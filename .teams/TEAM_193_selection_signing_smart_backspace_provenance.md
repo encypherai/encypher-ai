@@ -64,3 +64,63 @@ feat(extension): sign selection in-place, smart backspace, provenance chain
 - Add design specs for native Google Docs add-on and MS Office add-in
 - Add 24 new tests for embedding detection, provenance, and signing (80/80 total)
 ```
+
+---
+
+## Google Docs Add-on Follow-on (Implemented)
+
+### Scope
+- Built a new native Google Docs Add-on under `integrations/google-docs-addon/` per Google Workspace Add-on requirements.
+
+### What was implemented
+- **Apps Script manifest** (`appsscript.json`) with:
+  - add-on metadata (`addOns.common`, `addOns.docs`)
+  - required scopes (`documents.currentonly`, `script.container.ui`, `script.external_request`, `userinfo.email`)
+  - API URL allowlist (`urlFetchWhitelist` for `https://api.encypherai.com/`)
+- **Entry points + menu actions** (`Code.gs`):
+  - `onInstall`, `onOpen`, add-on homepage card, sidebar launch
+  - Docs add-on menu: Open Sidebar, Sign Selection/Document, Verify Selection/Document
+- **Core Docs workflows** (`DocsService.gs`):
+  - selection/full-doc extraction
+  - selection/full-doc sign and replace
+  - selection/full-doc verification
+- **API integration** (`Api.gs`):
+  - sign via `/api/v1/sign`
+  - verify via `/api/v1/verify`
+  - robust HTTP and JSON error handling
+- **Provenance chain** (`Provenance.gs`):
+  - VS/ZWNBSP embedding extraction
+  - per-document provenance persistence + capping
+  - reuse as `previous_embeddings` during re-sign
+- **Settings + sidebar actions** (`SidebarActions.gs`):
+  - save/clear API key + base URL
+  - runtime state + provenance summary
+- **Security policy** (`Config.gs`):
+  - enforced HTTPS and `*.encypherai.com` API base URL policy
+- **UI** (`Sidebar.html`):
+  - branded Encypher sidebar for sign/verify/settings/provenance
+
+### Validation
+- Added local Node tests for provenance utility logic:
+  - `integrations/google-docs-addon/tests/provenance-utils.test.js`
+- Test result: **6/6 passing** via `npm test` in `integrations/google-docs-addon`.
+
+### Documentation and deployment
+- Added `integrations/google-docs-addon/README.md` with:
+  - setup, testing, clasp deploy instructions
+  - Marketplace submission checklist
+- Added `.clasp.json.example`, `.claspignore`, `.gitignore`, `package.json` for local test workflow.
+
+### Suggested Git Commit Message (Google Docs Add-on)
+```
+feat(integrations): add native Google Docs add-on with sign/verify and provenance chain
+
+- Create Apps Script Google Docs add-on scaffold under integrations/google-docs-addon
+- Add compliant appsscript.json manifest with docs add-on metadata and scopes
+- Implement Docs menu + sidebar entrypoints (onOpen/onInstall/homepage card)
+- Add sign/verify flows for selection and full document via Encypher API
+- Add provenance extraction/storage and reuse via previous_embeddings
+- Enforce HTTPS + *.encypherai.com API base URL policy for add-on settings
+- Add local Node tests for provenance utilities (6/6 passing)
+- Add README with clasp deployment and Marketplace checklist
+```

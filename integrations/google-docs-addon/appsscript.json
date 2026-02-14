@@ -1,0 +1,36 @@
+{
+  "timeZone": "Etc/UTC",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/documents.currentonly",
+    "https://www.googleapis.com/auth/script.container.ui",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/userinfo.email"
+  ],
+  "urlFetchWhitelist": [
+    "https://api.encypherai.com/"
+  ],
+  "addOns": {
+    "common": {
+      "name": "Encypher Provenance",
+      "logoUrl": "https://dashboard.encypherai.com/favicon.ico",
+      "layoutProperties": {
+        "primaryColor": "#1B2F50",
+        "secondaryColor": "#2A87C4"
+      },
+      "useLocaleFromApp": true,
+      "homepageTrigger": {
+        "runFunction": "onDocsHomepage"
+      },
+      "universalActions": [
+        {
+          "label": "Open Encypher Sidebar",
+          "runFunction": "openSidebarFromUniversalAction"
+        }
+      ]
+    },
+    "docs": {}
+  }
+}

@@ -1,0 +1,8 @@
+# Keep local/dev artifacts out of Apps Script deployments
+node_modules/**
+tests/**
+package.json
+package-lock.json
+.clasp.json.example
+provenance-utils.js
+README.md
