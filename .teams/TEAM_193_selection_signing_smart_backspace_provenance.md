@@ -124,3 +124,68 @@ feat(integrations): add native Google Docs add-on with sign/verify and provenanc
 - Add local Node tests for provenance utilities (6/6 passing)
 - Add README with clasp deployment and Marketplace checklist
 ```
+
+---
+
+## Microsoft Office Add-in Follow-on (Implemented)
+
+### Scope
+- Built a new native Microsoft Office Add-in under `integrations/microsoft-office-addin/` with cross-host support for Word, Excel, and PowerPoint.
+
+### What was implemented
+- **Manifest + command surface** (`manifest.xml`):
+  - Multi-host configuration: Document (Word), Workbook (Excel), Presentation (PowerPoint)
+  - Task pane ribbon buttons for each host
+  - Shared task pane source location
+- **Task pane UI** (`taskpane/taskpane.html`, `taskpane/taskpane.css`):
+  - Actions: sign/verify selection + full-document actions
+  - Settings: API key + API base URL
+  - Host capability display + provenance summary + JSON result panel
+- **Host capability matrix** (`src/host-capabilities.js`):
+  - Word: selection + full-document
+  - Excel: selection-only
+  - PowerPoint: selection-only
+- **Host adapters** (`src/host-adapters.js`):
+  - Selection read/replace via Common API (`getSelectedDataAsync`, `setSelectedDataAsync`)
+  - Word full-document read/replace via `Word.run`
+- **Sign/verify/provenance orchestration** (`src/app.js`):
+  - Host-aware action routing
+  - Sign/verify API integration
+  - Previous embedding reuse for re-sign operations
+- **API client** (`src/api-client.js`):
+  - `/api/v1/sign` and `/api/v1/verify` integration
+  - HTTPS + `*.encypherai.com` host enforcement
+- **Roaming settings persistence** (`src/storage.js`):
+  - User settings and provenance entries in `Office.context.roamingSettings`
+  - Index-based provenance key trimming (no reliance on private Office internals)
+- **Embedding/provenance utilities** (`src/provenance-utils.js`):
+  - VS/ZWNBSP parsing, run extraction, text hashing, capped merge
+
+### Validation
+- Added and executed Node tests:
+  - `tests/provenance-utils.test.js`
+  - `tests/host-capabilities.test.js`
+  - `tests/api-client.test.js`
+- Test result: **13/13 passing** via `npm test`.
+
+### Documentation
+- Added `integrations/microsoft-office-addin/README.md` with:
+  - host coverage and current limitations
+  - local testing and sideload instructions
+  - AppSource readiness checklist
+
+### Suggested Git Commit Message (Microsoft Office Add-in)
+```
+feat(integrations): add Microsoft Office add-in for Word/Excel/PowerPoint
+
+- create new Office add-in project under integrations/microsoft-office-addin
+- add multi-host manifest with task pane command surfaces
+- implement host capability matrix and host adapters
+- support sign/verify for selection across Word/Excel/PowerPoint
+- support full-document sign/verify for Word
+- add provenance extraction and roaming-settings chain persistence
+- enforce HTTPS + *.encypherai.com API host validation
+- add task pane UI for actions, settings, capabilities, and results
+- add tests for provenance utils, host capabilities, and API URL policy (13/13 passing)
+- add README with sideloading and AppSource checklist
+```

@@ -1,0 +1,9 @@
+{
+  "name": "@encypher/microsoft-office-addin",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Encypher Microsoft Office Add-in (Word, Excel, PowerPoint)",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

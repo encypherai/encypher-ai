@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Encypher Provenance - Office Add-in</title>
+    <link rel="stylesheet" href="./taskpane.css" />
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div class="badge">E</div>
+        <div>
+          <h1>Encypher Provenance</h1>
+          <p id="hostLabel">Loading host...</p>
+        </div>
+      </header>
+
+      <section class="panel">
+        <h2>Capabilities</h2>
+        <p id="capabilitiesText">Loading capabilities...</p>
+      </section>
+
+      <section class="panel">
+        <h2>Actions</h2>
+        <div class="button-grid">
+          <button id="signSelectionBtn" class="btn btn-primary">Sign Selection</button>
+          <button id="verifySelectionBtn" class="btn">Verify Selection</button>
+          <button id="signDocumentBtn" class="btn btn-primary">Sign Full Document</button>
+          <button id="verifyDocumentBtn" class="btn">Verify Full Document</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Settings</h2>
+        <label for="apiKeyInput">API Key</label>
+        <input id="apiKeyInput" type="password" placeholder="encypher_..." />
+
+        <label for="apiBaseUrlInput">API Base URL</label>
+        <input id="apiBaseUrlInput" type="url" placeholder="https://api.encypherai.com" />
+
+        <div class="button-grid two-col">
+          <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+          <button id="clearSettingsBtn" class="btn">Clear</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Provenance</h2>
+        <p id="provenanceSummary">No provenance data loaded.</p>
+      </section>
+
+      <section class="panel" id="resultPanel" hidden>
+        <h2>Result</h2>
+        <pre id="resultOutput"></pre>
+      </section>
+    </main>
+
+    <script src="../src/host-capabilities.js"></script>
+    <script src="../src/provenance-utils.js"></script>
+    <script src="../src/storage.js"></script>
+    <script src="../src/api-client.js"></script>
+    <script src="../src/host-adapters.js"></script>
+    <script src="../src/app.js"></script>
+  </body>
+</html>

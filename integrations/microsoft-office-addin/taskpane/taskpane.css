@@ -1,0 +1,121 @@
+:root {
+  --primary: #1b2f50;
+  --secondary: #2a87c4;
+  --bg: #f5f8fc;
+  --panel: #ffffff;
+  --border: #d3dceb;
+  --text: #15243b;
+  --muted: #586882;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Inter", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app-shell {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.app-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+h1 {
+  margin: 0;
+  font-size: 16px;
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 10px;
+}
+
+label {
+  display: block;
+  margin: 8px 0 4px;
+  font-size: 12px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.button-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.button-grid.two-col {
+  grid-template-columns: 1fr 1fr;
+  margin-top: 8px;
+}
+
+.btn {
+  border: 1px solid var(--primary);
+  background: #fff;
+  color: var(--primary);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+pre {
+  margin: 0;
+  max-height: 200px;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 8px;
+  background: #0f1728;
+  color: #e2ecff;
+  font-size: 12px;
+}
