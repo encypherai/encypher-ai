@@ -10,6 +10,11 @@ import { CopyButton } from './CopyButton';
 
 type ViewState = 'loading' | 'disconnected' | 'setup' | 'connected';
 
+function formatLastWebhook(value?: string | null): string {
+  if (!value) return 'Never';
+  return new Date(value).toLocaleString();
+}
+
 export function GhostIntegrationCard() {
   const { data: session } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
@@ -291,9 +296,9 @@ export function GhostIntegrationCard() {
                 </p>
                 <ul className="text-xs text-muted-foreground mb-3 space-y-1 ml-4 list-disc">
                   <li><code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">Post published</code></li>
-                  <li><code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">Post updated</code></li>
+                  <li><code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">Published post updated</code> <span className="text-[11px]">(or <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">Post updated</code> if your Ghost version shows that label)</span></li>
                   <li><code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">Page published</code></li>
-                  <li><code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">Page updated</code></li>
+                  <li><code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">Published page updated</code> <span className="text-[11px]">(or <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">Page updated</code>)</span></li>
                 </ul>
               </div>
 
@@ -339,7 +344,7 @@ export function GhostIntegrationCard() {
 
   // ── Connected state ──
   return (
-    <Card variant="bordered" className="border-green-500/30">
+    <Card variant="bordered" className="border-green-500/30 overflow-hidden">
       <CardHeader>
         <div className="flex items-start gap-4">
           <GhostIcon />
@@ -368,21 +373,35 @@ export function GhostIntegrationCard() {
           <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
             <p className="text-xs text-muted-foreground">Last webhook</p>
             <p className="text-sm font-medium text-delft-blue dark:text-white">
-              {integration?.last_webhook_at
-                ? new Date(integration.last_webhook_at).toLocaleDateString()
-                : 'Never'}
+              {formatLastWebhook(integration?.last_webhook_at)}
             </p>
           </div>
         </div>
 
+        {/* Active webhook URL */}
+        <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">Configured webhook URL</p>
+          <div className="flex items-start gap-2">
+            <code className="text-xs flex-1 break-all text-delft-blue dark:text-slate-200 font-mono leading-relaxed">
+              {newWebhookUrl || integration?.webhook_url}
+            </code>
+            <CopyButton text={newWebhookUrl || integration?.webhook_url || ''} />
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            In Ghost, use this URL for: Post published, Published post updated, Page published, and Published page updated.
+          </p>
+        </div>
+
         {/* Config summary */}
-        <div className="text-xs text-muted-foreground space-y-1 mb-4">
-          <p>
+        <div className="text-xs text-muted-foreground space-y-2 mb-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+          <p className="leading-relaxed">
             <span className="font-medium">API Key:</span>{' '}
-            <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">{integration?.ghost_admin_api_key_masked}</code>
+            <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded break-all inline-block max-w-full align-top">
+              {integration?.ghost_admin_api_key_masked}
+            </code>
           </p>
           <p>
-            <span className="font-medium">Mode:</span> {integration?.manifest_mode} / {integration?.segmentation_level}
+            <span className="font-medium">Mode:</span> <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">{integration?.manifest_mode}</code> / <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">{integration?.segmentation_level}</code>
           </p>
           <p>
             <span className="font-medium">Auto-sign:</span>{' '}
@@ -406,7 +425,7 @@ export function GhostIntegrationCard() {
         )}
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 items-start">
           {/* Regenerate token */}
           {!showRegenerateConfirm ? (
             <Button
@@ -417,8 +436,8 @@ export function GhostIntegrationCard() {
               Regenerate Token
             </Button>
           ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Are you sure?</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-muted-foreground">Regenerate token?</span>
               <Button
                 variant="destructive"
                 size="sm"
@@ -448,7 +467,7 @@ export function GhostIntegrationCard() {
               Disconnect
             </Button>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-red-500">Remove integration?</span>
               <Button
                 variant="destructive"

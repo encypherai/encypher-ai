@@ -28,6 +28,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_content_db, get_db
 from app.dependencies import get_current_organization, require_sign_permission
 from app.models.ghost_integration import GhostIntegration
@@ -69,9 +70,14 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def _build_webhook_url(token: str) -> str:
+def _build_webhook_url(token: str, *, request: Request | None = None) -> str:
     """Build the full webhook URL with the token as query param."""
-    return f"{WEBHOOK_BASE_PATH}?token={token}"
+    if request is not None:
+        # request.base_url includes trailing slash
+        base_url = str(request.base_url).rstrip("/")
+    else:
+        base_url = settings.api_base_url.rstrip("/")
+    return f"{base_url}{WEBHOOK_BASE_PATH}?token={token}"
 
 
 # =============================================================================
@@ -159,6 +165,7 @@ def _build_response(
     integration: GhostIntegration,
     *,
     webhook_token: str | None = None,
+    request: Request | None = None,
 ) -> GhostIntegrationResponse:
     """Build a GhostIntegrationResponse from a model instance.
 
@@ -167,9 +174,9 @@ def _build_response(
             the webhook URL from it. Only set on creation / regeneration.
     """
     if webhook_token:
-        webhook_url = _build_webhook_url(webhook_token)
+        webhook_url = _build_webhook_url(webhook_token, request=request)
     else:
-        webhook_url = f"{WEBHOOK_BASE_PATH}?token=ghwh_••••••••"
+        webhook_url = _build_webhook_url("ghwh_••••••••", request=request)
 
     return GhostIntegrationResponse(
         id=integration.id,
@@ -209,6 +216,7 @@ def _build_response(
     tags=["Integrations"],
 )
 async def create_ghost_integration(
+    request: Request,
     body: GhostIntegrationCreate,
     organization: dict = Depends(require_sign_permission),
     db: AsyncSession = Depends(get_db),
@@ -234,7 +242,7 @@ async def create_ghost_integration(
         await db.commit()
         await db.refresh(existing)
         # Don't return token on update — user must use regenerate-token to see it again
-        return _build_response(existing)
+        return _build_response(existing, request=request)
 
     # Create new with a fresh webhook token
     plaintext_token = _generate_webhook_token()
@@ -254,7 +262,7 @@ async def create_ghost_integration(
     await db.commit()
     await db.refresh(integration)
     # Return plaintext token on first creation — user must store it
-    return _build_response(integration, webhook_token=plaintext_token)
+    return _build_response(integration, webhook_token=plaintext_token, request=request)
 
 
 @router.get(
@@ -265,12 +273,13 @@ async def create_ghost_integration(
     tags=["Integrations"],
 )
 async def get_ghost_integration(
+    request: Request,
     organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db),
 ):
     org_id = organization["organization_id"]
     integration = await _get_ghost_integration(org_id, db)
-    return _build_response(integration)
+    return _build_response(integration, request=request)
 
 
 @router.delete(
@@ -311,6 +320,7 @@ async def delete_ghost_integration(
     tags=["Integrations"],
 )
 async def regenerate_ghost_token(
+    request: Request,
     organization: dict = Depends(require_sign_permission),
     db: AsyncSession = Depends(get_db),
 ):
@@ -324,7 +334,7 @@ async def regenerate_ghost_token(
     logger.info("Regenerated webhook token for org %s", org_id)
 
     return GhostTokenRegenerateResponse(
-        webhook_url=_build_webhook_url(plaintext_token),
+        webhook_url=_build_webhook_url(plaintext_token, request=request),
         webhook_token=plaintext_token,
     )
 

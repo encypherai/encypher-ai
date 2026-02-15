@@ -18,6 +18,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+import app.routers.integrations as integrations_router
+
 from app.services.ghost_integration import (
     GhostAdminClient,
     _TextExtractor,
@@ -410,16 +412,24 @@ class TestWebhookToken:
         t2 = _generate_webhook_token()
         assert _hash_token(t1) != _hash_token(t2)
 
-    def test_build_webhook_url(self):
+    def test_build_webhook_url(self, monkeypatch: pytest.MonkeyPatch):
         token = "ghwh_abc123"
+        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://api.encypherai.com")
         url = _build_webhook_url(token)
-        assert url == f"{WEBHOOK_BASE_PATH}?token=ghwh_abc123"
+        assert url == f"https://api.encypherai.com{WEBHOOK_BASE_PATH}?token=ghwh_abc123"
 
-    def test_build_webhook_url_contains_token(self):
+    def test_build_webhook_url_contains_token(self, monkeypatch: pytest.MonkeyPatch):
         token = _generate_webhook_token()
+        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://api.encypherai.com/")
         url = _build_webhook_url(token)
         assert token in url
-        assert url.startswith(WEBHOOK_BASE_PATH)
+        assert url.startswith(f"https://api.encypherai.com{WEBHOOK_BASE_PATH}")
+
+    def test_build_webhook_url_uses_configured_base_url(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://staging-api.encypherai.com")
+        token = "ghwh_custom"
+        url = _build_webhook_url(token)
+        assert url == f"https://staging-api.encypherai.com{WEBHOOK_BASE_PATH}?token=ghwh_custom"
 
 
 class TestMaskKey:
@@ -452,7 +462,7 @@ class TestGhostIntegrationResponseSchema:
             segmentation_level="sentence",
             badge_enabled=True,
             is_active=True,
-            webhook_url="/api/v1/integrations/ghost/webhook?token=ghwh_abc",
+            webhook_url="https://api.encypherai.com/api/v1/integrations/ghost/webhook?token=ghwh_abc",
             webhook_token="ghwh_abc",
         )
         assert resp.webhook_token == "ghwh_abc"
@@ -470,14 +480,14 @@ class TestGhostIntegrationResponseSchema:
             segmentation_level="sentence",
             badge_enabled=True,
             is_active=True,
-            webhook_url="/api/v1/integrations/ghost/webhook?token=ghwh_••••••••",
+            webhook_url="https://api.encypherai.com/api/v1/integrations/ghost/webhook?token=ghwh_••••••••",
         )
         assert resp.webhook_token is None
         assert "••••••••" in resp.webhook_url
 
     def test_token_regenerate_response(self):
         resp = GhostTokenRegenerateResponse(
-            webhook_url="/api/v1/integrations/ghost/webhook?token=ghwh_new",
+            webhook_url="https://api.encypherai.com/api/v1/integrations/ghost/webhook?token=ghwh_new",
             webhook_token="ghwh_new",
         )
         assert resp.webhook_token == "ghwh_new"

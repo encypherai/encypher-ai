@@ -14,6 +14,7 @@ import {
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { useOrganization } from '../../contexts/OrganizationContext';
+import apiClient from '../../lib/api';
 
 interface AuditLog {
   id: string;
@@ -55,7 +56,17 @@ export default function AuditLogsPage() {
   const pageSize = 25;
 
   const userTier = (session?.user as any)?.tier || 'free';
-  const hasAuditFeature = userTier === 'enterprise';
+  const accessToken = (session?.user as any)?.accessToken as string | undefined;
+  const { data: isSuperAdmin } = useQuery({
+    queryKey: ['is-super-admin'],
+    queryFn: async () => {
+      if (!accessToken) return false;
+      return apiClient.isSuperAdmin(accessToken);
+    },
+    enabled: Boolean(accessToken),
+    staleTime: 5 * 60 * 1000,
+  });
+  const hasAuditFeature = userTier === 'enterprise' || isSuperAdmin === true;
   const { activeOrganization, isLoading: orgLoading } = useOrganization();
   const orgId = activeOrganization?.id;
 
@@ -64,7 +75,6 @@ export default function AuditLogsPage() {
     queryKey: ['org-members', orgId],
     queryFn: async () => {
       if (!orgId) return [];
-      const accessToken = (session?.user as any)?.accessToken;
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/members`,
         {
@@ -83,7 +93,6 @@ export default function AuditLogsPage() {
     queryKey: ['audit-logs', orgId, page, userIdFilter],
     queryFn: async () => {
       if (!orgId) return [];
-      const accessToken = (session?.user as any)?.accessToken;
       const params = new URLSearchParams({
         limit: String(pageSize),
         offset: String((page - 1) * pageSize),

@@ -228,7 +228,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const visibleGroups = navGroups
     .map(group => ({
       ...group,
-      items: group.items.filter(item => !item.enterpriseOnly || isEnterprise),
+      items: group.items.filter(item => !item.enterpriseOnly || isEnterprise || isAdmin),
     }))
     .filter(group => group.items.length > 0);
 

@@ -13,7 +13,12 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useRef, Suspense } from 'react';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
-import apiClient, { Invoice } from '../../lib/api';
+import apiClient, {
+  type BillingUsageStats,
+  type CoalitionSummary,
+  Invoice,
+  type SubscriptionInfo,
+} from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { useOrganization } from '../../contexts/OrganizationContext';
 import {
@@ -36,16 +41,21 @@ function BillingPageContent() {
   const hasRefetchedAfterCheckout = useRef(false);
 
   // Fetch subscription, invoices, usage, and coalition data
-  const billingQuery = useQuery({
+  const billingQuery = useQuery<{
+    subscription: SubscriptionInfo | null;
+    invoices: Invoice[];
+    usage: BillingUsageStats | null;
+    coalition: CoalitionSummary | null;
+  }>({
     queryKey: ['billing', accessToken],
     queryFn: async () => {
       if (!accessToken) return { subscription: null, invoices: [], usage: null, coalition: null };
-      const [subscription, invoices, usage, coalition] = await Promise.all([
-        apiClient.getSubscription(accessToken).catch(() => null),
+      const [invoices, usage, coalition] = await Promise.all([
         apiClient.getInvoices(accessToken).catch(() => []),
         apiClient.getBillingUsage(accessToken).catch(() => null),
         apiClient.getCoalitionEarnings(accessToken).catch(() => null),
       ]);
+      const subscription = null;
       return { subscription, invoices, usage, coalition };
     },
     enabled: Boolean(accessToken),
@@ -98,6 +108,11 @@ function BillingPageContent() {
   const isDowngradeScheduled = Boolean(subscription?.cancel_at_period_end);
   const downgradeEffectiveDate = subscription?.current_period_end;
   const downgradeTargetLabel = 'Free';
+  const currentPriceLabel = currentPrice > 0
+    ? `$${currentPrice}/${currentBillingCycle === 'annual' ? 'year' : 'month'}`
+    : currentTier === 'enterprise'
+      ? 'Custom'
+      : 'Free';
   // TEAM_061: Enterprise pricing terms (rev share) should not be displayed in the dashboard UI.
   const isEnterpriseTier = currentTier === 'enterprise';
   const isLoading = status === 'loading' || billingQuery.isLoading;
@@ -160,9 +175,7 @@ function BillingPageContent() {
                 {currentTierLabel}
               </p>
               <p className="text-muted-foreground">
-                {currentPrice > 0 
-                  ? `$${currentPrice}/${currentBillingCycle === 'annual' ? 'year' : 'month'}` 
-                  : 'Free'}
+                {currentPriceLabel}
               </p>
               {isDowngradeScheduled && downgradeEffectiveDate && (
                 <p className="mt-2 text-xs text-amber-600">
