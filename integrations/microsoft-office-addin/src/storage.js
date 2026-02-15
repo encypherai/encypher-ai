@@ -12,21 +12,30 @@
     maxHashes: 50,
   };
 
-  function getRoamingSettings() {
-    if (!global.Office || !Office.context || !Office.context.roamingSettings) {
-      throw new Error('Office roamingSettings unavailable. Open from Office task pane context.');
+  function getSettingsContainer() {
+    if (!global.Office || !Office.context) {
+      throw new Error('Office settings unavailable. Open from Office task pane context.');
     }
-    return Office.context.roamingSettings;
+
+    if (Office.context.roamingSettings) {
+      return Office.context.roamingSettings;
+    }
+
+    if (Office.context.document && Office.context.document.settings) {
+      return Office.context.document.settings;
+    }
+
+    throw new Error('Office settings unavailable. Open from Office task pane context.');
   }
 
   function readSetting(key, fallbackValue) {
-    const settings = getRoamingSettings();
+    const settings = getSettingsContainer();
     const value = settings.get(key);
     return value === null || value === undefined ? fallbackValue : value;
   }
 
   function writeSetting(key, value) {
-    const settings = getRoamingSettings();
+    const settings = getSettingsContainer();
     settings.set(key, value);
     return new Promise((resolve, reject) => {
       settings.saveAsync((result) => {
@@ -43,7 +52,7 @@
     const apiKey = (input.apiKey || '').trim();
     const apiBaseUrl = (input.apiBaseUrl || '').trim();
 
-    const settings = getRoamingSettings();
+    const settings = getSettingsContainer();
     if (apiKey) {
       settings.set(SETTINGS_KEYS.apiKey, apiKey);
     }
@@ -65,7 +74,7 @@
   }
 
   async function clearUserSettings() {
-    const settings = getRoamingSettings();
+    const settings = getSettingsContainer();
     settings.remove(SETTINGS_KEYS.apiKey);
     settings.remove(SETTINGS_KEYS.apiBaseUrl);
 
@@ -127,7 +136,7 @@
   }
 
   async function trimProvenanceKeys(existingIndex) {
-    const settings = getRoamingSettings();
+    const settings = getSettingsContainer();
     const keys = Array.isArray(existingIndex) ? existingIndex.slice() : getProvenanceIndex();
 
     if (keys.length <= DEFAULTS.maxHashes) {

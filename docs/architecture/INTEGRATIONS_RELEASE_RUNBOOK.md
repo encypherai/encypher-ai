@@ -49,8 +49,40 @@ Portable notes:
 - Use `--repo-root /path/to/encypherai-commercial` when running outside the repository root.
 - By design, installer output avoids machine-specific assumptions and emits explicit cwd per command.
 
+### Practical forwarded-port HTTPS setup (Office/Outlook)
+Use this when Office apps run on a host test machine but add-in assets are served from this machine.
+
+Target ports used by manifests:
+- Microsoft Office add-in: `https://localhost:4000/taskpane/taskpane.html`
+- Outlook add-in: `https://localhost:4001/taskpane/taskpane.html`
+
+On the serving machine (this repo machine):
+
+```bash
+# 1) Create trusted localhost certs (one-time)
+mkcert -install
+mkcert localhost 127.0.0.1 ::1
+
+# 2) Serve Office add-in assets over HTTPS:4000
+npx http-server integrations/microsoft-office-addin \
+  -p 4000 -a 127.0.0.1 \
+  -S -C localhost+2.pem -K localhost+2-key.pem
+
+# 3) Serve Outlook add-in assets over HTTPS:4001
+npx http-server integrations/outlook-email-addin \
+  -p 4001 -a 127.0.0.1 \
+  -S -C localhost+2.pem -K localhost+2-key.pem
+```
+
+If `localhost+2.pem` naming differs on your machine, use the filenames emitted by `mkcert`.
+
+On the host test machine:
+- Ensure forwarded `localhost:4000` and `localhost:4001` map to this machine.
+- Trust the generated local CA/certificate on the host machine if certificate warnings appear.
+- Sideload the manifest XML files only; web assets can remain on the serving machine.
+
 ### Outlook add-in
-1. Serve `integrations/outlook-email-addin` over HTTPS at `https://localhost:3000`.
+1. Serve `integrations/outlook-email-addin` over HTTPS at `https://localhost:4001`.
 2. Upload `manifest.xml` as a custom add-in in Outlook desktop/web.
 3. In compose and read modes:
    - save API settings
@@ -58,7 +90,7 @@ Portable notes:
    - confirm provenance summary updates
 
 ### Microsoft Office add-in (Word/Excel/PowerPoint)
-1. Serve `integrations/microsoft-office-addin` over HTTPS at `https://localhost:3000`.
+1. Serve `integrations/microsoft-office-addin` over HTTPS at `https://localhost:4000`.
 2. Upload `manifest.xml` in each host app.
 3. Test:
    - selection sign/verify in Word, Excel, PowerPoint

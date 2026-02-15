@@ -7,6 +7,7 @@ function signWithEncypher_(text, title, previousEmbeddings) {
     document_title: title || undefined,
     options: {
       document_type: 'article',
+      return_embedding_plan: true,
     },
   };
 
@@ -46,6 +47,7 @@ function signWithEncypher_(text, title, previousEmbeddings) {
 
   return {
     signedText: signedText,
+    embeddingPlan: documentData.embedding_plan || null,
     documentId: documentData.document_id || null,
     verificationUrl: documentData.verification_url || null,
     tier: (data.meta && data.meta.tier) || null,

@@ -131,6 +131,7 @@ Provide **either** `text` (single document) **or** `documents` (batch), plus an 
 | `embedding_options.format` | string | `"plain"` | `plain`, `html`, `markdown`, `json` | Output format for the signed text. |
 | `embedding_options.method` | string | `"invisible"` | `invisible`, `data-attribute`, `span`, `comment` | How the embedding is represented. `invisible` uses zero-width Unicode characters. |
 | `embedding_options.include_text` | bool | `true` | | Whether to include the embedded text in the response. |
+| `return_embedding_plan` | bool | `false` | | When `true`, includes `document.embedding_plan` with codepoint-based marker insertion operations for formatting-preserving clients. |
 | `expires_at` | datetime | *null* | ISO 8601 | Optional expiration timestamp for the embeddings. |
 
 ---
@@ -185,6 +186,19 @@ Provide **either** `text` (single document) **or** `documents` (batch), plus an 
 ```
 
 The response includes `meta.features_gated` showing features available at higher tiers.
+
+When `options.return_embedding_plan=true`, each signed document may also include:
+
+```json
+"embedding_plan": {
+  "index_unit": "codepoint",
+  "operations": [
+    {"insert_after_index": 128, "marker": "..."}
+  ]
+}
+```
+
+This allows clients (e.g. Office add-ins) to insert only invisible markers at indexed positions while preserving native formatting.
 """,
     responses={
         201: {"description": "Content signed successfully"},

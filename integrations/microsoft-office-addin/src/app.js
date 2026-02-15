@@ -50,9 +50,18 @@
       throw new Error('Full-document actions are not supported in this host.');
     }
 
-    const text = mode === 'selection'
-      ? await global.EncypherHostAdapter.readSelectionText()
-      : await global.EncypherHostAdapter.readFullDocumentText();
+    let text = '';
+    let sourceOoxml = null;
+    const useOoxmlFlow = mode === 'document' && host === 'Word' && !!global.EncypherOoxmlFormatting;
+
+    if (mode === 'selection') {
+      text = await global.EncypherHostAdapter.readSelectionText();
+    } else if (useOoxmlFlow) {
+      sourceOoxml = await global.EncypherHostAdapter.readFullDocumentOoxml();
+      text = global.EncypherOoxmlFormatting.extractVisibleTextFromOoxml(sourceOoxml);
+    } else {
+      text = await global.EncypherHostAdapter.readFullDocumentText();
+    }
 
     if (!text || !text.trim()) {
       throw new Error('No text found to sign.');
@@ -80,10 +89,27 @@
       previousEmbeddings,
     });
 
+    let formattingPreserved = false;
     if (mode === 'selection') {
       await global.EncypherHostAdapter.replaceSelectionText(signResult.signedText);
     } else {
-      await global.EncypherHostAdapter.replaceFullDocumentText(signResult.signedText);
+      if (useOoxmlFlow && sourceOoxml) {
+        try {
+          const signedOoxml = signResult.embeddingPlan
+            ? global.EncypherOoxmlFormatting.applyApiEmbeddingPlanToOoxml(sourceOoxml, signResult.embeddingPlan)
+            : global.EncypherOoxmlFormatting.applySignedTextToOoxml(
+                sourceOoxml,
+                signResult.signedText,
+                global.ProvenanceUtils.isEmbeddingChar
+              );
+          await global.EncypherHostAdapter.replaceFullDocumentOoxml(signedOoxml);
+          formattingPreserved = true;
+        } catch (error) {
+          await global.EncypherHostAdapter.replaceFullDocumentText(signResult.signedText);
+        }
+      } else {
+        await global.EncypherHostAdapter.replaceFullDocumentText(signResult.signedText);
+      }
     }
 
     await loadProvenanceSummary(signResult.signedText);
@@ -95,6 +121,7 @@
       signedLength: signResult.signedText.length,
       previousEmbeddingsCount: previousEmbeddings.length,
       verificationUrl: signResult.verificationUrl,
+      formattingPreserved,
       message: 'Content signed with cryptographic proof of origin.',
     };
   }
@@ -115,9 +142,23 @@
       throw new Error('Full-document actions are not supported in this host.');
     }
 
-    const text = mode === 'selection'
-      ? await global.EncypherHostAdapter.readSelectionText()
-      : await global.EncypherHostAdapter.readFullDocumentText();
+    let text = '';
+    const useSelectionOoxml = mode === 'selection' && host === 'Word' && !!global.EncypherOoxmlFormatting;
+
+    if (mode === 'selection') {
+      if (useSelectionOoxml) {
+        try {
+          const selectionOoxml = await global.EncypherHostAdapter.readSelectionOoxml();
+          text = global.EncypherOoxmlFormatting.extractVisibleTextFromOoxml(selectionOoxml);
+        } catch (error) {
+          text = await global.EncypherHostAdapter.readSelectionText();
+        }
+      } else {
+        text = await global.EncypherHostAdapter.readSelectionText();
+      }
+    } else {
+      text = await global.EncypherHostAdapter.readFullDocumentText();
+    }
 
     if (!text || !text.trim()) {
       throw new Error('No text found to verify.');

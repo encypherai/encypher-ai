@@ -57,7 +57,7 @@ async def test_create_invitation_sends_email(monkeypatch):
         first_name=invitation.first_name,
         last_name=invitation.last_name,
         organization_name=invitation.organization_name,
-        tier=org_api.UserTier.BUSINESS,
+        tier=org_api.UserTier.ENTERPRISE,
         trial_months=invitation.trial_months,
     )
 
@@ -73,7 +73,7 @@ async def test_create_invitation_sends_email(monkeypatch):
         first_name=invitation.first_name,
         last_name=invitation.last_name,
         organization_name=invitation.organization_name,
-        tier=org_api.UserTier.BUSINESS.value,
+        tier=org_api.UserTier.ENTERPRISE.value,
         trial_months=invitation.trial_months,
     )
     send_mock.assert_awaited_once()
@@ -136,7 +136,7 @@ async def test_trial_invitation_requires_super_admin(monkeypatch):
         role=invitation.role,
         message=invitation.message,
         organization_name=invitation.organization_name,
-        tier=org_api.UserTier.BUSINESS,
+        tier=org_api.UserTier.ENTERPRISE,
         trial_months=invitation.trial_months,
     )
 
@@ -191,7 +191,7 @@ async def test_create_trial_invitation_for_new_org_sends_email(monkeypatch):
         first_name=invitation.first_name,
         last_name=invitation.last_name,
         organization_name=invitation.organization_name,
-        tier=org_api.UserTier.BUSINESS,
+        tier=org_api.UserTier.ENTERPRISE,
         trial_months=invitation.trial_months,
     )
 
@@ -204,7 +204,7 @@ async def test_create_trial_invitation_for_new_org_sends_email(monkeypatch):
         email=invitation.email,
         first_name=invitation.first_name,
         last_name=invitation.last_name,
-        tier=org_api.UserTier.BUSINESS.value,
+        tier=org_api.UserTier.ENTERPRISE.value,
         trial_months=invitation.trial_months,
         inviter_user_id=inviter.id,
     )

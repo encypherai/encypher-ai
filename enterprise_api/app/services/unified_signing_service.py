@@ -28,6 +28,7 @@ from app.schemas.sign_schemas import (
     UnifiedSignRequest,
     validate_sign_options_for_tier,
 )
+from app.services.embedding_plan import build_embedding_plan
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +123,12 @@ async def execute_unified_signing(
                     options=request.options,
                     organization=organization,
                     db=core_db,
+                )
+
+            if request.options.return_embedding_plan and result.signed_text:
+                result.embedding_plan = build_embedding_plan(
+                    visible_text=doc.text,
+                    signed_text=result.signed_text,
                 )
             
             results.append(result)

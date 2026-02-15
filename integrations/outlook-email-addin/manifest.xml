@@ -10,8 +10,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Encypher C2PA Email Provenance"/>
   <Description DefaultValue="Embed and verify cryptographic proof of origin for Outlook email content using C2PA-aligned provenance infrastructure."/>
-  <IconUrl DefaultValue="https://dashboard.encypherai.com/favicon.ico"/>
-  <HighResolutionIconUrl DefaultValue="https://dashboard.encypherai.com/favicon.ico"/>
+  <IconUrl DefaultValue="https://encypherai.com/assets/logo.png"/>
+  <HighResolutionIconUrl DefaultValue="https://encypherai.com/assets/logo.png"/>
   <SupportUrl DefaultValue="https://docs.encypherai.com"/>
 
   <AppDomains>
@@ -32,14 +32,13 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://localhost:3000/taskpane/taskpane.html"/>
+        <SourceLocation DefaultValue="https://localhost:4001/taskpane/taskpane.html"/>
         <RequestedHeight>450</RequestedHeight>
       </DesktopSettings>
     </Form>
     <Form xsi:type="ItemEdit">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://localhost:3000/taskpane/taskpane.html"/>
-        <RequestedHeight>450</RequestedHeight>
+        <SourceLocation DefaultValue="https://localhost:4001/taskpane/taskpane.html"/>
       </DesktopSettings>
     </Form>
   </FormSettings>
@@ -116,12 +115,12 @@
 
       <Resources>
         <bt:Images>
-          <bt:Image id="Icon.16" DefaultValue="https://dashboard.encypherai.com/favicon.ico"/>
-          <bt:Image id="Icon.32" DefaultValue="https://dashboard.encypherai.com/favicon.ico"/>
-          <bt:Image id="Icon.80" DefaultValue="https://dashboard.encypherai.com/favicon.ico"/>
+          <bt:Image id="Icon.16" DefaultValue="https://encypherai.com/assets/logo.png"/>
+          <bt:Image id="Icon.32" DefaultValue="https://encypherai.com/assets/logo.png"/>
+          <bt:Image id="Icon.80" DefaultValue="https://encypherai.com/assets/logo.png"/>
         </bt:Images>
         <bt:Urls>
-          <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane/taskpane.html"/>
+          <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:4001/taskpane/taskpane.html"/>
         </bt:Urls>
         <bt:ShortStrings>
           <bt:String id="GroupLabel" DefaultValue="Encypher"/>

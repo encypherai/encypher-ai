@@ -1812,7 +1812,7 @@
           "Signing"
         ],
         "summary": "Sign content with C2PA manifest",
-        "description": "Sign content with C2PA manifest. Features are gated by tier.\n\n---\n\n## Tier Feature Matrix\n\n| Feature | Free | Enterprise |\n|---------|------|------------|\n| Basic C2PA signing | \u2705 | \u2705 |\n| Sentence / paragraph / section segmentation | \u2705 | \u2705 |\n| Advanced manifest modes | \u2705 | \u2705 |\n| Attribution indexing | \u2705 | \u2705 |\n| Custom assertions | \u2705 | \u2705 |\n| Rights metadata | \u2705 | \u2705 |\n| Batch signing | up to 10 | up to 100 |\n| Word-level segmentation | \u274c | \u2705 |\n| Dual binding | \u274c | \u2705 |\n| Fingerprinting | \u274c | \u2705 |\n\n---\n\n## Request Body\n\nProvide **either** `text` (single document) **or** `documents` (batch), plus an `options` object.\n\n### Top-level fields\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `text` | string | one of `text` / `documents` | Content to sign (single document, max 1 MB). |\n| `document_id` | string | no | Custom document identifier (1-255 chars). Auto-generated if omitted. |\n| `document_title` | string | no | Human-readable title (max 500 chars). |\n| `document_url` | string | no | Canonical URL of the document (max 1000 chars). |\n| `metadata` | object | no | Arbitrary key-value metadata attached to the document. |\n| `documents` | array | one of `text` / `documents` | List of `{text, document_id?, document_title?, document_url?, metadata?}` objects for batch signing. |\n| `options` | object | no | Signing options (see below). All fields have sensible defaults. |\n\n---\n\n## Options Reference\n\n### Segmentation & Structure\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `segmentation_level` | string | `\"document\"` | `document`, `sentence`, `paragraph`, `section`, `word` | `word` requires Enterprise | Granularity at which text is split and individually signed. Higher granularity enables per-segment tamper detection. |\n| `segmentation_levels` | string[] | *null* | subset of `sentence`, `paragraph`, `section` | Free | Build Merkle trees at multiple levels simultaneously for multi-resolution verification. |\n\n### Manifest & Embedding\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `manifest_mode` | string | `\"full\"` | `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`, `micro`, `micro_ecc`, `micro_c2pa`, `micro_ecc_c2pa` | Free | Controls how the C2PA manifest and per-segment markers are embedded. `full` = standard C2PA wrapper. `micro` variants = ultra-compact invisible markers (36-44 chars). `*_c2pa` variants add a full C2PA document manifest alongside micro markers. `*_ecc` variants add Reed-Solomon error correction. |\n| `embedding_strategy` | string | `\"single_point\"` | `single_point`, `distributed`, `distributed_redundant` | `distributed_redundant` requires Enterprise | How the invisible signature is placed within each segment. `single_point` = one location. `distributed` = spread across the segment. `distributed_redundant` = distributed with ECC for resilience. |\n| `distribution_target` | string | *null* | `whitespace`, `punctuation`, `all_chars` | Free | Which character positions are used when `embedding_strategy` is `distributed` or `distributed_redundant`. |\n\n### C2PA Provenance\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `action` | string | `\"c2pa.created\"` | `c2pa.created`, `c2pa.edited` | Free | C2PA action type. Use `c2pa.created` for new content, `c2pa.edited` for modifications. |\n| `previous_instance_id` | string | *null* | any | Free | The `instance_id` from a previous signing response. Required when `action` is `c2pa.edited` to form a provenance chain. |\n| `document_type` | string | `\"article\"` | `article`, `legal_brief`, `contract`, `ai_output` | Free | Semantic document type included in the manifest. |\n| `claim_generator` | string | *null* | any | Free | Optional claim generator identifier for C2PA manifests (e.g. your application name). |\n| `digital_source_type` | string | *null* | IPTC URI | Free | IPTC digital source type URI, e.g. for AI-generated content. |\n\n### Advanced Features\n\n| Option | Type | Default | Tier | Description |\n|--------|------|---------|------|-------------|\n| `index_for_attribution` | bool | `false` | Free | Index content segments for later attribution and plagiarism detection via `/verify/advanced`. |\n| `add_dual_binding` | bool | `false` | Enterprise | Enable an additional integrity binding layer for enhanced tamper resistance. |\n| `include_fingerprint` | bool | `false` | Enterprise | Generate a robust content fingerprint that can survive minor text modifications. |\n| `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding; only basic metadata is attached. |\n\n### Custom Assertions & Rights (Business+)\n\n| Option | Type | Default | Tier | Description |\n|--------|------|---------|------|-------------|\n| `custom_assertions` | array | *null* | Free | List of `{label, data}` objects to include as custom C2PA assertions. |\n| `template_id` | string | *null* | Free | ID of a pre-registered assertion template to apply. |\n| `validate_assertions` | bool | `true` | Free | Whether to validate custom assertions against registered JSON schemas. |\n| `rights` | object | *null* | Free | Rights metadata: `{copyright_holder, license_url, usage_terms, syndication_allowed, embargo_until, contact_email}`. |\n| `license` | object | *null* | Free | License info: `{type, url, contact_email}`. |\n| `actions` | array | *null* | Free | List of C2PA action assertion objects. |\n\n### Output Options\n\n| Option | Type | Default | Values | Description |\n|--------|------|---------|--------|-------------|\n| `embedding_options.format` | string | `\"plain\"` | `plain`, `html`, `markdown`, `json` | Output format for the signed text. |\n| `embedding_options.method` | string | `\"invisible\"` | `invisible`, `data-attribute`, `span`, `comment` | How the embedding is represented. `invisible` uses zero-width Unicode characters. |\n| `embedding_options.include_text` | bool | `true` | | Whether to include the embedded text in the response. |\n| `expires_at` | datetime | *null* | ISO 8601 | Optional expiration timestamp for the embeddings. |\n\n---\n\n## Examples\n\n**Single document (minimal):**\n```json\n{\n    \"text\": \"The Senate passed a landmark bill today.\",\n    \"document_title\": \"Senate Bill\"\n}\n```\n\n**Single document (with options):**\n```json\n{\n    \"text\": \"The Senate passed a landmark bill today. The vote was 67-33.\",\n    \"document_title\": \"Senate Bill\",\n    \"options\": {\n        \"segmentation_level\": \"sentence\",\n        \"manifest_mode\": \"micro_ecc_c2pa\",\n        \"index_for_attribution\": true,\n        \"action\": \"c2pa.created\"\n    }\n}\n```\n\n**Batch:**\n```json\n{\n    \"documents\": [\n        {\"text\": \"First article...\", \"document_title\": \"Article 1\"},\n        {\"text\": \"Second article...\", \"document_title\": \"Article 2\"}\n    ],\n    \"options\": {\n        \"segmentation_level\": \"sentence\",\n        \"embedding_strategy\": \"distributed\"\n    }\n}\n```\n\n**Edit provenance chain:**\n```json\n{\n    \"text\": \"Updated article content...\",\n    \"options\": {\n        \"action\": \"c2pa.edited\",\n        \"previous_instance_id\": \"urn:uuid:abc123...\"\n    }\n}\n```\n\nThe response includes `meta.features_gated` showing features available at higher tiers.",
+        "description": "Sign content with C2PA manifest. Features are gated by tier.\n\n---\n\n## Tier Feature Matrix\n\n| Feature | Free | Enterprise |\n|---------|------|------------|\n| Basic C2PA signing | \u2705 | \u2705 |\n| Sentence / paragraph / section segmentation | \u2705 | \u2705 |\n| Advanced manifest modes | \u2705 | \u2705 |\n| Attribution indexing | \u2705 | \u2705 |\n| Custom assertions | \u2705 | \u2705 |\n| Rights metadata | \u2705 | \u2705 |\n| Batch signing | up to 10 | up to 100 |\n| Word-level segmentation | \u274c | \u2705 |\n| Dual binding | \u274c | \u2705 |\n| Fingerprinting | \u274c | \u2705 |\n\n---\n\n## Request Body\n\nProvide **either** `text` (single document) **or** `documents` (batch), plus an `options` object.\n\n### Top-level fields\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `text` | string | one of `text` / `documents` | Content to sign (single document, max 1 MB). |\n| `document_id` | string | no | Custom document identifier (1-255 chars). Auto-generated if omitted. |\n| `document_title` | string | no | Human-readable title (max 500 chars). |\n| `document_url` | string | no | Canonical URL of the document (max 1000 chars). |\n| `metadata` | object | no | Arbitrary key-value metadata attached to the document. |\n| `documents` | array | one of `text` / `documents` | List of `{text, document_id?, document_title?, document_url?, metadata?}` objects for batch signing. |\n| `options` | object | no | Signing options (see below). All fields have sensible defaults. |\n\n---\n\n## Options Reference\n\n### Segmentation & Structure\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `segmentation_level` | string | `\"document\"` | `document`, `sentence`, `paragraph`, `section`, `word` | `word` requires Enterprise | Granularity at which text is split and individually signed. Higher granularity enables per-segment tamper detection. |\n| `segmentation_levels` | string[] | *null* | subset of `sentence`, `paragraph`, `section` | Free | Build Merkle trees at multiple levels simultaneously for multi-resolution verification. |\n\n### Manifest & Embedding\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `manifest_mode` | string | `\"full\"` | `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`, `micro`, `micro_ecc`, `micro_c2pa`, `micro_ecc_c2pa` | Free | Controls how the C2PA manifest and per-segment markers are embedded. `full` = standard C2PA wrapper. `micro` variants = ultra-compact invisible markers (36-44 chars). `*_c2pa` variants add a full C2PA document manifest alongside micro markers. `*_ecc` variants add Reed-Solomon error correction. |\n| `embedding_strategy` | string | `\"single_point\"` | `single_point`, `distributed`, `distributed_redundant` | `distributed_redundant` requires Enterprise | How the invisible signature is placed within each segment. `single_point` = one location. `distributed` = spread across the segment. `distributed_redundant` = distributed with ECC for resilience. |\n| `distribution_target` | string | *null* | `whitespace`, `punctuation`, `all_chars` | Free | Which character positions are used when `embedding_strategy` is `distributed` or `distributed_redundant`. |\n\n### C2PA Provenance\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `action` | string | `\"c2pa.created\"` | `c2pa.created`, `c2pa.edited` | Free | C2PA action type. Use `c2pa.created` for new content, `c2pa.edited` for modifications. |\n| `previous_instance_id` | string | *null* | any | Free | The `instance_id` from a previous signing response. Required when `action` is `c2pa.edited` to form a provenance chain. |\n| `document_type` | string | `\"article\"` | `article`, `legal_brief`, `contract`, `ai_output` | Free | Semantic document type included in the manifest. |\n| `claim_generator` | string | *null* | any | Free | Optional claim generator identifier for C2PA manifests (e.g. your application name). |\n| `digital_source_type` | string | *null* | IPTC URI | Free | IPTC digital source type URI, e.g. for AI-generated content. |\n\n### Advanced Features\n\n| Option | Type | Default | Tier | Description |\n|--------|------|---------|------|-------------|\n| `index_for_attribution` | bool | `false` | Free | Index content segments for later attribution and plagiarism detection via `/verify/advanced`. |\n| `add_dual_binding` | bool | `false` | Enterprise | Enable an additional integrity binding layer for enhanced tamper resistance. |\n| `include_fingerprint` | bool | `false` | Enterprise | Generate a robust content fingerprint that can survive minor text modifications. |\n| `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding; only basic metadata is attached. |\n\n### Custom Assertions & Rights (Business+)\n\n| Option | Type | Default | Tier | Description |\n|--------|------|---------|------|-------------|\n| `custom_assertions` | array | *null* | Free | List of `{label, data}` objects to include as custom C2PA assertions. |\n| `template_id` | string | *null* | Free | ID of a pre-registered assertion template to apply. |\n| `validate_assertions` | bool | `true` | Free | Whether to validate custom assertions against registered JSON schemas. |\n| `rights` | object | *null* | Free | Rights metadata: `{copyright_holder, license_url, usage_terms, syndication_allowed, embargo_until, contact_email}`. |\n| `license` | object | *null* | Free | License info: `{type, url, contact_email}`. |\n| `actions` | array | *null* | Free | List of C2PA action assertion objects. |\n\n### Output Options\n\n| Option | Type | Default | Values | Description |\n|--------|------|---------|--------|-------------|\n| `embedding_options.format` | string | `\"plain\"` | `plain`, `html`, `markdown`, `json` | Output format for the signed text. |\n| `embedding_options.method` | string | `\"invisible\"` | `invisible`, `data-attribute`, `span`, `comment` | How the embedding is represented. `invisible` uses zero-width Unicode characters. |\n| `embedding_options.include_text` | bool | `true` | | Whether to include the embedded text in the response. |\n| `return_embedding_plan` | bool | `false` | | When `true`, includes `document.embedding_plan` with codepoint-based marker insertion operations for formatting-preserving clients. |\n| `expires_at` | datetime | *null* | ISO 8601 | Optional expiration timestamp for the embeddings. |\n\n---\n\n## Examples\n\n**Single document (minimal):**\n```json\n{\n    \"text\": \"The Senate passed a landmark bill today.\",\n    \"document_title\": \"Senate Bill\"\n}\n```\n\n**Single document (with options):**\n```json\n{\n    \"text\": \"The Senate passed a landmark bill today. The vote was 67-33.\",\n    \"document_title\": \"Senate Bill\",\n    \"options\": {\n        \"segmentation_level\": \"sentence\",\n        \"manifest_mode\": \"micro_ecc_c2pa\",\n        \"index_for_attribution\": true,\n        \"action\": \"c2pa.created\"\n    }\n}\n```\n\n**Batch:**\n```json\n{\n    \"documents\": [\n        {\"text\": \"First article...\", \"document_title\": \"Article 1\"},\n        {\"text\": \"Second article...\", \"document_title\": \"Article 2\"}\n    ],\n    \"options\": {\n        \"segmentation_level\": \"sentence\",\n        \"embedding_strategy\": \"distributed\"\n    }\n}\n```\n\n**Edit provenance chain:**\n```json\n{\n    \"text\": \"Updated article content...\",\n    \"options\": {\n        \"action\": \"c2pa.edited\",\n        \"previous_instance_id\": \"urn:uuid:abc123...\"\n    }\n}\n```\n\nThe response includes `meta.features_gated` showing features available at higher tiers.\n\nWhen `options.return_embedding_plan=true`, each signed document may also include:\n\n```json\n\"embedding_plan\": {\n  \"index_unit\": \"codepoint\",\n  \"operations\": [\n    {\"insert_after_index\": 128, \"marker\": \"...\"}\n  ]\n}\n```\n\nThis allows clients (e.g. Office add-ins) to insert only invisible markers at indexed positions while preserving native formatting.",
         "operationId": "sign_content_api_v1_sign_post",
         "requestBody": {
           "content": {
@@ -4206,7 +4206,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BatchVerifyRequest"
+                "$ref": "#/components/schemas/app__schemas__batch__BatchVerifyRequest"
               }
             }
           },
@@ -4499,7 +4499,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -4509,7 +4509,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -4519,7 +4519,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -4529,7 +4529,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -5874,7 +5874,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5884,7 +5884,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5894,7 +5894,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5943,7 +5943,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__schemas__embeddings__BatchVerifyRequest"
+                "$ref": "#/components/schemas/BatchVerifyRequest"
               }
             }
           }
@@ -5964,7 +5964,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5974,7 +5974,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -7345,65 +7345,21 @@
       },
       "BatchVerifyRequest": {
         "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "c2pa",
-              "embeddings"
-            ],
-            "title": "Mode",
-            "description": "Processing mode: 'c2pa' or 'embeddings'"
-          },
-          "segmentation_level": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "document",
-                  "paragraph",
-                  "sentence"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Segmentation Level",
-            "description": "Segmentation level (embeddings mode only)",
-            "default": "sentence"
-          },
-          "idempotency_key": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 8,
-            "title": "Idempotency Key",
-            "description": "Caller-supplied key used to deduplicate retries"
-          },
-          "items": {
+          "references": {
             "items": {
-              "$ref": "#/components/schemas/BatchItemPayload"
+              "$ref": "#/components/schemas/VerifyEmbeddingRequest"
             },
             "type": "array",
-            "maxItems": 100,
-            "minItems": 1,
-            "title": "Items",
-            "description": "Documents to process (max 100)"
-          },
-          "fail_fast": {
-            "type": "boolean",
-            "title": "Fail Fast",
-            "description": "Abort remaining items upon the first error when set to true",
-            "default": false
+            "title": "References",
+            "description": "List of embeddings to verify"
           }
         },
         "type": "object",
         "required": [
-          "mode",
-          "idempotency_key",
-          "items"
+          "references"
         ],
         "title": "BatchVerifyRequest",
-        "description": "Batch verification request (shares schema for now)."
+        "description": "Request to verify multiple embeddings."
       },
       "BatchVerifyResponse": {
         "properties": {
@@ -9703,43 +9659,39 @@
           "error": {
             "type": "string",
             "title": "Error",
-            "description": "Error type"
+            "description": "Error message"
           },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "Human-readable error message"
-          },
-          "details": {
+          "detail": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Details",
-            "description": "Additional error details"
+            "title": "Detail",
+            "description": "Detailed error information"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code",
+            "description": "Error code for programmatic handling"
           }
         },
         "type": "object",
         "required": [
-          "error",
-          "message"
+          "error"
         ],
         "title": "ErrorResponse",
-        "description": "Standard error response schema.",
-        "example": {
-          "details": {
-            "field": "segmentation_level",
-            "value": "invalid"
-          },
-          "error": "ValidationError",
-          "message": "Invalid segmentation level provided",
-          "success": false
-        }
+        "description": "Error response."
       },
       "EvidenceGenerateRequest": {
         "properties": {
@@ -12863,6 +12815,12 @@
             "$ref": "#/components/schemas/EmbeddingOptions",
             "description": "Embedding output format options"
           },
+          "return_embedding_plan": {
+            "type": "boolean",
+            "title": "Return Embedding Plan",
+            "description": "When true, include an embedding_plan with index-based marker insertion operations in the response.",
+            "default": false
+          },
           "expires_at": {
             "anyOf": [
               {
@@ -13996,6 +13954,16 @@
             },
             "type": "object",
             "title": "Tsa Trust List"
+          },
+          "default_signing_mode": {
+            "type": "string",
+            "title": "Default Signing Mode",
+            "default": "organization"
+          },
+          "managed_signer_id": {
+            "type": "string",
+            "title": "Managed Signer Id",
+            "default": "encypher_managed"
           }
         },
         "type": "object",
@@ -15123,25 +15091,69 @@
         "title": "ZWResolveResponse",
         "description": "Response for ZW segment UUID resolution."
       },
-      "app__schemas__embeddings__BatchVerifyRequest": {
+      "app__schemas__batch__BatchVerifyRequest": {
         "properties": {
-          "references": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "c2pa",
+              "embeddings"
+            ],
+            "title": "Mode",
+            "description": "Processing mode: 'c2pa' or 'embeddings'"
+          },
+          "segmentation_level": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "document",
+                  "paragraph",
+                  "sentence"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmentation Level",
+            "description": "Segmentation level (embeddings mode only)",
+            "default": "sentence"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "description": "Caller-supplied key used to deduplicate retries"
+          },
+          "items": {
             "items": {
-              "$ref": "#/components/schemas/VerifyEmbeddingRequest"
+              "$ref": "#/components/schemas/BatchItemPayload"
             },
             "type": "array",
-            "title": "References",
-            "description": "List of embeddings to verify"
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Items",
+            "description": "Documents to process (max 100)"
+          },
+          "fail_fast": {
+            "type": "boolean",
+            "title": "Fail Fast",
+            "description": "Abort remaining items upon the first error when set to true",
+            "default": false
           }
         },
         "type": "object",
         "required": [
-          "references"
+          "mode",
+          "idempotency_key",
+          "items"
         ],
         "title": "BatchVerifyRequest",
-        "description": "Request to verify multiple embeddings."
+        "description": "Batch verification request (shares schema for now)."
       },
-      "app__schemas__embeddings__ErrorResponse": {
+      "app__schemas__merkle__ErrorResponse": {
         "properties": {
           "success": {
             "type": "boolean",
@@ -15152,39 +15164,43 @@
           "error": {
             "type": "string",
             "title": "Error",
-            "description": "Error message"
+            "description": "Error type"
           },
-          "detail": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable error message"
+          },
+          "details": {
             "anyOf": [
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Detail",
-            "description": "Detailed error information"
-          },
-          "error_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error Code",
-            "description": "Error code for programmatic handling"
+            "title": "Details",
+            "description": "Additional error details"
           }
         },
         "type": "object",
         "required": [
-          "error"
+          "error",
+          "message"
         ],
         "title": "ErrorResponse",
-        "description": "Error response."
+        "description": "Standard error response schema.",
+        "example": {
+          "details": {
+            "field": "segmentation_level",
+            "value": "invalid"
+          },
+          "error": "ValidationError",
+          "message": "Invalid segmentation level provided",
+          "success": false
+        }
       }
     },
     "securitySchemes": {

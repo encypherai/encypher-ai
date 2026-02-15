@@ -55,7 +55,7 @@ npm test
 
 ## Sideload in Outlook
 
-1. Host this folder over HTTPS so `taskpane/taskpane.html` is available (manifest points to `https://localhost:3000/taskpane/taskpane.html`).
+1. Host this folder over HTTPS so `taskpane/taskpane.html` is available (manifest points to `https://localhost:4001/taskpane/taskpane.html`).
 2. In Outlook web or desktop, upload `manifest.xml` as a custom add-in.
 3. Open a message in compose/read mode.
 4. Launch **Encypher Email Provenance** task pane.

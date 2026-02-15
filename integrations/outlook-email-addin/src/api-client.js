@@ -42,6 +42,7 @@
       document_title: params.title || 'Outlook Email',
       options: {
         document_type: 'email',
+        return_embedding_plan: true,
       },
     };
 
@@ -67,6 +68,7 @@
 
     return {
       signedText,
+      embeddingPlan: documentData.embedding_plan || null,
       verificationUrl: documentData.verification_url || null,
       documentId: documentData.document_id || null,
       raw: body,
@@ -97,5 +99,6 @@
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     ensureAllowedApiUrl: globalThis.EmailApi.ensureAllowedApiUrl,
+    signEmailBody: globalThis.EmailApi.signEmailBody,
   };
 }

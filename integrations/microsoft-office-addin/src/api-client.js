@@ -43,7 +43,10 @@
       text,
       document_title: title || undefined,
       options: {
+        segmentation_level: 'sentence',
+        manifest_mode: 'micro_ecc_c2pa',
         document_type: 'article',
+        return_embedding_plan: true,
       },
     };
 
@@ -69,6 +72,7 @@
 
     return {
       signedText,
+      embeddingPlan: documentData.embedding_plan || null,
       documentId: documentData.document_id || null,
       verificationUrl: documentData.verification_url || null,
       raw: body,

@@ -230,6 +230,10 @@ class SignOptions(BaseModel):
         default_factory=EmbeddingOptions,
         description="Embedding output format options",
     )
+    return_embedding_plan: bool = Field(
+        default=False,
+        description="When true, include an embedding_plan with index-based marker insertion operations in the response.",
+    )
     expires_at: Optional[datetime] = Field(
         default=None,
         description="Optional expiration datetime for embeddings",
@@ -642,6 +646,26 @@ def validate_sign_options_for_tier(
 # Sign Response Models
 # =============================================================================
 
+class EmbeddingPlanOperation(BaseModel):
+    """Single index-based embedding insertion operation."""
+
+    insert_after_index: int = Field(
+        ...,
+        description="0-based codepoint index after which to insert marker chars. Use -1 to insert before the first codepoint.",
+    )
+    marker: str = Field(..., description="Invisible marker characters to insert at the specified index.")
+
+
+class EmbeddingPlan(BaseModel):
+    """Index-based embedding insertion plan for formatting-preserving clients."""
+
+    index_unit: str = Field(default="codepoint", description="Index unit used by operations. Currently always 'codepoint'.")
+    operations: List[EmbeddingPlanOperation] = Field(
+        default_factory=list,
+        description="Ordered embedding insertion operations for reconstructing signed_text without replacing full content.",
+    )
+
+
 class SignedDocumentResult(BaseModel):
     """Result for a single signed document."""
     
@@ -653,6 +677,10 @@ class SignedDocumentResult(BaseModel):
     instance_id: Optional[str] = Field(None, description="C2PA manifest instance ID for provenance chain")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
     publisher_attribution: Optional[str] = Field(None, description="Publisher identity shown on verification (e.g. 'Sarah Chen · Powered by Encypher')")
+    embedding_plan: Optional[EmbeddingPlan] = Field(
+        None,
+        description="Optional index-based marker insertion plan (returned when options.return_embedding_plan=true).",
+    )
 
 
 class SignResponseData(BaseModel):

@@ -64,9 +64,9 @@ Serve the `integrations/microsoft-office-addin` directory over HTTPS (Office req
 
 Example with local HTTPS tooling (recommended):
 
-1. Start a local HTTPS server at `https://localhost:3000`
+1. Start a local HTTPS server at `https://localhost:4000`
 2. Ensure `taskpane/taskpane.html` is reachable
-3. Keep `manifest.xml` `SourceLocation` set to `https://localhost:3000/taskpane/taskpane.html`
+3. Keep `manifest.xml` `SourceLocation` set to `https://localhost:4000/taskpane/taskpane.html`
 
 ## Sideload in Office
 
