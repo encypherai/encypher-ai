@@ -19,6 +19,10 @@ __pycache__/
 # C extensions
 *.so
 
+# Keys/Secrets
+*.crt
+*.key
+
 # Distribution / packaging
 .Python
 build/
