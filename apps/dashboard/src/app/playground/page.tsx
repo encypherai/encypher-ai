@@ -20,6 +20,7 @@ import { TourSpotlight } from '../../components/TourSpotlight';
 import apiClient from '../../lib/api';
 import { buildRequestBodyJson, parseRequestBodyJson } from '../../lib/playgroundRequestBuilder.mjs';
 import { PLAYGROUND_ENDPOINTS } from '../../lib/playgroundEndpoints.mjs';
+import { extractSignedTextFromResponse } from '../../lib/playgroundSignedText.mjs';
 
 // API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
@@ -618,6 +619,18 @@ export default function PlaygroundPage() {
     } else {
       toast.info('Select some text first');
     }
+  };
+
+  const signedTextPlain = useMemo(() => extractSignedTextFromResponse(response ?? ''), [response]);
+
+  const copySignedTextPlain = () => {
+    if (!signedTextPlain) {
+      toast.error('No signed_text found in this response');
+      return;
+    }
+
+    navigator.clipboard.writeText(signedTextPlain);
+    toast.success('Signed text copied (plain text)');
   };
 
   const getStatusColor = (status: number | null) => {
@@ -1588,6 +1601,35 @@ export default function PlaygroundPage() {
                               <p className="mt-3 text-xs text-green-700 dark:text-green-300">
                                 The signed text contains invisible Unicode signatures. Copy it and paste into Verify to confirm.
                               </p>
+                              {signedTextPlain && (
+                                <div className="mt-3 rounded-lg border border-green-200 dark:border-green-800 bg-white/80 dark:bg-slate-900/40 p-3">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="text-xs font-medium text-green-900 dark:text-green-200">
+                                      Signed text (plain text, ready to paste)
+                                    </p>
+                                    <Button
+                                      variant="primary"
+                                      size="sm"
+                                      onClick={copySignedTextPlain}
+                                      data-testid="copy-signed-text-plain"
+                                    >
+                                      Copy signed_text
+                                    </Button>
+                                  </div>
+                                  <pre
+                                    className="mt-2 max-h-40 overflow-auto rounded bg-slate-950 text-slate-100 p-3 text-xs"
+                                    style={{
+                                      whiteSpace: 'pre-wrap',
+                                      wordBreak: 'break-word',
+                                      WebkitUserSelect: 'text',
+                                      userSelect: 'text',
+                                    }}
+                                    data-testid="signed-text-plain-preview"
+                                  >
+                                    {signedTextPlain}
+                                  </pre>
+                                </div>
+                              )}
                               {showQuickStart && lastSignedContent && (
                                 <Button 
                                   variant="secondary" 

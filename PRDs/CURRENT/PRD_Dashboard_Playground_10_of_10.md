@@ -32,6 +32,7 @@ Make the API Playground in `apps/dashboard` a trusted, award-winning experience:
 - [x] 2.4 Add JSON validation with inline feedback (Valid/Invalid badges)
 - [x] 2.5 Add human-readable response summary cards (verify, sign, lookup)
 - [x] 2.6 Add inline field documentation (expandable tooltips)
+- [x] 2.7 Add one-click plain-text `signed_text` copy area for preserving formatting in external paste targets
 
 - [x] 3.0 Tests (TDD)
 - [x] 3.1 Add Puppeteer smoke test for the golden path in the playground
@@ -43,6 +44,9 @@ Make the API Playground in `apps/dashboard` a trusted, award-winning experience:
 - [x] 5.0 Build integrity (merge conflict cleanup)
 - [x] 5.1 Remove merge conflict markers in playground code
 - [x] 5.2 Verification — ✅ npm lint ✅ type-check ✅ puppeteer
+
+- [x] 6.0 Signed text copy quality
+- [x] 6.1 Task — ✅ node contract test (`playground.signed-text.contract.test.mjs`) ✅ npm lint ✅ npm type-check ✅ puppeteer smoke
 
 ## Success Criteria
 - The playground can execute a successful end-to-end demo flow without requiring the user to paste a key.
@@ -65,6 +69,11 @@ Make the API Playground in `apps/dashboard` a trusted, award-winning experience:
   - **Response Summary Cards**: Human-readable verdict cards for verify, sign, and lookup responses
   - **Field Documentation**: Expandable inline docs for each JSON field
   - All tests passing: lint ✅, type-check ✅, puppeteer e2e ✅
+- Implemented signed-text copy UX (TEAM_204):
+  - Added `extractSignedTextFromResponse()` utility to normalize unified (`data.document.signed_text`) and legacy (`signed_text`) response formats.
+  - Added a dedicated plain-text `signed_text` preview with one-click copy button in sign response summaries.
+  - Copy flow uses clipboard plain text to preserve line breaks and invisible Unicode signatures for downstream paste/verify usage.
+  - Verification run: signed-text contract test ✅, lint ✅, type-check ✅, puppeteer smoke ✅.
 
 ## Updated Rubric Score (Final)
 | Category | Before | After | Notes |
