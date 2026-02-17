@@ -56,6 +56,8 @@ class AccountInfo(BaseModel):
     email: Optional[str] = Field(None, description="Primary contact email")
     tier: str = Field(..., description="Subscription tier")
     features: FeatureFlags = Field(..., description="Enabled features")
+    publisher_display_name: Optional[str] = Field(None, description="Publisher display name configured for verification")
+    anonymous_publisher: bool = Field(False, description="Whether publisher identity is anonymized in verification")
     created_at: Optional[str] = Field(None, description="Account creation date")
     subscription_status: str = Field("active", description="Subscription status")
 
@@ -130,6 +132,8 @@ async def get_account_info(
                 email=None,
                 tier=tier,
                 features=FeatureFlags(**features_dict),
+                publisher_display_name=organization.get("display_name"),
+                anonymous_publisher=bool(organization.get("anonymous_publisher", False)),
                 created_at=None,
                 subscription_status="active",
             )
@@ -169,6 +173,8 @@ async def get_account_info(
             email=row.email,
             tier=tier,
             features=FeatureFlags(**merged_features),
+            publisher_display_name=organization.get("display_name"),
+            anonymous_publisher=bool(organization.get("anonymous_publisher", False)),
             created_at=row.created_at.isoformat() if row.created_at else None,
             subscription_status=row.subscription_status or "active",
         )

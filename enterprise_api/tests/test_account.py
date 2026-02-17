@@ -28,6 +28,8 @@ class TestGetAccountInfo:
         assert "organization_id" in data["data"]
         assert "tier" in data["data"]
         assert "features" in data["data"]
+        assert "publisher_display_name" in data["data"]
+        assert "anonymous_publisher" in data["data"]
 
     async def test_get_account_starter_tier(self, client: AsyncClient, starter_auth_headers: dict):
         """Test account info for starter tier."""
