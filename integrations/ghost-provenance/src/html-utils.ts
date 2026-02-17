@@ -283,7 +283,7 @@ export function extractText(html: string): string {
   const lines = raw.split('\n');
   const cleaned: string[] = [];
   for (const line of lines) {
-    const normalized = line.replace(/[ \t]+/g, ' ').trim();
+    const normalized = decodeHtmlEntities(line).replace(/[ \t]+/g, ' ').trim();
     if (normalized !== '') {
       cleaned.push(normalized);
     }

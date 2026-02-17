@@ -33,6 +33,21 @@ const fixtures: ReplayFixture[] = [
     name: 'skip-card + visible duplicate',
     html: '<div class="kg-card kg-code-card"><pre><code>Hello world.</code></pre></div><p>Hello world.</p>',
   },
+  {
+    name: 'lexical-mobiledoc migrated wrappers',
+    html:
+      '<!--kg-card-begin: markdown--><p>Rendered markdown text survives migration.</p><!--kg-card-end: markdown-->'
+      + '<div class="kg-card kg-callout-card"><div class="kg-callout-text"><span data-lexical-text="true">Lexical callout text.</span></div></div>'
+      + '<div class="kg-card kg-html-card"><div>Raw html-card source must be skipped.</div></div>',
+  },
+  {
+    name: 'malformed html recovery',
+    html: '<div><p>Start <strong>bold<p>Next line &amp; trailing',
+  },
+  {
+    name: 'unicode grapheme zwj sequence',
+    html: '<p>Emoji family 👨‍👩‍👧‍👦 stays intact.</p>',
+  },
 ];
 
 async function wait(ms: number): Promise<void> {

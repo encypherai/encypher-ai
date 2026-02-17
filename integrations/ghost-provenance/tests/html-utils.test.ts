@@ -199,6 +199,31 @@ describe('html-utils', () => {
       expect(result).not.toContain('Hero');
     });
 
+    it('handles migrated lexical/mobiledoc-style mixed wrappers safely', () => {
+      const html = `
+        <!--kg-card-begin: markdown-->
+        <p>Rendered markdown text survives migration.</p>
+        <!--kg-card-end: markdown-->
+        <div class="kg-card kg-callout-card">
+          <div class="kg-callout-text"><span data-lexical-text="true">Lexical callout text.</span></div>
+        </div>
+        <div class="kg-card kg-html-card"><div>Raw html-card source must be skipped.</div></div>
+      `;
+
+      const result = extractText(html);
+      expect(result).toContain('Rendered markdown text survives migration.');
+      expect(result).toContain('Lexical callout text.');
+      expect(result).not.toContain('Raw html-card source must be skipped.');
+    });
+
+    it('handles malformed html without crashing and preserves visible text', () => {
+      const html = '<div><p>Start <strong>bold<p>Next line &amp; trailing';
+      const result = extractText(html);
+      expect(result).toContain('Start');
+      expect(result).toContain('bold');
+      expect(result).toContain('Next line & trailing');
+    });
+
     it('skips source=html wrapped Ghost html-card content', () => {
       const html = `
         <p>Before.</p>
@@ -414,6 +439,19 @@ describe('html-utils', () => {
       expect(result).toContain('<code>Hello world.</code>');
       expect(result).toContain(`<p>Hello world.${marker}</p>`);
     });
+
+    it('supports codepoint insertion around ZWJ grapheme sequences', () => {
+      const marker = '\uFE00';
+      const visible = 'Family 👨‍👩‍👧‍👦 rocks.';
+      const html = `<p>${visible}</p>`;
+      const result = embedEmbeddingPlanIntoHtml(html, {
+        index_unit: 'codepoint',
+        operations: [{ insert_after_index: splitChars(visible).length - 1, marker }],
+      });
+
+      expect(result).toContain(`rocks.${marker}</p>`);
+      expect(result).toContain('👨‍👩‍👧‍👦');
+    });
   });
 
   describe('stripC2paEmbeddings', () => {
@@ -486,6 +524,15 @@ describe('html-utils', () => {
 
       expect(result).toContain('<!--kg-card-begin: html--><p>Hello world.</p><!--kg-card-end: html-->');
       expect(result).toContain('<p>Hello world.\uFE01</p>');
+    });
+
+    it('preserves Unicode grapheme clusters while embedding markers', () => {
+      const html = '<p>Emoji family 👨‍👩‍👧‍👦 stays intact.</p>';
+      const signed = 'Emoji family 👨‍👩‍👧‍👦 stays intact.\uFE01';
+      const result = embedSignedText(html, signed);
+
+      expect(result).toContain('👨‍👩‍👧‍👦');
+      expect(result).toContain('intact.\uFE01</p>');
     });
   });
 
