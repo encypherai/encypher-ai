@@ -210,7 +210,7 @@ async def verify_embedding(
             logger.error(f"Merkle root not found for reference: {ref_id}")
             return VerifyEmbeddingResponse(valid=False, ref_id=ref_id, error="Associated Merkle root not found")
 
-        # TEAM_165: Extract segment location from embedding_metadata (micro_c2pa mode)
+        # TEAM_165: Extract segment location from embedding_metadata (micro mode)
         embedding_meta = cast(Dict[str, Any], reference.embedding_metadata or {})
         segment_location_info = None
         location_data = embedding_meta.get("segment_location")
@@ -244,9 +244,9 @@ async def verify_embedding(
 
         # C2PA info (if available) - Now with actual verification!
         c2pa_info = None
-        # TEAM_165: micro_c2pa stores the full manifest in manifest_data (DB-backed)
+        # TEAM_165: micro mode stores the full manifest in manifest_data (DB-backed)
         ref_manifest_data = cast(Optional[Dict[str, Any]], reference.manifest_data)
-        if ref_manifest_data and embedding_meta.get("manifest_mode") in ("micro_c2pa", "micro_ecc_c2pa"):
+        if ref_manifest_data and embedding_meta.get("manifest_mode") == "micro":
             c2pa_info = C2PAInfo(
                 manifest_url=None,
                 manifest_hash=reference.c2pa_manifest_hash,

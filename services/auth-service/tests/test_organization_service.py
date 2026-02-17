@@ -383,6 +383,27 @@ class TestDomainClaims(TestOrganizationService):
                             actor_user_id="user123",
                         )
 
+    def test_create_domain_claim_rejects_duplicate_domain_for_same_org(self, service, mock_db, mock_org):
+        active_query = MagicMock()
+        active_query.filter.return_value.count.return_value = 0
+
+        existing_claim = MagicMock(spec=OrganizationDomainClaim)
+        existing_claim.organization_id = mock_org.id
+
+        existing_query = MagicMock()
+        existing_query.filter.return_value.first.return_value = existing_claim
+
+        with patch.object(service, "_has_permission", return_value=True):
+            with patch.object(service, "get_organization", return_value=mock_org):
+                mock_db.query.side_effect = [active_query, existing_query]
+                with pytest.raises(ValueError, match="already has a pending or verified claim"):
+                    service.create_domain_claim(
+                        org_id=mock_org.id,
+                        domain="example.com",
+                        verification_email="admin@example.com",
+                        actor_user_id="user123",
+                    )
+
     def test_verify_domain_email_marks_verified(self, service, mock_db):
         claim = MagicMock(spec=OrganizationDomainClaim)
         claim.status = "pending"
@@ -419,6 +440,26 @@ class TestDomainClaims(TestOrganizationService):
         assert result.status == "verified"
         mock_db.commit.assert_called_once()
 
+    def test_verify_domain_dns_sets_verified_without_email_confirmation(self, service, mock_db):
+        claim = MagicMock(spec=OrganizationDomainClaim)
+        claim.status = "pending"
+        claim.dns_token = "abc"
+        claim.dns_verified_at = None
+        claim.email_verified_at = None
+        claim.verified_at = None
+
+        query = MagicMock()
+        query.filter.return_value.first.return_value = claim
+        mock_db.query.return_value = query
+
+        with patch.object(service, "_has_permission", return_value=True):
+            result = service.verify_domain_dns("org123", "claim123", "user123", ["encypher-domain-claim=abc"])
+
+        assert result.dns_verified_at is not None
+        assert result.status == "verified"
+        assert result.email_verified_at is None
+        mock_db.commit.assert_called_once()
+
     def test_set_domain_auto_join_requires_verified(self, service, mock_db):
         claim = MagicMock(spec=OrganizationDomainClaim)
         claim.status = "pending"
@@ -430,6 +471,33 @@ class TestDomainClaims(TestOrganizationService):
         with patch.object(service, "_has_permission", return_value=True):
             with pytest.raises(ValueError, match="Domain must be verified"):
                 service.set_domain_auto_join("org123", "claim123", "user123", True)
+
+    def test_delete_domain_claim_removes_claim(self, service, mock_db):
+        claim = MagicMock(spec=OrganizationDomainClaim)
+        claim.id = "odc_123"
+        claim.organization_id = "org123"
+
+        query = MagicMock()
+        query.filter.return_value.first.return_value = claim
+        mock_db.query.return_value = query
+
+        with patch.object(service, "_has_permission", return_value=True):
+            with patch.object(service, "_log_action") as log_action:
+                deleted = service.delete_domain_claim("org123", "odc_123", "user123")
+
+        assert deleted == claim
+        mock_db.delete.assert_called_once_with(claim)
+        mock_db.commit.assert_called_once()
+        log_action.assert_called_once()
+
+    def test_delete_domain_claim_missing_raises_value_error(self, service, mock_db):
+        query = MagicMock()
+        query.filter.return_value.first.return_value = None
+        mock_db.query.return_value = query
+
+        with patch.object(service, "_has_permission", return_value=True):
+            with pytest.raises(ValueError, match="Domain claim not found"):
+                service.delete_domain_claim("org123", "odc_missing", "user123")
 
 
 class TestAcceptInvitation(TestOrganizationService):

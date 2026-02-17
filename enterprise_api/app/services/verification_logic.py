@@ -104,6 +104,42 @@ def _find_status_assertion(manifest: Dict[str, Any]) -> Optional[Dict[str, Any]]
     return None
 
 
+def _resolve_signer_name(execution: VerificationExecution) -> Optional[str]:
+    """Resolve a human-readable signer label from certificate/manifest context."""
+
+    if execution.resolved_cert and execution.resolved_cert.organization_name:
+        return execution.resolved_cert.organization_name
+
+    manifest = execution.manifest if isinstance(execution.manifest, dict) else {}
+    nested_manifest = manifest.get("manifest") if isinstance(manifest.get("manifest"), dict) else None
+    manifest_data = manifest.get("manifest_data") if isinstance(manifest.get("manifest_data"), dict) else None
+
+    for candidate_manifest in (nested_manifest, manifest_data, manifest):
+        if not isinstance(candidate_manifest, dict):
+            continue
+
+        custom_metadata = candidate_manifest.get("custom_metadata")
+        if isinstance(custom_metadata, dict):
+            for key in ("publisher_name", "organization_name", "display_name"):
+                value = custom_metadata.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+
+        publisher = candidate_manifest.get("publisher")
+        if isinstance(publisher, dict):
+            for key in ("name", "identifier"):
+                value = publisher.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+
+        for key in ("publisher_name", "organization_name", "display_name"):
+            value = candidate_manifest.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+
+    return execution.signer_id or None
+
+
 def _extract_rights_signals(manifest: Dict[str, Any]) -> Dict[str, Any]:
     rights_signals: Dict[str, Any] = {}
 
@@ -385,7 +421,7 @@ async def _resolve_uuids_from_db(
             "is_valid": True,
             "signer_id": row.organization_id,
             "manifest": {
-                "manifest_mode": row.manifest_mode or "micro_ecc_c2pa",
+                "manifest_mode": row.manifest_mode or "micro",
                 "segment_uuid": first_uuid,
                 "document_id": row.document_id,
                 "total_signatures": len(uuids),
@@ -472,10 +508,10 @@ async def execute_verification(
         manifest = {}
         exception_message = str(exc)
 
-    # TEAM_158: Fallback to micro_ecc / micro / ZW embedding verification
-    # when C2PA finds no signer.  These modes embed a signed UUID per
+    # TEAM_158: Fallback to micro / ZW embedding verification
+    # when C2PA finds no signer.  Micro mode embeds a signed UUID per
     # sentence (not a full C2PA manifest), so UnicodeMetadata won't detect
-    # them.  Try ECC first (error-correcting), then plain micro, then ZW.
+    # them.  Try ECC first (error-correcting), then plain HMAC, then ZW.
     if not is_valid and not signer_id:
         try:
             from app.utils.vs256_crypto import (
@@ -501,12 +537,13 @@ async def execute_verification(
                         is_valid = True
                         signer_id = settings.demo_organization_id
                         manifest = {
-                            "manifest_mode": "micro_ecc",
+                            "manifest_mode": "micro",
+                            "ecc": True,
                             "segment_uuid": str(sig_uuid),
                             "micro_signatures_found": len(vs256_sigs),
                         }
                         logger.info(
-                            "micro_ecc fallback verification succeeded: uuid=%s, sigs=%d",
+                            "micro (ecc) fallback verification succeeded: uuid=%s, sigs=%d",
                             sig_uuid, len(vs256_sigs),
                         )
                 except Exception:
@@ -711,7 +748,7 @@ def build_verdict(
         )
 
     timestamp = parse_manifest_timestamp(execution.manifest)
-    signer_name = execution.resolved_cert.organization_name if execution.resolved_cert else (execution.signer_id or None)
+    signer_name = _resolve_signer_name(execution)
 
     tampered = False
     if not execution.is_valid and reason_code == "SIGNATURE_INVALID":

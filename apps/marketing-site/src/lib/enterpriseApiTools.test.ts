@@ -203,4 +203,31 @@ describe("enterpriseApiTools", () => {
     expect(decoded.total_segments_in_document).toBeNull();
     expect(decoded.c2pa).toBeNull();
   });
+
+  it("mapVerifyResponseToDecodeToolResponse resolves signer label from manifest when signer_name is unavailable", () => {
+    const decoded = mapVerifyResponseToDecodeToolResponse({
+      success: true,
+      correlation_id: "req-6",
+      error: null,
+      data: {
+        valid: true,
+        tampered: false,
+        reason_code: "OK",
+        signer_id: "org_abc123",
+        signer_name: "org_abc123",
+        details: {
+          manifest: {
+            custom_metadata: {
+              publisher_name: "Encypher Newsroom",
+            },
+          },
+        },
+        embeddings_found: 1,
+        all_embeddings: null,
+      },
+    });
+
+    expect(decoded.raw_hidden_data?.signer_name).toBe("Encypher Newsroom");
+    expect(decoded.raw_hidden_data?.signer_id).toBe("org_abc123");
+  });
 });

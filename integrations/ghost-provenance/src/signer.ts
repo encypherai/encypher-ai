@@ -7,6 +7,8 @@ import { MetadataStore } from './metadata-store';
 import {
   applyEmbeddingPlan,
   extractText,
+  extractTextForVerify,
+  embedEmbeddingPlanIntoHtml,
   embedSignedText,
   stripC2paEmbeddings,
   detectC2paEmbeddings,
@@ -16,6 +18,24 @@ import { generateBadgeScript, mergeBadgeInjection } from './badge-injector';
 const logger = pino({ name: 'signer' });
 
 const PLUGIN_VERSION = '1.0.0';
+
+function normalizeManifestOptions(signing: Config['signing']): {
+  manifestMode: string;
+  ecc: boolean;
+  embedC2pa: boolean;
+} {
+  if (signing.manifestMode === 'micro_ecc_c2pa') {
+    return { manifestMode: 'micro', ecc: true, embedC2pa: true };
+  }
+  if (signing.manifestMode === 'micro_ecc') {
+    return { manifestMode: 'micro', ecc: true, embedC2pa: false };
+  }
+  return {
+    manifestMode: signing.manifestMode,
+    ecc: signing.ecc,
+    embedC2pa: signing.embedC2pa,
+  };
+}
 
 export interface SignResult {
   success: boolean;
@@ -133,6 +153,8 @@ export class Signer {
     const existingTags = (post.tags || []).map(t => ({ id: t.id, name: t.name, slug: t.slug }));
     const hasEncypherTag = existingTags.some(t => t.slug === 'hash-encypher-signed');
 
+    const normalizedManifest = normalizeManifestOptions(this.config.signing);
+
     const signPayload = {
       text: extractedText,
       document_id: uniqueDocumentId,
@@ -153,8 +175,10 @@ export class Signer {
         document_type: 'article',
         claim_generator: `Ghost/Encypher Integration v${PLUGIN_VERSION}`,
         action: actionType,
-        manifest_mode: this.config.signing.manifestMode,
+        manifest_mode: normalizedManifest.manifestMode,
         segmentation_level: this.config.signing.segmentationLevel,
+        ecc: normalizedManifest.ecc,
+        embed_c2pa: normalizedManifest.embedC2pa,
         index_for_attribution: true,
         return_embedding_plan: true,
         ...(previousInstanceId ? { previous_instance_id: previousInstanceId } : {}),
@@ -169,39 +193,50 @@ export class Signer {
       return { success: false, documentId: '', instanceId: '', totalSegments: 0, actionType, error: `Signing API error: ${err}` };
     }
 
-    // 7. Prefer embedding-plan reconstruction; fall back to signed_text response.
+    // 7. Prefer direct embedding-plan insertion; fall back to signed_text flow.
     let signedText: string | null = null;
+    let embeddedHtml: string | null = null;
     const embeddingPlan = EncypherClient.extractEmbeddingPlan(signResponse);
     if (embeddingPlan) {
-      signedText = applyEmbeddingPlan(extractedText, embeddingPlan);
-      if (!signedText) {
-        logger.warn({ postId }, 'Embedding plan reconstruction failed, falling back to signed_text');
+      embeddedHtml = embedEmbeddingPlanIntoHtml(cleanHtml, embeddingPlan);
+      if (!embeddedHtml) {
+        logger.warn({ postId }, 'Direct embedding plan insertion failed, falling back to signed_text');
+
+        // Secondary fallback: reconstruct signed text from extracted text + plan.
+        signedText = applyEmbeddingPlan(extractedText, embeddingPlan);
+        if (!signedText) {
+          logger.warn({ postId }, 'Embedding plan reconstruction failed, falling back to signed_text response');
+        }
       }
     }
 
-    if (!signedText) {
+    if (!embeddedHtml && !signedText) {
       signedText = EncypherClient.extractSignedText(signResponse);
     }
 
-    if (!signedText) {
+    if (!embeddedHtml && !signedText) {
       logger.error({ postId }, 'No signed text in API response');
       return { success: false, documentId: '', instanceId: '', totalSegments: 0, actionType, error: 'No signed text in API response' };
     }
 
-    // Verify C2PA compliance
-    const c2paCheck = detectC2paEmbeddings(signedText);
+    // 8. Build embedded HTML if plan path was unavailable.
+    if (!embeddedHtml) {
+      embeddedHtml = embedSignedText(cleanHtml, signedText as string);
+    }
+
+    // Verify C2PA compliance on text extracted from the final HTML payload.
+    const verifyText = extractTextForVerify(embeddedHtml);
+    const c2paCheck = detectC2paEmbeddings(verifyText);
     if (c2paCheck.count < 1) {
       logger.error({ postId, count: c2paCheck.count }, 'C2PA compliance violation');
       return { success: false, documentId: '', instanceId: '', totalSegments: 0, actionType, error: `C2PA compliance check failed: found ${c2paCheck.count} wrappers` };
     }
 
-    // 8. Embed signed text back into HTML
-    const embeddedHtml = embedSignedText(cleanHtml, signedText);
-
     logger.info({
       postId,
       embeddedHtmlLength: embeddedHtml.length,
-      signedTextLength: signedText.length,
+      signedTextLength: signedText?.length || 0,
+      usedEmbeddingPlanDirect: Boolean(embeddingPlan && !signedText),
     }, 'Embedded signed text into HTML');
 
     // 9. Prepare update options

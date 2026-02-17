@@ -127,11 +127,14 @@ class EmbeddingService:
         custom_assertions: Optional[List[Dict[str, Any]]] = None,  # Custom C2PA assertions
         digital_source_type: Optional[str] = None,  # IPTC digital source type
         # === API Feature Augmentation (TEAM_044) ===
-        manifest_mode: str = "full",  # full, lightweight_uuid, minimal_uuid, hybrid
+        manifest_mode: str = "full",  # full, lightweight_uuid, minimal_uuid, hybrid, micro
+        ecc: bool = True,  # Reed-Solomon error correction for micro mode
+        embed_c2pa: bool = True,  # Embed C2PA manifest in content for micro mode
         embedding_strategy: str = "single_point",  # single_point, distributed, distributed_redundant
         distribution_target: Optional[str] = None,  # whitespace, punctuation, all_chars
         add_dual_binding: bool = False,  # Enable dual-binding manifest
         disable_c2pa: bool = False,  # Opt-out of C2PA embedding
+        store_c2pa_manifest: bool = True,  # Persist extracted C2PA manifest in DB
         processing_metadata: Optional[Dict[str, Any]] = None,
         organization_name: Optional[str] = None,
     ) -> Tuple[List[EmbeddingReference], str]:
@@ -258,7 +261,7 @@ class EmbeddingService:
         # inserts invisible characters mid-text instead of at the end.
         is_document_level = len(segments) == 1
         embedded_segments = []
-        if manifest_mode in ("zw_embedding", "micro", "micro_ecc", "micro_c2pa", "micro_ecc_c2pa"):
+        if manifest_mode in ("zw_embedding", "micro"):
             # For zw_embedding, use original segments (embeddings added in their own branches)
             embedded_segments = segments
         elif is_document_level:
@@ -387,8 +390,10 @@ class EmbeddingService:
         # Log the embedding configuration
         logger.info(
             f"Embedding config for document {document_id}: "
-            f"manifest_mode={manifest_mode}, embedding_strategy={embedding_strategy}, "
-            f"disable_c2pa={disable_c2pa}, add_dual_binding={add_dual_binding}"
+            f"manifest_mode={manifest_mode}, ecc={ecc}, embed_c2pa={embed_c2pa}, "
+            f"embedding_strategy={embedding_strategy}, "
+            f"disable_c2pa={disable_c2pa}, add_dual_binding={add_dual_binding}, "
+            f"store_c2pa_manifest={store_c2pa_manifest}"
         )
 
         # Handle C2PA opt-out
@@ -558,30 +563,47 @@ class EmbeddingService:
                 logger.error(f"Failed to embed ZW signatures: {e}")
                 raise ValueError(f"ZW embedding failed: {e}")
 
-        # TEAM_165: Handle "micro" manifest mode (ultra-compact per-sentence markers, 36 chars)
-        # Internally uses VS256 encoding — public name is "micro".
+        # TEAM_166: Unified "micro" manifest mode — flag-driven.
+        # Two orthogonal flags control behaviour:
+        #   ecc=True  → Reed-Solomon error correction (44 chars, default)
+        #   ecc=False → plain HMAC (36 chars)
+        #   embed_c2pa=True  → full C2PA document manifest embedded in content (default)
+        #   embed_c2pa=False → per-sentence markers only; C2PA manifest DB-only
+        # A C2PA-compatible manifest is ALWAYS generated and extracted.
+        # store_c2pa_manifest controls DB persistence; embed_c2pa controls in-content embedding.
         elif manifest_mode == "micro":
+            use_ecc = ecc
+            use_embed_c2pa = embed_c2pa
+            chars_per_segment = 44 if use_ecc else 36
+
             logger.info(
-                "Using micro manifest mode for document %s with ultra-compact per-sentence markers",
-                document_id,
+                "Using micro manifest mode for document %s (ecc=%s, embed_c2pa=%s, %d chars/segment)",
+                document_id, use_ecc, use_embed_c2pa, chars_per_segment,
             )
 
             try:
-                from app.utils.vs256_crypto import (
-                    create_minimal_signed_uuid as vs256_create_minimal_signed_uuid,
-                    derive_signing_key_from_private_key as vs256_derive_signing_key,
-                    embed_signature_safely as vs256_embed_signature_safely,
-                )
+                # --- Phase 1: Import the appropriate crypto module ---
+                if use_ecc:
+                    from app.utils.vs256_rs_crypto import (
+                        create_minimal_signed_uuid as micro_create,
+                        derive_signing_key_from_private_key as micro_derive_key,
+                        embed_signature_safely as micro_embed_safely,
+                    )
+                else:
+                    from app.utils.vs256_crypto import (
+                        create_minimal_signed_uuid as micro_create,
+                        derive_signing_key_from_private_key as micro_derive_key,
+                        embed_signature_safely as micro_embed_safely,
+                    )
 
-                # Derive HMAC signing key from org's private key
-                signing_key = vs256_derive_signing_key(self.private_key)
+                signing_key = micro_derive_key(self.private_key)
 
-                # Build document with per-sentence markers
+                # --- Phase 2: Embed per-sentence markers ---
                 micro_embedded_segments = []
                 for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
                     segment_uuid = uuid.uuid4()
-                    micro_signature = vs256_create_minimal_signed_uuid(segment_uuid, signing_key)
-                    embedded_segment = vs256_embed_signature_safely(segment, micro_signature)
+                    micro_signature = micro_create(segment_uuid, signing_key)
+                    embedded_segment = micro_embed_safely(segment, micro_signature)
                     micro_embedded_segments.append(embedded_segment)
 
                     if idx < len(references_to_insert):
@@ -591,301 +613,97 @@ class EmbeddingService:
                             ref_any.embedding_metadata["manifest_mode"] = "micro"
                             ref_any.embedding_metadata["segment_uuid"] = str(segment_uuid)
                             ref_any.embedding_metadata["micro_signature_length"] = len(micro_signature)
+                            ref_any.embedding_metadata["ecc"] = use_ecc
+                            if use_ecc:
+                                ref_any.embedding_metadata["rs_parity_symbols"] = 8
 
-                embedded_document = " ".join(micro_embedded_segments)
+                full_document = " ".join(micro_embedded_segments)
+
+                # --- Phase 3: Always generate C2PA manifest ---
+                # We always create the manifest via embed_metadata so we can
+                # extract it for DB storage.  If embed_c2pa=False we then
+                # discard the wrapper from the returned content.
+                c2pa_wrapped_document = UnicodeMetadata.embed_metadata(
+                    text=full_document,
+                    private_key=self.private_key,
+                    signer_id=self.signer_id,
+                    timestamp=current_timestamp,
+                    custom_metadata=document_metadata_jsonld,
+                    metadata_format=metadata_format,
+                    add_hard_binding=add_hard_binding,
+                    claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
+                    actions=c2pa_actions,
+                    ingredients=c2pa_ingredients,
+                    custom_assertions=final_custom_assertions,
+                    distribute_across_targets=use_distributed,
+                    target=target_for_embedding,
+                )
+
+                # --- Phase 4: Extract C2PA manifest for DB storage ---
+                micro_manifest = None
+                try:
+                    extracted = UnicodeMetadata.extract_metadata(c2pa_wrapped_document)
+                    if extracted:
+                        micro_manifest = extracted
+                except Exception as manifest_err:
+                    logger.warning("micro: could not extract manifest for DB storage: %s", manifest_err)
+
+                # Choose what goes into the returned document
+                if use_embed_c2pa:
+                    embedded_document = c2pa_wrapped_document
+                else:
+                    embedded_document = full_document
+
+                # --- Phase 5: Compute segment location ---
+                from app.utils.segmentation import segment_paragraphs, segment_sentences
+
+                paragraphs = segment_paragraphs("\n\n".join(segments))
+                sentence_location: dict[int, dict[str, int]] = {}
+                global_sent_idx = 0
+                for para_idx, para_text in enumerate(paragraphs):
+                    para_sentences = segment_sentences(para_text)
+                    for sent_in_para, _sent in enumerate(para_sentences):
+                        if global_sent_idx < len(segments):
+                            sentence_location[global_sent_idx] = {
+                                "paragraph_index": para_idx,
+                                "sentence_in_paragraph": sent_in_para,
+                            }
+                        global_sent_idx += 1
+
+                # --- Phase 6: Store manifest + segment location in DB ---
+                if store_c2pa_manifest:
+                    for idx, ref in enumerate(references_to_insert):
+                        ref_any = cast(Any, ref)
+                        ref_any.manifest_data = micro_manifest
+                        if hasattr(ref_any, "embedding_metadata"):
+                            ref_any.embedding_metadata = ref_any.embedding_metadata or {}
+                            location = sentence_location.get(idx, {
+                                "paragraph_index": 0,
+                                "sentence_in_paragraph": idx,
+                            })
+                            ref_any.embedding_metadata["segment_location"] = location
+                            ref_any.embedding_metadata["total_segments"] = len(segments)
+
                 document_metadata["manifest_mode"] = "micro"
-                document_metadata["micro_encoding"] = "base256_variation_selectors"
-                document_metadata["signature_chars_per_segment"] = 36
+                document_metadata["ecc"] = use_ecc
+                document_metadata["embed_c2pa"] = use_embed_c2pa
+                if use_ecc:
+                    document_metadata["micro_encoding"] = "base256_variation_selectors_rs"
+                    document_metadata["rs_parity_symbols"] = 8
+                else:
+                    document_metadata["micro_encoding"] = "base256_variation_selectors"
+                document_metadata["signature_chars_per_segment"] = chars_per_segment
+                document_metadata["c2pa_manifest_embedded"] = use_embed_c2pa
 
                 logger.info(
                     "Successfully embedded micro markers for document %s: "
-                    "%d segments, 36 chars each",
-                    document_id,
-                    len(segments),
+                    "%d segments, %d chars each (ecc=%s, embed_c2pa=%s)",
+                    document_id, len(segments), chars_per_segment,
+                    use_ecc, use_embed_c2pa,
                 )
             except Exception as e:
                 logger.error("Failed to embed micro markers: %s", e)
                 raise ValueError(f"micro embedding failed: {e}")
-
-        # TEAM_165: Handle micro_c2pa manifest mode
-        # Combines VS256 per-sentence markers (36 chars) with a full C2PA-compliant
-        # document-level manifest. Each ContentReference stores the full manifest
-        # and segment location (paragraph_index, sentence_in_paragraph) so that
-        # verifying a single copied sentence returns the complete provenance chain.
-        elif manifest_mode == "micro_c2pa":
-            logger.info(
-                "Using micro_c2pa manifest mode for document %s: "
-                "VS256 per-sentence markers + full C2PA document manifest",
-                document_id,
-            )
-
-            try:
-                from app.utils.vs256_crypto import (
-                    create_minimal_signed_uuid as vs256_create_minimal_signed_uuid,
-                    derive_signing_key_from_private_key as vs256_derive_signing_key,
-                    embed_signature_safely as vs256_embed_signature_safely,
-                )
-
-                # Derive HMAC signing key from org's private key
-                signing_key = vs256_derive_signing_key(self.private_key)
-
-                # --- Phase 1: Embed VS256 per-sentence markers ---
-                micro_embedded_segments = []
-                for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
-                    segment_uuid = uuid.uuid4()
-
-                    # Create minimal signed UUID (36 chars, max density)
-                    vs256_signature = vs256_create_minimal_signed_uuid(segment_uuid, signing_key)
-
-                    # Embed signature safely (before terminal punctuation)
-                    embedded_segment = vs256_embed_signature_safely(segment, vs256_signature)
-                    micro_embedded_segments.append(embedded_segment)
-
-                    # Update the reference with micro_c2pa-specific metadata
-                    if idx < len(references_to_insert):
-                        ref_any = cast(Any, references_to_insert[idx])
-                        if hasattr(ref_any, "embedding_metadata"):
-                            ref_any.embedding_metadata = ref_any.embedding_metadata or {}
-                            ref_any.embedding_metadata["manifest_mode"] = "micro_c2pa"
-                            ref_any.embedding_metadata["segment_uuid"] = str(segment_uuid)
-                            ref_any.embedding_metadata["micro_signature_length"] = len(vs256_signature)
-
-                # Join segments with VS256 markers into full document
-                full_document = " ".join(micro_embedded_segments)
-
-                # --- Phase 2: Add full C2PA document-level manifest wrapper ---
-                embedded_document = UnicodeMetadata.embed_metadata(
-                    text=full_document,
-                    private_key=self.private_key,
-                    signer_id=self.signer_id,
-                    timestamp=current_timestamp,
-                    custom_metadata=document_metadata_jsonld,
-                    metadata_format=metadata_format,
-                    add_hard_binding=add_hard_binding,
-                    claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
-                    actions=c2pa_actions,
-                    ingredients=c2pa_ingredients,
-                    custom_assertions=final_custom_assertions,
-                    distribute_across_targets=use_distributed,
-                    target=target_for_embedding,
-                )
-
-                # --- Phase 3: Extract the C2PA manifest for DB storage ---
-                micro_manifest = None
-                try:
-                    extracted = UnicodeMetadata.extract_metadata(embedded_document)
-                    if extracted:
-                        micro_manifest = extracted
-                except Exception as manifest_err:
-                    logger.warning("micro_c2pa: could not extract manifest for DB storage: %s", manifest_err)
-
-                # --- Phase 4: Compute segment location for each sentence ---
-                # Build paragraph→sentence mapping so verification can report
-                # "paragraph 3, sentence 2" for any extracted marker.
-                from app.utils.segmentation import segment_paragraphs, segment_sentences
-
-                paragraphs = segment_paragraphs("\n\n".join(segments))
-                # Build a sentence→(paragraph_index, sentence_in_paragraph) map
-                sentence_location: dict[int, dict[str, int]] = {}
-                global_sent_idx = 0
-                for para_idx, para_text in enumerate(paragraphs):
-                    para_sentences = segment_sentences(para_text)
-                    for sent_in_para, _sent in enumerate(para_sentences):
-                        if global_sent_idx < len(segments):
-                            sentence_location[global_sent_idx] = {
-                                "paragraph_index": para_idx,
-                                "sentence_in_paragraph": sent_in_para,
-                            }
-                        global_sent_idx += 1
-
-                # Store manifest + segment location in each ContentReference
-                for idx, ref in enumerate(references_to_insert):
-                    ref_any = cast(Any, ref)
-                    # Store full C2PA manifest in the DB row
-                    ref_any.manifest_data = micro_manifest
-                    if hasattr(ref_any, "embedding_metadata"):
-                        ref_any.embedding_metadata = ref_any.embedding_metadata or {}
-                        location = sentence_location.get(idx, {
-                            "paragraph_index": 0,
-                            "sentence_in_paragraph": idx,
-                        })
-                        ref_any.embedding_metadata["segment_location"] = location
-                        ref_any.embedding_metadata["total_segments"] = len(segments)
-
-                document_metadata["manifest_mode"] = "micro_c2pa"
-                document_metadata["micro_encoding"] = "base256_variation_selectors"
-                document_metadata["signature_chars_per_segment"] = 36
-                document_metadata["c2pa_manifest_embedded"] = True
-
-                logger.info(
-                    "Successfully embedded micro_c2pa for document %s: "
-                    "%d segments (36 chars each) + full C2PA manifest",
-                    document_id,
-                    len(segments),
-                )
-            except Exception as e:
-                logger.error("Failed to embed micro_c2pa: %s", e)
-                raise ValueError(f"micro_c2pa embedding failed: {e}")
-
-        # TEAM_165: Handle micro_ecc_c2pa manifest mode
-        # Same as micro_c2pa but uses Reed-Solomon error-correcting VS256 encoding.
-        # Can recover from up to 4 unknown errors or 8 known erasures per sentence
-        # marker — ideal for content that passes through PDF pipelines, email
-        # clients, or CMS migrations that may corrupt a few invisible chars.
-        elif manifest_mode == "micro_ecc_c2pa":
-            logger.info(
-                "Using micro_ecc_c2pa manifest mode for document %s: "
-                "RS-protected per-sentence markers + full C2PA document manifest",
-                document_id,
-            )
-
-            try:
-                from app.utils.vs256_rs_crypto import (
-                    create_minimal_signed_uuid as vs256rs_create,
-                    derive_signing_key_from_private_key as vs256rs_derive_key,
-                    embed_signature_safely as vs256rs_embed_safely,
-                )
-
-                signing_key = vs256rs_derive_key(self.private_key)
-
-                # --- Phase 1: Embed RS-protected per-sentence markers ---
-                micro_ecc_embedded_segments = []
-                for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
-                    segment_uuid = uuid.uuid4()
-                    rs_signature = vs256rs_create(segment_uuid, signing_key)
-                    embedded_segment = vs256rs_embed_safely(segment, rs_signature)
-                    micro_ecc_embedded_segments.append(embedded_segment)
-
-                    if idx < len(references_to_insert):
-                        ref_any = cast(Any, references_to_insert[idx])
-                        if hasattr(ref_any, "embedding_metadata"):
-                            ref_any.embedding_metadata = ref_any.embedding_metadata or {}
-                            ref_any.embedding_metadata["manifest_mode"] = "micro_ecc_c2pa"
-                            ref_any.embedding_metadata["segment_uuid"] = str(segment_uuid)
-                            ref_any.embedding_metadata["micro_signature_length"] = len(rs_signature)
-                            ref_any.embedding_metadata["rs_parity_symbols"] = 8
-
-                full_document = " ".join(micro_ecc_embedded_segments)
-
-                # --- Phase 2: Add full C2PA document-level manifest wrapper ---
-                embedded_document = UnicodeMetadata.embed_metadata(
-                    text=full_document,
-                    private_key=self.private_key,
-                    signer_id=self.signer_id,
-                    timestamp=current_timestamp,
-                    custom_metadata=document_metadata_jsonld,
-                    metadata_format=metadata_format,
-                    add_hard_binding=add_hard_binding,
-                    claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
-                    actions=c2pa_actions,
-                    ingredients=c2pa_ingredients,
-                    custom_assertions=final_custom_assertions,
-                    distribute_across_targets=use_distributed,
-                    target=target_for_embedding,
-                )
-
-                # --- Phase 3: Extract the C2PA manifest for DB storage ---
-                micro_ecc_manifest = None
-                try:
-                    extracted = UnicodeMetadata.extract_metadata(embedded_document)
-                    if extracted:
-                        micro_ecc_manifest = extracted
-                except Exception as manifest_err:
-                    logger.warning("micro_ecc_c2pa: could not extract manifest for DB storage: %s", manifest_err)
-
-                # --- Phase 4: Compute segment location ---
-                from app.utils.segmentation import segment_paragraphs, segment_sentences
-
-                paragraphs = segment_paragraphs("\n\n".join(segments))
-                sentence_location: dict[int, dict[str, int]] = {}
-                global_sent_idx = 0
-                for para_idx, para_text in enumerate(paragraphs):
-                    para_sentences = segment_sentences(para_text)
-                    for sent_in_para, _sent in enumerate(para_sentences):
-                        if global_sent_idx < len(segments):
-                            sentence_location[global_sent_idx] = {
-                                "paragraph_index": para_idx,
-                                "sentence_in_paragraph": sent_in_para,
-                            }
-                        global_sent_idx += 1
-
-                # Store manifest + segment location in each ContentReference
-                for idx, ref in enumerate(references_to_insert):
-                    ref_any = cast(Any, ref)
-                    ref_any.manifest_data = micro_ecc_manifest
-                    if hasattr(ref_any, "embedding_metadata"):
-                        ref_any.embedding_metadata = ref_any.embedding_metadata or {}
-                        location = sentence_location.get(idx, {
-                            "paragraph_index": 0,
-                            "sentence_in_paragraph": idx,
-                        })
-                        ref_any.embedding_metadata["segment_location"] = location
-                        ref_any.embedding_metadata["total_segments"] = len(segments)
-
-                document_metadata["manifest_mode"] = "micro_ecc_c2pa"
-                document_metadata["micro_encoding"] = "base256_variation_selectors_rs"
-                document_metadata["signature_chars_per_segment"] = 44
-                document_metadata["rs_parity_symbols"] = 8
-                document_metadata["c2pa_manifest_embedded"] = True
-
-                logger.info(
-                    "Successfully embedded micro_ecc_c2pa for document %s: "
-                    "%d segments (44 chars each, 128-bit HMAC + 8 RS parity) + full C2PA manifest",
-                    document_id,
-                    len(segments),
-                )
-            except Exception as e:
-                logger.error("Failed to embed micro_ecc_c2pa: %s", e)
-                raise ValueError(f"micro_ecc_c2pa embedding failed: {e}")
-
-        # TEAM_165: Handle "micro_ecc" manifest mode (RS error-correcting, 44 chars/sentence, 128-bit HMAC)
-        # Internally uses VS256 + Reed-Solomon encoding — public name is "micro_ecc".
-        elif manifest_mode == "micro_ecc":
-            logger.info(
-                "Using micro_ecc manifest mode for document %s with RS-protected per-sentence markers (44 chars, 128-bit HMAC)",
-                document_id,
-            )
-
-            try:
-                from app.utils.vs256_rs_crypto import (
-                    create_minimal_signed_uuid as ecc_create,
-                    derive_signing_key_from_private_key as ecc_derive_key,
-                    embed_signature_safely as ecc_embed_safely,
-                )
-
-                signing_key = ecc_derive_key(self.private_key)
-
-                ecc_embedded_segments = []
-                for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
-                    segment_uuid = uuid.uuid4()
-                    ecc_signature = ecc_create(segment_uuid, signing_key)
-                    embedded_segment = ecc_embed_safely(segment, ecc_signature)
-                    ecc_embedded_segments.append(embedded_segment)
-
-                    if idx < len(references_to_insert):
-                        ref_any = cast(Any, references_to_insert[idx])
-                        if hasattr(ref_any, "embedding_metadata"):
-                            ref_any.embedding_metadata = ref_any.embedding_metadata or {}
-                            ref_any.embedding_metadata["manifest_mode"] = "micro_ecc"
-                            ref_any.embedding_metadata["segment_uuid"] = str(segment_uuid)
-                            ref_any.embedding_metadata["micro_signature_length"] = len(ecc_signature)
-                            ref_any.embedding_metadata["rs_parity_symbols"] = 8
-
-                embedded_document = " ".join(ecc_embedded_segments)
-                document_metadata["manifest_mode"] = "micro_ecc"
-                document_metadata["micro_encoding"] = "base256_variation_selectors_rs"
-                document_metadata["signature_chars_per_segment"] = 44
-                document_metadata["rs_parity_symbols"] = 8
-
-                logger.info(
-                    "Successfully embedded micro_ecc markers for document %s: "
-                    "%d segments, 44 chars each (128-bit HMAC + 8 RS parity)",
-                    document_id,
-                    len(segments),
-                )
-            except Exception as e:
-                logger.error("Failed to embed micro_ecc markers: %s", e)
-                raise ValueError(f"micro_ecc embedding failed: {e}")
 
         # Default: full C2PA manifest mode
         else:
@@ -924,13 +742,16 @@ class EmbeddingService:
             logger.warning(f"Could not extract manifest for storage: {e}")
 
         # Update references with manifest data
-        # TEAM_165: micro_c2pa already stored manifest_data in its own branch;
+        # TEAM_166: micro mode stores manifest_data in its own branch;
         # skip overwriting it here.
         for ref in references_to_insert:
             ref_any = cast(Any, ref)
             ref_any.instance_id = extracted_instance_id
             ref_any.previous_instance_id = previous_instance_id
-            if manifest_mode not in ("micro_c2pa", "micro_ecc_c2pa"):
+            if manifest_mode != "micro":
+                ref_any.manifest_data = None
+
+            if manifest_mode == "micro" and not store_c2pa_manifest:
                 ref_any.manifest_data = None
 
         # Create embedding references for each segment

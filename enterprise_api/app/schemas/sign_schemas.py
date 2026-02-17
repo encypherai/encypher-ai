@@ -170,7 +170,15 @@ class SignOptions(BaseModel):
     )
     manifest_mode: str = Field(
         default="full",
-        description="Manifest mode: full (free), lightweight_uuid, minimal_uuid, hybrid, zw_embedding, micro, micro_ecc, micro_c2pa, micro_ecc_c2pa (Professional+)",
+        description="Manifest mode: full (free), lightweight_uuid, minimal_uuid, hybrid, zw_embedding, micro (Professional+). micro uses ultra-compact per-segment markers; behaviour controlled by ecc and embed_c2pa flags.",
+    )
+    ecc: bool = Field(
+        default=True,
+        description="Enable Reed-Solomon error correction for micro mode (44 chars/segment vs 36). Ignored for non-micro modes.",
+    )
+    embed_c2pa: bool = Field(
+        default=True,
+        description="Embed full C2PA document manifest into signed content for micro mode. When false, per-sentence markers only; C2PA manifest is still generated and stored in DB. Ignored for non-micro modes.",
     )
     embedding_strategy: str = Field(
         default="single_point",
@@ -222,7 +230,11 @@ class SignOptions(BaseModel):
     )
     disable_c2pa: bool = Field(
         default=False,
-        description="Opt-out of C2PA embedding, only basic metadata (Enterprise)",
+        description="Opt-out of C2PA embedding for non-micro modes, only basic metadata (Enterprise). For micro mode use embed_c2pa instead.",
+    )
+    store_c2pa_manifest: bool = Field(
+        default=True,
+        description="Persist generated C2PA manifest in content DB for DB-backed verification. Applies to all modes that generate a manifest.",
     )
     
     # === Output Options ===

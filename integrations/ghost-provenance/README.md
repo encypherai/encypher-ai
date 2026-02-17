@@ -175,9 +175,26 @@ npm run test:watch  # Watch mode
 | `AUTO_SIGN_ON_PUBLISH` | `true` | Auto-sign when posts are published |
 | `AUTO_SIGN_ON_UPDATE` | `true` | Auto-sign when published posts are updated |
 | `SIGNING_TIER` | `free` | Encypher tier (free, pro, enterprise) |
-| `MANIFEST_MODE` | `micro_ecc_c2pa` | C2PA manifest mode |
+| `MANIFEST_MODE` | `micro` | C2PA manifest mode |
 | `SEGMENTATION_LEVEL` | `sentence` | Signing granularity |
+| `ECC` | `true` | Enable ECC-compatible micro manifest behavior |
+| `EMBED_C2PA` | `true` | Embed C2PA payload for micro mode |
 | `DB_PATH` | `./data/ghost-provenance.db` | SQLite database path |
 | `BADGE_ENABLED` | `true` | Inject verification badge |
 | `VERIFY_BASE_URL` | `https://verify.encypherai.com` | Verification URL base |
 | `WEBHOOK_SECRET` | (optional) | Secret for verifying webhook signatures |
+
+### Local replay hardening (edge-case fixtures)
+
+An opt-in Vitest replay harness is available at `tests/local-replay.test.ts`.
+
+It can seed a replay post automatically (if `LOCAL_GHOST_REPLAY_POST_ID` is omitted),
+apply fixture HTML variants, trigger signing through `/api/sign`, and assert C2PA
+markers are present while protected wrapper/card regions remain unchanged.
+
+```bash
+RUN_LOCAL_GHOST_REPLAY=1 \
+LOCAL_GHOST_PROVENANCE_URL=http://localhost:3100 \
+GHOST_ADMIN_API_KEY=<ghost_admin_key> \
+npm test -- local-replay.test.ts
+```

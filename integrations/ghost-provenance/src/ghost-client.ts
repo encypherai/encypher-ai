@@ -159,4 +159,20 @@ export class GhostClient {
     });
     return posts as GhostPost[];
   }
+
+  /**
+   * Create a post from HTML source (used by local replay fixture seeding).
+   */
+  async createPostHtml(title: string, html: string, status: 'draft' | 'published' = 'draft'): Promise<GhostPost> {
+    logger.debug({ title, status }, 'Creating post in Ghost from HTML source');
+    const created = await this.getApi().posts.add(
+      {
+        title,
+        html,
+        status,
+      },
+      { source: 'html' }
+    );
+    return created as GhostPost;
+  }
 }

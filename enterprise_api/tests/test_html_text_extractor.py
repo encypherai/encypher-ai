@@ -260,7 +260,7 @@ class TestEmbedSignedTextInHtml:
         assert len(found) >= 2, f"Expected >=2 markers in signed HTML, found {len(found)}"
 
     def test_chesschampion_roundtrip_with_existing_signed_output(self, example_html):
-        """Use the already-generated micro_c2pa signed text to produce signed HTML."""
+        """Use the already-generated micro signed text to produce signed HTML."""
         signed_path = (
             Path(__file__).resolve().parent / "e2e_live" / "output" / "chesschampion_micro_c2pa_signed.txt"
         )

@@ -25,6 +25,8 @@ export interface SignRequest {
     action?: string;
     manifest_mode?: string;
     segmentation_level?: string;
+    ecc?: boolean;
+    embed_c2pa?: boolean;
     index_for_attribution?: boolean;
     return_embedding_plan?: boolean;
     previous_instance_id?: string;

@@ -81,7 +81,15 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     # === API Feature Augmentation (TEAM_044) ===
     manifest_mode: str = Field(
         default="full",
-        description="Controls manifest detail level. Options: full, lightweight_uuid, minimal_uuid, hybrid, zw_embedding, micro, micro_ecc, micro_c2pa, micro_ecc_c2pa. micro modes use ultra-compact per-sentence markers; micro_ecc adds error correction (44 chars); _c2pa variants add a full C2PA document manifest with DB-backed segment indexing. Availability depends on plan tier.",
+        description="Controls manifest detail level. Options: full, lightweight_uuid, minimal_uuid, hybrid, zw_embedding, micro. micro uses ultra-compact per-sentence markers; behaviour controlled by ecc and embed_c2pa flags. Availability depends on plan tier.",
+    )
+    ecc: bool = Field(
+        default=True,
+        description="Enable Reed-Solomon error correction for micro mode (44 chars/segment vs 36). Ignored for non-micro modes.",
+    )
+    embed_c2pa: bool = Field(
+        default=True,
+        description="Embed full C2PA document manifest into signed content for micro mode. When false, per-sentence markers only; C2PA manifest is still generated and stored in DB. Ignored for non-micro modes.",
     )
     embedding_strategy: str = Field(
         default="single_point",
@@ -93,6 +101,10 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     )
     add_dual_binding: bool = Field(default=False, description="Enable additional integrity binding. Availability depends on plan tier.")
     disable_c2pa: bool = Field(default=False, description="Opt-out of C2PA embedding. When true, only basic metadata is embedded.")
+    store_c2pa_manifest: bool = Field(
+        default=True,
+        description="Store extracted C2PA manifest in content DB for DB-backed verification features.",
+    )
     previous_instance_id: Optional[str] = Field(
         None, description="Previous manifest instance_id for edit provenance chain (required if action=c2pa.edited)"
     )
@@ -268,7 +280,7 @@ class C2PAInfo(BaseModel):
     validated: bool = Field(..., description="Whether the manifest passed validation")
     validation_type: str = Field(..., description="Validation semantics.")
     validation_details: Optional[Dict[str, Any]] = Field(None, description="Detailed validation results (assertions, signatures, errors)")
-    manifest_data: Optional[Dict[str, Any]] = Field(None, description="Full C2PA manifest data (available for micro_c2pa mode)")
+    manifest_data: Optional[Dict[str, Any]] = Field(None, description="Full C2PA manifest data (available for micro mode)")
 
 
 class LicensingInfo(BaseModel):

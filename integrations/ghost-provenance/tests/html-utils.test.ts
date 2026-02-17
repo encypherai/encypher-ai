@@ -3,6 +3,7 @@ import {
   extractText,
   extractFragments,
   applyEmbeddingPlan,
+  embedEmbeddingPlanIntoHtml,
   embedSignedText,
   extractTextForVerify,
   isVsChar,
@@ -118,8 +119,12 @@ describe('html-utils', () => {
         </div>
         <p>After code.</p>
       `;
-      const result = extractText(html);
-      expect(result).toBe('Before code. After code.');
+      expect(extractText(html)).toBe('Before code. After code.');
+    });
+
+    it('skips plain pre/code content without Ghost card classes', () => {
+      const html = '<pre><code>const x = 1;</code></pre><p>After</p>';
+      expect(extractText(html)).toBe('After');
     });
 
     it('skips Ghost gallery cards', () => {
@@ -193,6 +198,46 @@ describe('html-utils', () => {
       // Should NOT contain image alt text
       expect(result).not.toContain('Hero');
     });
+
+    it('handles migrated lexical/mobiledoc-style mixed wrappers safely', () => {
+      const html = `
+        <!--kg-card-begin: markdown-->
+        <p>Rendered markdown text survives migration.</p>
+        <!--kg-card-end: markdown-->
+        <div class="kg-card kg-callout-card">
+          <div class="kg-callout-text"><span data-lexical-text="true">Lexical callout text.</span></div>
+        </div>
+        <div class="kg-card kg-html-card"><div>Raw html-card source must be skipped.</div></div>
+      `;
+
+      const result = extractText(html);
+      expect(result).toContain('Rendered markdown text survives migration.');
+      expect(result).toContain('Lexical callout text.');
+      expect(result).not.toContain('Raw html-card source must be skipped.');
+    });
+
+    it('handles malformed html without crashing and preserves visible text', () => {
+      const html = '<div><p>Start <strong>bold<p>Next line &amp; trailing';
+      const result = extractText(html);
+      expect(result).toContain('Start');
+      expect(result).toContain('bold');
+      expect(result).toContain('Next line & trailing');
+    });
+
+    it('skips source=html wrapped Ghost html-card content', () => {
+      const html = `
+        <p>Before.</p>
+        <!--kg-card-begin: html-->
+        <p>Do not sign this raw html card text.</p>
+        <!--kg-card-end: html-->
+        <p>After.</p>
+      `;
+
+      const result = extractText(html);
+      expect(result).toContain('Before.');
+      expect(result).toContain('After.');
+      expect(result).not.toContain('Do not sign this raw html card text.');
+    });
   });
 
   // =========================================================================
@@ -229,6 +274,14 @@ describe('html-utils', () => {
 
     it('handles HTML with no text', () => {
       expect(extractFragments('<img src="test.jpg">')).toEqual([]);
+    });
+
+    it('skips text inside source=html wrapped Ghost html-card comments', () => {
+      const html = '<p>Before</p><!--kg-card-begin: html--><p>Skip me</p><!--kg-card-end: html--><p>After</p>';
+      const frags = extractFragments(html);
+      expect(frags.length).toBe(2);
+      expect(frags[0].rawText).toBe('Before');
+      expect(frags[1].rawText).toBe('After');
     });
   });
 
@@ -334,6 +387,73 @@ describe('html-utils', () => {
     });
   });
 
+  describe('embedEmbeddingPlanIntoHtml', () => {
+    it('inserts markers by codepoint index across paragraph boundaries', () => {
+      const markerA = '\uFE00';
+      const markerB = '\uFE01\uFE02';
+      const html = '<p>Hello world.</p><p>Next sentence.</p>';
+      const result = embedEmbeddingPlanIntoHtml(html, {
+        index_unit: 'codepoint',
+        operations: [
+          { insert_after_index: 11, marker: markerA },
+          { insert_after_index: 26, marker: markerB },
+        ],
+      });
+
+      expect(result).toContain(`world.${markerA}</p>`);
+      expect(result).toContain(`sentence.${markerB}</p>`);
+      expect(result).toContain('<p>Hello');
+      expect(result).toContain('<p>Next');
+    });
+
+    it('supports insertion before the first visible character via index -1', () => {
+      const marker = '\uFE00';
+      const html = '<p>Hello world.</p>';
+      const result = embedEmbeddingPlanIntoHtml(html, {
+        index_unit: 'codepoint',
+        operations: [{ insert_after_index: -1, marker }],
+      });
+
+      expect(result).toContain(`<p>${marker}Hello world.</p>`);
+    });
+
+    it('returns null for out-of-range insertion indices', () => {
+      const html = '<p>Hello world.</p>';
+      const result = embedEmbeddingPlanIntoHtml(html, {
+        index_unit: 'codepoint',
+        operations: [{ insert_after_index: 999, marker: '\uFE00' }],
+      });
+
+      expect(result).toBeNull();
+    });
+
+    it('does not insert markers into skipped kg-code-card text when duplicate visible text exists', () => {
+      const marker = '\uFE00';
+      const html = '<div class="kg-card kg-code-card"><pre><code>Hello world.</code></pre></div><p>Hello world.</p>';
+
+      const result = embedEmbeddingPlanIntoHtml(html, {
+        index_unit: 'codepoint',
+        operations: [{ insert_after_index: 11, marker }],
+      });
+
+      expect(result).toContain('<code>Hello world.</code>');
+      expect(result).toContain(`<p>Hello world.${marker}</p>`);
+    });
+
+    it('supports codepoint insertion around ZWJ grapheme sequences', () => {
+      const marker = '\uFE00';
+      const visible = 'Family 👨‍👩‍👧‍👦 rocks.';
+      const html = `<p>${visible}</p>`;
+      const result = embedEmbeddingPlanIntoHtml(html, {
+        index_unit: 'codepoint',
+        operations: [{ insert_after_index: splitChars(visible).length - 1, marker }],
+      });
+
+      expect(result).toContain(`rocks.${marker}</p>`);
+      expect(result).toContain('👨‍👩‍👧‍👦');
+    });
+  });
+
   describe('stripC2paEmbeddings', () => {
     it('strips VS chars', () => {
       const text = 'Hello\uFE00\uFE01 World\uFEFF';
@@ -380,6 +500,39 @@ describe('html-utils', () => {
       const html = '';
       const signed = 'Just text';
       expect(embedSignedText(html, signed)).toBe('Just text');
+    });
+
+    it('embeds markers correctly when HTML contains named entities', () => {
+      const html = '<p>As Co-Chair &mdash; proof.</p><p>Next sentence.</p>';
+      const signed = `As Co-Chair — proof.\uFE00 Next sentence.\uFE01\uFE02`;
+
+      const result = embedSignedText(html, signed);
+
+      // Marker for first sentence should remain in first paragraph.
+      expect(result).toContain('proof.\uFE00</p>');
+      // Marker for second sentence should remain in second paragraph.
+      expect(result).toContain('sentence.\uFE01\uFE02</p>');
+    });
+
+    it('does not embed into source=html wrapped Ghost html-card text when duplicated', () => {
+      const html =
+        '<!--kg-card-begin: html--><p>Hello world.</p><!--kg-card-end: html-->'
+        + '<p>Hello world.</p>';
+      const signed = 'Hello world.\uFE01';
+
+      const result = embedSignedText(html, signed);
+
+      expect(result).toContain('<!--kg-card-begin: html--><p>Hello world.</p><!--kg-card-end: html-->');
+      expect(result).toContain('<p>Hello world.\uFE01</p>');
+    });
+
+    it('preserves Unicode grapheme clusters while embedding markers', () => {
+      const html = '<p>Emoji family 👨‍👩‍👧‍👦 stays intact.</p>';
+      const signed = 'Emoji family 👨‍👩‍👧‍👦 stays intact.\uFE01';
+      const result = embedSignedText(html, signed);
+
+      expect(result).toContain('👨‍👩‍👧‍👦');
+      expect(result).toContain('intact.\uFE01</p>');
     });
   });
 

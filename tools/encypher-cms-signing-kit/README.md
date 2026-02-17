@@ -56,11 +56,8 @@ The signed HTML can be served directly by your CMS. Readers can verify the conte
 ## Usage
 
 ```bash
-# Sign with micro_ecc_c2pa (default — C2PA manifest + Reed-Solomon error correction)
+# Sign with micro mode (default — C2PA manifest + Reed-Solomon error correction)
 uv run python encypher_sign_html.py input.html output.html
-
-# Sign with micro_c2pa (compact C2PA manifest, no error correction)
-uv run python encypher_sign_html.py input.html output.html --mode micro_c2pa
 
 # Sign with basic mode (per-sentence signatures only, no C2PA manifest)
 uv run python encypher_sign_html.py input.html output.html --mode basic
@@ -94,9 +91,12 @@ Priority order: CLI flags → `.env` file → environment variables.
 
 | Mode | Markers | C2PA Manifest | Error Correction | Best For |
 |---|---|---|---|---|
-| `micro_ecc_c2pa` | Per-sentence + document | Yes | Reed-Solomon | **Default** — recommended |
-| `micro_c2pa` | Per-sentence + document | Yes | No | Standard use |
+| `micro` | Per-sentence + document | Yes | Reed-Solomon (default) | **Default** — recommended |
 | `basic` | Per-sentence only | No | No | Lightweight |
+
+The `micro` mode supports two optional flags via the API:
+- `ecc` (default: `true`) — Reed-Solomon error correction (44 chars/segment vs 36)
+- `embed_c2pa` (default: `true`) — embed full C2PA manifest in content
 
 ## Content Selector
 
@@ -121,7 +121,7 @@ original_html = get_page_from_cms()
 signed_html = sign_html(
     html=original_html,
     api_key="your-api-key",
-    manifest_mode="micro_ecc_c2pa",
+    manifest_mode="micro",
     content_selector="article",
 )
 

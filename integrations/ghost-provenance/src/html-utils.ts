@@ -39,6 +39,7 @@ const BLOCK_ELEMENTS = new Set([
 // Elements whose content is never visible text and should be skipped entirely.
 const SKIP_ELEMENTS = new Set([
   'script', 'style', 'noscript', 'svg', 'math', 'video', 'audio',
+  'code', 'pre',
   'canvas', 'iframe', 'object', 'embed', 'source', 'track', 'picture',
   'template', 'img', 'input', 'select', 'textarea', 'button',
   'map', 'area', 'link', 'meta', 'base', 'head', 'title',
@@ -69,6 +70,17 @@ const GHOST_TEXT_CARD_CLASSES = new Set([
   'kg-toggle-card',    // has heading + content text
   'kg-blockquote-alt', // alternative blockquote style
 ]);
+
+// Ghost Admin API `source=html` content can contain literal wrapper comments
+// that mark an HTML card region. We must ignore wrapped payload during
+// extraction/embedding so we never sign or mutate raw html-card internals.
+const GHOST_HTML_CARD_WRAPPER_RE =
+  /<!--\s*kg-card-begin:\s*html\s*-->[\s\S]*?<!--\s*kg-card-end:\s*html\s*-->/giu;
+
+function stripGhostHtmlCardWrappedRegions(html: string): string {
+  if (!html) return html;
+  return html.replace(GHOST_HTML_CARD_WRAPPER_RE, '');
+}
 
 // =========================================================================
 // Unicode Variation Selector helpers
@@ -262,7 +274,8 @@ function walkDomForText(node: HTMLElement | TextNode, chunks: string[]): void {
  * @returns Plain text suitable for the /sign API
  */
 export function extractText(html: string): string {
-  const root = parse(html);
+  const sanitizedHtml = stripGhostHtmlCardWrappedRegions(html);
+  const root = parse(sanitizedHtml);
   const chunks: string[] = [];
   walkDomForText(root as unknown as HTMLElement, chunks);
 
@@ -270,7 +283,7 @@ export function extractText(html: string): string {
   const lines = raw.split('\n');
   const cleaned: string[] = [];
   for (const line of lines) {
-    const normalized = line.replace(/[ \t]+/g, ' ').trim();
+    const normalized = decodeHtmlEntities(line).replace(/[ \t]+/g, ' ').trim();
     if (normalized !== '') {
       cleaned.push(normalized);
     }
@@ -301,15 +314,82 @@ export function extractFragments(html: string): TextFragment[] {
   const buf = Buffer.from(html, 'utf-8');
   const len = buf.length;
   let i = 0;
+  let inGhostHtmlCardWrapper = false;
+  let inIgnoredRegion = false;
+  let ignoredDepth = 0;
 
   // We work at the byte level for correct offset tracking
   while (i < len) {
+    // Skip everything inside Ghost source=html card wrappers while preserving
+    // original offsets for text outside the wrapper block.
+    if (inGhostHtmlCardWrapper) {
+      if (
+        i + 3 < len
+        && buf[i] === 0x3C
+        && buf[i + 1] === 0x21
+        && buf[i + 2] === 0x2D
+        && buf[i + 3] === 0x2D
+      ) {
+        const endMarker = Buffer.from('-->', 'utf-8');
+        const end = buf.indexOf(endMarker, i + 4);
+        if (end === -1) {
+          i = len;
+          continue;
+        }
+
+        const commentContent = buf.subarray(i + 4, end).toString('utf-8').toLowerCase();
+        if (commentContent.includes('kg-card-end: html')) {
+          inGhostHtmlCardWrapper = false;
+        }
+        i = end + 3;
+        continue;
+      }
+
+      i++;
+      continue;
+    }
+
+    if (inIgnoredRegion) {
+      if (buf[i] === 0x3C) { // '<'
+        const tagEnd = buf.indexOf(0x3E, i + 1); // '>'
+        if (tagEnd === -1) {
+          i = len;
+          continue;
+        }
+
+        const tagContent = buf.subarray(i, tagEnd + 1).toString('utf-8').toLowerCase();
+        const isEndTag = /^<\s*\//.test(tagContent);
+        const isSelfClosing = /\/\s*>$/.test(tagContent)
+          || /^<\s*(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)\b/.test(tagContent);
+
+        if (isEndTag) {
+          ignoredDepth -= 1;
+          if (ignoredDepth <= 0) {
+            inIgnoredRegion = false;
+            ignoredDepth = 0;
+          }
+        } else if (!isSelfClosing) {
+          ignoredDepth += 1;
+        }
+
+        i = tagEnd + 1;
+        continue;
+      }
+
+      i += 1;
+      continue;
+    }
+
     if (buf[i] === 0x3C) { // '<'
       // Skip HTML comments (<!-- ... -->)
       if (i + 3 < len && buf[i + 1] === 0x21 && buf[i + 2] === 0x2D && buf[i + 3] === 0x2D) {
         const endMarker = Buffer.from('-->', 'utf-8');
         const end = buf.indexOf(endMarker, i + 4);
         if (end !== -1) {
+          const commentContent = buf.subarray(i + 4, end).toString('utf-8').toLowerCase();
+          if (commentContent.includes('kg-card-begin: html')) {
+            inGhostHtmlCardWrapper = true;
+          }
           i = end + 3;
         } else {
           i = len;
@@ -326,16 +406,17 @@ export function extractFragments(html: string): TextFragment[] {
 
       const tagContent = buf.subarray(i, tagEnd + 1).toString('utf-8').toLowerCase();
 
-      // Check for skip elements
-      const skipMatch = tagContent.match(/^<(script|style|noscript|svg|math)\b/);
-      if (skipMatch) {
-        const closeTag = Buffer.from(`</${skipMatch[1]}>`, 'utf-8');
-        const closePos = buf.indexOf(closeTag, tagEnd + 1);
-        if (closePos !== -1) {
-          i = closePos + closeTag.length;
-        } else {
-          i = len;
-        }
+      const skipTagMatch = tagContent.match(/^<\s*(script|style|noscript|svg|math|code|pre)\b/);
+      const classAttrMatch = tagContent.match(/class\s*=\s*("([^"]*)"|'([^']*)')/);
+      const classNames = (classAttrMatch?.[2] || classAttrMatch?.[3] || '').split(/\s+/).filter(Boolean);
+      const hasSkipClass = classNames.some((cls) => GHOST_SKIP_CARD_CLASSES.has(cls));
+      const isSelfClosing = /\/\s*>$/.test(tagContent)
+        || /^<\s*(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)\b/.test(tagContent);
+
+      if ((skipTagMatch || hasSkipClass) && !isSelfClosing) {
+        inIgnoredRegion = true;
+        ignoredDepth = 1;
+        i = tagEnd + 1;
         continue;
       }
 
@@ -371,7 +452,7 @@ export function extractFragments(html: string): TextFragment[] {
  * Decode common HTML entities in a string.
  */
 function decodeHtmlEntities(str: string): string {
-  return str
+  const decodedNamed = str
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -380,7 +461,216 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&apos;/g, "'")
     .replace(/&#x27;/g, "'")
     .replace(/&#x2F;/g, '/')
-    .replace(/&nbsp;/g, '\u00A0');
+    .replace(/&nbsp;/g, '\u00A0')
+    .replace(/&ndash;/g, '–')
+    .replace(/&mdash;/g, '—')
+    .replace(/&lsquo;/g, '‘')
+    .replace(/&rsquo;/g, '’')
+    .replace(/&ldquo;/g, '“')
+    .replace(/&rdquo;/g, '”')
+    .replace(/&hellip;/g, '…')
+    .replace(/&bull;/g, '•');
+
+  return decodedNamed
+    // Decimal numeric entities: &#8212;
+    .replace(/&#(\d+);/g, (_m, dec) => {
+      const cp = Number.parseInt(dec, 10);
+      return Number.isFinite(cp) ? String.fromCodePoint(cp) : _m;
+    })
+    // Hex numeric entities: &#x2014;
+    .replace(/&#x([0-9a-fA-F]+);/g, (_m, hex) => {
+      const cp = Number.parseInt(hex, 16);
+      return Number.isFinite(cp) ? String.fromCodePoint(cp) : _m;
+    })
+    ;
+}
+
+interface MappedChar {
+  ch: string;
+  startByte: number;
+  endByte: number;
+}
+
+function decodeRawTextWithByteOffsets(rawText: string): MappedChar[] {
+  const mapped: MappedChar[] = [];
+  let i = 0;
+  let consumedBytes = 0;
+
+  while (i < rawText.length) {
+    if (rawText[i] === '&') {
+      const semi = rawText.indexOf(';', i + 1);
+      if (semi !== -1) {
+        const token = rawText.slice(i, semi + 1);
+        const decoded = decodeHtmlEntities(token);
+        if (decoded !== token) {
+          const tokenBytes = Buffer.byteLength(token, 'utf-8');
+          const startByte = consumedBytes;
+          const endByte = consumedBytes + tokenBytes;
+          const decodedChars = splitChars(decoded);
+          for (const ch of decodedChars) {
+            mapped.push({ ch, startByte, endByte });
+          }
+          consumedBytes = endByte;
+          i = semi + 1;
+          continue;
+        }
+      }
+    }
+
+    const cp = rawText.codePointAt(i);
+    if (cp === undefined) break;
+    const ch = String.fromCodePoint(cp);
+    const chBytes = Buffer.byteLength(ch, 'utf-8');
+    const startByte = consumedBytes;
+    const endByte = consumedBytes + chBytes;
+    mapped.push({ ch, startByte, endByte });
+    consumedBytes = endByte;
+    i += ch.length;
+  }
+
+  return mapped;
+}
+
+/**
+ * Embed markers from an embedding plan directly into original HTML text nodes.
+ *
+ * This avoids reconstructing full signed text and instead inserts markers by
+ * codepoint index into the existing HTML byte stream.
+ *
+ * Returns null when mapping or plan validation fails.
+ */
+export function embedEmbeddingPlanIntoHtml(html: string, plan: EmbeddingPlan | null | undefined): string | null {
+  if (!plan) return null;
+  if (plan.index_unit && plan.index_unit !== 'codepoint') return null;
+
+  const operations = plan.operations || [];
+  if (operations.length === 0) return html;
+
+  const visibleText = extractText(html);
+  const visibleChars = splitChars(visibleText);
+  if (visibleChars.length === 0) return null;
+
+  const fragments = extractFragments(html);
+
+  const insertionOffsetByVisibleIndex = new Map<number, number>();
+  let firstVisibleStartByteAbs: number | null = null;
+  let previousVisibleEndByteAbs: number | null = null;
+  let visibleCursor = 0;
+
+  for (const fragment of fragments) {
+    const mapped = decodeRawTextWithByteOffsets(fragment.rawText);
+    const normalized: MappedChar[] = [];
+
+    for (const item of mapped) {
+      if (/\s/u.test(item.ch)) {
+        const last = normalized[normalized.length - 1];
+        if (!last) continue;
+        if (last.ch === ' ') {
+          last.endByte = item.endByte;
+        } else {
+          normalized.push({ ch: ' ', startByte: item.startByte, endByte: item.endByte });
+        }
+      } else {
+        normalized.push({ ...item });
+      }
+    }
+
+    while (normalized.length > 0 && normalized[0].ch === ' ') {
+      normalized.shift();
+    }
+    while (normalized.length > 0 && normalized[normalized.length - 1].ch === ' ') {
+      normalized.pop();
+    }
+
+    if (normalized.length === 0) {
+      continue;
+    }
+
+    while (visibleCursor < visibleChars.length && visibleChars[visibleCursor] === ' ') {
+      if (previousVisibleEndByteAbs !== null) {
+        insertionOffsetByVisibleIndex.set(visibleCursor, previousVisibleEndByteAbs);
+      }
+      visibleCursor++;
+    }
+
+    for (const item of normalized) {
+      if (visibleCursor >= visibleChars.length) {
+        return null;
+      }
+
+      const targetChar = visibleChars[visibleCursor];
+      const equivalent = item.ch === targetChar
+        || (item.ch === '\u00A0' && targetChar === ' ')
+        || (item.ch === ' ' && targetChar === '\u00A0');
+
+      if (!equivalent) {
+        return null;
+      }
+
+      const startByteAbs = fragment.byteOffset + item.startByte;
+      const endByteAbs = fragment.byteOffset + item.endByte;
+      if (firstVisibleStartByteAbs === null) {
+        firstVisibleStartByteAbs = startByteAbs;
+      }
+
+      insertionOffsetByVisibleIndex.set(visibleCursor, endByteAbs);
+      previousVisibleEndByteAbs = endByteAbs;
+      visibleCursor++;
+    }
+  }
+
+  while (visibleCursor < visibleChars.length && visibleChars[visibleCursor] === ' ') {
+    if (previousVisibleEndByteAbs !== null) {
+      insertionOffsetByVisibleIndex.set(visibleCursor, previousVisibleEndByteAbs);
+    }
+    visibleCursor++;
+  }
+
+  if (visibleCursor !== visibleChars.length) return null;
+  if (firstVisibleStartByteAbs === null) return null;
+
+  for (const op of operations) {
+    if (!op || typeof op.insert_after_index !== 'number' || !Number.isInteger(op.insert_after_index)) {
+      return null;
+    }
+    if (typeof op.marker !== 'string' || op.marker.length === 0) {
+      return null;
+    }
+    if (op.insert_after_index < -1 || op.insert_after_index >= visibleChars.length) {
+      return null;
+    }
+  }
+
+  const markersByOffset = new Map<number, string[]>();
+  for (const op of operations) {
+    const byteOffset = op.insert_after_index === -1
+      ? firstVisibleStartByteAbs
+      : insertionOffsetByVisibleIndex.get(op.insert_after_index);
+
+    if (byteOffset === undefined) {
+      return null;
+    }
+
+    const existing = markersByOffset.get(byteOffset) || [];
+    existing.push(op.marker);
+    markersByOffset.set(byteOffset, existing);
+  }
+
+  const insertions = [...markersByOffset.entries()]
+    .map(([byteOffset, markers]) => ({ byteOffset, marker: markers.join('') }))
+    .sort((a, b) => b.byteOffset - a.byteOffset);
+
+  let result = Buffer.from(html, 'utf-8');
+  for (const { byteOffset, marker } of insertions) {
+    const markerBuf = Buffer.from(marker, 'utf-8');
+    result = Buffer.concat([
+      result.subarray(0, byteOffset),
+      markerBuf,
+      result.subarray(byteOffset),
+    ]);
+  }
+
+  return result.toString('utf-8');
 }
 
 /**

@@ -313,10 +313,13 @@ async def _execute_advanced_signing(
         index_for_attribution=options.index_for_attribution,
         action=options.action,
         manifest_mode=options.manifest_mode,
+        ecc=options.ecc,
+        embed_c2pa=options.embed_c2pa,
         embedding_strategy=options.embedding_strategy,
         distribution_target=options.distribution_target,
         add_dual_binding=options.add_dual_binding,
         disable_c2pa=options.disable_c2pa,
+        store_c2pa_manifest=options.store_c2pa_manifest,
         previous_instance_id=options.previous_instance_id,
         metadata=document.metadata or {
             "title": document.document_title,

@@ -3,7 +3,7 @@ HTML text extractor for CMS content signing (TEAM_169).
 
 Extracts only the text that would be rendered in a browser from HTML content,
 stripping all tags while preserving paragraph/section structure. This produces
-clean text suitable for signing with micro_c2pa / micro_ecc_c2pa modes.
+clean text suitable for signing with micro mode.
 
 Key design decisions:
 - Block elements (h1-h6, p, div, li, blockquote, etc.) produce paragraph breaks
@@ -59,7 +59,7 @@ def extract_segments_from_html(html: str) -> list[str]:
     """Extract text from HTML and split into signable segments.
 
     Each segment is a non-empty line of text (paragraph, heading, list item, etc.)
-    suitable for per-sentence signing with micro_c2pa or micro_ecc_c2pa.
+    suitable for per-sentence signing with micro mode.
 
     Args:
         html: Raw HTML string.

@@ -20,6 +20,8 @@ export interface Config {
     signingMode: string;
     manifestMode: string;
     segmentationLevel: string;
+    ecc: boolean;
+    embedC2pa: boolean;
   };
   webhookSecret: string;
   dbPath: string;
@@ -56,8 +58,10 @@ export function loadConfig(): Config {
       tier: process.env.SIGNING_TIER || 'free',
       organizationName: process.env.ORGANIZATION_NAME || '',
       signingMode: process.env.SIGNING_MODE || 'managed',
-      manifestMode: process.env.MANIFEST_MODE || 'micro_ecc_c2pa',
+      manifestMode: process.env.MANIFEST_MODE || 'micro',
       segmentationLevel: process.env.SEGMENTATION_LEVEL || 'sentence',
+      ecc: envBool('ECC', true),
+      embedC2pa: envBool('EMBED_C2PA', true),
     },
     webhookSecret: process.env.WEBHOOK_SECRET || '',
     dbPath: process.env.DB_PATH || './data/ghost-provenance.db',

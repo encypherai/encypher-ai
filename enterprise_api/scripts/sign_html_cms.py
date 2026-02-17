@@ -3,19 +3,19 @@
 Sign HTML CMS content in-place via the Encypher AI Enterprise API.
 
 Parses a full CMS HTML page, extracts article text content, signs it
-via the live API with invisible Unicode markers (micro_c2pa or
-micro_ecc_c2pa), and returns the complete HTML page with markers
+via the live API with invisible Unicode markers (micro mode), and
+returns the complete HTML page with markers
 embedded in the article's text nodes. All HTML tags, attributes,
 images, scripts, styles, nav, and footer remain untouched.
 
 Usage:
     python scripts/sign_html_cms.py INPUT.html OUTPUT.html [OPTIONS]
 
-    # Sign with micro_c2pa (default)
+    # Sign with micro mode (default: ecc=True, embed_c2pa=True)
     python scripts/sign_html_cms.py page.html page_signed.html
 
-    # Sign with micro_ecc_c2pa (Reed-Solomon error correction)
-    python scripts/sign_html_cms.py page.html page_signed.html --mode micro_ecc_c2pa
+    # Sign with basic mode (full C2PA)
+    python scripts/sign_html_cms.py page.html page_signed.html --mode basic
 
     # Custom content selector (default: article)
     python scripts/sign_html_cms.py page.html page_signed.html --selector "main .content"
@@ -218,7 +218,7 @@ def sign_html(
     html: str,
     api_key: str,
     base_url: str = "https://api.encypherai.com",
-    manifest_mode: str = "micro_c2pa",
+    manifest_mode: str = "micro",
     content_selector: str = "article",
     document_title: str | None = None,
 ) -> str:
@@ -228,7 +228,7 @@ def sign_html(
         html: Full HTML page content.
         api_key: Encypher AI API key.
         base_url: API base URL.
-        manifest_mode: Signing mode (micro_c2pa, micro_ecc_c2pa, or basic).
+        manifest_mode: Signing mode (micro or basic).
         content_selector: CSS selector for the content area to sign.
         document_title: Optional document title for the API.
 
@@ -367,9 +367,9 @@ def main() -> None:
     parser.add_argument("output", help="Output HTML file path")
     parser.add_argument(
         "--mode",
-        default="micro_c2pa",
-        choices=["micro_c2pa", "micro_ecc_c2pa", "basic"],
-        help="Manifest mode (default: micro_c2pa)",
+        default="micro",
+        choices=["micro", "basic"],
+        help="Manifest mode (default: micro)",
     )
     parser.add_argument(
         "--selector",

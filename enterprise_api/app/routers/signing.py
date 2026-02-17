@@ -90,7 +90,9 @@ Provide **either** `text` (single document) **or** `documents` (batch), plus an 
 
 | Option | Type | Default | Values | Tier | Description |
 |--------|------|---------|--------|------|-------------|
-| `manifest_mode` | string | `"full"` | `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`, `micro`, `micro_ecc`, `micro_c2pa`, `micro_ecc_c2pa` | Free | Controls how the C2PA manifest and per-segment markers are embedded. `full` = standard C2PA wrapper. `micro` variants = ultra-compact invisible markers (36-44 chars). `*_c2pa` variants add a full C2PA document manifest alongside micro markers. `*_ecc` variants add Reed-Solomon error correction. |
+| `manifest_mode` | string | `"full"` | `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`, `micro` | Free | Controls how the C2PA manifest and per-segment markers are embedded. `full` = standard C2PA wrapper. `micro` = ultra-compact per-segment markers controlled by `ecc` and `embed_c2pa` flags. A C2PA manifest is always generated; `embed_c2pa` controls whether it's embedded in content; `store_c2pa_manifest` controls DB persistence. |
+| `ecc` | bool | `true` | | Free | Enable Reed-Solomon error correction for micro mode (44 chars/segment vs 36). Ignored for non-micro modes. |
+| `embed_c2pa` | bool | `true` | | Free | Embed full C2PA document manifest into signed content for micro mode. When false, per-sentence markers only; C2PA manifest is still generated and stored in DB. Ignored for non-micro modes. |
 | `embedding_strategy` | string | `"single_point"` | `single_point`, `distributed`, `distributed_redundant` | `distributed_redundant` requires Enterprise | How the invisible signature is placed within each segment. `single_point` = one location. `distributed` = spread across the segment. `distributed_redundant` = distributed with ECC for resilience. |
 | `distribution_target` | string | *null* | `whitespace`, `punctuation`, `all_chars` | Free | Which character positions are used when `embedding_strategy` is `distributed` or `distributed_redundant`. |
 
@@ -111,7 +113,8 @@ Provide **either** `text` (single document) **or** `documents` (batch), plus an 
 | `index_for_attribution` | bool | `false` | Free | Index content segments for later attribution and plagiarism detection via `/verify/advanced`. |
 | `add_dual_binding` | bool | `false` | Enterprise | Enable an additional integrity binding layer for enhanced tamper resistance. |
 | `include_fingerprint` | bool | `false` | Enterprise | Generate a robust content fingerprint that can survive minor text modifications. |
-| `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding; only basic metadata is attached. |
+| `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding for non-micro modes; only basic metadata is attached. For micro mode, use `embed_c2pa` instead. |
+| `store_c2pa_manifest` | bool | `true` | Free | Persist generated C2PA manifest in content DB for DB-backed verification. Applies to all modes that generate a manifest. |
 
 ### Custom Assertions & Rights (Business+)
 
@@ -153,7 +156,7 @@ Provide **either** `text` (single document) **or** `documents` (batch), plus an 
     "document_title": "Senate Bill",
     "options": {
         "segmentation_level": "sentence",
-        "manifest_mode": "micro_ecc_c2pa",
+        "manifest_mode": "micro",
         "index_for_attribution": true,
         "action": "c2pa.created"
     }

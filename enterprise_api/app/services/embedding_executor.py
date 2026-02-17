@@ -460,10 +460,13 @@ async def encode_document_with_embeddings(
             processing_metadata=processing_metadata,
             # === API Feature Augmentation (TEAM_044) ===
             manifest_mode=request.manifest_mode,
+            ecc=request.ecc,
+            embed_c2pa=request.embed_c2pa,
             embedding_strategy=request.embedding_strategy,
             distribution_target=request.distribution_target,
             add_dual_binding=request.add_dual_binding,
             disable_c2pa=request.disable_c2pa,
+            store_c2pa_manifest=request.store_c2pa_manifest,
             organization_name=organization.get("publisher_identity_base") or organization.get("organization_name"),
         )
 

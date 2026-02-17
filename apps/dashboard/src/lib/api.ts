@@ -499,6 +499,22 @@ const apiClient = {
   },
 
   /**
+   * Delete a domain claim
+   */
+  async deleteDomainClaim(
+    accessToken: string,
+    organizationId: string,
+    claimId: string
+  ): Promise<DomainClaimResponse> {
+    const response = await fetchWithAuth<DomainClaimResponse>(
+      `${AUTH_SERVICE_URL}/organizations/${organizationId}/domain-claims/${claimId}`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+    return response;
+  },
+
+  /**
    * Create a new API key
    */
   async createApiKey(

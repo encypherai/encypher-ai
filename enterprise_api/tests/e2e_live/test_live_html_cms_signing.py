@@ -3,7 +3,7 @@ Live e2e tests for HTML CMS content signing (TEAM_169).
 
 Pipeline:
 1. Extract rendered text from chesschampion example_article.html
-2. Sign via live production API with micro_c2pa and micro_ecc_c2pa
+2. Sign via live production API with micro mode (ecc=False and ecc=True)
 3. Verify via live production API
 4. Write signed text to files for manual copy-paste into encypherai.com/tools/verify
 
@@ -92,22 +92,22 @@ class TestHtmlExtractionForCms:
 
 
 # ===========================================================================
-# Live API: sign with micro_c2pa, verify, output for manual paste
+# Live API: sign with micro (ecc=False), verify, output for manual paste
 # ===========================================================================
 
 
 @pytest.mark.e2e
 @pytest.mark.asyncio
-async def test_live_html_sign_micro_c2pa(
+async def test_live_html_sign_micro_no_ecc(
     live_client,
     live_auth_headers,
     live_api_config,
     extracted_text,
 ) -> None:
-    """Sign chesschampion HTML text with micro_c2pa via live unified /sign, verify, write output."""
+    """Sign chesschampion HTML text with micro (ecc=False) via live unified /sign, verify, write output."""
     assert live_api_config.base_url.startswith("https://api.encypherai.com")
 
-    document_id = _unique_document_id("html_micro_c2pa")
+    document_id = _unique_document_id("html_micro_no_ecc")
 
     sign_response = await live_client.post(
         "/api/v1/sign",
@@ -118,7 +118,8 @@ async def test_live_html_sign_micro_c2pa(
             "document_title": "Best Chess Games of All Time",
             "options": {
                 "document_type": "article",
-                "manifest_mode": "micro_c2pa",
+                "manifest_mode": "micro",
+                "ecc": False,
                 "segmentation_level": "sentence",
                 "segmentation_levels": ["sentence", "paragraph"],
                 "embedding_strategy": "single_point",
@@ -127,7 +128,7 @@ async def test_live_html_sign_micro_c2pa(
         },
     )
 
-    _assert_status(sign_response, 201, "POST /api/v1/sign (micro_c2pa)")
+    _assert_status(sign_response, 201, "POST /api/v1/sign (micro ecc=False)")
     sign_payload = sign_response.json()
     assert sign_payload["success"] is True
 
@@ -139,8 +140,8 @@ async def test_live_html_sign_micro_c2pa(
     assert len(signed_text) > len(extracted_text), "Signed text should be longer (has markers)"
 
     # Write signed text for manual copy-paste into encypherai.com/tools/verify
-    out_path = _write_output("chesschampion_micro_c2pa_signed.txt", signed_text)
-    print(f"\n>>> micro_c2pa signed text written to: {out_path}")
+    out_path = _write_output("chesschampion_micro_no_ecc_signed.txt", signed_text)
+    print(f"\n>>> micro (ecc=False) signed text written to: {out_path}")
     print(f">>> Document ID: {document_id}")
     print(f">>> Signed text length: {len(signed_text)} chars")
 
@@ -151,32 +152,32 @@ async def test_live_html_sign_micro_c2pa(
         json={"text": signed_text},
     )
 
-    _assert_status(verify_response, 200, "POST /api/v1/verify (micro_c2pa)")
+    _assert_status(verify_response, 200, "POST /api/v1/verify (micro ecc=False)")
     verify_payload = verify_response.json()
     assert verify_payload["success"] is True
     assert verify_payload["data"]["valid"] is True, (
-        f"micro_c2pa verification failed. "
+        f"micro (ecc=False) verification failed. "
         f"Reason: {verify_payload['data'].get('reason_code')}. "
         f"Details: {verify_payload['data'].get('details')}. "
         f"Full: {verify_payload}"
     )
 
-    print(">>> micro_c2pa API verification: PASSED")
+    print(">>> micro (ecc=False) API verification: PASSED")
     print(f">>> Copy the contents of {out_path} and paste into https://encypherai.com/tools/verify")
 
 
 @pytest.mark.e2e
 @pytest.mark.asyncio
-async def test_live_html_sign_micro_ecc_c2pa(
+async def test_live_html_sign_micro_ecc(
     live_client,
     live_auth_headers,
     live_api_config,
     extracted_text,
 ) -> None:
-    """Sign chesschampion HTML text with micro_ecc_c2pa via live unified /sign, verify, write output."""
+    """Sign chesschampion HTML text with micro (ecc=True, default) via live unified /sign, verify, write output."""
     assert live_api_config.base_url.startswith("https://api.encypherai.com")
 
-    document_id = _unique_document_id("html_micro_ecc_c2pa")
+    document_id = _unique_document_id("html_micro_ecc")
 
     sign_response = await live_client.post(
         "/api/v1/sign",
@@ -187,7 +188,7 @@ async def test_live_html_sign_micro_ecc_c2pa(
             "document_title": "Best Chess Games of All Time",
             "options": {
                 "document_type": "article",
-                "manifest_mode": "micro_ecc_c2pa",
+                "manifest_mode": "micro",
                 "segmentation_level": "sentence",
                 "segmentation_levels": ["sentence", "paragraph"],
                 "embedding_strategy": "single_point",
@@ -196,7 +197,7 @@ async def test_live_html_sign_micro_ecc_c2pa(
         },
     )
 
-    _assert_status(sign_response, 201, "POST /api/v1/sign (micro_ecc_c2pa)")
+    _assert_status(sign_response, 201, "POST /api/v1/sign (micro ecc=True)")
     sign_payload = sign_response.json()
     assert sign_payload["success"] is True
 
@@ -208,8 +209,8 @@ async def test_live_html_sign_micro_ecc_c2pa(
     assert len(signed_text) > len(extracted_text), "Signed text should be longer (has RS markers)"
 
     # Write signed text for manual copy-paste
-    out_path = _write_output("chesschampion_micro_ecc_c2pa_signed.txt", signed_text)
-    print(f"\n>>> micro_ecc_c2pa signed text written to: {out_path}")
+    out_path = _write_output("chesschampion_micro_ecc_signed.txt", signed_text)
+    print(f"\n>>> micro (ecc=True) signed text written to: {out_path}")
     print(f">>> Document ID: {document_id}")
     print(f">>> Signed text length: {len(signed_text)} chars")
 
@@ -220,17 +221,17 @@ async def test_live_html_sign_micro_ecc_c2pa(
         json={"text": signed_text},
     )
 
-    _assert_status(verify_response, 200, "POST /api/v1/verify (micro_ecc_c2pa)")
+    _assert_status(verify_response, 200, "POST /api/v1/verify (micro ecc=True)")
     verify_payload = verify_response.json()
     assert verify_payload["success"] is True
     assert verify_payload["data"]["valid"] is True, (
-        f"micro_ecc_c2pa verification failed. "
+        f"micro (ecc=True) verification failed. "
         f"Reason: {verify_payload['data'].get('reason_code')}. "
         f"Details: {verify_payload['data'].get('details')}. "
         f"Full: {verify_payload}"
     )
 
-    print(">>> micro_ecc_c2pa API verification: PASSED")
+    print(">>> micro (ecc=True) API verification: PASSED")
     print(f">>> Copy the contents of {out_path} and paste into https://encypherai.com/tools/verify")
 
 
@@ -305,17 +306,17 @@ async def test_live_html_sign_basic(
 
 @pytest.mark.e2e
 @pytest.mark.asyncio
-async def test_live_html_inplace_micro_c2pa(
+async def test_live_html_inplace_micro_no_ecc(
     live_client,
     live_auth_headers,
     live_api_config,
     example_html,
     extracted_text,
 ) -> None:
-    """Sign text via API with micro_c2pa, embed back into HTML, output .html file."""
+    """Sign text via API with micro (ecc=False), embed back into HTML, output .html file."""
     assert live_api_config.base_url.startswith("https://api.encypherai.com")
 
-    document_id = _unique_document_id("html_inplace_micro_c2pa")
+    document_id = _unique_document_id("html_inplace_micro_no_ecc")
 
     sign_response = await live_client.post(
         "/api/v1/sign",
@@ -326,7 +327,8 @@ async def test_live_html_inplace_micro_c2pa(
             "document_title": "Best Chess Games of All Time",
             "options": {
                 "document_type": "article",
-                "manifest_mode": "micro_c2pa",
+                "manifest_mode": "micro",
+                "ecc": False,
                 "segmentation_level": "sentence",
                 "segmentation_levels": ["sentence", "paragraph"],
                 "embedding_strategy": "single_point",
@@ -335,7 +337,7 @@ async def test_live_html_inplace_micro_c2pa(
         },
     )
 
-    _assert_status(sign_response, 201, "POST /api/v1/sign (micro_c2pa inplace)")
+    _assert_status(sign_response, 201, "POST /api/v1/sign (micro ecc=False inplace)")
     sign_payload = sign_response.json()
     assert sign_payload["success"] is True
     signed_text = sign_payload["data"]["document"]["signed_text"]
@@ -350,8 +352,8 @@ async def test_live_html_inplace_micro_c2pa(
     assert "<ol" in signed_html
     assert len(signed_html) > len(example_html)
 
-    out_path = _write_output("chesschampion_micro_c2pa_signed.html", signed_html)
-    print(f"\n>>> micro_c2pa signed HTML written to: {out_path}")
+    out_path = _write_output("chesschampion_micro_no_ecc_signed.html", signed_html)
+    print(f"\n>>> micro (ecc=False) signed HTML written to: {out_path}")
     print(f">>> Original HTML: {len(example_html)} chars")
     print(f">>> Signed HTML:   {len(signed_html)} chars")
     print(">>> Open in browser, select-all, copy, paste into https://encypherai.com/tools/verify")
@@ -364,27 +366,27 @@ async def test_live_html_inplace_micro_c2pa(
         json={"text": text_from_signed_html},
     )
 
-    _assert_status(verify_response, 200, "POST /api/v1/verify (micro_c2pa inplace)")
+    _assert_status(verify_response, 200, "POST /api/v1/verify (micro ecc=False inplace)")
     verify_payload = verify_response.json()
     assert verify_payload["success"] is True
     assert verify_payload["data"]["valid"] is True, (
-        f"micro_c2pa inplace verification failed. "
+        f"micro (ecc=False) inplace verification failed. "
         f"Reason: {verify_payload['data'].get('reason_code')}. "
         f"Full: {verify_payload}"
     )
-    print(">>> micro_c2pa inplace HTML verification: PASSED")
+    print(">>> micro (ecc=False) inplace HTML verification: PASSED")
 
 
 @pytest.mark.e2e
 @pytest.mark.asyncio
-async def test_live_html_inplace_micro_ecc_c2pa(
+async def test_live_html_inplace_micro_ecc(
     live_client,
     live_auth_headers,
     live_api_config,
     example_html,
     extracted_text,
 ) -> None:
-    """Sign text via API with micro_ecc_c2pa, embed back into HTML, output .html file."""
+    """Sign text via API with micro (ecc=True, default), embed back into HTML, output .html file."""
     assert live_api_config.base_url.startswith("https://api.encypherai.com")
 
     document_id = _unique_document_id("html_inplace_micro_ecc")
@@ -398,7 +400,7 @@ async def test_live_html_inplace_micro_ecc_c2pa(
             "document_title": "Best Chess Games of All Time",
             "options": {
                 "document_type": "article",
-                "manifest_mode": "micro_ecc_c2pa",
+                "manifest_mode": "micro",
                 "segmentation_level": "sentence",
                 "segmentation_levels": ["sentence", "paragraph"],
                 "embedding_strategy": "single_point",
@@ -407,7 +409,7 @@ async def test_live_html_inplace_micro_ecc_c2pa(
         },
     )
 
-    _assert_status(sign_response, 201, "POST /api/v1/sign (micro_ecc_c2pa inplace)")
+    _assert_status(sign_response, 201, "POST /api/v1/sign (micro ecc=True inplace)")
     sign_payload = sign_response.json()
     assert sign_payload["success"] is True
     signed_text = sign_payload["data"]["document"]["signed_text"]
@@ -419,8 +421,8 @@ async def test_live_html_inplace_micro_ecc_c2pa(
     assert "<img " in signed_html
     assert len(signed_html) > len(example_html)
 
-    out_path = _write_output("chesschampion_micro_ecc_c2pa_signed.html", signed_html)
-    print(f"\n>>> micro_ecc_c2pa signed HTML written to: {out_path}")
+    out_path = _write_output("chesschampion_micro_ecc_signed.html", signed_html)
+    print(f"\n>>> micro (ecc=True) signed HTML written to: {out_path}")
     print(f">>> Original HTML: {len(example_html)} chars")
     print(f">>> Signed HTML:   {len(signed_html)} chars")
 
@@ -432,12 +434,12 @@ async def test_live_html_inplace_micro_ecc_c2pa(
         json={"text": text_from_signed_html},
     )
 
-    _assert_status(verify_response, 200, "POST /api/v1/verify (micro_ecc_c2pa inplace)")
+    _assert_status(verify_response, 200, "POST /api/v1/verify (micro ecc=True inplace)")
     verify_payload = verify_response.json()
     assert verify_payload["success"] is True
     assert verify_payload["data"]["valid"] is True, (
-        f"micro_ecc_c2pa inplace verification failed. "
+        f"micro (ecc=True) inplace verification failed. "
         f"Reason: {verify_payload['data'].get('reason_code')}. "
         f"Full: {verify_payload}"
     )
-    print(">>> micro_ecc_c2pa inplace HTML verification: PASSED")
+    print(">>> micro (ecc=True) inplace HTML verification: PASSED")

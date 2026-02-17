@@ -16,8 +16,10 @@ function makeConfig(): Config {
       tier: 'free',
       organizationName: 'Test Org',
       signingMode: 'managed',
-      manifestMode: 'micro_ecc_c2pa',
+      manifestMode: 'micro',
       segmentationLevel: 'sentence',
+      ecc: true,
+      embedC2pa: true,
     },
     webhookSecret: '',
     dbPath: ':memory:',
@@ -110,6 +112,10 @@ describe('Signer embedding plan flow', () => {
     expect(result.success).toBe(true);
     expect(encypherClient.sign).toHaveBeenCalledTimes(1);
     const signPayload = (encypherClient.sign as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(signPayload.options.manifest_mode).toBe('micro');
+    expect(signPayload.options.segmentation_level).toBe('sentence');
+    expect(signPayload.options.ecc).toBe(true);
+    expect(signPayload.options.embed_c2pa).toBe(true);
     expect(signPayload.options.return_embedding_plan).toBe(true);
 
     expect(ghostClient.updatePostHtml).toHaveBeenCalledTimes(1);
@@ -146,5 +152,46 @@ describe('Signer embedding plan flow', () => {
     expect(ghostClient.updatePostHtml).toHaveBeenCalledTimes(1);
     const updatedHtml = (ghostClient.updatePostHtml as ReturnType<typeof vi.fn>).mock.calls[0][1] as string;
     expect(updatedHtml).toContain(c2paMagicMarker());
+  });
+
+  it('normalizes legacy micro_ecc_c2pa manifest mode to canonical micro options', async () => {
+    signer = new Signer(
+      makeConfig({
+        signing: {
+          ...makeConfig().signing,
+          manifestMode: 'micro_ecc_c2pa',
+          ecc: false,
+          embedC2pa: false,
+        },
+      }),
+      ghostClient,
+      encypherClient,
+      metadataStore
+    );
+
+    const initialPost = makePost();
+    (ghostClient.readPost as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(initialPost)
+      .mockResolvedValueOnce(initialPost);
+
+    (encypherClient.sign as ReturnType<typeof vi.fn>).mockResolvedValue({
+      success: true,
+      data: {
+        document: {
+          document_id: 'doc_legacy',
+          instance_id: 'inst_legacy',
+          total_segments: 1,
+          signed_text: `Hello ${c2paMagicMarker()}world.`,
+        },
+      },
+    });
+
+    const result = await signer.signPost('post_123', 'post');
+
+    expect(result.success).toBe(true);
+    const signPayload = (encypherClient.sign as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(signPayload.options.manifest_mode).toBe('micro');
+    expect(signPayload.options.ecc).toBe(true);
+    expect(signPayload.options.embed_c2pa).toBe(true);
   });
 });
