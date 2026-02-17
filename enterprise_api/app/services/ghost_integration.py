@@ -366,7 +366,7 @@ async def sign_ghost_post(
     organization: Dict[str, Any],
     core_db: Any,
     content_db: Any,
-    manifest_mode: str = "micro_ecc_c2pa",
+    manifest_mode: str = "micro",
     segmentation_level: str = "sentence",
     badge_enabled: bool = True,
 ) -> Dict[str, Any]:

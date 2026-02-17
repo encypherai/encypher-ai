@@ -56,7 +56,7 @@ export function loadConfig(): Config {
       tier: process.env.SIGNING_TIER || 'free',
       organizationName: process.env.ORGANIZATION_NAME || '',
       signingMode: process.env.SIGNING_MODE || 'managed',
-      manifestMode: process.env.MANIFEST_MODE || 'micro_ecc_c2pa',
+      manifestMode: process.env.MANIFEST_MODE || 'micro',
       segmentationLevel: process.env.SEGMENTATION_LEVEL || 'sentence',
     },
     webhookSecret: process.env.WEBHOOK_SECRET || '',

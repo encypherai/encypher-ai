@@ -37,7 +37,7 @@ class GhostIntegrationCreate(BaseModel):
         description="Automatically re-sign posts when updated",
     )
     manifest_mode: str = Field(
-        default="micro_ecc_c2pa",
+        default="micro",
         description="C2PA manifest mode for signing",
     )
     segmentation_level: str = Field(
@@ -72,7 +72,7 @@ class GhostIntegrationCreate(BaseModel):
     def validate_manifest_mode(cls, v: str) -> str:
         valid = {
             "full", "lightweight_uuid", "minimal_uuid", "hybrid",
-            "zw_embedding", "micro", "micro_ecc", "micro_c2pa", "micro_ecc_c2pa",
+            "zw_embedding", "micro",
         }
         if v not in valid:
             raise ValueError(f"manifest_mode must be one of: {', '.join(sorted(valid))}")

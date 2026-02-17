@@ -371,7 +371,7 @@ export function extractFragments(html: string): TextFragment[] {
  * Decode common HTML entities in a string.
  */
 function decodeHtmlEntities(str: string): string {
-  return str
+  const decodedNamed = str
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
@@ -380,7 +380,216 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&apos;/g, "'")
     .replace(/&#x27;/g, "'")
     .replace(/&#x2F;/g, '/')
-    .replace(/&nbsp;/g, '\u00A0');
+    .replace(/&nbsp;/g, '\u00A0')
+    .replace(/&ndash;/g, '–')
+    .replace(/&mdash;/g, '—')
+    .replace(/&lsquo;/g, '‘')
+    .replace(/&rsquo;/g, '’')
+    .replace(/&ldquo;/g, '“')
+    .replace(/&rdquo;/g, '”')
+    .replace(/&hellip;/g, '…')
+    .replace(/&bull;/g, '•');
+
+  return decodedNamed
+    // Decimal numeric entities: &#8212;
+    .replace(/&#(\d+);/g, (_m, dec) => {
+      const cp = Number.parseInt(dec, 10);
+      return Number.isFinite(cp) ? String.fromCodePoint(cp) : _m;
+    })
+    // Hex numeric entities: &#x2014;
+    .replace(/&#x([0-9a-fA-F]+);/g, (_m, hex) => {
+      const cp = Number.parseInt(hex, 16);
+      return Number.isFinite(cp) ? String.fromCodePoint(cp) : _m;
+    })
+    ;
+}
+
+interface MappedChar {
+  ch: string;
+  startByte: number;
+  endByte: number;
+}
+
+function decodeRawTextWithByteOffsets(rawText: string): MappedChar[] {
+  const mapped: MappedChar[] = [];
+  let i = 0;
+  let consumedBytes = 0;
+
+  while (i < rawText.length) {
+    if (rawText[i] === '&') {
+      const semi = rawText.indexOf(';', i + 1);
+      if (semi !== -1) {
+        const token = rawText.slice(i, semi + 1);
+        const decoded = decodeHtmlEntities(token);
+        if (decoded !== token) {
+          const tokenBytes = Buffer.byteLength(token, 'utf-8');
+          const startByte = consumedBytes;
+          const endByte = consumedBytes + tokenBytes;
+          const decodedChars = splitChars(decoded);
+          for (const ch of decodedChars) {
+            mapped.push({ ch, startByte, endByte });
+          }
+          consumedBytes = endByte;
+          i = semi + 1;
+          continue;
+        }
+      }
+    }
+
+    const cp = rawText.codePointAt(i);
+    if (cp === undefined) break;
+    const ch = String.fromCodePoint(cp);
+    const chBytes = Buffer.byteLength(ch, 'utf-8');
+    const startByte = consumedBytes;
+    const endByte = consumedBytes + chBytes;
+    mapped.push({ ch, startByte, endByte });
+    consumedBytes = endByte;
+    i += ch.length;
+  }
+
+  return mapped;
+}
+
+/**
+ * Embed markers from an embedding plan directly into original HTML text nodes.
+ *
+ * This avoids reconstructing full signed text and instead inserts markers by
+ * codepoint index into the existing HTML byte stream.
+ *
+ * Returns null when mapping or plan validation fails.
+ */
+export function embedEmbeddingPlanIntoHtml(html: string, plan: EmbeddingPlan | null | undefined): string | null {
+  if (!plan) return null;
+  if (plan.index_unit && plan.index_unit !== 'codepoint') return null;
+
+  const operations = plan.operations || [];
+  if (operations.length === 0) return html;
+
+  const visibleText = extractText(html);
+  const visibleChars = splitChars(visibleText);
+  if (visibleChars.length === 0) return null;
+
+  const fragments = extractFragments(html);
+
+  const insertionOffsetByVisibleIndex = new Map<number, number>();
+  let firstVisibleStartByteAbs: number | null = null;
+  let previousVisibleEndByteAbs: number | null = null;
+  let visibleCursor = 0;
+
+  for (const fragment of fragments) {
+    const mapped = decodeRawTextWithByteOffsets(fragment.rawText);
+    const normalized: MappedChar[] = [];
+
+    for (const item of mapped) {
+      if (/\s/u.test(item.ch)) {
+        const last = normalized[normalized.length - 1];
+        if (!last) continue;
+        if (last.ch === ' ') {
+          last.endByte = item.endByte;
+        } else {
+          normalized.push({ ch: ' ', startByte: item.startByte, endByte: item.endByte });
+        }
+      } else {
+        normalized.push({ ...item });
+      }
+    }
+
+    while (normalized.length > 0 && normalized[0].ch === ' ') {
+      normalized.shift();
+    }
+    while (normalized.length > 0 && normalized[normalized.length - 1].ch === ' ') {
+      normalized.pop();
+    }
+
+    if (normalized.length === 0) {
+      continue;
+    }
+
+    while (visibleCursor < visibleChars.length && visibleChars[visibleCursor] === ' ') {
+      if (previousVisibleEndByteAbs !== null) {
+        insertionOffsetByVisibleIndex.set(visibleCursor, previousVisibleEndByteAbs);
+      }
+      visibleCursor++;
+    }
+
+    for (const item of normalized) {
+      if (visibleCursor >= visibleChars.length) {
+        return null;
+      }
+
+      const targetChar = visibleChars[visibleCursor];
+      const equivalent = item.ch === targetChar
+        || (item.ch === '\u00A0' && targetChar === ' ')
+        || (item.ch === ' ' && targetChar === '\u00A0');
+
+      if (!equivalent) {
+        return null;
+      }
+
+      const startByteAbs = fragment.byteOffset + item.startByte;
+      const endByteAbs = fragment.byteOffset + item.endByte;
+      if (firstVisibleStartByteAbs === null) {
+        firstVisibleStartByteAbs = startByteAbs;
+      }
+
+      insertionOffsetByVisibleIndex.set(visibleCursor, endByteAbs);
+      previousVisibleEndByteAbs = endByteAbs;
+      visibleCursor++;
+    }
+  }
+
+  while (visibleCursor < visibleChars.length && visibleChars[visibleCursor] === ' ') {
+    if (previousVisibleEndByteAbs !== null) {
+      insertionOffsetByVisibleIndex.set(visibleCursor, previousVisibleEndByteAbs);
+    }
+    visibleCursor++;
+  }
+
+  if (visibleCursor !== visibleChars.length) return null;
+  if (firstVisibleStartByteAbs === null) return null;
+
+  for (const op of operations) {
+    if (!op || typeof op.insert_after_index !== 'number' || !Number.isInteger(op.insert_after_index)) {
+      return null;
+    }
+    if (typeof op.marker !== 'string' || op.marker.length === 0) {
+      return null;
+    }
+    if (op.insert_after_index < -1 || op.insert_after_index >= visibleChars.length) {
+      return null;
+    }
+  }
+
+  const markersByOffset = new Map<number, string[]>();
+  for (const op of operations) {
+    const byteOffset = op.insert_after_index === -1
+      ? firstVisibleStartByteAbs
+      : insertionOffsetByVisibleIndex.get(op.insert_after_index);
+
+    if (byteOffset === undefined) {
+      return null;
+    }
+
+    const existing = markersByOffset.get(byteOffset) || [];
+    existing.push(op.marker);
+    markersByOffset.set(byteOffset, existing);
+  }
+
+  const insertions = [...markersByOffset.entries()]
+    .map(([byteOffset, markers]) => ({ byteOffset, marker: markers.join('') }))
+    .sort((a, b) => b.byteOffset - a.byteOffset);
+
+  let result = Buffer.from(html, 'utf-8');
+  for (const { byteOffset, marker } of insertions) {
+    const markerBuf = Buffer.from(marker, 'utf-8');
+    result = Buffer.concat([
+      result.subarray(0, byteOffset),
+      markerBuf,
+      result.subarray(byteOffset),
+    ]);
+  }
+
+  return result.toString('utf-8');
 }
 
 /**

@@ -102,6 +102,58 @@ export type DecodeToolResponseLike = {
   c2pa?: C2PAInfoLike | null;
 };
 
+function readManifestSignerLabel(manifest: Record<string, unknown> | undefined): string | undefined {
+  if (!manifest || typeof manifest !== "object") return undefined;
+
+  const custom = manifest.custom_metadata;
+  if (custom && typeof custom === "object") {
+    const customRecord = custom as Record<string, unknown>;
+    const candidate =
+      customRecord.publisher_name ||
+      customRecord.organization_name ||
+      customRecord.display_name;
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  const publisher = manifest.publisher;
+  if (publisher && typeof publisher === "object") {
+    const publisherRecord = publisher as Record<string, unknown>;
+    const candidate = publisherRecord.name || publisherRecord.identifier;
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  const topLevel = manifest.publisher_name || manifest.organization_name || manifest.display_name;
+  if (typeof topLevel === "string" && topLevel.trim()) {
+    return topLevel.trim();
+  }
+
+  return undefined;
+}
+
+function resolveSignerName(params: {
+  signerId?: string | null;
+  signerName?: string | null;
+  manifest?: Record<string, unknown> | undefined;
+}): string | undefined {
+  const signerId = params.signerId || undefined;
+  const provided = params.signerName || undefined;
+
+  if (provided && provided !== signerId) {
+    return provided;
+  }
+
+  const manifestLabel = readManifestSignerLabel(params.manifest);
+  if (manifestLabel) {
+    return manifestLabel;
+  }
+
+  return provided || signerId;
+}
+
 function randomDocId(): string {
   return `doc_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
@@ -218,7 +270,11 @@ export function mapVerifyResponseToDecodeToolResponse(
           tampered: emb.tampered,
           reason_code: emb.reason_code,
           signer_id: emb.signer_id || undefined,
-          signer_name: emb.signer_name || undefined,
+          signer_name: resolveSignerName({
+            signerId: emb.signer_id,
+            signerName: emb.signer_name,
+            manifest: emb.manifest || undefined,
+          }),
           timestamp: emb.timestamp || undefined,
         },
         text_span: emb.text_span || null,
@@ -235,7 +291,11 @@ export function mapVerifyResponseToDecodeToolResponse(
       tampered: verdict.tampered,
       reason_code: verdict.reason_code,
       signer_id: (verdict as any).signer_id,
-      signer_name: (verdict as any).signer_name,
+      signer_name: resolveSignerName({
+        signerId: (verdict as any).signer_id,
+        signerName: (verdict as any).signer_name,
+        manifest,
+      }),
       timestamp: (verdict as any).timestamp,
       details: (verdict as any).details,
     },

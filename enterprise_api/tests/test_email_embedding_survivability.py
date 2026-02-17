@@ -1,4 +1,4 @@
-"""Email survivability tests for micro_ecc_c2pa-style VS256-RS markers vs zero-width markers.
+"""Email survivability tests for micro mode (ecc=True) VS256-RS markers vs zero-width markers.
 
 These tests simulate common email-processor transformations (Unicode normalization,
 character sanitization) to measure whether embedded signatures remain detectable
@@ -116,18 +116,18 @@ def test_email_unicode_nfc_transform_preserves_both_embedding_types() -> None:
     assert zw_valid is True
 
 
-def test_email_strip_supplementary_variation_selectors_breaks_micro_ecc() -> None:
+def test_email_strip_supplementary_variation_selectors_breaks_micro_ecc_markers() -> None:
     base_text = "Email survivability sentence for Encypher."
     micro_text, _, _, _, _, _ = _build_embedded_texts(base_text)
 
     micro_processed = _transform_strip_supplementary_vs(micro_text)
     micro_sigs = find_micro_ecc_signatures(micro_processed)
 
-    # micro_ecc magic prefix and many payload chars depend on supplementary VS.
+    # micro (ecc) magic prefix and many payload chars depend on supplementary VS.
     assert len(micro_sigs) == 0
 
 
-def test_email_strip_all_variation_selectors_breaks_micro_ecc() -> None:
+def test_email_strip_all_variation_selectors_breaks_micro_ecc_markers() -> None:
     base_text = "Email survivability sentence for Encypher."
     micro_text, _, _, _, _, _ = _build_embedded_texts(base_text)
 

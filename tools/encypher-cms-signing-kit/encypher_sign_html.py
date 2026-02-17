@@ -11,11 +11,11 @@ footer remain untouched.
 Usage:
     python encypher_sign_html.py INPUT.html OUTPUT.html [OPTIONS]
 
-    # Sign with micro_c2pa (default)
+    # Sign with micro mode (default: ecc + C2PA embedded)
     python encypher_sign_html.py page.html page_signed.html
 
-    # Sign with micro_ecc_c2pa (Reed-Solomon error correction)
-    python encypher_sign_html.py page.html page_signed.html --mode micro_ecc_c2pa
+    # Sign with basic mode (full C2PA only)
+    python encypher_sign_html.py page.html page_signed.html --mode basic
 
     # Custom content selector (default: article)
     python encypher_sign_html.py page.html page_signed.html --selector "main .content"
@@ -253,7 +253,7 @@ def sign_html(
     html: str,
     api_key: str,
     base_url: str = "https://api.encypherai.com",
-    manifest_mode: str = "micro_ecc_c2pa",
+    manifest_mode: str = "micro",
     content_selector: str = "article",
     document_title: str | None = None,
 ) -> str:
@@ -263,7 +263,7 @@ def sign_html(
         html: Full HTML page content.
         api_key: Encypher API key.
         base_url: API base URL.
-        manifest_mode: Signing mode (micro_c2pa, micro_ecc_c2pa, or basic).
+        manifest_mode: Signing mode (micro or basic).
         content_selector: CSS selector for the content area to sign.
         document_title: Optional document title for the API.
 
@@ -406,9 +406,9 @@ def main() -> None:
     parser.add_argument("output", help="Output HTML file path")
     parser.add_argument(
         "--mode",
-        default="micro_c2pa",
-        choices=["micro_c2pa", "micro_ecc_c2pa", "basic"],
-        help="Signing mode (default: micro_c2pa)",
+        default="micro",
+        choices=["micro", "basic"],
+        help="Signing mode (default: micro)",
     )
     parser.add_argument(
         "--selector",

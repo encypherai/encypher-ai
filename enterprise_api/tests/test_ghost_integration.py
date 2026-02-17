@@ -294,7 +294,7 @@ class TestGhostIntegrationCreate:
             ghost_admin_api_key="1234567890abcdef:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
         )
         assert body.ghost_url == "https://myblog.ghost.io"
-        assert body.manifest_mode == "micro_ecc_c2pa"
+        assert body.manifest_mode == "micro"
         assert body.segmentation_level == "sentence"
 
     def test_strips_trailing_slash(self):
@@ -458,7 +458,7 @@ class TestGhostIntegrationResponseSchema:
             ghost_admin_api_key_masked="****cret",
             auto_sign_on_publish=True,
             auto_sign_on_update=True,
-            manifest_mode="micro_ecc_c2pa",
+            manifest_mode="micro",
             segmentation_level="sentence",
             badge_enabled=True,
             is_active=True,
@@ -476,7 +476,7 @@ class TestGhostIntegrationResponseSchema:
             ghost_admin_api_key_masked="****cret",
             auto_sign_on_publish=True,
             auto_sign_on_update=True,
-            manifest_mode="micro_ecc_c2pa",
+            manifest_mode="micro",
             segmentation_level="sentence",
             badge_enabled=True,
             is_active=True,

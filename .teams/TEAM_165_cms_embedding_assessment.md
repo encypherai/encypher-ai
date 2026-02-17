@@ -62,3 +62,64 @@ Micro markers are HMAC-based (symmetric key derived from org's Ed25519 private k
 - **67 unit tests passed** (38 vs256_crypto + 25 vs256_rs_crypto + 4 micro/ecc unit + 3 SignerIdentity schema — all no-DB tests green)
 - Integration tests require Docker DB stack (not available in this environment)
 - SSOT validation confirmed across all 3 schema files
+
+---
+
+## Session: 2026-02-17
+## Goal: Micro/micro_ecc default C2PA manifest persistence + signer identity display parity
+
+## Status: In Progress (feature slice complete, broader repo lint baseline still noisy)
+
+### Work Completed
+- Added TDD coverage for `/api/v1/sign` micro modes default behavior and opt-out storage flag:
+  - `test_sign_micro_modes_embed_and_store_c2pa_manifest_by_default`
+  - `test_sign_micro_modes_can_opt_out_of_manifest_storage`
+  - File: `enterprise_api/tests/test_micro_c2pa_embedding.py`
+- Implemented backend option plumbing for manifest DB persistence toggle:
+  - Added `store_c2pa_manifest` option (default `true`) to unified sign schemas
+  - Propagated option through unified signing -> embedding executor -> embedding service
+  - Files: `app/schemas/sign_schemas.py`, `app/schemas/embeddings.py`, `app/services/unified_signing_service.py`, `app/services/embedding_executor.py`
+- Updated micro + micro_ecc embedding behavior:
+  - Both now embed a full document-level C2PA wrapper by default (when `disable_c2pa=false`)
+  - Manifest extraction and DB persistence now controlled by `store_c2pa_manifest`
+  - File: `app/services/embedding_service.py`
+- Added verification signer-name fallback logic to prefer human-readable manifest identity when cert name unavailable:
+  - New helper `_resolve_signer_name`
+  - File: `app/services/verification_logic.py`
+- Added focused unit coverage for verification signer-name resolution paths:
+  - File: `enterprise_api/tests/test_verification_logic.py`
+- Updated marketing-site verify mapping to prefer human-readable manifest identity when `signer_name` is missing/equal to `signer_id`:
+  - File: `apps/marketing-site/src/lib/enterpriseApiTools.ts`
+  - Test: `apps/marketing-site/src/lib/enterpriseApiTools.test.ts`
+- Updated `/sign` docs for new behavior/options:
+  - File: `enterprise_api/app/routers/signing.py`
+
+### Validation Run (this session)
+- `uv run ruff check app/services/verification_logic.py tests/test_verification_logic.py tests/test_micro_c2pa_embedding.py` ✅
+- `uv run pytest -q tests/test_verification_logic.py tests/test_micro_c2pa_embedding.py` ✅ (27 passed, 1 skipped)
+- `npm test -- --runInBand src/lib/enterpriseApiTools.test.ts` ✅
+
+### Known Baseline Noise / Blockers
+- `npm run lint` in marketing-site reports pre-existing workspace lint errors unrelated to this change set.
+- `next lint <file>` and direct ESLint v9 CLI invocation are not usable in this repo as-is due to local lint config/tooling mismatch.
+
+### Suggested Comprehensive Commit Message
+```
+feat(sign+verify): default micro/micro_ecc to full C2PA manifests with DB persistence toggle and signer identity fallback
+
+- add SignOptions.store_c2pa_manifest (default true) and propagate through unified sign pipeline
+- extend EncodeWithEmbeddingsRequest with store_c2pa_manifest
+- update embedding service micro/micro_ecc modes to embed full document-level C2PA manifests by default
+- support opt-out of manifest JSON persistence in content_references via store_c2pa_manifest=false
+- preserve micro marker behavior while adding C2PA wrapper + manifest extraction/storage controls
+- improve verification signer_name resolution via certificate -> manifest metadata -> signer_id fallback
+- improve marketing-site verify mapping to prefer human-readable manifest identity labels
+- add regression tests for micro/micro_ecc default manifest embedding + storage opt-out
+- add verification_logic unit tests for signer identity resolution behavior
+- update /sign option docs to describe micro default C2PA behavior and store_c2pa_manifest
+
+Tested:
+- uv run ruff check app/services/verification_logic.py tests/test_verification_logic.py tests/test_micro_c2pa_embedding.py
+- uv run pytest -q tests/test_verification_logic.py tests/test_micro_c2pa_embedding.py
+- npm test -- --runInBand src/lib/enterpriseApiTools.test.ts
+```

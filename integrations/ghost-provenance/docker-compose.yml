@@ -58,7 +58,7 @@ services:
       AUTO_SIGN_ON_PUBLISH: "true"
       AUTO_SIGN_ON_UPDATE: "true"
       SIGNING_TIER: free
-      MANIFEST_MODE: micro_ecc_c2pa
+      MANIFEST_MODE: micro
       SEGMENTATION_LEVEL: sentence
       DB_PATH: /app/data/ghost-provenance.db
       BADGE_ENABLED: "true"

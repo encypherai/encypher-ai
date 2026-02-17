@@ -16,7 +16,7 @@ export const PLAYGROUND_ENDPOINTS = [
         options: {
           document_type: 'article',
           segmentation_level: 'sentence',
-          manifest_mode: 'micro_ecc_c2pa',
+          manifest_mode: 'micro',
         },
       },
       null,

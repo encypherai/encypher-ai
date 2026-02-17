@@ -1,20 +1,21 @@
 """
-Tests for micro_c2pa and micro_ecc_c2pa manifest modes (TEAM_165).
+Tests for unified micro manifest mode (TEAM_166).
 
-micro_c2pa combines:
-- Ultra-compact per-sentence markers (36 invisible chars each, internally VS256)
-- Full C2PA-compliant document-level manifest
-- DB-backed manifest storage with segment location indices
+micro mode uses two orthogonal flags:
+  ecc=True  (default) → Reed-Solomon error correction (44 chars/segment)
+  ecc=False           → plain HMAC (36 chars/segment)
+  embed_c2pa=True  (default) → full C2PA document manifest embedded in content
+  embed_c2pa=False           → per-sentence markers only; C2PA manifest DB-only
 
-micro_ecc_c2pa is the same but uses Reed-Solomon error-correcting encoding
-that can recover from up to 4 unknown errors or 8 erasures per marker.
+A C2PA-compatible manifest is ALWAYS generated for micro mode.
+store_c2pa_manifest controls DB persistence; embed_c2pa controls in-content embedding.
 
 Test scenarios:
-1. Sentence-level markers are embedded and extractable
-2. Full C2PA manifest is embedded at document level
-3. DB ContentReferences store the manifest + segment location
-4. Verification of a single copied sentence returns full manifest + segment info
-5. Integration test via /sign endpoint
+1. Sentence-level markers are embedded and extractable (ecc=True and ecc=False)
+2. Full C2PA manifest is embedded at document level (embed_c2pa=True)
+3. C2PA manifest is NOT embedded when embed_c2pa=False
+4. DB ContentReferences store the manifest + segment location
+5. Integration test via /sign endpoint with flag combinations
 6. RS error correction survives partial corruption
 """
 
@@ -22,6 +23,8 @@ import uuid as uuid_mod
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from encypher.core.unicode_metadata import UnicodeMetadata
+from sqlalchemy import text
 
 from app.utils.vs256_crypto import (
     find_all_minimal_signed_uuids as vs256_find_all,
@@ -36,19 +39,19 @@ from app.utils.vs256_rs_crypto import (
 
 
 # =============================================================================
-# Unit tests — micro_c2pa embedding logic (no DB required)
+# Unit tests — micro mode embedding logic (no DB required)
 # =============================================================================
 
 
-class TestMicroC2paEmbeddingUnit:
-    """Unit tests for micro_c2pa embedding without DB."""
+class TestMicroEmbeddingUnit:
+    """Unit tests for micro mode embedding without DB (ecc=False variant for 36-char markers)."""
 
     @pytest.fixture
     def keypair(self):
         private_key = Ed25519PrivateKey.generate()
         return private_key
 
-    def test_micro_c2pa_creates_per_sentence_markers(self, keypair):
+    def test_micro_creates_per_sentence_markers(self, keypair):
         """Each sentence should get a 36-char invisible marker."""
         from app.utils.vs256_crypto import (
             create_minimal_signed_uuid,
@@ -83,7 +86,7 @@ class TestMicroC2paEmbeddingUnit:
             assert is_valid, "Each marker should verify with the correct key"
             assert extracted_uuid is not None
 
-    def test_micro_c2pa_markers_invisible_in_text(self, keypair):
+    def test_micro_markers_invisible_in_text(self, keypair):
         """Markers should not affect visible text content."""
         from app.utils.vs256_crypto import (
             create_minimal_signed_uuid,
@@ -101,7 +104,7 @@ class TestMicroC2paEmbeddingUnit:
         cleaned = remove_minimal_signed_uuid(embedded)
         assert cleaned == original
 
-    def test_micro_c2pa_c2pa_manifest_embeds_at_document_level(self, keypair):
+    def test_micro_c2pa_manifest_embeds_at_document_level(self, keypair):
         """The full C2PA manifest should be extractable from the document."""
         from encypher.core.unicode_metadata import UnicodeMetadata
         from app.utils.vs256_crypto import (
@@ -151,7 +154,7 @@ class TestMicroC2paEmbeddingUnit:
             "Extracted metadata should contain manifest data"
         )
 
-    def test_micro_c2pa_segment_location_computation(self):
+    def test_micro_segment_location_computation(self):
         """Segment location (paragraph, sentence) should be computed correctly."""
         from app.utils.segmentation import segment_paragraphs, segment_sentences
 
@@ -185,16 +188,16 @@ class TestMicroC2paEmbeddingUnit:
 
 
 # =============================================================================
-# Integration tests — micro_c2pa via /sign endpoint (requires DB)
+# Integration tests — micro mode via /sign endpoint (requires DB)
 # =============================================================================
 
 
 @pytest.mark.asyncio
-async def test_sign_micro_c2pa_creates_embedded_content(
+async def test_sign_micro_default_creates_embedded_content(
     async_client,
     auth_headers: dict,
 ) -> None:
-    """POST /sign with micro_c2pa should return embedded content with markers + C2PA."""
+    """POST /sign with micro (defaults: ecc=True, embed_c2pa=True) should return RS markers + C2PA."""
     original_text = (
         "Artificial intelligence is transforming content creation. "
         "Publishers need tools to verify the origin of every sentence. "
@@ -207,7 +210,7 @@ async def test_sign_micro_c2pa_creates_embedded_content(
         json={
             "text": original_text,
             "options": {
-                "manifest_mode": "micro_c2pa",
+                "manifest_mode": "micro",
                 "segmentation_level": "sentence",
             },
         },
@@ -216,36 +219,34 @@ async def test_sign_micro_c2pa_creates_embedded_content(
     assert response.status_code == 201, f"Expected 201, got {response.status_code}: {response.text}"
     payload = response.json()
 
-    # Extract embedded text from unified response
     data = payload.get("data", {})
     document = data.get("document", {})
     embedded_text = document.get("signed_text") or payload.get("embedded_text") or payload.get("text")
     assert embedded_text is not None, "Response should contain embedded text"
 
-    # Should contain per-sentence markers (internally VS256)
-    found_markers = vs256_find_all(embedded_text)
-    assert len(found_markers) == 3, f"Expected 3 per-sentence markers, found {len(found_markers)}"
+    # Default ecc=True → RS markers (44 chars)
+    found_markers = vs256rs_find_all(embedded_text)
+    assert len(found_markers) == 3, f"Expected 3 RS markers, found {len(found_markers)}"
 
-    # Should also contain C2PA manifest (extractable via UnicodeMetadata)
-    from encypher.core.unicode_metadata import UnicodeMetadata
-
+    # Default embed_c2pa=True → C2PA manifest extractable
     extracted_manifest = UnicodeMetadata.extract_metadata(embedded_text)
     assert extracted_manifest is not None, "C2PA manifest should be extractable from embedded content"
 
 
 @pytest.mark.asyncio
-async def test_sign_micro_c2pa_marker_size_is_36_chars(
+async def test_sign_micro_no_ecc_marker_size_is_36_chars(
     async_client,
     auth_headers: dict,
 ) -> None:
-    """Each micro_c2pa per-sentence marker should be exactly 36 invisible chars."""
+    """micro with ecc=False should produce 36-char markers."""
     response = await async_client.post(
         "/api/v1/sign",
         headers=auth_headers,
         json={
             "text": "Single test sentence for size check.",
             "options": {
-                "manifest_mode": "micro_c2pa",
+                "manifest_mode": "micro",
+                "ecc": False,
                 "segmentation_level": "sentence",
             },
         },
@@ -267,29 +268,54 @@ async def test_sign_micro_c2pa_marker_size_is_36_chars(
 
 
 @pytest.mark.asyncio
-async def test_sign_micro_c2pa_with_custom_assertions(
+async def test_sign_micro_default_ecc_marker_size_is_44_chars(
     async_client,
     auth_headers: dict,
 ) -> None:
-    """micro_c2pa should support custom C2PA assertions (e.g. source URL)."""
-    source_url = "https://example.com/blog/my-article"
+    """micro with default ecc=True should produce 44-char RS markers."""
+    response = await async_client.post(
+        "/api/v1/sign",
+        headers=auth_headers,
+        json={
+            "text": "Single test sentence for RS size check.",
+            "options": {
+                "manifest_mode": "micro",
+                "segmentation_level": "sentence",
+            },
+        },
+    )
 
+    assert response.status_code == 201
+    payload = response.json()
+
+    data = payload.get("data", {})
+    document = data.get("document", {})
+    embedded_text = document.get("signed_text") or payload.get("embedded_text") or payload.get("text")
+    assert embedded_text is not None
+
+    found_markers = vs256rs_find_all(embedded_text)
+    assert len(found_markers) == 1, "Should find exactly 1 RS marker"
+
+    _start, _end, sig_text = found_markers[0]
+    assert len(sig_text) == 44, f"RS marker should be 44 chars, got {len(sig_text)}"
+
+
+@pytest.mark.asyncio
+async def test_sign_micro_embed_c2pa_false_no_manifest_in_content(
+    async_client,
+    auth_headers: dict,
+) -> None:
+    """micro with embed_c2pa=False should NOT embed C2PA manifest in content."""
     response = await async_client.post(
         "/api/v1/sign",
         headers=auth_headers,
         json={
             "text": "Blog post content here. Another sentence follows.",
             "options": {
-                "manifest_mode": "micro_c2pa",
+                "manifest_mode": "micro",
+                "embed_c2pa": False,
                 "segmentation_level": "sentence",
             },
-            "custom_assertions": [
-                {
-                    "label": "com.encypher.source_url",
-                    "data": {"url": source_url},
-                }
-            ],
-            "validate_assertions": False,
         },
     )
 
@@ -301,24 +327,28 @@ async def test_sign_micro_c2pa_with_custom_assertions(
     embedded_text = document.get("signed_text") or payload.get("embedded_text") or payload.get("text")
     assert embedded_text is not None
 
-    # Markers should be present
-    found_markers = vs256_find_all(embedded_text)
+    # Per-sentence markers should still be present
+    found_markers = vs256rs_find_all(embedded_text)
     assert len(found_markers) == 2
+
+    # C2PA manifest should NOT be extractable from the content
+    extracted = UnicodeMetadata.extract_metadata(embedded_text)
+    assert extracted is None, "C2PA manifest should NOT be in content when embed_c2pa=False"
 
 
 @pytest.mark.asyncio
-async def test_sign_micro_c2pa_metadata_reports_mode(
+async def test_sign_micro_metadata_reports_mode_and_flags(
     async_client,
     auth_headers: dict,
 ) -> None:
-    """Response metadata should indicate micro_c2pa mode."""
+    """Response metadata should indicate micro mode with flag values."""
     response = await async_client.post(
         "/api/v1/sign",
         headers=auth_headers,
         json={
             "text": "Test sentence for metadata check.",
             "options": {
-                "manifest_mode": "micro_c2pa",
+                "manifest_mode": "micro",
             },
         },
     )
@@ -326,22 +356,21 @@ async def test_sign_micro_c2pa_metadata_reports_mode(
     assert response.status_code == 201
     payload = response.json()
 
-    # The response should contain manifest metadata
     data = payload.get("data", {})
     document = data.get("document", {})
     signed_text = document.get("signed_text", "")
 
-    # Verify markers are present (confirms micro_c2pa mode worked)
-    found_sigs = vs256_find_all(signed_text)
-    assert len(found_sigs) > 0, "Response should contain micro markers (micro_c2pa mode)"
+    # Verify markers are present (confirms micro mode worked)
+    found_sigs = vs256rs_find_all(signed_text)
+    assert len(found_sigs) > 0, "Response should contain micro markers"
 
 
 @pytest.mark.asyncio
-async def test_sign_micro_c2pa_multi_paragraph(
+async def test_sign_micro_multi_paragraph(
     async_client,
     auth_headers: dict,
 ) -> None:
-    """micro_c2pa should handle multi-paragraph content correctly."""
+    """micro mode should handle multi-paragraph content correctly."""
     text = (
         "First paragraph first sentence. First paragraph second sentence.\n\n"
         "Second paragraph first sentence. Second paragraph second sentence. "
@@ -354,7 +383,7 @@ async def test_sign_micro_c2pa_multi_paragraph(
         json={
             "text": text,
             "options": {
-                "manifest_mode": "micro_c2pa",
+                "manifest_mode": "micro",
                 "segmentation_level": "sentence",
             },
         },
@@ -368,13 +397,12 @@ async def test_sign_micro_c2pa_multi_paragraph(
     embedded_text = document.get("signed_text") or payload.get("embedded_text") or payload.get("text")
     assert embedded_text is not None
 
-    # Should have markers for all sentences
-    found_markers = vs256_find_all(embedded_text)
+    found_markers = vs256rs_find_all(embedded_text)
     assert len(found_markers) >= 4, f"Expected at least 4 markers for multi-paragraph, found {len(found_markers)}"
 
 
 @pytest.mark.asyncio
-async def test_sign_micro_c2pa_does_not_expose_vs256_in_response(
+async def test_sign_micro_does_not_expose_vs256_in_response(
     async_client,
     auth_headers: dict,
 ) -> None:
@@ -385,34 +413,28 @@ async def test_sign_micro_c2pa_does_not_expose_vs256_in_response(
         json={
             "text": "Test sentence.",
             "options": {
-                "manifest_mode": "micro_c2pa",
+                "manifest_mode": "micro",
             },
         },
     )
 
     assert response.status_code == 201
-    response_text = response.text.lower()
 
-    # The public response body should not leak vs256 terminology
-    # (internal dev comments in code are fine, but the API response is public)
-    # Note: some internal metadata fields may contain it; we check the top-level keys
     payload = response.json()
     data = payload.get("data", {})
-    # Check that the manifest_mode in the response uses the public name
-    doc = data.get("document", {})
     metadata = data.get("metadata", {}) or payload.get("metadata", {})
     if isinstance(metadata, dict):
         mode = metadata.get("manifest_mode", "")
-        assert mode != "vs256_embedding", "Response should use 'micro_c2pa' not 'vs256_embedding'"
+        assert mode != "vs256_embedding", "Response should use 'micro' not 'vs256_embedding'"
 
 
 # =============================================================================
-# Unit tests — micro_ecc_c2pa (RS error-correcting variant)
+# Unit tests — micro mode with ecc=True (RS error-correcting variant)
 # =============================================================================
 
 
-class TestMicroEccC2paEmbeddingUnit:
-    """Unit tests for micro_ecc_c2pa embedding without DB."""
+class TestMicroEccEmbeddingUnit:
+    """Unit tests for micro mode with ecc=True (RS error-correcting, 44-char markers)."""
 
     @pytest.fixture
     def keypair(self):
@@ -480,7 +502,7 @@ class TestMicroEccC2paEmbeddingUnit:
         assert is_valid, "RS should recover from 2 erasures"
         assert extracted_uuid == sentence_uuid
 
-    def test_micro_ecc_c2pa_manifest_embeds_at_document_level(self, keypair):
+    def test_micro_ecc_manifest_embeds_at_document_level(self, keypair):
         """Full C2PA manifest should be extractable alongside RS markers."""
         from encypher.core.unicode_metadata import UnicodeMetadata
         from app.utils.vs256_rs_crypto import (
@@ -526,119 +548,165 @@ class TestMicroEccC2paEmbeddingUnit:
 
 
 # =============================================================================
-# Integration tests — micro_ecc_c2pa via /sign endpoint
+# Integration tests — micro mode flag combinations via /sign endpoint
 # =============================================================================
 
 
 @pytest.mark.asyncio
-async def test_sign_micro_ecc_c2pa_creates_embedded_content(
+@pytest.mark.parametrize(
+    "ecc,finder",
+    [
+        (True, vs256rs_find_all),
+        (False, vs256_find_all),
+    ],
+)
+async def test_sign_micro_embed_and_store_c2pa_manifest_by_default(
     async_client,
     auth_headers: dict,
+    content_db,
+    ecc: bool,
+    finder,
 ) -> None:
-    """POST /sign with micro_ecc_c2pa should return embedded content with RS markers + C2PA."""
-    original_text = (
-        "Artificial intelligence is transforming content creation. "
-        "Publishers need tools to verify the origin of every sentence. "
-        "Encypher provides cryptographic provenance at the sentence level."
-    )
-
+    """micro mode should embed a document-level C2PA manifest and persist it by default."""
     response = await async_client.post(
         "/api/v1/sign",
         headers=auth_headers,
         json={
-            "text": original_text,
+            "text": "First sentence. Second sentence.",
             "options": {
-                "manifest_mode": "micro_ecc_c2pa",
+                "manifest_mode": "micro",
+                "ecc": ecc,
                 "segmentation_level": "sentence",
             },
         },
     )
 
-    assert response.status_code == 201, f"Expected 201, got {response.status_code}: {response.text}"
+    assert response.status_code == 201, response.text
     payload = response.json()
+    document = payload.get("data", {}).get("document", {})
+    signed_text = document.get("signed_text")
+    document_id = document.get("document_id")
 
-    data = payload.get("data", {})
-    document = data.get("document", {})
-    embedded_text = document.get("signed_text") or payload.get("embedded_text") or payload.get("text")
-    assert embedded_text is not None, "Response should contain embedded text"
+    assert isinstance(signed_text, str) and signed_text
+    assert isinstance(document_id, str) and document_id
+    assert len(finder(signed_text)) >= 2
 
-    # Should contain per-sentence RS markers
-    found_markers = vs256rs_find_all(embedded_text)
-    assert len(found_markers) == 3, f"Expected 3 RS markers, found {len(found_markers)}"
+    extracted_manifest = UnicodeMetadata.extract_metadata(signed_text)
+    assert extracted_manifest is not None, "Expected C2PA manifest to be embedded for micro mode"
 
-    # Should also contain C2PA manifest
-    from encypher.core.unicode_metadata import UnicodeMetadata
-    extracted_manifest = UnicodeMetadata.extract_metadata(embedded_text)
-    assert extracted_manifest is not None, "C2PA manifest should be extractable"
+    rows_with_manifest = await content_db.execute(
+        text(
+            """
+            SELECT COUNT(*)
+            FROM content_references
+            WHERE document_id = :document_id
+              AND manifest_data IS NOT NULL
+              AND manifest_data::text <> 'null'
+            """
+        ),
+        {"document_id": document_id},
+    )
+    assert rows_with_manifest.scalar_one() > 0, "Expected manifest_data to be persisted by default"
 
 
 @pytest.mark.asyncio
-async def test_sign_micro_ecc_c2pa_marker_size_is_44_chars(
+@pytest.mark.parametrize("ecc", [True, False])
+async def test_sign_micro_can_opt_out_of_manifest_storage(
     async_client,
     auth_headers: dict,
+    content_db,
+    ecc: bool,
 ) -> None:
-    """Each micro_ecc_c2pa marker should be exactly 44 invisible chars (128-bit HMAC + RS)."""
+    """/sign options should allow disabling DB persistence of extracted C2PA manifests."""
     response = await async_client.post(
         "/api/v1/sign",
         headers=auth_headers,
         json={
-            "text": "Single test sentence for RS size check.",
+            "text": "First sentence. Second sentence.",
             "options": {
-                "manifest_mode": "micro_ecc_c2pa",
+                "manifest_mode": "micro",
+                "ecc": ecc,
                 "segmentation_level": "sentence",
+                "store_c2pa_manifest": False,
             },
         },
     )
 
-    assert response.status_code == 201
+    assert response.status_code == 201, response.text
     payload = response.json()
+    document = payload.get("data", {}).get("document", {})
+    signed_text = document.get("signed_text")
+    document_id = document.get("document_id")
 
-    data = payload.get("data", {})
-    document = data.get("document", {})
-    embedded_text = document.get("signed_text") or payload.get("embedded_text") or payload.get("text")
-    assert embedded_text is not None
+    assert isinstance(signed_text, str) and signed_text
+    assert isinstance(document_id, str) and document_id
 
-    found_markers = vs256rs_find_all(embedded_text)
-    assert len(found_markers) == 1, "Should find exactly 1 RS marker"
+    # embed_c2pa defaults to True, so manifest should be in content
+    extracted_manifest = UnicodeMetadata.extract_metadata(signed_text)
+    assert extracted_manifest is not None, "C2PA manifest should still be embedded in signed payload"
 
-    _start, _end, sig_text = found_markers[0]
-    assert len(sig_text) == 44, f"RS marker should be 44 chars, got {len(sig_text)}"
+    rows_with_manifest = await content_db.execute(
+        text(
+            """
+            SELECT COUNT(*)
+            FROM content_references
+            WHERE document_id = :document_id
+              AND manifest_data IS NOT NULL
+              AND manifest_data::text <> 'null'
+            """
+        ),
+        {"document_id": document_id},
+    )
+    assert rows_with_manifest.scalar_one() == 0, "manifest_data should be omitted when storage opt-out is set"
 
 
 @pytest.mark.asyncio
-async def test_sign_micro_ecc_c2pa_multi_paragraph(
+async def test_sign_micro_embed_c2pa_false_still_stores_manifest_in_db(
     async_client,
     auth_headers: dict,
+    content_db,
 ) -> None:
-    """micro_ecc_c2pa should handle multi-paragraph content correctly."""
-    text = (
-        "First paragraph first sentence. First paragraph second sentence.\n\n"
-        "Second paragraph first sentence. Second paragraph second sentence. "
-        "Second paragraph third sentence."
-    )
-
+    """embed_c2pa=False should still generate and store manifest in DB (store_c2pa_manifest defaults true)."""
     response = await async_client.post(
         "/api/v1/sign",
         headers=auth_headers,
         json={
-            "text": text,
+            "text": "First sentence. Second sentence.",
             "options": {
-                "manifest_mode": "micro_ecc_c2pa",
+                "manifest_mode": "micro",
+                "embed_c2pa": False,
                 "segmentation_level": "sentence",
             },
         },
     )
 
-    assert response.status_code == 201, f"Expected 201, got {response.status_code}: {response.text}"
+    assert response.status_code == 201, response.text
     payload = response.json()
+    document = payload.get("data", {}).get("document", {})
+    signed_text = document.get("signed_text")
+    document_id = document.get("document_id")
 
-    data = payload.get("data", {})
-    document = data.get("document", {})
-    embedded_text = document.get("signed_text") or payload.get("embedded_text") or payload.get("text")
-    assert embedded_text is not None
+    assert isinstance(signed_text, str) and signed_text
+    assert isinstance(document_id, str) and document_id
 
-    found_markers = vs256rs_find_all(embedded_text)
-    assert len(found_markers) >= 4, f"Expected at least 4 RS markers, found {len(found_markers)}"
+    # C2PA should NOT be in the content
+    extracted = UnicodeMetadata.extract_metadata(signed_text)
+    assert extracted is None, "C2PA manifest should NOT be in content when embed_c2pa=False"
+
+    # But it SHOULD be in the DB
+    rows_with_manifest = await content_db.execute(
+        text(
+            """
+            SELECT COUNT(*)
+            FROM content_references
+            WHERE document_id = :document_id
+              AND manifest_data IS NOT NULL
+              AND manifest_data::text <> 'null'
+            """
+        ),
+        {"document_id": document_id},
+    )
+    assert rows_with_manifest.scalar_one() > 0, "manifest_data should be persisted even when embed_c2pa=False"
 
 
 # =============================================================================
@@ -703,7 +771,7 @@ async def test_sign_and_verify_returns_signer_identity(
     async_client,
     auth_headers: dict,
 ) -> None:
-    """Sign with micro_c2pa, then verify a ref and check signer_identity is present."""
+    """Sign with micro mode, then verify a ref and check signer_identity is present."""
     # Step 1: Sign content
     response = await async_client.post(
         "/api/v1/sign",
@@ -711,7 +779,7 @@ async def test_sign_and_verify_returns_signer_identity(
         json={
             "text": "This sentence tests signer identity resolution.",
             "options": {
-                "manifest_mode": "micro_c2pa",
+                "manifest_mode": "micro",
             },
         },
     )

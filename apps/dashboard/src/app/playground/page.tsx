@@ -74,7 +74,7 @@ const fieldDocs: Record<string, Record<string, string>> = {
     text: 'The content to sign. Each sentence gets its own invisible cryptographic signature.',
     document_title: 'A human-readable title for the document.',
     segmentation_level: 'How to split text for signing. Sentence = each sentence signed individually (recommended).',
-    manifest_mode: 'micro_ecc_c2pa = compact per-sentence markers + full C2PA manifest (recommended).',
+    manifest_mode: 'micro = compact per-sentence markers (default: ECC + C2PA embedded). Use ecc/embed_c2pa flags to control.',
     document_type: 'Type of content: article, legal_brief, contract, ai_output.',
     embedding_strategy: 'Where to place invisible signatures: single_point (default), distributed, distributed_redundant.',
     template_id: 'Optional: ID of a rights template to embed licensing terms (Business+).',
@@ -108,7 +108,7 @@ const DEMO_SIGN_SAMPLE = {
   document_title: 'CERN Cosmic Ray Discovery',
   document_type: 'article',
   segmentation_level: 'sentence',
-  manifest_mode: 'micro_ecc_c2pa',
+  manifest_mode: 'micro',
   embedding_strategy: 'single_point',
 };
 
@@ -687,7 +687,7 @@ export default function PlaygroundPage() {
                   The signed text looks identical to the original.
                 </p>
                 <div className="mt-2 p-2 bg-white dark:bg-slate-800 rounded text-xs font-mono text-slate-600 dark:text-slate-300">
-                  <span className="text-blue-600">Recommended:</span> segmentation: sentence, mode: micro_ecc_c2pa
+                  <span className="text-blue-600">Recommended:</span> segmentation: sentence, mode: micro
                 </div>
               </div>
               <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
@@ -1240,13 +1240,11 @@ export default function PlaygroundPage() {
                                 className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs"
                               >
                                 <option value="">Default (full)</option>
-                                <option value="micro_ecc_c2pa">Micro ECC + C2PA (recommended)</option>
+                                <option value="micro">Micro (recommended)</option>
                                 <option value="full">Full C2PA</option>
-                                <option value="micro_ecc">Micro ECC (compact)</option>
-                                <option value="micro">Micro (ultra-compact)</option>
                                 <option value="lightweight_uuid">Lightweight UUID</option>
                               </select>
-                              <p className="text-xs text-muted-foreground mt-1">micro_ecc_c2pa: compact per-sentence markers + full C2PA manifest.</p>
+                              <p className="text-xs text-muted-foreground mt-1">micro: compact per-sentence markers + C2PA manifest. Use ecc/embed_c2pa flags for control.</p>
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-3">

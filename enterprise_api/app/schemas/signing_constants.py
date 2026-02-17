@@ -5,17 +5,21 @@ TEAM_165: All schema validators for manifest_mode, embedding_strategy,
 segmentation_level, etc. MUST import from here. Never duplicate these lists.
 
 NOTE: Public-facing names only. Internal implementation details (e.g. the
-encoding used by micro_c2pa) must NOT appear in these constants.
+encoding used by micro mode) must NOT appear in these constants.
 """
 
 # --- Manifest Modes ---
 # Controls how the C2PA manifest and per-segment markers are embedded.
 #
-# Naming convention (TEAM_165):
-#   "micro"          — ultra-compact per-sentence markers (36 invisible chars)
-#   "micro_ecc"      — same + Reed-Solomon error correction (44 chars, 128-bit HMAC)
-#   "micro_c2pa"     — micro markers + full C2PA document manifest
-#   "micro_ecc_c2pa" — micro_ecc markers + full C2PA document manifest
+# TEAM_166: "micro" is now the single compact mode.  Two orthogonal boolean
+# flags control its behaviour:
+#   ecc=True        → Reed-Solomon error correction (44 chars, default)
+#   ecc=False       → plain HMAC (36 chars)
+#   embed_c2pa=True → full C2PA document manifest embedded in content (default)
+#   embed_c2pa=False→ per-sentence markers only; C2PA manifest DB-only
+#
+# A C2PA-compatible manifest is ALWAYS generated for micro mode.
+# store_c2pa_manifest controls DB persistence; embed_c2pa controls in-content embedding.
 #
 # Internal implementation uses VS256 encoding — do NOT expose that detail
 # in public API surfaces (descriptions, error messages, docs).
@@ -26,9 +30,6 @@ MANIFEST_MODES: list[str] = [
     "hybrid",
     "zw_embedding",
     "micro",
-    "micro_ecc",
-    "micro_c2pa",
-    "micro_ecc_c2pa",
 ]
 
 # --- Embedding Strategies ---

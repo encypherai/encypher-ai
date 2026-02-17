@@ -16,7 +16,7 @@ function makeConfig(): Config {
       tier: 'free',
       organizationName: 'Test Org',
       signingMode: 'managed',
-      manifestMode: 'micro_ecc_c2pa',
+      manifestMode: 'micro',
       segmentationLevel: 'sentence',
     },
     webhookSecret: '',
@@ -110,6 +110,8 @@ describe('Signer embedding plan flow', () => {
     expect(result.success).toBe(true);
     expect(encypherClient.sign).toHaveBeenCalledTimes(1);
     const signPayload = (encypherClient.sign as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(signPayload.options.manifest_mode).toBe('micro');
+    expect(signPayload.options.segmentation_level).toBe('sentence');
     expect(signPayload.options.return_embedding_plan).toBe(true);
 
     expect(ghostClient.updatePostHtml).toHaveBeenCalledTimes(1);

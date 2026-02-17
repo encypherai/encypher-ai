@@ -193,3 +193,7 @@ integrations/ghost-provenance/
 **Phase 1 complete (2026-02-13).** Core integration service built with 56 passing tests and clean TypeScript build. All source modules, Docker Compose stack, Dockerfile, and documentation created.
 
 **E2E verified (2026-02-13).** Full signing flow tested: Ghost webhook → read post → extract text (234 chars) → Enterprise API /sign → embed signed text (2022 VS chars) → update Ghost post (4331 bytes HTML) → add #encypher-signed tag → inject verification badge. Docker networking resolved via shared `encypher-network` to reach Enterprise API container directly.
+
+**Regression hardening (2026-02-17, TEAM_206).** Fixed HTML re-embedding alignment when Ghost HTML contains named/numeric entities (e.g., `&mdash;`, `&#8212;`) so sentence-level markers are preserved in the correct segment positions. Added tests asserting `manifest_mode=micro_ecc_c2pa` + `segmentation_level=sentence` are forwarded and entity-heavy HTML keeps per-sentence markers intact. ✅ `npm test` (63/63)
+
+**Embedding-plan insertion upgrade (2026-02-17, TEAM_206).** Added a primary signer path that applies `embedding_plan` `codepoint` operations directly into original HTML text nodes via byte-offset insertion, reducing reliance on signed-text round-tripping. Added regression tests for cross-paragraph insertion, `insert_after_index=-1`, and plan bounds validation; signer retains reconstructed/returned `signed_text` as fallback. ✅ `npm test` (66/66)

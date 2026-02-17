@@ -99,7 +99,7 @@ async def test_c2pa_manifest_does_not_leak_internal_details(async_client, auth_h
         json={
             "text": "First sentence. Second sentence. Third sentence.",
             "options": {
-                "manifest_mode": "micro_ecc_c2pa",
+                "manifest_mode": "micro",
                 "segmentation_level": "sentence",
             },
         },

@@ -35,7 +35,7 @@ def upgrade() -> None:
         sa.Column("webhook_token_hash", sa.String(128), nullable=False, unique=True),
         sa.Column("auto_sign_on_publish", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("auto_sign_on_update", sa.Boolean(), nullable=False, server_default=sa.text("true")),
-        sa.Column("manifest_mode", sa.String(50), nullable=False, server_default="micro_ecc_c2pa"),
+        sa.Column("manifest_mode", sa.String(50), nullable=False, server_default="micro"),
         sa.Column("segmentation_level", sa.String(50), nullable=False, server_default="sentence"),
         sa.Column("badge_enabled", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),

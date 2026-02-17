@@ -16,7 +16,7 @@ function makeConfig(overrides: Partial<Config> = {}): Config {
       tier: 'free',
       organizationName: '',
       signingMode: 'managed',
-      manifestMode: 'micro_ecc_c2pa',
+      manifestMode: 'micro',
       segmentationLevel: 'sentence',
     },
     webhookSecret: '',

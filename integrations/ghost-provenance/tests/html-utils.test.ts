@@ -3,6 +3,7 @@ import {
   extractText,
   extractFragments,
   applyEmbeddingPlan,
+  embedEmbeddingPlanIntoHtml,
   embedSignedText,
   extractTextForVerify,
   isVsChar,
@@ -334,6 +335,47 @@ describe('html-utils', () => {
     });
   });
 
+  describe('embedEmbeddingPlanIntoHtml', () => {
+    it('inserts markers by codepoint index across paragraph boundaries', () => {
+      const markerA = '\uFE00';
+      const markerB = '\uFE01\uFE02';
+      const html = '<p>Hello world.</p><p>Next sentence.</p>';
+      const result = embedEmbeddingPlanIntoHtml(html, {
+        index_unit: 'codepoint',
+        operations: [
+          { insert_after_index: 11, marker: markerA },
+          { insert_after_index: 26, marker: markerB },
+        ],
+      });
+
+      expect(result).toContain(`world.${markerA}</p>`);
+      expect(result).toContain(`sentence.${markerB}</p>`);
+      expect(result).toContain('<p>Hello');
+      expect(result).toContain('<p>Next');
+    });
+
+    it('supports insertion before the first visible character via index -1', () => {
+      const marker = '\uFE00';
+      const html = '<p>Hello world.</p>';
+      const result = embedEmbeddingPlanIntoHtml(html, {
+        index_unit: 'codepoint',
+        operations: [{ insert_after_index: -1, marker }],
+      });
+
+      expect(result).toContain(`<p>${marker}Hello world.</p>`);
+    });
+
+    it('returns null for out-of-range insertion indices', () => {
+      const html = '<p>Hello world.</p>';
+      const result = embedEmbeddingPlanIntoHtml(html, {
+        index_unit: 'codepoint',
+        operations: [{ insert_after_index: 999, marker: '\uFE00' }],
+      });
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('stripC2paEmbeddings', () => {
     it('strips VS chars', () => {
       const text = 'Hello\uFE00\uFE01 World\uFEFF';
@@ -380,6 +422,18 @@ describe('html-utils', () => {
       const html = '';
       const signed = 'Just text';
       expect(embedSignedText(html, signed)).toBe('Just text');
+    });
+
+    it('embeds markers correctly when HTML contains named entities', () => {
+      const html = '<p>As Co-Chair &mdash; proof.</p><p>Next sentence.</p>';
+      const signed = `As Co-Chair — proof.\uFE00 Next sentence.\uFE01\uFE02`;
+
+      const result = embedSignedText(html, signed);
+
+      // Marker for first sentence should remain in first paragraph.
+      expect(result).toContain('proof.\uFE00</p>');
+      // Marker for second sentence should remain in second paragraph.
+      expect(result).toContain('sentence.\uFE01\uFE02</p>');
     });
   });
 

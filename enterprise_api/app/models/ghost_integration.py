@@ -43,7 +43,7 @@ class GhostIntegration(Base):
     # Signing preferences
     auto_sign_on_publish = Column(Boolean, nullable=False, default=True)
     auto_sign_on_update = Column(Boolean, nullable=False, default=True)
-    manifest_mode = Column(String(50), nullable=False, default="micro_ecc_c2pa")
+    manifest_mode = Column(String(50), nullable=False, default="micro")
     segmentation_level = Column(String(50), nullable=False, default="sentence")
     badge_enabled = Column(Boolean, nullable=False, default=True)
 

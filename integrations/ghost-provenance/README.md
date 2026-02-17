@@ -175,7 +175,7 @@ npm run test:watch  # Watch mode
 | `AUTO_SIGN_ON_PUBLISH` | `true` | Auto-sign when posts are published |
 | `AUTO_SIGN_ON_UPDATE` | `true` | Auto-sign when published posts are updated |
 | `SIGNING_TIER` | `free` | Encypher tier (free, pro, enterprise) |
-| `MANIFEST_MODE` | `micro_ecc_c2pa` | C2PA manifest mode |
+| `MANIFEST_MODE` | `micro` | C2PA manifest mode |
 | `SEGMENTATION_LEVEL` | `sentence` | Signing granularity |
 | `DB_PATH` | `./data/ghost-provenance.db` | SQLite database path |
 | `BADGE_ENABLED` | `true` | Inject verification badge |
