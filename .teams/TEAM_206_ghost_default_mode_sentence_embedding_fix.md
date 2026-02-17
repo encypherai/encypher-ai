@@ -10,6 +10,9 @@
 - [x] Added regression tests for HTML entity-safe embedding + sign payload mode assertions — ✅ npm test
 - [x] Fixed root cause in HTML entity decoding for signed text re-embedding — ✅ npm test
 - [x] Implemented direct `embedding_plan` codepoint insertion into original HTML (no full round-trip replacement) — ✅ npm test
+- [x] Investigated hosted Ghost webhook ingress + signing failures — ✅ uv run pytest enterprise_api/tests/test_ghost_integration.py
+- [x] Fixed hosted webhook URL generation to always use API base domain — ✅ uv run pytest enterprise_api/tests/test_ghost_integration.py
+- [x] Migrated Ghost hosted integration schema to canonical sign options (`micro` + `ecc` + `embed_c2pa`) with DB migration — ✅ uv run pytest enterprise_api/tests/test_ghost_integration.py
 
 ## Changes Made
 - `integrations/ghost-provenance/src/html-utils.ts`: Expanded `decodeHtmlEntities` to handle common named entities (`&mdash;`, `&ndash;`, smart quotes, ellipsis, bullet) plus decimal/hex numeric entities to keep signed-text alignment intact during HTML re-embedding.
@@ -18,6 +21,12 @@
 - `integrations/ghost-provenance/tests/html-utils.test.ts`: Added tests for direct embedding-plan insertion (cross-paragraph insertion, index `-1` insertion, out-of-range validation).
 - `integrations/ghost-provenance/tests/signer.test.ts`: Added assertions that outbound sign payload includes `manifest_mode: micro_ecc_c2pa` and `segmentation_level: sentence`.
 - `integrations/ghost-provenance/src/signer.ts`: Updated signing flow to prefer direct `embedding_plan` insertion into HTML, then fallback to reconstructed/returned `signed_text`; C2PA compliance now checks extracted final HTML text.
+- `enterprise_api/app/routers/integrations.py`: Updated webhook URL builder to always use configured `api_base_url`, preventing issuance of non-routable `encypherai.com` webhook URLs for Ghost.
+- `enterprise_api/app/services/ghost_integration.py`: Added legacy manifest alias normalization at sign boundary and canonical micro option passthrough (`ecc`, `embed_c2pa`) to `SignOptions`.
+- `enterprise_api/app/schemas/integration_schemas.py`: Switched Ghost manifest/segmentation validation to signing SSOT constants and added canonical micro flags (`ecc`, `embed_c2pa`) to create/response schemas.
+- `enterprise_api/app/models/ghost_integration.py`: Added persisted `ecc` and `embed_c2pa` columns for hosted Ghost integration config.
+- `enterprise_api/alembic/versions/20260217_182300_ghost_integration_sign_options_alignment.py`: Added forward migration to create `ecc`/`embed_c2pa` columns and normalize legacy `manifest_mode` values (`micro_ecc_c2pa`, `micro_ecc`) to canonical `micro`.
+- `enterprise_api/tests/test_ghost_integration.py`: Added regression tests for legacy mode normalization and explicit micro flags passthrough; updated schema tests for new canonical fields.
 
 ## Blockers
 - None.
@@ -28,13 +37,17 @@
 - Verification:
   - `npm test` ✅ (66/66)
   - `npm run lint` ⚠️ fails due to missing ESLint v9 flat config (`eslint.config.*`) in this package, pre-existing project setup issue.
+  - `uv run pytest enterprise_api/tests/test_ghost_integration.py` ✅ (66 passed)
+  - `uv run ruff check enterprise_api/app/schemas/integration_schemas.py enterprise_api/app/models/ghost_integration.py enterprise_api/app/routers/integrations.py enterprise_api/app/services/ghost_integration.py enterprise_api/tests/test_ghost_integration.py enterprise_api/alembic/versions/20260217_182300_ghost_integration_sign_options_alignment.py` ✅
 
 ### Suggested Commit Message
-fix(ghost-provenance): use embedding_plan codepoint insertion for robust HTML marker placement
+fix(ghost): align hosted integration with canonical sign schema and unblock webhook signing
 
-- add regression test for embedSignedText with entity-containing HTML (`&mdash;`)
-- expand HTML entity decoding in signer embedding path (named + numeric entities)
-- add direct embedEmbeddingPlanIntoHtml path aligned to extractText codepoint stream
-- update signer flow to prefer embedding_plan insertion with signed_text fallback
-- assert signer forwards manifest_mode=micro_ecc_c2pa and segmentation_level=sentence
-- verify ghost-provenance test suite passes (66/66)
+- force generated Ghost webhook URLs to configured API domain (`api_base_url`) to avoid host-routing mismatches
+- add legacy manifest alias normalization for persisted `micro_ecc_c2pa`/`micro_ecc` values at sign boundary
+- extend hosted Ghost integration config with canonical micro controls (`ecc`, `embed_c2pa`)
+- switch Ghost integration schema validators to signing SSOT constants (`MANIFEST_MODES`, `SEGMENTATION_LEVELS`)
+- add Alembic migration to persist `ecc`/`embed_c2pa` and normalize legacy `manifest_mode` values to `micro`
+- pass canonical micro flags through webhook and manual-sign orchestration into `SignOptions`
+- add regression tests for legacy alias coercion and explicit micro flag passthrough
+- verify with `uv run pytest enterprise_api/tests/test_ghost_integration.py` and focused `ruff check`

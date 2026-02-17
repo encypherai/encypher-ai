@@ -353,6 +353,41 @@ def merge_badge_injection(existing_foot: Optional[str], badge_script: str) -> st
     return badge_script
 
 
+def _normalize_manifest_mode_for_sign_options(manifest_mode: str) -> tuple[str, Optional[bool], Optional[bool]]:
+    """Normalize persisted Ghost manifest mode values for SignOptions.
+
+    Supports legacy aliases from older Ghost integration configs while
+    preserving intended micro mode behavior.
+    """
+    from app.schemas.signing_constants import MANIFEST_MODES
+
+    mode = (manifest_mode or "micro").strip().lower().replace("-", "_")
+    legacy_aliases: dict[str, tuple[str, Optional[bool], Optional[bool]]] = {
+        "micro_ecc_c2pa": ("micro", True, True),
+        "micro_ecc": ("micro", True, False),
+    }
+
+    if mode in legacy_aliases:
+        normalized_mode, ecc_override, embed_c2pa_override = legacy_aliases[mode]
+        logger.info(
+            "Normalized legacy Ghost manifest mode '%s' to mode='%s' (ecc=%s, embed_c2pa=%s)",
+            manifest_mode,
+            normalized_mode,
+            ecc_override,
+            embed_c2pa_override,
+        )
+        return normalized_mode, ecc_override, embed_c2pa_override
+
+    if mode in MANIFEST_MODES:
+        return mode, None, None
+
+    logger.warning(
+        "Unsupported Ghost manifest mode '%s'; defaulting to 'micro'",
+        manifest_mode,
+    )
+    return "micro", None, None
+
+
 # =============================================================================
 # Signing Orchestration
 # =============================================================================
@@ -368,6 +403,8 @@ async def sign_ghost_post(
     content_db: Any,
     manifest_mode: str = "micro",
     segmentation_level: str = "sentence",
+    ecc: bool = True,
+    embed_c2pa: bool = True,
     badge_enabled: bool = True,
 ) -> Dict[str, Any]:
     """
@@ -427,6 +464,23 @@ async def sign_ghost_post(
 
     correlation_id = f"ghost-{uuid.uuid4().hex[:12]}"
 
+    normalized_manifest_mode, ecc_override, embed_c2pa_override = _normalize_manifest_mode_for_sign_options(manifest_mode)
+
+    sign_options: dict[str, Any] = {
+        "document_type": "article",
+        "claim_generator": "Ghost/Encypher Integration v1.0.0",
+        "action": action_type,
+        "manifest_mode": normalized_manifest_mode,
+        "segmentation_level": segmentation_level,
+        "ecc": ecc,
+        "embed_c2pa": embed_c2pa,
+        "index_for_attribution": True,
+    }
+    if ecc_override is not None:
+        sign_options["ecc"] = ecc_override
+    if embed_c2pa_override is not None:
+        sign_options["embed_c2pa"] = embed_c2pa_override
+
     sign_request = UnifiedSignRequest(
         text=extracted_text,
         document_id=unique_doc_id,
@@ -439,14 +493,7 @@ async def sign_ghost_post(
             "tags": tag_names,
             "source": "ghost_integration",
         },
-        options=SignOptions(
-            document_type="article",
-            claim_generator="Ghost/Encypher Integration v1.0.0",
-            action=action_type,
-            manifest_mode=manifest_mode,
-            segmentation_level=segmentation_level,
-            index_for_attribution=True,
-        ),
+        options=SignOptions(**sign_options),
     )
 
     try:

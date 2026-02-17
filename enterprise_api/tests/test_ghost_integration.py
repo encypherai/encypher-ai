@@ -30,6 +30,7 @@ from app.services.ghost_integration import (
     generate_badge_script,
     is_in_flight,
     merge_badge_injection,
+    sign_ghost_post,
     set_in_flight,
     strip_c2pa_embeddings,
 )
@@ -296,6 +297,8 @@ class TestGhostIntegrationCreate:
         assert body.ghost_url == "https://myblog.ghost.io"
         assert body.manifest_mode == "micro"
         assert body.segmentation_level == "sentence"
+        assert body.ecc is True
+        assert body.embed_c2pa is True
 
     def test_strips_trailing_slash(self):
         body = GhostIntegrationCreate(
@@ -331,7 +334,7 @@ class TestGhostIntegrationCreate:
             GhostIntegrationCreate(
                 ghost_url="https://myblog.ghost.io",
                 ghost_admin_api_key="1234567890abcdef:abcdef1234567890",
-                segmentation_level="word",  # word requires Enterprise, not allowed here
+                segmentation_level="chapter",
             )
 
 
@@ -377,6 +380,108 @@ class TestGhostAdminClient:
             admin_api_key="1234567890abcdef:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
         )
         assert client._api_url("posts/123/") == "https://myblog.ghost.io/ghost/api/admin/posts/123/"
+
+
+class TestGhostSignOrchestration:
+    @pytest.mark.asyncio
+    async def test_sign_ghost_post_accepts_legacy_micro_ecc_c2pa_manifest_mode(self):
+        ghost_client = MagicMock()
+        ghost_client.read_post = AsyncMock(
+            return_value={
+                "id": "post_123",
+                "title": "Hello",
+                "url": "https://myblog.ghost.io/hello",
+                "html": "<p>Hello world.</p>",
+                "authors": [{"name": "Author"}],
+                "tags": [],
+                "updated_at": "2026-02-17T18:00:00.000Z",
+                "codeinjection_foot": None,
+            }
+        )
+        ghost_client.update_post = AsyncMock(return_value={"id": "post_123"})
+
+        async def _fake_execute_unified_signing(*, request, **kwargs):
+            assert request.options.manifest_mode == "micro"
+            assert request.options.ecc is True
+            assert request.options.embed_c2pa is True
+            return {
+                "success": True,
+                "data": {
+                    "document": {
+                        "embedded_text": "Hello\uFE01 world.",
+                        "document_id": "doc_123",
+                        "instance_id": "inst_123",
+                        "total_segments": 1,
+                    }
+                },
+            }
+
+        with patch("app.services.unified_signing_service.execute_unified_signing", new=AsyncMock(side_effect=_fake_execute_unified_signing)):
+            result = await sign_ghost_post(
+                ghost_client=ghost_client,
+                post_id="post_123",
+                post_type="post",
+                organization={"organization_id": "org_123", "tier": "business"},
+                core_db=MagicMock(),
+                content_db=MagicMock(),
+                manifest_mode="micro_ecc_c2pa",
+                segmentation_level="sentence",
+                badge_enabled=False,
+            )
+
+        assert result["success"] is True
+        ghost_client.update_post.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_sign_ghost_post_passes_explicit_micro_flags(self):
+        ghost_client = MagicMock()
+        ghost_client.read_post = AsyncMock(
+            return_value={
+                "id": "post_456",
+                "title": "Hello",
+                "url": "https://myblog.ghost.io/hello",
+                "html": "<p>Hello world.</p>",
+                "authors": [{"name": "Author"}],
+                "tags": [],
+                "updated_at": "2026-02-17T18:00:00.000Z",
+                "codeinjection_foot": None,
+            }
+        )
+        ghost_client.update_post = AsyncMock(return_value={"id": "post_456"})
+
+        async def _fake_execute_unified_signing(*, request, **kwargs):
+            assert request.options.manifest_mode == "micro"
+            assert request.options.ecc is False
+            assert request.options.embed_c2pa is False
+            return {
+                "success": True,
+                "data": {
+                    "document": {
+                        "embedded_text": "Hello\uFE01 world.",
+                        "document_id": "doc_456",
+                        "instance_id": "inst_456",
+                        "total_segments": 1,
+                    }
+                },
+            }
+
+        with patch("app.services.unified_signing_service.execute_unified_signing", new=AsyncMock(side_effect=_fake_execute_unified_signing)):
+            result = await sign_ghost_post(
+                ghost_client=ghost_client,
+                post_id="post_456",
+                post_type="post",
+                organization={"organization_id": "org_123", "tier": "business"},
+                core_db=MagicMock(),
+                content_db=MagicMock(),
+                manifest_mode="micro",
+                segmentation_level="sentence",
+                badge_enabled=False,
+                ecc=False,
+                embed_c2pa=False,
+            )
+
+        assert result["success"] is True
+        ghost_client.update_post.assert_awaited_once()
 
 
 # =============================================================================
@@ -469,6 +574,8 @@ class TestGhostIntegrationResponseSchema:
             auto_sign_on_update=True,
             manifest_mode="micro",
             segmentation_level="sentence",
+            ecc=True,
+            embed_c2pa=True,
             badge_enabled=True,
             is_active=True,
             webhook_url="https://api.encypherai.com/api/v1/integrations/ghost/webhook?token=ghwh_abc",
@@ -476,6 +583,8 @@ class TestGhostIntegrationResponseSchema:
         )
         assert resp.webhook_token == "ghwh_abc"
         assert "ghwh_abc" in resp.webhook_url
+        assert resp.ecc is True
+        assert resp.embed_c2pa is True
 
     def test_response_without_token(self):
         resp = GhostIntegrationResponse(
@@ -487,12 +596,16 @@ class TestGhostIntegrationResponseSchema:
             auto_sign_on_update=True,
             manifest_mode="micro",
             segmentation_level="sentence",
+            ecc=True,
+            embed_c2pa=True,
             badge_enabled=True,
             is_active=True,
             webhook_url="https://api.encypherai.com/api/v1/integrations/ghost/webhook?token=ghwh_••••••••",
         )
         assert resp.webhook_token is None
         assert "••••••••" in resp.webhook_url
+        assert resp.ecc is True
+        assert resp.embed_c2pa is True
 
     def test_token_regenerate_response(self):
         resp = GhostTokenRegenerateResponse(
@@ -515,3 +628,5 @@ class TestGhostIntegrationCreateNoWebhookSecret:
             ghost_admin_api_key="1234567890abcdef:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
         )
         assert not hasattr(body, "webhook_secret")
+        assert body.ecc is True
+        assert body.embed_c2pa is True

@@ -189,6 +189,8 @@ def _build_response(
         auto_sign_on_update=integration.auto_sign_on_update,
         manifest_mode=integration.manifest_mode,
         segmentation_level=integration.segmentation_level,
+        ecc=integration.ecc,
+        embed_c2pa=integration.embed_c2pa,
         badge_enabled=integration.badge_enabled,
         is_active=integration.is_active,
         webhook_url=webhook_url,
@@ -239,6 +241,8 @@ async def create_ghost_integration(
         existing.auto_sign_on_update = body.auto_sign_on_update
         existing.manifest_mode = body.manifest_mode
         existing.segmentation_level = body.segmentation_level
+        existing.ecc = body.ecc
+        existing.embed_c2pa = body.embed_c2pa
         existing.badge_enabled = body.badge_enabled
         existing.is_active = True
         await db.commit()
@@ -258,6 +262,8 @@ async def create_ghost_integration(
         auto_sign_on_update=body.auto_sign_on_update,
         manifest_mode=body.manifest_mode,
         segmentation_level=body.segmentation_level,
+        ecc=body.ecc,
+        embed_c2pa=body.embed_c2pa,
         badge_enabled=body.badge_enabled,
     )
     db.add(integration)
@@ -444,6 +450,8 @@ async def ghost_webhook(
     ghost_admin_api_key = integration.ghost_admin_api_key
     manifest_mode = integration.manifest_mode
     segmentation_level = integration.segmentation_level
+    ecc = integration.ecc
+    embed_c2pa = integration.embed_c2pa
     badge_enabled = integration.badge_enabled
 
     # Fire-and-forget signing task with fresh DB sessions
@@ -466,6 +474,8 @@ async def ghost_webhook(
                     content_db=task_content_db,
                     manifest_mode=manifest_mode,
                     segmentation_level=segmentation_level,
+                    ecc=ecc,
+                    embed_c2pa=embed_c2pa,
                     badge_enabled=badge_enabled,
                 )
                 if result.get("success"):
@@ -539,6 +549,8 @@ async def manual_sign_ghost_post(
             content_db=content_db,
             manifest_mode=integration.manifest_mode,
             segmentation_level=integration.segmentation_level,
+            ecc=integration.ecc,
+            embed_c2pa=integration.embed_c2pa,
             badge_enabled=integration.badge_enabled,
         )
 

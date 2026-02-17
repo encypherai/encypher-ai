@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from app.schemas.signing_constants import MANIFEST_MODES, SEGMENTATION_LEVELS
+
 
 # =============================================================================
 # Ghost Integration CRUD
@@ -44,6 +46,14 @@ class GhostIntegrationCreate(BaseModel):
         default="sentence",
         description="Text segmentation level for signing",
     )
+    ecc: bool = Field(
+        default=True,
+        description="Enable Reed-Solomon error correction for micro mode markers.",
+    )
+    embed_c2pa: bool = Field(
+        default=True,
+        description="Embed full C2PA manifest into content when using micro mode.",
+    )
     badge_enabled: bool = Field(
         default=True,
         description="Inject verification badge into posts",
@@ -70,21 +80,18 @@ class GhostIntegrationCreate(BaseModel):
     @field_validator("manifest_mode")
     @classmethod
     def validate_manifest_mode(cls, v: str) -> str:
-        valid = {
-            "full", "lightweight_uuid", "minimal_uuid", "hybrid",
-            "zw_embedding", "micro",
-        }
-        if v not in valid:
-            raise ValueError(f"manifest_mode must be one of: {', '.join(sorted(valid))}")
-        return v
+        mode = v.strip().lower().replace("-", "_")
+        if mode not in MANIFEST_MODES:
+            raise ValueError(f"manifest_mode must be one of: {', '.join(MANIFEST_MODES)}")
+        return mode
 
     @field_validator("segmentation_level")
     @classmethod
     def validate_segmentation_level(cls, v: str) -> str:
-        valid = {"document", "sentence", "paragraph", "section"}
-        if v not in valid:
-            raise ValueError(f"segmentation_level must be one of: {', '.join(sorted(valid))}")
-        return v
+        level = v.strip().lower()
+        if level not in SEGMENTATION_LEVELS:
+            raise ValueError(f"segmentation_level must be one of: {', '.join(SEGMENTATION_LEVELS)}")
+        return level
 
 
 class GhostIntegrationResponse(BaseModel):
@@ -100,6 +107,8 @@ class GhostIntegrationResponse(BaseModel):
     auto_sign_on_update: bool
     manifest_mode: str
     segmentation_level: str
+    ecc: bool
+    embed_c2pa: bool
     badge_enabled: bool
     is_active: bool
     webhook_url: str = Field(

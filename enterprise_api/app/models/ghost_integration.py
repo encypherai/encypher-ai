@@ -45,6 +45,8 @@ class GhostIntegration(Base):
     auto_sign_on_update = Column(Boolean, nullable=False, default=True)
     manifest_mode = Column(String(50), nullable=False, default="micro")
     segmentation_level = Column(String(50), nullable=False, default="sentence")
+    ecc = Column(Boolean, nullable=False, default=True)
+    embed_c2pa = Column(Boolean, nullable=False, default=True)
     badge_enabled = Column(Boolean, nullable=False, default=True)
 
     # Status
