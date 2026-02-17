@@ -44,6 +44,7 @@ class HtmlTextExtractionTest
     private $embed_method;
     private $extract_fragments_method;
     private $sanitize_method;
+    private $resolve_signing_identity_method;
     private $instance;
     private int $passed = 0;
     private int $failed = 0;
@@ -64,6 +65,9 @@ class HtmlTextExtractionTest
 
         $this->sanitize_method = $this->rest->getMethod('sanitize_wp_block_comments');
         $this->sanitize_method->setAccessible(true);
+
+        $this->resolve_signing_identity_method = $this->rest->getMethod('resolve_signing_identity');
+        $this->resolve_signing_identity_method->setAccessible(true);
     }
 
     private function assert_equals($expected, $actual, string $message): void
@@ -317,6 +321,53 @@ class HtmlTextExtractionTest
         $this->assert_equals(3, substr_count($result, '<!-- /wp:paragraph -->'), 'Three closing block comments');
     }
 
+    public function test_resolve_signing_identity_prefers_publisher_name_over_identifier(): void
+    {
+        echo "\n=== test_resolve_signing_identity_prefers_publisher_name_over_identifier ===\n";
+
+        $verdict = [
+            'c2pa' => [
+                'assertions' => [
+                    [
+                        'label' => 'c2pa.metadata',
+                        'data' => [
+                            'publisher' => [
+                                'identifier' => 'user_a1621dd6-3298-473f-b2ad-232ca72c3df5',
+                                'name' => 'Encypher',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $resolved = $this->resolve_signing_identity_method->invoke($this->instance, $verdict);
+        $this->assert_equals('Encypher', $resolved, 'Uses publisher name for UI display when available');
+    }
+
+    public function test_resolve_signing_identity_falls_back_to_identifier_when_name_missing(): void
+    {
+        echo "\n=== test_resolve_signing_identity_falls_back_to_identifier_when_name_missing ===\n";
+
+        $verdict = [
+            'c2pa' => [
+                'assertions' => [
+                    [
+                        'label' => 'c2pa.metadata',
+                        'data' => [
+                            'publisher' => [
+                                'identifier' => 'org_encypher',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $resolved = $this->resolve_signing_identity_method->invoke($this->instance, $verdict);
+        $this->assert_equals('org_encypher', $resolved, 'Falls back to identifier when publisher name is unavailable');
+    }
+
     public function run_all(): void
     {
         echo "Running HTML text extraction tests...\n";
@@ -330,6 +381,8 @@ class HtmlTextExtractionTest
         $this->test_extract_skips_script_and_style();
         $this->test_sanitize_wp_block_comments();
         $this->test_embed_no_nested_p_tags();
+        $this->test_resolve_signing_identity_prefers_publisher_name_over_identifier();
+        $this->test_resolve_signing_identity_falls_back_to_identifier_when_name_missing();
 
         echo "\n=== Results ===\n";
         echo "Passed: {$this->passed}\n";

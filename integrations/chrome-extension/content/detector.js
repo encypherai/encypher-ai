@@ -238,6 +238,109 @@ function detectMarkerType(bytes) {
   return null;
 }
 
+function _getStatusMetadata(status) {
+  const normalized = String(status || 'unknown');
+  const labels = {
+    verified: 'Verified',
+    invalid: 'Invalid Signature',
+    revoked: 'Revoked',
+    error: 'Error',
+    pending: 'Verifying...'
+  };
+  const colors = {
+    verified: '#00CED1',
+    invalid: '#EF4444',
+    revoked: '#A7AFBC',
+    error: '#6B7280',
+    pending: '#B7D5ED'
+  };
+  return {
+    key: normalized,
+    label: labels[normalized] || normalized,
+    color: colors[normalized] || '#6B7280'
+  };
+}
+
+function _markerTypeLabel(markerType, compact = false) {
+  if (compact) {
+    return markerType === 'c2pa' ? 'C2PA'
+      : markerType === 'encypher' ? 'Encypher'
+      : markerType === 'micro' ? 'Micro-Embedding'
+      : '';
+  }
+  return markerType === 'c2pa' ? 'C2PA Text Manifest'
+    : markerType === 'encypher' ? 'Encypher Format'
+    : markerType === 'micro' ? 'Encypher Micro-Embedding'
+    : 'Unknown';
+}
+
+function _buildC2paManifestDisclosure(details) {
+  const manifest = details.c2paManifest;
+  const assertions = details.c2paAssertions;
+  const hasManifest = manifest && typeof manifest === 'object';
+  const hasAssertions = Array.isArray(assertions) && assertions.length > 0;
+  if (!hasManifest && !hasAssertions) {
+    return '';
+  }
+
+  let payload = hasManifest ? manifest : { assertions };
+  if (!hasManifest && hasAssertions && details.c2paValidated !== undefined) {
+    payload = {
+      validated: !!details.c2paValidated,
+      validation_type: details.c2paValidationType || null,
+      assertions
+    };
+  }
+
+  const serialized = _escapeHtml(JSON.stringify(payload, null, 2));
+  return `<div class="encypher-detail-panel__manifest">
+    <details>
+      <summary>View full C2PA manifest</summary>
+      <pre>${serialized}</pre>
+    </details>
+  </div>`;
+}
+
+function _buildHoverTooltipHtml({ details, status }) {
+  const statusMeta = _getStatusMetadata(status);
+  const signingIdentity = _resolveSigningIdentity(details);
+  const identityValue = signingIdentity ? _escapeHtml(signingIdentity) : 'Unknown signer';
+
+  return `<span class="encypher-badge__tooltip" role="status" aria-live="polite">
+    <div class="encypher-badge__tooltip-card">
+      <div class="encypher-detail-panel__header">
+        <span class="encypher-detail-panel__logo">${ENCYPHER_LOGO_SVG}</span>
+        <span class="encypher-detail-panel__title">Encypher Verification</span>
+      </div>
+      <div class="encypher-badge__tooltip-body">
+        <div class="encypher-badge__tooltip-row">
+          <span class="encypher-badge__tooltip-label">Status</span>
+          <span class="encypher-badge__tooltip-value" style="color:${statusMeta.color};font-weight:600">${_escapeHtml(statusMeta.label)}</span>
+        </div>
+        <div class="encypher-badge__tooltip-row">
+          <span class="encypher-badge__tooltip-label">Signing Identity</span>
+          <span class="encypher-badge__tooltip-value">${identityValue}</span>
+        </div>
+        <div class="encypher-badge__tooltip-hint">Click for more information</div>
+      </div>
+    </div>
+  </span>`;
+}
+
+function _dedupeDetectionsByElement(detections) {
+  const unique = [];
+  const seen = new Set();
+  for (const detection of detections || []) {
+    const element = detection?.element;
+    if (!element || seen.has(element)) {
+      continue;
+    }
+    seen.add(element);
+    unique.push(detection);
+  }
+  return unique;
+}
+
 /**
  * Extract wrapper bytes from a ZWNBSP-prefixed contiguous VS sequence.
  * C2PA wrappers are: ZWNBSP + contiguous variation selectors.
@@ -431,7 +534,7 @@ function _escapeHtml(str) {
 
 function _isOpaqueIdentity(value) {
   if (!value) return false;
-  return /^(org_|usr_|user_)[a-f0-9]+$/i.test(String(value).trim());
+  return /^(org_|usr_|user_)[a-z0-9-]+$/i.test(String(value).trim());
 }
 
 function _buildIdentityFromId(idValue) {
@@ -445,7 +548,7 @@ function _buildIdentityFromId(idValue) {
 
 function _resolveSigningIdentity(details) {
   const explicitIdentity = String(details.signingIdentity || '').trim();
-  if (explicitIdentity) return explicitIdentity;
+  if (explicitIdentity && !_isOpaqueIdentity(explicitIdentity)) return explicitIdentity;
 
   const signerName = String(details.signer || '').trim();
   if (signerName && !_isOpaqueIdentity(signerName)) return signerName;
@@ -511,32 +614,15 @@ function _showDetailPanel(badge, details) {
   const panel = document.createElement('div');
   panel.className = 'encypher-detail-panel';
   
-  const status = details._status || 'unknown';
-  const statusLabels = {
-    verified: 'Verified',
-    invalid: 'Invalid Signature',
-    revoked: 'Revoked',
-    error: 'Error',
-    pending: 'Verifying...'
-  };
-  const statusColors = {
-    verified: '#00CED1',
-    invalid: '#EF4444',
-    revoked: '#A7AFBC',
-    error: '#6B7280',
-    pending: '#B7D5ED'
-  };
-  
-  const markerLabel = details.markerType === 'c2pa' ? 'C2PA Text Manifest' : 
-                      details.markerType === 'encypher' ? 'Encypher Format' :
-                      details.markerType === 'micro' ? 'Encypher Micro-Embedding' : 'Unknown';
+  const statusMeta = _getStatusMetadata(details._status || 'unknown');
+  const markerLabel = _markerTypeLabel(details.markerType);
   
   let rows = '';
   
   // Status row
   rows += `<div class="encypher-detail-panel__row">
     <span class="encypher-detail-panel__label">Status</span>
-    <span class="encypher-detail-panel__value" style="color:${statusColors[status] || '#6B7280'};font-weight:600">${_escapeHtml(statusLabels[status] || status)}</span>
+    <span class="encypher-detail-panel__value" style="color:${statusMeta.color};font-weight:600">${_escapeHtml(statusMeta.label)}</span>
   </div>`;
   
   // Format
@@ -556,7 +642,7 @@ function _showDetailPanel(badge, details) {
   
   // Signer — only show if it's a human-readable name (not an ID like org_xxx or usr_xxx)
   const signerDisplay = details.signer;
-  const signerIsId = signerDisplay && /^(org_|usr_|user_)[a-f0-9]+$/i.test(signerDisplay);
+  const signerIsId = signerDisplay && /^(org_|usr_|user_)[a-z0-9-]+$/i.test(signerDisplay);
   if (signerDisplay && !signerIsId) {
     rows += `<div class="encypher-detail-panel__row">
       <span class="encypher-detail-panel__label">Signed by</span>
@@ -609,11 +695,18 @@ function _showDetailPanel(badge, details) {
   
   // C2PA validation
   if (details.c2paValidated !== undefined) {
+    let c2paSource = 'no';
+    if (details.c2paValidated) {
+      c2paSource = details.c2paValidationType === 'db_backed_manifest'
+        ? 'external manifest'
+        : 'embedded manifest';
+    }
     rows += `<div class="encypher-detail-panel__row">
       <span class="encypher-detail-panel__label">C2PA Validated</span>
-      <span class="encypher-detail-panel__value">${details.c2paValidated ? 'Yes' : 'No'}${details.c2paValidationType ? ` (${_escapeHtml(details.c2paValidationType)})` : ''}</span>
+      <span class="encypher-detail-panel__value">${details.c2paValidated ? 'Yes' : 'No'} (${_escapeHtml(c2paSource)})</span>
     </div>`;
   }
+  rows += _buildC2paManifestDisclosure(details);
   
   // License
   if (details.licenseType) {
@@ -725,27 +818,10 @@ function injectBadge(element, status, details) {
     error: '<span class="encypher-badge__status">!</span>'
   };
   
-  // Format marker type for display
-  const markerLabel = details.markerType === 'c2pa' ? 'C2PA' : 
-                      details.markerType === 'encypher' ? 'Encypher' :
-                      details.markerType === 'micro' ? 'Micro-Embedding' : '';
-  
-  // Prefer organization name over ID for tooltip display (never show raw IDs)
-  const orgRaw = details.organizationName || '';
-  const orgDisplay = /^org_[a-f0-9]+$/i.test(orgRaw) ? '' : orgRaw;
-  
   badge.innerHTML = `
     <span class="encypher-badge__icon">${ENCYPHER_LOGO_SVG}</span>
     ${statusOverlay[status] || ''}
-    <span class="encypher-badge__tooltip">
-      <strong>${status === 'verified' ? 'Verified by Encypher' : status.charAt(0).toUpperCase() + status.slice(1)}</strong>
-      ${markerLabel ? `<br>Format: ${markerLabel}` : ''}
-      ${details.signer && !/^(org_|usr_|user_)[a-f0-9]+$/i.test(details.signer) ? `<br>Signed by: ${_escapeHtml(details.signer)}` : ''}
-      ${orgDisplay ? `<br>Org: ${_escapeHtml(orgDisplay)}` : ''}
-      ${details.timestamp ? `<br>Date: ${new Date(details.timestamp).toLocaleDateString()}` : ''}
-      ${details.error ? `<br>Error: ${_escapeHtml(details.error)}` : ''}
-      <br><em style="opacity:0.7">Click for details</em>
-    </span>
+    ${_buildHoverTooltipHtml({ details, status })}
   `;
   
   // Store full details on the badge for the click handler
@@ -793,13 +869,14 @@ function _detectEmbeddings(root = document.body) {
   const nodes = findNodesWithEmbeddings(root);
   const uncached = [];
   const cached = [];
+  const queuedElements = new Set();
   
   for (const node of nodes) {
     const text = node.textContent || '';
     const containingBlock = getContainingBlock(node);
     
     // Skip if this element already has a badge (already processed)
-    if (_processedElements.has(containingBlock)) {
+    if (_processedElements.has(containingBlock) || queuedElements.has(containingBlock)) {
       continue;
     }
     
@@ -816,6 +893,7 @@ function _detectEmbeddings(root = document.body) {
         cachedStatus: cachedEntry.status,
         cachedDetails: cachedEntry.details
       });
+      queuedElements.add(containingBlock);
       continue;
     }
     
@@ -832,6 +910,7 @@ function _detectEmbeddings(root = document.body) {
           detectionId: _getOrCreateDetectionId(containingBlock, textHash),
           bytes: Array.from(wrapper.bytes), markerType
         });
+        queuedElements.add(containingBlock);
         found = true;
         break; // Only take the first valid wrapper per text node
       }
@@ -855,6 +934,7 @@ function _detectEmbeddings(root = document.body) {
           detectionId: _getOrCreateDetectionId(containingBlock, textHash),
           bytes: Array.from(bytes), markerType
         });
+        queuedElements.add(containingBlock);
         found = true;
       }
     }
@@ -875,6 +955,7 @@ function _detectEmbeddings(root = document.body) {
           microCount: micros.length,
           microBytes: largest.byteCount
         });
+        queuedElements.add(containingBlock);
       }
     }
   }
@@ -887,11 +968,16 @@ function _detectEmbeddings(root = document.body) {
  */
 function _buildBadgeDetails(response, markerType) {
   if (response && response.success) {
+    const signerName = response.data?.signer_name || null;
+    const orgName = response.data?.organization_name || null;
+    const signerDisplay = (signerName && !_isOpaqueIdentity(signerName))
+      ? signerName
+      : ((orgName && !_isOpaqueIdentity(orgName)) ? orgName : null);
     return {
       status: 'verified',
       details: {
         signingIdentity: response.data?.signing_identity || response.data?.publisher_display_name || null,
-        signer: response.data?.signer_name || response.data?.organization_name || null,
+        signer: signerDisplay,
         signerId: response.data?.signer_id,
         organizationName: response.data?.organization_name,
         organizationId: response.data?.organization_id,
@@ -902,21 +988,30 @@ function _buildBadgeDetails(response, markerType) {
         documentType: response.data?.document_type,
         c2paValidated: response.data?.c2pa_validated,
         c2paValidationType: response.data?.c2pa_validation_type,
+        c2paManifest: response.data?.c2pa_manifest,
+        c2paAssertions: response.data?.c2pa_assertions,
         licenseType: response.data?.license_type,
         markerType
       }
     };
   } else if (response && response.revoked) {
+    const signerName = response.data?.signer_name || null;
+    const orgName = response.data?.organization_name || null;
+    const signerDisplay = (signerName && !_isOpaqueIdentity(signerName))
+      ? signerName
+      : ((orgName && !_isOpaqueIdentity(orgName)) ? orgName : null);
     return {
       status: 'revoked',
       details: {
         error: 'This content has been revoked',
         revokedAt: response.data?.revoked_at || response.revoked_at,
         signingIdentity: response.data?.signing_identity || response.data?.publisher_display_name || null,
-        signer: response.data?.signer_name || response.data?.organization_name || null,
+        signer: signerDisplay,
         signerId: response.data?.signer_id,
         organizationName: response.data?.organization_name,
         organizationId: response.data?.organization_id,
+        c2paManifest: response.data?.c2pa_manifest,
+        c2paAssertions: response.data?.c2pa_assertions,
         verificationUrl: response.data?.verification_url,
         markerType
       }
@@ -953,7 +1048,8 @@ async function _verifyDetections(detections) {
     });
     
     try {
-      const response = await _safeSendMessage({
+      const response = await Promise.race([
+        _safeSendMessage({
         type: 'VERIFY_CONTENT',
         detectionId: detection.detectionId,
         text: detection.text,
@@ -961,7 +1057,9 @@ async function _verifyDetections(detections) {
         markerType: detection.markerType,
         pageUrl: window.location.href,
         pageTitle: document.title
-      });
+        }),
+        new Promise((resolve) => setTimeout(() => resolve(null), 15000)),
+      ]);
       
       if (!response) {
         // Extension context invalidated or no response
@@ -1013,6 +1111,11 @@ async function scanPage(root = document.body) {
       cached = cached.concat(extra.cached);
     }
   }
+
+  uncached = _dedupeDetectionsByElement(uncached);
+  cached = _dedupeDetectionsByElement(cached);
+  const uncachedElements = new Set(uncached.map(entry => entry.element));
+  cached = cached.filter(entry => !uncachedElements.has(entry.element));
   
   // Apply cached results immediately (no API call needed)
   for (const entry of cached) {

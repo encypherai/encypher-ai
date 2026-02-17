@@ -657,8 +657,8 @@ class Rest
                 }
                 $meta = $assertion['data'];
                 if (isset($meta['publisher']) && is_array($meta['publisher'])) {
-                    $candidates[] = $meta['publisher']['identifier'] ?? null;
                     $candidates[] = $meta['publisher']['name'] ?? null;
+                    $candidates[] = $meta['publisher']['identifier'] ?? null;
                 }
                 $candidates[] = $meta['author'] ?? null;
             }

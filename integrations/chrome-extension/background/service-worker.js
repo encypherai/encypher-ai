@@ -25,6 +25,8 @@ let API_CONFIG = {
   provisioningEndpoint: '/api/v1/provisioning/auto-provision',
   analyticsEndpoint: '/api/v1/analytics/discovery',
   accountEndpoint: '/api/v1/account',
+  quotaEndpoint: '/api/v1/account/quota',
+  usageEndpoint: '/api/v1/usage',
   timeout: 10000
 };
 
@@ -431,6 +433,8 @@ async function verifyContent(text, options = {}) {
           // C2PA info (free)
           c2pa_validated: verdict.c2pa?.validated,
           c2pa_validation_type: verdict.c2pa?.validation_type,
+          c2pa_manifest: verdict.c2pa || null,
+          c2pa_assertions: verdict.c2pa?.assertions,
           // Licensing info (free)
           license_type: verdict.licensing?.license_type,
           license_url: verdict.licensing?.license_url,
@@ -776,6 +780,62 @@ function _extractAccountPayload(raw) {
   return raw.data && typeof raw.data === 'object' ? raw.data : raw;
 }
 
+function _mapQuotaMetricsToUsage(quotaPayload) {
+  if (!quotaPayload || typeof quotaPayload !== 'object') return null;
+
+  const metrics = quotaPayload.metrics && typeof quotaPayload.metrics === 'object'
+    ? quotaPayload.metrics
+    : quotaPayload;
+  const c2paMetrics = metrics?.c2pa_signatures;
+  if (!c2paMetrics || typeof c2paMetrics !== 'object') return null;
+
+  const used = Number(c2paMetrics?.used);
+  const limit = Number(c2paMetrics?.limit);
+  if (!Number.isFinite(used) && !Number.isFinite(limit)) {
+    return null;
+  }
+
+  return {
+    signings_this_month: Number.isFinite(used) ? used : 0,
+    monthly_limit: Number.isFinite(limit) && limit > 0 ? limit : null,
+  };
+}
+
+async function _fetchQuotaUsage(apiKey) {
+  const endpoints = [API_CONFIG.quotaEndpoint, API_CONFIG.usageEndpoint];
+
+  for (const endpoint of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
+      const response = await fetch(`${API_CONFIG.baseUrl}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const quotaRaw = await response.json();
+      const quotaPayload = _extractAccountPayload(quotaRaw);
+      const mappedUsage = _mapQuotaMetricsToUsage(quotaPayload);
+      if (mappedUsage) {
+        return mappedUsage;
+      }
+    } catch {
+      // Best-effort enrichment only; account payload fallback is handled by caller.
+    }
+  }
+
+  return null;
+}
+
 /**
  * Get account info from the Encypher API
  */
@@ -805,6 +865,10 @@ async function getAccountInfo(apiKey) {
 
     const data = await response.json();
     const accountPayload = _extractAccountPayload(data);
+    const quotaUsage = await _fetchQuotaUsage(apiKey);
+    const accountUsage = accountPayload.usage && typeof accountPayload.usage === 'object'
+      ? accountPayload.usage
+      : {};
     const organizationName = accountPayload.organization_name || accountPayload.name || accountPayload.organization?.name || null;
     const publisherDisplayName = accountPayload.publisher_display_name || accountPayload.display_name || accountPayload.publisher?.display_name || null;
     
@@ -817,7 +881,7 @@ async function getAccountInfo(apiKey) {
         anonymousPublisher: Boolean(accountPayload.anonymous_publisher ?? accountPayload.publisher?.anonymous_publisher),
         tier: accountPayload.tier || accountPayload.subscription_tier || 'free',
         features: accountPayload.features || {},
-        usage: accountPayload.usage || {}
+        usage: quotaUsage || accountUsage
       }
     };
   } catch (error) {

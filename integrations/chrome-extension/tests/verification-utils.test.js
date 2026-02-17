@@ -63,6 +63,23 @@ describe('resolveSigningIdentity', () => {
 
     assert.strictEqual(identity, 'Test User at Encypher');
   });
+
+  it('ignores opaque explicit user id identity and falls back to account publisher identity', () => {
+    const identity = resolveSigningIdentity({
+      data: {
+        signing_identity: 'user_a1621dd6-3298-473f-b2ad-232ca72c3df5',
+        signer_id: 'user_a1621dd6-3298-473f-b2ad-232ca72c3df5',
+        organization_id: 'user_a1621dd6-3298-473f-b2ad-232ca72c3df5',
+      },
+      accountInfo: {
+        organizationId: 'user_a1621dd6-3298-473f-b2ad-232ca72c3df5',
+        publisherDisplayName: 'Erik Svilich at Encypher',
+        organizationName: 'Encypher',
+      },
+    });
+
+    assert.strictEqual(identity, 'Erik Svilich at Encypher');
+  });
 });
 
 describe('buildVerificationDetail', () => {
@@ -84,6 +101,23 @@ describe('buildVerificationDetail', () => {
     assert.strictEqual(detail.signer, 'Acme News');
     assert.strictEqual(detail.documentId, 'doc_123');
     assert.strictEqual(detail.markerType, 'c2pa');
+  });
+
+  it('does not expose opaque signer ids in detail signer label', () => {
+    const detail = buildVerificationDetail({
+      markerType: 'micro',
+      result: {
+        success: true,
+        data: {
+          signing_identity: 'user_a1621dd6-3298-473f-b2ad-232ca72c3df5',
+          signer_name: 'user_a1621dd6-3298-473f-b2ad-232ca72c3df5',
+          organization_name: 'user_a1621dd6-3298-473f-b2ad-232ca72c3df5',
+        },
+      },
+    });
+
+    assert.strictEqual(detail.signingIdentity, null);
+    assert.strictEqual(detail.signer, 'Unknown signer');
   });
 
   it('marks revoked verification distinctly', () => {

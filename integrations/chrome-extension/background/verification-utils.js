@@ -6,7 +6,7 @@ const MAX_DETAILS = 25;
 
 function isOpaqueIdentity(value) {
   if (!value) return false;
-  return /^(org_|usr_|user_)[a-f0-9]+$/i.test(String(value).trim());
+  return /^(org_|usr_|user_)[a-z0-9-]+$/i.test(String(value).trim());
 }
 
 export function resolveSigningIdentity({ data, accountInfo } = {}) {
@@ -15,7 +15,7 @@ export function resolveSigningIdentity({ data, accountInfo } = {}) {
   const explicitIdentity = String(
     payload.signing_identity || payload.publisher_display_name || payload.publisherDisplayName || ''
   ).trim();
-  if (explicitIdentity) {
+  if (explicitIdentity && !isOpaqueIdentity(explicitIdentity)) {
     return explicitIdentity;
   }
 
@@ -74,13 +74,18 @@ export function buildVerificationDetail({ markerType, result, detectionId = null
   const isRevoked = !!result?.revoked;
   const isValid = result?.success === true;
   const signingIdentity = resolveSigningIdentity({ data });
+  const signerName = String(data.signer_name || '').trim();
+  const organizationName = String(data.organization_name || '').trim();
+  const signer = (signerName && !isOpaqueIdentity(signerName))
+    ? signerName
+    : ((organizationName && !isOpaqueIdentity(organizationName)) ? organizationName : (signingIdentity || 'Unknown signer'));
 
   return {
     valid: isValid,
     revoked: isRevoked,
     detectionId,
     signingIdentity,
-    signer: data.signer_name || data.organization_name || 'Unknown signer',
+    signer,
     date: data.signed_at || data.revoked_at || null,
     markerType: markerType || 'unknown',
     documentId: data.document_id || null,
