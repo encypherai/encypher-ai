@@ -76,19 +76,24 @@ const handler = NextAuth({
               }),
             });
             const mfaData = await mfaRes.json();
-            if (!mfaRes.ok || !mfaData.success) {
-              throw new Error(mfaData.detail || 'Invalid multi-factor authentication code');
+            if (mfaRes.ok && mfaData.success) {
+              const user = mfaData.data.user;
+              return {
+                id: String(user.id),
+                email: user.email,
+                name: user.name,
+                accessToken: mfaData.data.access_token,
+                role: user.role ?? user.account_type ?? user.permission ?? 'member',
+                tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
+              } as any;
             }
 
-            const user = mfaData.data.user;
-            return {
-              id: String(user.id),
-              email: user.email,
-              name: user.name,
-              accessToken: mfaData.data.access_token,
-              role: user.role ?? user.account_type ?? user.permission ?? 'member',
-              tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
-            } as any;
+            const mfaErrorMessage = mfaData.detail || mfaData.error?.message || 'Invalid multi-factor authentication code';
+            if (mfaErrorMessage === 'Invalid or expired MFA challenge') {
+              console.warn('[NextAuth] Stale MFA challenge detected; retrying primary login flow');
+            } else {
+              throw new Error(mfaErrorMessage);
+            }
           }
 
           console.log('[NextAuth] Attempting login to:', `${API_BASE}/auth/login`);
