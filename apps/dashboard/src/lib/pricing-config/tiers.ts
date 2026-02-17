@@ -16,10 +16,31 @@ import type {
   PricingConfig,
 } from './types';
 
+/**
+ * Encypher Publisher Pricing — Freemium Model (Feb 2026)
+ *
+ * Source of truth for all pricing across:
+ * - Marketing site
+ * - Dashboard
+ * - Billing service (reference)
+ *
+ * Model: Free infrastructure → Paid enforcement tools → Licensing revenue share
+ *
+ * @see docs/new_publisher_pricing_model_feb_2026.md
+ */
+
+// ---------------------------------------------------------------------------
+// Licensing Revenue Share — flat across ALL tiers
+// ---------------------------------------------------------------------------
+
 export const LICENSING_REV_SHARE: LicensingRevShare = {
   coalition: { publisher: 60, encypher: 40 },
   selfService: { publisher: 80, encypher: 20 },
 };
+
+// ---------------------------------------------------------------------------
+// Free Tier — Full Signing Infrastructure
+// ---------------------------------------------------------------------------
 
 export const FREE_TIER: FreeTierConfig = {
   id: 'free',
@@ -55,7 +76,12 @@ export const FREE_TIER: FreeTierConfig = {
   target: 'Individual bloggers, small to mid-size publishers, independent media, academic researchers, content marketing teams, WordPress site owners',
 };
 
+// ---------------------------------------------------------------------------
+// Freemium Add-Ons — self-service, no sales call required
+// ---------------------------------------------------------------------------
+
 export const ADD_ONS: AddOnConfig[] = [
+  // --- Enforcement Add-Ons ---
   {
     id: 'attribution-analytics',
     name: 'Attribution Analytics',
@@ -103,12 +129,14 @@ export const ADD_ONS: AddOnConfig[] = [
     ],
     comingSoon: true,
   },
+
+  // --- Infrastructure Add-Ons ---
   {
     id: 'custom-signing-identity',
     name: 'Custom Signing Identity',
     category: 'infrastructure',
-    priceMonthly: 499,
-    description: 'Sign content as your brand instead of "Encypher Coalition Member." Your name and logo on every verification page.',
+    priceMonthly: 9,
+    description: 'Unlock a custom signer label for your verified organization identity in signed and verified content.',
   },
   {
     id: 'white-label-verification',
@@ -132,6 +160,8 @@ export const ADD_ONS: AddOnConfig[] = [
     priceMonthly: 499,
     description: 'Use your organization\'s existing PKI infrastructure and signing certificates. Validated against C2PA trust list.',
   },
+
+  // --- Operations Add-Ons ---
   {
     id: 'bulk-archive-backfill',
     name: 'Bulk Archive Backfill',
@@ -159,6 +189,10 @@ export const ADD_ONS: AddOnConfig[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Bundles
+// ---------------------------------------------------------------------------
+
 export const BUNDLES: BundleConfig[] = [
   {
     id: 'enforcement-bundle',
@@ -176,13 +210,13 @@ export const BUNDLES: BundleConfig[] = [
   {
     id: 'publisher-identity',
     name: 'Publisher Identity',
-    priceMonthly: 749,
+    priceMonthly: 329,
     includes: [
-      'Custom Signing Identity ($499/mo value)',
+      'Custom Signing Identity ($9/mo value)',
       'White-Label Verification ($299/mo value)',
       'Custom Verification Domain ($29/mo value)',
     ],
-    savings: '7%',
+    savings: '2%',
     description: 'Professional brand presence on all verification pages and signed content.',
   },
   {
@@ -198,6 +232,10 @@ export const BUNDLES: BundleConfig[] = [
     comingSoon: true,
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Enterprise Tier
+// ---------------------------------------------------------------------------
 
 export const ENTERPRISE_TIER: EnterpriseConfig = {
   id: 'enterprise',
@@ -243,12 +281,16 @@ export const ENTERPRISE_TIER: EnterpriseConfig = {
   ],
   foundingCoalition: [
     'Implementation fee waived',
-    'Same 60/40 and 80/20 licensing splits',
+    'Same licensing revenue splits as all tiers',
     'Syracuse Symposium seat — define market licensing frameworks',
     'Advisory board participation',
     'Priority coalition positioning in all licensing negotiations',
   ],
 };
+
+// ---------------------------------------------------------------------------
+// Complete pricing configuration
+// ---------------------------------------------------------------------------
 
 export const PRICING_CONFIG: PricingConfig = {
   freeTier: FREE_TIER,
@@ -258,34 +300,46 @@ export const PRICING_CONFIG: PricingConfig = {
   revShare: LICENSING_REV_SHARE,
 };
 
+// ---------------------------------------------------------------------------
+// Helper functions
+// ---------------------------------------------------------------------------
+
+/** Get the free tier configuration */
 export function getFreeTier(): FreeTierConfig {
   return FREE_TIER;
 }
 
+/** Get the enterprise tier configuration */
 export function getEnterpriseTier(): EnterpriseConfig {
   return ENTERPRISE_TIER;
 }
 
+/** Get all add-ons */
 export function getAllAddOns(): AddOnConfig[] {
   return ADD_ONS;
 }
 
+/** Get add-ons by category */
 export function getAddOnsByCategory(category: AddOnConfig['category']): AddOnConfig[] {
   return ADD_ONS.filter(a => a.category === category);
 }
 
+/** Get a specific add-on by ID */
 export function getAddOn(id: string): AddOnConfig | undefined {
   return ADD_ONS.find(a => a.id === id);
 }
 
+/** Get all bundles */
 export function getAllBundles(): BundleConfig[] {
   return BUNDLES;
 }
 
+/** Get a specific bundle by ID */
 export function getBundle(id: string): BundleConfig | undefined {
   return BUNDLES.find(b => b.id === id);
 }
 
+/** Format add-on price for display */
 export function formatAddOnPrice(addOn: AddOnConfig): string {
   if (addOn.priceMonthly > 0) {
     return `$${addOn.priceMonthly}/mo`;
@@ -296,10 +350,12 @@ export function formatAddOnPrice(addOn: AddOnConfig): string {
   return 'Free';
 }
 
+/** Format bundle price for display */
 export function formatBundlePrice(bundle: BundleConfig): string {
   return `$${bundle.priceMonthly}/mo`;
 }
 
+/** Format revenue share for display */
 export function formatRevShare(type: 'coalition' | 'selfService'): string {
   const share = LICENSING_REV_SHARE[type];
   return `${share.publisher}/${share.encypher}`;

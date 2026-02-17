@@ -12,7 +12,7 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
-from ...db.models import User
+from ...db.models import User, OrganizationDomainClaim
 from ...db.session import get_db
 from ...core.config import settings
 from ...services.organization_service import OrganizationService
@@ -25,6 +25,14 @@ from encypher_commercial_shared.email import EmailConfig
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 logger = logging.getLogger(__name__)
+SIGNING_IDENTITY_MODE_ORGANIZATION_NAME = "organization_name"
+SIGNING_IDENTITY_MODE_ORGANIZATION_AND_AUTHOR = "organization_and_author"
+SIGNING_IDENTITY_MODE_CUSTOM = "custom"
+ALLOWED_SIGNING_IDENTITY_MODES = {
+    SIGNING_IDENTITY_MODE_ORGANIZATION_NAME,
+    SIGNING_IDENTITY_MODE_ORGANIZATION_AND_AUTHOR,
+    SIGNING_IDENTITY_MODE_CUSTOM,
+}
 
 
 def _get_email_config() -> EmailConfig:
@@ -160,13 +168,11 @@ async def _send_invitation_email(
                 headers={"Authorization": authorization},
             )
             if response.status_code >= 400:
-                logger.warning(
-                    "invitation_email_failed",
-                    status=response.status_code,
-                    response=response.text,
-                )
+                logger.warning("invitation_email_failed status=%s response=%s", response.status_code, response.text)
     except httpx.RequestError as exc:
-        logger.warning("invitation_email_request_failed", error=str(exc))
+        logger.warning("invitation_email_request_failed error=%s", str(exc))
+    except Exception as exc:
+        logger.exception("invitation_email_unexpected_error error=%s", str(exc))
 
 
 async def _send_domain_claim_email(
@@ -213,13 +219,11 @@ async def _send_domain_claim_email(
                 headers={"Authorization": authorization},
             )
             if response.status_code >= 400:
-                logger.warning(
-                    "domain_claim_email_failed",
-                    status=response.status_code,
-                    response=response.text,
-                )
+                logger.warning("domain_claim_email_failed status=%s response=%s", response.status_code, response.text)
     except httpx.RequestError as exc:
-        logger.warning("domain_claim_email_request_failed", error=str(exc))
+        logger.warning("domain_claim_email_request_failed error=%s", str(exc))
+    except Exception as exc:
+        logger.exception("domain_claim_email_unexpected_error error=%s", str(exc))
 
 
 # ==========================================
@@ -261,7 +265,10 @@ class OrganizationResponse(BaseModel):
     email: str
     account_type: Optional[str] = None
     display_name: Optional[str] = None
+    signing_identity_mode: Optional[str] = None
+    signing_identity_custom_label: Optional[str] = None
     anonymous_publisher: bool = False
+    add_ons: Optional[dict] = None
     tier: str
     trial_tier: Optional[str] = None
     trial_months: Optional[int] = None
@@ -618,13 +625,18 @@ async def create_domain_claim(
         )
         org = org_service.get_organization(org_id)
         if org:
-            await _send_domain_claim_email(
-                authorization=request.headers.get("Authorization", ""),
-                recipient_email=claim.verification_email,
-                organization_name=org.name,
-                domain=claim.domain,
-                email_token=claim.email_token,
-            )
+            try:
+                await _send_domain_claim_email(
+                    authorization=request.headers.get("Authorization", ""),
+                    recipient_email=claim.verification_email,
+                    organization_name=org.name,
+                    domain=claim.domain,
+                    email_token=claim.email_token,
+                )
+            except Exception as exc:
+                # Domain claims are persisted before notification dispatch; email failures
+                # should not fail claim creation.
+                logger.exception("domain_claim_email_dispatch_failed claim_id=%s error=%s", claim.id, str(exc))
 
         response = DomainClaimResponse.model_validate(claim).model_dump()
         response["dns_txt_record"] = f"encypher-domain-claim={claim.dns_token}"
@@ -1207,6 +1219,7 @@ async def create_audit_log(
 class PublisherSettingsUpdate(BaseModel):
     """Request to update publisher identity settings"""
     display_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    signing_identity_mode: Optional[str] = Field(None, min_length=1, max_length=64)
     anonymous_publisher: Optional[bool] = None
 
 
@@ -1232,10 +1245,60 @@ async def update_publisher_settings(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
     changes = {}
+    if payload.signing_identity_mode is not None:
+        requested_mode = payload.signing_identity_mode.strip().lower()
+        if requested_mode not in ALLOWED_SIGNING_IDENTITY_MODES:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid signing identity mode")
+    else:
+        requested_mode = None
+
+    if org.account_type == "organization" and (payload.display_name is not None or requested_mode is not None):
+        verified_claim = (
+            db.query(OrganizationDomainClaim)
+            .filter(
+                OrganizationDomainClaim.organization_id == org_id,
+                OrganizationDomainClaim.status == "verified",
+            )
+            .first()
+        )
+        if not verified_claim:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verify at least one organization domain before setting publisher display name.",
+            )
+
+    if requested_mode is not None:
+        is_custom_mode = requested_mode == SIGNING_IDENTITY_MODE_CUSTOM
+        has_custom_add_on = bool((org.add_ons or {}).get("custom-signing-identity"))
+        has_custom_entitlement = org.tier in {"enterprise", "strategic_partner"} or has_custom_add_on
+        if is_custom_mode and not has_custom_entitlement:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Custom signing identity requires the Custom Signing Identity add-on.",
+            )
+
+        org.signing_identity_mode = requested_mode
+        changes["signing_identity_mode"] = org.signing_identity_mode
+        if requested_mode != SIGNING_IDENTITY_MODE_CUSTOM:
+            org.signing_identity_custom_label = None
+            changes["signing_identity_custom_label"] = None
+
     if payload.display_name is not None:
         cleaned_display_name = payload.display_name.strip()
         if not cleaned_display_name:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Display name cannot be empty")
+
+        resolved_mode = requested_mode or org.signing_identity_mode or SIGNING_IDENTITY_MODE_ORGANIZATION_NAME
+        if resolved_mode == SIGNING_IDENTITY_MODE_CUSTOM:
+            has_custom_add_on = bool((org.add_ons or {}).get("custom-signing-identity"))
+            has_custom_entitlement = org.tier in {"enterprise", "strategic_partner"} or has_custom_add_on
+            if not has_custom_entitlement:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Custom signing identity requires the Custom Signing Identity add-on.",
+                )
+            org.signing_identity_custom_label = cleaned_display_name
+            changes["signing_identity_custom_label"] = org.signing_identity_custom_label
 
         org.display_name = cleaned_display_name
         if not org.name:
@@ -1262,6 +1325,10 @@ async def update_publisher_settings(
         "data": {
             "display_name": org.display_name,
             "account_type": org.account_type,
+            "signing_identity_mode": org.signing_identity_mode,
+            "signing_identity_custom_label": org.signing_identity_custom_label,
+            "custom_signing_identity_enabled": bool((org.add_ons or {}).get("custom-signing-identity"))
+            or org.tier in {"enterprise", "strategic_partner"},
             "anonymous_publisher": org.anonymous_publisher,
         },
         "error": None,

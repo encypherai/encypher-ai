@@ -20,10 +20,16 @@ import { LICENSING_REV_SHARE } from './tiers';
  * @see docs/new_publisher_pricing_model_feb_2026.md
  */
 
+/**
+ * Get the licensing revenue share configuration
+ */
 export function getRevShare(): LicensingRevShare {
   return LICENSING_REV_SHARE;
 }
 
+/**
+ * Calculate publisher earnings from a gross licensing amount
+ */
 export function calculatePublisherEarnings(
   grossAmount: number,
   track: 'coalition' | 'selfService'
@@ -35,12 +41,18 @@ export function calculatePublisherEarnings(
   };
 }
 
+/**
+ * Coalition value proposition — single message for all publishers
+ */
 export const COALITION_VALUE_PROP = {
   headline: 'Free to sign. Paid to enforce. Aligned on outcomes.',
   subheadline: 'Every signed document strengthens the coalition. We only charge for enforcement tools — and we only win when you win.',
   philosophy: 'Every signed document strengthens the coalition. Every publisher in the network increases leverage for all members. We don\'t charge for signing because signing is the supply that makes the marketplace valuable. We charge for the tools that extract value from the network — enforcement, evidence, analytics, and identity.',
 } as const;
 
+/**
+ * Two-track licensing explanation
+ */
 export const LICENSING_TRACKS = {
   coalition: {
     name: 'Coalition Deals',
@@ -54,6 +66,9 @@ export const LICENSING_TRACKS = {
   },
 } as const;
 
+/**
+ * Worked examples from the pricing doc — for marketing/sales
+ */
 export const WORKED_EXAMPLES = {
   midSizePublisher: {
     title: 'Mid-Size Publisher (~$10M/year) — Self-Service Track',

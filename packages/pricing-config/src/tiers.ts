@@ -126,8 +126,8 @@ export const ADD_ONS: AddOnConfig[] = [
     id: 'custom-signing-identity',
     name: 'Custom Signing Identity',
     category: 'infrastructure',
-    priceMonthly: 499,
-    description: 'Sign content as your brand instead of "Encypher Coalition Member." Your name and logo on every verification page.',
+    priceMonthly: 9,
+    description: 'Unlock a custom signer label for your verified organization identity in signed and verified content.',
   },
   {
     id: 'white-label-verification',
@@ -201,13 +201,13 @@ export const BUNDLES: BundleConfig[] = [
   {
     id: 'publisher-identity',
     name: 'Publisher Identity',
-    priceMonthly: 749,
+    priceMonthly: 329,
     includes: [
-      'Custom Signing Identity ($499/mo value)',
+      'Custom Signing Identity ($9/mo value)',
       'White-Label Verification ($299/mo value)',
       'Custom Verification Domain ($29/mo value)',
     ],
-    savings: '7%',
+    savings: '2%',
     description: 'Professional brand presence on all verification pages and signed content.',
   },
   {

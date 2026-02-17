@@ -44,6 +44,12 @@ export function buildRequestObject(endpointId, values) {
     return { text };
   }
 
+  if (endpointId === 'verify-advanced') {
+    const text = preserveExactString(values.text);
+    if (!text) throw new Error('verify-advanced.text is required');
+    return { text };
+  }
+
   if (endpointId === 'lookup') {
     const sentence_text = normalizeString(values.sentence_text);
     if (!sentence_text) throw new Error('lookup.sentence_text is required');
@@ -57,10 +63,9 @@ export function buildRequestObject(endpointId, values) {
     const document_title = normalizeString(values.document_title);
     const template_id = normalizeString(values.template_id);
 
-    // Build options object
+    // Build options object for advanced fields.
     const options = {};
     const document_type = normalizeString(values.document_type);
-    if (document_type) options.document_type = document_type;
     const segmentation_level = normalizeString(values.segmentation_level);
     if (segmentation_level) options.segmentation_level = segmentation_level;
     const manifest_mode = normalizeString(values.manifest_mode);
@@ -71,6 +76,7 @@ export function buildRequestObject(endpointId, values) {
     return {
       text,
       ...(document_title ? { document_title } : {}),
+      ...(document_type ? { document_type } : {}),
       ...(template_id ? { template_id } : {}),
       ...(Object.keys(options).length > 0 ? { options } : {}),
     };
@@ -104,7 +110,7 @@ export function parseRequestBodyJson(endpointId, json) {
 
   if (!parsed || typeof parsed !== 'object') return null;
 
-  if (endpointId === 'verify') {
+  if (endpointId === 'verify' || endpointId === 'verify-advanced') {
     return {
       text: typeof parsed.text === 'string' ? parsed.text : '',
     };
@@ -118,14 +124,18 @@ export function parseRequestBodyJson(endpointId, json) {
 
   if (endpointId === 'sign') {
     const opts = (parsed.options && typeof parsed.options === 'object') ? parsed.options : {};
+    const segmentation_level = typeof opts.segmentation_level === 'string' ? opts.segmentation_level : '';
+    const manifest_mode = typeof opts.manifest_mode === 'string' ? opts.manifest_mode : '';
+    const embedding_strategy = typeof opts.embedding_strategy === 'string' ? opts.embedding_strategy : '';
+
     return {
       text: typeof parsed.text === 'string' ? parsed.text : '',
       document_title: typeof parsed.document_title === 'string' ? parsed.document_title : '',
       document_type: typeof opts.document_type === 'string' ? opts.document_type : (typeof parsed.document_type === 'string' ? parsed.document_type : ''),
       template_id: typeof parsed.template_id === 'string' ? parsed.template_id : '',
-      segmentation_level: typeof opts.segmentation_level === 'string' ? opts.segmentation_level : '',
-      manifest_mode: typeof opts.manifest_mode === 'string' ? opts.manifest_mode : '',
-      embedding_strategy: typeof opts.embedding_strategy === 'string' ? opts.embedding_strategy : '',
+      ...(segmentation_level ? { segmentation_level } : {}),
+      ...(manifest_mode ? { manifest_mode } : {}),
+      ...(embedding_strategy ? { embedding_strategy } : {}),
     };
   }
 

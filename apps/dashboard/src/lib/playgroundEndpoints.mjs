@@ -58,6 +58,25 @@ export const PLAYGROUND_ENDPOINTS = [
     ),
   },
   {
+    id: 'verify-advanced',
+    name: 'Verify Content (Advanced)',
+    method: 'POST',
+    path: '/verify/advanced',
+    description: 'Advanced verification with enriched provenance and policy diagnostics.',
+    category: 'Verification',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'enterprise',
+    docsUrl: 'https://api.encypherai.com/docs',
+    sampleBody: JSON.stringify(
+      {
+        text: 'Paste signed content here to verify with advanced diagnostics...',
+      },
+      null,
+      2
+    ),
+  },
+  {
     id: 'stream-sign',
     name: 'Stream Sign (SSE)',
     method: 'POST',
@@ -66,6 +85,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Streaming',
     requiresAuth: true,
     authType: 'apikey',
+    minTier: 'enterprise',
     docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify(
       {
@@ -86,6 +106,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Streaming',
     requiresAuth: true,
     authType: 'apikey',
+    minTier: 'enterprise',
     docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify(
       {
@@ -122,6 +143,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Streaming',
     requiresAuth: true,
     authType: 'apikey',
+    minTier: 'enterprise',
     docsUrl: 'https://api.encypherai.com/docs',
   },
   {
@@ -133,6 +155,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Streaming',
     requiresAuth: true,
     authType: 'apikey',
+    minTier: 'enterprise',
     docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify(
       {
@@ -190,6 +213,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Status & Revocation',
     requiresAuth: true,
     authType: 'apikey',
+    minTier: 'enterprise',
     docsUrl: 'https://api.encypherai.com/docs',
   },
   {
@@ -201,6 +225,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Status & Revocation',
     requiresAuth: true,
     authType: 'apikey',
+    minTier: 'enterprise',
     docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify(
       {
@@ -220,6 +245,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Status & Revocation',
     requiresAuth: true,
     authType: 'apikey',
+    minTier: 'enterprise',
     docsUrl: 'https://api.encypherai.com/docs',
   },
   {

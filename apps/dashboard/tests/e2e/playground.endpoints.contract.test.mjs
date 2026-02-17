@@ -12,7 +12,7 @@ describe('Playground endpoint catalog (contract)', () => {
     assert.equal(statusDocument.method, 'GET');
     assert.equal(statusDocument.path, '/status/documents/{document_id}');
     assert.equal(statusDocument.requiresAuth, true);
-    assert.equal(statusDocument.minTier, 'professional');
+    assert.equal(statusDocument.minTier, 'enterprise');
     assert.equal(statusDocument.category, 'Status & Revocation');
 
     const revoke = findById('status-revoke');
@@ -20,7 +20,7 @@ describe('Playground endpoint catalog (contract)', () => {
     assert.equal(revoke.method, 'POST');
     assert.equal(revoke.path, '/status/documents/{document_id}/revoke');
     assert.equal(revoke.requiresAuth, true);
-    assert.equal(revoke.minTier, 'professional');
+    assert.equal(revoke.minTier, 'enterprise');
     assert.equal(revoke.category, 'Status & Revocation');
     assert.ok(revoke.sampleBody, 'status-revoke sample body missing');
     const revokeSample = JSON.parse(revoke.sampleBody);
@@ -31,7 +31,7 @@ describe('Playground endpoint catalog (contract)', () => {
     assert.equal(reinstate.method, 'POST');
     assert.equal(reinstate.path, '/status/documents/{document_id}/reinstate');
     assert.equal(reinstate.requiresAuth, true);
-    assert.equal(reinstate.minTier, 'professional');
+    assert.equal(reinstate.minTier, 'enterprise');
     assert.equal(reinstate.category, 'Status & Revocation');
 
     const statusList = findById('status-list');
@@ -50,7 +50,7 @@ describe('Playground endpoint catalog (contract)', () => {
     assert.equal(verifyAdvanced.requiresAuth, true);
     assert.equal(verifyAdvanced.authType, 'apikey');
     assert.equal(verifyAdvanced.category, 'Verification');
-    assert.equal(verifyAdvanced.minTier, 'professional');
+    assert.equal(verifyAdvanced.minTier, 'enterprise');
     assert.ok(verifyAdvanced.sampleBody, 'verify-advanced sample body missing');
     const sample = JSON.parse(verifyAdvanced.sampleBody);
     assert.ok(sample.text, 'verify-advanced sample body missing text');
@@ -62,7 +62,7 @@ describe('Playground endpoint catalog (contract)', () => {
     assert.equal(streamSign.method, 'POST');
     assert.equal(streamSign.path, '/sign/stream');
     assert.equal(streamSign.requiresAuth, true);
-    assert.equal(streamSign.minTier, 'professional');
+    assert.equal(streamSign.minTier, 'enterprise');
     assert.equal(streamSign.category, 'Streaming');
     assert.ok(streamSign.sampleBody, 'stream-sign sample body missing');
 
@@ -71,7 +71,7 @@ describe('Playground endpoint catalog (contract)', () => {
     assert.equal(streamChatOpenai.method, 'POST');
     assert.equal(streamChatOpenai.path, '/chat/completions');
     assert.equal(streamChatOpenai.requiresAuth, true);
-    assert.equal(streamChatOpenai.minTier, 'professional');
+    assert.equal(streamChatOpenai.minTier, 'enterprise');
     assert.equal(streamChatOpenai.category, 'Streaming');
 
     const streamChatHealth = findById('stream-chat-health');
@@ -86,7 +86,7 @@ describe('Playground endpoint catalog (contract)', () => {
     assert.equal(streamSessionCreate.method, 'POST');
     assert.equal(streamSessionCreate.path, '/sign/stream/sessions');
     assert.equal(streamSessionCreate.requiresAuth, true);
-    assert.equal(streamSessionCreate.minTier, 'professional');
+    assert.equal(streamSessionCreate.minTier, 'enterprise');
     assert.equal(streamSessionCreate.category, 'Streaming');
   });
 });

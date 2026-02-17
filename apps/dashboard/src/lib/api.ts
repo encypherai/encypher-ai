@@ -102,7 +102,10 @@ interface OrganizationInfo {
   email: string;
   account_type?: AccountType | null;
   display_name?: string | null;
+  signing_identity_mode?: SigningIdentityMode | null;
+  signing_identity_custom_label?: string | null;
   anonymous_publisher?: boolean;
+  add_ons?: Record<string, unknown>;
   tier: string;
   max_seats: number;
   subscription_status: string;
@@ -324,8 +327,13 @@ interface SetupStatusResponse {
 interface PublisherSettings {
   display_name: string | null;
   account_type: AccountType | null;
+  signing_identity_mode?: SigningIdentityMode | null;
+  signing_identity_custom_label?: string | null;
+  custom_signing_identity_enabled?: boolean;
   anonymous_publisher: boolean;
 }
+
+type SigningIdentityMode = 'organization_name' | 'organization_and_author' | 'custom';
 
 interface MfaStatusResponse {
   totp_enabled: boolean;
@@ -1453,7 +1461,7 @@ const apiClient = {
   async updatePublisherSettings(
     accessToken: string,
     orgId: string,
-    data: { display_name?: string; anonymous_publisher?: boolean }
+    data: { display_name?: string; signing_identity_mode?: SigningIdentityMode; anonymous_publisher?: boolean }
   ): Promise<PublisherSettings> {
     const response = await fetchWithAuth<{ success: boolean; data: PublisherSettings }>(
       `${AUTH_SERVICE_URL}/organizations/${orgId}/publisher-settings`,

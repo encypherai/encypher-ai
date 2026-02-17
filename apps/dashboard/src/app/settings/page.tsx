@@ -42,6 +42,8 @@ const defaultNotifications = {
   marketingEmails: true,  // Default to true - users can opt-out
 };
 
+type SigningIdentityMode = 'organization_name' | 'organization_and_author' | 'custom';
+
 const normalizeProfile = (raw: any): Profile => ({
   name: raw?.name ?? '',
   email: raw?.email ?? '',
@@ -80,6 +82,7 @@ export default function SettingsPage() {
   const [domainName, setDomainName] = useState('');
   const [domainEmail, setDomainEmail] = useState('');
   const [publisherDisplayName, setPublisherDisplayName] = useState('');
+  const [signingIdentityMode, setSigningIdentityMode] = useState<SigningIdentityMode>('organization_name');
   const [anonymousPublisher, setAnonymousPublisher] = useState(false);
   const [totpCode, setTotpCode] = useState('');
   const [totpDisableCode, setTotpDisableCode] = useState('');
@@ -229,13 +232,14 @@ export default function SettingsPage() {
     mutationFn: async () => {
       if (!accessToken || !orgId) throw new Error('You must be signed in.');
 
-      const trimmedName = publisherDisplayName.trim();
-      if (!trimmedName) {
-        throw new Error('Display name cannot be empty.');
+      const customLabel = publisherDisplayName.trim();
+      if (signingIdentityMode === 'custom' && !customLabel) {
+        throw new Error('Custom signing identity label cannot be empty.');
       }
 
       return apiClient.updatePublisherSettings(accessToken, orgId, {
-        display_name: trimmedName,
+        ...(signingIdentityMode === 'custom' ? { display_name: customLabel } : {}),
+        signing_identity_mode: signingIdentityMode,
         anonymous_publisher: anonymousPublisher,
       });
     },
@@ -277,9 +281,24 @@ export default function SettingsPage() {
   }, [profileQuery.data]);
 
   useEffect(() => {
-    setPublisherDisplayName(activeOrganization?.display_name ?? activeOrganization?.name ?? '');
+    const resolvedMode = (activeOrganization?.signing_identity_mode as SigningIdentityMode | undefined) ?? 'organization_name';
+    setSigningIdentityMode(resolvedMode);
+    setPublisherDisplayName(
+      activeOrganization?.signing_identity_custom_label ?? activeOrganization?.display_name ?? activeOrganization?.name ?? ''
+    );
     setAnonymousPublisher(Boolean(activeOrganization?.anonymous_publisher));
   }, [activeOrganization]);
+
+  const hasCustomSigningIdentityEntitlement =
+    activeOrganization?.tier === 'enterprise' || Boolean(activeOrganization?.add_ons?.['custom-signing-identity']);
+
+  const signingIdentityPreview = (() => {
+    const baseName = activeOrganization?.display_name || activeOrganization?.name || 'Your organization';
+    if (anonymousPublisher) return orgId || baseName;
+    if (signingIdentityMode === 'custom') return publisherDisplayName.trim() || baseName;
+    if (signingIdentityMode === 'organization_and_author') return `Author Name · ${baseName}`;
+    return baseName;
+  })();
 
   const updateProfileMutation = useMutation({
     mutationFn: async (changes: Profile) => {
@@ -874,13 +893,35 @@ export default function SettingsPage() {
 
                         <form className="space-y-4" onSubmit={handlePublisherSettingsSave}>
                           <div>
-                            <label className="block text-sm font-medium mb-2">Display name</label>
-                            <Input
-                              value={publisherDisplayName}
-                              onChange={(e) => setPublisherDisplayName(e.target.value)}
-                              placeholder="e.g. Sarah Chen or The Verge"
-                            />
+                            <label className="block text-sm font-medium mb-2">Signing identity mode</label>
+                            <select
+                              value={signingIdentityMode}
+                              onChange={(e) => setSigningIdentityMode(e.target.value as SigningIdentityMode)}
+                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            >
+                              <option value="organization_name">Use verified organization name</option>
+                              <option value="organization_and_author">Use author + organization</option>
+                              <option value="custom" disabled={!hasCustomSigningIdentityEntitlement}>
+                                Custom signing identity {!hasCustomSigningIdentityEntitlement ? '(requires add-on)' : ''}
+                              </option>
+                            </select>
+                            {!hasCustomSigningIdentityEntitlement && (
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Custom Signing Identity add-on is available for $9/month.
+                              </p>
+                            )}
                           </div>
+
+                          {signingIdentityMode === 'custom' && (
+                            <div>
+                              <label className="block text-sm font-medium mb-2">Custom label</label>
+                              <Input
+                                value={publisherDisplayName}
+                                onChange={(e) => setPublisherDisplayName(e.target.value)}
+                                placeholder="e.g. Encypher Editorial"
+                              />
+                            </div>
+                          )}
 
                           <label className="flex items-start gap-3 text-sm">
                             <input
@@ -898,7 +939,7 @@ export default function SettingsPage() {
                           </label>
 
                           <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
-                            Preview: {anonymousPublisher ? orgId : (publisherDisplayName.trim() || activeOrganization?.name)}
+                            Preview: {signingIdentityPreview}
                           </div>
 
                           <Button type="submit" variant="primary" disabled={updatePublisherSettingsMutation.isPending}>

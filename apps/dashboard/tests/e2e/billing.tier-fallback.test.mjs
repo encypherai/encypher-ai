@@ -12,7 +12,8 @@ describe('Dashboard Billing (tier fallback)', () => {
 
     assert.match(source, /useSearchParams\s*\(/);
     assert.match(source, /success|upgrade/);
-    assert.match(source, /getTier\(/);
+    assert.match(source, /subscription\.tier\s*!==\s*'unknown'/);
+    assert.match(source, /\['starter',\s*'free',\s*'basic'\]\.includes\(rawTier\)/);
     assert.match(source, /unknown/i);
   });
 });

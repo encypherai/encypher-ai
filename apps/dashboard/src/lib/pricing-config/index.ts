@@ -16,7 +16,7 @@
  * - Freemium add-ons (enforcement, infrastructure, operations)
  * - Bundles (Enforcement, Publisher Identity, Full Stack)
  * - Enterprise tier (custom implementation)
- * - Licensing revenue share (60/40 coalition, 80/20 self-service)
+ * - Licensing revenue share (majority to publisher)
  *
  * Used by:
  * - apps/marketing-site (pricing page)

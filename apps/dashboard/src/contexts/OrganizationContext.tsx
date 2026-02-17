@@ -10,7 +10,10 @@ interface Organization {
   email: string;
   account_type?: 'individual' | 'organization' | null;
   display_name?: string | null;
+  signing_identity_mode?: 'organization_name' | 'organization_and_author' | 'custom' | null;
+  signing_identity_custom_label?: string | null;
   anonymous_publisher?: boolean;
+  add_ons?: Record<string, unknown>;
   tier: string;
   max_seats: number;
   subscription_status: string;
