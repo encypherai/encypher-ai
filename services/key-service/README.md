@@ -146,6 +146,7 @@ See `.env.example` for all available configuration options.
 - `REDIS_URL` - Redis connection string
 - `KEY_PREFIX` - Prefix for generated keys (default: ency_)
 - `KEY_LENGTH` - Length of random part (default: 32)
+- `SUPERADMIN_PUBLISHER_DISPLAY_NAME` - Publisher identity label used for user-level super-admin keys (default: `Encypher Publisher`)
 
 ## Architecture
 

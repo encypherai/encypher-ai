@@ -510,14 +510,21 @@ class KeyService:
             if result.user_id in SUPERADMIN_USER_IDS:
                 is_super_admin = True
 
+            configured_superadmin_identity = (settings.SUPERADMIN_PUBLISHER_DISPLAY_NAME or "").strip()
+            user_level_identity = configured_superadmin_identity if is_super_admin and configured_superadmin_identity else "Personal Account"
+            user_level_account_type = "organization" if is_super_admin else "individual"
+
             return {
                 "key_id": result.key_id,
                 "user_id": result.user_id,
                 "organization_id": f"user_{result.user_id}",  # Synthetic org ID
-                "organization_name": "Personal Account",
+                "organization_name": user_level_identity,
                 "tier": "enterprise" if is_super_admin else "starter",  # Superadmins get enterprise tier
                 "is_demo": True,  # Allow using demo private key for signing
                 "certificate_pem": None,
+                "account_type": user_level_account_type,
+                "display_name": user_level_identity,
+                "anonymous_publisher": False,
                 "features": {
                     "team_management": is_super_admin,
                     "audit_logs": is_super_admin,

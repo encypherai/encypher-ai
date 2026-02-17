@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     # ===========================================
     KEY_PREFIX: str = "ency_"
     KEY_LENGTH: int = 32
+    SUPERADMIN_PUBLISHER_DISPLAY_NAME: str = "Encypher Publisher"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -7,6 +7,8 @@ Uses async fixtures from conftest.py for proper database and auth handling.
 import pytest
 from httpx import AsyncClient
 
+from app.routers.account import resolve_user_account_name
+
 
 @pytest.mark.asyncio
 class TestGetAccountInfo:
@@ -50,6 +52,23 @@ class TestGetAccountInfo:
             features = data["data"]["features"]
             assert features["merkle_enabled"] is True
             assert features["byok_enabled"] is True
+
+
+class TestResolveUserAccountName:
+    def test_prefers_publisher_display_name(self):
+        assert (
+            resolve_user_account_name(
+                {
+                    "display_name": "Encypher Publisher",
+                    "organization_name": "Personal Account",
+                }
+            )
+            == "Encypher Publisher"
+        )
+
+    def test_falls_back_to_organization_name_then_default(self):
+        assert resolve_user_account_name({"organization_name": "Encypher Admin"}) == "Encypher Admin"
+        assert resolve_user_account_name({}) == "Personal Account"
 
 
 @pytest.mark.asyncio

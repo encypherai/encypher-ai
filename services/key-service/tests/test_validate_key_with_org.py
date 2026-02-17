@@ -120,3 +120,50 @@ def test_ensure_organization_certificate_calls_enterprise_api(monkeypatch) -> No
     assert payload["organization_name"] == "Test Org"
     assert headers["Authorization"] == "Bearer test"
     assert headers["X-Internal-Token"] == "internal-token"
+
+
+def test_user_level_super_admin_key_uses_configured_publisher_identity(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from app.core.config import settings
+    from app.services.key_service import KeyService
+
+    class _DummyResult:
+        def __init__(self, row):
+            self._row = row
+
+        def fetchone(self):
+            return self._row
+
+    class _DummyDB:
+        def __init__(self):
+            self.execute_calls = 0
+            self.row = SimpleNamespace(
+                key_id="key_superadmin",
+                organization_id=None,
+                user_id="a1621dd6-3298-473f-b2ad-232ca72c3df5",
+                key_permissions=["sign", "verify", "super_admin"],
+                is_active=True,
+                is_revoked=False,
+                expires_at=None,
+            )
+
+        def execute(self, *args, **kwargs):
+            self.execute_calls += 1
+            if self.execute_calls == 1:
+                return _DummyResult(self.row)
+            return _DummyResult(None)
+
+        def commit(self):
+            return None
+
+        def rollback(self):
+            return None
+
+    monkeypatch.setattr(settings, "SUPERADMIN_PUBLISHER_DISPLAY_NAME", "Encypher Publisher", raising=False)
+    result = KeyService.verify_key_with_org(_DummyDB(), "ency_" + ("a" * 32))
+
+    assert result is not None
+    assert result["organization_name"] == "Encypher Publisher"
+    assert result["display_name"] == "Encypher Publisher"
+    assert result["account_type"] == "organization"

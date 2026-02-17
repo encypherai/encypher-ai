@@ -18,6 +18,17 @@ from app.dependencies import get_current_organization
 router = APIRouter(prefix="/account", tags=["Account"])
 
 
+def resolve_user_account_name(organization: Dict[str, Any]) -> str:
+    """Resolve display name for user-level account contexts."""
+    if not isinstance(organization, dict):
+        return "Personal Account"
+    return (
+        organization.get("display_name")
+        or organization.get("organization_name")
+        or "Personal Account"
+    )
+
+
 # =============================================================================
 # Response Models
 # =============================================================================
@@ -128,7 +139,7 @@ async def get_account_info(
         return AccountResponse(
             data=AccountInfo(
                 organization_id=org_id,
-                name="Personal Account",
+                name=resolve_user_account_name(organization),
                 email=None,
                 tier=tier,
                 features=FeatureFlags(**features_dict),

@@ -1496,6 +1496,25 @@ curl -X POST https://api-staging.encypherai.com/api/v1/sign \
    LOCAL_API_TESTS=true uv run pytest enterprise_api/tests/e2e_local -m e2e
    ```
 
+### Publisher Identity Setup (Avoid "Personal Account" in Verification)
+
+To show a non-personal publisher name in verify responses and extension identity labels:
+
+1. **Use an organization-scoped API key when possible**
+   - Keys tied to an organization return organization identity fields directly.
+2. **Set your publishing identity in Dashboard**
+   - Open `dashboard.encypherai.com` → Settings → Publisher identity.
+   - Set a `display_name` (for example, your newsroom or brand name).
+   - For enterprise/custom identity, set signing identity mode to `custom` and define a custom label.
+3. **Confirm identity fields via API**
+   - Call `GET /api/v1/account` with your API key.
+   - Ensure `publisher_display_name` is populated with the intended organization label.
+4. **For user-level super-admin keys**
+   - Configure Key Service env var `SUPERADMIN_PUBLISHER_DISPLAY_NAME`.
+   - This value is used for synthetic user org contexts to avoid fallback to `Personal Account`.
+5. **Re-verify content**
+   - Run `POST /api/v1/verify` and confirm identity fields (`signing_identity`, `publisher_display_name`, `organization_name`) reflect the configured publisher name.
+
 ### Local Development Setup
 
 1. **Start Required Services:**
