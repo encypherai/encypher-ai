@@ -474,7 +474,9 @@ class OrganizationService:
             )
             .first()
         )
-        if existing_domain and existing_domain.organization_id != org_id:
+        if existing_domain:
+            if existing_domain.organization_id == org_id:
+                raise ValueError("This organization already has a pending or verified claim for this domain")
             raise ValueError("Domain is already claimed by another organization")
 
         dns_token = secrets.token_urlsafe(24)
@@ -579,6 +581,30 @@ class OrganizationService:
         self.db.commit()
         return claim
 
+    def delete_domain_claim(self, org_id: str, claim_id: str, actor_user_id: str) -> OrganizationDomainClaim:
+        """Delete a domain claim from an organization."""
+        if not self._has_permission(org_id, actor_user_id, ROLE_CAN_MANAGE_SETTINGS):
+            raise PermissionError("You don't have permission to manage domain claims")
+
+        claim = self.get_domain_claim(org_id, claim_id)
+        if not claim:
+            raise ValueError("Domain claim not found")
+
+        self._log_action(
+            org_id,
+            actor_user_id,
+            "domain_claim.deleted",
+            "domain_claim",
+            claim.id,
+            {
+                "domain": claim.domain,
+                "status": claim.status,
+            },
+        )
+        self.db.delete(claim)
+        self.db.commit()
+        return claim
+
     def get_auto_join_org_for_email(self, email: str) -> Optional[str]:
         """Return org_id for a verified domain with auto-join enabled."""
         if "@" not in email:
@@ -596,7 +622,7 @@ class OrganizationService:
         return claim.organization_id if claim else None
 
     def _refresh_domain_claim_status(self, claim: OrganizationDomainClaim) -> None:
-        if claim.dns_verified_at and claim.email_verified_at:
+        if claim.dns_verified_at:
             claim.status = "verified"
             if not claim.verified_at:
                 claim.verified_at = datetime.utcnow()

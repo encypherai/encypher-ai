@@ -410,12 +410,30 @@ export default function SettingsPage() {
       if (!accessToken || !orgId) throw new Error('You must be signed in.');
       return apiClient.verifyDomainClaimDns(accessToken, orgId, claimId);
     },
-    onSuccess: () => {
-      toast.success('DNS verification successful.');
+    onSuccess: (response) => {
+      if (response?.data?.status === 'verified') {
+        toast.success('Domain fully verified (DNS + email).');
+      } else {
+        toast.success('DNS verified. Finish email verification to complete domain verification.');
+      }
       domainClaimsQuery.refetch();
     },
     onError: (err: any) => {
       toast.error(err?.message || 'DNS verification failed.');
+    },
+  });
+
+  const deleteDomainClaimMutation = useMutation({
+    mutationFn: async (claimId: string) => {
+      if (!accessToken || !orgId) throw new Error('You must be signed in.');
+      return apiClient.deleteDomainClaim(accessToken, orgId, claimId);
+    },
+    onSuccess: () => {
+      toast.success('Domain claim removed.');
+      domainClaimsQuery.refetch();
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to remove domain claim.');
     },
   });
 
@@ -1006,6 +1024,15 @@ export default function SettingsPage() {
                                       disabled={verifyDnsMutation.isPending}
                                     >
                                       Verify DNS
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => deleteDomainClaimMutation.mutate(claim.id)}
+                                      disabled={deleteDomainClaimMutation.isPending}
+                                    >
+                                      Remove
                                     </Button>
                                     {claim.status === 'verified' && (
                                       <div className="flex items-center gap-2 text-sm">

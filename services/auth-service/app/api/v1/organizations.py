@@ -706,6 +706,30 @@ async def update_domain_auto_join(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
+@router.delete("/{org_id}/domain-claims/{claim_id}")
+async def delete_domain_claim(
+    org_id: str,
+    claim_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Delete a domain claim for an organization."""
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+
+    try:
+        claim = org_service.delete_domain_claim(org_id, claim_id, user_id)
+        return {
+            "success": True,
+            "data": DomainClaimResponse.model_validate(claim).model_dump(),
+            "error": None,
+        }
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+
+
 @router.get("/domain-claims/verify-email")
 async def verify_domain_email(token: str, db: Session = Depends(get_db)):
     """Verify a domain claim via email token (public endpoint)."""

@@ -313,6 +313,84 @@ async def test_create_domain_claim_succeeds_when_notification_dispatch_fails(mon
 
 
 @pytest.mark.asyncio
+async def test_create_domain_claim_dispatches_verification_email(monkeypatch):
+    db = MagicMock(spec=Session)
+    request = MagicMock()
+    request.headers = {"Authorization": "Bearer test-token"}
+
+    claim = MagicMock()
+    claim.id = "odc_456"
+    claim.organization_id = "org_123"
+    claim.domain = "encypherai.com"
+    claim.verification_email = "erik.svilich@encypherai.com"
+    claim.status = "pending"
+    claim.dns_token = "dns-token"
+    claim.email_token = "email-token"
+    claim.dns_verified_at = None
+    claim.email_verified_at = None
+    claim.verified_at = None
+    claim.auto_join_enabled = False
+    claim.created_at = datetime.utcnow()
+
+    org = MagicMock()
+    org.name = "Encypher"
+
+    monkeypatch.setattr(org_api, "get_current_user_id", AsyncMock(return_value="user_123"))
+
+    mock_service = MagicMock()
+    mock_service.create_domain_claim.return_value = claim
+    mock_service.get_organization.return_value = org
+    monkeypatch.setattr(org_api, "OrganizationService", MagicMock(return_value=mock_service))
+
+    send_mock = AsyncMock()
+    monkeypatch.setattr(org_api, "_send_domain_claim_email", send_mock)
+
+    payload = org_api.DomainClaimCreate(domain="encypherai.com", verification_email="erik.svilich@encypherai.com")
+    response = await org_api.create_domain_claim("org_123", payload, request, db, None)
+
+    assert response["success"] is True
+    send_mock.assert_awaited_once()
+    _, kwargs = send_mock.call_args
+    assert kwargs["authorization"] == "Bearer test-token"
+    assert kwargs["recipient_email"] == "erik.svilich@encypherai.com"
+    assert kwargs["organization_name"] == "Encypher"
+    assert kwargs["domain"] == "encypherai.com"
+    assert kwargs["email_token"] == "email-token"
+
+
+@pytest.mark.asyncio
+async def test_delete_domain_claim_endpoint_returns_deleted_claim(monkeypatch):
+    db = MagicMock(spec=Session)
+    request = MagicMock()
+    request.headers = {"Authorization": "Bearer test-token"}
+
+    claim = MagicMock()
+    claim.id = "odc_123"
+    claim.organization_id = "org_123"
+    claim.domain = "encypherai.com"
+    claim.verification_email = "admin@encypherai.com"
+    claim.status = "pending"
+    claim.dns_token = "dns-token"
+    claim.dns_verified_at = None
+    claim.email_verified_at = None
+    claim.verified_at = None
+    claim.auto_join_enabled = False
+    claim.created_at = datetime.utcnow()
+
+    monkeypatch.setattr(org_api, "get_current_user_id", AsyncMock(return_value="user_123"))
+
+    mock_service = MagicMock()
+    mock_service.delete_domain_claim.return_value = claim
+    monkeypatch.setattr(org_api, "OrganizationService", MagicMock(return_value=mock_service))
+
+    response = await org_api.delete_domain_claim("org_123", "odc_123", request, db)
+
+    assert response["success"] is True
+    assert response["data"]["id"] == "odc_123"
+    mock_service.delete_domain_claim.assert_called_once_with("org_123", "odc_123", "user_123")
+
+
+@pytest.mark.asyncio
 async def test_update_publisher_settings_requires_verified_domain_for_org_account(monkeypatch):
     db = MagicMock(spec=Session)
     request = MagicMock()
