@@ -1,7 +1,7 @@
 'use client';
 
 import { Input } from '@encypher/design-system';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import apiClient from '../../lib/api';
@@ -15,7 +15,7 @@ import MetadataBackground from '../../components/hero/MetadataBackground';
 const LOGO_COLOR = '/assets/encypher_full_logo_color.svg';
 const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -332,5 +332,22 @@ export default function LoginPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen bg-background items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-border p-8">
+            <h1 className="text-2xl font-bold text-card-foreground mb-2">Preparing sign in...</h1>
+            <p className="text-sm text-muted-foreground">Loading authentication context.</p>
+          </div>
+        </main>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }

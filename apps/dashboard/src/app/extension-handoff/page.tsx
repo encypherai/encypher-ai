@@ -3,7 +3,7 @@
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@encypher/design-system';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
@@ -46,6 +46,25 @@ function extractFullKey(payload: unknown): string {
   );
 }
 
+export default function ExtensionHandoffPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-gradient-to-br from-columbia-blue via-blue-ncs to-delft-blue flex items-center justify-center p-4">
+          <Card className="w-full max-w-xl">
+            <CardHeader>
+              <CardTitle>Preparing extension handoff...</CardTitle>
+              <CardDescription>Loading extension setup context.</CardDescription>
+            </CardHeader>
+          </Card>
+        </main>
+      }
+    >
+      <ExtensionHandoffContent />
+    </Suspense>
+  );
+}
+
 function sendHandoffToExtension(extensionId: string, apiKey: string): Promise<RuntimeSendResponse> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined') {
@@ -77,7 +96,7 @@ function sendHandoffToExtension(extensionId: string, apiKey: string): Promise<Ru
   });
 }
 
-export default function ExtensionHandoffPage() {
+function ExtensionHandoffContent() {
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const accessToken = (session?.user as { accessToken?: string } | undefined)?.accessToken;

@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Input } from '@encypher/design-system';
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -19,7 +19,7 @@ const HTML_TAG_REGEX = /<[^>]*>/g;
 
 const sanitizeName = (value: string) => value.replace(HTML_TAG_REGEX, '').trim();
 
-export default function SignupPage() {
+function SignupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
@@ -381,5 +381,22 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-br from-columbia-blue via-blue-ncs to-delft-blue flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-border p-8">
+            <h1 className="text-2xl font-bold text-card-foreground mb-2">Preparing sign up...</h1>
+            <p className="text-sm text-muted-foreground">Loading registration context.</p>
+          </div>
+        </div>
+      }
+    >
+      <SignupPageContent />
+    </Suspense>
   );
 }
