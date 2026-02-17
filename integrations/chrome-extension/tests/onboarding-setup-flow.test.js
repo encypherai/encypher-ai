@@ -357,4 +357,70 @@ describe('Optional login onboarding + setup tracking', () => {
       'Extension handoff page should call chrome.runtime.sendMessage for callback handoff'
     );
   });
+
+  it('supports selecting default signing method in settings and popup sign tab', () => {
+    const popupHtmlPath = path.join(EXTENSION_ROOT, 'popup', 'popup.html');
+    const popupHtml = fs.readFileSync(popupHtmlPath, 'utf8');
+    const popupJsPath = path.join(EXTENSION_ROOT, 'popup', 'popup.js');
+    const popupJs = fs.readFileSync(popupJsPath, 'utf8');
+    const optionsHtmlPath = path.join(EXTENSION_ROOT, 'options', 'options.html');
+    const optionsHtml = fs.readFileSync(optionsHtmlPath, 'utf8');
+    const optionsJsPath = path.join(EXTENSION_ROOT, 'options', 'options.js');
+    const optionsJs = fs.readFileSync(optionsJsPath, 'utf8');
+
+    assert.match(
+      popupHtml,
+      /id="sign-method"/,
+      'Popup sign tab should expose a signing method dropdown'
+    );
+
+    assert.match(
+      popupJs,
+      /signMethod/,
+      'Popup signing payload should include signing method metadata'
+    );
+
+    assert.match(
+      popupJs,
+      /chrome\.storage\.sync\.get\([\s\S]*defaultSignMethod/s,
+      'Popup should load defaultSignMethod from sync settings for initial sign tab defaults'
+    );
+
+    assert.match(
+      optionsHtml,
+      /id="defaultSignMethod"/,
+      'Options should expose default signing method control'
+    );
+
+    assert.match(
+      optionsJs,
+      /defaultSignMethod/,
+      'Options defaults should include defaultSignMethod and save handler wiring'
+    );
+  });
+
+  it('keeps content script iframe injection settings ready for LinkedIn composer preload frames', () => {
+    const manifestPath = path.join(EXTENSION_ROOT, 'manifest.json');
+    const manifestRaw = fs.readFileSync(manifestPath, 'utf8');
+    const manifest = JSON.parse(manifestRaw);
+    const contentScript = (manifest.content_scripts || [])[0] || {};
+
+    assert.strictEqual(
+      contentScript.all_frames,
+      true,
+      'Content script should inject into all frames so LinkedIn preload composers are covered'
+    );
+
+    assert.strictEqual(
+      contentScript.match_origin_as_fallback,
+      true,
+      'Content script should enable match_origin_as_fallback for iframe-origin fallback matching'
+    );
+
+    assert.strictEqual(
+      contentScript.run_at,
+      'document_start',
+      'Content script should inject early enough for dynamic preload frame editors'
+    );
+  });
 });

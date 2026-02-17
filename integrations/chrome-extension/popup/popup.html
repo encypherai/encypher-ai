@@ -146,6 +146,14 @@
             <label for="sign-text">Text to Sign</label>
             <textarea id="sign-text" placeholder="Paste or type text to sign..." rows="5"></textarea>
             <div class="popup__sign-options">
+              <label for="sign-method">Signing Method</label>
+              <select id="sign-method">
+                <option value="standard">Standard</option>
+                <option value="merkle">Merkle Verification (Enterprise)</option>
+                <option value="attribution">Attribution Tracking (Enterprise)</option>
+              </select>
+            </div>
+            <div class="popup__sign-options">
               <label for="sign-title">Title (optional)</label>
               <input type="text" id="sign-title" placeholder="Document title">
             </div>

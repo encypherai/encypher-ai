@@ -134,4 +134,27 @@ describe('Popup branding + debug logging regressions', () => {
       'Detector badge details should map verification_url from verify response data'
     );
   });
+
+  it('scans open shadow roots for editor surfaces so LinkedIn interop composer editors are discoverable', () => {
+    const editorSignerPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.js');
+    const editorSignerCode = fs.readFileSync(editorSignerPath, 'utf8');
+
+    assert.match(
+      editorSignerCode,
+      /function\s+scanShadowRootsForEditors\(/,
+      'Editor signer should define a dedicated shadow-root traversal helper'
+    );
+
+    assert.match(
+      editorSignerCode,
+      /if\s*\(el\.shadowRoot\)[\s\S]*scanForEditorsInRoot\(el\.shadowRoot\)/,
+      'Shadow traversal should recurse through open shadow roots when scanning for editors'
+    );
+
+    assert.match(
+      editorSignerCode,
+      /node\.shadowRoot[\s\S]*scanForEditorsInRoot\(node\.shadowRoot\)/,
+      'Mutation observer path should trigger scanning when newly added nodes host shadow roots'
+    );
+  });
 });

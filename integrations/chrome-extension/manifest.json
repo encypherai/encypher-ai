@@ -49,8 +49,9 @@
       "matches": ["<all_urls>"],
       "js": ["content/detector.js", "content/editor-signer.js"],
       "css": ["content/badge.css", "content/editor-signer.css"],
-      "run_at": "document_idle",
+      "run_at": "document_start",
       "all_frames": true,
+      "match_origin_as_fallback": true,
       "match_about_blank": true
     }
   ],

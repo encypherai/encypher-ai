@@ -28,6 +28,7 @@ const signErrorEl = document.getElementById('sign-error');
 
 const signTextEl = document.getElementById('sign-text');
 const signTitleEl = document.getElementById('sign-title');
+const signMethodEl = document.getElementById('sign-method');
 const signBtn = document.getElementById('sign-btn');
 const signedOutputEl = document.getElementById('signed-output');
 const copySignedBtn = document.getElementById('copy-signed');
@@ -86,6 +87,12 @@ let debugAutoRefreshInterval = null;
 // Tab elements
 const tabs = document.querySelectorAll('.popup__tab');
 
+const DEFAULT_SIGN_SETTINGS = {
+  defaultInvisible: true,
+  defaultDocType: 'article',
+  defaultSignMethod: 'standard',
+};
+
 /**
  * Show a specific state and hide others
  */
@@ -94,6 +101,73 @@ function showState(state) {
   noContentEl.hidden = state !== 'empty';
   contentFoundEl.hidden = state !== 'found';
   errorEl.hidden = state !== 'error';
+}
+
+function syncAdvancedControlsFromMethod(signMethod) {
+  if (!signMerkleEl || !signAttributionEl) return;
+
+  if (signMethod === 'merkle') {
+    if (!signMerkleEl.disabled) signMerkleEl.checked = true;
+    signAttributionEl.checked = false;
+    return;
+  }
+
+  if (signMethod === 'attribution') {
+    if (!signAttributionEl.disabled) signAttributionEl.checked = true;
+    signMerkleEl.checked = false;
+    return;
+  }
+
+  signMerkleEl.checked = false;
+  signAttributionEl.checked = false;
+}
+
+function syncMethodFromAdvancedControls() {
+  if (!signMethodEl) return;
+
+  if (signMerkleEl?.checked && !signMerkleEl.disabled) {
+    signMethodEl.value = 'merkle';
+    return;
+  }
+
+  if (signAttributionEl?.checked && !signAttributionEl.disabled) {
+    signMethodEl.value = 'attribution';
+    return;
+  }
+
+  signMethodEl.value = 'standard';
+}
+
+function enforceSignMethodByTier(info) {
+  if (!signMethodEl) return;
+
+  const tier = (info?.tier || 'free').toLowerCase();
+  const isEnterprise = ['enterprise', 'business'].includes(tier);
+  const enterpriseMethods = new Set(['merkle', 'attribution']);
+
+  [...signMethodEl.options].forEach((option) => {
+    if (enterpriseMethods.has(option.value)) {
+      option.disabled = !isEnterprise;
+    }
+  });
+
+  if (!isEnterprise && enterpriseMethods.has(signMethodEl.value)) {
+    signMethodEl.value = 'standard';
+  }
+
+  syncAdvancedControlsFromMethod(signMethodEl.value || 'standard');
+}
+
+async function loadSignDefaults() {
+  try {
+    const settings = await chrome.storage.sync.get(DEFAULT_SIGN_SETTINGS);
+    if (signInvisibleEl) signInvisibleEl.checked = settings.defaultInvisible !== false;
+    if (signDocTypeEl) signDocTypeEl.value = settings.defaultDocType || 'article';
+    if (signMethodEl) signMethodEl.value = settings.defaultSignMethod || 'standard';
+    enforceSignMethodByTier(accountInfo);
+  } catch (error) {
+    // Keep in-UI defaults when storage read fails.
+  }
 }
 
 function isPlausibleApiKey(value) {
@@ -405,6 +479,7 @@ async function checkApiKeyAndShowSignState() {
   try {
     const result = await chrome.storage.local.get({ apiKey: '' });
     const syncState = await chrome.storage.sync.get({ extensionSetupStatus: 'not_started' });
+    await loadSignDefaults();
     
     if (result.apiKey) {
       showSignState('ready');
@@ -513,6 +588,7 @@ function updateTierDisplay(info) {
   if (signAttributionEl) {
     signAttributionEl.disabled = !isEnterprise;
   }
+  enforceSignMethodByTier(info);
   
   // Hide upgrade prompt for enterprise users
   if (enterpriseFeaturesEl && isEnterprise) {
@@ -584,6 +660,7 @@ function showSignState(state) {
 async function signContent() {
   const text = signTextEl.value.trim();
   const title = signTitleEl.value.trim();
+  const signMethod = signMethodEl?.value || 'standard';
   
   if (!text) {
     signErrorMessageEl.textContent = 'Please enter text to sign.';
@@ -594,8 +671,8 @@ async function signContent() {
   // Gather advanced options
   const useInvisible = signInvisibleEl?.checked ?? true;
   const docType = signDocTypeEl?.value || 'article';
-  const useMerkle = signMerkleEl?.checked && !signMerkleEl?.disabled;
-  const useAttribution = signAttributionEl?.checked && !signAttributionEl?.disabled;
+  const useMerkle = signMethod === 'merkle' || (signMerkleEl?.checked && !signMerkleEl?.disabled);
+  const useAttribution = signMethod === 'attribution' || (signAttributionEl?.checked && !signAttributionEl?.disabled);
   
   // Disable button and show loading
   signBtn.disabled = true;
@@ -607,6 +684,7 @@ async function signContent() {
       text: text,
       title: title || undefined,
       options: {
+        signMethod,
         useInvisible,
         documentType: docType,
         useMerkle,
@@ -696,6 +774,18 @@ toggleAdvancedBtn?.addEventListener('click', () => {
   const isOpen = advancedPanelEl.hidden;
   advancedPanelEl.hidden = !isOpen;
   toggleAdvancedBtn.classList.toggle('open', isOpen);
+});
+
+signMethodEl?.addEventListener('change', () => {
+  syncAdvancedControlsFromMethod(signMethodEl.value || 'standard');
+});
+
+signMerkleEl?.addEventListener('change', () => {
+  syncMethodFromAdvancedControls();
+});
+
+signAttributionEl?.addEventListener('change', () => {
+  syncMethodFromAdvancedControls();
 });
 
 /**
@@ -823,10 +913,12 @@ debugFilters.forEach(btn => {
 // Initialize
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
+    loadSignDefaults();
     loadTabState();
     checkDevMode();
   });
 } else {
+  loadSignDefaults();
   loadTabState();
   checkDevMode();
 }

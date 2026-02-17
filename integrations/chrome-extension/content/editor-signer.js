@@ -719,27 +719,15 @@ function attachSignButton(editor) {
 /**
  * Scan page for editors
  */
-function scanForEditors() {
-  if (!editorButtonsEnabled) return;
-
-  // Check for online editor platforms first
-  const platform = detectOnlinePlatform();
-  if (platform) {
-    const editorInfo = getOnlineEditorElement(platform);
-    if (editorInfo) {
-      attachSignButton(editorInfo.element);
-    }
-    // On Google Docs / Word Online, don't scan for generic editors
-    // to avoid attaching buttons to unrelated contenteditable regions
-    return;
-  }
+function scanForEditorsInRoot(root) {
+  if (!root?.querySelectorAll) return;
 
   // Contenteditable elements
-  const editables = document.querySelectorAll('[contenteditable="true"]');
+  const editables = root.querySelectorAll('[contenteditable="true"]');
   editables.forEach(attachSignButton);
   
   // Textareas (skip very small ones like search boxes)
-  const textareas = document.querySelectorAll('textarea');
+  const textareas = root.querySelectorAll('textarea');
   textareas.forEach(ta => {
     if (ta.rows >= 3 || ta.offsetHeight >= 80) {
       attachSignButton(ta);
@@ -762,9 +750,40 @@ function scanForEditors() {
   ];
   
   editorSelectors.forEach(selector => {
-    const editors = document.querySelectorAll(selector);
+    const editors = root.querySelectorAll(selector);
     editors.forEach(attachSignButton);
   });
+}
+
+function scanShadowRootsForEditors(root = document) {
+  if (!root?.querySelectorAll) return;
+
+  const elements = root.querySelectorAll('*');
+  elements.forEach((el) => {
+    if (el.shadowRoot) {
+      scanForEditorsInRoot(el.shadowRoot);
+      scanShadowRootsForEditors(el.shadowRoot);
+    }
+  });
+}
+
+function scanForEditors() {
+  if (!editorButtonsEnabled) return;
+
+  // Check for online editor platforms first
+  const platform = detectOnlinePlatform();
+  if (platform) {
+    const editorInfo = getOnlineEditorElement(platform);
+    if (editorInfo) {
+      attachSignButton(editorInfo.element);
+    }
+    // On Google Docs / Word Online, don't scan for generic editors
+    // to avoid attaching buttons to unrelated contenteditable regions
+    return;
+  }
+
+  scanForEditorsInRoot(document);
+  scanShadowRootsForEditors(document);
 }
 
 /**
@@ -778,6 +797,12 @@ function observeForEditors() {
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) {
+            if (node.shadowRoot) {
+              scanForEditorsInRoot(node.shadowRoot);
+              scanShadowRootsForEditors(node.shadowRoot);
+              shouldScan = true;
+            }
+
             // Check if it's an editor or contains editors
             if (detectEditorType(node) || 
                 node.querySelector?.('[contenteditable="true"], textarea')) {

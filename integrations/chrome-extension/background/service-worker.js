@@ -491,6 +491,15 @@ async function verifyContent(text, options = {}) {
  */
 async function signContent(text, title, options = {}) {
   try {
+    const signMethod = String(options.signMethod || 'standard').toLowerCase();
+    if (signMethod === 'merkle') {
+      options.useMerkle = true;
+      options.useAttribution = false;
+    } else if (signMethod === 'attribution') {
+      options.useAttribution = true;
+      options.useMerkle = false;
+    }
+
     // Get API key from storage
     const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
     
