@@ -118,12 +118,11 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("SSL.com API: Not configured (optional for staging)")
 
-    # Ensure database is ready and run migrations (SSOT strategy from config)
+    # Ensure database is ready and run migrations (Alembic SSOT)
     ensure_database_ready(
         database_url=db_url,
         service_name="enterprise-api",
         run_migrations=True,
-        migration_strategy=settings.db_migration_strategy,
         exit_on_failure=True,
     )
 

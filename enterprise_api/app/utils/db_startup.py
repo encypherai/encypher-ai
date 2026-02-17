@@ -1,7 +1,6 @@
 """Database startup utilities for Enterprise API.
 
-SSOT: startup migration checks are Alembic-driven by default. A temporary
-legacy SQL migration path is retained behind an explicit strategy switch.
+SSOT: startup migration checks are Alembic-driven.
 """
 
 import logging
@@ -86,110 +85,19 @@ def check_database_connection(database_url: str, max_retries: int = 5, retry_del
     return False
 
 
-def run_sql_migrations(database_url: str, migrations_dir: str, service_name: str = "enterprise-api") -> bool:
-    """
-    Run SQL migrations from a directory.
-
-    Migrations are run in alphabetical order. Each migration should be idempotent
-    (use IF NOT EXISTS, etc.) to allow safe re-runs.
-
-    Args:
-        database_url: PostgreSQL connection URL
-        migrations_dir: Path to directory containing .sql migration files
-        service_name: Name of the service (for logging)
-
-    Returns:
-        True if migrations completed successfully
-
-    Raises:
-        DatabaseStartupError: If migration fails
-    """
-    migrations_path = Path(migrations_dir)
-
-    if not migrations_path.exists():
-        logger.warning(f"[{service_name}] Migrations directory not found: {migrations_dir}")
-        return True
-
-    # Get all SQL files sorted by name
-    sql_files = sorted(migrations_path.glob("*.sql"))
-
-    # Filter out rollback files
-    sql_files = [f for f in sql_files if not f.name.startswith("rollback")]
-
-    if not sql_files:
-        logger.info(f"[{service_name}] No migration files found in {migrations_dir}")
-        return True
-
-    logger.info(f"[{service_name}] Found {len(sql_files)} migration files")
-
-    try:
-        from sqlalchemy import create_engine, text
-    except ImportError:
-        raise DatabaseStartupError(f"[{service_name}] SQLAlchemy is not installed.")
-
-    # Normalize URL for sync connection
-    sync_url = database_url.replace("+asyncpg", "").replace("+aiopg", "")
-
-    engine = create_engine(sync_url)
-
-    try:
-        for sql_file in sql_files:
-            logger.info(f"[{service_name}] Running migration: {sql_file.name}")
-
-            # Read SQL content
-            sql_content = sql_file.read_text()
-
-            # Split into statements (handle comments)
-            lines = []
-            for line in sql_content.split("\n"):
-                # Skip comment-only lines
-                stripped = line.strip()
-                if stripped.startswith("--"):
-                    continue
-                lines.append(line)
-
-            clean_sql = "\n".join(lines)
-            statements = [s.strip() for s in clean_sql.split(";") if s.strip()]
-
-            # Execute each statement
-            with engine.begin() as conn:
-                for i, statement in enumerate(statements, 1):
-                    try:
-                        conn.execute(text(statement))
-                    except Exception as e:
-                        # Log but don't fail on "already exists" type errors
-                        error_str = str(e).lower()
-                        if "already exists" in error_str or "duplicate" in error_str:
-                            logger.debug(f"[{service_name}] Statement {i} skipped (already applied): {e}")
-                        else:
-                            logger.error(f"[{service_name}] Statement {i} failed: {e}")
-                            logger.error(f"[{service_name}] Statement: {statement[:200]}...")
-                            raise
-
-            logger.info(f"[{service_name}] ✓ Migration {sql_file.name} completed")
-
-        logger.info(f"[{service_name}] ✓ All migrations completed successfully")
-        return True
-
-    except Exception as e:
-        raise DatabaseStartupError(f"[{service_name}] Migration failed: {e}")
-    finally:
-        engine.dispose()
-
-
 def run_alembic_migrations(
     service_name: str = "enterprise-api",
     alembic_ini_path: Optional[str] = None,
     database_url: Optional[str] = None,
 ) -> bool:
-    """Run Alembic migrations to head(s)."""
+    """Run Alembic migrations to the reconciled head."""
     project_root = Path(__file__).resolve().parents[2]
     alembic_ini = Path(alembic_ini_path) if alembic_ini_path else project_root / "alembic.ini"
 
     if not alembic_ini.exists():
         raise DatabaseStartupError(f"[{service_name}] Alembic config not found: {alembic_ini}")
 
-    cmd = ["alembic", "-c", str(alembic_ini), "upgrade", "heads"]
+    cmd = ["alembic", "-c", str(alembic_ini), "upgrade", "head"]
     logger.info("[%s] Running Alembic migrations: %s", service_name, " ".join(cmd))
 
     env = os.environ.copy()
@@ -224,11 +132,9 @@ def run_alembic_migrations(
 def ensure_database_ready(
     database_url: Optional[str] = None,
     service_name: str = "enterprise-api",
-    migrations_dir: Optional[str] = None,
     max_retries: int = 5,
     retry_delay: float = 2.0,
     run_migrations: bool = True,
-    migration_strategy: str = "alembic",
     exit_on_failure: bool = True,
 ) -> bool:
     """
@@ -240,11 +146,9 @@ def ensure_database_ready(
     Args:
         database_url: PostgreSQL connection URL (defaults to CORE_DATABASE_URL or DATABASE_URL env var)
         service_name: Name of the service (for logging)
-        migrations_dir: Path to SQL migrations directory (legacy sql_legacy strategy)
         max_retries: Maximum number of connection attempts
         retry_delay: Seconds to wait between retries
         run_migrations: If True, run migrations
-        migration_strategy: Migration executor strategy (alembic | sql_legacy)
         exit_on_failure: If True, call sys.exit(1) on failure
 
     Returns:
@@ -255,10 +159,6 @@ def ensure_database_ready(
     """
     # Get database URL from parameter or environment
     db_url = database_url or os.environ.get("CORE_DATABASE_URL") or os.environ.get("DATABASE_URL")
-
-    # Default migrations directory
-    if migrations_dir is None:
-        migrations_dir = str(Path(__file__).parent.parent.parent / "migrations")
 
     if not db_url:
         raise DatabaseStartupError(
@@ -273,15 +173,7 @@ def ensure_database_ready(
 
         # Step 2: Run migrations if requested
         if run_migrations:
-            strategy = (migration_strategy or "alembic").strip().lower()
-            if strategy == "alembic":
-                run_alembic_migrations(service_name=service_name, database_url=db_url)
-            elif strategy == "sql_legacy":
-                run_sql_migrations(database_url=db_url, migrations_dir=migrations_dir, service_name=service_name)
-            else:
-                raise DatabaseStartupError(
-                    f"[{service_name}] Unsupported migration strategy: {migration_strategy}"
-                )
+            run_alembic_migrations(service_name=service_name, database_url=db_url)
 
         logger.info(f"[{service_name}] ✓ Database is ready")
         return True

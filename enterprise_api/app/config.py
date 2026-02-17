@@ -24,8 +24,6 @@ class Settings(BaseSettings):
     content_database_url: Optional[str] = None
     # Legacy single database URL (for backward compatibility)
     database_url: Optional[str] = None
-    # Startup migration strategy for enterprise_api (SSOT default: alembic)
-    db_migration_strategy: str = "alembic"
 
     # Redis (for session management)
     redis_url: str = "redis://localhost:6379/0"
