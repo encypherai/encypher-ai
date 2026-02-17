@@ -517,7 +517,12 @@ async def sign_ghost_post(
     # 7. Extract signed text from response
     data = sign_result.get("data", {})
     doc_data = data.get("document", {})
-    signed_text = doc_data.get("embedded_text", "")
+    signed_text = (
+        doc_data.get("signed_text")
+        or doc_data.get("embedded_text")
+        or doc_data.get("embedded_content")
+        or ""
+    )
     document_id = doc_data.get("document_id", unique_doc_id)
     instance_id = doc_data.get("instance_id", "")
     total_segments = doc_data.get("total_segments", 0)

@@ -433,6 +433,52 @@ class TestGhostSignOrchestration:
         ghost_client.update_post.assert_awaited_once()
 
     @pytest.mark.asyncio
+    async def test_sign_ghost_post_uses_signed_text_field_from_unified_response(self):
+        ghost_client = MagicMock()
+        ghost_client.read_post = AsyncMock(
+            return_value={
+                "id": "post_789",
+                "title": "Hello",
+                "url": "https://myblog.ghost.io/hello",
+                "html": "<p>Hello world.</p>",
+                "authors": [{"name": "Author"}],
+                "tags": [],
+                "updated_at": "2026-02-17T18:00:00.000Z",
+                "codeinjection_foot": None,
+            }
+        )
+        ghost_client.update_post = AsyncMock(return_value={"id": "post_789"})
+
+        async def _fake_execute_unified_signing(*, request, **kwargs):
+            return {
+                "success": True,
+                "data": {
+                    "document": {
+                        "signed_text": "Hello\uFE01 world.",
+                        "document_id": "doc_789",
+                        "instance_id": "inst_789",
+                        "total_segments": 1,
+                    }
+                },
+            }
+
+        with patch("app.services.unified_signing_service.execute_unified_signing", new=AsyncMock(side_effect=_fake_execute_unified_signing)):
+            result = await sign_ghost_post(
+                ghost_client=ghost_client,
+                post_id="post_789",
+                post_type="post",
+                organization={"organization_id": "org_123", "tier": "business"},
+                core_db=MagicMock(),
+                content_db=MagicMock(),
+                manifest_mode="micro",
+                segmentation_level="sentence",
+                badge_enabled=False,
+            )
+
+        assert result["success"] is True
+        ghost_client.update_post.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_sign_ghost_post_passes_explicit_micro_flags(self):
         ghost_client = MagicMock()
         ghost_client.read_post = AsyncMock(
