@@ -91,9 +91,16 @@ const tabs = document.querySelectorAll('.popup__tab');
 const DEFAULT_SIGN_SETTINGS = {
   defaultInvisible: true,
   defaultDocType: 'article',
-  defaultEmbeddingTechnique: 'micro_ecc_c2pa',
+  defaultEmbeddingTechnique: 'micro',
   defaultSegmentationLevel: 'sentence',
 };
+
+function normalizeEmbeddingTechnique(value) {
+  const mode = String(value || '').toLowerCase();
+  if (mode === 'micro_ecc_c2pa' || mode === 'micro') return 'micro';
+  if (mode === 'micro_ecc' || mode === 'micro_no_embed_c2pa') return 'micro_no_embed_c2pa';
+  return 'micro';
+}
 
 /**
  * Show a specific state and hide others
@@ -130,7 +137,9 @@ async function loadSignDefaults() {
     const settings = await chrome.storage.sync.get(DEFAULT_SIGN_SETTINGS);
     if (signInvisibleEl) signInvisibleEl.checked = settings.defaultInvisible !== false;
     if (signDocTypeEl) signDocTypeEl.value = settings.defaultDocType || 'article';
-    if (signEmbeddingTechniqueEl) signEmbeddingTechniqueEl.value = settings.defaultEmbeddingTechnique || 'micro_ecc_c2pa';
+    if (signEmbeddingTechniqueEl) {
+      signEmbeddingTechniqueEl.value = normalizeEmbeddingTechnique(settings.defaultEmbeddingTechnique || 'micro');
+    }
     if (signSegmentationLevelEl) signSegmentationLevelEl.value = settings.defaultSegmentationLevel || 'sentence';
     enforceSignMethodByTier(accountInfo);
   } catch (error) {
@@ -638,7 +647,7 @@ async function signContent() {
   // Gather options
   const useInvisible = signInvisibleEl?.checked ?? true;
   const docType = signDocTypeEl?.value || 'article';
-  const manifestMode = signEmbeddingTechniqueEl?.value || 'micro_ecc_c2pa';
+  const manifestMode = signEmbeddingTechniqueEl?.value || 'micro';
   const segmentationLevel = signSegmentationLevelEl?.value || 'sentence';
   const useMerkle = signMerkleEl?.checked && !signMerkleEl?.disabled;
   const useAttribution = signAttributionEl?.checked && !signAttributionEl?.disabled;

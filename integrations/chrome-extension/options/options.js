@@ -44,13 +44,20 @@ const DEFAULT_SETTINGS = {
   defaultInvisible: true,
   autoReplaceContent: true,
   defaultDocType: 'article',
-  defaultEmbeddingTechnique: 'micro_ecc_c2pa',
+  defaultEmbeddingTechnique: 'micro',
   defaultSegmentationLevel: 'sentence',
   showEditorButtons: true,
   // Analytics
   analyticsEnabled: true,
   extensionSetupStatus: 'not_started'
 };
+
+function normalizeEmbeddingTechnique(value) {
+  const mode = String(value || '').toLowerCase();
+  if (mode === 'micro_ecc_c2pa' || mode === 'micro') return 'micro';
+  if (mode === 'micro_ecc' || mode === 'micro_no_embed_c2pa') return 'micro_no_embed_c2pa';
+  return 'micro';
+}
 
 /**
  * Load settings from storage
@@ -87,7 +94,9 @@ async function loadSettings() {
     if (defaultInvisibleCheckbox) defaultInvisibleCheckbox.checked = result.defaultInvisible;
     if (autoReplaceContentCheckbox) autoReplaceContentCheckbox.checked = result.autoReplaceContent;
     if (defaultDocTypeSelect) defaultDocTypeSelect.value = result.defaultDocType;
-    if (defaultEmbeddingTechniqueSelect) defaultEmbeddingTechniqueSelect.value = result.defaultEmbeddingTechnique || 'micro_ecc_c2pa';
+    if (defaultEmbeddingTechniqueSelect) {
+      defaultEmbeddingTechniqueSelect.value = normalizeEmbeddingTechnique(result.defaultEmbeddingTechnique || 'micro');
+    }
     if (defaultSegmentationLevelSelect) defaultSegmentationLevelSelect.value = result.defaultSegmentationLevel || 'sentence';
     if (showEditorButtonsCheckbox) showEditorButtonsCheckbox.checked = result.showEditorButtons;
     

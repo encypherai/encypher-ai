@@ -523,8 +523,29 @@ async function signContent(text, title, options = {}) {
     };
 
     // Embedding technique (manifest_mode)
-    if (options.manifestMode) {
-      requestBody.options.manifest_mode = options.manifestMode;
+    // TEAM_166: Normalize legacy + new values to unified micro mode + flags.
+    const requestedMode = String(options.manifestMode || '').toLowerCase();
+    if (requestedMode === 'basic') {
+      requestBody.options.manifest_mode = 'full';
+    } else {
+      requestBody.options.manifest_mode = 'micro';
+
+      // Legacy modes (backward compatibility for persisted extension settings)
+      if (requestedMode === 'micro_c2pa') {
+        requestBody.options.ecc = false;
+      } else if (requestedMode === 'micro_ecc') {
+        requestBody.options.embed_c2pa = false;
+      } else if (requestedMode === 'micro') {
+        // Unified default: ecc=true, embed_c2pa=true
+      }
+
+      // New extension-specific shortcuts
+      if (requestedMode === 'micro_no_ecc') {
+        requestBody.options.ecc = false;
+      }
+      if (requestedMode === 'micro_no_embed_c2pa') {
+        requestBody.options.embed_c2pa = false;
+      }
     }
 
     // Segmentation level

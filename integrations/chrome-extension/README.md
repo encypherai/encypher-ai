@@ -25,7 +25,7 @@ A browser extension that automatically detects and verifies Encypher and C2PA-co
 - **WYSIWYG Editor Integration**: Floating sign buttons on detected text editors
 - **Context Menu Signing**: Right-click to sign selected text or sign & copy to clipboard
 - **Keyboard Shortcut**: Ctrl+Shift+E to sign selected text in any editor
-- **Embedding Mode**: Choose between Standard (C2PA + ECC) and Lightweight (ECC only) signing
+- **Embedding Mode**: Choose between Standard (micro default: C2PA + ECC) and Compact (no embedded C2PA) signing
 - **Embedding Frequency**: Control how often signatures are embedded (entire content, per section, per paragraph, per sentence, or per word)
 - **Advanced Options**: Document type, invisible embeddings, Merkle tree (Enterprise), attribution tracking (Enterprise)
 - **Tier-Aware**: Free tier (1,000 signings/month) and Enterprise (unlimited) with usage tracking
@@ -104,14 +104,14 @@ chrome-extension/
 
 1. User enters or selects text to sign (popup, editor button, context menu, or Ctrl+Shift+E)
 2. A modal or form collects signing options:
-   - **Embedding Mode** controls the signature format sent to the API (`manifest_mode`):
-     - *Standard* (`micro_ecc_c2pa`): error-corrected segment embeddings plus a C2PA provenance manifest appended to the content. Best for full provenance chain.
-     - *Lightweight* (`micro_ecc`): error-corrected segment embeddings only, no C2PA manifest. Smaller footprint when provenance metadata is not needed.
+   - **Embedding Mode** controls the signature format sent to the API:
+     - *Standard* (`micro`): unified micro mode defaults (`ecc=true`, `embed_c2pa=true`) for error-corrected segment embeddings plus embedded C2PA provenance manifest.
+     - *Compact* (`micro` + `embed_c2pa=false`): keeps per-segment micro markers while skipping in-content C2PA embedding. Useful when content size is sensitive.
    - **Embedding Frequency** controls how the text is segmented for signing (`segmentation_level`):
      - *Entire content* (`document`): one signature for the whole text.
      - *Per section / paragraph / sentence / word*: progressively finer granularity. More frequent embeddings increase resilience to partial edits but add more invisible characters.
      - Default is *Per sentence*, which balances survivability and size.
-3. Service worker sends `POST /api/v1/sign` with `manifest_mode` and `segmentation_level` in the request options
+3. Service worker sends `POST /api/v1/sign` with `manifest_mode='micro'` (or `full` for basic), plus `ecc` / `embed_c2pa` flags when needed, and `segmentation_level` in request options
 4. Signed text is inserted back into the editor (DOM-preserving when possible) or copied to clipboard
 
 ### Badge States
@@ -177,7 +177,7 @@ zip -r encypher-verify.zip . -x 'node_modules/*' 'tests/*' '*.md' 'package*.json
 The extension uses these default settings:
 
 - **API Base URL**: `https://api.encypherai.com` (configurable text field in settings)
-- **Default Embedding Mode**: Standard (`micro_ecc_c2pa`)
+- **Default Embedding Mode**: Standard (`micro`)
 - **Default Embedding Frequency**: Per sentence (`sentence`)
 - **Verification Cache TTL**: 1 hour (local browser cache)
 - **Request Timeout**: 10 seconds

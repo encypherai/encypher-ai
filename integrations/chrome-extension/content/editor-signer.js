@@ -38,8 +38,15 @@ const activeEditors = new Map();
 let editorButtonsEnabled = true;
 
 // Signing option defaults (loaded from settings)
-let defaultEmbeddingTechnique = 'micro_ecc_c2pa';
+let defaultEmbeddingTechnique = 'micro';
 let defaultSegmentationLevel = 'sentence';
+
+function normalizeEmbeddingTechnique(value) {
+  const mode = String(value || '').toLowerCase();
+  if (mode === 'micro_ecc_c2pa' || mode === 'micro') return 'micro';
+  if (mode === 'micro_ecc' || mode === 'micro_no_embed_c2pa') return 'micro_no_embed_c2pa';
+  return 'micro';
+}
 
 // ── Embedding byte detection (mirrors detector.js constants) ──
 const VS_RANGES = {
@@ -522,8 +529,8 @@ function showSigningUI(editor, editorType, button) {
       <div class="encypher-sign-ui__select-group">
         <label for="encypher-embedding-technique">Embedding Mode</label>
         <select id="encypher-embedding-technique" class="encypher-sign-ui__select">
-          <option value="micro_ecc_c2pa">Standard</option>
-          <option value="micro_ecc">Lightweight</option>
+          <option value="micro">Standard (recommended)</option>
+          <option value="micro_no_embed_c2pa">Compact (no embedded C2PA)</option>
         </select>
       </div>
       <div class="encypher-sign-ui__select-group">
@@ -1846,11 +1853,11 @@ async function _initEditorSigner() {
   try {
     const settings = await chrome.storage.sync.get({
       showEditorButtons: true,
-      defaultEmbeddingTechnique: 'micro_ecc_c2pa',
+      defaultEmbeddingTechnique: 'micro',
       defaultSegmentationLevel: 'sentence',
     });
     editorButtonsEnabled = settings.showEditorButtons;
-    defaultEmbeddingTechnique = settings.defaultEmbeddingTechnique;
+    defaultEmbeddingTechnique = normalizeEmbeddingTechnique(settings.defaultEmbeddingTechnique);
     defaultSegmentationLevel = settings.defaultSegmentationLevel;
   } catch (e) {
     // Default to enabled if storage fails
@@ -1881,7 +1888,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
   }
   if (changes.defaultEmbeddingTechnique) {
-    defaultEmbeddingTechnique = changes.defaultEmbeddingTechnique.newValue;
+    defaultEmbeddingTechnique = normalizeEmbeddingTechnique(changes.defaultEmbeddingTechnique.newValue);
   }
   if (changes.defaultSegmentationLevel) {
     defaultSegmentationLevel = changes.defaultSegmentationLevel.newValue;

@@ -50,7 +50,7 @@ A writer, journalist, or publisher who needs portable provenance for content acr
    - no key state prompts optional onboarding (email-based setup) or manual API key.
 3. Completes onboarding or enters API key.
 4. Optionally configures signing defaults in Settings:
-   - **Embedding Mode**: *Standard* (C2PA + error-corrected embeddings) or *Lightweight* (error-corrected embeddings only).
+   - **Embedding Mode**: *Standard* (micro default: C2PA + error-corrected embeddings) or *Compact* (no embedded C2PA).
    - **Embedding Frequency**: How often signatures are placed in the text (*Entire content*, *Per section*, *Per paragraph*, *Per sentence* (default), or *Per word*).
 5. Signs content via:
    - popup sign form (shows embedding mode + frequency dropdowns), and/or
@@ -61,9 +61,9 @@ A writer, journalist, or publisher who needs portable provenance for content acr
 7. Published content later appears as verifiable to Reader journey users.
 
 ### Signing options
-- **Embedding Mode** (`manifest_mode` API parameter):
-  - *Standard* (`micro_ecc_c2pa`): Error-corrected segment embeddings + a C2PA provenance manifest at the end of the content. Full provenance chain, recommended for most use cases.
-  - *Lightweight* (`micro_ecc`): Error-corrected segment embeddings only. Smaller footprint, no C2PA manifest.
+- **Embedding Mode** (API request options):
+  - *Standard* (`manifest_mode='micro'`): unified micro defaults (`ecc=true`, `embed_c2pa=true`) for error-corrected segment embeddings + embedded C2PA provenance manifest.
+  - *Compact* (`manifest_mode='micro'`, `embed_c2pa=false`): keeps micro markers and DB-backed C2PA manifest but omits in-content C2PA embedding.
 - **Embedding Frequency** (`segmentation_level` API parameter):
   - Controls granularity: `document` (one signature), `section`, `paragraph`, `sentence` (default), or `word` (Enterprise).
   - More frequent = more resilient to partial edits but more invisible characters embedded.

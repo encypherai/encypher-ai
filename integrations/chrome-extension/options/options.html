@@ -106,10 +106,10 @@
         <div class="options__field">
           <label for="defaultEmbeddingTechnique">Default Embedding Mode</label>
           <select id="defaultEmbeddingTechnique">
-            <option value="micro_ecc_c2pa">Standard</option>
-            <option value="micro_ecc">Lightweight</option>
+            <option value="micro">Standard (recommended)</option>
+            <option value="micro_no_embed_c2pa">Compact (no embedded C2PA)</option>
           </select>
-          <p class="options__hint">Standard includes a C2PA provenance manifest. Lightweight embeds only error-corrected signatures.</p>
+          <p class="options__hint">Standard uses micro mode defaults (ECC + embedded C2PA). Compact keeps micro markers but stores C2PA in DB only.</p>
         </div>
 
         <div class="options__field">
