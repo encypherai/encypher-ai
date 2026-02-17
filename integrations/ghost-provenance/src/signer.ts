@@ -19,6 +19,24 @@ const logger = pino({ name: 'signer' });
 
 const PLUGIN_VERSION = '1.0.0';
 
+function normalizeManifestOptions(signing: Config['signing']): {
+  manifestMode: string;
+  ecc: boolean;
+  embedC2pa: boolean;
+} {
+  if (signing.manifestMode === 'micro_ecc_c2pa') {
+    return { manifestMode: 'micro', ecc: true, embedC2pa: true };
+  }
+  if (signing.manifestMode === 'micro_ecc') {
+    return { manifestMode: 'micro', ecc: true, embedC2pa: false };
+  }
+  return {
+    manifestMode: signing.manifestMode,
+    ecc: signing.ecc,
+    embedC2pa: signing.embedC2pa,
+  };
+}
+
 export interface SignResult {
   success: boolean;
   documentId: string;
@@ -135,6 +153,8 @@ export class Signer {
     const existingTags = (post.tags || []).map(t => ({ id: t.id, name: t.name, slug: t.slug }));
     const hasEncypherTag = existingTags.some(t => t.slug === 'hash-encypher-signed');
 
+    const normalizedManifest = normalizeManifestOptions(this.config.signing);
+
     const signPayload = {
       text: extractedText,
       document_id: uniqueDocumentId,
@@ -155,8 +175,10 @@ export class Signer {
         document_type: 'article',
         claim_generator: `Ghost/Encypher Integration v${PLUGIN_VERSION}`,
         action: actionType,
-        manifest_mode: this.config.signing.manifestMode,
+        manifest_mode: normalizedManifest.manifestMode,
         segmentation_level: this.config.signing.segmentationLevel,
+        ecc: normalizedManifest.ecc,
+        embed_c2pa: normalizedManifest.embedC2pa,
         index_for_attribution: true,
         return_embedding_plan: true,
         ...(previousInstanceId ? { previous_instance_id: previousInstanceId } : {}),

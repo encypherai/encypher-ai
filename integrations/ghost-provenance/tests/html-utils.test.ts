@@ -119,8 +119,12 @@ describe('html-utils', () => {
         </div>
         <p>After code.</p>
       `;
-      const result = extractText(html);
-      expect(result).toBe('Before code. After code.');
+      expect(extractText(html)).toBe('Before code. After code.');
+    });
+
+    it('skips plain pre/code content without Ghost card classes', () => {
+      const html = '<pre><code>const x = 1;</code></pre><p>After</p>';
+      expect(extractText(html)).toBe('After');
     });
 
     it('skips Ghost gallery cards', () => {
@@ -194,6 +198,21 @@ describe('html-utils', () => {
       // Should NOT contain image alt text
       expect(result).not.toContain('Hero');
     });
+
+    it('skips source=html wrapped Ghost html-card content', () => {
+      const html = `
+        <p>Before.</p>
+        <!--kg-card-begin: html-->
+        <p>Do not sign this raw html card text.</p>
+        <!--kg-card-end: html-->
+        <p>After.</p>
+      `;
+
+      const result = extractText(html);
+      expect(result).toContain('Before.');
+      expect(result).toContain('After.');
+      expect(result).not.toContain('Do not sign this raw html card text.');
+    });
   });
 
   // =========================================================================
@@ -230,6 +249,14 @@ describe('html-utils', () => {
 
     it('handles HTML with no text', () => {
       expect(extractFragments('<img src="test.jpg">')).toEqual([]);
+    });
+
+    it('skips text inside source=html wrapped Ghost html-card comments', () => {
+      const html = '<p>Before</p><!--kg-card-begin: html--><p>Skip me</p><!--kg-card-end: html--><p>After</p>';
+      const frags = extractFragments(html);
+      expect(frags.length).toBe(2);
+      expect(frags[0].rawText).toBe('Before');
+      expect(frags[1].rawText).toBe('After');
     });
   });
 
@@ -374,6 +401,19 @@ describe('html-utils', () => {
 
       expect(result).toBeNull();
     });
+
+    it('does not insert markers into skipped kg-code-card text when duplicate visible text exists', () => {
+      const marker = '\uFE00';
+      const html = '<div class="kg-card kg-code-card"><pre><code>Hello world.</code></pre></div><p>Hello world.</p>';
+
+      const result = embedEmbeddingPlanIntoHtml(html, {
+        index_unit: 'codepoint',
+        operations: [{ insert_after_index: 11, marker }],
+      });
+
+      expect(result).toContain('<code>Hello world.</code>');
+      expect(result).toContain(`<p>Hello world.${marker}</p>`);
+    });
   });
 
   describe('stripC2paEmbeddings', () => {
@@ -434,6 +474,18 @@ describe('html-utils', () => {
       expect(result).toContain('proof.\uFE00</p>');
       // Marker for second sentence should remain in second paragraph.
       expect(result).toContain('sentence.\uFE01\uFE02</p>');
+    });
+
+    it('does not embed into source=html wrapped Ghost html-card text when duplicated', () => {
+      const html =
+        '<!--kg-card-begin: html--><p>Hello world.</p><!--kg-card-end: html-->'
+        + '<p>Hello world.</p>';
+      const signed = 'Hello world.\uFE01';
+
+      const result = embedSignedText(html, signed);
+
+      expect(result).toContain('<!--kg-card-begin: html--><p>Hello world.</p><!--kg-card-end: html-->');
+      expect(result).toContain('<p>Hello world.\uFE01</p>');
     });
   });
 

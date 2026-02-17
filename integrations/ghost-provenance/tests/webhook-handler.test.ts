@@ -18,6 +18,8 @@ function makeConfig(overrides: Partial<Config> = {}): Config {
       signingMode: 'managed',
       manifestMode: 'micro',
       segmentationLevel: 'sentence',
+      ecc: true,
+      embedC2pa: true,
     },
     webhookSecret: '',
     dbPath: ':memory:',
