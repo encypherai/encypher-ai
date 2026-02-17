@@ -86,6 +86,18 @@ require_cmd() {
   fi
 }
 
+compose_build_with_fallback() {
+  local compose_file="$1"
+  local services="$2"
+
+  if ${COMPOSE} -f "$compose_file" build $services; then
+    return 0
+  fi
+
+  warn "BuildKit build failed; retrying with legacy builder (DOCKER_BUILDKIT=0)"
+  DOCKER_BUILDKIT=0 COMPOSE_DOCKER_CLI_BUILD=0 ${COMPOSE} -f "$compose_file" build $services
+}
+
 wait_for_http() {
   local name="$1"
   local url="$2"
@@ -170,7 +182,7 @@ if [[ "$SKIP_DOCKER" -eq 0 ]]; then
 
     step "  " "Rebuilding application services..."
     SERVICES_TO_BUILD="auth-service user-service key-service encoding-service verification-service coalition-service analytics-service billing-service notification-service enterprise-api marketing-site dashboard"
-    ${COMPOSE} -f docker-compose.full-stack.yml build $SERVICES_TO_BUILD
+    compose_build_with_fallback "docker-compose.full-stack.yml" "$SERVICES_TO_BUILD"
   fi
 
   # Build the list of services to exclude

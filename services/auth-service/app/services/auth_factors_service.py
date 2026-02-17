@@ -9,18 +9,31 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-import pyotp
+try:
+    import pyotp
+except ModuleNotFoundError:
+    pyotp = None
 from cryptography.fernet import Fernet
 from sqlalchemy.orm import Session
-from webauthn import (
-    generate_authentication_options,
-    generate_registration_options,
-    options_to_json,
-    verify_authentication_response,
-    verify_registration_response,
-)
-from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
-from webauthn.helpers.structs import PublicKeyCredentialDescriptor
+try:
+    from webauthn import (
+        generate_authentication_options,
+        generate_registration_options,
+        options_to_json,
+        verify_authentication_response,
+        verify_registration_response,
+    )
+    from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+    from webauthn.helpers.structs import PublicKeyCredentialDescriptor
+except ModuleNotFoundError:
+    generate_authentication_options = None
+    generate_registration_options = None
+    options_to_json = None
+    verify_authentication_response = None
+    verify_registration_response = None
+    base64url_to_bytes = None
+    bytes_to_base64url = None
+    PublicKeyCredentialDescriptor = None
 
 from app.core.config import settings
 from app.db.models import User
@@ -37,6 +50,25 @@ def _hash_value(value: str) -> str:
 def _fernet() -> Fernet:
     key_seed = hashlib.sha256(settings.JWT_SECRET_KEY.encode("utf-8")).digest()
     return Fernet(base64.urlsafe_b64encode(key_seed))
+
+
+def _require_pyotp() -> None:
+    if pyotp is None:
+        raise ValueError("TOTP support is unavailable because dependency 'pyotp' is not installed")
+
+
+def _require_webauthn() -> None:
+    if (
+        generate_authentication_options is None
+        or generate_registration_options is None
+        or options_to_json is None
+        or verify_authentication_response is None
+        or verify_registration_response is None
+        or base64url_to_bytes is None
+        or bytes_to_base64url is None
+        or PublicKeyCredentialDescriptor is None
+    ):
+        raise ValueError("Passkey support is unavailable because dependency 'webauthn' is not installed")
 
 
 class AuthFactorsService:
@@ -56,6 +88,7 @@ class AuthFactorsService:
         return user
 
     def begin_totp_setup(self, user_id: str) -> dict[str, Any]:
+        _require_pyotp()
         user = self._get_user(user_id)
         secret = pyotp.random_base32()
         user.totp_secret_encrypted = _fernet().encrypt(secret.encode("utf-8")).decode("utf-8")
@@ -73,6 +106,7 @@ class AuthFactorsService:
         }
 
     def confirm_totp_setup(self, user_id: str, code: str) -> dict[str, Any]:
+        _require_pyotp()
         user = self._get_user(user_id)
         if not user.totp_secret_encrypted:
             raise ValueError("TOTP setup has not been initialized")
@@ -87,7 +121,7 @@ class AuthFactorsService:
         return {"enabled": True, "recovery_codes_remaining": len(user.totp_backup_code_hashes or [])}
 
     def verify_totp_or_backup(self, user: User, code: str) -> str | None:
-        if user.totp_secret_encrypted:
+        if pyotp is not None and user.totp_secret_encrypted:
             secret = _fernet().decrypt(user.totp_secret_encrypted.encode("utf-8")).decode("utf-8")
             if pyotp.TOTP(secret).verify(code, valid_window=1):
                 return "totp"
@@ -115,6 +149,7 @@ class AuthFactorsService:
         self.db.commit()
 
     def begin_passkey_registration(self, user_id: str) -> dict[str, str]:
+        _require_webauthn()
         user = self._get_user(user_id)
         existing = []
         for cred in user.passkey_credentials or []:
@@ -138,6 +173,7 @@ class AuthFactorsService:
         return {"options_json": options_to_json(options)}
 
     def complete_passkey_registration(self, user_id: str, credential: dict[str, Any], name: str | None = None) -> dict[str, Any]:
+        _require_webauthn()
         user = self._get_user(user_id)
         if not user.passkey_challenge:
             raise ValueError("No passkey registration in progress")
@@ -168,6 +204,7 @@ class AuthFactorsService:
         return credential_info
 
     def begin_passkey_authentication(self, email: str) -> dict[str, str]:
+        _require_webauthn()
         user = self._get_user_by_email(email)
         credentials = list(user.passkey_credentials or [])
         if not credentials:
@@ -191,6 +228,7 @@ class AuthFactorsService:
         return {"options_json": options_to_json(options)}
 
     def complete_passkey_authentication(self, email: str, credential: dict[str, Any]) -> User:
+        _require_webauthn()
         user = self._get_user_by_email(email)
         if not user.passkey_challenge:
             raise ValueError("No passkey authentication in progress")

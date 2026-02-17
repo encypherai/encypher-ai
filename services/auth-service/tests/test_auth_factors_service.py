@@ -67,6 +67,14 @@ def test_confirm_totp_setup_rejects_invalid_code(service, mock_db, user):
         service.confirm_totp_setup(user.id, "000000")
 
 
+def test_begin_totp_setup_requires_pyotp_dependency(service, mock_db, user):
+    _wire_user(mock_db, user)
+
+    with patch("app.services.auth_factors_service.pyotp", None):
+        with pytest.raises(ValueError, match="TOTP support is unavailable"):
+            service.begin_totp_setup(user.id)
+
+
 def test_verify_totp_or_backup_accepts_backup_code_once(service, mock_db, user):
     _wire_user(mock_db, user)
     setup = service.begin_totp_setup(user.id)
@@ -77,6 +85,25 @@ def test_verify_totp_or_backup_accepts_backup_code_once(service, mock_db, user):
 
     method_again = service.verify_totp_or_backup(user, code)
     assert method_again is None
+
+
+def test_verify_totp_or_backup_uses_backup_code_when_pyotp_missing(service, mock_db, user):
+    _wire_user(mock_db, user)
+    setup = service.begin_totp_setup(user.id)
+    code = setup["backup_codes"][0]
+
+    with patch("app.services.auth_factors_service.pyotp", None):
+        method = service.verify_totp_or_backup(user, code)
+
+    assert method == "backup_code"
+
+
+def test_begin_passkey_registration_requires_webauthn_dependency(service, mock_db, user):
+    _wire_user(mock_db, user)
+
+    with patch("app.services.auth_factors_service.generate_registration_options", None):
+        with pytest.raises(ValueError, match="Passkey support is unavailable"):
+            service.begin_passkey_registration(user.id)
 
 
 def test_begin_passkey_registration_sets_challenge(service, mock_db, user):
