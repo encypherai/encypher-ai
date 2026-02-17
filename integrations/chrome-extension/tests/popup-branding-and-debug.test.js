@@ -65,4 +65,73 @@ describe('Popup branding + debug logging regressions', () => {
       'Detector should react to input events from WYSIWYG/contenteditable editing'
     );
   });
+
+  it('renders floating badges for editable surfaces to avoid writing badge markup into editor content', () => {
+    const detectorPath = path.join(EXTENSION_ROOT, 'content', 'detector.js');
+    const detectorCode = fs.readFileSync(detectorPath, 'utf8');
+
+    assert.match(
+      detectorCode,
+      /function\s+_isEditableSurface\(/,
+      'Detector should detect editable surfaces before injecting verification badges'
+    );
+
+    assert.match(
+      detectorCode,
+      /document\.body\.appendChild\(badge\)/,
+      'Editable-surface badges should be mounted on document.body as floating overlays'
+    );
+
+    assert.match(
+      detectorCode,
+      /if\s*\(editableSurface\)[\s\S]*return;[\s\S]*element\.appendChild\(badge\)/,
+      'Detector should avoid inline badge insertion for editable surfaces while preserving inline mode for static content'
+    );
+  });
+
+  it('skips wrapper-less C2PA fallback detections that commonly appear in transformed WYSIWYG mirror content', () => {
+    const detectorPath = path.join(EXTENSION_ROOT, 'content', 'detector.js');
+    const detectorCode = fs.readFileSync(detectorPath, 'utf8');
+
+    assert.match(
+      detectorCode,
+      /markerType\s*===\s*'c2pa'\s*&&\s*wrappers\.length\s*===\s*0/,
+      'Detector should explicitly gate non-wrapper C2PA fallback candidates'
+    );
+  });
+
+  it('treats WYSIWYG source/code panes as editable surfaces to avoid inline badge DOM pollution', () => {
+    const detectorPath = path.join(EXTENSION_ROOT, 'content', 'detector.js');
+    const detectorCode = fs.readFileSync(detectorPath, 'utf8');
+    const editableSurfaceFn = detectorCode.match(/function\s+_isEditableSurface\([\s\S]*?\n\}/)?.[0] || '';
+
+    assert.match(
+      editableSurfaceFn,
+      /\.CodeMirror|\.cm-editor|\.ace_editor|\.tox-edit-area|\.mce-content-body/,
+      'Detector should include source/code editor roots in editable-surface detection'
+    );
+  });
+
+  it('renders Signing Identity row and clickable verification link in verification detail panel', () => {
+    const detectorPath = path.join(EXTENSION_ROOT, 'content', 'detector.js');
+    const detectorCode = fs.readFileSync(detectorPath, 'utf8');
+
+    assert.match(
+      detectorCode,
+      /Signing Identity/,
+      'Detail panel should show Signing Identity instead of raw Organization label'
+    );
+
+    assert.match(
+      detectorCode,
+      /target="_blank"\s+rel="noopener"/,
+      'Verification URL row should render as an external clickable link'
+    );
+
+    assert.match(
+      detectorCode,
+      /verificationUrl:\s*response\.data\?\.verification_url/,
+      'Detector badge details should map verification_url from verify response data'
+    );
+  });
 });

@@ -12,7 +12,9 @@ const errorMessageEl = document.getElementById('error-message');
 const verifiedCountEl = document.getElementById('verified-count');
 const pendingCountEl = document.getElementById('pending-count');
 const invalidCountEl = document.getElementById('invalid-count');
+const revokedCountEl = document.getElementById('revoked-count');
 const detailsListEl = document.getElementById('details-list');
+const verifySignCtaEl = document.getElementById('verify-sign-cta');
 
 const rescanBtn = document.getElementById('rescan-btn');
 const settingsBtn = document.getElementById('settings-btn');
@@ -32,7 +34,19 @@ const copySignedBtn = document.getElementById('copy-signed');
 const signAnotherBtn = document.getElementById('sign-another');
 const signRetryBtn = document.getElementById('sign-retry');
 const signErrorMessageEl = document.getElementById('sign-error-message');
+const signIdentityEl = document.getElementById('sign-identity');
 const openSettingsBtn = document.getElementById('open-settings');
+const onboardingEmailEl = document.getElementById('onboarding-email');
+const onboardingLoginBtn = document.getElementById('onboarding-login');
+const onboardingStatusEl = document.getElementById('onboarding-status');
+const onboardingDashboardLoginBtn = document.getElementById('onboarding-dashboard-login');
+const onboardingDashboardSignupBtn = document.getElementById('onboarding-dashboard-signup');
+const onboardingDashboardGoogleBtn = document.getElementById('onboarding-dashboard-google');
+const onboardingDashboardGithubBtn = document.getElementById('onboarding-dashboard-github');
+const onboardingDashboardPasskeyBtn = document.getElementById('onboarding-dashboard-passkey');
+const quickApiKeyEl = document.getElementById('quick-api-key');
+const quickSaveApiKeyBtn = document.getElementById('quick-save-api-key');
+const signingIdentityHintEl = document.getElementById('signing-identity-hint');
 
 // DOM elements - Advanced options
 const tierBadgeEl = document.getElementById('tier-badge');
@@ -63,6 +77,7 @@ const debugFilters = document.querySelectorAll('.debug-panel__filter');
 
 // Account info cache
 let accountInfo = null;
+let currentTabId = null;
 
 // Debug state
 let currentDebugFilter = 'all';
@@ -81,6 +96,88 @@ function showState(state) {
   errorEl.hidden = state !== 'error';
 }
 
+function isPlausibleApiKey(value) {
+  const key = String(value || '').trim();
+  return key.length >= 16 && (key.startsWith('ency_') || key.startsWith('demo_'));
+}
+
+async function openDashboardAuth(mode, provider = '') {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'OPEN_DASHBOARD_AUTH',
+      mode,
+      provider,
+    });
+    if (!response?.success) {
+      throw new Error(response?.error || 'Unable to open dashboard auth flow.');
+    }
+    onboardingStatusEl.textContent = 'Opened Dashboard. Complete sign-in, create your API key, then paste it below.';
+    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--neutral';
+  } catch (error) {
+    onboardingStatusEl.textContent = error?.message || 'Unable to open Dashboard auth flow.';
+    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
+  }
+}
+
+async function saveQuickApiKey() {
+  const apiKey = quickApiKeyEl?.value?.trim() || '';
+  if (!isPlausibleApiKey(apiKey)) {
+    onboardingStatusEl.textContent = 'Enter a valid API key that starts with ency_ or demo_.';
+    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
+    return;
+  }
+
+  if (quickSaveApiKeyBtn) {
+    quickSaveApiKeyBtn.disabled = true;
+    quickSaveApiKeyBtn.textContent = 'Validating...';
+  }
+  onboardingStatusEl.textContent = 'Validating API key and loading your signing identity...';
+  onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--neutral';
+
+  try {
+    const accountResponse = await chrome.runtime.sendMessage({
+      type: 'GET_ACCOUNT_INFO',
+      apiKey,
+    });
+
+    if (!accountResponse?.success || !accountResponse?.data) {
+      throw new Error(accountResponse?.error || 'API key validation failed.');
+    }
+
+    const accountPayload = accountResponse.data;
+    const identity = accountPayload.publisherDisplayName || accountPayload.organizationName || 'your organization';
+
+    await chrome.storage.local.set({ apiKey });
+    await chrome.storage.sync.set({
+      extensionSetupStatus: 'completed',
+      onboardingCompletedAt: new Date().toISOString(),
+    });
+
+    onboardingStatusEl.textContent = `Connected. Signing as ${identity}.`;
+    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--success';
+    if (signingIdentityHintEl) {
+      signingIdentityHintEl.textContent = `Signing identity ready: ${identity}`;
+    }
+    if (quickApiKeyEl) {
+      quickApiKeyEl.value = '';
+    }
+
+    await checkApiKeyAndShowSignState();
+  } catch (error) {
+    onboardingStatusEl.textContent = error?.message || 'Unable to save API key.';
+    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
+  } finally {
+    if (quickSaveApiKeyBtn) {
+      quickSaveApiKeyBtn.disabled = false;
+      quickSaveApiKeyBtn.textContent = 'Save API Key & Continue';
+    }
+  }
+}
+
+function switchToSignTab() {
+  switchTab('sign');
+}
+
 /**
  * Update the summary counts
  */
@@ -88,6 +185,59 @@ function updateCounts(state) {
   verifiedCountEl.textContent = state.verified || 0;
   pendingCountEl.textContent = state.pending || 0;
   invalidCountEl.textContent = state.invalid || 0;
+  revokedCountEl.textContent = state.revoked || 0;
+}
+
+function formatDetailDate(rawDate) {
+  if (!rawDate) return 'Date unknown';
+  const parsed = new Date(rawDate);
+  if (Number.isNaN(parsed.getTime())) {
+    return rawDate;
+  }
+  return parsed.toLocaleString();
+}
+
+function markerTypeLabel(markerType) {
+  const marker = String(markerType || '').toLowerCase();
+  if (marker === 'c2pa') return 'C2PA';
+  if (marker === 'encypher') return 'Encypher';
+  if (marker === 'micro') return 'Micro';
+  return 'Unknown';
+}
+
+function buildVerificationLink(documentId) {
+  if (!documentId) return null;
+  return `https://api.encypherai.com/api/v1/public/verify/${encodeURIComponent(documentId)}`;
+}
+
+function safeExternalUrl(urlValue) {
+  if (!urlValue) return null;
+  try {
+    const parsed = new URL(String(urlValue));
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.toString();
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+async function locateEmbeddingOnPage(detectionId) {
+  if (!detectionId || !currentTabId) return;
+
+  try {
+    const response = await chrome.tabs.sendMessage(currentTabId, {
+      type: 'FOCUS_EMBEDDING',
+      detectionId,
+    });
+
+    if (!response?.found) {
+      await rescanPage();
+    }
+  } catch (error) {
+    console.error('Error locating embedding:', error);
+  }
 }
 
 /**
@@ -105,6 +255,16 @@ function renderDetails(details) {
     item.className = 'popup__detail-item';
     
     const iconClass = detail.revoked ? 'revoked' : (detail.valid ? 'verified' : 'invalid');
+    const statusLabel = detail.revoked ? 'Revoked' : (detail.valid ? 'Verified' : 'Invalid');
+    const markerLabel = markerTypeLabel(detail.markerType);
+    const detailDate = formatDetailDate(detail.date);
+    const verificationUrl = safeExternalUrl(detail.verificationUrl) || safeExternalUrl(buildVerificationLink(detail.documentId));
+    const verificationLinkHtml = verificationUrl
+      ? `<a class="popup__detail-link" href="${verificationUrl}" target="_blank" rel="noopener noreferrer">View verification</a>`
+      : '';
+    const locateButtonHtml = detail.detectionId
+      ? `<button class="popup__detail-action" type="button" data-action="locate-embedding" data-detection-id="${detail.detectionId}">Locate on page</button>`
+      : '';
     const iconSymbol = detail.revoked
       ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>'
       : (detail.valid
@@ -115,9 +275,21 @@ function renderDetails(details) {
       <div class="popup__detail-icon popup__detail-icon--${iconClass}">${iconSymbol}</div>
       <div class="popup__detail-info">
         <div class="popup__detail-signer">${detail.signer || 'Unknown Signer'}</div>
-        <div class="popup__detail-date">${detail.date || 'Date unknown'}</div>
+        <div class="popup__detail-date">${detailDate}</div>
+        <div class="popup__detail-meta">${statusLabel} · ${markerLabel}</div>
+        ${locateButtonHtml}
+        ${verificationLinkHtml}
       </div>
     `;
+
+    const locateButton = item.querySelector('[data-action="locate-embedding"]');
+    if (locateButton) {
+      locateButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        locateEmbeddingOnPage(detail.detectionId);
+      });
+    }
     
     detailsListEl.appendChild(item);
   }
@@ -135,6 +307,7 @@ async function loadTabState() {
       errorMessageEl.textContent = 'Unable to access current tab.';
       return;
     }
+    currentTabId = tab.id;
 
     // Get state from service worker
     const state = await chrome.runtime.sendMessage({
@@ -142,7 +315,8 @@ async function loadTabState() {
       tabId: tab.id
     });
 
-    if (!state || state.count === 0) {
+    const hasDetails = Array.isArray(state.details) && state.details.length > 0;
+    if (!state || (state.count === 0 && !hasDetails)) {
       showState('empty');
     } else {
       showState('found');
@@ -230,6 +404,7 @@ function switchTab(tabName) {
 async function checkApiKeyAndShowSignState() {
   try {
     const result = await chrome.storage.local.get({ apiKey: '' });
+    const syncState = await chrome.storage.sync.get({ extensionSetupStatus: 'not_started' });
     
     if (result.apiKey) {
       showSignState('ready');
@@ -237,10 +412,56 @@ async function checkApiKeyAndShowSignState() {
       fetchAccountInfo(result.apiKey);
     } else {
       showSignState('no-key');
+      if (onboardingStatusEl && syncState.extensionSetupStatus === 'completed') {
+        onboardingStatusEl.textContent = 'Setup is marked complete. Add or refresh your API key in Settings.';
+        onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--neutral';
+      }
     }
   } catch (error) {
     console.error('Error checking API key:', error);
     showSignState('no-key');
+  }
+}
+
+/**
+ * Optional onboarding flow: create tracked account + provision API key
+ */
+async function startOptionalOnboarding() {
+  if (!onboardingLoginBtn) return;
+
+  const email = onboardingEmailEl?.value?.trim() || '';
+  if (!email) {
+    onboardingStatusEl.textContent = 'Enter an email to set up your tracked account.';
+    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
+    return;
+  }
+
+  onboardingLoginBtn.disabled = true;
+  onboardingLoginBtn.textContent = 'Setting up...';
+  onboardingStatusEl.textContent = 'Creating account and provisioning your API key...';
+  onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--neutral';
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'AUTO_PROVISION_EXTENSION_USER',
+      email
+    });
+
+    if (response?.success) {
+      onboardingStatusEl.textContent = 'Setup complete. You can now sign content.';
+      onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--success';
+      await checkApiKeyAndShowSignState();
+      return;
+    }
+
+    onboardingStatusEl.textContent = response?.error || 'Setup failed. You can still add your API key manually.';
+    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
+  } catch (error) {
+    onboardingStatusEl.textContent = error.message || 'Setup failed. Please try again or add API key manually.';
+    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
+  } finally {
+    onboardingLoginBtn.disabled = false;
+    onboardingLoginBtn.textContent = 'Instant setup by email';
   }
 }
 
@@ -257,10 +478,18 @@ async function fetchAccountInfo(apiKey) {
     if (response && response.success) {
       accountInfo = response.data;
       updateTierDisplay(accountInfo);
+      updateSignIdentity(accountInfo);
     }
   } catch (error) {
     console.error('Error fetching account info:', error);
   }
+}
+
+function updateSignIdentity(info) {
+  if (!signIdentityEl) return;
+  const publisherDisplayName = info?.publisherDisplayName;
+  const signerName = publisherDisplayName || info?.organizationName || 'your organization';
+  signIdentityEl.textContent = `Signing as: ${signerName}`;
 }
 
 /**
@@ -453,6 +682,14 @@ copySignedBtn?.addEventListener('click', copySignedOutput);
 signAnotherBtn?.addEventListener('click', resetSignForm);
 signRetryBtn?.addEventListener('click', () => showSignState('ready'));
 openSettingsBtn?.addEventListener('click', openSettings);
+onboardingLoginBtn?.addEventListener('click', startOptionalOnboarding);
+onboardingDashboardLoginBtn?.addEventListener('click', () => openDashboardAuth('login'));
+onboardingDashboardSignupBtn?.addEventListener('click', () => openDashboardAuth('signup'));
+onboardingDashboardGoogleBtn?.addEventListener('click', () => openDashboardAuth('login', 'google'));
+onboardingDashboardGithubBtn?.addEventListener('click', () => openDashboardAuth('login', 'github'));
+onboardingDashboardPasskeyBtn?.addEventListener('click', () => openDashboardAuth('login', 'passkey'));
+quickSaveApiKeyBtn?.addEventListener('click', saveQuickApiKey);
+verifySignCtaEl?.addEventListener('click', switchToSignTab);
 
 // Event listener - Advanced options toggle
 toggleAdvancedBtn?.addEventListener('click', () => {

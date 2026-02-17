@@ -6,16 +6,128 @@
  */
 
 import debugLog from './debug-logger.js';
+import { resolveSignedText, withEmbeddingPlanRequest } from './signing-utils.js';
+import {
+  appendVerificationDetail,
+  buildVerificationDetail,
+  getIconStateForTab,
+  resolveSigningIdentity,
+  shouldRetryVerification,
+  updateTabStateWithVerification,
+} from './verification-utils.js';
 
 // API configuration (can be overridden by settings)
 let API_CONFIG = {
   baseUrl: 'https://api.encypherai.com',
+  dashboardBaseUrl: 'https://dashboard.encypherai.com',
   verifyEndpoint: '/api/v1/verify',
   signEndpoint: '/api/v1/sign',
+  provisioningEndpoint: '/api/v1/provisioning/auto-provision',
   analyticsEndpoint: '/api/v1/analytics/discovery',
   accountEndpoint: '/api/v1/account',
   timeout: 10000
 };
+
+function deriveDashboardBaseUrl(apiBaseUrl) {
+  try {
+    const parsed = new URL(apiBaseUrl);
+    if (parsed.hostname.startsWith('api.')) {
+      parsed.hostname = `dashboard.${parsed.hostname.slice(4)}`;
+    } else if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+      parsed.port = parsed.port || '3000';
+    }
+    parsed.pathname = '';
+    parsed.search = '';
+    parsed.hash = '';
+    return parsed.toString().replace(/\/$/, '');
+  } catch {
+    return 'https://dashboard.encypherai.com';
+  }
+}
+
+async function handleDashboardApiKeyHandoff(message, sender) {
+  const senderUrl = sender?.url || '';
+  if (!isTrustedExternalSender(senderUrl)) {
+    return { success: false, error: 'Untrusted handoff origin.' };
+  }
+
+  const apiKey = String(message?.apiKey || '').trim();
+  if (!isPlausibleApiKey(apiKey)) {
+    return { success: false, error: 'Invalid API key payload from dashboard.' };
+  }
+
+  const accountResult = await getAccountInfo(apiKey);
+  if (!accountResult?.success || !accountResult?.data) {
+    return { success: false, error: accountResult?.error || 'API key validation failed during dashboard handoff.' };
+  }
+
+  await chrome.storage.local.set({ apiKey });
+  await chrome.storage.sync.set({
+    extensionSetupStatus: 'completed',
+    onboardingSource: 'dashboard_handoff',
+    onboardingCompletedAt: new Date().toISOString(),
+  });
+
+  _accountInfoCache = {
+    apiKey,
+    data: accountResult.data,
+    expiresAt: Date.now() + ACCOUNT_INFO_CACHE_TTL_MS,
+  };
+
+  const identity = accountResult.data.publisherDisplayName || accountResult.data.organizationName || 'your organization';
+  return { success: true, source: 'dashboard_handoff', identity };
+}
+
+chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+  if (message?.type !== 'DASHBOARD_API_KEY_HANDOFF') {
+    sendResponse({ success: false, error: 'Unknown external message type.' });
+    return false;
+  }
+
+  handleDashboardApiKeyHandoff(message, sender).then((result) => {
+    sendResponse(result);
+  }).catch((error) => {
+    sendResponse({ success: false, error: error?.message || 'Dashboard handoff failed.' });
+  });
+
+  return true;
+});
+
+function buildDashboardAuthUrl(mode = 'login', provider = '') {
+  const authPath = mode === 'signup' ? '/signup' : '/login';
+  const dashboardBase = API_CONFIG.dashboardBaseUrl || deriveDashboardBaseUrl(API_CONFIG.baseUrl);
+  const callbackUrl = new URL(`${dashboardBase}/extension-handoff`);
+  callbackUrl.searchParams.set('source', 'chrome_extension');
+  callbackUrl.searchParams.set('extensionId', chrome.runtime.id);
+
+  const url = new URL(`${dashboardBase}${authPath}`);
+  url.searchParams.set('source', 'chrome_extension');
+  url.searchParams.set('extensionId', chrome.runtime.id);
+  url.searchParams.set('callbackUrl', callbackUrl.toString());
+  if (provider) {
+    url.searchParams.set('provider', provider);
+  }
+  return url.toString();
+}
+
+function isPlausibleApiKey(value) {
+  const key = String(value || '').trim();
+  return key.length >= 16 && (key.startsWith('ency_') || key.startsWith('demo_'));
+}
+
+function isTrustedExternalSender(senderUrl) {
+  if (!senderUrl) return false;
+  try {
+    const origin = new URL(senderUrl).origin;
+    return (
+      /^https:\/\/([a-z0-9-]+\.)*encypherai\.com$/i.test(origin) ||
+      /^http:\/\/localhost(?::\d+)?$/i.test(origin) ||
+      /^http:\/\/127\.0\.0\.1(?::\d+)?$/i.test(origin)
+    );
+  } catch {
+    return false;
+  }
+}
 
 // Analytics configuration — discovery tracking is always on.
 // This reports WHERE embeddings are found (URL + domain) so content owners
@@ -29,6 +141,12 @@ const ANALYTICS_CONFIG = {
 // Analytics queue for batching discovery events
 const analyticsQueue = [];
 let analyticsFlushTimeout = null;
+const ACCOUNT_INFO_CACHE_TTL_MS = 5 * 60 * 1000;
+let _accountInfoCache = {
+  apiKey: null,
+  data: null,
+  expiresAt: 0,
+};
 
 // Load settings on startup
 chrome.storage.sync.get({ apiBaseUrl: 'https://api.encypherai.com', customApiUrl: '' }, (result) => {
@@ -37,11 +155,100 @@ chrome.storage.sync.get({ apiBaseUrl: 'https://api.encypherai.com', customApiUrl
   } else if (result.apiBaseUrl) {
     API_CONFIG.baseUrl = result.apiBaseUrl;
   }
+  API_CONFIG.dashboardBaseUrl = deriveDashboardBaseUrl(API_CONFIG.baseUrl);
   debugLog.info('init', 'Service worker loaded', { apiBaseUrl: API_CONFIG.baseUrl });
 });
 
+async function _getCachedAccountInfo(apiKey) {
+  if (!apiKey) return null;
+
+  if (
+    _accountInfoCache.apiKey === apiKey &&
+    _accountInfoCache.data &&
+    Date.now() < _accountInfoCache.expiresAt
+  ) {
+    return _accountInfoCache.data;
+  }
+
+  const accountResponse = await getAccountInfo(apiKey);
+  if (accountResponse?.success && accountResponse.data) {
+    _accountInfoCache = {
+      apiKey,
+      data: accountResponse.data,
+      expiresAt: Date.now() + ACCOUNT_INFO_CACHE_TTL_MS,
+    };
+    return accountResponse.data;
+  }
+
+  return null;
+}
+
+/**
+ * Optional onboarding flow for extension users:
+ * create tracked account + provision API key.
+ */
+async function autoProvisionExtensionUser(email) {
+  try {
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      return { success: false, error: 'A valid email is required.' };
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
+
+    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.provisioningEndpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: normalizedEmail,
+        source: 'api',
+        source_metadata: {
+          integration: 'chrome_extension',
+          extension_version: chrome.runtime.getManifest().version
+        },
+        tier: 'free',
+        auto_activate: true
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const detail = errorData.detail || errorData.error || `HTTP ${response.status}`;
+      return { success: false, error: `Setup failed: ${detail}` };
+    }
+
+    const payload = await response.json();
+    const provisionedKey = payload?.api_key?.api_key || payload?.api_key || '';
+
+    if (!provisionedKey) {
+      return { success: false, error: 'Setup completed but no API key was returned.' };
+    }
+
+    await chrome.storage.local.set({ apiKey: provisionedKey });
+    await chrome.storage.sync.set({
+      extensionSetupStatus: 'completed',
+      onboardingEmail: normalizedEmail,
+      onboardingCompletedAt: new Date().toISOString()
+    });
+
+    return { success: true, apiKey: provisionedKey };
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      return { success: false, error: 'Setup timed out. Please try again.' };
+    }
+    return { success: false, error: error.message || 'Setup failed due to a network error.' };
+  }
+}
+
 // Cache for verification results (keyed by content hash)
 const verificationCache = new Map();
+const verificationInFlight = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Tab state tracking
@@ -92,6 +299,8 @@ function updateIcon(tabId, state) {
     none: '',
     found: '?',
     verified: 'OK',
+    revoked: 'RVK',
+    mixed: 'MIX',
     invalid: '!'
   };
   
@@ -104,6 +313,8 @@ function updateIcon(tabId, state) {
     none: '#6B7280',
     found: '#F59E0B',
     verified: '#10B981',
+    revoked: '#8B5CF6',
+    mixed: '#0EA5E9',
     invalid: '#EF4444'
   };
 
@@ -125,106 +336,152 @@ async function verifyContent(text, options = {}) {
     return cached.result;
   }
 
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
+  // De-duplicate concurrent verification requests for identical content
+  const inFlight = verificationInFlight.get(cacheKey);
+  if (inFlight) {
+    return inFlight;
+  }
 
-    // Build request with optional parameters
-    const requestBody = { text };
-    
-    // Add options for paid features (requires API key)
-    if (options.includeMerkleProof) {
-      requestBody.options = { include_merkle_proof: true };
-    }
+  const runVerification = async () => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
 
-    // Get API key if available (for enhanced features)
-    const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
-    const headers = { 'Content-Type': 'application/json' };
-    if (apiKey) {
-      headers['Authorization'] = `Bearer ${apiKey}`;
-    }
+      // Build request with optional parameters
+      const requestBody = { text };
+      
+      // Add options for paid features (requires API key)
+      if (options.includeMerkleProof) {
+        requestBody.options = { include_merkle_proof: true };
+      }
 
-    const verifyUrl = `${API_CONFIG.baseUrl}${API_CONFIG.verifyEndpoint}`;
-    debugLog.api('verify', `POST ${verifyUrl}`, { bodyLength: text.length, hasApiKey: !!apiKey });
+      // Get API key if available (for enhanced features)
+      const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) {
+        headers['Authorization'] = `Bearer ${apiKey}`;
+      }
 
-    const response = await fetch(verifyUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody),
-      signal: controller.signal
-    });
+      const verifyUrl = `${API_CONFIG.baseUrl}${API_CONFIG.verifyEndpoint}`;
+      debugLog.api('verify', `POST ${verifyUrl}`, { bodyLength: text.length, hasApiKey: !!apiKey });
 
-    clearTimeout(timeoutId);
+      const response = await fetch(verifyUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody),
+        signal: controller.signal
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      debugLog.error('verify', `HTTP ${response.status}`, errorData);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        debugLog.error('verify', `HTTP ${response.status}`, errorData);
+        return {
+          success: false,
+          error: errorData.error?.message || errorData.detail || `HTTP ${response.status}`,
+          status: response.status
+        };
+      }
+
+      const data = await response.json();
+      debugLog.api('verify', 'Response OK', { valid: data.data?.valid, correlationId: data.correlation_id });
+      
+      // Handle the unified VerifyResponse format
+      // Response: { success, data: VerifyVerdict, error, correlation_id }
+      const verdict = data.data || {};
+      
+      let accountInfo = null;
+      if (apiKey) {
+        accountInfo = await _getCachedAccountInfo(apiKey);
+      }
+
+      const signingIdentity = resolveSigningIdentity({
+        data: {
+          signing_identity: verdict.signing_identity,
+          publisher_display_name: verdict.publisher_display_name,
+          signer_id: verdict.signer_id,
+          signer_name: verdict.signer_name || verdict.organization_name,
+          organization_id: verdict.organization_id,
+          organization_name: verdict.organization_name,
+        },
+        accountInfo,
+      });
+
+      return {
+        success: verdict.valid === true,
+        revoked: verdict.revoked || false,
+        data: {
+          valid: verdict.valid,
+          tampered: verdict.tampered,
+          reason_code: verdict.reason_code,
+          signer_id: verdict.signer_id,
+          signer_name: verdict.signer_name || verdict.organization_name,
+          signing_identity: signingIdentity || null,
+          publisher_display_name: verdict.publisher_display_name || accountInfo?.publisherDisplayName || null,
+          organization_id: verdict.organization_id,
+          organization_name: verdict.organization_name,
+          signed_at: verdict.timestamp,
+          // Document info (free)
+          document_id: verdict.document?.document_id,
+          verification_url: verdict.document?.verification_url || verdict.verification_url || null,
+          title: verdict.document?.title,
+          author: verdict.document?.author,
+          document_type: verdict.document?.document_type,
+          // C2PA info (free)
+          c2pa_validated: verdict.c2pa?.validated,
+          c2pa_validation_type: verdict.c2pa?.validation_type,
+          // Licensing info (free)
+          license_type: verdict.licensing?.license_type,
+          license_url: verdict.licensing?.license_url,
+          // Merkle proof (paid - only if requested and authorized)
+          merkle_root: verdict.merkle_proof?.root_hash,
+          merkle_verified: verdict.merkle_proof?.verified,
+          // Status
+          revoked: verdict.revoked || false,
+          revoked_at: verdict.revoked_at || null
+        },
+        correlation_id: data.correlation_id,
+        error: data.error?.message
+      };
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return {
+          success: false,
+          error: 'Request timed out'
+        };
+      }
       return {
         success: false,
-        error: errorData.error?.message || errorData.detail || `HTTP ${response.status}`,
-        status: response.status
+        error: error.message || 'Network error'
       };
     }
+  };
 
-    const data = await response.json();
-    debugLog.api('verify', 'Response OK', { valid: data.data?.valid, correlationId: data.correlation_id });
-    
-    // Handle the unified VerifyResponse format
-    // Response: { success, data: VerifyVerdict, error, correlation_id }
-    const verdict = data.data || {};
-    
-    const result = {
-      success: verdict.valid === true,
-      revoked: verdict.revoked || false,
-      data: {
-        valid: verdict.valid,
-        tampered: verdict.tampered,
-        reason_code: verdict.reason_code,
-        signer_id: verdict.signer_id,
-        signer_name: verdict.signer_name || verdict.organization_name,
-        organization_id: verdict.organization_id,
-        organization_name: verdict.organization_name,
-        signed_at: verdict.timestamp,
-        // Document info (free)
-        document_id: verdict.document?.document_id,
-        title: verdict.document?.title,
-        author: verdict.document?.author,
-        document_type: verdict.document?.document_type,
-        // C2PA info (free)
-        c2pa_validated: verdict.c2pa?.validated,
-        c2pa_validation_type: verdict.c2pa?.validation_type,
-        // Licensing info (free)
-        license_type: verdict.licensing?.license_type,
-        license_url: verdict.licensing?.license_url,
-        // Merkle proof (paid - only if requested and authorized)
-        merkle_root: verdict.merkle_proof?.root_hash,
-        merkle_verified: verdict.merkle_proof?.verified,
-        // Status
-        revoked: verdict.revoked || false,
-        revoked_at: verdict.revoked_at || null
-      },
-      correlation_id: data.correlation_id,
-      error: data.error?.message
-    };
+  const verifyPromise = (async () => {
+    let result = await runVerification();
+    if (!result.success && shouldRetryVerification(result)) {
+      debugLog.info('verify', 'Retrying verification request after transient failure', {
+        status: result.status,
+        error: result.error
+      });
+      result = await runVerification();
+    }
 
-    // Cache the result
+    // Cache final result (including invalid/revoked) to avoid API spam
     verificationCache.set(cacheKey, {
-      result: result,
+      result,
       timestamp: Date.now()
     });
 
     return result;
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      return {
-        success: false,
-        error: 'Request timed out'
-      };
-    }
-    return {
-      success: false,
-      error: error.message || 'Network error'
-    };
+  })();
+
+  verificationInFlight.set(cacheKey, verifyPromise);
+  try {
+    return await verifyPromise;
+  } finally {
+    verificationInFlight.delete(cacheKey);
   }
 }
 
@@ -251,9 +508,9 @@ async function signContent(text, title, options = {}) {
     const requestBody = {
       text: text,
       document_title: title || undefined,
-      options: {
+      options: withEmbeddingPlanRequest({
         document_type: options.documentType || 'article',
-      }
+      })
     };
     
     // Advanced options for professional+ tiers (tier-gated server-side)
@@ -320,10 +577,18 @@ async function signContent(text, title, options = {}) {
     
     // Handle new unified response format: { success, data: { document: {...} }, meta: {...} }
     const result = data.data?.document || data.data || data;
+    const signedText = resolveSignedText({ visibleText: text, result });
+    if (!signedText) {
+      return {
+        success: false,
+        error: 'Signing response did not include signed text or a valid embedding plan'
+      };
+    }
     
     return {
       success: true,
-      signedText: result.signed_text || result.embedded_content,
+      signedText,
+      embeddingPlan: result.embedding_plan || null,
       documentId: result.document_id,
       verificationUrl: result.verification_url,
       merkleRoot: result.merkle_root,
@@ -468,6 +733,11 @@ function getAnalyticsSummary() {
   };
 }
 
+function _extractAccountPayload(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+  return raw.data && typeof raw.data === 'object' ? raw.data : raw;
+}
+
 /**
  * Get account info from the Encypher API
  */
@@ -496,15 +766,20 @@ async function getAccountInfo(apiKey) {
     }
 
     const data = await response.json();
+    const accountPayload = _extractAccountPayload(data);
+    const organizationName = accountPayload.organization_name || accountPayload.name || accountPayload.organization?.name || null;
+    const publisherDisplayName = accountPayload.publisher_display_name || accountPayload.display_name || accountPayload.publisher?.display_name || null;
     
     return {
       success: true,
       data: {
-        organizationId: data.organization_id,
-        organizationName: data.organization_name,
-        tier: data.tier || data.subscription_tier || 'free',
-        features: data.features || {},
-        usage: data.usage || {}
+        organizationId: accountPayload.organization_id || accountPayload.organizationId || null,
+        organizationName,
+        publisherDisplayName,
+        anonymousPublisher: Boolean(accountPayload.anonymous_publisher ?? accountPayload.publisher?.anonymous_publisher),
+        tier: accountPayload.tier || accountPayload.subscription_tier || 'free',
+        features: accountPayload.features || {},
+        usage: accountPayload.usage || {}
       }
     };
   } catch (error) {
@@ -529,7 +804,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           url: message.url,
           verified: 0,
           invalid: 0,
-          pending: message.count
+          revoked: 0,
+          details: [],
+          pending: typeof message.pending === 'number' ? message.pending : message.count
         });
         updateIcon(tabId, 'found');
       }
@@ -538,11 +815,71 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'NO_EMBEDDINGS':
       if (tabId) {
-        tabState.set(tabId, {
+        const existing = tabState.get(tabId);
+        const hasExistingDetections = Boolean(
+          (existing?.count || 0) > 0 || (Array.isArray(existing?.details) && existing.details.length > 0)
+        );
+        if (!hasExistingDetections) {
+          tabState.set(tabId, {
+            count: 0,
+            url: message.url
+          });
+          updateIcon(tabId, 'none');
+        }
+      }
+      sendResponse({ received: true });
+      break;
+
+    case 'REPORT_CACHED_DETECTION':
+      if (tabId) {
+        const current = tabState.get(tabId) || {
           count: 0,
-          url: message.url
-        });
-        updateIcon(tabId, 'none');
+          verified: 0,
+          invalid: 0,
+          revoked: 0,
+          pending: 0,
+          details: [],
+          url: message.pageUrl,
+        };
+
+        const detectionId = message.detectionId || null;
+        const hasDetail = detectionId
+          ? (Array.isArray(current.details) && current.details.some((d) => d?.detectionId === detectionId))
+          : false;
+
+        if (!hasDetail) {
+          const status = String(message.status || '').toLowerCase();
+          if (status === 'verified') {
+            current.verified += 1;
+          } else if (status === 'revoked') {
+            current.revoked += 1;
+          } else if (status === 'invalid' || status === 'error') {
+            current.invalid += 1;
+          }
+
+          const raw = message.details || {};
+          const detail = {
+            valid: status === 'verified',
+            revoked: status === 'revoked',
+            detectionId,
+            signingIdentity: raw.signingIdentity || null,
+            signer: raw.signer || 'Unknown signer',
+            date: raw.timestamp || raw.revokedAt || null,
+            markerType: raw.markerType || message.markerType || 'unknown',
+            documentId: raw.documentId || null,
+            verificationUrl: raw.verificationUrl || null,
+            reason: raw.error || null,
+          };
+          current.details = appendVerificationDetail(current.details, detail);
+        }
+
+        current.url = message.pageUrl || current.url;
+        current.count = Math.max(
+          current.count || 0,
+          current.verified + current.invalid + current.revoked + current.pending
+        );
+        tabState.set(tabId, current);
+        updateIcon(tabId, getIconStateForTab(current));
       }
       sendResponse({ received: true });
       break;
@@ -551,21 +888,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       verifyContent(message.text).then(result => {
         // Update tab state
         if (tabId) {
-          const state = tabState.get(tabId) || { verified: 0, invalid: 0, pending: 0, url: message.pageUrl };
-          state.pending = Math.max(0, (state.pending || 0) - 1);
-          if (result.success) {
-            state.verified = (state.verified || 0) + 1;
-          } else {
-            state.invalid = (state.invalid || 0) + 1;
-          }
+          const current = tabState.get(tabId) || {
+            verified: 0,
+            invalid: 0,
+            revoked: 0,
+            pending: 0,
+            details: [],
+            url: message.pageUrl
+          };
+          const state = updateTabStateWithVerification(current, result);
+          state.url = message.pageUrl || state.url;
+
+          const detail = buildVerificationDetail({
+            markerType: message.markerType,
+            result,
+            detectionId: message.detectionId || null,
+          });
+          state.details = appendVerificationDetail(state.details, detail);
+
           tabState.set(tabId, state);
 
           // Update icon based on overall state
-          if (state.verified > 0 && state.invalid === 0) {
-            updateIcon(tabId, 'verified');
-          } else if (state.invalid > 0) {
-            updateIcon(tabId, 'invalid');
-          }
+          updateIcon(tabId, getIconStateForTab(state));
           
           // Track discovery for analytics (phone home)
           trackEmbeddingDiscovery({
@@ -586,7 +930,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true; // async response
 
     case 'GET_TAB_STATE': {
-      const state = tabState.get(message.tabId) || { count: 0 };
+      const state = tabState.get(message.tabId) || { count: 0, verified: 0, invalid: 0, revoked: 0, pending: 0, details: [] };
       sendResponse(state);
       break;
     }
@@ -608,6 +952,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse(result);
       });
       return true; // async response
+
+    case 'AUTO_PROVISION_EXTENSION_USER':
+      autoProvisionExtensionUser(message.email).then(result => {
+        sendResponse(result);
+      });
+      return true; // async response
+
+    case 'OPEN_DASHBOARD_AUTH': {
+      const authUrl = buildDashboardAuthUrl(message.mode, message.provider);
+      chrome.tabs.create({ url: authUrl }).then(() => {
+        sendResponse({ success: true, url: authUrl });
+      }).catch((error) => {
+        sendResponse({ success: false, error: error?.message || 'Could not open dashboard auth.' });
+      });
+      return true;
+    }
 
     case 'CONTENT_DEBUG_LOG':
       // TEAM_151: Forward content script logs into the debug logger
@@ -639,6 +999,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // Update API config when settings change
       if (message.setting === 'apiBaseUrl') {
         API_CONFIG.baseUrl = message.value;
+        API_CONFIG.dashboardBaseUrl = deriveDashboardBaseUrl(message.value);
         debugLog.info('settings', 'API URL changed', { newUrl: message.value });
       } else if (message.setting === 'cacheTtl') {
         // Could update cache TTL here
@@ -653,6 +1014,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'SETTINGS_RESET':
       API_CONFIG.baseUrl = 'https://api.encypherai.com';
+      API_CONFIG.dashboardBaseUrl = deriveDashboardBaseUrl(API_CONFIG.baseUrl);
       verificationCache.clear();
       analyticsQueue.length = 0;
       sendResponse({ received: true });
@@ -697,7 +1059,11 @@ setInterval(() => {
 }, 60000); // Every minute
 
 // Create context menus on install
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === 'install') {
+    chrome.storage.sync.set({ extensionSetupStatus: 'not_started' }).catch(() => {});
+  }
+
   // Verify selected text
   chrome.contextMenus.create({
     id: 'verify-selected-text',
@@ -727,32 +1093,122 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+const CONTEXT_SCRIPT_FILES = ['content/detector.js', 'content/editor-signer.js'];
+
+function isRecoverableMessagingError(error) {
+  const message = String(error?.message || '');
+  return (
+    message.includes('Receiving end does not exist') ||
+    message.includes('Could not establish connection') ||
+    message.includes('The message port closed before a response was received') ||
+    message.includes('Extension context invalidated') ||
+    message.includes('Extension disconnected') ||
+    message.includes('No receiver acknowledgement')
+  );
+}
+
+async function showPageToast(tabId, message, variant = 'info') {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: (msg, type) => {
+        const toast = document.createElement('div');
+        toast.className = `encypher-notification encypher-notification--${type}`;
+        toast.setAttribute('role', 'alert');
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          setTimeout(() => toast.remove(), 220);
+        }, 1800);
+      },
+      args: [message, variant]
+    });
+  } catch (error) {
+    // Best-effort UX hint only.
+  }
+}
+
+async function sendFrameMessageWithFallback(tabId, frameId, payload, options = {}) {
+  const requestedFrameId = Number.isInteger(frameId) ? frameId : 0;
+  const attempts = requestedFrameId === 0 ? [0] : [requestedFrameId, 0];
+  const requireAck = options.requireAck === true;
+
+  for (const candidateFrameId of attempts) {
+    try {
+      const response = await chrome.tabs.sendMessage(tabId, payload, { frameId: candidateFrameId });
+      if (!requireAck || response?.received === true) {
+        return response;
+      }
+      throw new Error(`No receiver acknowledgement for ${payload?.type || 'message'}`);
+    } catch (error) {
+      if (!isRecoverableMessagingError(error)) {
+        throw error;
+      }
+
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId, frameIds: [candidateFrameId] },
+          files: CONTEXT_SCRIPT_FILES
+        });
+      } catch {
+        // Continue to retry sendMessage even if explicit injection is not permitted.
+      }
+
+      try {
+        const retryResponse = await chrome.tabs.sendMessage(tabId, payload, { frameId: candidateFrameId });
+        if (!requireAck || retryResponse?.received === true) {
+          return retryResponse;
+        }
+        throw new Error(`No receiver acknowledgement for ${payload?.type || 'message'}`);
+      } catch (retryError) {
+        if (!isRecoverableMessagingError(retryError)) {
+          throw retryError;
+        }
+      }
+    }
+  }
+
+  throw new Error('Could not establish connection to page content');
+}
+
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (!info.selectionText) return;
+  if (!tab?.id) return;
+  const targetFrameId = Number.isInteger(info.frameId) ? info.frameId : 0;
   
   switch (info.menuItemId) {
     case 'verify-selected-text':
       // Send selected text to content script for verification
       try {
-        await chrome.tabs.sendMessage(tab.id, {
+        await sendFrameMessageWithFallback(tab.id, targetFrameId, {
           type: 'VERIFY_SELECTION',
-          text: info.selectionText
+          text: info.selectionText,
+          pageUrl: tab.url || '',
+          pageTitle: tab.title || ''
+        }, {
+          requireAck: true
         });
       } catch (error) {
         console.error('Error verifying selection:', error);
+        await showPageToast(tab.id, 'Unable to verify selected text in this frame', 'error');
       }
       break;
       
     case 'sign-selected-text':
       // Send to content script to show signing UI
       try {
-        await chrome.tabs.sendMessage(tab.id, {
+        await showPageToast(tab.id, 'Signing selected text...', 'info');
+        await sendFrameMessageWithFallback(tab.id, targetFrameId, {
           type: 'SIGN_SELECTION',
           text: info.selectionText
+        }, {
+          requireAck: true
         });
       } catch (error) {
         console.error('Error signing selection:', error);
+        await showPageToast(tab.id, 'Unable to sign selected text. Try popup Sign tab.', 'error');
       }
       break;
       

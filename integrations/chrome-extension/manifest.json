@@ -11,6 +11,8 @@
     "scripting"
   ],
   "host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*",
     "https://api.encypherai.com/*",
     "https://*.encypherai.com/*"
   ],
@@ -34,12 +36,22 @@
     "service_worker": "background/service-worker.js",
     "type": "module"
   },
+  "externally_connectable": {
+    "matches": [
+      "https://dashboard.encypherai.com/*",
+      "https://*.encypherai.com/*",
+      "http://localhost/*",
+      "http://127.0.0.1/*"
+    ]
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content/detector.js", "content/editor-signer.js"],
       "css": ["content/badge.css", "content/editor-signer.css"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "web_accessible_resources": [

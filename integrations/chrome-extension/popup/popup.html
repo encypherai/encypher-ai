@@ -38,6 +38,7 @@
 
       <!-- Embeddings found -->
       <div id="content-found" class="popup__state" hidden>
+        <h2 class="popup__found-title">Signed content detected on this page.</h2>
         <div class="popup__summary">
           <div class="popup__stat popup__stat--verified">
             <span class="popup__stat-value" id="verified-count">0</span>
@@ -51,10 +52,19 @@
             <span class="popup__stat-value" id="invalid-count">0</span>
             <span class="popup__stat-label">Invalid</span>
           </div>
+          <div class="popup__stat popup__stat--revoked">
+            <span class="popup__stat-value" id="revoked-count">0</span>
+            <span class="popup__stat-label">Revoked</span>
+          </div>
         </div>
 
         <div class="popup__details" id="details-list">
           <!-- Populated by JavaScript -->
+        </div>
+
+        <div class="popup__verify-cta">
+          <span class="popup__verify-cta-text">Want to sign your own content?</span>
+          <button id="verify-sign-cta" class="popup__btn popup__btn--secondary" type="button">Set up free signing</button>
         </div>
       </div>
 
@@ -72,9 +82,47 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
           </div>
           <h2>API Key Required</h2>
-          <p>Add your API key in settings to sign content.</p>
+          <p id="onboarding-setup">Log in to track your signed content and get notified when it's found on the web.</p>
+
+          <div class="popup__auth-setup" id="auth-setup-flow">
+            <p class="popup__auth-title">Choose a sign-in method</p>
+            <div class="popup__auth-actions">
+              <button id="onboarding-dashboard-login" class="popup__btn popup__btn--primary popup__btn--full" type="button">
+                Continue with Dashboard Login
+              </button>
+              <button id="onboarding-dashboard-signup" class="popup__btn popup__btn--secondary popup__btn--full" type="button">
+                Create Dashboard Account
+              </button>
+            </div>
+
+            <div class="popup__oauth-row" role="group" aria-label="Dashboard social and passkey sign in">
+              <button id="onboarding-dashboard-google" class="popup__oauth-btn" type="button">Google</button>
+              <button id="onboarding-dashboard-github" class="popup__oauth-btn" type="button">GitHub</button>
+              <button id="onboarding-dashboard-passkey" class="popup__oauth-btn" type="button">Passkey</button>
+            </div>
+
+            <p class="popup__auth-guidance">After sign-in, set your signing identity in Dashboard and copy your API key below for instant sync.</p>
+
+            <label for="quick-api-key" class="popup__onboarding-label">Sync API key from Dashboard</label>
+            <input type="password" id="quick-api-key" class="popup__onboarding-input" placeholder="ency_..." autocomplete="off" spellcheck="false">
+            <button id="quick-save-api-key" class="popup__btn popup__btn--primary popup__btn--full" type="button">
+              Save API Key &amp; Continue
+            </button>
+            <p id="signing-identity-hint" class="popup__identity-hint">We'll fetch your signing identity as soon as your key is saved.</p>
+          </div>
+
+          <div class="popup__onboarding">
+            <label for="onboarding-email" class="popup__onboarding-label">Work email (optional)</label>
+            <input type="email" id="onboarding-email" class="popup__onboarding-input" placeholder="you@company.com" autocomplete="email">
+            <button id="onboarding-login" class="popup__btn popup__btn--primary popup__btn--full" type="button">
+              Instant setup by email
+            </button>
+            <p id="onboarding-status" class="popup__onboarding-status" aria-live="polite"></p>
+          </div>
+
+          <p class="popup__or-separator">or</p>
           <button id="open-settings" class="popup__btn popup__btn--primary" style="margin-top: 12px;">
-            Open Settings
+            Add API Key Manually
           </button>
         </div>
 
@@ -83,6 +131,7 @@
             <div class="popup__tier-badge" id="tier-badge">
               <span class="popup__tier-name">Free Tier</span>
             </div>
+            <p class="popup__sign-identity" id="sign-identity">Signing as: your organization</p>
 
             <!-- Usage meter -->
             <div class="popup__usage" id="usage-meter" hidden>

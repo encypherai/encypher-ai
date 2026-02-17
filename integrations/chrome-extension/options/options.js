@@ -7,6 +7,7 @@ const apiKeyInput = document.getElementById('apiKey');
 const toggleApiKeyBtn = document.getElementById('toggleApiKey');
 const saveApiKeyBtn = document.getElementById('saveApiKey');
 const apiKeyStatus = document.getElementById('apiKeyStatus');
+const publisherIdentityEl = document.getElementById('publisherIdentity');
 
 const autoVerifyCheckbox = document.getElementById('autoVerify');
 const showBadgesCheckbox = document.getElementById('showBadges');
@@ -26,6 +27,8 @@ const showEditorButtonsCheckbox = document.getElementById('showEditorButtons');
 // Analytics settings
 const analyticsEnabledCheckbox = document.getElementById('analyticsEnabled');
 const analyticsStatusEl = document.getElementById('analyticsStatus');
+const extensionSetupStatusSelect = document.getElementById('extensionSetupStatus');
+const setupStatusHint = document.getElementById('setupStatusHint');
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -41,7 +44,8 @@ const DEFAULT_SETTINGS = {
   defaultDocType: 'article',
   showEditorButtons: true,
   // Analytics
-  analyticsEnabled: true
+  analyticsEnabled: true,
+  extensionSetupStatus: 'not_started'
 };
 
 /**
@@ -53,10 +57,14 @@ async function loadSettings() {
     
     // API Key (stored locally for security)
     const localResult = await chrome.storage.local.get({ apiKey: '' });
+
     if (localResult.apiKey) {
       apiKeyInput.value = localResult.apiKey;
       apiKeyStatus.textContent = 'API key saved';
       apiKeyStatus.className = 'options__hint options__hint--success';
+      await loadPublisherIdentity(localResult.apiKey);
+    } else if (publisherIdentityEl) {
+      publisherIdentityEl.textContent = 'Signing as: add an API key to load your publisher identity.';
     }
     
     // Verification settings
@@ -79,10 +87,59 @@ async function loadSettings() {
     
     // Analytics settings
     if (analyticsEnabledCheckbox) analyticsEnabledCheckbox.checked = result.analyticsEnabled;
+    if (extensionSetupStatusSelect) {
+      extensionSetupStatusSelect.value = result.extensionSetupStatus || 'not_started';
+      updateSetupStatusHint(extensionSetupStatusSelect.value);
+    }
     updateAnalyticsStatus();
   } catch (error) {
     console.error('Error loading settings:', error);
   }
+}
+
+function updateSetupStatusHint(status) {
+  if (!setupStatusHint) return;
+
+  if (status === 'completed') {
+    setupStatusHint.textContent = 'Setup is marked complete. You can still replace the API key manually.';
+    setupStatusHint.className = 'options__hint options__hint--success';
+    return;
+  }
+
+  setupStatusHint.textContent = 'Optional login setup marks your extension as tracked for adoption metrics.';
+  setupStatusHint.className = 'options__hint';
+}
+
+function renderPublisherIdentity(account) {
+  if (!publisherIdentityEl) return;
+  const publisherDisplayName = account?.publisherDisplayName;
+  const signerName = publisherDisplayName || account.organizationName || 'your organization';
+  publisherIdentityEl.textContent = `Signing as: ${signerName}`;
+}
+
+async function loadPublisherIdentity(apiKey) {
+  if (!publisherIdentityEl) return;
+
+  if (!apiKey) {
+    publisherIdentityEl.textContent = 'Signing as: add an API key to load your publisher identity.';
+    return;
+  }
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'GET_ACCOUNT_INFO',
+      apiKey
+    });
+
+    if (response?.success && response.data) {
+      renderPublisherIdentity(response.data);
+      return;
+    }
+  } catch (error) {
+    // Ignore account lookup failure and show fallback identity hint.
+  }
+
+  publisherIdentityEl.textContent = 'Signing as: unable to load publisher identity.';
 }
 
 /**
@@ -129,6 +186,11 @@ function validateApiKey(key) {
   return { valid: true };
 }
 
+function normalizeAccountPayload(data) {
+  if (!data || typeof data !== 'object') return {};
+  return data?.data || data;
+}
+
 /**
  * Test API key by making a request
  */
@@ -145,7 +207,9 @@ async function testApiKey(apiKey) {
     
     if (response.ok) {
       const data = await response.json();
-      return { valid: true, organization: data.organization_name };
+      const accountPayload = normalizeAccountPayload(data);
+      const organization = accountPayload.organization_name || accountPayload.name || accountPayload.organization?.name || 'your organization';
+      return { valid: true, organization };
     } else if (response.status === 401) {
       return { valid: false, error: 'Invalid API key' };
     } else {
@@ -196,14 +260,23 @@ saveApiKeyBtn.addEventListener('click', async () => {
   if (testResult.valid) {
     // Save to local storage (more secure than sync)
     await saveSetting('apiKey', apiKey, true);
+    await saveSetting('extensionSetupStatus', 'completed');
     apiKeyStatus.textContent = `Connected as ${testResult.organization}`;
     apiKeyStatus.className = 'options__hint options__hint--success';
+    await loadPublisherIdentity(apiKey);
+    if (extensionSetupStatusSelect) {
+      extensionSetupStatusSelect.value = 'completed';
+      updateSetupStatusHint('completed');
+    }
     
     // Notify service worker
     chrome.runtime.sendMessage({ type: 'API_KEY_UPDATED', hasKey: true });
   } else {
     apiKeyStatus.textContent = testResult.error;
     apiKeyStatus.className = 'options__hint options__hint--error';
+    if (publisherIdentityEl) {
+      publisherIdentityEl.textContent = 'Signing as: add an API key to load your publisher identity.';
+    }
   }
   
   saveApiKeyBtn.disabled = false;
@@ -301,6 +374,11 @@ showEditorButtonsCheckbox?.addEventListener('change', async () => {
     setting: 'showEditorButtons', 
     value: showEditorButtonsCheckbox.checked 
   });
+});
+
+extensionSetupStatusSelect?.addEventListener('change', async () => {
+  await saveSetting('extensionSetupStatus', extensionSetupStatusSelect.value);
+  updateSetupStatusHint(extensionSetupStatusSelect.value);
 });
 
 // Analytics settings event listener

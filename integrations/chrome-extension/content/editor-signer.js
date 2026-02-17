@@ -818,6 +818,336 @@ function _stripEmbeddingChars(text) {
 }
 
 /**
+ * Convert a codepoint offset into a UTF-16 string offset.
+ */
+function _codepointOffsetToUtf16(text, codepointOffset) {
+  if (codepointOffset <= 0) return 0;
+  let utf16Offset = 0;
+  let seen = 0;
+  for (const char of text) {
+    if (seen >= codepointOffset) break;
+    utf16Offset += char.length;
+    seen += 1;
+  }
+  return utf16Offset;
+}
+
+/**
+ * Normalize embedding-plan operations into grouped insertion points.
+ * Returns null when operations are malformed for the provided visible text.
+ */
+function _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText) {
+  if (!embeddingPlan || !Array.isArray(embeddingPlan.operations)) {
+    return null;
+  }
+
+  const totalCodepoints = [...(visibleText || '')].length;
+  const grouped = new Map();
+
+  for (const op of embeddingPlan.operations) {
+    if (!op || typeof op.marker !== 'string' || typeof op.insert_after_index !== 'number') {
+      return null;
+    }
+    const idx = op.insert_after_index;
+    if (!Number.isInteger(idx) || idx < -1 || idx >= totalCodepoints) {
+      return null;
+    }
+    const insertionOffset = idx + 1;
+    grouped.set(insertionOffset, `${grouped.get(insertionOffset) || ''}${op.marker}`);
+  }
+
+  return Array.from(grouped.entries())
+    .map(([cpOffset, marker]) => ({ cpOffset, marker }))
+    .sort((a, b) => b.cpOffset - a.cpOffset);
+}
+
+/**
+ * Collect selected text-node segments covered by a range.
+ */
+function _collectRangeTextSegments(range) {
+  const segments = [];
+  const SHOW_TEXT = window.NodeFilter?.SHOW_TEXT || 4;
+  const commonRoot = range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+    ? range.commonAncestorContainer.parentNode || range.commonAncestorContainer
+    : range.commonAncestorContainer;
+
+  const walker = document.createTreeWalker(commonRoot, SHOW_TEXT);
+  let node = walker.nextNode();
+  while (node) {
+    try {
+      if (!range.intersectsNode(node)) {
+        node = walker.nextNode();
+        continue;
+      }
+    } catch (e) {
+      node = walker.nextNode();
+      continue;
+    }
+
+    let startOffset = 0;
+    let endOffset = (node.textContent || '').length;
+
+    if (node === range.startContainer) {
+      startOffset = range.startOffset;
+    }
+    if (node === range.endContainer) {
+      endOffset = range.endOffset;
+    }
+
+    if (endOffset > startOffset) {
+      const text = (node.textContent || '').slice(startOffset, endOffset);
+      segments.push({
+        node,
+        startOffset,
+        endOffset,
+        text,
+        codepointLength: [...text].length,
+      });
+    }
+
+    node = walker.nextNode();
+  }
+
+  return segments;
+}
+
+/**
+ * Collect all text-node segments inside an element.
+ */
+function _collectElementTextSegments(element) {
+  if (!element) return [];
+  const segments = [];
+  const SHOW_TEXT = window.NodeFilter?.SHOW_TEXT || 4;
+  const walker = document.createTreeWalker(element, SHOW_TEXT);
+  let node = walker.nextNode();
+  while (node) {
+    const text = node.textContent || '';
+    if (text.length > 0) {
+      segments.push({
+        node,
+        startOffset: 0,
+        endOffset: text.length,
+        text,
+        codepointLength: [...text].length,
+      });
+    }
+    node = walker.nextNode();
+  }
+  return segments;
+}
+
+/**
+ * Find a single (unique) UTF-16 occurrence for needle within haystack.
+ * Returns -1 when not found or when multiple matches exist.
+ */
+function _findSingleUtf16Occurrence(haystack, needle) {
+  if (!needle) return -1;
+  const first = haystack.indexOf(needle);
+  if (first === -1) return -1;
+  const second = haystack.indexOf(needle, first + 1);
+  if (second !== -1) return -1;
+  return first;
+}
+
+/**
+ * Build a normalized whitespace view of text and a mapping back to original
+ * codepoint offsets. Used to tolerate editor-specific NBSP/newline drift.
+ */
+function _buildNormalizedWhitespaceView(text) {
+  const normalizedChars = [];
+  const normalizedToOriginalCp = [];
+  const sourceChars = [...(text || '')];
+
+  let prevWasSpace = false;
+  for (let i = 0; i < sourceChars.length; i += 1) {
+    const ch = sourceChars[i];
+    const isSpaceLike = ch === '\u00A0' || ch === '\n' || ch === '\r' || ch === '\t' || ch === ' ';
+    const out = isSpaceLike ? ' ' : ch;
+
+    if (out === ' ') {
+      if (prevWasSpace) continue;
+      prevWasSpace = true;
+    } else {
+      prevWasSpace = false;
+    }
+
+    normalizedChars.push(out);
+    normalizedToOriginalCp.push(i);
+  }
+
+  return {
+    text: normalizedChars.join(''),
+    normalizedToOriginalCp,
+  };
+}
+
+/**
+ * Find a single (unique) normalized occurrence and map back to original
+ * codepoint start offset. Returns null when no unique match exists.
+ */
+function _findSingleNormalizedOccurrence(haystack, needle) {
+  const hayView = _buildNormalizedWhitespaceView(haystack);
+  const needleView = _buildNormalizedWhitespaceView(needle);
+
+  const hayChars = [...hayView.text];
+  const needleChars = [...needleView.text];
+  if (!needleChars.length) return null;
+  if (needleChars.length > hayChars.length) return null;
+
+  const matchStarts = [];
+  for (let i = 0; i <= hayChars.length - needleChars.length; i += 1) {
+    let ok = true;
+    for (let j = 0; j < needleChars.length; j += 1) {
+      if (hayChars[i + j] !== needleChars[j]) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) {
+      matchStarts.push(i);
+      if (matchStarts.length > 1) return null;
+    }
+  }
+
+  if (matchStarts.length !== 1) return null;
+
+  const normalizedStartCp = matchStarts[0];
+  return {
+    startCodepoint: hayView.normalizedToOriginalCp[normalizedStartCp] ?? 0,
+    lengthCodepoints: needleChars.length,
+  };
+}
+
+/**
+ * Map a global codepoint offset to a concrete node/UTF-16 offset insertion point.
+ */
+function _mapCodepointOffsetToNodePoint(segments, cpOffset) {
+  if (!segments.length) return null;
+  let consumed = 0;
+
+  for (const segment of segments) {
+    const nextConsumed = consumed + segment.codepointLength;
+    if (cpOffset <= nextConsumed) {
+      const localCpOffset = cpOffset - consumed;
+      const localUtf16Offset = _codepointOffsetToUtf16(segment.text, localCpOffset);
+      return {
+        node: segment.node,
+        offset: segment.startOffset + localUtf16Offset,
+      };
+    }
+    consumed = nextConsumed;
+  }
+
+  const last = segments[segments.length - 1];
+  return {
+    node: last.node,
+    offset: last.endOffset,
+  };
+}
+
+/**
+ * Apply embedding-plan markers in-place to the selected contenteditable text,
+ * preserving surrounding DOM structure whenever possible.
+ */
+function applyEmbeddingPlanToSelectionInPlace(embeddingPlan, visibleText) {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return false;
+
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) return false;
+
+  const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
+  if (!normalizedOps) return false;
+
+  const segments = _collectRangeTextSegments(range);
+  if (!segments.length) return false;
+
+  const rangeVisibleText = segments.map(s => s.text).join('');
+  if (rangeVisibleText !== visibleText) {
+    return false;
+  }
+
+  for (const op of normalizedOps) {
+    const point = _mapCodepointOffsetToNodePoint(segments, op.cpOffset);
+    if (!point || !point.node) {
+      return false;
+    }
+
+    const current = point.node.textContent || '';
+    point.node.textContent = current.slice(0, point.offset) + op.marker + current.slice(point.offset);
+  }
+
+  const lastSegment = segments[segments.length - 1];
+  const lastNodeText = lastSegment.node.textContent || '';
+  const trailingMarkers = normalizedOps
+    .filter(op => op.cpOffset >= [...visibleText].length)
+    .reduce((sum, op) => sum + op.marker.length, 0);
+  const caretOffset = Math.min(lastSegment.endOffset + trailingMarkers, lastNodeText.length);
+
+  const newRange = document.createRange();
+  newRange.setStart(lastSegment.node, caretOffset);
+  newRange.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
+
+  const container = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+    ? range.commonAncestorContainer
+    : range.commonAncestorContainer.parentElement;
+  const editRoot = container?.closest?.('[contenteditable="true"]') || container;
+  editRoot?.dispatchEvent(new Event('input', { bubbles: true }));
+
+  return true;
+}
+
+/**
+ * Apply embedding-plan markers within online-editor roots when browser selection
+ * ranges are non-standard (Google Docs / Office Online edge surfaces).
+ */
+function applyEmbeddingPlanToOnlineEditorInPlace(embeddingPlan, visibleText, onlinePlatform) {
+  if (onlinePlatform !== 'google-docs' && onlinePlatform !== 'ms-word-online') {
+    return false;
+  }
+
+  const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
+  if (!normalizedOps) return false;
+
+  const editorInfo = getOnlineEditorElement(onlinePlatform);
+  const editorRoot = editorInfo?.element;
+  if (!editorRoot) return false;
+
+  const segments = _collectElementTextSegments(editorRoot);
+  if (!segments.length) return false;
+
+  const fullText = segments.map(segment => segment.text).join('');
+  const normalizedMatch = _findSingleNormalizedOccurrence(fullText, visibleText);
+
+  let startCpOffset;
+  if (normalizedMatch) {
+    startCpOffset = normalizedMatch.startCodepoint;
+  } else {
+    const matchUtf16 = _findSingleUtf16Occurrence(fullText, visibleText);
+    if (matchUtf16 < 0) {
+      return false;
+    }
+    startCpOffset = [...fullText.slice(0, matchUtf16)].length;
+  }
+
+  for (const op of normalizedOps) {
+    const absoluteCpOffset = startCpOffset + op.cpOffset;
+    const point = _mapCodepointOffsetToNodePoint(segments, absoluteCpOffset);
+    if (!point || !point.node) {
+      return false;
+    }
+
+    const current = point.node.textContent || '';
+    point.node.textContent = current.slice(0, point.offset) + op.marker + current.slice(point.offset);
+  }
+
+  editorRoot.dispatchEvent(new Event('input', { bubbles: true }));
+  return true;
+}
+
+/**
  * Try to replace the current selection in-place within an editable element.
  * Returns true if replacement succeeded, false if not in an editable context.
  */
@@ -899,8 +1229,21 @@ async function handleSignSelection(text) {
         await storeProvenance(visibleHash, oldBytes, { action: 'resign' });
       }
 
-      // Try in-place replacement first
-      const replaced = replaceSelectionInPlace(response.signedText);
+      // Try DOM-preserving embedding-plan insertion first when available
+      let replaced = false;
+      if (response.embeddingPlan) {
+        replaced = applyEmbeddingPlanToSelectionInPlace(response.embeddingPlan, visibleText);
+
+        const onlinePlatform = detectOnlinePlatform();
+        if (!replaced && (onlinePlatform === 'google-docs' || onlinePlatform === 'ms-word-online')) {
+          replaced = applyEmbeddingPlanToOnlineEditorInPlace(response.embeddingPlan, visibleText, onlinePlatform);
+        }
+      }
+
+      // Fallback to full signed-text replacement
+      if (!replaced) {
+        replaced = replaceSelectionInPlace(response.signedText);
+      }
       if (replaced) {
         signedContentHashes.add(hashText(response.signedText));
         showNotification('success', 'Content signed and replaced!');
@@ -1096,6 +1439,10 @@ if (typeof module !== 'undefined' && module.exports) {
     _isVS,
     _isEmbeddingChar,
     _stripEmbeddingChars,
+    applyEmbeddingPlanToSelectionInPlace,
+    applyEmbeddingPlanToOnlineEditorInPlace,
+    _normalizeEmbeddingPlanOperations,
+    _codepointOffsetToUtf16,
     VS_RANGES,
     ZWNBSP
   };

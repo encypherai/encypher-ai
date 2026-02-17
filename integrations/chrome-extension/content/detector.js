@@ -49,6 +49,9 @@ const ZWNBSP = 0xFEFF;
 // This prevents re-hitting the API when a user scrolls up and down a page.
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 const _verificationCache = new Map(); // hash → { result, details, timestamp }
+const _floatingBadgeByElement = new WeakMap();
+const _detectionIdByElement = new WeakMap();
+let _detectionSequence = 0;
 
 // Track which DOM elements already have badges to avoid duplicate processing.
 // Uses Set (not WeakSet) so it can be cleared on RESCAN.
@@ -56,6 +59,21 @@ const _processedElements = new Set();
 
 // Guard against extension context invalidation (e.g. after extension reload)
 let _extensionContextValid = true;
+
+function _isDisconnectedMessageError(err) {
+  const message = String(err?.message || '');
+  return (
+    message.includes('Extension context invalidated') ||
+    message.includes('Extension disconnected') ||
+    message.includes('Receiving end does not exist') ||
+    message.includes('Could not establish connection') ||
+    message.includes('The message port closed before a response was received')
+  );
+}
+
+function _isContextInvalidatedError(err) {
+  return String(err?.message || '').includes('Extension context invalidated');
+}
 
 /**
  * Simple string hash for deduplication (not cryptographic)
@@ -70,25 +88,73 @@ function _hashText(text) {
   return hash.toString(36);
 }
 
+function _getOrCreateDetectionId(element, textHash) {
+  const existing = _detectionIdByElement.get(element);
+  if (existing) return existing;
+
+  _detectionSequence += 1;
+  const id = `${textHash}-${_detectionSequence.toString(36)}`;
+  _detectionIdByElement.set(element, id);
+  try {
+    element.dataset.encypherDetectionId = id;
+  } catch {
+    // Defensive: some hosts may block dataset writes on special nodes.
+  }
+  return id;
+}
+
+function _focusEmbeddingById(detectionId) {
+  if (!detectionId) return false;
+  const escaped = (typeof CSS !== 'undefined' && typeof CSS.escape === 'function')
+    ? CSS.escape(detectionId)
+    : String(detectionId).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const target = document.querySelector(`[data-encypher-detection-id="${escaped}"]`);
+  if (!target) return false;
+
+  target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+  const previousTransition = target.style.transition;
+  const previousOutline = target.style.outline;
+  const previousOutlineOffset = target.style.outlineOffset;
+  target.style.transition = 'outline 0.2s ease';
+  target.style.outline = '2px solid rgba(42, 135, 196, 0.85)';
+  target.style.outlineOffset = '2px';
+  setTimeout(() => {
+    target.style.outline = previousOutline;
+    target.style.outlineOffset = previousOutlineOffset;
+    target.style.transition = previousTransition;
+  }, 1800);
+  return true;
+}
+
 /**
  * Safe wrapper around chrome.runtime.sendMessage.
- * Catches "Extension context invalidated" errors and stops further messaging.
+ * Handles extension disconnect races and retries once when possible.
  */
-function _safeSendMessage(message) {
-  if (!_extensionContextValid) return Promise.resolve(null);
+async function _safeSendMessage(message) {
+  if (!_extensionContextValid) return null;
   try {
-    return chrome.runtime.sendMessage(message).catch(err => {
-      if (err?.message?.includes('Extension context invalidated')) {
+    return await chrome.runtime.sendMessage(message);
+  } catch (err) {
+    if (!_isDisconnectedMessageError(err)) {
+      return null;
+    }
+
+    if (_isContextInvalidatedError(err)) {
+      _extensionContextValid = false;
+      _debugLog('WARN', 'detector', 'Extension context invalidated — stopping messaging');
+      return null;
+    }
+
+    // Service worker can be suspended/restarted; retry once before surfacing an error badge.
+    try {
+      await new Promise(resolve => setTimeout(resolve, 120));
+      return await chrome.runtime.sendMessage(message);
+    } catch (retryErr) {
+      if (_isContextInvalidatedError(retryErr)) {
         _extensionContextValid = false;
-        _debugLog('WARN', 'detector', 'Extension context invalidated — stopping messaging');
       }
       return null;
-    });
-  } catch (err) {
-    if (err?.message?.includes('Extension context invalidated')) {
-      _extensionContextValid = false;
     }
-    return Promise.resolve(null);
   }
 }
 
@@ -363,6 +429,71 @@ function _escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function _isOpaqueIdentity(value) {
+  if (!value) return false;
+  return /^(org_|usr_|user_)[a-f0-9]+$/i.test(String(value).trim());
+}
+
+function _buildIdentityFromId(idValue) {
+  if (!idValue) return null;
+  const raw = String(idValue).trim();
+  if (!raw) return null;
+  const compact = raw.replace(/^(org_|usr_|user_)/i, '');
+  const suffix = compact.length > 12 ? `${compact.slice(0, 12)}...` : compact;
+  return `Organization ${suffix}`;
+}
+
+function _resolveSigningIdentity(details) {
+  const explicitIdentity = String(details.signingIdentity || '').trim();
+  if (explicitIdentity) return explicitIdentity;
+
+  const signerName = String(details.signer || '').trim();
+  if (signerName && !_isOpaqueIdentity(signerName)) return signerName;
+
+  const orgName = String(details.organizationName || '').trim();
+  if (orgName && !_isOpaqueIdentity(orgName)) return orgName;
+
+  return _buildIdentityFromId(details.organizationId || details.signerId);
+}
+
+function _safeExternalUrl(value) {
+  if (!value) return null;
+  try {
+    const parsed = new URL(String(value));
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      return parsed.toString();
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function _isEditableSurface(element) {
+  if (!element || element.nodeType !== Node.ELEMENT_NODE) return false;
+  if (element.isContentEditable) return true;
+  if (element.closest?.('[contenteditable="true"], textarea, input')) return true;
+  if (element.closest?.('.ql-editor, .ck-editor__editable, .cke_editable, .mce-content-body, .tox-edit-area, .CodeMirror, .cm-editor, .ace_editor, .kix-appview-editor, .kix-page-content-wrapper, [data-content-type="RichText"], .WACViewPanel_EditingElement')) return true;
+  return false;
+}
+
+function _positionFloatingBadge(badge, anchor) {
+  const rect = anchor.getBoundingClientRect();
+  const badgeWidth = 30;
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+  const top = Math.max(window.scrollY + rect.top - 10, window.scrollY + 8);
+  let left = window.scrollX + rect.right + 6;
+
+  if (left + badgeWidth > window.scrollX + viewportWidth - 8) {
+    left = Math.max(window.scrollX + rect.left - badgeWidth - 6, window.scrollX + 8);
+  }
+
+  badge.style.position = 'absolute';
+  badge.style.top = `${top}px`;
+  badge.style.left = `${left}px`;
+  badge.style.zIndex = '2147483000';
+}
+
 /**
  * Close any open detail panels
  */
@@ -414,19 +545,12 @@ function _showDetailPanel(badge, details) {
     <span class="encypher-detail-panel__value">${_escapeHtml(markerLabel)}</span>
   </div>`;
   
-  // Organization (prefer human-readable name; fall back to ID in mono)
-  const orgName = details.organizationName;
-  const orgId = details.organizationId;
-  const orgIsId = orgName && /^org_[a-f0-9]+$/i.test(orgName);
-  if (orgName && !orgIsId) {
+  // Signing identity (prefer explicit signer identity, avoid raw opaque IDs in UI)
+  const signingIdentity = _resolveSigningIdentity(details);
+  if (signingIdentity) {
     rows += `<div class="encypher-detail-panel__row">
-      <span class="encypher-detail-panel__label">Organization</span>
-      <span class="encypher-detail-panel__value">${_escapeHtml(orgName)}</span>
-    </div>`;
-  } else if (orgId) {
-    rows += `<div class="encypher-detail-panel__row">
-      <span class="encypher-detail-panel__label">Organization</span>
-      <span class="encypher-detail-panel__value encypher-detail-panel__mono">${_escapeHtml(orgId)}</span>
+      <span class="encypher-detail-panel__label">Signing Identity</span>
+      <span class="encypher-detail-panel__value">${_escapeHtml(signingIdentity)}</span>
     </div>`;
   }
   
@@ -455,6 +579,15 @@ function _showDetailPanel(badge, details) {
     rows += `<div class="encypher-detail-panel__row">
       <span class="encypher-detail-panel__label">Document</span>
       <span class="encypher-detail-panel__value encypher-detail-panel__mono">${_escapeHtml(details.documentId)}</span>
+    </div>`;
+  }
+
+  // Verification URL
+  const verificationUrl = _safeExternalUrl(details.verificationUrl);
+  if (verificationUrl) {
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">Verification</span>
+      <span class="encypher-detail-panel__value"><a href="${_escapeHtml(verificationUrl)}" target="_blank" rel="noopener">Open verification record</a></span>
     </div>`;
   }
   
@@ -560,14 +693,21 @@ function _showDetailPanel(badge, details) {
  * Create and inject a verification badge with Encypher logo
  */
 function injectBadge(element, status, details) {
+  const editableSurface = _isEditableSurface(element);
+
   // Remove existing badge so status updates (pending → verified) work
-  const existingBadge = element.querySelector('.encypher-badge');
+  const existingInlineBadge = element.querySelector('.encypher-badge');
+  const existingFloatingBadge = _floatingBadgeByElement.get(element);
+  const existingBadge = editableSurface ? existingFloatingBadge : existingInlineBadge;
   if (existingBadge) {
     // If the new status is 'pending' and a non-pending badge already exists, keep it
     if (status === 'pending' && !existingBadge.classList.contains('encypher-badge--pending')) {
       return;
     }
     existingBadge.remove();
+    if (editableSurface) {
+      _floatingBadgeByElement.delete(element);
+    }
   }
   
   const badge = document.createElement('div');
@@ -626,7 +766,15 @@ function injectBadge(element, status, details) {
     }
   });
   
-  // Append badge inline at the end of the element (no absolute overlay)
+  if (editableSurface) {
+    _positionFloatingBadge(badge, element);
+    badge.dataset.encypherFloating = 'true';
+    document.body.appendChild(badge);
+    _floatingBadgeByElement.set(element, badge);
+    return;
+  }
+
+  // Append badge inline at the end of the element for non-editable content.
   element.appendChild(badge);
   element.classList.add('encypher-verified-content');
 }
@@ -663,6 +811,7 @@ function _detectEmbeddings(root = document.body) {
     if (cachedEntry) {
       cached.push({
         element: containingBlock,
+        detectionId: _getOrCreateDetectionId(containingBlock, textHash),
         textHash,
         cachedStatus: cachedEntry.status,
         cachedDetails: cachedEntry.details
@@ -680,6 +829,7 @@ function _detectEmbeddings(root = document.body) {
         const visibleText = extractVisibleText(text);
         uncached.push({
           element: containingBlock, node, text, textHash, visibleText,
+          detectionId: _getOrCreateDetectionId(containingBlock, textHash),
           bytes: Array.from(wrapper.bytes), markerType
         });
         found = true;
@@ -692,9 +842,17 @@ function _detectEmbeddings(root = document.body) {
       const bytes = extractEmbeddedBytes(text);
       const markerType = detectMarkerType(bytes);
       if (markerType) {
+        if (markerType === 'c2pa' && wrappers.length === 0) {
+          _debugLog('DEBUG', 'detector', 'Skipping non-wrapper C2PA fallback candidate', {
+            textHash,
+            byteLength: bytes.length
+          });
+          continue;
+        }
         const visibleText = extractVisibleText(text);
         uncached.push({
           element: containingBlock, node, text, textHash, visibleText,
+          detectionId: _getOrCreateDetectionId(containingBlock, textHash),
           bytes: Array.from(bytes), markerType
         });
         found = true;
@@ -711,6 +869,7 @@ function _detectEmbeddings(root = document.body) {
         const bytes = extractEmbeddedBytes(text);
         uncached.push({
           element: containingBlock, node, text, textHash, visibleText,
+          detectionId: _getOrCreateDetectionId(containingBlock, textHash),
           bytes: Array.from(bytes),
           markerType: 'micro',
           microCount: micros.length,
@@ -731,11 +890,14 @@ function _buildBadgeDetails(response, markerType) {
     return {
       status: 'verified',
       details: {
+        signingIdentity: response.data?.signing_identity || response.data?.publisher_display_name || null,
         signer: response.data?.signer_name || response.data?.organization_name || null,
+        signerId: response.data?.signer_id,
         organizationName: response.data?.organization_name,
         organizationId: response.data?.organization_id,
         timestamp: response.data?.signed_at,
         documentId: response.data?.document_id,
+        verificationUrl: response.data?.verification_url,
         title: response.data?.title,
         documentType: response.data?.document_type,
         c2paValidated: response.data?.c2pa_validated,
@@ -750,7 +912,12 @@ function _buildBadgeDetails(response, markerType) {
       details: {
         error: 'This content has been revoked',
         revokedAt: response.data?.revoked_at || response.revoked_at,
+        signingIdentity: response.data?.signing_identity || response.data?.publisher_display_name || null,
+        signer: response.data?.signer_name || response.data?.organization_name || null,
+        signerId: response.data?.signer_id,
         organizationName: response.data?.organization_name,
+        organizationId: response.data?.organization_id,
+        verificationUrl: response.data?.verification_url,
         markerType
       }
     };
@@ -773,13 +940,6 @@ function _buildBadgeDetails(response, markerType) {
 async function _verifyDetections(detections) {
   if (detections.length === 0) return;
   
-  // Notify service worker about the count
-  _safeSendMessage({
-    type: 'EMBEDDINGS_DETECTED',
-    count: detections.length,
-    url: window.location.href
-  });
-  
   for (const detection of detections) {
     // Mark as processed immediately to prevent duplicate work
     _processedElements.add(detection.element);
@@ -795,6 +955,7 @@ async function _verifyDetections(detections) {
     try {
       const response = await _safeSendMessage({
         type: 'VERIFY_CONTENT',
+        detectionId: detection.detectionId,
         text: detection.text,
         visibleText: detection.visibleText,
         markerType: detection.markerType,
@@ -812,6 +973,7 @@ async function _verifyDetections(detections) {
       }
       
       const { status, details } = _buildBadgeDetails(response, detection.markerType);
+      details.detectionId = detection.detectionId;
       
       // Store in local browser cache
       _verificationCache.set(detection.textHash, {
@@ -855,12 +1017,31 @@ async function scanPage(root = document.body) {
   // Apply cached results immediately (no API call needed)
   for (const entry of cached) {
     _processedElements.add(entry.element);
-    injectBadge(entry.element, entry.cachedStatus, entry.cachedDetails);
+    const cachedDetails = { ...(entry.cachedDetails || {}), detectionId: entry.detectionId };
+    injectBadge(entry.element, entry.cachedStatus, cachedDetails);
+    _safeSendMessage({
+      type: 'REPORT_CACHED_DETECTION',
+      detectionId: entry.detectionId,
+      status: entry.cachedStatus,
+      details: cachedDetails,
+      markerType: cachedDetails.markerType,
+      pageUrl: window.location.href,
+      pageTitle: document.title,
+    });
     _debugLog('DEBUG', 'detector', `Cache hit: ${entry.cachedStatus} (hash=${entry.textHash})`);
   }
   
   const totalFound = uncached.length + cached.length;
   _debugLog('INFO', 'detector', `Scan complete: ${totalFound} embeddings (${cached.length} cached, ${uncached.length} new)`);
+
+  if (totalFound > 0) {
+    _safeSendMessage({
+      type: 'EMBEDDINGS_DETECTED',
+      count: totalFound,
+      pending: uncached.length,
+      url: window.location.href,
+    });
+  }
   
   if (uncached.length > 0) {
     await _verifyDetections(uncached);
@@ -968,7 +1149,7 @@ function observeDOM() {
     if (!(target instanceof Element)) return;
 
     const editableRoot = target.closest(
-      '[contenteditable="true"], .ql-editor, .ck-editor__editable, .cke_editable, .mce-content-body, .kix-appview-editor, .kix-page-content-wrapper, [data-content-type="RichText"], .WACViewPanel_EditingElement'
+      '[contenteditable="true"], textarea, input, .ql-editor, .ck-editor__editable, .cke_editable, .mce-content-body, .tox-edit-area, .CodeMirror, .cm-editor, .ace_editor, .kix-appview-editor, .kix-page-content-wrapper, [data-content-type="RichText"], .WACViewPanel_EditingElement'
     ) || target;
 
     pendingInputRoots.push(editableRoot);
@@ -1024,23 +1205,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   if (message.type === 'VERIFY_SELECTION') {
     // Verify selected text via context menu
-    verifySelectedText(message.text);
+    verifySelectedText(message.text, {
+      pageUrl: message.pageUrl,
+      pageTitle: message.pageTitle,
+      markerType: message.markerType || 'selection'
+    });
     sendResponse({ received: true });
+  }
+
+  if (message.type === 'FOCUS_EMBEDDING') {
+    const found = _focusEmbeddingById(message.detectionId);
+    sendResponse({ found });
   }
 });
 
 /**
  * Verify text selected via context menu
  */
-async function verifySelectedText(text) {
+async function verifySelectedText(text, context = {}) {
   try {
-    const response = await chrome.runtime.sendMessage({
+    const response = await _safeSendMessage({
       type: 'VERIFY_CONTENT',
       text: text,
-      visibleText: text
+      visibleText: text,
+      markerType: context.markerType || 'selection',
+      pageUrl: context.pageUrl || window.location.href,
+      pageTitle: context.pageTitle || document.title
     });
-    
-    // Show notification with result
+
+    if (!response) {
+      showVerificationNotification('error', {
+        error: 'Extension disconnected. Reload page and try again.'
+      });
+      return;
+    }
+
     if (response && response.success) {
       showVerificationNotification('verified', {
         signer: response.data?.signer_name || response.data?.signer_id,

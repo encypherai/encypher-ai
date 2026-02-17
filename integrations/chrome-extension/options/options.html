@@ -31,11 +31,23 @@
             </button>
           </div>
           <p class="options__hint" id="apiKeyStatus"></p>
+          <p class="options__identity" id="publisherIdentity">Signing as: add an API key to load your publisher identity.</p>
         </div>
 
         <button type="button" id="saveApiKey" class="options__btn options__btn--primary">
           Save API Key
         </button>
+
+        <div class="options__setup-state">
+          <label for="extensionSetupStatus">Extension Setup Status</label>
+          <select id="extensionSetupStatus">
+            <option value="not_started">Not started</option>
+            <option value="completed">Completed</option>
+          </select>
+          <p class="options__hint" id="setupStatusHint">
+            Optional login setup marks your extension as tracked for adoption metrics.
+          </p>
+        </div>
       </section>
 
       <!-- Verification Settings -->

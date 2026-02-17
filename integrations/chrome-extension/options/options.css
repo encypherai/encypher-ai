@@ -135,12 +135,24 @@ body {
   margin-top: 4px;
 }
 
+.options__identity {
+  font-size: 12px;
+  color: #334155;
+  margin-top: 6px;
+}
+
 .options__hint--success {
   color: #059669;
 }
 
 .options__hint--error {
   color: #DC2626;
+}
+
+.options__setup-state {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
 }
 
 /* Checkbox fields */

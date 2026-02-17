@@ -1,13 +1,14 @@
 'use client';
 
 import { Input } from '@encypher/design-system';
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import apiClient from '../../lib/api';
 
 // Note: API_BASE not used directly in login - auth goes through NextAuth
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import MetadataBackground from '../../components/hero/MetadataBackground';
 
 // Canonical SVG logos
@@ -15,6 +16,7 @@ const LOGO_COLOR = '/assets/encypher_full_logo_color.svg';
 const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
@@ -22,6 +24,40 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const autoAuthTriggeredRef = useRef(false);
+
+  const source = searchParams.get('source') || '';
+  const extensionId = searchParams.get('extensionId') || '';
+  const provider = (searchParams.get('provider') || '').toLowerCase();
+
+  const callbackUrl = useMemo(() => {
+    const raw = searchParams.get('callbackUrl') || '/';
+    try {
+      const parsed = new URL(raw, 'http://local.app');
+      if (parsed.origin !== 'http://local.app' || !parsed.pathname.startsWith('/')) {
+        return '/';
+      }
+      return `${parsed.pathname}${parsed.search}${parsed.hash}` || '/';
+    } catch {
+      return '/';
+    }
+  }, [searchParams]);
+
+  const signupHref = useMemo(() => {
+    const params = new URLSearchParams();
+    if (source) params.set('source', source);
+    if (extensionId) params.set('extensionId', extensionId);
+    if (callbackUrl) params.set('callbackUrl', callbackUrl);
+    const query = params.toString();
+    return query ? `/signup?${query}` : '/signup';
+  }, [callbackUrl, extensionId, source]);
+
+  useEffect(() => {
+    if (autoAuthTriggeredRef.current) return;
+    if (provider !== 'google' && provider !== 'github') return;
+    autoAuthTriggeredRef.current = true;
+    signIn(provider, { callbackUrl });
+  }, [callbackUrl, provider]);
 
   const base64UrlToBuffer = (value: string): Uint8Array => {
     const padded = `${value}${'='.repeat((4 - (value.length % 4)) % 4)}`;
@@ -94,13 +130,13 @@ export default function LoginPage() {
         email,
         password: `__TOKEN__${accessToken}`,
         redirect: false,
-        callbackUrl: '/',
+        callbackUrl,
       });
 
       if (result?.error) {
         throw new Error(result.error);
       }
-      window.location.href = '/';
+      window.location.href = callbackUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Passkey login failed.');
     } finally {
@@ -120,7 +156,7 @@ export default function LoginPage() {
         mfaToken: mfaToken || undefined,
         mfaCode: mfaCode || undefined,
         redirect: false,
-        callbackUrl: '/',
+        callbackUrl,
       });
 
       if (result?.error) {
@@ -136,7 +172,7 @@ export default function LoginPage() {
       } else if (result?.ok) {
         // Force a hard navigation to ensure middleware re-evaluates with fresh session
         // Using window.location instead of router.push to avoid Next.js cache issues
-        window.location.href = '/';
+        window.location.href = callbackUrl;
       } else {
         setError('Login failed. Please try again.');
         setLoading(false);
@@ -186,7 +222,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 disabled={loading}
-                onClick={() => signIn('google', { callbackUrl: '/' })}
+                onClick={() => signIn('google', { callbackUrl })}
                 className="flex items-center justify-center gap-2 py-3 px-2 rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-sm"
                 aria-label="Sign in with Google"
                 style={{ boxShadow: '0 2px 10px 0 #4285F4' }}
@@ -197,7 +233,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 disabled={loading}
-                onClick={() => signIn('github', { callbackUrl: '/' })}
+                onClick={() => signIn('github', { callbackUrl })}
                 className="flex items-center justify-center gap-2 py-3 px-2 rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-sm"
                 aria-label="Sign in with GitHub"
                 style={{ boxShadow: '0 2px 10px 0 #4285F4' }}
@@ -276,7 +312,7 @@ export default function LoginPage() {
             </form>
 
             <div className="text-sm text-muted-foreground mt-2 text-center">
-              Don't have an account? <Link href="/signup" className="text-accent hover:underline">Sign up</Link>
+              Don't have an account? <Link href={signupHref} className="text-accent hover:underline">Sign up</Link>
             </div>
             <div className="text-sm text-muted-foreground text-center">
               <Link href="/forgot-password" className="text-accent hover:underline">Forgot your password?</Link>

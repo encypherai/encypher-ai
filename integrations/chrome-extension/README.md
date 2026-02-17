@@ -2,6 +2,13 @@
 
 A browser extension that automatically detects and verifies C2PA-signed content on any webpage, displaying trust badges for verified content. Also supports signing content directly from the browser and inline signing in WYSIWYG editors.
 
+## User Journeys
+
+- See `USER_JOURNEYS.md` for documented end-to-end flows for:
+  - Reader / Verifier (no account)
+  - Publisher / Creator (onboarded signing)
+  - validation matrix and test commands
+
 ## Features
 
 ### Verification
@@ -14,6 +21,7 @@ A browser extension that automatically detects and verifies C2PA-signed content 
 
 ### Content Signing
 - **Popup Signing**: Sign text directly from the extension popup (requires API key)
+- **Optional Login Onboarding**: Set up a tracked free account from the popup to auto-provision an API key
 - **WYSIWYG Editor Integration**: Floating sign buttons on detected text editors
 - **Context Menu Signing**: Right-click to sign selected text or sign & copy to clipboard
 - **Advanced Options**: Document type, invisible embeddings, Merkle tree (Enterprise), attribution tracking (Enterprise)
@@ -34,6 +42,7 @@ The extension automatically detects and adds signing capabilities to:
 
 ### Settings
 - **API Key Management**: Securely store and test your API key
+- **Setup State Tracking**: Mark extension setup as complete/not started, independent of manual API key override
 - **Verification Settings**: Auto-verify, show badges
 - **Signing Preferences**: Default document type, invisible embeddings, auto-replace content
 - **Advanced**: Custom API URL, cache duration
@@ -111,11 +120,15 @@ chrome-extension/
 - `POST /api/v1/sign` - Sign content with C2PA manifest (features gated by tier via options)
 - `GET /api/v1/account` - Get account info and tier
 
+### Optional Onboarding Provisioning
+- `POST /api/v1/provisioning/auto-provision` - Create a tracked free account and return a provisioned API key for extension onboarding
+
 ## Privacy
 
 - Only signed content blocks are sent to the API (not the entire page)
 - Verification results are cached locally
-- No user tracking or analytics
+- Discovery analytics may be sent for signed-content detection events
+- Optional onboarding setup can associate extension activity with a user-provided email for adoption metrics
 
 ## Development
 
