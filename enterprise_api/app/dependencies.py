@@ -24,6 +24,14 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
 
 
+def _build_api_key_prefix(raw_key: str) -> str:
+    """Return a safe, human-readable key prefix for telemetry."""
+    trimmed = (raw_key or "").strip()
+    if not trimmed:
+        return ""
+    return trimmed[:12]
+
+
 async def _get_org_context_from_jwt_access_token(token: str) -> Optional[Dict]:
     """Resolve organization context from an auth-service JWT access token.
 
@@ -295,6 +303,7 @@ async def get_current_organization(
     request.state.organization_id = org_context.get("organization_id")
     request.state.user_id = org_context.get("user_id") or org_context.get("api_key_owner_id")
     request.state.api_key_id = org_context.get("api_key_id")
+    request.state.api_key_prefix = _build_api_key_prefix(api_key)
     request.state.tier = org_context.get("tier")
 
     return org_context
@@ -509,6 +518,7 @@ async def require_super_admin_dep(
     request.state.organization_id = admin_context.get("organization_id")
     request.state.user_id = admin_context.get("user_id")
     request.state.api_key_id = admin_context.get("api_key_id")
+    request.state.api_key_prefix = ""
     request.state.tier = admin_context.get("tier")
     return await require_super_admin(admin_context)
 

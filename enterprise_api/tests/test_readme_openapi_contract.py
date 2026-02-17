@@ -14,6 +14,15 @@ from app.main import _filter_openapi_for_public, app
 
 _HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
 
+_GHOST_INTEGRATION_ENDPOINTS = {
+    ("POST", "/api/v1/integrations/ghost"),
+    ("GET", "/api/v1/integrations/ghost"),
+    ("DELETE", "/api/v1/integrations/ghost"),
+    ("POST", "/api/v1/integrations/ghost/regenerate-token"),
+    ("POST", "/api/v1/integrations/ghost/webhook"),
+    ("POST", "/api/v1/integrations/ghost/sign/{post_id}"),
+}
+
 
 def _extract_backticked_value(cell: str) -> str | None:
     match = re.search(r"`([^`]+)`", cell)
@@ -160,3 +169,16 @@ async def test_readme_endpoint_tables_match_openapi_schema() -> None:
             + f"Extra in README (README -> OpenAPI): {len(extra_in_readme)}\n"
             + (extra_block if extra_block else "")
         )
+
+
+def test_readme_documents_ghost_integration_endpoints() -> None:
+    readme_path = Path(__file__).resolve().parents[1] / "README.md"
+    readme_text = readme_path.read_text(encoding="utf-8")
+
+    readme_endpoints = _extract_readme_endpoints(readme_text)
+    missing_ghost_endpoints = sorted(_GHOST_INTEGRATION_ENDPOINTS - readme_endpoints)
+
+    assert not missing_ghost_endpoints, (
+        "README is missing Ghost integration endpoints:\n"
+        + "\n".join(f"- {method} {path}" for method, path in missing_ghost_endpoints)
+    )

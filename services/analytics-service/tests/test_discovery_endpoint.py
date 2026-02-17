@@ -6,12 +6,17 @@ import os
 # Add the analytics-service directory to the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Test-safe defaults for pydantic settings used by endpoint imports
+os.environ.setdefault("DATABASE_URL", "sqlite:///./analytics_service_test.db")
+os.environ.setdefault("AUTH_SERVICE_URL", "http://auth-service:8001")
+
 import pytest
 from datetime import datetime
 from pydantic import ValidationError
 
 # Import schemas directly for unit tests
 from app.models.schemas import DiscoveryEvent, DiscoveryBatchRequest, DiscoveryResponse, DiscoveryStats
+from app.api.v1.endpoints import _should_verify_auth_header
 
 
 @pytest.fixture
@@ -161,3 +166,23 @@ class TestDiscoveryStats:
         assert stats.verified_count == 85
         assert len(stats.top_domains) == 1
         assert len(stats.top_signers) == 1
+
+
+class TestDiscoveryAuthHeaderVerification:
+    """Tests for auth header verification gating on discovery endpoint."""
+
+    def test_skips_non_jwt_bearer_api_key(self):
+        """Bearer API keys should not be sent to auth verify endpoint."""
+        assert _should_verify_auth_header("Bearer enc_live_test_key") is False
+
+    def test_accepts_bearer_jwt(self):
+        """JWT-shaped bearer tokens should be verified."""
+        assert _should_verify_auth_header("Bearer header.payload.signature") is True
+
+    def test_rejects_missing_bearer_prefix(self):
+        """Headers without Bearer prefix should be ignored for verification."""
+        assert _should_verify_auth_header("enc_live_test_key") is False
+
+    def test_rejects_empty_value(self):
+        """Empty headers should be ignored for verification."""
+        assert _should_verify_auth_header("") is False

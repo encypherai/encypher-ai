@@ -86,6 +86,34 @@ class ActivityItem(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class ActivityFeedPage(BaseModel):
+    """Paginated activity feed payload."""
+
+    items: List[ActivityItem]
+    total: int
+    page: int
+    limit: int
+
+
+class ActivityAlertCodeCount(BaseModel):
+    """Top error code aggregate for alerting summaries."""
+
+    error_code: str
+    count: int
+
+
+class ActivityAlertSummary(BaseModel):
+    """Aggregated alert-style metrics for audit visibility."""
+
+    total_requests: int
+    failure_requests: int
+    critical_failures: int
+    failure_rate: float
+    top_error_codes: List[ActivityAlertCodeCount]
+    period_start: datetime
+    period_end: datetime
+
+
 class MessageResponse(BaseModel):
     """Generic message response"""
 

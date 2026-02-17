@@ -6,7 +6,9 @@ Non-blocking - metrics are buffered and flushed asynchronously.
 """
 
 import logging
+import json
 import time
+import traceback
 from typing import Set, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -50,7 +52,11 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         start_time = time.perf_counter()
 
         # Process request
-        response = cast(Response, await call_next(request))
+        try:
+            response = cast(Response, await call_next(request))
+        except Exception as exc:
+            await self._emit_unhandled_exception_metric(request, path, start_time, exc)
+            raise
 
         # Calculate response time
         response_time_ms = (time.perf_counter() - start_time) * 1000
@@ -65,6 +71,24 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         organization_id = getattr(request.state, "organization_id", None)
         user_id = getattr(request.state, "user_id", None)
         api_key_id = getattr(request.state, "api_key_id", None)
+        api_key_prefix = getattr(request.state, "api_key_prefix", None)
+
+        metadata = {
+            "request_id": request.headers.get("x-request-id"),
+            "method": request.method,
+            "api_key_prefix": api_key_prefix,
+        }
+        if response.status_code >= 400:
+            body_bytes, consumed_stream = await self._read_response_body(response)
+            metadata.update(self._extract_error_metadata(body_bytes))
+            if consumed_stream:
+                response = Response(
+                    content=body_bytes,
+                    status_code=response.status_code,
+                    headers=dict(response.headers),
+                    media_type=response.media_type,
+                    background=response.background,
+                )
 
         # Only record metrics if we have an organization
         if organization_id:
@@ -82,12 +106,54 @@ class MetricsMiddleware(BaseHTTPMiddleware):
                     method=request.method,
                     status_code=response.status_code,
                     response_time_ms=response_time_ms,
+                    metadata={k: v for k, v in metadata.items() if v},
                 )
             except Exception as e:
                 # Never let metrics collection break the request
                 logger.debug(f"Failed to emit metric: {e}")
 
         return response
+
+    async def _emit_unhandled_exception_metric(self, request: Request, path: str, start_time: float, exc: Exception) -> None:
+        """Emit telemetry for unhandled exceptions before they are converted to HTTP 500."""
+        metrics = get_metrics_service()
+        if not metrics:
+            return
+
+        organization_id = getattr(request.state, "organization_id", None)
+        if not organization_id:
+            return
+
+        user_id = getattr(request.state, "user_id", None)
+        api_key_id = getattr(request.state, "api_key_id", None)
+        api_key_prefix = getattr(request.state, "api_key_prefix", None)
+
+        metadata = {
+            "request_id": request.headers.get("x-request-id"),
+            "method": request.method,
+            "api_key_prefix": api_key_prefix,
+            "error_code": "E_UNHANDLED",
+            "error_message": str(exc),
+            "error_stack": "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+        }
+
+        response_time_ms = (time.perf_counter() - start_time) * 1000
+        metric_type = self._get_metric_type(path, request.method)
+
+        try:
+            await metrics.emit(
+                metric_type=metric_type,
+                organization_id=organization_id,
+                user_id=user_id,
+                api_key_id=api_key_id,
+                endpoint=path,
+                method=request.method,
+                status_code=500,
+                response_time_ms=response_time_ms,
+                metadata={k: v for k, v in metadata.items() if v},
+            )
+        except Exception as metric_exc:
+            logger.debug(f"Failed to emit unhandled exception metric: {metric_exc}")
 
     def _should_exclude(self, path: str) -> bool:
         """Check if path should be excluded from metrics."""
@@ -97,6 +163,53 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             if path.startswith(exclude_path + "/"):
                 return True
         return False
+
+    async def _read_response_body(self, response: Response) -> tuple[bytes, bool]:
+        """Read response body bytes, including streaming responses."""
+        body = getattr(response, "body", None)
+        if body:
+            return body, False
+
+        body_iterator = getattr(response, "body_iterator", None)
+        if body_iterator is None:
+            return b"", False
+
+        chunks: list[bytes] = []
+        async for chunk in body_iterator:
+            if isinstance(chunk, bytes):
+                chunks.append(chunk)
+            elif isinstance(chunk, bytearray):
+                chunks.append(bytes(chunk))
+            elif isinstance(chunk, memoryview):
+                chunks.append(chunk.tobytes())
+            else:
+                chunks.append(str(chunk).encode("utf-8"))
+        return b"".join(chunks), True
+
+    def _extract_error_metadata(self, body: bytes) -> dict:
+        """Extract structured error fields from JSON response payloads."""
+        if not body:
+            return {}
+
+        try:
+            payload = json.loads(body)
+        except (TypeError, ValueError):
+            return {}
+
+        if not isinstance(payload, dict):
+            return {}
+
+        error = payload.get("error")
+        if not isinstance(error, dict):
+            return {}
+
+        error_details = error.get("details")
+        return {
+            "error_code": error.get("code"),
+            "error_message": error.get("message"),
+            "error_details": error_details,
+            "error_stack": error.get("stack") or error.get("traceback"),
+        }
 
     def _get_metric_type(self, path: str, method: str) -> MetricType:
         """Determine metric type based on endpoint."""

@@ -1,12 +1,16 @@
 """API endpoints for Analytics Service v1"""
 
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Query, Request
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Dict
 from pydantic import BaseModel
 from datetime import datetime, timedelta
+import csv
 import httpx
+import io
+import json
 
 from ...db.session import get_db
 from ...db.models import UsageMetric
@@ -19,6 +23,8 @@ from ...models.schemas import (
     AnalyticsReport,
     PageviewEvent,
     ActivityItem,
+    ActivityFeedPage,
+    ActivityAlertSummary,
     DiscoveryBatchRequest,
     DiscoveryResponse,
     DiscoveryStats,
@@ -40,6 +46,44 @@ from ...core.config import settings
 router = APIRouter()
 
 
+def _resolve_activity_window(
+    days: int,
+    start_at: datetime | None,
+    end_at: datetime | None,
+) -> tuple[datetime, datetime]:
+    computed_end = end_at or datetime.utcnow()
+    computed_start = start_at or (computed_end - timedelta(days=days))
+    return computed_start, computed_end
+
+
+def _activity_filters(
+    api_key_prefix: str | None,
+    endpoint: str | None,
+    status: str | None,
+    error_code: str | None,
+    request_id: str | None,
+    event_type: str | None,
+    actor_id: str | None,
+    query: str | None,
+    event_types: list[str] | None,
+    severities: list[str] | None,
+    has_stack: bool | None,
+) -> Dict[str, object]:
+    return {
+        "api_key_prefix": api_key_prefix,
+        "endpoint": endpoint,
+        "status": status,
+        "error_code": error_code,
+        "request_id": request_id,
+        "event_type": event_type,
+        "actor_id": actor_id,
+        "query": query,
+        "event_types": event_types,
+        "severities": severities,
+        "has_stack": has_stack,
+    }
+
+
 def _resolve_identity(current_user: dict) -> str:
     """Extract the best identifier for analytics queries.
 
@@ -51,6 +95,27 @@ def _resolve_identity(current_user: dict) -> str:
     user_id = current_user.get("id") or current_user.get("user_id")
     org_id = current_user.get("organization_id")
     return org_id or user_id
+
+
+def _should_verify_auth_header(authorization: str | None) -> bool:
+    """Return True when Authorization looks like a JWT bearer token.
+
+    Discovery events may include API-key bearer headers from browser clients.
+    Those should not be sent to auth-service `/auth/verify`, which expects JWTs.
+    """
+    if not authorization:
+        return False
+
+    parts = authorization.strip().split(" ", 1)
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return False
+
+    token = parts[1].strip()
+    if not token:
+        return False
+
+    # JWT shape: header.payload.signature
+    return token.count(".") == 2
 
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
@@ -107,7 +172,7 @@ async def record_metric(
             metric_data=metric_data,
         )
         return metric
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to record metric",
@@ -227,6 +292,202 @@ async def get_activity_feed(
     return [ActivityItem(**AnalyticsService.describe_activity(metric)) for metric in metrics]
 
 
+@router.get("/activity/audit-events", response_model=ActivityFeedPage)
+async def get_activity_audit_events(
+    days: int = Query(default=30, ge=1, le=90),
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=50, ge=1, le=200),
+    api_key_prefix: str | None = Query(default=None),
+    endpoint: str | None = Query(default=None),
+    status: str | None = Query(default=None, pattern="^(success|failure)$"),
+    error_code: str | None = Query(default=None),
+    request_id: str | None = Query(default=None),
+    event_type: str | None = Query(default=None),
+    actor_id: str | None = Query(default=None),
+    query: str | None = Query(default=None),
+    event_types: list[str] | None = Query(default=None),
+    severities: list[str] | None = Query(default=None),
+    has_stack: bool | None = Query(default=None),
+    start_at: datetime | None = Query(default=None),
+    end_at: datetime | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Get paginated audit-focused activity events with advanced filtering."""
+    computed_start, computed_end = _resolve_activity_window(days, start_at, end_at)
+    filters = _activity_filters(
+        api_key_prefix,
+        endpoint,
+        status,
+        error_code,
+        request_id,
+        event_type,
+        actor_id,
+        query,
+        event_types,
+        severities,
+        has_stack,
+    )
+
+    identity = _resolve_identity(current_user)
+    result = AnalyticsService.get_activity_events(
+        db=db,
+        user_id=identity,
+        start_date=computed_start,
+        end_date=computed_end,
+        page=page,
+        limit=limit,
+        api_key_prefix=filters["api_key_prefix"],
+        endpoint=filters["endpoint"],
+        status=filters["status"],
+        error_code=filters["error_code"],
+        request_id=filters["request_id"],
+        event_type=filters["event_type"],
+        actor_id=filters["actor_id"],
+        query=filters["query"],
+        event_types=filters["event_types"],
+        severities=filters["severities"],
+        has_stack=filters["has_stack"],
+    )
+
+    return ActivityFeedPage(
+        items=[ActivityItem(**AnalyticsService.describe_activity(metric)) for metric in result["items"]],
+        total=result["total"],
+        page=result["page"],
+        limit=result["limit"],
+    )
+
+
+@router.get("/activity/audit-events/export")
+async def export_activity_audit_events(
+    format: str = Query(default="csv", pattern="^(csv|json)$"),
+    days: int = Query(default=30, ge=1, le=90),
+    api_key_prefix: str | None = Query(default=None),
+    endpoint: str | None = Query(default=None),
+    status: str | None = Query(default=None, pattern="^(success|failure)$"),
+    error_code: str | None = Query(default=None),
+    request_id: str | None = Query(default=None),
+    event_type: str | None = Query(default=None),
+    actor_id: str | None = Query(default=None),
+    query: str | None = Query(default=None),
+    event_types: list[str] | None = Query(default=None),
+    severities: list[str] | None = Query(default=None),
+    has_stack: bool | None = Query(default=None),
+    start_at: datetime | None = Query(default=None),
+    end_at: datetime | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Export filtered audit activity events as CSV or JSON."""
+    computed_start, computed_end = _resolve_activity_window(days, start_at, end_at)
+    filters = _activity_filters(
+        api_key_prefix,
+        endpoint,
+        status,
+        error_code,
+        request_id,
+        event_type,
+        actor_id,
+        query,
+        event_types,
+        severities,
+        has_stack,
+    )
+
+    identity = _resolve_identity(current_user)
+    rows = AnalyticsService.get_activity_export_rows(
+        db=db,
+        user_id=identity,
+        start_date=computed_start,
+        end_date=computed_end,
+        api_key_prefix=filters["api_key_prefix"],
+        endpoint=filters["endpoint"],
+        status=filters["status"],
+        error_code=filters["error_code"],
+        request_id=filters["request_id"],
+        event_type=filters["event_type"],
+        actor_id=filters["actor_id"],
+        query=filters["query"],
+        event_types=filters["event_types"],
+        severities=filters["severities"],
+        has_stack=filters["has_stack"],
+    )
+
+    timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+    if format == "json":
+        payload = [
+            {
+                **row,
+                "timestamp": row["timestamp"].isoformat() if isinstance(row.get("timestamp"), datetime) else row.get("timestamp"),
+            }
+            for row in rows
+        ]
+        return Response(
+            content=json.dumps(payload),
+            media_type="application/json",
+            headers={"Content-Disposition": f'attachment; filename="audit-events-{timestamp}.json"'},
+        )
+
+    headers = [
+        "id",
+        "timestamp",
+        "type",
+        "description",
+        "status",
+        "severity",
+        "endpoint",
+        "method",
+        "request_id",
+        "api_key",
+        "error_code",
+        "error_message",
+        "error_details",
+        "error_stack",
+        "event_type",
+        "actor_type",
+        "actor_id",
+        "resource_type",
+        "resource_id",
+        "organization_id",
+    ]
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=headers)
+    writer.writeheader()
+    for row in rows:
+        csv_row = dict(row)
+        ts_value = csv_row.get("timestamp")
+        if isinstance(ts_value, datetime):
+            csv_row["timestamp"] = ts_value.isoformat()
+        writer.writerow(csv_row)
+
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="audit-events-{timestamp}.csv"'},
+    )
+
+
+@router.get("/activity/audit-events/alerts", response_model=ActivityAlertSummary)
+async def get_activity_audit_alert_summary(
+    days: int = Query(default=7, ge=1, le=90),
+    start_at: datetime | None = Query(default=None),
+    end_at: datetime | None = Query(default=None),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Get audit alert summary for visibility widgets and incident triage."""
+    computed_start, computed_end = _resolve_activity_window(days, start_at, end_at)
+    identity = _resolve_identity(current_user)
+
+    summary = AnalyticsService.get_activity_alert_summary(
+        db=db,
+        user_id=identity,
+        start_date=computed_start,
+        end_date=computed_end,
+    )
+    return ActivityAlertSummary(**summary)
+
+
 @router.get("/report", response_model=AnalyticsReport)
 async def get_analytics_report(
     days: int = Query(default=30, ge=1, le=365),
@@ -331,7 +592,7 @@ async def record_pageview(event: PageviewEvent, request: Request, db: Session = 
             organization_id=None,
         )
         return {"success": True, "data": {"message": "accepted"}, "error": None}
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=500, detail="Failed to record pageview")
 
 
@@ -391,7 +652,7 @@ async def record_discovery_events(
     
     # Try to get organization from auth if token provided
     organization_id = None
-    if authorization:
+    if _should_verify_auth_header(authorization):
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -459,10 +720,10 @@ async def record_discovery_events(
             },
             error=None
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to record discovery events"
+            detail="Failed to process discovery events",
         )
 
 

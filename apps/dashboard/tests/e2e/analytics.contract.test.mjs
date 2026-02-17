@@ -23,4 +23,19 @@ describe('Analytics dashboard (contract)', () => {
     assert.match(source, /Latency/i);
     assert.match(source, /Status/i);
   });
+
+  it('audit logs page is wired for API telemetry troubleshooting', async () => {
+    const auditLogsPath = `${DASHBOARD_ROOT}/src/app/audit-logs/page.tsx`;
+    const source = await readFile(auditLogsPath, 'utf8');
+
+    assert.match(source, /\/analytics\/activity\/audit-events/);
+    assert.match(source, /API key/i);
+    assert.match(source, /Stack trace|Error details|Request ID|Severity/i);
+    assert.match(source, /Export CSV|Export JSON/i);
+    assert.match(source, /Failure Rate|Critical Failures|Top Error Codes/i);
+    assert.match(source, /Date Range|Last 24 Hours|Last 7 Days|Last 30 Days|Custom Range/i);
+    assert.match(source, /Event Types|Severities/i);
+    assert.match(source, /Only failures with stack trace/i);
+    assert.match(source, /Saved Views|Save current view/i);
+  });
 });

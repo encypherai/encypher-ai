@@ -69,7 +69,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ **Auto-Enrollment**: Automatic coalition membership for free tier
 - ✅ **Content Indexing**: Aggregate content for bulk licensing
 - ✅ **Revenue Sharing**: Two-track model (coalition 60/40, self-service 80/20)
-- ✅ **Access Tracking**: Monitor content usage by AI companies
+- ✅ **Access Tracking**: Monitor where signed content appears across the web; ingestion-level tracking available when AI companies integrate provenance checking
 
 #### Team & Administration
 - ✅ **Team Management**: Multi-user organizations
@@ -272,6 +272,17 @@ Look up content across multiple sources with chronological ordering.
 | `/api/v1/webhooks/{webhook_id}` | DELETE | ✅ | Enterprise | Delete webhook |
 | `/api/v1/webhooks/{webhook_id}/deliveries` | GET | ✅ | Enterprise | List webhook deliveries |
 | `/api/v1/webhooks/{webhook_id}/test` | POST | ✅ | Enterprise | Send a test delivery |
+
+### Ghost CMS Integration Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/integrations/ghost` | POST | ✅ | All | Create or update Ghost integration configuration and return webhook URL/token on first create |
+| `/api/v1/integrations/ghost` | GET | ✅ | All | Get current Ghost integration configuration with masked API key and configured webhook URL |
+| `/api/v1/integrations/ghost` | DELETE | ✅ | All | Deactivate Ghost integration for the current organization |
+| `/api/v1/integrations/ghost/regenerate-token` | POST | ✅ | All | Rotate webhook token and return a new ready-to-paste webhook URL |
+| `/api/v1/integrations/ghost/webhook` | POST | ❌ | Public (token-scoped) | Receive Ghost publish/update webhook events using scoped `ghwh_...` query token |
+| `/api/v1/integrations/ghost/sign/{post_id}` | POST | ✅ | All | Manually trigger signing for a Ghost post or page |
 
 #### BYOK Trust Policy Metadata (`GET /api/v1/byok/trusted-cas`)
 

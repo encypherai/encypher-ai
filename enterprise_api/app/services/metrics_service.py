@@ -62,8 +62,15 @@ class MetricEvent:
         """Convert to dictionary for Redis storage."""
         data = asdict(self)
         data["metric_type"] = self.metric_type.value
-        # Remove None values to save space
-        return {k: str(v) if v is not None else "" for k, v in data.items() if v is not None}
+        payload: Dict[str, Any] = {}
+        for key, value in data.items():
+            if value is None:
+                continue
+            if isinstance(value, (dict, list)):
+                payload[key] = json.dumps(value)
+            else:
+                payload[key] = str(value)
+        return payload
 
 
 class MetricsService:

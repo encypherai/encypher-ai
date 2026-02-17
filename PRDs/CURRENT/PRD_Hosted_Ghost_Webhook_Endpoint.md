@@ -54,7 +54,7 @@ Add a hosted Ghost CMS webhook endpoint to the Enterprise API so users can enabl
 ### 6.0 Documentation & Wiring
 - [x] 6.1 Register router in main.py
 - [x] 6.2 Add Traefik route for `/api/v1/integrations`
-- [ ] 6.3 Update API docs (auto-generated via FastAPI OpenAPI)
+- [x] 6.3 Update API docs (auto-generated via FastAPI OpenAPI)
 
 ## Success Criteria
 
@@ -100,3 +100,12 @@ Ghost webhooks don't carry the org's Encypher API key. We use an **opaque webhoo
 ### Loop Prevention
 
 Same approach as the self-hosted integration: in-memory dict of in-flight post IDs with TTL. When we update a Ghost post, the webhook fires again — we skip it if the post is already in-flight.
+
+## Completion Notes
+
+- Added Ghost CMS integration endpoint rows to `enterprise_api/README.md` endpoint reference so public docs include:
+  - create/get/delete integration config
+  - token regeneration
+  - token-scoped webhook receiver
+  - manual sign trigger
+- Added regression test coverage in `enterprise_api/tests/test_readme_openapi_contract.py` to ensure Ghost integration endpoints remain documented.
