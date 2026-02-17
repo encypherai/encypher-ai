@@ -370,32 +370,38 @@ describe('Optional login onboarding + setup tracking', () => {
 
     assert.match(
       popupHtml,
-      /id="sign-method"/,
-      'Popup sign tab should expose a signing method dropdown'
+      /id="sign-embedding-technique"/,
+      'Popup sign tab should expose an embedding technique dropdown'
+    );
+
+    assert.match(
+      popupHtml,
+      /id="sign-segmentation-level"/,
+      'Popup sign tab should expose a segmentation level dropdown'
     );
 
     assert.match(
       popupJs,
-      /signMethod/,
-      'Popup signing payload should include signing method metadata'
+      /manifestMode/,
+      'Popup signing payload should include manifestMode metadata'
     );
 
     assert.match(
       popupJs,
-      /chrome\.storage\.sync\.get\([\s\S]*defaultSignMethod/s,
-      'Popup should load defaultSignMethod from sync settings for initial sign tab defaults'
+      /chrome\.storage\.sync\.get\([\s\S]*defaultEmbeddingTechnique/s,
+      'Popup should load defaultEmbeddingTechnique from sync settings'
     );
 
     assert.match(
       optionsHtml,
-      /id="defaultSignMethod"/,
-      'Options should expose default signing method control'
+      /id="defaultEmbeddingTechnique"/,
+      'Options should expose default embedding technique control'
     );
 
     assert.match(
       optionsJs,
-      /defaultSignMethod/,
-      'Options defaults should include defaultSignMethod and save handler wiring'
+      /defaultEmbeddingTechnique/,
+      'Options defaults should include defaultEmbeddingTechnique and save handler wiring'
     );
   });
 

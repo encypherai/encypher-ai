@@ -1,10 +1,10 @@
-# Privacy Policy - Encypher C2PA Verifier
+# Privacy Policy - Encypher Verify
 
 **Last Updated:** February 13, 2026
 
 ## Overview
 
-The Encypher C2PA Verifier is a browser extension that helps you verify the authenticity of content on the web. We are committed to protecting your privacy and being transparent about what data we collect and how we use it.
+Encypher Verify is a browser extension that helps you verify the authenticity and provenance of content on the web. We are committed to protecting your privacy and being transparent about what data we collect and how we use it.
 
 ## What We Collect
 

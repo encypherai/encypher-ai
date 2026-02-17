@@ -1,5 +1,5 @@
 /**
- * Encypher Editor Signer Styles
+ * Encypher Verify - Editor Signer Styles
  */
 
 /* Sign Button */
@@ -57,6 +57,15 @@
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.encypher-sign-btn__icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .encypher-sign-btn__text {
@@ -196,6 +205,41 @@
   accent-color: #2A87C4;
 }
 
+.encypher-sign-ui__select-group {
+  margin-bottom: 12px;
+}
+
+.encypher-sign-ui__select-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6B7280;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.encypher-sign-ui__select {
+  width: 100%;
+  padding: 7px 28px 7px 10px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #374151;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B7280'/%3E%3C/svg%3E") no-repeat right 10px center;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.encypher-sign-ui__select:focus {
+  outline: none;
+  border-color: #2A87C4;
+  box-shadow: 0 0 0 3px rgba(42, 135, 196, 0.1);
+}
+
 .encypher-sign-ui__footer {
   display: flex;
   gap: 8px;
@@ -240,9 +284,13 @@
 }
 
 .encypher-sign-ui__btn-loading {
-  display: inline-flex;
+  display: none;
   align-items: center;
   gap: 6px;
+}
+
+.encypher-sign-ui__btn-loading.encypher-sign-ui__btn-loading--active {
+  display: inline-flex;
 }
 
 .encypher-sign-ui__btn-loading::before {
@@ -382,6 +430,17 @@
   
   .encypher-sign-ui__btn--secondary:hover {
     background: #4B5563;
+  }
+
+  .encypher-sign-ui__select-group label {
+    color: #9CA3AF;
+  }
+
+  .encypher-sign-ui__select {
+    background-color: #374151;
+    border-color: #4B5563;
+    color: #F3F4F6;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239CA3AF'/%3E%3C/svg%3E");
   }
 }
 

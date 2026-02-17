@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const EXTENSION_ROOT = path.resolve(__dirname, '..');
 
 describe('Popup branding + debug logging regressions', () => {
-  it('uses white Encypher full logo and compact Verifier title in popup header', () => {
+  it('uses white Encypher full logo and compact Verify title in popup header', () => {
     const popupHtmlPath = path.join(EXTENSION_ROOT, 'popup', 'popup.html');
     const popupHtml = fs.readFileSync(popupHtmlPath, 'utf8');
 
@@ -21,8 +21,8 @@ describe('Popup branding + debug logging regressions', () => {
 
     assert.match(
       popupHtml,
-      /<span class="popup__title">Verifier<\/span>/,
-      'Popup header title should be compact and only show Verifier text'
+      /<span class="popup__title">Verify<\/span>/,
+      'Popup header title should be compact and only show Verify text'
     );
   });
 

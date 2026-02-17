@@ -1,5 +1,5 @@
 /**
- * Encypher C2PA Verifier - Options Page Script
+ * Encypher Verify - Options Page Script
  */
 
 // DOM elements
@@ -22,7 +22,8 @@ const resetSettingsBtn = document.getElementById('resetSettings');
 const defaultInvisibleCheckbox = document.getElementById('defaultInvisible');
 const autoReplaceContentCheckbox = document.getElementById('autoReplaceContent');
 const defaultDocTypeSelect = document.getElementById('defaultDocType');
-const defaultSignMethodSelect = document.getElementById('defaultSignMethod');
+const defaultEmbeddingTechniqueSelect = document.getElementById('defaultEmbeddingTechnique');
+const defaultSegmentationLevelSelect = document.getElementById('defaultSegmentationLevel');
 const showEditorButtonsCheckbox = document.getElementById('showEditorButtons');
 
 // Analytics settings
@@ -43,7 +44,8 @@ const DEFAULT_SETTINGS = {
   defaultInvisible: true,
   autoReplaceContent: true,
   defaultDocType: 'article',
-  defaultSignMethod: 'standard',
+  defaultEmbeddingTechnique: 'micro_ecc_c2pa',
+  defaultSegmentationLevel: 'sentence',
   showEditorButtons: true,
   // Analytics
   analyticsEnabled: true,
@@ -85,7 +87,8 @@ async function loadSettings() {
     if (defaultInvisibleCheckbox) defaultInvisibleCheckbox.checked = result.defaultInvisible;
     if (autoReplaceContentCheckbox) autoReplaceContentCheckbox.checked = result.autoReplaceContent;
     if (defaultDocTypeSelect) defaultDocTypeSelect.value = result.defaultDocType;
-    if (defaultSignMethodSelect) defaultSignMethodSelect.value = result.defaultSignMethod || 'standard';
+    if (defaultEmbeddingTechniqueSelect) defaultEmbeddingTechniqueSelect.value = result.defaultEmbeddingTechnique || 'micro_ecc_c2pa';
+    if (defaultSegmentationLevelSelect) defaultSegmentationLevelSelect.value = result.defaultSegmentationLevel || 'sentence';
     if (showEditorButtonsCheckbox) showEditorButtonsCheckbox.checked = result.showEditorButtons;
     
     // Analytics settings
@@ -370,12 +373,21 @@ defaultDocTypeSelect?.addEventListener('change', async () => {
   });
 });
 
-defaultSignMethodSelect?.addEventListener('change', async () => {
-  await saveSetting('defaultSignMethod', defaultSignMethodSelect.value);
+defaultEmbeddingTechniqueSelect?.addEventListener('change', async () => {
+  await saveSetting('defaultEmbeddingTechnique', defaultEmbeddingTechniqueSelect.value);
   chrome.runtime.sendMessage({
     type: 'SETTINGS_UPDATED',
-    setting: 'defaultSignMethod',
-    value: defaultSignMethodSelect.value
+    setting: 'defaultEmbeddingTechnique',
+    value: defaultEmbeddingTechniqueSelect.value
+  });
+});
+
+defaultSegmentationLevelSelect?.addEventListener('change', async () => {
+  await saveSetting('defaultSegmentationLevel', defaultSegmentationLevelSelect.value);
+  chrome.runtime.sendMessage({
+    type: 'SETTINGS_UPDATED',
+    setting: 'defaultSegmentationLevel',
+    value: defaultSegmentationLevelSelect.value
   });
 });
 

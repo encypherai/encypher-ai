@@ -1,4 +1,4 @@
-# Security Review Checklist - Encypher C2PA Verifier
+# Security Review Checklist - Encypher Verify
 
 ## Manifest V3 Compliance
 
@@ -113,7 +113,7 @@ All dev dependencies are not included in the extension package.
 
 ## Chrome Web Store Requirements
 
-- [x] Single purpose: Verify and sign C2PA content
+- [x] Single purpose: Verify and sign content with C2PA provenance
 - [x] Privacy policy provided (`PRIVACY.md`)
 - [x] No obfuscated code
 - [x] No minification (for review clarity)

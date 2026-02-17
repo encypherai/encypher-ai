@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Encypher Verifier - Settings</title>
+  <title>Encypher Verify - Settings</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
@@ -104,12 +104,24 @@
         </div>
 
         <div class="options__field">
-          <label for="defaultSignMethod">Default Signing Method</label>
-          <select id="defaultSignMethod">
-            <option value="standard">Standard</option>
-            <option value="merkle">Merkle Verification (Enterprise)</option>
-            <option value="attribution">Attribution Tracking (Enterprise)</option>
+          <label for="defaultEmbeddingTechnique">Default Embedding Mode</label>
+          <select id="defaultEmbeddingTechnique">
+            <option value="micro_ecc_c2pa">Standard</option>
+            <option value="micro_ecc">Lightweight</option>
           </select>
+          <p class="options__hint">Standard includes a C2PA provenance manifest. Lightweight embeds only error-corrected signatures.</p>
+        </div>
+
+        <div class="options__field">
+          <label for="defaultSegmentationLevel">Embedding Frequency</label>
+          <select id="defaultSegmentationLevel">
+            <option value="document">Entire content</option>
+            <option value="section">Per section</option>
+            <option value="paragraph">Per paragraph</option>
+            <option value="sentence">Per sentence</option>
+            <option value="word">Per word (Enterprise)</option>
+          </select>
+          <p class="options__hint">How often signatures are embedded. More frequent = more resilient to partial edits.</p>
         </div>
 
         <div class="options__field options__field--checkbox">
@@ -170,7 +182,7 @@
     </main>
 
     <footer class="options__footer">
-      <p>Encypher C2PA Verifier v1.0.0</p>
+      <p>Encypher Verify v1.0.0</p>
       <p><a href="https://encypherai.com/privacy" target="_blank">Privacy Policy</a></p>
     </footer>
   </div>

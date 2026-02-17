@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Encypher C2PA Verifier",
+  "name": "Encypher Verify",
   "version": "1.0.0",
-  "description": "Verify and sign C2PA content on any webpage. See trust badges for verified AI-generated and human-authored content.",
+  "description": "Verify and sign Encypher and C2PA-compatible content on any webpage. See trust badges for verified AI-generated and human-authored content.",
   "permissions": [
     "activeTab",
     "storage",

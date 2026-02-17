@@ -1,5 +1,5 @@
 /**
- * Encypher C2PA Verifier - Service Worker
+ * Encypher Verify - Service Worker
  * 
  * Handles API calls to the Encypher verification endpoint.
  * Runs in the background and communicates with content scripts.
@@ -521,11 +521,19 @@ async function signContent(text, title, options = {}) {
         document_type: options.documentType || 'article',
       })
     };
-    
-    // Advanced options for professional+ tiers (tier-gated server-side)
-    if (options.useMerkle || options.segmentationLevel) {
-      requestBody.options.segmentation_level = options.segmentationLevel || 'sentence';
+
+    // Embedding technique (manifest_mode)
+    if (options.manifestMode) {
+      requestBody.options.manifest_mode = options.manifestMode;
     }
+
+    // Segmentation level
+    if (options.segmentationLevel) {
+      requestBody.options.segmentation_level = options.segmentationLevel;
+    } else if (options.useMerkle) {
+      requestBody.options.segmentation_level = 'sentence';
+    }
+
     if (options.useAttribution) {
       requestBody.options.index_for_attribution = true;
     }
@@ -1276,5 +1284,5 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
-debugLog.info('init', 'Encypher C2PA Verifier service worker initialized');
-console.log('Encypher C2PA Verifier service worker initialized');
+debugLog.info('init', 'Encypher Verify service worker initialized');
+console.log('Encypher Verify service worker initialized');

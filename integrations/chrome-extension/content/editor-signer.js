@@ -1,9 +1,9 @@
 /**
- * Encypher C2PA Editor Signer
- * 
+ * Encypher Verify - Editor Signer
+ *
  * Detects WYSIWYG editors and text containers on web pages,
  * providing inline signing capabilities for content creators.
- * 
+ *
  * Supported editors:
  * - contenteditable elements
  * - textarea elements
@@ -16,6 +16,10 @@
  * - Froala
  * - Summernote
  */
+
+// IIFE to avoid top-level const/let collisions with detector.js
+// (both scripts share the same content-script scope)
+(function () {
 
 // Configuration
 const EDITOR_CONFIG = {
@@ -32,6 +36,10 @@ const activeEditors = new Map();
 
 // Whether editor sign buttons are enabled (loaded from settings)
 let editorButtonsEnabled = true;
+
+// Signing option defaults (loaded from settings)
+let defaultEmbeddingTechnique = 'micro_ecc_c2pa';
+let defaultSegmentationLevel = 'sentence';
 
 // ── Embedding byte detection (mirrors detector.js constants) ──
 const VS_RANGES = {
@@ -450,13 +458,16 @@ function createSignButton(editorId) {
   button.id = `encypher-sign-${editorId}`;
   button.setAttribute('type', 'button');
   button.setAttribute('aria-label', 'Sign content with Encypher');
-  button.setAttribute('title', 'Sign with Encypher C2PA');
+  button.setAttribute('title', 'Sign with Encypher');
   
+  // Use the Encypher logo (defined in detector.js, which loads first in the
+  // same content-script group).  Fall back to a simple shield if unavailable.
+  const logoSvg = (typeof ENCYPHER_LOGO_SVG !== 'undefined')
+    ? ENCYPHER_LOGO_SVG
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>';
+
   button.innerHTML = `
-    <svg class="encypher-sign-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      <path d="M9 12l2 2 4-4"/>
-    </svg>
+    <span class="encypher-sign-btn__icon">${logoSvg}</span>
     <span class="encypher-sign-btn__text">Sign</span>
   `;
   
@@ -508,6 +519,23 @@ function showSigningUI(editor, editorType, button) {
         <label for="encypher-sign-title">Document Title (optional)</label>
         <input type="text" id="encypher-sign-title" placeholder="Enter title...">
       </div>
+      <div class="encypher-sign-ui__select-group">
+        <label for="encypher-embedding-technique">Embedding Mode</label>
+        <select id="encypher-embedding-technique" class="encypher-sign-ui__select">
+          <option value="micro_ecc_c2pa">Standard</option>
+          <option value="micro_ecc">Lightweight</option>
+        </select>
+      </div>
+      <div class="encypher-sign-ui__select-group">
+        <label for="encypher-segmentation-level">Embedding Frequency</label>
+        <select id="encypher-segmentation-level" class="encypher-sign-ui__select">
+          <option value="document">Entire content</option>
+          <option value="section">Per section</option>
+          <option value="paragraph">Per paragraph</option>
+          <option value="sentence">Per sentence</option>
+          <option value="word">Per word (Enterprise)</option>
+        </select>
+      </div>
       <div class="encypher-sign-ui__options">
         <label>
           <input type="checkbox" id="encypher-replace-content" checked>
@@ -519,7 +547,7 @@ function showSigningUI(editor, editorType, button) {
       <button class="encypher-sign-ui__btn encypher-sign-ui__btn--secondary" data-action="cancel">Cancel</button>
       <button class="encypher-sign-ui__btn encypher-sign-ui__btn--primary" data-action="sign">
         <span class="encypher-sign-ui__btn-text">Sign Content</span>
-        <span class="encypher-sign-ui__btn-loading" hidden>Signing...</span>
+        <span class="encypher-sign-ui__btn-loading">Signing...</span>
       </button>
     </div>
   `;
@@ -531,33 +559,57 @@ function showSigningUI(editor, editorType, button) {
   ui.style.right = `${window.innerWidth - buttonRect.right}px`;
   
   document.body.appendChild(ui);
-  
+
+  // Set dropdown defaults from settings
+  const embTechSelect = ui.querySelector('#encypher-embedding-technique');
+  const segLevelSelect = ui.querySelector('#encypher-segmentation-level');
+  if (embTechSelect) embTechSelect.value = defaultEmbeddingTechnique;
+  if (segLevelSelect) segLevelSelect.value = defaultSegmentationLevel;
+
   // Event handlers
   ui.querySelector('.encypher-sign-ui__close').addEventListener('click', () => ui.remove());
   ui.querySelector('[data-action="cancel"]').addEventListener('click', () => ui.remove());
   
+  // Guard: ignore clicks that arrive in the same event-loop tick as the UI
+  // creation (the mouseup from the floating button can land on this submit
+  // button if they overlap).
+  let signReady = false;
+  requestAnimationFrame(() => { signReady = true; });
+
   ui.querySelector('[data-action="sign"]').addEventListener('click', async (e) => {
+    if (!signReady) return;
     const signBtn = e.currentTarget;
     const btnText = signBtn.querySelector('.encypher-sign-ui__btn-text');
     const btnLoading = signBtn.querySelector('.encypher-sign-ui__btn-loading');
     const title = ui.querySelector('#encypher-sign-title').value.trim();
     const replaceContent = ui.querySelector('#encypher-replace-content').checked;
-    
+    const manifestMode = ui.querySelector('#encypher-embedding-technique')?.value || defaultEmbeddingTechnique;
+    const segmentationLevel = ui.querySelector('#encypher-segmentation-level')?.value || defaultSegmentationLevel;
+
     // Show loading state
     btnText.hidden = true;
-    btnLoading.hidden = false;
+    btnLoading.classList.add('encypher-sign-ui__btn-loading--active');
     signBtn.disabled = true;
-    
+
     try {
       const response = await chrome.runtime.sendMessage({
         type: 'SIGN_CONTENT',
         text: text,
-        title: title || undefined
+        title: title || undefined,
+        options: { manifestMode, segmentationLevel }
       });
       
       if (response && response.success) {
         if (replaceContent) {
-          setEditorText(editor, editorType, response.signedText);
+          // Prefer in-place embedding plan insertion: it preserves the editor's
+          // DOM structure, placeholder text, undo history and avoids triggering
+          // character-count issues from full text replacement.
+          const applied = response.embeddingPlan
+            ? applyEmbeddingPlanToEditorInPlace(editor, editorType, response.embeddingPlan, text)
+            : false;
+          if (!applied) {
+            setEditorText(editor, editorType, response.signedText);
+          }
         }
         
         // Track as signed
@@ -579,13 +631,13 @@ function showSigningUI(editor, editorType, button) {
       } else {
         showNotification('error', response?.error || 'Signing failed');
         btnText.hidden = false;
-        btnLoading.hidden = true;
+        btnLoading.classList.remove('encypher-sign-ui__btn-loading--active');
         signBtn.disabled = false;
       }
     } catch (error) {
       showNotification('error', error.message || 'Signing error');
       btnText.hidden = false;
-      btnLoading.hidden = true;
+      btnLoading.classList.remove('encypher-sign-ui__btn-loading--active');
       signBtn.disabled = false;
     }
   });
@@ -638,6 +690,240 @@ function showNotification(type, message) {
   }, 4000);
 }
 
+// ── Helpers for Selection in both main document and shadow roots ──
+
+function _getSelection(editor) {
+  const root = editor.getRootNode?.() || document;
+  return root.getSelection ? root.getSelection() : window.getSelection();
+}
+
+/**
+ * Get the caret's text-node context: the node, its text content as a
+ * codepoint array, and the caret's codepoint offset within that node.
+ * Returns null when the caret isn't inside a text node (or there's a range
+ * selection instead of a collapsed caret).
+ */
+function _getTextNodeCaret(editor, editorType) {
+  if (editorType === 'textarea' || editorType === 'input') {
+    if (editor.selectionStart !== editor.selectionEnd) return null;
+    const text = editor.value;
+    const utf16 = editor.selectionStart;
+    if (utf16 == null) return null;
+    const cpOffset = [...text.slice(0, utf16)].length;
+    return { node: null, text, chars: [...text], cpOffset };
+  }
+
+  const sel = _getSelection(editor);
+  if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return null;
+  const range = sel.getRangeAt(0);
+  const node = range.startContainer;
+  if (node.nodeType !== Node.TEXT_NODE) return null;
+  if (!editor.contains(node)) return null;
+  const text = node.textContent || '';
+  const cpOffset = [...text.slice(0, range.startOffset)].length;
+  return { node, text, chars: [...text], cpOffset };
+}
+
+/**
+ * Place the caret at codepoint offset `cpOffset` inside `textNode`
+ * (for contenteditable) or at the corresponding UTF-16 position in a textarea.
+ */
+function _setCaretInTextNode(editor, editorType, textNode, text, cpOffset) {
+  const utf16 = _codepointOffsetToUtf16(text, cpOffset);
+
+  if (editorType === 'textarea' || editorType === 'input') {
+    editor.setSelectionRange(utf16, utf16);
+    return;
+  }
+
+  const sel = _getSelection(editor);
+  if (!sel) return;
+  const r = document.createRange();
+  r.setStart(textNode, utf16);
+  r.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(r);
+}
+
+// ── Embedding-run aware keyboard & clipboard handlers ──
+
+/**
+ * Attach handlers that treat contiguous embedding-char runs as atomic:
+ *   - Backspace / Delete removes the entire run in one keystroke
+ *   - ArrowLeft / ArrowRight skips over the run
+ *   - Mouse click / Ctrl+Arrow / Home / End: post-hoc cursor nudge
+ *   - Copy / Cut extends a partial selection to include the full run
+ */
+function _attachEmbeddingRunHandlers(editor, editorType) {
+  if (editorType === 'google-docs' || editorType === 'ms-word-online') return;
+
+  editor.addEventListener('keydown', (e) => {
+    const isDelete = e.key === 'Backspace' || e.key === 'Delete';
+    const isArrow  = e.key === 'ArrowLeft'  || e.key === 'ArrowRight';
+    if (!isDelete && !isArrow) return;
+
+    // For modified arrow keys (Shift, Ctrl, etc.) handle via post-hoc nudge
+    if (isArrow && (e.shiftKey || e.ctrlKey || e.metaKey || e.altKey)) return;
+    // For modified delete keys let the browser handle normally (Ctrl+Backspace = delete word)
+    if (isDelete && (e.ctrlKey || e.metaKey)) return;
+
+    const caret = _getTextNodeCaret(editor, editorType);
+    if (!caret) return;
+
+    const { node, text, chars, cpOffset } = caret;
+
+    if (isArrow) {
+      _handleArrowOverRun(e, editor, editorType, node, text, chars, cpOffset);
+    } else {
+      _handleDeleteRun(e, editor, editorType, node, text, chars, cpOffset);
+    }
+  });
+
+  // Post-hoc nudge: after mouse clicks, Ctrl+Arrow, Home, End, etc.
+  // If the caret lands inside an embedding run, nudge it to the nearest edge.
+  const scheduleNudge = () => requestAnimationFrame(() => _nudgeCaret(editor, editorType));
+  editor.addEventListener('mouseup', scheduleNudge);
+  editor.addEventListener('keyup', (e) => {
+    // Only nudge for navigation keys that might land inside a run
+    if (e.ctrlKey || e.metaKey || e.key === 'Home' || e.key === 'End' ||
+        ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && e.shiftKey)) {
+      scheduleNudge();
+    }
+  });
+
+  editor.addEventListener('copy', _extendSelectionForEmbeddingRuns);
+  editor.addEventListener('cut', _extendSelectionForEmbeddingRuns);
+}
+
+/**
+ * Arrow key: skip over an adjacent embedding run.
+ */
+function _handleArrowOverRun(e, editor, editorType, textNode, text, chars, cpOffset) {
+  const goingRight = e.key === 'ArrowRight';
+
+  // Check the character we'd step into
+  const checkIdx = goingRight ? cpOffset : cpOffset - 1;
+  if (checkIdx < 0 || checkIdx >= chars.length) return;
+  if (!_isEmbeddingChar(chars[checkIdx].codePointAt(0))) return;
+
+  const run = findEmbeddingRun(text, cpOffset);
+  if (!run) return;
+
+  e.preventDefault();
+  const target = goingRight ? run.end : run.start;
+  _setCaretInTextNode(editor, editorType, textNode, text, target);
+}
+
+/**
+ * Backspace / Delete: remove the entire adjacent embedding run from the
+ * text node directly, preserving surrounding DOM structure.
+ */
+function _handleDeleteRun(e, editor, editorType, textNode, text, chars, cpOffset) {
+  const isBackspace = e.key === 'Backspace';
+
+  // Check the character that the keystroke would delete
+  const checkIdx = isBackspace ? cpOffset - 1 : cpOffset;
+  if (checkIdx < 0 || checkIdx >= chars.length) return;
+  if (!_isEmbeddingChar(chars[checkIdx].codePointAt(0))) return;
+
+  const run = findEmbeddingRun(text, cpOffset);
+  if (!run) return;
+
+  e.preventDefault();
+
+  // Splice the run out of the text, keeping everything else intact
+  const newChars = [...chars.slice(0, run.start), ...chars.slice(run.end)];
+  const newText = newChars.join('');
+
+  if (editorType === 'textarea' || editorType === 'input') {
+    editor.value = newText;
+    const utf16 = _codepointOffsetToUtf16(newText, run.start);
+    editor.setSelectionRange(utf16, utf16);
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+  } else {
+    // Modify only this text node — preserves <p>, <br>, undo, etc.
+    textNode.textContent = newText;
+    _setCaretInTextNode(editor, editorType, textNode, newText, run.start);
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
+
+/**
+ * Post-hoc nudge: if the caret is inside an embedding run (e.g. after a
+ * mouse click or Ctrl+Arrow), move it to the nearest visible-text edge.
+ */
+function _nudgeCaret(editor, editorType) {
+  const caret = _getTextNodeCaret(editor, editorType);
+  if (!caret) return;
+
+  const { node, text, chars, cpOffset } = caret;
+  if (cpOffset >= chars.length) return;
+  if (!_isEmbeddingChar(chars[cpOffset]?.codePointAt(0))) {
+    // Also check the char before the cursor
+    if (cpOffset === 0 || !_isEmbeddingChar(chars[cpOffset - 1]?.codePointAt(0))) return;
+  }
+
+  const run = findEmbeddingRun(text, cpOffset);
+  if (!run) return;
+
+  // Move to whichever edge is closer
+  const distStart = cpOffset - run.start;
+  const distEnd   = run.end - cpOffset;
+  const target = distStart <= distEnd ? run.start : run.end;
+  if (target === cpOffset) return;
+  _setCaretInTextNode(editor, editorType, node, text, target);
+}
+
+/**
+ * On copy/cut, if the selection partially overlaps an embedding run,
+ * extend the clipboard data to include the full run so the signature
+ * isn't split.
+ */
+function _extendSelectionForEmbeddingRuns(e) {
+  const target = e.target;
+  const root = target?.getRootNode?.() || document;
+  const sel = root.getSelection ? root.getSelection() : window.getSelection();
+  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+
+  const range = sel.getRangeAt(0);
+  const container = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+    ? range.commonAncestorContainer
+    : range.commonAncestorContainer.parentElement;
+  if (!container) return;
+
+  const editable = container.closest?.('[contenteditable="true"]') || container;
+
+  const fullText = editable.innerText || editable.textContent || '';
+  const selectedText = sel.toString();
+  if (!selectedText) return;
+
+  const preRange = document.createRange();
+  preRange.selectNodeContents(editable);
+  preRange.setEnd(range.startContainer, range.startOffset);
+  const preText = preRange.toString();
+  const startCp = [...preText].length;
+  const endCp = startCp + [...selectedText].length;
+  const chars = [...fullText];
+
+  let newStart = startCp;
+  let newEnd = endCp;
+
+  if (newStart > 0 && newStart < chars.length && _isEmbeddingChar(chars[newStart].codePointAt(0))) {
+    const run = findEmbeddingRun(fullText, newStart);
+    if (run) newStart = run.start;
+  }
+  if (newEnd > 0 && newEnd < chars.length && _isEmbeddingChar(chars[newEnd - 1]?.codePointAt(0))) {
+    const run = findEmbeddingRun(fullText, newEnd);
+    if (run) newEnd = run.end;
+  }
+
+  if (newStart === startCp && newEnd === endCp) return;
+
+  const extendedText = chars.slice(newStart, newEnd).join('');
+  e.clipboardData.setData('text/plain', extendedText);
+  e.preventDefault();
+}
+
 /**
  * Attach sign button to an editor
  */
@@ -664,14 +950,30 @@ function attachSignButton(editor) {
     type: editorType,
     button: button
   });
-  
+
+  // Clean up button when editor is removed from the DOM (e.g. modal closed)
+  const cleanupObserver = new MutationObserver(() => {
+    if (!editor.isConnected) {
+      button.remove();
+      activeEditors.delete(editorId);
+      cleanupObserver.disconnect();
+    }
+  });
+  const editorParent = editor.getRootNode() === document
+    ? document.body
+    : editor.getRootNode();
+  cleanupObserver.observe(editorParent, { childList: true, subtree: true });
+
   // Button click handler
   button.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     showSigningUI(editor, editorType, button);
   });
-  
+
+  // Atomic embedding-run handling for delete/backspace and copy/cut
+  _attachEmbeddingRunHandlers(editor, editorType);
+
   // Online editors (Google Docs, MS Word Online): always-visible fixed button
   const isOnlineEditor = editorType === 'google-docs' || editorType === 'ms-word-online';
 
@@ -702,8 +1004,24 @@ function attachSignButton(editor) {
       }, 200);
     });
 
-    // Initially visible if focused
-    if (document.activeElement === editor) {
+    // Determine if editor is already active.  For shadow-DOM editors,
+    // document.activeElement returns the shadow host, so also walk
+    // through shadowRoot.activeElement chains.
+    let active = document.activeElement;
+    while (active && active.shadowRoot && active.shadowRoot.activeElement) {
+      active = active.shadowRoot.activeElement;
+    }
+    const editorIsActive = (active === editor);
+
+    // Also treat the editor as active when it lives inside a dialog /
+    // modal overlay (the user clearly intends to type).
+    const insideModal = editor.closest?.('dialog, [role="dialog"], [aria-modal="true"]')
+        || editor.getRootNode()?.host?.closest?.('dialog, [role="dialog"], [aria-modal="true"]');
+
+    // Show button immediately when the editor is focused OR inside an
+    // open modal — users can dismiss it, but it should default to
+    // visible so they discover the feature.
+    if (editorIsActive || insideModal) {
       button.classList.add('encypher-sign-btn--visible');
     }
   }
@@ -787,44 +1105,77 @@ function scanForEditors() {
 }
 
 /**
- * Observe DOM for dynamically added editors
+ * Observe DOM for dynamically added editors.
+ *
+ * In addition to watching the main document, we also observe inside open
+ * shadow roots (e.g. LinkedIn's #interop-outlet) because a MutationObserver
+ * on document.body does NOT see mutations inside shadow trees.
  */
-function observeForEditors() {
-  const observer = new MutationObserver((mutations) => {
-    let shouldScan = false;
-    
-    for (const mutation of mutations) {
-      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        for (const node of mutation.addedNodes) {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.shadowRoot) {
-              scanForEditorsInRoot(node.shadowRoot);
-              scanShadowRootsForEditors(node.shadowRoot);
-              shouldScan = true;
-            }
+const _observedShadowRoots = new WeakSet();
 
-            // Check if it's an editor or contains editors
-            if (detectEditorType(node) || 
-                node.querySelector?.('[contenteditable="true"], textarea')) {
-              shouldScan = true;
-              break;
-            }
+function _scheduleScan() {
+  clearTimeout(observeForEditors.timeout);
+  observeForEditors.timeout = setTimeout(scanForEditors, 500);
+}
+
+function _handleMutations(mutations) {
+  let shouldScan = false;
+
+  for (const mutation of mutations) {
+    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.shadowRoot) {
+            _observeShadowRoot(node.shadowRoot);
+            shouldScan = true;
+          }
+
+          // Check if it's an editor or contains editors
+          if (detectEditorType(node) ||
+              node.querySelector?.('[contenteditable="true"], textarea')) {
+            shouldScan = true;
+            break;
           }
         }
       }
-      if (shouldScan) break;
     }
-    
-    if (shouldScan) {
-      // Debounce
-      clearTimeout(observeForEditors.timeout);
-      observeForEditors.timeout = setTimeout(scanForEditors, 500);
-    }
+    if (shouldScan) break;
+  }
+
+  if (shouldScan) {
+    _scheduleScan();
+  }
+}
+
+function _observeShadowRoot(shadowRoot) {
+  if (!shadowRoot || _observedShadowRoots.has(shadowRoot)) return;
+  _observedShadowRoots.add(shadowRoot);
+
+  // Scan existing content inside the shadow root
+  scanForEditorsInRoot(shadowRoot);
+  scanShadowRootsForEditors(shadowRoot);
+
+  // Watch for future mutations inside this shadow root
+  const shadowObserver = new MutationObserver(_handleMutations);
+  shadowObserver.observe(shadowRoot, {
+    childList: true,
+    subtree: true
   });
-  
+}
+
+function observeForEditors() {
+  // Main document observer
+  const observer = new MutationObserver(_handleMutations);
   observer.observe(document.body, {
     childList: true,
     subtree: true
+  });
+
+  // Also observe any shadow roots that already exist
+  document.querySelectorAll('*').forEach((el) => {
+    if (el.shadowRoot) {
+      _observeShadowRoot(el.shadowRoot);
+    }
   });
 }
 
@@ -1173,6 +1524,79 @@ function applyEmbeddingPlanToOnlineEditorInPlace(embeddingPlan, visibleText, onl
 }
 
 /**
+ * Apply embedding-plan markers directly into an editor element (contenteditable
+ * or textarea) without replacing the entire text content. This preserves the
+ * editor's DOM structure, placeholder text, undo history, and internal state.
+ * Returns true on success, false if the plan could not be applied in-place.
+ */
+function applyEmbeddingPlanToEditorInPlace(editor, editorType, embeddingPlan, visibleText) {
+  if (!embeddingPlan || !Array.isArray(embeddingPlan.operations) || !visibleText) {
+    return false;
+  }
+
+  // Textarea / input: simple string splice
+  if (editorType === 'textarea' || editorType === 'input') {
+    const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
+    if (!normalizedOps) return false;
+
+    const chars = [...editor.value];
+    // Ops are sorted descending, so splice from end to preserve offsets
+    for (const op of normalizedOps) {
+      const utf16Offset = _codepointOffsetToUtf16(editor.value, op.cpOffset);
+      editor.value = editor.value.slice(0, utf16Offset) + op.marker + editor.value.slice(utf16Offset);
+    }
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+    editor.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  }
+
+  // Online editors (Google Docs, MS Word Online): use dedicated function
+  const onlinePlatform = detectOnlinePlatform();
+  if (onlinePlatform === 'google-docs' || onlinePlatform === 'ms-word-online') {
+    return applyEmbeddingPlanToOnlineEditorInPlace(embeddingPlan, visibleText, onlinePlatform);
+  }
+
+  // Contenteditable: walk text nodes and insert markers.
+  // getEditorText() uses innerText which synthesises \n for block elements
+  // (<p>, <br>, <div>) that don't exist in raw text nodes.  We must handle
+  // the offset difference between innerText codepoints and DOM text-node
+  // codepoints so the embedding plan lands in the right place.
+  const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
+  if (!normalizedOps) return false;
+
+  const segments = _collectElementTextSegments(editor);
+  if (!segments.length) return false;
+
+  const fullText = segments.map(s => s.text).join('');
+
+  // Compare with whitespace stripped — innerText adds synthetic \n for block
+  // elements that don't appear in raw text nodes.
+  const normalize = (t) => t.replace(/[\s\u00A0]+/g, ' ').trim();
+  const fullTextClean = normalize(_stripEmbeddingChars(fullText));
+  const visibleTextClean = normalize(visibleText);
+  if (fullTextClean !== visibleTextClean) {
+    return false;
+  }
+
+  const totalSegmentCp = segments.reduce((sum, s) => sum + s.codepointLength, 0);
+
+  for (const op of normalizedOps) {
+    // Clamp cpOffset: visibleText may be longer than DOM text due to
+    // synthetic newlines.  Offsets at/beyond the end of DOM text should map
+    // to the very end of the last text node.
+    const mappedCpOffset = Math.min(op.cpOffset, totalSegmentCp);
+    const point = _mapCodepointOffsetToNodePoint(segments, mappedCpOffset);
+    if (!point || !point.node) return false;
+
+    const current = point.node.textContent || '';
+    point.node.textContent = current.slice(0, point.offset) + op.marker + current.slice(point.offset);
+  }
+
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
+  return true;
+}
+
+/**
  * Try to replace the current selection in-place within an editable element.
  * Returns true if replacement succeeded, false if not in an editable context.
  */
@@ -1241,10 +1665,17 @@ async function handleSignSelection(text) {
   const provenance = await getProvenance(visibleHash);
 
   try {
+    const signOptions = {
+      manifestMode: defaultEmbeddingTechnique,
+      segmentationLevel: defaultSegmentationLevel,
+    };
+    if (provenance.length > 0) {
+      signOptions.previousEmbeddings = provenance;
+    }
     const response = await chrome.runtime.sendMessage({
       type: 'SIGN_CONTENT',
       text: cleanText,
-      options: provenance.length > 0 ? { previousEmbeddings: provenance } : {}
+      options: signOptions
     });
 
     if (response && response.success) {
@@ -1413,8 +1844,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Load settings and initialize
 async function _initEditorSigner() {
   try {
-    const settings = await chrome.storage.sync.get({ showEditorButtons: true });
+    const settings = await chrome.storage.sync.get({
+      showEditorButtons: true,
+      defaultEmbeddingTechnique: 'micro_ecc_c2pa',
+      defaultSegmentationLevel: 'sentence',
+    });
     editorButtonsEnabled = settings.showEditorButtons;
+    defaultEmbeddingTechnique = settings.defaultEmbeddingTechnique;
+    defaultSegmentationLevel = settings.defaultSegmentationLevel;
   } catch (e) {
     // Default to enabled if storage fails
   }
@@ -1429,7 +1866,8 @@ async function _initEditorSigner() {
 
 // Listen for settings changes
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'sync' && changes.showEditorButtons) {
+  if (area !== 'sync') return;
+  if (changes.showEditorButtons) {
     editorButtonsEnabled = changes.showEditorButtons.newValue;
     if (!editorButtonsEnabled) {
       // Remove all sign buttons
@@ -1442,6 +1880,12 @@ chrome.storage.onChanged.addListener((changes, area) => {
       observeForEditors();
     }
   }
+  if (changes.defaultEmbeddingTechnique) {
+    defaultEmbeddingTechnique = changes.defaultEmbeddingTechnique.newValue;
+  }
+  if (changes.defaultSegmentationLevel) {
+    defaultSegmentationLevel = changes.defaultSegmentationLevel.newValue;
+  }
 });
 
 if (document.readyState === 'loading') {
@@ -1450,9 +1894,8 @@ if (document.readyState === 'loading') {
   _initEditorSigner();
 }
 
-// Export for testing
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
+// Expose for testing (attached to window so module.exports can reach them)
+window._encypherEditorSigner = {
     detectEditorType,
     detectOnlinePlatform,
     getOnlineEditorElement,
@@ -1466,9 +1909,16 @@ if (typeof module !== 'undefined' && module.exports) {
     _stripEmbeddingChars,
     applyEmbeddingPlanToSelectionInPlace,
     applyEmbeddingPlanToOnlineEditorInPlace,
+    applyEmbeddingPlanToEditorInPlace,
     _normalizeEmbeddingPlanOperations,
     _codepointOffsetToUtf16,
     VS_RANGES,
     ZWNBSP
   };
+
+})(); // end IIFE
+
+// Export for testing (Node/Jest)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = (typeof window !== 'undefined' && window._encypherEditorSigner) || {};
 }

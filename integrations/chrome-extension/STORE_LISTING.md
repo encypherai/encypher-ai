@@ -1,26 +1,28 @@
-# Chrome Web Store Listing - Encypher C2PA Verifier
+# Chrome Web Store Listing - Encypher Verify
 
 ## Store Listing Information
 
 ### Name
-Encypher C2PA Verifier
+Encypher Verify
 
 ### Short Description (132 characters max)
-Verify and sign C2PA content authenticity. See trust badges for verified AI-generated and human-authored content on any webpage.
+Verify and sign Encypher and C2PA-compatible content. See trust badges for verified AI-generated and human-authored content.
 
 ### Detailed Description
 
-**Verify Content Authenticity with C2PA**
+**Verify Content Authenticity and Provenance**
 
-Encypher C2PA Verifier helps you identify authentic, signed content on the web. See instant verification badges on articles, social media posts, and any text content that has been cryptographically signed using the C2PA (Coalition for Content Provenance and Authenticity) standard.
+Encypher Verify helps you identify authentic, signed content on the web. See instant verification badges on articles, social media posts, and any text content that has been signed using Encypher or the C2PA (Coalition for Content Provenance and Authenticity) standard.
 
 **Key Features:**
 
-- **Auto-Detection**: Automatically scans pages for C2PA and Encypher signed content
+- **Auto-Detection**: Automatically scans pages for Encypher and C2PA-compatible signed content
 - **Verification Badges**: Shows color-coded inline badges (blue = verified, red = invalid, gray = revoked)
 - **Content Signing**: Sign your own content directly from the browser (requires API key)
+- **Signing Controls**: Choose embedding mode (Standard or Lightweight) and frequency (per sentence, per paragraph, etc.)
 - **Context Menu**: Right-click any text and select "Verify with Encypher"
 - **WYSIWYG Editor Support**: Floating sign buttons on TinyMCE, CKEditor, Quill, ProseMirror, and more
+- **Keyboard Shortcut**: Press Ctrl+Shift+E to sign selected text instantly
 - **Usage Tracking**: Free tier includes 1,000 signings/month with visual progress meter
 - **Privacy-First**: Only sends signed content blocks for verification, never full pages
 - **Offline Detection**: Detects signed content locally before verifying
@@ -29,7 +31,7 @@ Encypher C2PA Verifier helps you identify authentic, signed content on the web. 
 
 1. **For Readers**: Browse the web normally. When you encounter signed content, you'll see a verification badge showing who signed it and when.
 
-2. **For Authors**: Get an API key from dashboard.encypherai.com, configure it in the extension settings, then use the "Sign" tab to sign text before publishing to platforms like Substack, Medium, or your blog.
+2. **For Authors**: Get an API key from dashboard.encypherai.com, configure it in the extension settings, then use the "Sign" tab to sign text before publishing. Choose Standard mode for full C2PA provenance or Lightweight for a smaller footprint. Set your preferred signing frequency in Settings so every signing surface uses the same defaults.
 
 3. **For Publishers**: Integrate C2PA signing into your workflow to prove content authenticity and combat AI-generated misinformation.
 
@@ -75,7 +77,7 @@ https://encypherai.com/privacy
 ### Promotional Images (Required)
 
 #### Small Promo Tile (440x280)
-**Description**: Extension icon with "Encypher C2PA Verifier" text
+**Description**: Extension icon with "Encypher Verify" text
 **File**: `store-assets/promo-small-440x280.png`
 **Status**: Ready
 
@@ -139,8 +141,8 @@ https://encypherai.com/privacy
 
 ## Pricing
 
-**Free Tier**: Unlimited verification (no API key required). 1,000 content signings per month with API key.
-**Enterprise**: Unlimited verification and signing, Merkle tree verification, attribution tracking. Contact sales at encypherai.com/contact.
+**Free Tier**: Unlimited verification (no API key required). 1,000 content signings per month with API key. Standard and Lightweight embedding modes, all frequency levels except per-word.
+**Enterprise**: Unlimited verification and signing, per-word embedding frequency, Merkle tree verification, attribution tracking. Contact sales at encypherai.com/contact.
 
 ## Support & Links
 
@@ -155,10 +157,13 @@ https://encypherai.com/privacy
 ### Version 1.0.0 (Initial Release)
 
 **Features:**
-- Auto-detection of C2PA and Encypher signed content
+- Auto-detection of Encypher and C2PA-compatible signed content
 - Verification badges with signer information
 - Content signing with API key
-- Context menu verification
+- Configurable embedding mode (Standard / Lightweight) and embedding frequency (per sentence, paragraph, etc.)
+- Context menu verification and signing
+- Keyboard shortcut signing (Ctrl+Shift+E)
+- WYSIWYG editor integration with floating sign buttons
 - Options page for configuration
 - Privacy-first design (no tracking)
 

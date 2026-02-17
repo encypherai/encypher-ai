@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Encypher C2PA Verifier</title>
+  <title>Encypher Verify</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
     <header class="popup__header">
       <div class="popup__logo">
         <img class="popup__logo-icon" src="../icons/encypher_full_logo_white.svg" alt="Encypher" width="132" height="24">
-        <span class="popup__title">Verifier</span>
+        <span class="popup__title">Verify</span>
       </div>
       <div class="popup__tabs">
         <button class="popup__tab popup__tab--active" data-tab="verify">Verify</button>
@@ -146,11 +146,20 @@
             <label for="sign-text">Text to Sign</label>
             <textarea id="sign-text" placeholder="Paste or type text to sign..." rows="5"></textarea>
             <div class="popup__sign-options">
-              <label for="sign-method">Signing Method</label>
-              <select id="sign-method">
-                <option value="standard">Standard</option>
-                <option value="merkle">Merkle Verification (Enterprise)</option>
-                <option value="attribution">Attribution Tracking (Enterprise)</option>
+              <label for="sign-embedding-technique">Embedding Mode</label>
+              <select id="sign-embedding-technique">
+                <option value="micro_ecc_c2pa">Standard</option>
+                <option value="micro_ecc">Lightweight</option>
+              </select>
+            </div>
+            <div class="popup__sign-options">
+              <label for="sign-segmentation-level">Embedding Frequency</label>
+              <select id="sign-segmentation-level">
+                <option value="document">Entire content</option>
+                <option value="section">Per section</option>
+                <option value="paragraph">Per paragraph</option>
+                <option value="sentence">Per sentence</option>
+                <option value="word">Per word (Enterprise)</option>
               </select>
             </div>
             <div class="popup__sign-options">

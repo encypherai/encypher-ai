@@ -1,6 +1,6 @@
-# Encypher C2PA Verifier - Chrome Extension
+# Encypher Verify - Chrome Extension
 
-A browser extension that automatically detects and verifies C2PA-signed content on any webpage, displaying trust badges for verified content. Also supports signing content directly from the browser and inline signing in WYSIWYG editors.
+A browser extension that automatically detects and verifies Encypher and C2PA-compatible signed content on any webpage, displaying trust badges for verified content. Also supports signing content directly from the browser and inline signing in WYSIWYG editors.
 
 ## User Journeys
 
@@ -12,7 +12,7 @@ A browser extension that automatically detects and verifies C2PA-signed content 
 ## Features
 
 ### Verification
-- **Auto-Detection**: Scans pages for C2PA and Encypher text embeddings using Unicode variation selectors
+- **Auto-Detection**: Scans pages for Encypher and C2PA-compatible content provenance embeddings using Unicode variation selectors
 - **Verification Badges**: Shows inline badges on verified content blocks
 - **Popup Summary**: Quick overview of verified/pending/invalid content on the page
 - **Context Menu**: Right-click to verify selected text
@@ -24,6 +24,9 @@ A browser extension that automatically detects and verifies C2PA-signed content 
 - **Optional Login Onboarding**: Set up a tracked free account from the popup to auto-provision an API key
 - **WYSIWYG Editor Integration**: Floating sign buttons on detected text editors
 - **Context Menu Signing**: Right-click to sign selected text or sign & copy to clipboard
+- **Keyboard Shortcut**: Ctrl+Shift+E to sign selected text in any editor
+- **Embedding Mode**: Choose between Standard (C2PA + ECC) and Lightweight (ECC only) signing
+- **Embedding Frequency**: Control how often signatures are embedded (entire content, per section, per paragraph, per sentence, or per word)
 - **Advanced Options**: Document type, invisible embeddings, Merkle tree (Enterprise), attribution tracking (Enterprise)
 - **Tier-Aware**: Free tier (1,000 signings/month) and Enterprise (unlimited) with usage tracking
 
@@ -44,7 +47,7 @@ The extension automatically detects and adds signing capabilities to:
 - **API Key Management**: Securely store and test your API key
 - **Setup State Tracking**: Mark extension setup as complete/not started, independent of manual API key override
 - **Verification Settings**: Auto-verify, show badges
-- **Signing Preferences**: Default document type, invisible embeddings, auto-replace content
+- **Signing Preferences**: Default embedding mode, embedding frequency, document type, invisible embeddings, auto-replace content
 - **Advanced**: Custom API URL, cache duration
 
 ## Installation (Development)
@@ -96,6 +99,20 @@ chrome-extension/
 2. Calls Encypher public verification API with the signed content
 3. Returns verification result (valid/invalid/revoked)
 4. Content script updates badge to reflect status
+
+### Signing
+
+1. User enters or selects text to sign (popup, editor button, context menu, or Ctrl+Shift+E)
+2. A modal or form collects signing options:
+   - **Embedding Mode** controls the signature format sent to the API (`manifest_mode`):
+     - *Standard* (`micro_ecc_c2pa`): error-corrected segment embeddings plus a C2PA provenance manifest appended to the content. Best for full provenance chain.
+     - *Lightweight* (`micro_ecc`): error-corrected segment embeddings only, no C2PA manifest. Smaller footprint when provenance metadata is not needed.
+   - **Embedding Frequency** controls how the text is segmented for signing (`segmentation_level`):
+     - *Entire content* (`document`): one signature for the whole text.
+     - *Per section / paragraph / sentence / word*: progressively finer granularity. More frequent embeddings increase resilience to partial edits but add more invisible characters.
+     - Default is *Per sentence*, which balances survivability and size.
+3. Service worker sends `POST /api/v1/sign` with `manifest_mode` and `segmentation_level` in the request options
+4. Signed text is inserted back into the editor (DOM-preserving when possible) or copied to clipboard
 
 ### Badge States
 
@@ -152,7 +169,7 @@ npm run test:e2e
 The extension uses no build step — source files are submitted directly. Create a zip of the extension directory (excluding `node_modules/`, `tests/`, and markdown files):
 
 ```bash
-zip -r encypher-c2pa-verifier.zip . -x 'node_modules/*' 'tests/*' '*.md' 'package*.json'
+zip -r encypher-verify.zip . -x 'node_modules/*' 'tests/*' '*.md' 'package*.json'
 ```
 
 ## Configuration
@@ -160,9 +177,13 @@ zip -r encypher-c2pa-verifier.zip . -x 'node_modules/*' 'tests/*' '*.md' 'packag
 The extension uses these default settings:
 
 - **API Base URL**: `https://api.encypherai.com` (configurable text field in settings)
+- **Default Embedding Mode**: Standard (`micro_ecc_c2pa`)
+- **Default Embedding Frequency**: Per sentence (`sentence`)
 - **Verification Cache TTL**: 1 hour (local browser cache)
 - **Request Timeout**: 10 seconds
 - **Free Tier Limit**: 1,000 signings per month
+
+Signing defaults are persisted in `chrome.storage.sync` and pre-fill every signing surface (popup, inline modal, context menu, keyboard shortcut). Users can override per-signing from the popup or the inline editor modal.
 
 ## License
 

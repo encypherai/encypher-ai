@@ -1,5 +1,5 @@
 /**
- * E2E Tests for Encypher C2PA Verifier Chrome Extension
+ * E2E Tests for Encypher Verify Chrome Extension
  * 
  * Prerequisites:
  * - Chrome browser installed

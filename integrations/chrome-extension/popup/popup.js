@@ -1,5 +1,5 @@
 /**
- * Encypher C2PA Verifier - Popup Script
+ * Encypher Verify - Popup Script
  */
 
 // DOM elements - Verify tab
@@ -28,7 +28,8 @@ const signErrorEl = document.getElementById('sign-error');
 
 const signTextEl = document.getElementById('sign-text');
 const signTitleEl = document.getElementById('sign-title');
-const signMethodEl = document.getElementById('sign-method');
+const signEmbeddingTechniqueEl = document.getElementById('sign-embedding-technique');
+const signSegmentationLevelEl = document.getElementById('sign-segmentation-level');
 const signBtn = document.getElementById('sign-btn');
 const signedOutputEl = document.getElementById('signed-output');
 const copySignedBtn = document.getElementById('copy-signed');
@@ -90,7 +91,8 @@ const tabs = document.querySelectorAll('.popup__tab');
 const DEFAULT_SIGN_SETTINGS = {
   defaultInvisible: true,
   defaultDocType: 'article',
-  defaultSignMethod: 'standard',
+  defaultEmbeddingTechnique: 'micro_ecc_c2pa',
+  defaultSegmentationLevel: 'sentence',
 };
 
 /**
@@ -103,59 +105,24 @@ function showState(state) {
   errorEl.hidden = state !== 'error';
 }
 
-function syncAdvancedControlsFromMethod(signMethod) {
-  if (!signMerkleEl || !signAttributionEl) return;
-
-  if (signMethod === 'merkle') {
-    if (!signMerkleEl.disabled) signMerkleEl.checked = true;
-    signAttributionEl.checked = false;
-    return;
-  }
-
-  if (signMethod === 'attribution') {
-    if (!signAttributionEl.disabled) signAttributionEl.checked = true;
-    signMerkleEl.checked = false;
-    return;
-  }
-
-  signMerkleEl.checked = false;
-  signAttributionEl.checked = false;
-}
-
-function syncMethodFromAdvancedControls() {
-  if (!signMethodEl) return;
-
-  if (signMerkleEl?.checked && !signMerkleEl.disabled) {
-    signMethodEl.value = 'merkle';
-    return;
-  }
-
-  if (signAttributionEl?.checked && !signAttributionEl.disabled) {
-    signMethodEl.value = 'attribution';
-    return;
-  }
-
-  signMethodEl.value = 'standard';
-}
-
 function enforceSignMethodByTier(info) {
-  if (!signMethodEl) return;
-
   const tier = (info?.tier || 'free').toLowerCase();
   const isEnterprise = ['enterprise', 'business'].includes(tier);
-  const enterpriseMethods = new Set(['merkle', 'attribution']);
 
-  [...signMethodEl.options].forEach((option) => {
-    if (enterpriseMethods.has(option.value)) {
-      option.disabled = !isEnterprise;
+  if (signMerkleEl) signMerkleEl.disabled = !isEnterprise;
+  if (signAttributionEl) signAttributionEl.disabled = !isEnterprise;
+
+  // Disable "Word (Enterprise)" segmentation option for non-enterprise
+  if (signSegmentationLevelEl) {
+    [...signSegmentationLevelEl.options].forEach((option) => {
+      if (option.value === 'word') {
+        option.disabled = !isEnterprise;
+      }
+    });
+    if (!isEnterprise && signSegmentationLevelEl.value === 'word') {
+      signSegmentationLevelEl.value = 'sentence';
     }
-  });
-
-  if (!isEnterprise && enterpriseMethods.has(signMethodEl.value)) {
-    signMethodEl.value = 'standard';
   }
-
-  syncAdvancedControlsFromMethod(signMethodEl.value || 'standard');
 }
 
 async function loadSignDefaults() {
@@ -163,7 +130,8 @@ async function loadSignDefaults() {
     const settings = await chrome.storage.sync.get(DEFAULT_SIGN_SETTINGS);
     if (signInvisibleEl) signInvisibleEl.checked = settings.defaultInvisible !== false;
     if (signDocTypeEl) signDocTypeEl.value = settings.defaultDocType || 'article';
-    if (signMethodEl) signMethodEl.value = settings.defaultSignMethod || 'standard';
+    if (signEmbeddingTechniqueEl) signEmbeddingTechniqueEl.value = settings.defaultEmbeddingTechnique || 'micro_ecc_c2pa';
+    if (signSegmentationLevelEl) signSegmentationLevelEl.value = settings.defaultSegmentationLevel || 'sentence';
     enforceSignMethodByTier(accountInfo);
   } catch (error) {
     // Keep in-UI defaults when storage read fails.
@@ -660,31 +628,33 @@ function showSignState(state) {
 async function signContent() {
   const text = signTextEl.value.trim();
   const title = signTitleEl.value.trim();
-  const signMethod = signMethodEl?.value || 'standard';
-  
+
   if (!text) {
     signErrorMessageEl.textContent = 'Please enter text to sign.';
     showSignState('error');
     return;
   }
-  
-  // Gather advanced options
+
+  // Gather options
   const useInvisible = signInvisibleEl?.checked ?? true;
   const docType = signDocTypeEl?.value || 'article';
-  const useMerkle = signMethod === 'merkle' || (signMerkleEl?.checked && !signMerkleEl?.disabled);
-  const useAttribution = signMethod === 'attribution' || (signAttributionEl?.checked && !signAttributionEl?.disabled);
-  
+  const manifestMode = signEmbeddingTechniqueEl?.value || 'micro_ecc_c2pa';
+  const segmentationLevel = signSegmentationLevelEl?.value || 'sentence';
+  const useMerkle = signMerkleEl?.checked && !signMerkleEl?.disabled;
+  const useAttribution = signAttributionEl?.checked && !signAttributionEl?.disabled;
+
   // Disable button and show loading
   signBtn.disabled = true;
   signBtn.textContent = 'Signing...';
-  
+
   try {
     const response = await chrome.runtime.sendMessage({
       type: 'SIGN_CONTENT',
       text: text,
       title: title || undefined,
       options: {
-        signMethod,
+        manifestMode,
+        segmentationLevel,
         useInvisible,
         documentType: docType,
         useMerkle,
@@ -776,16 +746,12 @@ toggleAdvancedBtn?.addEventListener('click', () => {
   toggleAdvancedBtn.classList.toggle('open', isOpen);
 });
 
-signMethodEl?.addEventListener('change', () => {
-  syncAdvancedControlsFromMethod(signMethodEl.value || 'standard');
-});
-
 signMerkleEl?.addEventListener('change', () => {
-  syncMethodFromAdvancedControls();
+  if (signMerkleEl.checked && signAttributionEl) signAttributionEl.checked = false;
 });
 
 signAttributionEl?.addEventListener('change', () => {
-  syncMethodFromAdvancedControls();
+  if (signAttributionEl.checked && signMerkleEl) signMerkleEl.checked = false;
 });
 
 /**

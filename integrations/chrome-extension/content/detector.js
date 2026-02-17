@@ -1,5 +1,5 @@
 /**
- * Encypher C2PA Content Detector
+ * Encypher Verify - Content Detector
  * 
  * Scans the page for C2PA and Encypher text embeddings using Unicode variation selectors.
  * When found, injects verification badges and communicates with the service worker.
