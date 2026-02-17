@@ -283,10 +283,10 @@ def prepare_evidence_package(content, notification_record):
 "Document-level watermarking works for basic proof"
 
 **Stage 3: Legal Realization**
-"Wait--I have sentence-level signing on the free tier. Now I need to actually find where my content appears in AI outputs and build the enforcement case."
+"Wait -- I have sentence-level signing on the free tier. Now I need to find where my content appears across the web and build the enforcement case."
 
 **Stage 4: Brand Protection Need**
-"Attribution Analytics shows my content is being used by multiple AI companies. I need formal notices and evidence packages to start licensing."
+"Attribution Analytics shows my signed content appearing on multiple websites, aggregators, and platforms. Combined with formal notice, I have the evidence to start licensing conversations."
 
 **Stage 5: Enterprise Evaluation**
 "The enforcement tools are working. Now I need enterprise scale--willful infringement proof, quote integrity, downstream survival"

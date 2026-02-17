@@ -46,6 +46,23 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 ---
 
+## Detection Capabilities Framework
+
+IMPORTANT: All internal messaging and external claims must align with these three tiers. Never imply capabilities from a higher tier when describing a lower tier.
+
+Tier 1 -- Web-Surface Detection (Available Now, No AI Company Cooperation Required):
+Detects signed content with intact embeddings appearing on websites, in RSS feeds, on aggregator platforms, in RAG retrieval systems that serve verbatim source text, and on content farms or scrapers that republish content. This is what the Chrome extension does. This is what Attribution Analytics provides today. It answers: "Where is my signed content appearing on the open web?"
+
+Tier 2 -- Ingestion-Time Provenance Checking (Requires AI Company Integration):
+AI company integrates provenance-checking on their data ingestion pipeline, checking incoming training or RAG data for C2PA manifests and embeddings before or during ingestion. Logs what marked content was ingested and can respect or act on embedded rights information. This is the collaborative infrastructure play -- requires native integration. It answers: "Did the AI company ingest my marked content, and were they aware of it?"
+
+Tier 3 -- End-to-End Output Attribution (Future / Requires Full Provenance Chain):
+AI company preserves provenance metadata through their pipeline and attributes sources in generated outputs. This is the long-term C2PA ecosystem vision but is NOT available today and requires industry-wide adoption of provenance infrastructure. It answers: "Which specific sources informed this AI-generated output?"
+
+When describing Attribution Analytics, Chrome extension, or any detection capability, always specify which tier applies. Never describe Tier 1 capabilities using Tier 2 or Tier 3 language.
+
+---
+
 ## Strategic Foundation 3.0
 
 ### The Market Reality
@@ -235,16 +252,12 @@ Close: "Signing is free for every publisher. Founding members get implementation
 **The Collaborative Infrastructure Strategy**
 
 **Opening Conversation:**
-"The publisher ecosystem is implementing cryptographic watermarking at scale--AP, BBC, Springer Nature, Taylor & Francis. Your training pipeline will encounter marked content with embedded proof of origin. You need compatible infrastructure.
-
-As Co-Chair of the C2PA Text Provenance Task Force, we're building this WITH you. OpenAI is a C2PA member. Google is implementing SynthID. This isn't adversarial--it's collaborative infrastructure that benefits everyone.
-
-Plus, quote integrity verification protects your brand when models output 'According to AP...' We can prove whether that's accurate or hallucinated."
+"The publisher ecosystem is implementing cryptographic watermarking at scale--AP, BBC, Springer Nature, Taylor & Francis. Your training pipeline will encounter marked content with embedded proof of origin. The standard is live. The market frameworks are defined. We're building this WITH you through C2PA. Quote integrity verification protects your brand from hallucination claims. When you integrate provenance infrastructure, sentence-level attribution provides performance intelligence unavailable through any other means."
 
 **Value Proposition:**
 - **Publisher Compatibility:** One integration handles marked content from growing coalition
 - **Quote Integrity Verification:** Protect brand from hallucination liability
-- **Performance Intelligence:** Sentence-level tracking reveals which content drives results
+- **Performance Intelligence:** When integrated into your pipeline, sentence-level tracking reveals which content drives results
 - **Provenance Infrastructure:** Technical foundation for content partnerships
 - **Standards Collaboration:** Shape frameworks through Syracuse Symposium participation
 

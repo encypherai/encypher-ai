@@ -143,7 +143,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 **Hook:** "We're building text provenance standards WITH you through C2PA. Quote integrity protects your brand. Performance intelligence improves your models."
 
 **Core Message:**
-"The publisher ecosystem is implementing cryptographic watermarking at scale--AP, BBC, Springer Nature, Taylor & Francis. Your training pipeline needs compatible infrastructure. The standard is live. The market frameworks are defined. We're building this WITH you through C2PA. Quote integrity verification protects your brand from hallucination claims. Sentence-level attribution provides unprecedented performance intelligence."
+"The publisher ecosystem is implementing cryptographic watermarking at scale--AP, BBC, Springer Nature, Taylor & Francis. Your training pipeline needs compatible infrastructure. The standard is live. The market frameworks are defined. We're building this WITH you through C2PA. Quote integrity verification protects your brand from hallucination claims. With provenance infrastructure integrated into your pipeline, sentence-level attribution provides performance intelligence unavailable through any other means."
 
 **Execution:**
 - Standards collaboration showcase (OpenAI membership, Google SynthID)

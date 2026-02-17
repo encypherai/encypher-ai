@@ -27,7 +27,7 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 
 **What This Enables:**
 - **Publisher Compatibility:** One integration handles marked content from growing publisher coalition (AP, BBC, Springer Nature, Taylor & Francis actively engaged)
-- **Performance Intelligence:** Our patent-pending granular content attribution (83 claims filed Jan 7, 2026) reveals which content drives model success--temperature settings that go viral, prompts that resonate, training data that improves outputs
+- **Performance Intelligence:** When integrated into AI company pipelines, our patent-pending granular content attribution (83 claims filed Jan 7, 2026) can reveal which content drives model success -- temperature settings that go viral, prompts that resonate, training data that improves outputs. Requires native integration with AI company infrastructure (Tier 2)
 - **Quote Integrity Verification:** When your model outputs "According to AP..." our infrastructure proves whether that quote is accurate or hallucinated--protecting both publisher brands and your reputation
 - **Provenance Infrastructure:** Handle cryptographically signed text in training pipelines with mathematical certainty
 - **Attribution Foundation:** Technical infrastructure for content partnerships and licensing frameworks
@@ -41,19 +41,19 @@ Publishers implementing our infrastructure embed cryptographic watermarking dire
 
 **What You Get:**
 - Compatible infrastructure for marked content ecosystem
-- Performance intelligence from sentence-level attribution
+- Performance intelligence from sentence-level attribution (when integrated into AI pipelines)
 - Quote integrity verification to prevent hallucination-related brand damage
 - Technical foundation for publisher partnerships
 - Exclusive patent-pending capabilities
 
 **The Strategic Reality:**
-This isn't about restriction--it's infrastructure for proper content licensing and unprecedented model insights. Publishers need proof of origin. You need provenance data and attribution intelligence. Both benefit from mathematical certainty.
+This isn't about restriction -- it's infrastructure for proper content licensing and model insights. Publishers need proof of origin. You benefit from provenance data and attribution intelligence when you integrate provenance checking into your pipeline. Both sides benefit from mathematical certainty and standards-based interoperability.
 
 **Alternative Scenario:**
 Build basic C2PA yourself, remain incompatible with publisher-specific enhancements, lose performance intelligence competitors gain, miss opportunity to shape standards while they solidify.
 
 **Next Step:**
-Technical demonstration showing sentence-level tracking and performance intelligence capabilities. See how provenance data reveals which content drives viral success.
+Technical demonstration showing sentence-level tracking and performance intelligence capabilities. See how provenance data can reveal which content drives success when integrated into AI pipelines.
 
 **Interactive Demo:** Visit **encypherai.com/ai-demo** to explore technical integration
 
@@ -110,7 +110,7 @@ Convert unmarked content into provably owned assets. Serve formal notice. Create
 Full signing infrastructure at no cost. C2PA 2.3-compliant signing, sentence-level Merkle tree authentication, invisible Unicode embeddings, public verification pages, coalition membership. 1,000 documents/month. WordPress plugin, API, CLI, GitHub Action included.
 
 **Enforcement Add-Ons (Self-Service):**
-- Attribution Analytics: $299/month (find where your content appears in AI outputs)
+- Attribution Analytics: $299/month (find where your signed content appears across the web -- scraped republication, aggregators, RAG systems, content platforms)
 - Formal Notice Package: $499/notice (trigger willful infringement framework)
 - Evidence Package: $999/package (court-ready evidence bundle)
 - Enforcement Bundle: $999/month (all three--57% savings vs. a la carte)
@@ -226,7 +226,7 @@ A: Once you notify AI companies that your content carries cryptographic signatur
 A: When an AI outputs "According to AP, [quote]..." our infrastructure can verify whether that exact quote exists in signed AP content. If it's accurate: verified ". If it's modified or hallucinated: flagged --. This protects publisher brands from AI hallucinations and gives AI companies a tool to verify accuracy.
 
 **Q: Why should AI companies adopt this?**
-A: Publishers are implementing marked content at scale. You need compatible infrastructure. Plus, sentence-level attribution provides unprecedented performance intelligence showing which content drives model success. Quote integrity verification protects your reputation. We're building this WITH you through C2PA.
+A: Publishers are implementing marked content at scale. You need compatible infrastructure. Plus, when you integrate provenance infrastructure, sentence-level attribution provides performance intelligence showing which content drives model success. Quote integrity verification protects your reputation. We're building this WITH you through C2PA.
 
 **Q: What if we want to build C2PA ourselves?**
 A: Excellent--Erik Svilich, our Founder & CEO, authored the specification and co-chairs the task force. You'd be implementing what he wrote. The consideration is that publishers are using our patent-pending sentence-level tracking for formal notice, willful infringement proof, and licensing. Basic C2PA provides document authentication. Our enhancements enable the publisher compatibility, legal infrastructure, and performance intelligence that creates strategic value. We can help accelerate your implementation of Erik's specification.

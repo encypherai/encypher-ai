@@ -59,7 +59,7 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 
 ### Tier 2: Enforcement + Enterprise (Commercial)
 
-- Attribution Analytics (where your content appears in AI outputs)
+- Attribution Analytics (where your signed content appears across the web -- aggregators, RAG systems, scrapers, content platforms)
 - Minimal invisible embeddings (Unicode variation selectors)
 - Real-time streaming support (WebSocket/SSE)
 - Tamper detection showing exact modifications
@@ -316,13 +316,13 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 5. Demonstrates sentence-level attribution
 6. CTA: "Join the publisher coalition" ' **encypherai.com/publisher-demo**
 
-### Flow 3: AI Attribution Intelligence
+### Flow 3: AI Provenance Infrastructure
 
-1. User selects "AI Attribution Tracking"
-2. Shows how AI companies benefit from provenance data
-3. Basic: Content was used
-4. Enterprise: Which sentences, performance impact
-5. Analytics preview of attribution intelligence
+1. User selects "AI Provenance Integration"
+2. Shows how AI companies benefit from integrating provenance checking on their ingestion pipeline
+3. Tier 1 (no integration): Web-surface detection of signed content on aggregators, RAG systems, scrapers
+4. Tier 2 (with integration): Ingestion-time provenance checking -- know what marked content entered your pipeline
+5. Enterprise: Sentence-level attribution and performance intelligence when integrated
 6. CTA: "Infrastructure for AI companies" ' **encypherai.com/ai-demo**
 
 ---

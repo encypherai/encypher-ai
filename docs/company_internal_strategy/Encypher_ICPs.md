@@ -29,6 +29,23 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 ---
 
+## Detection Capabilities Framework
+
+IMPORTANT: All internal messaging and external claims must align with these three tiers. Never imply capabilities from a higher tier when describing a lower tier.
+
+Tier 1 -- Web-Surface Detection (Available Now, No AI Company Cooperation Required):
+Detects signed content with intact embeddings appearing on websites, in RSS feeds, on aggregator platforms, in RAG retrieval systems that serve verbatim source text, and on content farms or scrapers that republish content. This is what the Chrome extension does. This is what Attribution Analytics provides today. It answers: "Where is my signed content appearing on the open web?"
+
+Tier 2 -- Ingestion-Time Provenance Checking (Requires AI Company Integration):
+AI company integrates provenance-checking on their data ingestion pipeline, checking incoming training or RAG data for C2PA manifests and embeddings before or during ingestion. Logs what marked content was ingested and can respect or act on embedded rights information. This is the collaborative infrastructure play -- requires native integration. It answers: "Did the AI company ingest my marked content, and were they aware of it?"
+
+Tier 3 -- End-to-End Output Attribution (Future / Requires Full Provenance Chain):
+AI company preserves provenance metadata through their pipeline and attributes sources in generated outputs. This is the long-term C2PA ecosystem vision but is NOT available today and requires industry-wide adoption of provenance infrastructure. It answers: "Which specific sources informed this AI-generated output?"
+
+When describing Attribution Analytics, Chrome extension, or any detection capability, always specify which tier applies. Never describe Tier 1 capabilities using Tier 2 or Tier 3 language.
+
+---
+
 ## Primary ICPs: The Market Makers
 
 ### ICP 1A: "The Publisher Strategist" -- Paul (PRIMARY - VALIDATED)
@@ -129,10 +146,10 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
  - Training pipeline encountering marked content with embedded origin proof
  - Basic C2PA won't integrate with publisher-specific sentence-level enhancements
 
-2. **Attribution Opportunity:**
- - Sentence-level provenance could reveal which content drives results
- - Performance intelligence from attribution data
- - Optimization insights currently unavailable
+2. **Attribution Opportunity (Requires Integration):**
+ - When AI companies integrate provenance checking on ingestion, sentence-level provenance reveals which content drives results
+ - Performance intelligence from attribution data available through native integration
+ - Optimization insights unavailable without provenance infrastructure on AI company pipeline
 
 3. **Quote Integrity Liability:**
  - Models output "According to AP..." but may hallucinate
@@ -149,7 +166,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 - **Reference Implementation:** Not a vendor interpretation--this is the author's implementation
 - **Publisher Compatibility:** One integration for marked content from growing ecosystem (AP, BBC, Springer Nature, Taylor & Francis)
 - **Quote Integrity Verification:** Prove AI attributions are accurate, protect brand from hallucination claims
-- **Performance Intelligence:** Patent-pending sentence-level tracking reveals which content drives success
+- **Performance Intelligence:** Patent-pending sentence-level tracking reveals which content drives success when integrated into AI pipelines
 - **Not Adversarial:** Building infrastructure both publishers AND AI companies need
 
 **Decision Criteria:**
@@ -164,13 +181,13 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 - "We're building text provenance standards WITH you through C2PA--OpenAI is a member, standard published January 8, 2026"
 - "Publisher ecosystem implementing marked content--you need compatible infrastructure"
 - "Quote integrity verification--prove when 'According to AP...' is accurate vs. hallucinated"
-- "Performance intelligence from sentence-level attribution--see which content drives viral success"
+- "Performance intelligence from sentence-level attribution -- when you integrate provenance checking, see which content drives success"
 - "This isn't restriction--it's infrastructure for attribution and partnerships"
 
 **Pricing Justification:**
 AI company infrastructure pricing to be determined based on coalition leverage. Focus on publisher coalition formation first.
 
-**Value Framing:** Not "litigation avoidance" but "performance intelligence + quote verification + infrastructure for partnerships"
+**Value Framing:** Not "litigation avoidance" but "provenance infrastructure + quote verification + performance intelligence (with integration) + foundation for content partnerships"
 
 **Demo:** **encypherai.com/ai-demo**
 
@@ -250,7 +267,7 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 ### For Kenji (AI Companies):
 
 **vs. Basic C2PA:**
-"Standard provides document-level authentication. Our patent-pending sentence-level tracking enables quote integrity verification and performance intelligence showing which content drives viral success."
+"Standard provides document-level authentication. Our patent-pending sentence-level tracking enables quote integrity verification and performance intelligence showing which content drives success (with pipeline integration)."
 
 **vs. Build Yourself:**
 "Erik Svilich co-chairs the C2PA task force with OpenAI as member and authored the specification. You'd be implementing what he wrote. Leverage the reference implementation from the specification author while gaining exclusive capabilities."
@@ -318,7 +335,7 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 **Month 2: Quote Integrity + Performance Intelligence**
 - Demo quote integrity verification (protect brand from hallucination claims)
 - Demonstrate sentence-level attribution capabilities
-- Show which content drives viral model outputs
+- Show which content can drive success in model outputs when provenance is integrated
 - Explain attribution intelligence ROI
 
 **Month 3: Infrastructure Partnership**

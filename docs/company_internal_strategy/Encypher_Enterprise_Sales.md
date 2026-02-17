@@ -22,6 +22,23 @@
 
 ---
 
+## Detection Capabilities Framework
+
+IMPORTANT: All internal messaging and external claims must align with these three tiers. Never imply capabilities from a higher tier when describing a lower tier.
+
+Tier 1 -- Web-Surface Detection (Available Now, No AI Company Cooperation Required):
+Detects signed content with intact embeddings appearing on websites, in RSS feeds, on aggregator platforms, in RAG retrieval systems that serve verbatim source text, and on content farms or scrapers that republish content. This is what the Chrome extension does. This is what Attribution Analytics provides today. It answers: "Where is my signed content appearing on the open web?"
+
+Tier 2 -- Ingestion-Time Provenance Checking (Requires AI Company Integration):
+AI company integrates provenance-checking on their data ingestion pipeline, checking incoming training or RAG data for C2PA manifests and embeddings before or during ingestion. Logs what marked content was ingested and can respect or act on embedded rights information. This is the collaborative infrastructure play -- requires native integration. It answers: "Did the AI company ingest my marked content, and were they aware of it?"
+
+Tier 3 -- End-to-End Output Attribution (Future / Requires Full Provenance Chain):
+AI company preserves provenance metadata through their pipeline and attributes sources in generated outputs. This is the long-term C2PA ecosystem vision but is NOT available today and requires industry-wide adoption of provenance infrastructure. It answers: "Which specific sources informed this AI-generated output?"
+
+When describing Attribution Analytics, Chrome extension, or any detection capability, always specify which tier applies. Never describe Tier 1 capabilities using Tier 2 or Tier 3 language.
+
+---
+
 ## Core Sales Narrative
 
 ### The Market Reality
@@ -127,7 +144,7 @@ All publishers get full signing capabilities at no cost:
 
 | Add-On | Price | What It Does |
 |--------|-------|-------------|
-| Attribution Analytics | $299/month | Find where your signed content appears in AI outputs |
+| Attribution Analytics | $299/month | Find where your signed content appears across the web -- scraped republication, aggregators, RAG systems, and content platforms (Tier 1 detection) |
 | Formal Notice Package | $499/notice | Cryptographically-backed notice triggering willful infringement framework |
 | Evidence Package | $999/package | Court-ready evidence bundle with Merkle proofs and chain-of-custody |
 | Enforcement Bundle | $999/month | Analytics + 2 notices/mo + 1 evidence package/mo (57% savings) |
