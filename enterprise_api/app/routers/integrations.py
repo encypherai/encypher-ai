@@ -71,12 +71,14 @@ def _hash_token(token: str) -> str:
 
 
 def _build_webhook_url(token: str, *, request: Request | None = None) -> str:
-    """Build the full webhook URL with the token as query param."""
-    if request is not None:
-        # request.base_url includes trailing slash
-        base_url = str(request.base_url).rstrip("/")
-    else:
-        base_url = settings.api_base_url.rstrip("/")
+    """Build the full webhook URL with the token as query param.
+
+    Always use configured API base URL to avoid issuing webhook links that
+    accidentally point at non-API hosts when requests are proxied through
+    dashboard/marketing domains.
+    """
+    _ = request  # Kept for backward compatibility with existing call sites.
+    base_url = settings.api_base_url.rstrip("/")
     return f"{base_url}{WEBHOOK_BASE_PATH}?token={token}"
 
 

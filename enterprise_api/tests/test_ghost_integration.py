@@ -431,6 +431,15 @@ class TestWebhookToken:
         url = _build_webhook_url(token)
         assert url == f"https://staging-api.encypherai.com{WEBHOOK_BASE_PATH}?token=ghwh_custom"
 
+    def test_build_webhook_url_ignores_request_host(self, monkeypatch: pytest.MonkeyPatch):
+        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://api.encypherai.com")
+
+        class _Req:
+            base_url = "https://encypherai.com/"
+
+        url = _build_webhook_url("ghwh_proxy", request=_Req())
+        assert url == f"https://api.encypherai.com{WEBHOOK_BASE_PATH}?token=ghwh_proxy"
+
 
 class TestMaskKey:
     def test_mask_long_key(self):
