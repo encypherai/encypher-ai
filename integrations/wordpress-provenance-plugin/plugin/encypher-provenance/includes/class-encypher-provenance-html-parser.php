@@ -491,6 +491,8 @@ class HtmlParser
         }
 
         $parts = [];
+        $prev_end = null;
+
         foreach ($fragments as [$offset, $length, $raw_text]) {
             $decoded = html_entity_decode($raw_text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
             // Collapse whitespace but preserve VS chars
@@ -513,11 +515,48 @@ class HtmlParser
             }
             $content = trim(implode('', $result_chars));
             if ('' !== $content) {
+                if ($prev_end !== null) {
+                    $gap_html = substr($html, $prev_end, $offset - $prev_end);
+                    if ($this->gap_requires_space((string) $gap_html)) {
+                        $parts[] = ' ';
+                    }
+                }
                 $parts[] = $content;
+                $prev_end = $offset + $length;
             }
         }
 
-        return implode(' ', $parts);
+        return implode('', $parts);
+    }
+
+    /**
+     * Determine whether HTML between text fragments implies a single space.
+     *
+     * This avoids false spaces across inline boundaries (e.g. "foo<em>bar</em>")
+     * while still preserving block-level spacing (e.g. "</p><p>").
+     */
+    private function gap_requires_space(string $gap_html): bool
+    {
+        if ('' === $gap_html) {
+            return false;
+        }
+
+        // Explicit whitespace between fragments should collapse to one space.
+        if (preg_match('/\s/u', $gap_html)) {
+            return true;
+        }
+
+        // If the boundary crosses block-level tags, preserve paragraph spacing.
+        if (preg_match_all('/<\/?\s*([a-zA-Z0-9:-]+)/', $gap_html, $matches) && !empty($matches[1])) {
+            foreach ($matches[1] as $tag_name) {
+                $tag = strtolower((string) $tag_name);
+                if (in_array($tag, self::BLOCK_ELEMENTS, true)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     // =========================================================================

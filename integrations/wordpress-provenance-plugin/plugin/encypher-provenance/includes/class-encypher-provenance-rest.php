@@ -320,6 +320,7 @@ class Rest
                 'manifest_mode' => 'micro_ecc_c2pa',
                 'segmentation_level' => 'sentence',
                 'index_for_attribution' => true,
+                'return_embedding_plan' => true,
             ],
         ];
         
@@ -354,8 +355,9 @@ class Rest
             $result = $response['data'];
         }
 
-        // Extract signed text from Enterprise API response
-        $signed_text = $result['signed_text'] ?? ($result['embedded_content'] ?? null);
+        // Prefer reconstructing signed text from embedding_plan (format-preserving),
+        // then fall back to signed_text/embedded_content for compatibility.
+        $signed_text = $this->resolve_signed_text_with_embedding_plan($result, $extracted_text);
         if (! is_string($signed_text) || '' === $signed_text) {
             return new WP_Error('invalid_response', __('Unexpected response from Enterprise API.', 'encypher-provenance'), ['status' => 502]);
         }
@@ -519,18 +521,15 @@ class Rest
 
         // Extract plain text from HTML for verification.
         // The signing pipeline signs plain text (extracted from HTML), so the
-        // C2PA content hash is computed on plain text.  We must send the same
-        // plain text (with VS markers intact) to /verify/advanced so the hash
-        // matches.  extract_text_from_html strips VS chars via DOMDocument, so
-        // we use extract_html_text_fragments which works at the byte level and
+        // C2PA content hash is computed on plain text. We must send the same
+        // plain text (with VS markers intact) to /verify so the hash matches.
+        // extract_text_from_html strips VS chars via DOMDocument, so we use
+        // extract_html_text_fragments which works at the byte level and
         // preserves all invisible characters.
         $verify_text = $this->extract_text_for_verify($raw_content);
 
-        $settings = get_option('encypher_provenance_settings', []);
-        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
-        // /verify is deprecated (410 Gone) — always use /verify/advanced
-        $endpoint = '/verify/advanced';
-        $require_auth = true;
+        $endpoint = '/verify';
+        $require_auth = false;
 
         // Check for cached verification (disabled in development, 5 minute cache in production)
         // Set WP_DEBUG to true in wp-config.php for development mode
@@ -552,14 +551,7 @@ class Rest
             'text' => $verify_text,
         ];
 
-        $payload['segmentation_level'] = 'sentence';
-        $payload['search_scope'] = 'organization';
-        $payload['include_attribution'] = false;
-        $payload['detect_plagiarism'] = false;
-        $payload['include_heat_map'] = false;
-        $payload['min_match_percentage'] = 0.0;
-
-        $verification_mode = 'advanced';
+        $verification_mode = 'standard';
         error_log(sprintf('Encypher: Calling %s for post %d (content length: %d)', $endpoint, $post_id, strlen($raw_content)));
         $response = $this->call_backend($endpoint, $payload, $require_auth);
         if (is_wp_error($response)) {
@@ -573,6 +565,7 @@ class Rest
             'reason_code' => null,
             'signer_id' => null,
             'signer_name' => null,
+            'signing_identity' => null,
             'verified_at' => null,
             'metadata' => null,
             'error' => null,
@@ -590,11 +583,10 @@ class Rest
             $normalized['tampered'] = !empty($verdict['tampered']);
             $normalized['reason_code'] = isset($verdict['reason_code']) ? (string) $verdict['reason_code'] : null;
             $normalized['signer_id'] = isset($verdict['signer_id']) ? (string) $verdict['signer_id'] : null;
-            $normalized['signer_name'] = isset($verdict['signer_name']) ? (string) $verdict['signer_name'] : null;
+            $normalized['signing_identity'] = $this->resolve_signing_identity($verdict);
+            $normalized['signer_name'] = $normalized['signing_identity'] ?: $this->resolve_signer_display($verdict);
             $normalized['verified_at'] = isset($verdict['timestamp']) ? (string) $verdict['timestamp'] : null;
-            if (isset($verdict['details']) && is_array($verdict['details']) && isset($verdict['details']['manifest']) && is_array($verdict['details']['manifest'])) {
-                $normalized['metadata'] = $verdict['details']['manifest'];
-            }
+            $normalized['metadata'] = $this->build_manifest_payload_for_display($verdict);
             if (isset($response['correlation_id'])) {
                 $normalized['correlation_id'] = (string) $response['correlation_id'];
             }
@@ -643,6 +635,96 @@ class Rest
 
         $normalized['cached'] = false;
         return new WP_REST_Response($normalized);
+    }
+
+    /**
+     * Resolve signing identity for UI display.
+     *
+     * Prefer explicit API fields, then fall back to C2PA metadata assertion
+     * publisher identifiers when available in DB-backed manifests.
+     */
+    private function resolve_signing_identity(array $verdict): ?string
+    {
+        $candidates = [
+            $verdict['signing_identity'] ?? null,
+            $verdict['publisher_display_name'] ?? null,
+        ];
+
+        if (isset($verdict['c2pa']) && is_array($verdict['c2pa']) && isset($verdict['c2pa']['assertions']) && is_array($verdict['c2pa']['assertions'])) {
+            foreach ($verdict['c2pa']['assertions'] as $assertion) {
+                if (!is_array($assertion) || ($assertion['label'] ?? null) !== 'c2pa.metadata' || !isset($assertion['data']) || !is_array($assertion['data'])) {
+                    continue;
+                }
+                $meta = $assertion['data'];
+                if (isset($meta['publisher']) && is_array($meta['publisher'])) {
+                    $candidates[] = $meta['publisher']['identifier'] ?? null;
+                    $candidates[] = $meta['publisher']['name'] ?? null;
+                }
+                $candidates[] = $meta['author'] ?? null;
+            }
+        }
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && '' !== trim($candidate)) {
+                return trim($candidate);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve signer display label, preferring signing identity when present.
+     */
+    private function resolve_signer_display(array $verdict): ?string
+    {
+        $candidates = [
+            $verdict['publisher_display_name'] ?? null,
+            $verdict['signer_name'] ?? null,
+            $verdict['organization_name'] ?? null,
+            $verdict['signer_id'] ?? null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && '' !== trim($candidate)) {
+                return trim($candidate);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Build a display-friendly manifest payload for the frontend modal.
+     *
+     * Prefer the full DB-backed C2PA assertion set when available, then merge
+     * verification details (segment_uuid / total_signatures) for UX summaries.
+     */
+    private function build_manifest_payload_for_display(array $verdict): ?array
+    {
+        $manifest = [];
+
+        if (isset($verdict['c2pa']) && is_array($verdict['c2pa'])) {
+            $c2pa = $verdict['c2pa'];
+            if (isset($c2pa['assertions']) && is_array($c2pa['assertions']) && !empty($c2pa['assertions'])) {
+                $manifest['assertions'] = $c2pa['assertions'];
+            }
+            foreach (['manifest_url', 'manifest_hash', 'validated', 'validation_type', 'certificate_chain'] as $key) {
+                if (array_key_exists($key, $c2pa) && null !== $c2pa[$key]) {
+                    $manifest[$key] = $c2pa[$key];
+                }
+            }
+        }
+
+        if (isset($verdict['details']) && is_array($verdict['details']) && isset($verdict['details']['manifest']) && is_array($verdict['details']['manifest'])) {
+            foreach ($verdict['details']['manifest'] as $key => $value) {
+                if (!array_key_exists($key, $manifest)) {
+                    $manifest[$key] = $value;
+                }
+            }
+        }
+
+        return !empty($manifest) ? $manifest : null;
     }
 
     public function handle_provenance_request(WP_REST_Request $request)
@@ -921,6 +1003,85 @@ class Rest
         }
 
         return 'signed';
+    }
+
+    private function resolve_signed_text_with_embedding_plan(array $result, string $visible_text): ?string
+    {
+        if (isset($result['embedding_plan']) && is_array($result['embedding_plan'])) {
+            $resolved = $this->apply_embedding_plan($visible_text, $result['embedding_plan']);
+            if (is_string($resolved) && '' !== $resolved) {
+                return $resolved;
+            }
+        }
+
+        $signed_text = $result['signed_text'] ?? ($result['embedded_content'] ?? null);
+        if (is_string($signed_text) && '' !== $signed_text) {
+            return $signed_text;
+        }
+
+        return null;
+    }
+
+    private function apply_embedding_plan(string $visible_text, array $embedding_plan): ?string
+    {
+        if (
+            !isset($embedding_plan['index_unit'])
+            || !is_string($embedding_plan['index_unit'])
+            || 'codepoint' !== $embedding_plan['index_unit']
+        ) {
+            return null;
+        }
+
+        if (!isset($embedding_plan['operations']) || !is_array($embedding_plan['operations']) || empty($embedding_plan['operations'])) {
+            return null;
+        }
+
+        $chars = $this->mb_str_split_safe($visible_text);
+        $char_count = count($chars);
+        $markers_by_position = [];
+
+        foreach ($embedding_plan['operations'] as $operation) {
+            if (!is_array($operation)) {
+                return null;
+            }
+
+            if (!isset($operation['insert_after_index'], $operation['marker'])) {
+                return null;
+            }
+
+            if (!is_int($operation['insert_after_index']) || !is_string($operation['marker']) || '' === $operation['marker']) {
+                return null;
+            }
+
+            $insert_after_index = $operation['insert_after_index'];
+            if ($insert_after_index < -1 || $insert_after_index >= $char_count) {
+                return null;
+            }
+
+            if (!isset($markers_by_position[$insert_after_index])) {
+                $markers_by_position[$insert_after_index] = [];
+            }
+            $markers_by_position[$insert_after_index][] = $operation['marker'];
+        }
+
+        $output = '';
+
+        if (isset($markers_by_position[-1])) {
+            foreach ($markers_by_position[-1] as $marker) {
+                $output .= $marker;
+            }
+        }
+
+        for ($idx = 0; $idx < $char_count; $idx++) {
+            $output .= $chars[$idx];
+            if (isset($markers_by_position[$idx])) {
+                foreach ($markers_by_position[$idx] as $marker) {
+                    $output .= $marker;
+                }
+            }
+        }
+
+        return $output;
     }
 
     // =========================================================================

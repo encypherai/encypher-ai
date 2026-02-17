@@ -3,6 +3,16 @@ import { Config } from './config';
 
 const logger = pino({ name: 'encypher-client' });
 
+export interface EmbeddingPlanOperation {
+  insert_after_index: number;
+  marker: string;
+}
+
+export interface EmbeddingPlan {
+  index_unit?: string;
+  operations?: EmbeddingPlanOperation[];
+}
+
 export interface SignRequest {
   text: string;
   document_id: string;
@@ -16,6 +26,7 @@ export interface SignRequest {
     manifest_mode?: string;
     segmentation_level?: string;
     index_for_attribution?: boolean;
+    return_embedding_plan?: boolean;
     previous_instance_id?: string;
     license?: {
       type: string;
@@ -35,6 +46,7 @@ export interface SignResponse {
       total_segments?: number;
       total_sentences?: number;
       metadata?: Record<string, unknown>;
+      embedding_plan?: EmbeddingPlan;
     };
   };
   // Legacy flat format
@@ -44,6 +56,7 @@ export interface SignResponse {
   instance_id?: string;
   total_segments?: number;
   total_sentences?: number;
+  embedding_plan?: EmbeddingPlan;
 }
 
 export interface VerifyRequest {
@@ -152,6 +165,19 @@ export class EncypherClient {
     }
     if (response.embedded_content) {
       return response.embedded_content;
+    }
+    return null;
+  }
+
+  /**
+   * Extract embedding plan from response when requested.
+   */
+  static extractEmbeddingPlan(response: SignResponse): EmbeddingPlan | null {
+    if (response.data?.document?.embedding_plan) {
+      return response.data.document.embedding_plan;
+    }
+    if (response.embedding_plan) {
+      return response.embedding_plan;
     }
     return null;
   }

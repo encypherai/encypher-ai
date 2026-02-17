@@ -5,6 +5,7 @@ import { GhostClient, GhostPost } from './ghost-client';
 import { EncypherClient } from './encypher-client';
 import { MetadataStore } from './metadata-store';
 import {
+  applyEmbeddingPlan,
   extractText,
   embedSignedText,
   stripC2paEmbeddings,
@@ -155,6 +156,7 @@ export class Signer {
         manifest_mode: this.config.signing.manifestMode,
         segmentation_level: this.config.signing.segmentationLevel,
         index_for_attribution: true,
+        return_embedding_plan: true,
         ...(previousInstanceId ? { previous_instance_id: previousInstanceId } : {}),
       },
     };
@@ -167,8 +169,20 @@ export class Signer {
       return { success: false, documentId: '', instanceId: '', totalSegments: 0, actionType, error: `Signing API error: ${err}` };
     }
 
-    // 7. Extract signed text from response
-    const signedText = EncypherClient.extractSignedText(signResponse);
+    // 7. Prefer embedding-plan reconstruction; fall back to signed_text response.
+    let signedText: string | null = null;
+    const embeddingPlan = EncypherClient.extractEmbeddingPlan(signResponse);
+    if (embeddingPlan) {
+      signedText = applyEmbeddingPlan(extractedText, embeddingPlan);
+      if (!signedText) {
+        logger.warn({ postId }, 'Embedding plan reconstruction failed, falling back to signed_text');
+      }
+    }
+
+    if (!signedText) {
+      signedText = EncypherClient.extractSignedText(signResponse);
+    }
+
     if (!signedText) {
       logger.error({ postId }, 'No signed text in API response');
       return { success: false, documentId: '', instanceId: '', totalSegments: 0, actionType, error: 'No signed text in API response' };

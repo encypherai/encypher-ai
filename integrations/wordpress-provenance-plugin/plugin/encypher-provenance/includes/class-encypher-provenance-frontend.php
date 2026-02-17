@@ -404,8 +404,8 @@ class Frontend
                 html += '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">';
                 html += '<h3 style="margin: 0 0 10px 0; font-size: 14px; color: #333;"><?php esc_html_e('Verification Summary', 'encypher-provenance'); ?></h3>';
                 
-                // Show signer_name (preferred) or signer_id
-                const signerDisplay = data.signer_name || data.signer_id;
+                // Prefer signing identity when available, then signer name/id fallback
+                const signerDisplay = data.signing_identity || data.signer_name || data.signer_id;
                 if (signerDisplay) {
                     html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Signed by:', 'encypher-provenance'); ?></strong> ' + escapeHtml(signerDisplay) + '</p>';
                 }

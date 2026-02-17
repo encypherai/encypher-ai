@@ -21,12 +21,27 @@ def _unique_document_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 
-def _assert_status(response, expected_status: int, label: str) -> None:
+def _assert_status(response, expected_status: int | tuple[int, ...], label: str) -> None:
     """Assert HTTP status code with helpful error message."""
-    assert response.status_code == expected_status, (
-        f"{label} expected {expected_status}, got {response.status_code}. "
+    allowed = expected_status if isinstance(expected_status, tuple) else (expected_status,)
+    assert response.status_code in allowed, (
+        f"{label} expected one of {allowed}, got {response.status_code}. "
         f"Body: {response.text}. Headers: {dict(response.headers)}"
     )
+
+
+def _extract_document_payload(payload: dict) -> dict:
+    document_payload = payload.get("data", {}).get("document")
+    if isinstance(document_payload, dict):
+        return document_payload
+    return payload
+
+
+def _extract_signed_text(payload: dict) -> str:
+    document_payload = _extract_document_payload(payload)
+    signed_text = document_payload.get("signed_text") or document_payload.get("embedded_content")
+    assert isinstance(signed_text, str) and signed_text, f"Expected signed text in response payload, got: {payload}"
+    return signed_text
 
 
 def _assert_local_base_url(base_url: str) -> None:
@@ -52,25 +67,26 @@ async def test_local_zw_embedding_sign_and_verify(
 
     # Sign with zw_embedding mode
     sign_response = await local_client.post(
-        "/api/v1/sign/advanced",
+        "/api/v1/sign",
         headers=local_auth_headers,
         json={
             "document_id": document_id,
             "text": original_text,
-            "manifest_mode": "zw_embedding",
-            "segmentation_level": "sentence",
+            "options": {
+                "manifest_mode": "zw_embedding",
+                "segmentation_level": "sentence",
+            },
         },
     )
 
-    _assert_status(sign_response, 201, "POST /api/v1/sign/advanced (zw_embedding)")
+    _assert_status(sign_response, (200, 201), "POST /api/v1/sign (zw_embedding)")
     sign_payload = sign_response.json()
+    sign_document = _extract_document_payload(sign_payload)
     
     assert sign_payload["success"] is True, f"Sign failed: {sign_payload}"
-    assert sign_payload["document_id"] == document_id
+    assert sign_document.get("document_id") == document_id
     
-    embedded_content = sign_payload.get("embedded_content")
-    assert embedded_content is not None, "Response should contain embedded_content"
-    assert isinstance(embedded_content, str)
+    embedded_content = _extract_signed_text(sign_payload)
 
     # Verify ZW signatures are present (detected via contiguous sequence detection)
     found_signatures = find_all_minimal_signed_uuids(embedded_content)
@@ -134,21 +150,22 @@ async def test_local_zw_embedding_signature_size(
     original_text = "Single sentence for size test."
 
     sign_response = await local_client.post(
-        "/api/v1/sign/advanced",
+        "/api/v1/sign",
         headers=local_auth_headers,
         json={
             "document_id": document_id,
             "text": original_text,
-            "manifest_mode": "zw_embedding",
-            "segmentation_level": "sentence",
+            "options": {
+                "manifest_mode": "zw_embedding",
+                "segmentation_level": "sentence",
+            },
         },
     )
 
-    _assert_status(sign_response, 201, "POST /api/v1/sign/advanced (zw_embedding)")
+    _assert_status(sign_response, (200, 201), "POST /api/v1/sign (zw_embedding)")
     sign_payload = sign_response.json()
-    
-    embedded_content = sign_payload.get("embedded_content")
-    assert embedded_content is not None
+
+    embedded_content = _extract_signed_text(sign_payload)
 
     # Calculate overhead
     overhead = len(embedded_content) - len(original_text)
@@ -180,21 +197,22 @@ async def test_local_zw_embedding_multiple_sentences(
     original_text = " ".join(sentences)
 
     sign_response = await local_client.post(
-        "/api/v1/sign/advanced",
+        "/api/v1/sign",
         headers=local_auth_headers,
         json={
             "document_id": document_id,
             "text": original_text,
-            "manifest_mode": "zw_embedding",
-            "segmentation_level": "sentence",
+            "options": {
+                "manifest_mode": "zw_embedding",
+                "segmentation_level": "sentence",
+            },
         },
     )
 
-    _assert_status(sign_response, 201, "POST /api/v1/sign/advanced (zw_embedding)")
+    _assert_status(sign_response, (200, 201), "POST /api/v1/sign (zw_embedding)")
     sign_payload = sign_response.json()
-    
-    embedded_content = sign_payload.get("embedded_content")
-    assert embedded_content is not None
+
+    embedded_content = _extract_signed_text(sign_payload)
 
     # Count signatures (via contiguous sequence detection)
     found_signatures = find_all_minimal_signed_uuids(embedded_content)
@@ -229,21 +247,22 @@ async def test_local_zw_embedding_word_compatibility_characters(
     original_text = "Test sentence for Word compatibility check."
 
     sign_response = await local_client.post(
-        "/api/v1/sign/advanced",
+        "/api/v1/sign",
         headers=local_auth_headers,
         json={
             "document_id": document_id,
             "text": original_text,
-            "manifest_mode": "zw_embedding",
-            "segmentation_level": "sentence",
+            "options": {
+                "manifest_mode": "zw_embedding",
+                "segmentation_level": "sentence",
+            },
         },
     )
 
-    _assert_status(sign_response, 201, "POST /api/v1/sign/advanced (zw_embedding)")
+    _assert_status(sign_response, (200, 201), "POST /api/v1/sign (zw_embedding)")
     sign_payload = sign_response.json()
-    
-    embedded_content = sign_payload.get("embedded_content")
-    assert embedded_content is not None
+
+    embedded_content = _extract_signed_text(sign_payload)
 
     # Extract only the ZW signature characters
     zw_chars = []
@@ -282,26 +301,29 @@ async def test_local_zw_embedding_metadata_response(
     original_text = "Test sentence for metadata validation."
 
     sign_response = await local_client.post(
-        "/api/v1/sign/advanced",
+        "/api/v1/sign",
         headers=local_auth_headers,
         json={
             "document_id": document_id,
             "text": original_text,
-            "manifest_mode": "zw_embedding",
-            "segmentation_level": "sentence",
+            "options": {
+                "manifest_mode": "zw_embedding",
+                "segmentation_level": "sentence",
+            },
         },
     )
 
-    _assert_status(sign_response, 201, "POST /api/v1/sign/advanced (zw_embedding)")
+    _assert_status(sign_response, (200, 201), "POST /api/v1/sign (zw_embedding)")
     sign_payload = sign_response.json()
     
     # Check for zw_embedding indicators in response
-    metadata = sign_payload.get("metadata", {})
+    sign_document = _extract_document_payload(sign_payload)
+    metadata = sign_document.get("metadata", {})
     
     # Should indicate zw_embedding mode somewhere
     manifest_mode = (
         metadata.get("manifest_mode") or 
-        sign_payload.get("manifest_mode")
+        sign_document.get("manifest_mode")
     )
     
     if manifest_mode:
@@ -313,8 +335,6 @@ async def test_local_zw_embedding_metadata_response(
         print("⚠ Warning: manifest_mode not found in response metadata")
 
     # Verify embedded_content exists
-    assert sign_payload.get("embedded_content") is not None, (
-        "Response should contain embedded_content field"
-    )
+    assert _extract_signed_text(sign_payload), "Response should contain signed text"
     
     print("✓ Response structure validated")

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   extractText,
   extractFragments,
+  applyEmbeddingPlan,
   embedSignedText,
   extractTextForVerify,
   isVsChar,
@@ -286,6 +287,50 @@ describe('html-utils', () => {
 
     it('handles empty string', () => {
       expect(splitChars('')).toEqual([]);
+    });
+  });
+
+  describe('applyEmbeddingPlan', () => {
+    it('applies marker insertions using codepoint indices', () => {
+      const markerA = '\uFE00';
+      const markerB = '\uFE01';
+      const result = applyEmbeddingPlan('Hello', {
+        index_unit: 'codepoint',
+        operations: [
+          { insert_after_index: 0, marker: markerA },
+          { insert_after_index: 4, marker: markerB },
+        ],
+      });
+
+      expect(result).toBe(`H${markerA}ello${markerB}`);
+    });
+
+    it('supports insertion before first visible character with index -1', () => {
+      const marker = '\uFE00';
+      const result = applyEmbeddingPlan('abc', {
+        index_unit: 'codepoint',
+        operations: [{ insert_after_index: -1, marker }],
+      });
+
+      expect(result).toBe(`${marker}abc`);
+    });
+
+    it('returns null when operation index is out of bounds', () => {
+      const result = applyEmbeddingPlan('abc', {
+        index_unit: 'codepoint',
+        operations: [{ insert_after_index: 3, marker: '\uFE00' }],
+      });
+
+      expect(result).toBeNull();
+    });
+
+    it('returns null for unsupported index units', () => {
+      const result = applyEmbeddingPlan('abc', {
+        index_unit: 'byte',
+        operations: [{ insert_after_index: 0, marker: '\uFE00' }],
+      });
+
+      expect(result).toBeNull();
     });
   });
 

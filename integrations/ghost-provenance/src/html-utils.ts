@@ -100,6 +100,49 @@ export function splitChars(str: string): string[] {
   return [...str];
 }
 
+export interface EmbeddingPlanOperation {
+  insert_after_index: number;
+  marker: string;
+}
+
+export interface EmbeddingPlan {
+  index_unit?: string;
+  operations?: EmbeddingPlanOperation[];
+}
+
+/**
+ * Apply index-based embedding operations to visible text.
+ *
+ * Returns null when the plan is invalid (unsupported index_unit,
+ * malformed operation, or out-of-range insertion index).
+ */
+export function applyEmbeddingPlan(visibleText: string, plan: EmbeddingPlan | null | undefined): string | null {
+  if (!plan) return null;
+  if (plan.index_unit && plan.index_unit !== 'codepoint') return null;
+
+  const operations = plan.operations || [];
+  const chars = splitChars(visibleText || '');
+
+  // Apply from right-to-left so insert indices remain stable.
+  const sorted = [...operations].sort((a, b) => b.insert_after_index - a.insert_after_index);
+  for (const op of sorted) {
+    if (!op || typeof op.insert_after_index !== 'number' || !Number.isInteger(op.insert_after_index)) {
+      return null;
+    }
+    if (typeof op.marker !== 'string' || op.marker.length === 0) {
+      return null;
+    }
+    if (op.insert_after_index < -1 || op.insert_after_index >= chars.length) {
+      return null;
+    }
+
+    const insertAt = op.insert_after_index + 1;
+    chars.splice(insertAt, 0, op.marker);
+  }
+
+  return chars.join('');
+}
+
 /**
  * Strip all C2PA embeddings (VS chars and ZWNBSP) from content.
  */

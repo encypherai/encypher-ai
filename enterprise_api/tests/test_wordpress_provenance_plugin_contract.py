@@ -68,8 +68,64 @@ def test_plugin_uses_supported_sign_and_verify_endpoints() -> None:
     # /sign/advanced is deprecated (returns 410), plugin should use /sign with options
     # assert "'/sign/advanced'" in src  # Deprecated
     assert "'/verify'" in src
-    # /verify/advanced may or may not be present depending on plugin version
-    # assert "'/verify/advanced'" in src
+    # /verify/advanced causes strict hard-binding behavior for mutated visible text;
+    # plugin verification should use the public /verify endpoint.
+    assert "'/verify/advanced'" not in src
+
+
+def test_plugin_requests_embedding_plan_and_has_plan_application_path() -> None:
+    repo_root = _repo_root()
+    rest_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-rest.php"
+    )
+    src = rest_php.read_text(encoding="utf-8")
+
+    assert "'return_embedding_plan' => true" in src
+    assert "resolve_signed_text_with_embedding_plan" in src
+
+
+def test_verify_text_extraction_preserves_inline_boundaries_without_forced_spaces() -> None:
+    repo_root = _repo_root()
+    parser_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-html-parser.php"
+    )
+    src = parser_php.read_text(encoding="utf-8")
+
+    assert "function extract_text_for_verify" in src
+    # Guard against reintroducing unconditional inter-fragment spaces.
+    assert "return implode(' ', $parts);" not in src
+    # Gap handling should be explicit and aware of block-vs-inline boundaries.
+    assert "gap_requires_space" in src
+
+
+def test_verify_response_prefers_signing_identity_and_full_manifest_payload() -> None:
+    repo_root = _repo_root()
+    rest_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-rest.php"
+    )
+    src = rest_php.read_text(encoding="utf-8")
+
+    assert "resolve_signing_identity" in src
+    assert "build_manifest_payload_for_display" in src
+    assert "$normalized['signer_name'] = $normalized['signing_identity'] ?: $this->resolve_signer_display($verdict);" in src
 
 
 def test_wordpress_plugin_docs_do_not_reference_legacy_embeddings_endpoints() -> None:
@@ -103,7 +159,7 @@ def test_tools_router_does_not_generate_ephemeral_demo_keys() -> None:
     assert "Generated ephemeral demo keys" not in src
 
 
-def test_plugin_accepts_canonical_tier_ids() -> None:
+def test_plugin_accepts_current_canonical_tier_ids() -> None:
     repo_root = _repo_root()
     admin_php = (
         repo_root
@@ -116,11 +172,11 @@ def test_plugin_accepts_canonical_tier_ids() -> None:
     )
     src = admin_php.read_text(encoding="utf-8")
 
-    # Canonical tier ids are: starter, professional, business, enterprise
-    assert "starter" in src
-    assert "professional" in src
-    assert "business" in src
+    # Canonical tier ids are: free, enterprise, strategic_partner.
+    # Legacy names are normalized server-side before reaching plugin settings.
+    assert "free" in src
     assert "enterprise" in src
+    assert "strategic_partner" in src
 
 
 def test_public_verify_requires_published_post() -> None:
