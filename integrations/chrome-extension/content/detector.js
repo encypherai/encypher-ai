@@ -618,6 +618,7 @@ function _positionFloatingBadge(badge, anchor) {
  */
 function _closeDetailPanels() {
   document.querySelectorAll('.encypher-detail-panel').forEach(p => p.remove());
+  document.querySelectorAll('.encypher-badge--panel-open').forEach(b => b.classList.remove('encypher-badge--panel-open'));
 }
 
 /**
@@ -626,7 +627,10 @@ function _closeDetailPanels() {
 function _showDetailPanel(badge, details) {
   // Close any existing panels first
   _closeDetailPanels();
-  
+
+  // Suppress hover tooltip while panel is open
+  badge.classList.add('encypher-badge--panel-open');
+
   const panel = document.createElement('div');
   panel.className = 'encypher-detail-panel';
   
@@ -766,12 +770,14 @@ function _showDetailPanel(badge, details) {
   panel.querySelector('.encypher-detail-panel__close').addEventListener('click', (e) => {
     e.stopPropagation();
     panel.remove();
+    badge.classList.remove('encypher-badge--panel-open');
   });
   
   // Close on outside click
   const closeOnOutsideClick = (e) => {
     if (!panel.contains(e.target) && !badge.contains(e.target)) {
       panel.remove();
+      badge.classList.remove('encypher-badge--panel-open');
       document.removeEventListener('click', closeOnOutsideClick, true);
     }
   };

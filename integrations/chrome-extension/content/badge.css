@@ -151,6 +151,13 @@
   visibility: visible;
 }
 
+/* Hide hover tooltip when the click detail panel is open */
+.encypher-badge--panel-open .encypher-badge__tooltip {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 .encypher-badge__tooltip-card {
   width: 270px;
   background: rgba(27, 47, 80, 0.95);

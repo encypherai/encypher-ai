@@ -54,7 +54,6 @@ const signingIdentityHintEl = document.getElementById('signing-identity-hint');
 const tierBadgeEl = document.getElementById('tier-badge');
 const toggleAdvancedBtn = document.getElementById('toggle-advanced');
 const advancedPanelEl = document.getElementById('advanced-panel');
-const signInvisibleEl = document.getElementById('sign-invisible');
 const signDocTypeEl = document.getElementById('sign-doc-type');
 const signMerkleEl = document.getElementById('sign-merkle');
 const signAttributionEl = document.getElementById('sign-attribution');
@@ -89,7 +88,6 @@ let debugAutoRefreshInterval = null;
 const tabs = document.querySelectorAll('.popup__tab');
 
 const DEFAULT_SIGN_SETTINGS = {
-  defaultInvisible: true,
   defaultDocType: 'article',
   defaultEmbeddingTechnique: 'micro',
   defaultSegmentationLevel: 'sentence',
@@ -135,7 +133,6 @@ function enforceSignMethodByTier(info) {
 async function loadSignDefaults() {
   try {
     const settings = await chrome.storage.sync.get(DEFAULT_SIGN_SETTINGS);
-    if (signInvisibleEl) signInvisibleEl.checked = settings.defaultInvisible !== false;
     if (signDocTypeEl) signDocTypeEl.value = settings.defaultDocType || 'article';
     if (signEmbeddingTechniqueEl) {
       signEmbeddingTechniqueEl.value = normalizeEmbeddingTechnique(settings.defaultEmbeddingTechnique || 'micro');
@@ -645,7 +642,6 @@ async function signContent() {
   }
 
   // Gather options
-  const useInvisible = signInvisibleEl?.checked ?? true;
   const docType = signDocTypeEl?.value || 'article';
   const manifestMode = signEmbeddingTechniqueEl?.value || 'micro';
   const segmentationLevel = signSegmentationLevelEl?.value || 'sentence';
@@ -664,7 +660,6 @@ async function signContent() {
       options: {
         manifestMode,
         segmentationLevel,
-        useInvisible,
         documentType: docType,
         useMerkle,
         useAttribution

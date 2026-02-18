@@ -19,7 +19,6 @@ const clearCacheBtn = document.getElementById('clearCache');
 const resetSettingsBtn = document.getElementById('resetSettings');
 
 // Signing settings
-const defaultInvisibleCheckbox = document.getElementById('defaultInvisible');
 const autoReplaceContentCheckbox = document.getElementById('autoReplaceContent');
 const defaultDocTypeSelect = document.getElementById('defaultDocType');
 const defaultEmbeddingTechniqueSelect = document.getElementById('defaultEmbeddingTechnique');
@@ -40,7 +39,6 @@ const DEFAULT_SETTINGS = {
   customApiUrl: '',
   cacheTtl: 5,
   // Signing defaults
-  defaultInvisible: true,
   autoReplaceContent: true,
   defaultDocType: 'article',
   defaultEmbeddingTechnique: 'micro',
@@ -88,7 +86,6 @@ async function loadSettings() {
     cacheTtlInput.value = result.cacheTtl;
     
     // Signing settings
-    if (defaultInvisibleCheckbox) defaultInvisibleCheckbox.checked = result.defaultInvisible;
     if (autoReplaceContentCheckbox) autoReplaceContentCheckbox.checked = result.autoReplaceContent;
     if (defaultDocTypeSelect) defaultDocTypeSelect.value = result.defaultDocType;
     if (defaultEmbeddingTechniqueSelect) {
@@ -350,14 +347,6 @@ clearCacheBtn.addEventListener('click', async () => {
 });
 
 // Signing settings event listeners
-defaultInvisibleCheckbox?.addEventListener('change', async () => {
-  await saveSetting('defaultInvisible', defaultInvisibleCheckbox.checked);
-  chrome.runtime.sendMessage({ 
-    type: 'SETTINGS_UPDATED', 
-    setting: 'defaultInvisible', 
-    value: defaultInvisibleCheckbox.checked 
-  });
-});
 
 autoReplaceContentCheckbox?.addEventListener('change', async () => {
   await saveSetting('autoReplaceContent', autoReplaceContentCheckbox.checked);
