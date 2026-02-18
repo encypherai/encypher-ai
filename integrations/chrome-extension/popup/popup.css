@@ -484,34 +484,37 @@ body {
 /* Tabs — inside dark header */
 .popup__tabs {
   display: flex;
-  gap: 0;
+  gap: 6px;
+  padding: 0 4px 10px;
 }
 
 .popup__tab {
   flex: 1;
-  padding: 9px 0;
+  padding: 7px 0;
   border: none;
-  background: transparent;
-  color: rgba(255,255,255,0.55);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.72);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   transition: all 0.15s;
 }
 
 .popup__tab:hover {
-  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.95);
 }
 
 .popup__tab--active {
-  color: #FFFFFF;
-  border-bottom-color: #FFFFFF;
+  background: #FFFFFF;
+  color: #1B2F50;
   font-weight: 600;
 }
 
 .popup__tab--active:hover {
-  color: #FFFFFF;
+  background: #FFFFFF;
+  color: #1B2F50;
 }
 
 .popup__tab-content {
