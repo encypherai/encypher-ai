@@ -262,12 +262,12 @@ body {
   color: #9CA3AF;
 }
 
-.options__footer a {
+.options__footer a:not(.options__support-btn) {
   color: #6B7280;
   text-decoration: none;
 }
 
-.options__footer a:hover {
+.options__footer a:not(.options__support-btn):hover {
   text-decoration: underline;
 }
 
