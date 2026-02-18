@@ -109,6 +109,7 @@ function ExtensionHandoffContent() {
   const [error, setError] = useState('');
   const [successIdentity, setSuccessIdentity] = useState('');
   const [generatedKey, setGeneratedKey] = useState('');
+  const [countdown, setCountdown] = useState<number | null>(null);
   const autoRunRef = useRef(false);
 
   const loginHref = useMemo(() => {
@@ -163,6 +164,7 @@ function ExtensionHandoffContent() {
 
       setSuccessIdentity(handoffResult.identity || 'your organization');
       toast.success('Extension connected successfully. You can start signing immediately.');
+      setCountdown(5);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Extension handoff failed.';
       setError(message);
@@ -179,6 +181,16 @@ function ExtensionHandoffContent() {
     autoRunRef.current = true;
     handleCreateAndConnect();
   }, [accessToken, extensionId, handleCreateAndConnect, orgLoading, status]);
+
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown === 0) {
+      window.close();
+      return;
+    }
+    const timer = setTimeout(() => setCountdown((c) => (c !== null ? c - 1 : null)), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   if (status === 'loading') {
     return (
@@ -225,8 +237,13 @@ function ExtensionHandoffContent() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {successIdentity ? (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-              Connected. Your extension is ready to sign as {successIdentity}.
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800 flex items-center justify-between gap-4">
+              <span>Connected. Your extension is ready to sign as {successIdentity}.</span>
+              {countdown !== null && (
+                <span className="text-sm font-medium tabular-nums whitespace-nowrap">
+                  Closing in {countdown}s
+                </span>
+              )}
             </div>
           ) : (
             <Button variant="primary" disabled={loading} onClick={handleCreateAndConnect}>
@@ -254,7 +271,7 @@ function ExtensionHandoffContent() {
 
           {successIdentity && (
             <p className="text-sm text-muted-foreground">
-              Return to your browser tab and open the extension popup. You can start signing immediately.
+              This tab will close automatically. Open the extension popup to start signing immediately.
             </p>
           )}
         </CardContent>
