@@ -29,8 +29,15 @@ const LOGO_COLOR_PNG_B64 = fs.readFileSync(path.join(MARKETING_PUBLIC, 'assets',
 const LOGO_WHITE_PNG_B64 = fs.readFileSync(path.join(MARKETING_PUBLIC, 'encypher_full_logo_white.png')).toString('base64');
 const CHECK_WHITE_SVG = fs.readFileSync(path.join(MARKETING_PUBLIC, 'encypher_check_white.svg'), 'utf-8');
 
+// Load actual extension badge icons
+const ICONS_DIR = path.join(__dirname, '..', 'icons');
+const CHECK_COLOR_SVG_B64 = fs.readFileSync(path.join(ICONS_DIR, 'encypher_check_color.svg')).toString('base64');
+const CHECK_MONO_SVG_B64 = fs.readFileSync(path.join(ICONS_DIR, 'encypher_check.svg')).toString('base64');
+
 const LOGO_COLOR_PNG_URI = `data:image/png;base64,${LOGO_COLOR_PNG_B64}`;
 const LOGO_WHITE_PNG_URI = `data:image/png;base64,${LOGO_WHITE_PNG_B64}`;
+const CHECK_COLOR_SVG_URI = `data:image/svg+xml;base64,${CHECK_COLOR_SVG_B64}`;
+const CHECK_MONO_SVG_URI = `data:image/svg+xml;base64,${CHECK_MONO_SVG_B64}`;
 
 // Clean SVGs for inline embedding (strip XML declaration and Inkscape metadata)
 function cleanSvg(raw) {
@@ -199,55 +206,93 @@ h1 {
   margin-top: 4px;
   color: ${DEEP_NAVY};
 }
-/* Verification badge */
+/* Verification badge — uses actual Encypher brand icon */
 .encypher-badge-inline {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: linear-gradient(135deg, ${LIGHT_SKY}, ${AZURE_BLUE});
-  box-shadow: 0 1px 4px rgba(27,47,80,0.2);
+  background: white;
+  box-shadow: 0 1px 6px rgba(27,47,80,0.25), 0 0 0 1.5px rgba(42,135,196,0.3);
   vertical-align: middle;
-  margin-left: 6px;
+  margin-left: 5px;
   cursor: pointer;
   position: relative;
   overflow: visible;
   z-index: 50;
 }
-.encypher-badge-inline svg {
-  width: 13px; height: 13px; color: white;
+.encypher-badge-inline img {
+  width: 20px; height: 20px;
 }
-/* Standalone tooltip — fixed position, not nested in inline elements */
-.floating-tooltip {
+/* On-click verification panel */
+.verification-panel {
   position: fixed;
-  background: ${DEEP_NAVY};
-  color: white;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-family: 'Roboto', sans-serif;
-  font-size: 12px;
-  white-space: nowrap;
-  box-shadow: 0 4px 16px rgba(27,47,80,0.3);
+  top: 180px;
+  right: 80px;
+  width: 280px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(27,47,80,0.22), 0 2px 8px rgba(27,47,80,0.1);
   z-index: 9999;
+  overflow: hidden;
+  font-family: 'Roboto', sans-serif;
 }
-.floating-tooltip::after {
-  content: '';
+.vp-header {
+  background: linear-gradient(135deg, ${DEEP_NAVY}, #243d66);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.vp-header img { height: 18px; width: auto; }
+.vp-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.vp-status-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(42,135,196,0.1);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.vp-status-icon img { width: 26px; height: 26px; }
+.vp-status-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: ${AZURE_BLUE};
+}
+.vp-status-sub {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 1px;
+}
+.vp-rows { padding: 10px 16px 14px; }
+.vp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 6px 0;
+  font-size: 12px;
+  border-bottom: 1px solid #f9fafb;
+}
+.vp-row:last-child { border-bottom: none; }
+.vp-row-key { color: #9ca3af; font-weight: 500; }
+.vp-row-val { color: ${DEEP_NAVY}; font-weight: 500; text-align: right; max-width: 160px; }
+.vp-row-val a { color: ${AZURE_BLUE}; text-decoration: none; }
+.vp-arrow {
   position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: ${DEEP_NAVY};
-}
-.floating-tooltip .tt-status {
-  color: ${CYBER_TEAL};
-  font-weight: 700;
-  margin-bottom: 2px;
-}
-.floating-tooltip .tt-signer {
-  color: ${LIGHT_SKY};
+  top: -8px;
+  right: 40px;
+  width: 0; height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid ${DEEP_NAVY};
 }
 </style></head><body>
 <div class="chrome-bar">
@@ -279,9 +324,44 @@ h1 {
     <span>February 13, 2026</span>
   </div>
   <div class="article-body">
-    <p>In an era where AI-generated content is becoming indistinguishable from human writing, the need for verifiable content provenance has never been more urgent. The Coalition for Content Provenance and Authenticity (C2PA) standard, backed by Adobe, Microsoft, and the BBC, offers a cryptographic solution that is rapidly gaining adoption across newsrooms and publishing platforms worldwide.<span class="encypher-badge-inline" id="badge1"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></p>
-    <p>Publishers who adopt C2PA signing give their readers a simple visual signal: a verification badge that confirms the content was authored by the claimed source and has not been tampered with since publication. This is not just about combating misinformation &mdash; it is about building a foundation of trust in the digital information ecosystem.<span class="encypher-badge-inline"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span></p>
-    <p>Early adopters report that readers engage more deeply with verified content, spending an average of 23% more time on articles that display provenance badges. The technology works silently in the background, embedding cryptographic signatures using Unicode variation selectors that are invisible to the naked eye.</p>
+    <p>In an era where AI-generated content is becoming indistinguishable from human writing, the need for verifiable content provenance has never been more urgent. The Coalition for Content Provenance and Authenticity (C2PA) standard, backed by Adobe, Microsoft, and the BBC, offers a cryptographic solution that is rapidly gaining adoption across newsrooms and publishing platforms worldwide.<span class="encypher-badge-inline" id="badge1"><img src="${CHECK_COLOR_SVG_URI}" /></span></p>
+    <p>Publishers who adopt C2PA signing give their readers a simple visual signal: a verification badge that confirms the content was authored by the claimed source and has not been tampered with since publication. This is not just about combating misinformation &mdash; it is about building a foundation of trust in the digital information ecosystem.<span class="encypher-badge-inline"><img src="${CHECK_COLOR_SVG_URI}" /></span></p>
+    <p>Early adopters report that readers engage more deeply with verified content, spending an average of 23% more time on articles that display provenance badges. The technology works silently in the background, embedding cryptographic signatures using Unicode variation selectors that are invisible to the naked eye.<span class="encypher-badge-inline"><img src="${CHECK_COLOR_SVG_URI}" /></span></p>
+  </div>
+</div>
+
+<!-- On-click verification panel — shown as if user clicked badge1 -->
+<div class="verification-panel">
+  <div class="vp-arrow"></div>
+  <div class="vp-header">
+    <img src="${LOGO_WHITE_PNG_URI}" />
+  </div>
+  <div class="vp-status-row">
+    <div class="vp-status-icon">
+      <img src="${CHECK_COLOR_SVG_URI}" />
+    </div>
+    <div>
+      <div class="vp-status-label">Verified</div>
+      <div class="vp-status-sub">Content authenticity confirmed</div>
+    </div>
+  </div>
+  <div class="vp-rows">
+    <div class="vp-row">
+      <span class="vp-row-key">Signing Identity</span>
+      <span class="vp-row-val">The Encypher Times</span>
+    </div>
+    <div class="vp-row">
+      <span class="vp-row-key">Signed</span>
+      <span class="vp-row-val">Feb 13, 2026</span>
+    </div>
+    <div class="vp-row">
+      <span class="vp-row-key">Format</span>
+      <span class="vp-row-val">C2PA Text Manifest</span>
+    </div>
+    <div class="vp-row">
+      <span class="vp-row-key">Verify URL</span>
+      <span class="vp-row-val"><a href="#">View certificate ↗</a></span>
+    </div>
   </div>
 </div>
 </body></html>`;
@@ -479,7 +559,7 @@ body {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div>
-        <div class="popup-detail-signer">Reuters News Agency</div>
+        <div class="popup-detail-signer">Meridian Press</div>
         <div class="popup-detail-date">Feb 12, 2026 &bull; Encypher Format</div>
       </div>
     </div>
@@ -488,7 +568,7 @@ body {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div>
-        <div class="popup-detail-signer">Associated Press</div>
+        <div class="popup-detail-signer">Vantage Newswire</div>
         <div class="popup-detail-date">Feb 11, 2026 &bull; C2PA Text Manifest</div>
       </div>
     </div>
@@ -733,7 +813,7 @@ body::before {
 }
 </style></head><body>
 <div class="content">
-  <div class="logo-icon"><img src="${LOGO_WHITE_PNG_URI}" style="height:48px;width:auto;" /></div>
+  <div style="margin-bottom:20px;"><img src="${LOGO_WHITE_PNG_URI}" style="height:52px;width:auto;display:block;margin:0 auto;" /></div>
   <div class="title">Encypher Verify</div>
   <div class="subtitle">Verify and sign Encypher and C2PA-compatible content on any webpage</div>
   <div class="badge-row">
