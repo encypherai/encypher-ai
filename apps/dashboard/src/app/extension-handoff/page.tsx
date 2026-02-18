@@ -100,7 +100,7 @@ function sendHandoffToExtension(extensionId: string, apiKey: string): Promise<Ru
 function ExtensionHandoffContent() {
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
-  const { activeOrganization } = useOrganization();
+  const { activeOrganization, isLoading: orgLoading } = useOrganization();
   const accessToken = (session?.user as { accessToken?: string } | undefined)?.accessToken;
   const extensionId = searchParams.get('extensionId') || '';
   const source = searchParams.get('source') || '';
@@ -173,10 +173,12 @@ function ExtensionHandoffContent() {
 
   useEffect(() => {
     if (autoRunRef.current) return;
-    if (!accessToken || !extensionId || status !== 'authenticated') return;
+    // Wait for org context to finish loading so activeOrganization?.id is available.
+    // Without this guard, key creation races the org fetch and sends no organization_id.
+    if (!accessToken || !extensionId || status !== 'authenticated' || orgLoading) return;
     autoRunRef.current = true;
     handleCreateAndConnect();
-  }, [accessToken, extensionId, handleCreateAndConnect, status]);
+  }, [accessToken, extensionId, handleCreateAndConnect, orgLoading, status]);
 
   if (status === 'loading') {
     return (
