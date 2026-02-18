@@ -98,14 +98,15 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
 function buildDashboardAuthUrl(mode = 'login', provider = '') {
   const authPath = mode === 'signup' ? '/signup' : '/login';
   const dashboardBase = API_CONFIG.dashboardBaseUrl || deriveDashboardBaseUrl(API_CONFIG.baseUrl);
-  const callbackUrl = new URL(`${dashboardBase}/extension-handoff`);
-  callbackUrl.searchParams.set('source', 'chrome_extension');
-  callbackUrl.searchParams.set('extensionId', chrome.runtime.id);
+
+  // callbackUrl must be a relative path — the login page sanitizer rejects absolute URLs
+  const callbackParams = new URLSearchParams({ source: 'chrome_extension', extensionId: chrome.runtime.id });
+  const callbackUrl = `/extension-handoff?${callbackParams.toString()}`;
 
   const url = new URL(`${dashboardBase}${authPath}`);
   url.searchParams.set('source', 'chrome_extension');
   url.searchParams.set('extensionId', chrome.runtime.id);
-  url.searchParams.set('callbackUrl', callbackUrl.toString());
+  url.searchParams.set('callbackUrl', callbackUrl);
   if (provider) {
     url.searchParams.set('provider', provider);
   }

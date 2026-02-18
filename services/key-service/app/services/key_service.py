@@ -54,7 +54,9 @@ class KeyService:
             scope_filter = ApiKey.organization_id == organization_id
         else:
             tier = "free"
-            scope_filter = ApiKey.user_id == user_id
+            # Only count user-scoped keys (no org) — org-scoped keys are counted separately
+            # against org limits and should not cross-count toward the user-scoped quota.
+            scope_filter = (ApiKey.user_id == user_id) & (ApiKey.organization_id.is_(None))
 
         max_keys = _tier_api_key_limit(tier)
         if max_keys < 0:

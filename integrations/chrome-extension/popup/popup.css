@@ -484,6 +484,20 @@ body {
   width: 100%;
 }
 
+.popup__btn--with-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.popup__btn-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  filter: brightness(0) invert(1);
+}
+
 /* Tabs */
 .popup__tabs {
   display: flex;

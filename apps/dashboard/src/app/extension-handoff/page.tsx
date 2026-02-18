@@ -7,6 +7,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
+import { useOrganization } from '../../contexts/OrganizationContext';
 
 type RuntimeSendResponse = {
   success?: boolean;
@@ -99,6 +100,7 @@ function sendHandoffToExtension(extensionId: string, apiKey: string): Promise<Ru
 function ExtensionHandoffContent() {
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
+  const { activeOrganization } = useOrganization();
   const accessToken = (session?.user as { accessToken?: string } | undefined)?.accessToken;
   const extensionId = searchParams.get('extensionId') || '';
   const source = searchParams.get('source') || '';
@@ -136,7 +138,8 @@ function ExtensionHandoffContent() {
       const response = await apiClient.createApiKey(
         accessToken,
         'Encypher Verify Extension Key',
-        ['sign', 'verify', 'read']
+        ['sign', 'verify', 'read'],
+        activeOrganization?.id ?? null
       );
       const fullKey = extractFullKey(response);
       if (!fullKey) {
@@ -166,7 +169,7 @@ function ExtensionHandoffContent() {
     } finally {
       setLoading(false);
     }
-  }, [accessToken, extensionId]);
+  }, [accessToken, activeOrganization?.id, extensionId]);
 
   useEffect(() => {
     if (autoRunRef.current) return;
