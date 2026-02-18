@@ -25,13 +25,13 @@ body {
 
 /* Header */
 .popup__header {
-  padding: 18px 16px 0;
+  padding: 14px 16px 0;
   background: linear-gradient(135deg, #1B2F50 0%, #243d66 100%);
 }
 
 .popup__logo-icon {
   flex-shrink: 0;
-  height: 24px;
+  height: 22px;
   width: auto;
 }
 
@@ -39,13 +39,17 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-bottom: 12px;
 }
 
 .popup__title {
   font-weight: 700;
-  font-size: 16px;
-  color: #FFFFFF;
-  letter-spacing: 0.3px;
+  font-size: 15px;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.5px;
+  border-left: 1px solid rgba(255,255,255,0.3);
+  padding-left: 10px;
+  line-height: 1;
 }
 
 /* Content */
@@ -477,41 +481,37 @@ body {
   filter: brightness(0) invert(1);
 }
 
-/* Tabs — sit on white bar below the dark header */
+/* Tabs — inside dark header */
 .popup__tabs {
   display: flex;
-  background: #FFFFFF;
-  border-bottom: 1px solid #E5E7EB;
-  margin-top: 0;
   gap: 0;
 }
 
 .popup__tab {
   flex: 1;
-  padding: 10px 0;
+  padding: 9px 0;
   border: none;
   background: transparent;
-  color: #9CA3AF;
+  color: rgba(255,255,255,0.55);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-  margin-bottom: -1px;
+  transition: all 0.15s;
 }
 
 .popup__tab:hover {
-  color: #2A87C4;
+  color: rgba(255,255,255,0.85);
 }
 
 .popup__tab--active {
-  color: #2A87C4;
-  border-bottom-color: #2A87C4;
+  color: #FFFFFF;
+  border-bottom-color: #FFFFFF;
   font-weight: 600;
 }
 
 .popup__tab--active:hover {
-  color: #2A87C4;
+  color: #FFFFFF;
 }
 
 .popup__tab-content {
