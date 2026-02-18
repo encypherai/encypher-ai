@@ -297,7 +297,7 @@ async function loadTabState() {
     }
     currentTabId = tab.id;
 
-    // Hide "Set up free signing" CTA when the user already has an API key
+    // Show "Set up free signing" CTA only when the user has no API key
     if (verifySignCtaEl) {
       const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
       verifySignCtaEl.closest('.popup__verify-cta').hidden = Boolean(apiKey);
