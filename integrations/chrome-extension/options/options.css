@@ -274,3 +274,21 @@ body {
 .options__footer p {
   margin-bottom: 4px;
 }
+
+.options__support-btn {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 20px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #2A87C4 0%, #1B2F50 100%);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.options__support-btn:hover {
+  background: linear-gradient(135deg, #1B2F50 0%, #2A87C4 100%);
+  text-decoration: none;
+  color: #FFFFFF;
+}
