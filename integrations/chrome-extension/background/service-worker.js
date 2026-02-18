@@ -150,6 +150,68 @@ let _accountInfoCache = {
   expiresAt: 0,
 };
 
+function normalizeDomain(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '';
+  return raw.replace(/^www\./, '');
+}
+
+function sanitizeDiscoveryUrl(rawUrl) {
+  try {
+    const sanitized = new URL(rawUrl);
+    if (!/^https?:$/i.test(sanitized.protocol)) {
+      return null;
+    }
+    sanitized.username = '';
+    sanitized.password = '';
+    sanitized.search = '';
+    sanitized.hash = '';
+    return sanitized.toString();
+  } catch {
+    return null;
+  }
+}
+
+function sanitizePageTitle(title) {
+  const compact = String(title || '').replace(/\s+/g, ' ').trim();
+  if (!compact) return null;
+  return compact.slice(0, 180);
+}
+
+function deriveDomainMismatch(pageDomainValue, originalDomainValue) {
+  const pageDomain = normalizeDomain(pageDomainValue);
+  const originalDomain = normalizeDomain(originalDomainValue);
+
+  if (!originalDomain) {
+    return {
+      domainMismatch: null,
+      reason: 'original_domain_missing',
+    };
+  }
+
+  if (!pageDomain) {
+    return {
+      domainMismatch: null,
+      reason: 'page_domain_missing',
+    };
+  }
+
+  const domainMismatch = pageDomain !== originalDomain;
+  return {
+    domainMismatch,
+    reason: domainMismatch ? 'original_domain_mismatch' : 'original_domain_match',
+  };
+}
+
+function deriveContentLengthBucket(lengthValue) {
+  const length = Number(lengthValue);
+  if (!Number.isFinite(length) || length <= 0) return 'unknown';
+  if (length <= 140) return 'short';
+  if (length <= 500) return 'medium';
+  if (length <= 2000) return 'long';
+  return 'very_long';
+}
+
 // Load settings on startup
 chrome.storage.sync.get({ apiBaseUrl: 'https://api.encypherai.com', customApiUrl: '' }, (result) => {
   if (result.apiBaseUrl === 'custom' && result.customApiUrl) {
@@ -658,25 +720,51 @@ async function signContent(text, title, options = {}) {
  * This "phones home" to report where embeddings are found and who owns them
  */
 function trackEmbeddingDiscovery(discoveryData) {
-  
+  const sanitizedUrl = sanitizeDiscoveryUrl(discoveryData.pageUrl);
+  const pageDomain = normalizeDomain(
+    discoveryData.pageDomain || (sanitizedUrl ? new URL(sanitizedUrl).hostname : '')
+  );
+  const originalDomain = normalizeDomain(discoveryData.originalDomain || '');
+  const mismatch = deriveDomainMismatch(pageDomain, originalDomain);
+
+  const safePageUrl = sanitizedUrl || (pageDomain ? `https://${pageDomain}/` : null);
+  if (!safePageUrl || !pageDomain) {
+    return;
+  }
+
+  const numericEmbeddingCount = Number(discoveryData.embeddingCount);
+  const embeddingCount = Number.isFinite(numericEmbeddingCount) && numericEmbeddingCount >= 1
+    ? Math.floor(numericEmbeddingCount)
+    : 1;
+  const numericByteLength = Number(discoveryData.embeddingByteLength);
+  const embeddingByteLength = Number.isFinite(numericByteLength) && numericByteLength >= 0
+    ? Math.floor(numericByteLength)
+    : null;
+  const numericVisibleLength = Number(discoveryData.visibleTextLength);
+
   const event = {
     timestamp: new Date().toISOString(),
     eventType: 'embedding_discovered',
-    pageUrl: discoveryData.pageUrl,
-    pageDomain: new URL(discoveryData.pageUrl).hostname,
-    pageTitle: discoveryData.pageTitle,
+    pageUrl: safePageUrl,
+    pageDomain,
+    pageTitle: sanitizePageTitle(discoveryData.pageTitle),
     // Embedding owner info
-    signerId: discoveryData.signerId,
-    signerName: discoveryData.signerName,
-    organizationId: discoveryData.organizationId,
-    documentId: discoveryData.documentId,
-    originalDomain: discoveryData.originalDomain || null,
+    signerId: discoveryData.signerId || null,
+    signerName: discoveryData.signerName || null,
+    organizationId: discoveryData.organizationId || null,
+    documentId: discoveryData.documentId || null,
+    originalDomain: originalDomain || null,
     // Verification result
-    verified: discoveryData.verified,
-    verificationStatus: discoveryData.status,
-    markerType: discoveryData.markerType,
+    verified: Boolean(discoveryData.verified),
+    verificationStatus: discoveryData.status || (discoveryData.verified ? 'verified' : 'invalid'),
+    markerType: discoveryData.markerType || 'unknown',
     // Context
-    embeddingCount: discoveryData.embeddingCount || 1,
+    embeddingCount,
+    domainMismatch: mismatch.domainMismatch,
+    mismatchReason: mismatch.reason,
+    discoverySource: discoveryData.discoverySource || 'page_scan',
+    contentLengthBucket: deriveContentLengthBucket(numericVisibleLength),
+    embeddingByteLength,
     // Extension metadata
     extensionVersion: chrome.runtime.getManifest().version,
     // Anonymized user context (no PII)
@@ -686,7 +774,7 @@ function trackEmbeddingDiscovery(discoveryData) {
   analyticsQueue.push(event);
   
   // Flush if batch size reached
-  if (analyticsQueue.length >= ANALYTICS_CONFIG.batchSize) {
+  if (mismatch.domainMismatch === true || analyticsQueue.length >= ANALYTICS_CONFIG.batchSize) {
     flushAnalytics();
   } else {
     // Schedule flush
@@ -973,6 +1061,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             reason: raw.error || null,
           };
           current.details = appendVerificationDetail(current.details, detail);
+
+          trackEmbeddingDiscovery({
+            pageUrl: message.pageUrl || current.url,
+            pageDomain: message.pageDomain,
+            pageTitle: message.pageTitle,
+            signerId: raw.signerId || null,
+            signerName: raw.signingIdentity || raw.signer || null,
+            organizationId: raw.organizationId || null,
+            documentId: raw.documentId || null,
+            originalDomain: raw.originalDomain || raw.signingDomain || null,
+            verified: status === 'verified',
+            status,
+            markerType: raw.markerType || message.markerType || 'unknown',
+            embeddingCount: message.embeddingCount || 1,
+            visibleTextLength: message.visibleTextLength,
+            embeddingByteLength: message.embeddingByteLength,
+            discoverySource: 'cached_detection',
+          });
         }
 
         current.url = message.pageUrl || current.url;
@@ -1016,6 +1122,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Track discovery for analytics (phone home)
           trackEmbeddingDiscovery({
             pageUrl: message.pageUrl || state.url,
+            pageDomain: message.pageDomain,
             pageTitle: message.pageTitle,
             signerId: result.data?.signer_id,
             signerName: result.data?.signer_name,
@@ -1024,7 +1131,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             originalDomain: result.data?.original_domain || result.data?.signing_domain,
             verified: result.success,
             status: result.success ? 'verified' : (result.revoked ? 'revoked' : 'invalid'),
-            markerType: message.markerType
+            markerType: message.markerType,
+            embeddingCount: message.embeddingCount || 1,
+            visibleTextLength: message.visibleTextLength,
+            embeddingByteLength: message.embeddingByteLength,
+            discoverySource: message.discoverySource || 'page_scan',
           });
         }
         sendResponse(result);

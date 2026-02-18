@@ -24,8 +24,56 @@ from ..core.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _normalize_tier_name(tier: Optional[str]) -> str:
+    tier_name = (tier or "free").strip().lower()
+    legacy_map = {
+        "starter": "free",
+        "professional": "free",
+        "business": "free",
+    }
+    return legacy_map.get(tier_name, tier_name)
+
+
+def _tier_api_key_limit(tier: Optional[str]) -> int:
+    normalized_tier = _normalize_tier_name(tier)
+    if normalized_tier == "free":
+        return 2
+    if normalized_tier in {"enterprise", "strategic_partner", "demo"}:
+        return -1
+    return 2
+
+
 class KeyService:
     """API Key management service"""
+
+    @staticmethod
+    def _enforce_api_key_limit(db: Session, *, organization_id: Optional[str], user_id: str) -> None:
+        if organization_id:
+            org = db.query(Organization).filter(Organization.id == organization_id).first()
+            tier = org.tier if org else "free"
+            scope_filter = ApiKey.organization_id == organization_id
+        else:
+            tier = "free"
+            scope_filter = ApiKey.user_id == user_id
+
+        max_keys = _tier_api_key_limit(tier)
+        if max_keys < 0:
+            return
+
+        active_key_count = (
+            db.query(ApiKey)
+            .filter(
+                scope_filter,
+                ApiKey.is_active == True,
+                ApiKey.is_revoked == False,
+            )
+            .count()
+        )
+
+        if active_key_count >= max_keys:
+            raise ValueError(
+                f"Free tier allows up to {max_keys} active API keys. Revoke an old key or upgrade your plan."
+            )
 
     @staticmethod
     def _fetch_org_certificate_pem(organization_id: str) -> Optional[str]:
@@ -242,6 +290,12 @@ class KeyService:
                 organization_name=org_name,
                 authorization=authorization,
             )
+
+        KeyService._enforce_api_key_limit(
+            db,
+            organization_id=organization_id,
+            user_id=user_id,
+        )
 
         # Generate new API key
         api_key = generate_api_key()

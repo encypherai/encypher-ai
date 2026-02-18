@@ -365,21 +365,58 @@ class Frontend
                 return (meta && meta.data) ? meta.data : null;
             }
 
+            function buildVerificationFailureHint(data) {
+                const defaultMessage = '<?php esc_html_e('No valid C2PA manifest found for this content.', 'encypher-provenance'); ?>';
+                const rawError = data && data.error ? String(data.error) : '';
+                const lowerError = rawError.toLowerCase();
+
+                if (!rawError) {
+                    return {
+                        message: defaultMessage,
+                        hint: '<?php esc_html_e('Try signing this post first, then verify again.', 'encypher-provenance'); ?>'
+                    };
+                }
+
+                if (lowerError.includes('invalid api key')) {
+                    return {
+                        message: rawError,
+                        hint: '<?php esc_html_e('Invalid API key detected. Check Encypher settings and update your API key. For local E2E, use demo-api-key-for-testing.', 'encypher-provenance'); ?>'
+                    };
+                }
+
+                if (lowerError.includes('not found or not published') || lowerError.includes('only published posts')) {
+                    return {
+                        message: rawError,
+                        hint: '<?php esc_html_e('Publish the post before verification.', 'encypher-provenance'); ?>'
+                    };
+                }
+
+                if (lowerError.includes('timed out') || lowerError.includes('http_error') || lowerError.includes('failed to fetch')) {
+                    return {
+                        message: rawError,
+                        hint: '<?php esc_html_e('The verification service is temporarily unavailable. Please try again in a moment.', 'encypher-provenance'); ?>'
+                    };
+                }
+
+                return {
+                    message: rawError,
+                    hint: '<?php esc_html_e('Failed to verify content. Please try again.', 'encypher-provenance'); ?>'
+                };
+            }
+
             function formatVerificationData(data, postId) {
                 if (!data || !data.valid) {
+                    const failure = buildVerificationFailureHint(data);
                     let errHtml = '<div class="encypher-error" style="text-align: center; padding: 20px;">';
                     errHtml += '<div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>';
                     errHtml += '<h3 style="margin: 0 0 8px 0; color: #856404;"><?php esc_html_e('Verification Unsuccessful', 'encypher-provenance'); ?></h3>';
-                    if (data && data.error) {
-                        errHtml += '<p style="color: #666; margin: 0;">' + escapeHtml(data.error) + '</p>';
-                    } else {
-                        errHtml += '<p style="color: #666; margin: 0;"><?php esc_html_e('No valid C2PA manifest found for this content.', 'encypher-provenance'); ?></p>';
-                    }
+                    errHtml += '<p style="color: #666; margin: 0;">' + escapeHtml(failure.message) + '</p>';
+                    errHtml += '<p style="color: #555; margin: 10px 0 0 0; font-size: 13px;">' + escapeHtml(failure.hint) + '</p>';
                     errHtml += '</div>';
                     return errHtml;
                 }
 
-                // Normalize metadata: for micro_ecc_c2pa mode, the C2PA manifest
+                // Normalize metadata: for canonical micro mode, the C2PA manifest
                 // (with assertions, instance_id, claim_generator) is nested inside
                 // data.metadata.manifest_data.  For full C2PA mode, it's directly
                 // in data.metadata.  Resolve to a single "manifest" reference.
@@ -387,7 +424,7 @@ class Frontend
                 const manifest = (rawMeta.manifest_data && rawMeta.manifest_data.assertions)
                     ? rawMeta.manifest_data
                     : rawMeta;
-                // Top-level document_id may live on rawMeta (micro_ecc) or in assertion
+                // Top-level document_id may live on rawMeta (micro metadata) or in assertion
                 const topDocumentId = rawMeta.document_id || null;
                 const totalSignatures = rawMeta.total_signatures || null;
                 const totalSegments = rawMeta.total_segments || null;
@@ -416,6 +453,12 @@ class Frontend
                 if (actions) {
                     const primaryAction = actions.find(a => a.label === 'c2pa.created')
                         || actions.find(a => a.label === 'c2pa.edited');
+                    if (primaryAction && primaryAction.label) {
+                        const actionLabel = primaryAction.label === 'c2pa.edited'
+                            ? '<?php esc_html_e('Edited (provenance chain updated)', 'encypher-provenance'); ?>'
+                            : '<?php esc_html_e('Created (initial signature)', 'encypher-provenance'); ?>';
+                        html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Latest action:', 'encypher-provenance'); ?></strong> ' + actionLabel + '</p>';
+                    }
                     if (primaryAction && primaryAction.when) {
                         const actionDate = new Date(primaryAction.when);
                         html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Signed:', 'encypher-provenance'); ?></strong> ' + actionDate.toLocaleString() + '</p>';
@@ -425,7 +468,7 @@ class Frontend
                     }
                 }
 
-                // Extract document_id: try top-level (micro_ecc), then c2pa.metadata assertion
+                // Extract document_id: try top-level micro metadata, then c2pa.metadata assertion
                 const metaAssertion = findMetadataAssertion(manifest);
                 const documentId = topDocumentId || (metaAssertion && metaAssertion.identifier) || null;
                 if (documentId) {
@@ -466,7 +509,7 @@ class Frontend
                 html += '</div>';
 
                 // Provenance chain viewer (if ingredients exist)
-                // Use normalized manifest for ingredients check (handles both full C2PA and micro_ecc_c2pa)
+                // Use normalized manifest for ingredients check (handles both full C2PA and micro manifest metadata)
                 if (manifest.ingredients && manifest.ingredients.length > 0) {
                     html += '<details style="margin: 15px 0;">';
                     html += '<summary style="cursor: pointer; padding: 10px; background: #28a745; color: white; border-radius: 4px; font-weight: 600;"><?php esc_html_e('View Provenance Chain', 'encypher-provenance'); ?></summary>';

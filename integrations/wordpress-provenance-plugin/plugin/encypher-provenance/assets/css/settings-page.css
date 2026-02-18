@@ -68,6 +68,56 @@
     border-bottom: 1px solid #dcdcde;
 }
 
+/* Launch Readiness + Connection Health */
+.encypher-settings-wrap .encypher-launch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    margin: 16px 0 20px;
+}
+
+.encypher-settings-wrap .encypher-launch-card {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.encypher-settings-wrap .encypher-launch-card h2 {
+    margin-top: 0;
+}
+
+.encypher-launch-checklist {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.encypher-launch-checklist li {
+    margin: 8px 0;
+}
+
+.encypher-launch-checklist li.is-complete {
+    color: #0a3622;
+}
+
+.encypher-launch-checklist li.is-pending {
+    color: #646970;
+}
+
+.encypher-health-state {
+    font-weight: 600;
+    margin: 6px 0 10px;
+}
+
+.encypher-health-meta {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.encypher-health-meta li {
+    margin: 4px 0;
+}
+
 /* Tier Badge */
 .tier-badge {
     display: inline-block;
@@ -175,6 +225,50 @@
     color: #50575e;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+/* Shared API usage progress styles */
+.encypher-usage-progress {
+    margin: 14px 0;
+    padding: 14px;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.encypher-usage-progress-title {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: #1b2f50;
+}
+
+.encypher-usage-progress-summary,
+.encypher-usage-progress-remaining {
+    margin: 0;
+    font-size: 13px;
+    color: #1f2937;
+}
+
+.encypher-usage-progress-remaining {
+    margin-top: 8px;
+}
+
+.encypher-usage-progress-track {
+    width: 100%;
+    height: 10px;
+    margin-top: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #e8edf2;
+}
+
+.encypher-usage-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1b2f50 0%, #2a87c4 100%);
+}
+
+.encypher-usage-progress-reset {
+    margin-top: 8px;
 }
 
 /* Responsive */

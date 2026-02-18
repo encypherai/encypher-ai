@@ -33,9 +33,8 @@ wordpress-provenance-plugin/
 
 The plugin targets the production Enterprise API hosted at `https://api.encypherai.com`:
 
-- `POST /api/v1/sign` - Unified signing endpoint with tier-gated features (sentence segmentation, Merkle trees for Professional+).
-- `POST /api/v1/verify` - Public verification endpoint (no auth required).
-- `POST /api/v1/verify/advanced` - Tier-gated verification with attribution, plagiarism detection (Professional+).
+- `POST /api/v1/sign` - Unified signing endpoint with options-based configuration (`manifest_mode: micro`, `ecc`, `embed_c2pa`, sentence segmentation, and optional `return_embedding_plan`).
+- `POST /api/v1/verify` - Public verification endpoint used by the plugin.
 
 Both endpoints and their request/response shapes are described in detail in the [Enterprise API README](../../enterprise_api/README.md) and [C2PA Provenance Chain documentation](../../docs/c2pa/C2PA_PROVENANCE_CHAIN.md). API failures are surfaced in the editor so authors can retry or contact support.
 

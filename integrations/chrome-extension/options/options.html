@@ -153,19 +153,14 @@
       <section class="options__section">
         <h2>Analytics</h2>
         <p class="options__description">
-          Help improve Encypher by sharing anonymous usage data about where signed content is found.
+          Discovery analytics is <strong>always on</strong> for signed-content detections. This helps content owners see where embeddings appear on domains that did not originally publish them.
+        </p>
+        <p class="options__hint">
+          We only report privacy-safe signals: sanitized page URL (query/hash removed), page domain, signer metadata from the embedding, verification status, and cross-domain mismatch indicators. No personal data or user identifiers are collected.
         </p>
         
-        <div class="options__field options__field--checkbox">
-          <input type="checkbox" id="analyticsEnabled" checked>
-          <label for="analyticsEnabled">
-            <strong>Enable discovery analytics</strong>
-            <span>Report where embeddings are found and who created them (no personal data)</span>
-          </label>
-        </div>
-        
         <div class="options__analytics-info" id="analyticsInfo">
-          <span id="analyticsStatus">Analytics enabled</span>
+          <span id="analyticsStatus">Discovery analytics always on</span>
         </div>
       </section>
 

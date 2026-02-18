@@ -57,20 +57,17 @@ The WordPress C2PA plugin implementation is **complete** per the PRD specificati
 1. User publishes/updates post
 2. Plugin checks auto-mark settings
 3. Plugin calls REST API `/sign` endpoint
-4. REST API calls Enterprise API `/sign` (Starter) or `/sign/advanced` (Professional+)
+4. REST API calls Enterprise API `/sign` with unified `options` payload
 5. Enterprise API returns embedded content
 6. Plugin updates post content and metadata
 
-### 2. Enterprise API Integration ✅
+### 2. Enterprise API Integration 
 
 **Description:** Full integration with Enterprise API microservices.
 
 **Endpoints Used:**
 - `POST /api/v1/sign` (authenticated)
-- `POST /api/v1/sign/advanced` (authenticated)
 - `POST /api/v1/verify` (public)
-- `POST /api/v1/verify/advanced` (authenticated)
-- `POST /api/v1/public/extract-and-verify` (public)
 
 **Implementation:**
 - Request formatting with C2PA options
@@ -299,15 +296,21 @@ wp_ajax_encypher_get_bulk_status
 
 **Embedding:**
 ```
-POST /api/v1/sign/advanced
+POST /api/v1/sign
 Authorization: Bearer {api_key}
 
 Request:
 {
   "text": "Post content...",
   "document_id": "wp_post_123",
-  "segmentation_level": "sentence",
-  "action": "c2pa.created",
+  "options": {
+    "manifest_mode": "micro",
+    "ecc": true,
+    "embed_c2pa": true,
+    "segmentation_level": "sentence",
+    "action": "c2pa.created",
+    "return_embedding_plan": true
+  },
   "metadata": {...}
 }
 
@@ -323,7 +326,7 @@ Response:
 
 **Verification:**
 ```
-POST /api/v1/public/extract-and-verify
+POST /api/v1/verify
 
 Request:
 {
@@ -336,7 +339,6 @@ Response:
   "verified_at": "...",
   "content": {...},
   "document": {...},
-  "merkle_proof": {...},
   "metadata": {...}
 }
 ```

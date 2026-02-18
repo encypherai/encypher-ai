@@ -325,8 +325,14 @@ The plugin communicates with the Encypher Enterprise API:
 {
   "document_id": "wp_post_123",
   "text": "Blog post text...",
-  "segmentation_level": "sentence",
-  "action": "c2pa.created",
+  "options": {
+    "manifest_mode": "micro",
+    "ecc": true,
+    "embed_c2pa": true,
+    "segmentation_level": "sentence",
+    "action": "c2pa.created",
+    "return_embedding_plan": true
+  },
   "metadata": {
     "title": "My Blog Post",
     "author": "John Doe",

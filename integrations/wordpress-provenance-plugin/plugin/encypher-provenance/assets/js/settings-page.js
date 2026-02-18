@@ -5,11 +5,16 @@
 (function($) {
     'use strict';
 
+    const HEALTH_COPY = {
+        lastCheckLabel: 'Last check:',
+    };
+
     const EncypherSettings = {
         init() {
             this.bindEvents();
             this.applyTierConstraints();
             this.checkConnection();
+            this.updateChecklistProgress();
         },
 
         bindEvents() {
@@ -20,6 +25,7 @@
 
             // Auto-test connection when API settings change
             $('input[name="encypher_provenance_settings[api_base_url]"], input[name="encypher_provenance_settings[api_key]"]').on('change', () => {
+                this.updateChecklistProgress();
                 this.checkConnection();
             });
 
@@ -31,9 +37,20 @@
         async checkConnection() {
             const $status = $('#connection-status');
             const apiUrl = $('input[name="encypher_provenance_settings[api_base_url]"]').val();
+            const apiKey = $('input[name="encypher_provenance_settings[api_key]"]').val();
+
+            this.setChecklistStepState('api-url', !!apiUrl);
+            this.setChecklistStepState('api-key', !!apiKey);
 
             if (!apiUrl) {
                 $status.html('<span class="status-indicator dashicons dashicons-minus"></span> <span>No API URL configured</span>');
+                this.updateHealthCard({
+                    state: 'disconnected',
+                    stateLabel: 'Disconnected',
+                    apiUrl,
+                });
+                this.setChecklistStepState('connection-test', false);
+                this.updateChecklistProgress();
                 return;
             }
 
@@ -53,12 +70,37 @@
 
                 if (response.ok && data.success) {
                     $status.html('<span class="status-indicator dashicons dashicons-yes-alt"></span> <span class="status-text-success">Connected</span>');
+                    this.setChecklistStepState('connection-test', true);
+                    this.updateHealthCard({
+                        state: data.status || 'connected',
+                        stateLabel: 'Connected and ready',
+                        apiUrl: data.api_url || apiUrl,
+                        tier: data.organization?.tier || 'free',
+                        organization: data.organization?.name || data.organization?.organization_id || 'Not available',
+                        lastCheck: this.currentTimestamp(),
+                    });
                 } else {
                     $status.html('<span class="status-indicator dashicons dashicons-dismiss"></span> <span class="status-text-error">Not connected</span>');
+                    this.setChecklistStepState('connection-test', false);
+                    this.updateHealthCard({
+                        state: 'auth_required',
+                        stateLabel: 'Auth required',
+                        apiUrl,
+                        lastCheck: this.currentTimestamp(),
+                    });
                 }
             } catch (error) {
                 $status.html('<span class="status-indicator dashicons dashicons-dismiss"></span> <span class="status-text-error">Check failed</span>');
+                this.setChecklistStepState('connection-test', false);
+                this.updateHealthCard({
+                    state: 'disconnected',
+                    stateLabel: 'Disconnected',
+                    apiUrl,
+                    lastCheck: this.currentTimestamp(),
+                });
             }
+
+            this.updateChecklistProgress();
         },
 
         convertToLocalhostUrl(url) {
@@ -125,11 +167,93 @@
                 // Update connection status indicator
                 this.checkConnection();
 
+                this.updateHealthCard({
+                    state: data.status || 'connected',
+                    stateLabel: 'Connected and ready',
+                    apiUrl: data.api_url || apiBaseUrl,
+                    tier: data.organization?.tier || 'free',
+                    organization: data.organization?.name || data.organization?.organization_id || 'Not available',
+                    lastCheck: this.currentTimestamp(),
+                });
+
             } catch (error) {
                 $result.html(`<div class="notice notice-error"><p><strong>Connection failed:</strong> ${error.message}</p></div>`);
+                this.updateHealthCard({
+                    state: 'disconnected',
+                    stateLabel: 'Disconnected',
+                    apiUrl: apiBaseUrl,
+                    lastCheck: this.currentTimestamp(),
+                });
             } finally {
                 $btn.prop('disabled', false).text('Test Connection');
             }
+        },
+
+        setChecklistStepState(step, complete) {
+            const $item = $(`#encypher-launch-checklist li[data-step="${step}"]`);
+            if (!$item.length) {
+                return;
+            }
+
+            $item.toggleClass('is-complete', !!complete);
+            $item.toggleClass('is-pending', !complete);
+        },
+
+        updateChecklistProgress() {
+            const $items = $('#encypher-launch-checklist li');
+            if (!$items.length) {
+                return;
+            }
+
+            const complete = $items.filter('.is-complete').length;
+            $('#encypher-launch-progress').text(`${complete} of 3 launch steps complete`);
+        },
+
+        updateHealthCard(payload = {}) {
+            const defaults = {
+                state: 'unknown',
+                stateLabel: 'No recent health check',
+                apiUrl: '',
+                tier: null,
+                organization: null,
+                lastCheck: null,
+            };
+            const data = { ...defaults, ...payload };
+
+            const $state = $('#encypher-connection-health-state');
+            if ($state.length) {
+                $state.text(data.stateLabel);
+            }
+
+            if (data.apiUrl) {
+                $('#encypher-connection-health-url').text(data.apiUrl);
+            }
+
+            if (data.tier) {
+                $('#encypher-connection-health-tier').text(data.tier);
+            }
+
+            if (data.organization) {
+                $('#encypher-connection-health-org').text(data.organization);
+            }
+
+            if (data.lastCheck) {
+                $('#encypher-connection-health-last-check').text(data.lastCheck);
+                $('#encypher-connection-health-last-check').attr('aria-label', `${HEALTH_COPY.lastCheckLabel} ${data.lastCheck}`);
+            }
+
+            const $statusField = $('input[name="encypher_provenance_settings[connection_last_status]"]');
+            const $lastCheckedField = $('input[name="encypher_provenance_settings[connection_last_checked_at]"]');
+            if ($statusField.length) {
+                $statusField.val(data.state);
+            }
+            if ($lastCheckedField.length && data.lastCheck) {
+                $lastCheckedField.val(data.lastCheck);
+            }
+        },
+
+        currentTimestamp() {
+            return new Date().toISOString();
         },
 
         applyTierConstraints() {

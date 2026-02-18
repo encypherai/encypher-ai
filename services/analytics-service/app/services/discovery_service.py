@@ -10,7 +10,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import and_, distinct, func
+from sqlalchemy import distinct, func
 from sqlalchemy.orm import Session
 
 from ..db.models import ContentDiscovery, DiscoveryDomainSummary, OwnedDomain
@@ -44,6 +44,13 @@ def domain_matches_pattern(domain: str, pattern: str) -> bool:
         return fnmatch.fnmatch(domain, pattern)
 
     return False
+
+
+def _domains_equal(left: Optional[str], right: Optional[str]) -> bool:
+    """Case-insensitive domain equality check with whitespace normalization."""
+    if not left or not right:
+        return False
+    return left.strip().lower() == right.strip().lower()
 
 
 class DiscoveryService:
@@ -82,10 +89,11 @@ class DiscoveryService:
             date=now.strftime("%Y-%m-%d"),
         )
 
-        # Domain-mismatch detection.  Priority order:
-        # 1. Org's configured owned_domains allowlist (deterministic)
-        # 2. originalDomain from the event (direct comparison)
-        # 3. Domain-summary heuristic (first domain seen = owned)
+        # Domain-mismatch detection priority:
+        # 1. If signer+org are known, use server-side allowlist/heuristics.
+        # 2. Else if client reported domainMismatch, honor that explicit signal.
+        # 3. Else if originalDomain exists, compare pageDomain vs originalDomain directly.
+        is_external = False
         if event.organizationId and event.signerId:
             is_external = DiscoveryService._is_external_domain(
                 db,
@@ -93,7 +101,12 @@ class DiscoveryService:
                 page_domain=event.pageDomain,
                 original_domain=event.originalDomain,
             )
-            discovery.is_external_domain = 1 if is_external else 0
+        elif event.domainMismatch is not None:
+            is_external = bool(event.domainMismatch)
+        elif event.originalDomain:
+            is_external = not _domains_equal(event.pageDomain, event.originalDomain)
+
+        discovery.is_external_domain = 1 if is_external else 0
 
         db.add(discovery)
 

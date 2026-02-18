@@ -17,9 +17,9 @@ The plugin codebase (`encypher-provenance`) implements distinct features for Fre
 ### 1. Free Tier
 *   **Target:** Individual bloggers, small sites.
 *   **Signature:** Shared Encypher-managed key (`signing_mode = 'managed'`).
-*   **Granularity:** Document-level only (1 C2PA manifest per post).
-    *   *Implementation:* `class-encypher-provenance-rest.php` forces `'segmentation_level' => 'document'`.
-*   **Bulk Marking:** Limited to 100 posts per batch.
+*   **Granularity:** Sentence-level signing with canonical micro mode (`manifest_mode: micro`, `ecc: true`, `embed_c2pa: true`).
+    *   *Implementation:* `class-encypher-provenance-rest.php` sends `'segmentation_level' => 'sentence'` with unified `options` payload.
+*   **Bulk Marking:** Limited to 10 posts per batch.
     *   *Implementation:* `class-encypher-provenance-bulk.php` checks count limit.
 *   **Coalition:** Mandatory participation.
     *   *Implementation:* `class-encypher-provenance-admin.php` forces `coalition_enabled = true`.
@@ -54,11 +54,11 @@ The plugin codebase (`encypher-provenance`) implements distinct features for Fre
 The plugin correctly utilizes the Enterprise microservices architecture:
 
 *   **Authentication:** Uses `Authorization: Bearer {api_key}` for all requests.
-*   **Signing Service:** Calls `POST /sign` (Starter) or `POST /sign/advanced` (Professional+) for signing.
-    *   Sends `segmentation_level` to trigger document vs sentence workflow.
+*   **Signing Service:** Calls unified `POST /sign` for signing.
+    *   Sends canonical micro options (`manifest_mode`, `ecc`, `embed_c2pa`) plus sentence segmentation.
     *   Preserves provenance chain via `previous_instance_id` and `action` (`c2pa.created` vs `c2pa.edited`).
 *   **Verification Service:** Calls `POST /verify` for editor / admin verification.
-*   **Public Verification:** Calls `POST /public/extract-and-verify` for unauthenticated third-party extraction + verification.
+*   **Public Verification:** Calls `POST /verify` for unauthenticated verification of extracted text.
 
 ## Recommendations
 *   **Update README:** Clarify the features available per tier in the public documentation.

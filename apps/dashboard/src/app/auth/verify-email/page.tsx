@@ -17,8 +17,7 @@ import {
 const API_BASE =
   (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
 
-// Canonical SVG logos
-const LOGO_COLOR = '/assets/encypher_full_logo_color.svg';
+// Canonical SVG logo
 const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
 
 type VerificationState = 'verifying' | 'success' | 'error' | 'logging-in';
@@ -61,7 +60,7 @@ function VerifyEmailContent() {
       }
 
       // Verification successful - we have tokens for auto-login
-      const { access_token, refresh_token, user } = data.data;
+      const { access_token, user } = data.data;
       setUserEmail(user?.email || '');
       
       // Auto-login the user
@@ -73,16 +72,12 @@ function VerifyEmailContent() {
         email: user.email,
         // Pass the access token as the password - our authorize function will detect this
         password: `__TOKEN__${access_token}`,
-        redirect: false,
         callbackUrl: '/',
       });
 
       if (signInResult?.error) {
         // If token-based login fails, show success but ask user to login manually
         setState('success');
-      } else {
-        // Redirect to dashboard
-        router.push('/');
       }
     } catch (err) {
       setState('error');

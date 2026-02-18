@@ -25,6 +25,9 @@
         const [showAllSentences, setShowAllSentences] = useState(false);
         const tier = (typeof EncypherProvenanceConfig !== 'undefined' && EncypherProvenanceConfig.tier) ? EncypherProvenanceConfig.tier : 'free';
         const upgradeUrl = (typeof EncypherProvenanceConfig !== 'undefined' && EncypherProvenanceConfig.upgradeUrl) ? EncypherProvenanceConfig.upgradeUrl : 'https://dashboard.encypherai.com/billing';
+        const usage = (typeof EncypherProvenanceConfig !== 'undefined' && EncypherProvenanceConfig.usage && EncypherProvenanceConfig.usage.api_calls)
+            ? EncypherProvenanceConfig.usage.api_calls
+            : { used: 0, limit: 1000, remaining: 1000, percentage_used: 0, is_unlimited: false };
 
         const renderUpgradeCallout = (message) => {
             return wp.element.createElement(
@@ -38,6 +41,101 @@
                           'Upgrade to Enterprise'
                       )
                     : null
+            );
+        };
+
+        const renderBrandingPrimer = () => {
+            const children = [
+                wp.element.createElement(
+                    'p',
+                    { key: 'brand-copy', className: 'encypher-brand-copy' },
+                    'Encypher powers this provenance workflow with C2PA-compatible signing and verification.'
+                ),
+            ];
+
+            if (tier === 'free') {
+                children.push(
+                    wp.element.createElement(
+                        'p',
+                        { key: 'free-cap', className: 'encypher-plan-note' },
+                        'Free plan includes up to 1,000 sign requests/month.'
+                    )
+                );
+                children.push(
+                    wp.element.createElement(
+                        'p',
+                        { key: 'free-overage', className: 'encypher-plan-note' },
+                        '$0.02/sign request after the monthly cap.'
+                    )
+                );
+                children.push(
+                    wp.element.createElement(
+                        'p',
+                        { key: 'free-verify-soft-cap', className: 'encypher-plan-note' },
+                        'Verification stays available with a soft cap of 10,000 requests/month.'
+                    )
+                );
+                children.push(
+                    wp.element.createElement(
+                        'p',
+                        { key: 'free-addons', className: 'encypher-plan-note' },
+                        'Whitelabel and advanced controls are available as add-ons, or included with Enterprise.'
+                    )
+                );
+            }
+
+            return wp.element.createElement('div', { className: 'encypher-brand-banner' }, children);
+        };
+
+        const renderUsageMeter = () => {
+            const used = Number.isFinite(Number(usage.used)) ? Number(usage.used) : 0;
+            const isUnlimited = Boolean(usage.is_unlimited) || Number(usage.limit) < 0;
+            const limit = isUnlimited ? -1 : (Number.isFinite(Number(usage.limit)) && Number(usage.limit) > 0 ? Number(usage.limit) : 1000);
+            const remaining = isUnlimited
+                ? -1
+                : (Number.isFinite(Number(usage.remaining)) ? Math.max(0, Number(usage.remaining)) : Math.max(0, limit - used));
+            const percentage = isUnlimited
+                ? 0
+                : Math.min(100, Math.max(0, Number.isFinite(Number(usage.percentage_used)) ? Number(usage.percentage_used) : ((used / limit) * 100)));
+
+            return wp.element.createElement(
+                'div',
+                { className: 'encypher-usage-meter' },
+                wp.element.createElement('h4', { className: 'encypher-section-title' }, 'Monthly API call usage'),
+                isUnlimited
+                    ? wp.element.createElement(
+                          'p',
+                          { className: 'encypher-usage-summary' },
+                          'Monthly API calls this month: ',
+                          wp.element.createElement('strong', null, used.toLocaleString()),
+                          ' (Unlimited plan)'
+                      )
+                    : wp.element.createElement(
+                          wp.element.Fragment,
+                          null,
+                          wp.element.createElement(
+                              'p',
+                              { className: 'encypher-usage-summary' },
+                              'Monthly API calls this month: ',
+                              wp.element.createElement('strong', null, used.toLocaleString()),
+                              ' / ',
+                              limit.toLocaleString(),
+                              ' (',
+                              Math.round(percentage),
+                              '%)'
+                          ),
+                          wp.element.createElement(
+                              'div',
+                              { className: 'encypher-usage-track', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(percentage) },
+                              wp.element.createElement('div', { className: 'encypher-usage-fill', style: { width: `${percentage}%` } })
+                          ),
+                          wp.element.createElement(
+                              'p',
+                              { className: 'encypher-usage-remaining' },
+                              'API calls remaining this month: ',
+                              wp.element.createElement('strong', null, remaining.toLocaleString())
+                          )
+                      )
             );
         };
 
@@ -325,6 +423,8 @@
             wp.element.createElement(
                 'div',
                 { className: 'encypher-provenance-status', style: { padding: '12px 0' } },
+                renderBrandingPrimer(),
+                renderUsageMeter(),
                 status === 'loading' && wp.element.createElement(Spinner, null),
                 status !== 'loading' && wp.element.createElement(
                     'div',
@@ -346,11 +446,18 @@
     const PrePublishPanel = function () {
         const postStatus = useSelect((select) => select('core/editor').getEditedPostAttribute('status'), []);
         const isDraft = postStatus === 'draft' || postStatus === 'auto-draft';
+        const usage = (typeof EncypherProvenanceConfig !== 'undefined' && EncypherProvenanceConfig.usage && EncypherProvenanceConfig.usage.api_calls)
+            ? EncypherProvenanceConfig.usage.api_calls
+            : { used: 0, limit: 1000, remaining: 1000, percentage_used: 0, is_unlimited: false };
+        const isUnlimited = Boolean(usage.is_unlimited) || Number(usage.limit) < 0;
+        const summary = isUnlimited
+            ? `Monthly API calls this month: ${Number(usage.used || 0).toLocaleString()} (Unlimited plan)`
+            : `Monthly API calls this month: ${Number(usage.used || 0).toLocaleString()} / ${Number(usage.limit || 1000).toLocaleString()}`;
 
         return wp.element.createElement(
             PluginPrePublishPanel,
             {
-                title: 'C2PA Content Signing',
+                title: 'Encypher Content Signing (C2PA-compatible)',
                 initialOpen: true,
             },
             wp.element.createElement(
@@ -374,6 +481,11 @@
                     'p',
                     { style: { margin: '12px 0 0 0', fontSize: '11px', color: '#999', fontStyle: 'italic' } },
                     'Signing happens automatically - no action required.'
+                ),
+                wp.element.createElement(
+                    'p',
+                    { className: 'encypher-prepublish-usage' },
+                    summary
                 )
             )
         );

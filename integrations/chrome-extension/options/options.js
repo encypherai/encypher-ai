@@ -27,7 +27,6 @@ const defaultSegmentationLevelSelect = document.getElementById('defaultSegmentat
 const showEditorButtonsCheckbox = document.getElementById('showEditorButtons');
 
 // Analytics settings
-const analyticsEnabledCheckbox = document.getElementById('analyticsEnabled');
 const analyticsStatusEl = document.getElementById('analyticsStatus');
 const extensionSetupStatusSelect = document.getElementById('extensionSetupStatus');
 const setupStatusHint = document.getElementById('setupStatusHint');
@@ -47,8 +46,6 @@ const DEFAULT_SETTINGS = {
   defaultEmbeddingTechnique: 'micro',
   defaultSegmentationLevel: 'sentence',
   showEditorButtons: true,
-  // Analytics
-  analyticsEnabled: true,
   extensionSetupStatus: 'not_started'
 };
 
@@ -101,7 +98,6 @@ async function loadSettings() {
     if (showEditorButtonsCheckbox) showEditorButtonsCheckbox.checked = result.showEditorButtons;
     
     // Analytics settings
-    if (analyticsEnabledCheckbox) analyticsEnabledCheckbox.checked = result.analyticsEnabled;
     if (extensionSetupStatusSelect) {
       extensionSetupStatusSelect.value = result.extensionSetupStatus || 'not_started';
       updateSetupStatusHint(extensionSetupStatusSelect.value);
@@ -163,10 +159,9 @@ async function loadPublisherIdentity(apiKey) {
 async function updateAnalyticsStatus() {
   try {
     const summary = await chrome.runtime.sendMessage({ type: 'GET_ANALYTICS_SUMMARY' });
-    if (analyticsStatusEl && summary) {
-      analyticsStatusEl.textContent = summary.enabled 
-        ? `Analytics enabled (${summary.queuedEvents} events queued)`
-        : 'Analytics disabled';
+    if (analyticsStatusEl) {
+      const queuedEvents = Number(summary?.queuedEvents || 0);
+      analyticsStatusEl.textContent = `Always on (privacy-safe): ${queuedEvents} events queued`;
     }
   } catch (e) {
     // Ignore errors
@@ -412,16 +407,6 @@ showEditorButtonsCheckbox?.addEventListener('change', async () => {
 extensionSetupStatusSelect?.addEventListener('change', async () => {
   await saveSetting('extensionSetupStatus', extensionSetupStatusSelect.value);
   updateSetupStatusHint(extensionSetupStatusSelect.value);
-});
-
-// Analytics settings event listener
-analyticsEnabledCheckbox?.addEventListener('change', async () => {
-  await saveSetting('analyticsEnabled', analyticsEnabledCheckbox.checked);
-  chrome.runtime.sendMessage({ 
-    type: 'SET_ANALYTICS_ENABLED', 
-    enabled: analyticsEnabledCheckbox.checked 
-  });
-  updateAnalyticsStatus();
 });
 
 // Reset settings

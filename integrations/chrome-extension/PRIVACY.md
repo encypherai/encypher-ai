@@ -29,17 +29,19 @@ When the extension verifies signed content on a page, we report a **discovery ev
 
 Each discovery event includes:
 
-- **Page URL and domain**: Where the signed content was found
+- **Sanitized page URL and domain**: Where the signed content was found (URL query parameters and hash fragments are removed before reporting)
 - **Page title**: The title of the page containing the content
 - **Signer information**: The organization that originally signed the content (extracted from the signature, not from you)
 - **Verification result**: Whether the content was verified, invalid, or revoked
+- **Embedding context**: Marker type, embedding size bucket, and source of detection (page scan vs cache hit)
+- **Domain mismatch signal**: Whether the detection domain differs from the original signing domain (when available)
 - **Anonymized session ID**: A random, ephemeral identifier that resets each browser session. This is NOT tied to your identity, account, or browsing history.
 
 What discovery tracking does NOT collect:
 
 - Your name, email, or any personal information
 - Your browsing history or pages without signed content
-- Your IP address is not stored (used only for rate limiting)
+- Your IP address is not stored with discovery analytics (used transiently for rate limiting only)
 - Any information that could identify you as an individual
 
 ### Data Sent When Signing Content
@@ -154,7 +156,7 @@ This extension is open source. You can review the code to verify our privacy cla
 
 ## Summary
 
-**What we collect:** Signed content blocks you verify, text you sign, and anonymous discovery events (page URL + signer info) when signed content is found.
+**What we collect:** Signed content blocks you verify, text you sign, and anonymous discovery events (sanitized page URL/domain + signer info + mismatch signal) when signed content is found.
 
 **What we don't collect:** Browsing history, full page content, personal information, or any data that identifies you.
 

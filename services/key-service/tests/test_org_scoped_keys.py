@@ -128,6 +128,29 @@ def test_generate_key_with_org_calls_service(client, monkeypatch, user_override)
     assert payload["organization_id"] == "org_123"
 
 
+def test_generate_key_returns_403_when_tier_key_limit_reached(client, monkeypatch, user_override):
+    from app.api.v1 import endpoints
+
+    async def fake_fetch_org_role(authorization: str, org_id: str, user_id: str):
+        return "owner"
+
+    def fake_create_key(db, user_id: str, key_data, organization_id: str = None, authorization: str = None):
+        raise ValueError("Free tier allows up to 2 active API keys. Revoke an old key or upgrade your plan.")
+
+    monkeypatch.setattr(endpoints, "_fetch_org_role", fake_fetch_org_role)
+    monkeypatch.setattr(endpoints.KeyService, "create_key", fake_create_key)
+
+    response = client.post(
+        "/api/v1/keys/generate",
+        json={"name": "Org Key", "organization_id": "org_123"},
+        headers={"Authorization": "Bearer test"},
+    )
+
+    assert response.status_code == 403
+    payload = response.json()
+    assert "2 active API keys" in payload["detail"]
+
+
 def test_revoke_keys_by_user_calls_service(client, monkeypatch, user_override):
     from app.api.v1 import endpoints
 

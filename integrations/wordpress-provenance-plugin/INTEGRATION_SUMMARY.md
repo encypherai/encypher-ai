@@ -16,8 +16,7 @@ The WordPress C2PA plugin has been successfully integrated with the Enterprise A
 
 ### 1. Signing Endpoints
 **Endpoints:**
-- `POST /api/v1/sign` (Starter / document-level)
-- `POST /api/v1/sign/advanced` (Professional+ / sentence-level)
+- `POST /api/v1/sign` (all tiers; features are configured via `options` and gated server-side)
 
 **Purpose:** Create C2PA-compliant invisible embeddings for WordPress posts.
 
@@ -28,8 +27,15 @@ The WordPress C2PA plugin has been successfully integrated with the Enterprise A
 {
   "text": "Blog post content...",
   "document_id": "wp_post_123",
-  "segmentation_level": "sentence",
-  "action": "c2pa.created",
+  "options": {
+    "manifest_mode": "micro",
+    "ecc": true,
+    "embed_c2pa": true,
+    "segmentation_level": "sentence",
+    "action": "c2pa.created",
+    "index_for_attribution": true,
+    "return_embedding_plan": true
+  },
   "metadata": {
     "title": "Post Title",
     "author": "Author Name",
@@ -65,11 +71,9 @@ The WordPress C2PA plugin has been successfully integrated with the Enterprise A
 
 ### 2. Verification Endpoints
 **Endpoints:**
-- `POST /api/v1/verify/advanced` (Professional+ authenticated verification)
-- `POST /api/v1/verify` (public verification fallback)
-- `POST /api/v1/public/extract-and-verify` (public extraction + verification)
-**Purpose:** Verify embedded C2PA manifests and optionally run attribution/plagiarism analysis.  
-**Authentication:** Required for `/verify/advanced`, optional for public endpoints.
+- `POST /api/v1/verify` (public verification)
+**Purpose:** Verify embedded C2PA manifests.  
+**Authentication:** Optional/public endpoint for plugin verification.
 
 **Request Format:**
 ```json
@@ -117,13 +121,13 @@ The WordPress C2PA plugin has been successfully integrated with the Enterprise A
 **1. Sign Content**
 - **Endpoint:** `POST /wp-json/encypher-provenance/v1/sign`
 - **Purpose:** Mark WordPress post with C2PA manifest
-- **Calls:** Enterprise API `/sign` (Starter) or `/sign/advanced` (Professional+)
+- **Calls:** Enterprise API `/sign` with canonical `options` payload
 - **Permission:** `edit_post` capability required
 
 **2. Verify Content**
 - **Endpoint:** `POST /wp-json/encypher-provenance/v1/verify`
 - **Purpose:** Verify C2PA manifest in post content
-- **Calls:** Enterprise API `/verify/advanced` for Pro/Enterprise tiers with fallback to `/verify`
+- **Calls:** Enterprise API `/verify`
 - **Permission:** `edit_post` capability required
 
 **3. Get Status**
@@ -140,7 +144,7 @@ The WordPress C2PA plugin has been successfully integrated with the Enterprise A
 3. Plugin checks if post type is enabled
 4. Plugin checks for per-post override
 5. Plugin calls REST API `/sign` endpoint
-6. REST API calls Enterprise API `/sign` or `/sign/advanced` (tier dependent)
+6. REST API calls Enterprise API `/sign` with canonical micro options
 7. Enterprise API returns embedded content
 8. Plugin updates post content with embedded version
 9. Plugin stores metadata in post meta fields
@@ -286,20 +290,26 @@ ENCYPHER_API_KEY=<your-production-key>
 
 **Test Advanced Signing Endpoint:**
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/sign/advanced \
+curl -X POST https://api.encypherai.com/api/v1/sign \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Test content",
     "document_id": "test_123",
-    "segmentation_level": "sentence",
-    "action": "c2pa.created"
+    "options": {
+      "manifest_mode": "micro",
+      "ecc": true,
+      "embed_c2pa": true,
+      "segmentation_level": "sentence",
+      "action": "c2pa.created",
+      "return_embedding_plan": true
+    }
   }'
 ```
 
 **Test Verification Endpoint:**
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/public/extract-and-verify \
+curl -X POST https://api.encypherai.com/api/v1/verify \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Content with invisible embeddings..."

@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { OrganizationSwitcher } from '../OrganizationSwitcher';
 import { MobileNav } from '../MobileNav';
@@ -196,6 +196,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const userInitial = userName.charAt(0).toUpperCase();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [setupWizardLatchedOpen, setSetupWizardLatchedOpen] = useState(false);
 
   // TEAM_006: Check if user is super admin via API
   const { data: isSuperAdmin } = useQuery({
@@ -222,7 +223,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     retry: 1,
   });
 
-  const showSetupWizard = !setupLoading && setupStatus && !setupStatus.setup_completed;
+  useEffect(() => {
+    if (setupStatus?.setup_completed === false) {
+      setSetupWizardLatchedOpen(true);
+      return;
+    }
+
+    if (setupStatus?.setup_completed === true) {
+      setSetupWizardLatchedOpen(false);
+    }
+  }, [setupStatus?.setup_completed]);
+
+  const showSetupWizard = setupWizardLatchedOpen || (!setupLoading && setupStatus?.setup_completed === false);
 
   // Filter groups: hide enterprise group for free users, remove empty groups
   const visibleGroups = navGroups

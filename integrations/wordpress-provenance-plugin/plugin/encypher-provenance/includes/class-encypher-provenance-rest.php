@@ -317,7 +317,9 @@ class Rest
                 'document_type' => 'article',
                 'claim_generator' => 'WordPress/Encypher Plugin v' . ENCYPHER_PROVENANCE_VERSION,
                 'action' => $action_type,
-                'manifest_mode' => 'micro_ecc_c2pa',
+                'manifest_mode' => 'micro',
+                'ecc' => true,
+                'embed_c2pa' => true,
                 'segmentation_level' => 'sentence',
                 'index_for_attribution' => true,
                 'return_embedding_plan' => true,
@@ -809,9 +811,13 @@ class Rest
             // If content changes manually, mark status stale.
             $previous_content = get_post_meta($post_id, '_encypher_provenance_cached_content_hash', true);
             $current_hash = md5((string) $post->post_content);
-            if ($previous_content && $previous_content !== $current_hash) {
+            $is_marked = (bool) get_post_meta($post_id, '_encypher_marked', true);
+            if ($is_marked && $previous_content && $previous_content !== $current_hash) {
                 update_post_meta($post_id, '_encypher_provenance_status', 'modified');
                 delete_post_meta($post_id, '_encypher_provenance_verification');
+                // Keep the previous signed-content hash so auto_sign_on_update can
+                // detect the content delta and trigger a c2pa.edited re-sign.
+                return;
             }
             update_post_meta($post_id, '_encypher_provenance_cached_content_hash', $current_hash);
         }
@@ -1224,7 +1230,7 @@ class Rest
         ];
 
         $api_key = isset($settings['api_key']) ? trim((string) $settings['api_key']) : '';
-        if ($api_key) {
+        if ($require_auth && $api_key) {
             $headers['Authorization'] = 'Bearer ' . sanitize_text_field($api_key);
         } elseif ($require_auth) {
             return new WP_Error('missing_api_key', __('Please configure an Encypher API key before signing.', 'encypher-provenance'), ['status' => 401]);

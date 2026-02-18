@@ -984,6 +984,8 @@ function _buildBadgeDetails(response, markerType) {
         timestamp: response.data?.signed_at,
         documentId: response.data?.document_id,
         verificationUrl: response.data?.verification_url,
+        originalDomain: response.data?.original_domain || response.data?.signing_domain || null,
+        signingDomain: response.data?.signing_domain || response.data?.original_domain || null,
         title: response.data?.title,
         documentType: response.data?.document_type,
         c2paValidated: response.data?.c2pa_validated,
@@ -991,7 +993,7 @@ function _buildBadgeDetails(response, markerType) {
         c2paManifest: response.data?.c2pa_manifest,
         c2paAssertions: response.data?.c2pa_assertions,
         licenseType: response.data?.license_type,
-        markerType
+        markerType,
       }
     };
   } else if (response && response.revoked) {
@@ -1013,6 +1015,8 @@ function _buildBadgeDetails(response, markerType) {
         c2paManifest: response.data?.c2pa_manifest,
         c2paAssertions: response.data?.c2pa_assertions,
         verificationUrl: response.data?.verification_url,
+        originalDomain: response.data?.original_domain || response.data?.signing_domain || null,
+        signingDomain: response.data?.signing_domain || response.data?.original_domain || null,
         markerType
       }
     };
@@ -1056,7 +1060,12 @@ async function _verifyDetections(detections) {
         visibleText: detection.visibleText,
         markerType: detection.markerType,
         pageUrl: window.location.href,
-        pageTitle: document.title
+        pageDomain: window.location.hostname,
+        pageTitle: document.title,
+        discoverySource: 'page_scan',
+        embeddingCount: 1,
+        visibleTextLength: detection.visibleText?.length || 0,
+        embeddingByteLength: detection.bytes?.length || 0,
         }),
         new Promise((resolve) => setTimeout(() => resolve(null), 15000)),
       ]);
@@ -1072,6 +1081,8 @@ async function _verifyDetections(detections) {
       
       const { status, details } = _buildBadgeDetails(response, detection.markerType);
       details.detectionId = detection.detectionId;
+      details.visibleTextLength = detection.visibleText?.length || 0;
+      details.embeddingByteLength = detection.bytes?.length || 0;
       
       // Store in local browser cache
       _verificationCache.set(detection.textHash, {
@@ -1129,7 +1140,12 @@ async function scanPage(root = document.body) {
       details: cachedDetails,
       markerType: cachedDetails.markerType,
       pageUrl: window.location.href,
+      pageDomain: window.location.hostname,
       pageTitle: document.title,
+      discoverySource: 'cached_detection',
+      embeddingCount: 1,
+      visibleTextLength: cachedDetails.visibleTextLength,
+      embeddingByteLength: cachedDetails.embeddingByteLength,
     });
     _debugLog('DEBUG', 'detector', `Cache hit: ${entry.cachedStatus} (hash=${entry.textHash})`);
   }
@@ -1333,7 +1349,12 @@ async function verifySelectedText(text, context = {}) {
       visibleText: text,
       markerType: context.markerType || 'selection',
       pageUrl: context.pageUrl || window.location.href,
-      pageTitle: context.pageTitle || document.title
+      pageDomain: window.location.hostname,
+      pageTitle: context.pageTitle || document.title,
+      discoverySource: 'selection_verify',
+      embeddingCount: 1,
+      visibleTextLength: text?.length || 0,
+      embeddingByteLength: null,
     });
 
     if (!response) {

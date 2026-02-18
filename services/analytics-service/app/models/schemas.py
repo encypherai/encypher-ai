@@ -149,6 +149,11 @@ class DiscoveryEvent(BaseModel):
     markerType: Optional[str] = Field(default=None, max_length=50)
     # Context
     embeddingCount: int = Field(default=1, ge=1)
+    discoverySource: Optional[str] = Field(default=None, max_length=64)
+    domainMismatch: Optional[bool] = None
+    mismatchReason: Optional[str] = Field(default=None, max_length=64)
+    contentLengthBucket: Optional[str] = Field(default=None, max_length=32)
+    embeddingByteLength: Optional[int] = Field(default=None, ge=0)
     # Extension metadata
     extensionVersion: Optional[str] = Field(default=None, max_length=50)
     sessionId: Optional[str] = Field(default=None, max_length=100)

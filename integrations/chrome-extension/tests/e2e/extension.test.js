@@ -115,7 +115,7 @@ describe('Chrome Extension E2E Tests', () => {
       
       // Check popup header
       const title = await popup.$eval('.popup__title', el => el.textContent);
-      assert.strictEqual(title, 'Verifier');
+      assert.strictEqual(title, 'Verify');
       
       // Check tabs exist (Verify, Sign, and Debug — Debug is hidden by default)
       const tabs = await popup.$$('.popup__tab');

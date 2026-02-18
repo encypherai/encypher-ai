@@ -148,6 +148,8 @@ class Admin
                 'api_base_url' => 'https://api.encypherai.com/api/v1',
                 'api_key' => '',
                 'auto_verify' => true,
+                'connection_last_status' => 'unknown',
+                'connection_last_checked_at' => '',
                 'auto_mark_on_publish' => true,
                 'auto_mark_on_update' => true,
                 'metadata_format' => 'c2pa',
@@ -157,6 +159,16 @@ class Admin
                 'signing_profile_id' => '',
                 'organization_id' => '',
                 'organization_name' => '',
+                'usage' => [
+                    'api_calls' => [
+                        'used' => 0,
+                        'limit' => 1000,
+                        'remaining' => 1000,
+                        'percentage_used' => 0,
+                        'is_unlimited' => false,
+                        'reset_date' => '',
+                    ],
+                ],
                 'post_types' => ['post', 'page'],
             ],
         ]);
@@ -350,6 +362,10 @@ class Admin
         $sanitized['api_base_url'] = rtrim($sanitized['api_base_url'], '/');
         $sanitized['api_key'] = isset($settings['api_key']) ? sanitize_text_field($settings['api_key']) : '';
         $sanitized['auto_verify'] = isset($settings['auto_verify']) ? (bool) $settings['auto_verify'] : false;
+        $valid_connection_states = ['unknown', 'connected', 'auth_required', 'disconnected'];
+        $connection_last_status = isset($settings['connection_last_status']) ? sanitize_key((string) $settings['connection_last_status']) : (isset($current_settings['connection_last_status']) ? sanitize_key((string) $current_settings['connection_last_status']) : 'unknown');
+        $sanitized['connection_last_status'] = in_array($connection_last_status, $valid_connection_states, true) ? $connection_last_status : 'unknown';
+        $sanitized['connection_last_checked_at'] = isset($settings['connection_last_checked_at']) ? sanitize_text_field((string) $settings['connection_last_checked_at']) : (isset($current_settings['connection_last_checked_at']) ? sanitize_text_field((string) $current_settings['connection_last_checked_at']) : '');
         $sanitized['auto_mark_on_publish'] = isset($settings['auto_mark_on_publish']) ? (bool) $settings['auto_mark_on_publish'] : true;
         $sanitized['auto_mark_on_update'] = isset($settings['auto_mark_on_update']) ? (bool) $settings['auto_mark_on_update'] : true;
         $sanitized['metadata_format'] = isset($settings['metadata_format']) && in_array($settings['metadata_format'], ['basic', 'c2pa'], true) ? $settings['metadata_format'] : 'c2pa';
@@ -382,12 +398,20 @@ class Admin
             $sanitized['organization_id'] = $account['organization_id'];
             $sanitized['organization_name'] = $account['organization_name'];
             $sanitized['features'] = $account['features'] ?? [];
+            $sanitized['usage'] = $this->normalize_usage_snapshot(
+                isset($account['usage']) && is_array($account['usage']) ? $account['usage'] : [],
+                $sanitized['tier']
+            );
         } elseif (!empty($sanitized['api_key']) && $previous_tier !== 'free') {
             // Keep last-known tier if dashboard lookup failed but we have a previous subscription
             $sanitized['tier'] = $previous_tier;
             $sanitized['organization_id'] = $previous_org_id;
             $sanitized['organization_name'] = $previous_org_name;
             $sanitized['features'] = isset($current_settings['features']) ? $current_settings['features'] : [];
+            $sanitized['usage'] = $this->normalize_usage_snapshot(
+                isset($current_settings['usage']) && is_array($current_settings['usage']) ? $current_settings['usage'] : [],
+                $sanitized['tier']
+            );
             add_settings_error(
                 'encypher_provenance_settings',
                 'tier_last_known',
@@ -398,6 +422,7 @@ class Admin
             $sanitized['tier'] = 'free';
             $sanitized['organization_id'] = '';
             $sanitized['organization_name'] = '';
+            $sanitized['usage'] = $this->normalize_usage_snapshot([], 'free');
         }
 
         $requested_mode = isset($settings['signing_mode']) && in_array($settings['signing_mode'], ['managed', 'byok'], true) ? $settings['signing_mode'] : 'managed';
@@ -495,12 +520,14 @@ class Admin
         }
 
         $features = isset($data['features']) && is_array($data['features']) ? $data['features'] : [];
+        $usage = $this->fetch_remote_usage_quota($base, $api_key, $tier, $fallback);
 
         $account = [
             'tier' => $tier,
             'organization_id' => isset($data['organization_id']) ? sanitize_text_field((string) $data['organization_id']) : '',
             'organization_name' => isset($data['organization_name']) ? sanitize_text_field((string) $data['organization_name']) : '',
             'features' => $features,
+            'usage' => $usage,
         ];
 
         set_site_transient($cache_key, $account, self::ACCOUNT_CACHE_TTL);
@@ -511,6 +538,196 @@ class Admin
     private function build_account_cache_key(string $api_base_url, string $api_key): string
     {
         return 'encypher_account_' . md5(strtolower($api_base_url) . '|' . substr(hash('sha256', $api_key), 0, 16));
+    }
+
+    private function fetch_remote_usage_quota(string $api_base_url, string $api_key, string $tier, array $fallback = []): array
+    {
+        $fallback_usage = isset($fallback['usage']) && is_array($fallback['usage'])
+            ? $fallback['usage']
+            : [];
+        $normalized_fallback = $this->normalize_usage_snapshot($fallback_usage, $tier);
+        $quota_url = rtrim((string) $api_base_url, '/') . '/account/quota';
+        $response = wp_remote_get($quota_url, [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+        ]);
+
+        if (is_wp_error($response)) {
+            return $normalized_fallback;
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code >= 400) {
+            return $normalized_fallback;
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (! is_array($body)) {
+            return $normalized_fallback;
+        }
+
+        $data = isset($body['data']) && is_array($body['data']) ? $body['data'] : [];
+        $metrics = isset($data['metrics']) && is_array($data['metrics']) ? $data['metrics'] : [];
+        $api_calls = isset($metrics['api_calls']) && is_array($metrics['api_calls']) ? $metrics['api_calls'] : [];
+
+        if (empty($api_calls)) {
+            return $normalized_fallback;
+        }
+
+        return $this->normalize_usage_snapshot([
+            'api_calls' => [
+                'used' => isset($api_calls['used']) ? (int) $api_calls['used'] : 0,
+                'limit' => isset($api_calls['limit']) ? (int) $api_calls['limit'] : ('free' === $tier ? 1000 : -1),
+                'remaining' => isset($api_calls['remaining']) ? (int) $api_calls['remaining'] : 0,
+                'percentage_used' => isset($api_calls['percentage_used']) ? (float) $api_calls['percentage_used'] : 0,
+                'is_unlimited' => isset($api_calls['limit']) ? ((int) $api_calls['limit'] < 0) : ('free' !== $tier),
+                'reset_date' => isset($data['reset_date']) ? sanitize_text_field((string) $data['reset_date']) : '',
+                'period_end' => isset($data['period_end']) ? sanitize_text_field((string) $data['period_end']) : '',
+            ],
+        ], $tier);
+    }
+
+    private function normalize_usage_snapshot(array $usage, string $tier): array
+    {
+        $default_limit = 'free' === $tier ? 1000 : -1;
+        $api_calls = isset($usage['api_calls']) && is_array($usage['api_calls']) ? $usage['api_calls'] : $usage;
+
+        $used = isset($api_calls['used']) ? max(0, (int) $api_calls['used']) : 0;
+        $limit = isset($api_calls['limit']) ? (int) $api_calls['limit'] : $default_limit;
+        $is_unlimited = isset($api_calls['is_unlimited']) ? (bool) $api_calls['is_unlimited'] : ($limit < 0);
+
+        if ($is_unlimited) {
+            $limit = -1;
+            $remaining = -1;
+            $percentage_used = 0.0;
+        } else {
+            if ($limit <= 0) {
+                $limit = $default_limit > 0 ? $default_limit : 1000;
+            }
+            $remaining = isset($api_calls['remaining'])
+                ? max(0, (int) $api_calls['remaining'])
+                : max(0, $limit - $used);
+            $percentage_used = isset($api_calls['percentage_used'])
+                ? (float) $api_calls['percentage_used']
+                : ($limit > 0 ? round(($used / $limit) * 100, 2) : 0.0);
+        }
+
+        if (! $is_unlimited) {
+            $percentage_used = min(100.0, max(0.0, $percentage_used));
+        }
+
+        return [
+            'api_calls' => [
+                'used' => $used,
+                'limit' => $limit,
+                'remaining' => $remaining,
+                'percentage_used' => $percentage_used,
+                'is_unlimited' => $is_unlimited,
+                'reset_date' => isset($api_calls['reset_date']) ? sanitize_text_field((string) $api_calls['reset_date']) : '',
+                'period_end' => isset($api_calls['period_end']) ? sanitize_text_field((string) $api_calls['period_end']) : '',
+            ],
+        ];
+    }
+
+    private function get_usage_snapshot(array $settings, bool $refresh_remote = false): array
+    {
+        $tier = isset($settings['tier']) ? (string) $settings['tier'] : 'free';
+        $usage = $this->normalize_usage_snapshot(
+            isset($settings['usage']) && is_array($settings['usage']) ? $settings['usage'] : [],
+            $tier
+        );
+
+        if (! $refresh_remote) {
+            return $usage;
+        }
+
+        $api_key = isset($settings['api_key']) ? trim((string) $settings['api_key']) : '';
+        $api_base_url = isset($settings['api_base_url']) ? trim((string) $settings['api_base_url']) : '';
+        if ('' === $api_key || '' === $api_base_url) {
+            return $usage;
+        }
+
+        $quota_usage = $this->fetch_remote_usage_quota($api_base_url, $api_key, $tier, [
+            'usage' => $usage,
+        ]);
+        if (isset($quota_usage['api_calls']) && is_array($quota_usage['api_calls'])) {
+            return $quota_usage;
+        }
+
+        $account = $this->resolve_remote_account($api_base_url, $api_key, $settings);
+        if (is_array($account) && isset($account['usage']) && is_array($account['usage'])) {
+            return $this->normalize_usage_snapshot($account['usage'], $tier);
+        }
+
+        return $usage;
+    }
+
+    private function render_usage_progress_bar(array $usage, string $wrapper_class = 'encypher-usage-progress', string $title = 'Monthly API call usage'): void
+    {
+        $api_calls = isset($usage['api_calls']) && is_array($usage['api_calls']) ? $usage['api_calls'] : [];
+        $used = isset($api_calls['used']) ? max(0, (int) $api_calls['used']) : 0;
+        $limit = isset($api_calls['limit']) ? (int) $api_calls['limit'] : 1000;
+        $remaining = isset($api_calls['remaining']) ? (int) $api_calls['remaining'] : max(0, $limit - $used);
+        $percentage = isset($api_calls['percentage_used']) ? (float) $api_calls['percentage_used'] : 0.0;
+        $is_unlimited = ! empty($api_calls['is_unlimited']) || $limit < 0;
+        $reset_date = isset($api_calls['reset_date']) ? (string) $api_calls['reset_date'] : '';
+        $human_readable_reset_date = $reset_date;
+
+        if ($reset_date) {
+            $reset_timestamp = strtotime($reset_date);
+            if (false !== $reset_timestamp) {
+                $human_readable_reset_date = wp_date(
+                    get_option('date_format') . ' ' . get_option('time_format'),
+                    $reset_timestamp
+                );
+            }
+        }
+
+        if (! $is_unlimited) {
+            $percentage = min(100.0, max(0.0, $percentage));
+        }
+
+        $wrapper_classes = trim($wrapper_class . ' encypher-usage-progress');
+        ?>
+        <div class="<?php echo esc_attr($wrapper_classes); ?>">
+            <h3 class="encypher-usage-progress-title"><?php echo esc_html($title); ?></h3>
+            <?php if ($is_unlimited): ?>
+                <p class="encypher-usage-progress-summary">
+                    <strong><?php esc_html_e('Monthly API calls this month:', 'encypher-provenance'); ?></strong>
+                    <?php echo esc_html(number_format_i18n($used)); ?>
+                    <span class="description"><?php esc_html_e('Unlimited plan', 'encypher-provenance'); ?></span>
+                </p>
+            <?php else: ?>
+                <p class="encypher-usage-progress-summary">
+                    <strong><?php esc_html_e('Monthly API calls this month:', 'encypher-provenance'); ?></strong>
+                    <?php echo esc_html(number_format_i18n($used)); ?>
+                    / <?php echo esc_html(number_format_i18n($limit)); ?>
+                    (<?php echo esc_html(number_format_i18n((int) round($percentage))); ?>%)
+                </p>
+                <div class="encypher-usage-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo esc_attr((int) round($percentage)); ?>">
+                    <div class="encypher-usage-progress-fill" style="width: <?php echo esc_attr($percentage); ?>%;"></div>
+                </div>
+                <p class="encypher-usage-progress-remaining">
+                    <strong><?php esc_html_e('API calls remaining this month:', 'encypher-provenance'); ?></strong>
+                    <?php echo esc_html(number_format_i18n(max(0, $remaining))); ?>
+                </p>
+            <?php endif; ?>
+            <?php if ($reset_date): ?>
+                <p class="description encypher-usage-progress-reset">
+                    <?php
+                    printf(
+                        /* translators: %s: reset date/time in site's locale */
+                        esc_html__('Usage resets on: %s', 'encypher-provenance'),
+                        esc_html($human_readable_reset_date)
+                    );
+                    ?>
+                </p>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 
     /**
@@ -527,6 +744,7 @@ class Admin
         $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
         $org_name = isset($settings['organization_name']) ? $settings['organization_name'] : '';
         $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
+        $usage = $this->get_usage_snapshot($settings, true);
         $is_connected = !empty($api_key);
         $stats = $this->gather_analytics_stats();
         $show_onboarding = get_option('encypher_show_onboarding', true) && !$is_connected;
@@ -604,6 +822,11 @@ class Admin
                 </div>
             </div>
 
+            <div class="encypher-section">
+                <h2><?php esc_html_e('API usage', 'encypher-provenance'); ?></h2>
+                <?php $this->render_usage_progress_bar($usage, 'encypher-dashboard-usage-progress encypher-usage-progress-compact'); ?>
+            </div>
+
             <!-- Upsell Module -->
             <?php $this->render_upsell_module($tier); ?>
 
@@ -636,6 +859,19 @@ class Admin
             .encypher-action-card .action-icon { margin-bottom: 12px; }
             .encypher-action-card .action-title { font-weight: 600; color: #1d2327; margin-bottom: 4px; }
             .encypher-action-card .action-desc { font-size: 13px; color: #646970; }
+            .encypher-usage-progress { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px; }
+            .encypher-usage-progress-title { margin: 0 0 8px; font-size: 14px; color: #1b2f50; }
+            .encypher-usage-progress-summary { margin: 0 0 10px; }
+            .encypher-usage-progress-track { width: 100%; height: 10px; border-radius: 999px; background: #e8edf2; overflow: hidden; }
+            .encypher-usage-progress-fill { height: 100%; background: linear-gradient(90deg, #1b2f50 0%, #2a87c4 100%); }
+            .encypher-usage-progress-remaining { margin: 10px 0 0; font-size: 13px; color: #334155; }
+            .encypher-usage-progress-reset { margin-top: 8px; }
+            .encypher-usage-progress-compact { padding: 10px 14px; }
+            .encypher-usage-progress-compact .encypher-usage-progress-title { margin-bottom: 6px; }
+            .encypher-usage-progress-compact .encypher-usage-progress-summary { margin-bottom: 6px; font-size: 12px; }
+            .encypher-usage-progress-compact .encypher-usage-progress-track { height: 7px; margin-top: 6px; }
+            .encypher-usage-progress-compact .encypher-usage-progress-remaining { margin-top: 6px; font-size: 12px; }
+            .encypher-usage-progress-compact .encypher-usage-progress-reset { margin-top: 6px; font-size: 11px; }
         </style>
         <?php
     }
@@ -768,6 +1004,11 @@ class Admin
             return;
         }
 
+        $settings = get_option('encypher_provenance_settings', []);
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
+
+        $usage = $this->get_usage_snapshot($settings, true);
+
         global $wpdb;
 
         // Get posts with their signing status
@@ -783,6 +1024,19 @@ class Admin
         <div class="wrap encypher-content-page">
             <h1><?php esc_html_e('Content Management', 'encypher-provenance'); ?></h1>
             <p class="description"><?php esc_html_e('View and manage the signing status of your content.', 'encypher-provenance'); ?></p>
+            <?php if ('free' === $tier): ?>
+                <div class="notice notice-info inline">
+                    <p>
+                        <?php esc_html_e('Free plan includes up to 1,000 sign requests/month for publishing workflows.', 'encypher-provenance'); ?>
+                        <?php esc_html_e('$0.02/sign request applies after the monthly cap.', 'encypher-provenance'); ?>
+                        <?php esc_html_e('Verification requests remain available with a soft cap of 10,000/month.', 'encypher-provenance'); ?>
+                        <?php esc_html_e('Need more than 1,000 sign requests/month?', 'encypher-provenance'); ?>
+                        <a href="https://dashboard.encypherai.com/billing" target="_blank" rel="noopener noreferrer"><?php esc_html_e('View billing options', 'encypher-provenance'); ?></a>
+                    </p>
+                </div>
+            <?php endif; ?>
+
+            <?php $this->render_usage_progress_bar($usage, 'encypher-content-usage-progress'); ?>
 
             <div class="tablenav top">
                 <div class="alignleft actions">
@@ -814,6 +1068,24 @@ class Admin
                             $status = get_post_meta($post->ID, '_encypher_provenance_status', true);
                             $document_id = get_post_meta($post->ID, '_encypher_provenance_document_id', true);
                             $verification_url = get_post_meta($post->ID, '_encypher_provenance_verification_url', true);
+
+                            $status_label = __('Signed', 'encypher-provenance');
+                            $status_class = 'status-signed';
+                            $status_guidance = __('Verified provenance is available.', 'encypher-provenance');
+
+                            if (! $is_marked) {
+                                $status_label = __('Unsigned (needs signing)', 'encypher-provenance');
+                                $status_class = 'status-unsigned';
+                                $status_guidance = __('Use Bulk Sign or publish/update this post to sign it.', 'encypher-provenance');
+                            } elseif ('modified' === $status) {
+                                $status_label = __('Modified since signing', 'encypher-provenance');
+                                $status_class = 'status-modified';
+                                $status_guidance = __('Re-sign by updating this post.', 'encypher-provenance');
+                            } elseif ('verification_failed' === $status) {
+                                $status_label = __('Verification failed', 'encypher-provenance');
+                                $status_class = 'status-verify-failed';
+                                $status_guidance = __('Run Verify to refresh status.', 'encypher-provenance');
+                            }
                         ?>
                             <tr>
                                 <td class="column-title">
@@ -821,20 +1093,19 @@ class Admin
                                 </td>
                                 <td class="column-type"><?php echo esc_html(get_post_type_object($post->post_type)->labels->singular_name); ?></td>
                                 <td class="column-status">
-                                    <?php if ($is_marked): ?>
-                                        <span class="encypher-status-badge status-signed"><?php esc_html_e('Signed', 'encypher-provenance'); ?></span>
-                                    <?php else: ?>
-                                        <span class="encypher-status-badge status-unsigned"><?php esc_html_e('Not Signed', 'encypher-provenance'); ?></span>
-                                    <?php endif; ?>
+                                    <span class="encypher-status-badge <?php echo esc_attr($status_class); ?>"><?php echo esc_html($status_label); ?></span>
+                                    <p class="encypher-status-guidance"><?php echo esc_html($status_guidance); ?></p>
                                 </td>
                                 <td class="column-signed">
                                     <?php echo $last_signed ? esc_html($last_signed) : '—'; ?>
                                 </td>
                                 <td class="column-actions">
                                     <?php if ($verification_url): ?>
-                                        <a href="<?php echo esc_url($verification_url); ?>" target="_blank" class="button button-small">
+                                        <a href="<?php echo esc_url($verification_url); ?>" target="_blank" rel="noopener noreferrer" class="button button-small">
                                             <?php esc_html_e('Verify', 'encypher-provenance'); ?>
                                         </a>
+                                    <?php else: ?>
+                                        <span class="encypher-no-verify-link"><?php esc_html_e('No verification link yet. Sign this post first.', 'encypher-provenance'); ?></span>
                                     <?php endif; ?>
                                     <a href="<?php echo esc_url(get_edit_post_link($post->ID)); ?>" class="button button-small">
                                         <?php esc_html_e('Edit', 'encypher-provenance'); ?>
@@ -850,6 +1121,10 @@ class Admin
             .encypher-content-page .encypher-status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
             .encypher-content-page .status-signed { background: #d1e7dd; color: #0a3622; }
             .encypher-content-page .status-unsigned { background: #f8d7da; color: #58151c; }
+            .encypher-content-page .status-modified { background: #fff3cd; color: #664d03; }
+            .encypher-content-page .status-verify-failed { background: #f8d7da; color: #842029; }
+            .encypher-content-page .encypher-status-guidance { margin: 6px 0 0; font-size: 12px; color: #50575e; }
+            .encypher-content-page .encypher-no-verify-link { display: inline-block; margin-right: 8px; font-size: 12px; color: #646970; }
         </style>
         <?php
     }
@@ -868,6 +1143,7 @@ class Admin
         $org_id = isset($settings['organization_id']) ? $settings['organization_id'] : '';
         $org_name = isset($settings['organization_name']) ? $settings['organization_name'] : '';
         $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
+        $usage = $this->get_usage_snapshot($settings, true);
         $is_connected = !empty($api_key);
 
         $tier_info = [
@@ -894,6 +1170,10 @@ class Admin
                     <?php if ($org_name): ?>
                         <p><strong><?php esc_html_e('Organization:', 'encypher-provenance'); ?></strong> <?php echo esc_html($org_name); ?></p>
                     <?php endif; ?>
+                    <?php if ('free' === $tier): ?>
+                        <p class="description"><?php esc_html_e('Need more than 1,000 sign requests/month? $0.02/sign request overage and Enterprise plans are available from billing.', 'encypher-provenance'); ?></p>
+                    <?php endif; ?>
+                    <?php $this->render_usage_progress_bar($usage, 'encypher-account-usage-progress'); ?>
                     <p>
                         <a href="https://dashboard.encypherai.com/billing" class="button" target="_blank">
                             <?php esc_html_e('Manage Subscription', 'encypher-provenance'); ?>
@@ -964,13 +1244,86 @@ class Admin
             return;
         }
 
+        $settings = get_option('encypher_provenance_settings', []);
+        $last_state = isset($settings['connection_last_status']) ? (string) $settings['connection_last_status'] : 'unknown';
+        $last_checked = isset($settings['connection_last_checked_at']) ? (string) $settings['connection_last_checked_at'] : '';
+
+        $has_api_url = ! empty($settings['api_base_url']);
+        $has_api_key = ! empty($settings['api_key']);
+        $connection_ready = ('connected' === $last_state);
+
+        $checklist_complete = ($has_api_url ? 1 : 0) + ($has_api_key ? 1 : 0) + ($connection_ready ? 1 : 0);
+
         ?>
-        <div class="wrap">
+        <div class="wrap encypher-settings-wrap">
             <h1><?php esc_html_e('Encypher Settings', 'encypher-provenance'); ?></h1>
+
+            <div class="encypher-launch-grid">
+                <div class="encypher-launch-card">
+                    <h2><?php esc_html_e('Launch Readiness Checklist', 'encypher-provenance'); ?></h2>
+                    <p class="description"><?php esc_html_e('Complete these steps before enabling production content signing.', 'encypher-provenance'); ?></p>
+                    <ul id="encypher-launch-checklist" class="encypher-launch-checklist">
+                        <li data-step="api-url" class="<?php echo $has_api_url ? 'is-complete' : 'is-pending'; ?>">
+                            <strong><?php esc_html_e('Step 1: Configure API base URL', 'encypher-provenance'); ?></strong>
+                        </li>
+                        <li data-step="api-key" class="<?php echo $has_api_key ? 'is-complete' : 'is-pending'; ?>">
+                            <strong><?php esc_html_e('Step 2: Add API key', 'encypher-provenance'); ?></strong>
+                        </li>
+                        <li data-step="connection-test" class="<?php echo $connection_ready ? 'is-complete' : 'is-pending'; ?>">
+                            <strong><?php esc_html_e('Step 3: Run connection test', 'encypher-provenance'); ?></strong>
+                        </li>
+                    </ul>
+                    <p id="encypher-launch-progress" class="encypher-launch-progress">
+                        <?php
+                        echo esc_html(
+                            sprintf(
+                                /* translators: 1: completed count, 2: total */
+                                __('%1$d of %2$d launch steps complete', 'encypher-provenance'),
+                                $checklist_complete,
+                                3
+                            )
+                        );
+                        ?>
+                    </p>
+                </div>
+
+                <div class="encypher-launch-card">
+                    <h2><?php esc_html_e('Connection Health', 'encypher-provenance'); ?></h2>
+                    <p id="encypher-connection-health-state" class="encypher-health-state" role="status" aria-live="polite">
+                        <?php
+                        if ('connected' === $last_state) {
+                            esc_html_e('Connected and ready', 'encypher-provenance');
+                        } elseif ('auth_required' === $last_state) {
+                            esc_html_e('Auth required', 'encypher-provenance');
+                        } elseif ('disconnected' === $last_state) {
+                            esc_html_e('Disconnected', 'encypher-provenance');
+                        } else {
+                            esc_html_e('No recent health check', 'encypher-provenance');
+                        }
+                        ?>
+                    </p>
+                    <ul class="encypher-health-meta">
+                        <li><strong><?php esc_html_e('API URL:', 'encypher-provenance'); ?></strong> <span id="encypher-connection-health-url"><?php echo esc_html(isset($settings['api_base_url']) ? (string) $settings['api_base_url'] : ''); ?></span></li>
+                        <li><strong><?php esc_html_e('Tier:', 'encypher-provenance'); ?></strong> <span id="encypher-connection-health-tier"><?php echo esc_html(isset($settings['tier']) ? (string) $settings['tier'] : 'free'); ?></span></li>
+                        <li><strong><?php esc_html_e('Organization:', 'encypher-provenance'); ?></strong> <span id="encypher-connection-health-org"><?php echo esc_html(isset($settings['organization_name']) ? (string) $settings['organization_name'] : __('Not available', 'encypher-provenance')); ?></span></li>
+                        <li><strong><?php esc_html_e('Last check:', 'encypher-provenance'); ?></strong> <span id="encypher-connection-health-last-check"><?php echo esc_html($last_checked ?: __('Not yet checked', 'encypher-provenance')); ?></span></li>
+                    </ul>
+                    <p class="description">
+                        <a href="https://dashboard.encypherai.com/register" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Get API key', 'encypher-provenance'); ?></a>
+                        ·
+                        <a href="https://dashboard.encypherai.com/billing" target="_blank" rel="noopener noreferrer"><?php esc_html_e('Manage account and billing', 'encypher-provenance'); ?></a>
+                    </p>
+                </div>
+            </div>
+
             <form method="post" action="options.php">
                 <?php
                 settings_fields('encypher_provenance_settings_group');
                 do_settings_sections('encypher-provenance-settings');
+                ?>
+                <input type="hidden" name="encypher_provenance_settings[connection_last_status]" value="<?php echo esc_attr($last_state); ?>" />
+                <input type="hidden" name="encypher_provenance_settings[connection_last_checked_at]" value="<?php echo esc_attr($last_checked); ?>" />
+                <?php
                 submit_button(__('Save Changes', 'encypher-provenance'));
                 ?>
             </form>
@@ -1050,9 +1403,9 @@ class Admin
             <strong><?php esc_html_e('Local testing:', 'encypher-provenance'); ?></strong> <?php esc_html_e('Use http://localhost:9000/api/v1', 'encypher-provenance'); ?><br>
             <strong><?php esc_html_e('Production:', 'encypher-provenance'); ?></strong> <?php esc_html_e('Use https://api.encypherai.com/api/v1', 'encypher-provenance'); ?>
         </p>
-        <div id="connection-status"></div>
+        <div id="connection-status" role="status" aria-live="polite"></div>
         <button type="button" id="test-connection-btn" class="button"><?php esc_html_e('Test Connection', 'encypher-provenance'); ?></button>
-        <div id="test-connection-result"></div>
+        <div id="test-connection-result" role="status" aria-live="polite"></div>
         <?php
     }
 
@@ -1113,6 +1466,8 @@ class Admin
         </select>
         <p class="description">
             <?php esc_html_e('BYOK lets you sign posts with your own Ed25519 key pair or HSM-backed keys (Enterprise) registered in the Encypher dashboard.', 'encypher-provenance'); ?>
+            <br><strong><?php esc_html_e('What is BYOK?', 'encypher-provenance'); ?></strong>
+            <?php esc_html_e('Bring Your Own Key means signatures are created using your organization-managed keys instead of Encypher-managed certificates.', 'encypher-provenance'); ?>
         </p>
         <?php
     }
@@ -1167,6 +1522,7 @@ class Admin
 
         $settings = get_option('encypher_provenance_settings', []);
         $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
+        $usage = $this->get_usage_snapshot($settings, true);
         wp_localize_script(
             'encypher-provenance-editor-sidebar',
             'EncypherProvenanceConfig',
@@ -1175,6 +1531,7 @@ class Admin
                 'nonce' => wp_create_nonce('wp_rest'),
                 'autoVerify' => ! empty($settings['auto_verify']),
                 'tier' => $tier,
+                'usage' => $usage,
                 'signingMode' => isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed',
                 'byokEnabled' => isset($settings['signing_mode']) && 'byok' === $settings['signing_mode'],
                 'upgradeUrl' => 'https://dashboard.encypherai.com/billing',
@@ -1433,7 +1790,11 @@ class Admin
             <input type="checkbox" name="encypher_provenance_settings[add_hard_binding]" value="1" <?php checked($checked); ?> />
             <?php esc_html_e('Include c2pa.hash.data assertion', 'encypher-provenance'); ?>
         </label>
-        <p class="description"><?php esc_html_e('Provides content hash for tamper detection. Recommended for maximum security.', 'encypher-provenance'); ?></p>
+        <p class="description">
+            <?php esc_html_e('Provides content hash for tamper detection. Recommended for maximum security.', 'encypher-provenance'); ?>
+            <br><strong><?php esc_html_e('What is hard binding?', 'encypher-provenance'); ?></strong>
+            <?php esc_html_e('Hard binding cryptographically ties the signed manifest to the exact rendered content so unauthorized edits are easier to detect.', 'encypher-provenance'); ?>
+        </p>
         <?php
     }
 
@@ -1468,6 +1829,7 @@ class Admin
     {
         $options = get_option('encypher_provenance_settings', []);
         $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $usage = $this->get_usage_snapshot($options, true);
         
         $tier_names = [
             'free' => __('Free', 'encypher-provenance'),
@@ -1478,7 +1840,7 @@ class Admin
         $tier_features = [
             'free' => [
                 __('Auto-sign on publish & update', 'encypher-provenance'),
-                __('Sentence-level C2PA signing (micro_ecc_c2pa)', 'encypher-provenance'),
+                __('Sentence-level C2PA signing (micro + ECC + embedded C2PA)', 'encypher-provenance'),
                 __('Attribution indexing', 'encypher-provenance'),
                 __('Batch signing (up to 10 docs)', 'encypher-provenance'),
                 __('Encypher-managed certificates', 'encypher-provenance'),
@@ -1513,12 +1875,18 @@ class Admin
             </div>
             
             <?php if ('free' === $tier): ?>
+                <p class="description" style="margin-top: 8px; color: #555d66;">
+                    <?php esc_html_e('1,000 sign requests/month included; $0.02/sign request after the monthly cap.', 'encypher-provenance'); ?>
+                    <?php esc_html_e('Verification requests remain available with a soft cap of 10,000/month.', 'encypher-provenance'); ?>
+                </p>
                 <p>
                     <a href="https://encypherai.com/enterprise" class="button button-primary" target="_blank">
                         <?php esc_html_e('Upgrade to Enterprise', 'encypher-provenance'); ?>
                     </a>
                 </p>
             <?php endif; ?>
+
+            <?php $this->render_usage_progress_bar($usage, 'encypher-settings-usage-progress'); ?>
             
             <input type="hidden" name="encypher_provenance_settings[tier]" value="<?php echo esc_attr($tier); ?>" />
         </div>
@@ -1612,6 +1980,7 @@ class Admin
             <p class="description">
                 <?php esc_html_e('Free tier includes "Powered by Encypher" branding on verification badges.', 'encypher-provenance'); ?>
                 <a href="https://encypherai.com/enterprise" target="_blank"><?php esc_html_e('Upgrade to Enterprise to remove branding.', 'encypher-provenance'); ?></a>
+                <br><?php esc_html_e('Whitelabel is also available as a paid add-on for Free plans. Contact Encypher support or sales for current pricing.', 'encypher-provenance'); ?>
             </p>
             <?php
         } else {

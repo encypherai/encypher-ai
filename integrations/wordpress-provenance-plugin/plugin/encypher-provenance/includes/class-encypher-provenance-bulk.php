@@ -88,6 +88,10 @@ class Bulk
 
         $settings = get_option('encypher_provenance_settings', []);
         $tier = $settings['tier'] ?? 'free';
+        $usage = $this->normalize_usage_snapshot(
+            isset($settings['usage']) && is_array($settings['usage']) ? $settings['usage'] : [],
+            $tier
+        );
         $post_types = get_post_types(['public' => true], 'objects');
         
         ?>
@@ -97,6 +101,8 @@ class Bulk
             <div class="encypher-bulk-intro">
                 <p><?php esc_html_e('Programmatically mark existing WordPress content with C2PA-compliant invisible embeddings.', 'encypher-provenance'); ?></p>
             </div>
+
+            <?php $this->render_usage_progress_bar($usage); ?>
 
             <?php if ('free' === $tier): ?>
             <div class="notice notice-info">
@@ -279,6 +285,84 @@ class Bulk
                     </button>
                 </p>
             </div>
+        </div>
+        <?php
+    }
+
+    private function normalize_usage_snapshot(array $usage, string $tier): array
+    {
+        $default_limit = 'free' === $tier ? 1000 : -1;
+        $api_calls = isset($usage['api_calls']) && is_array($usage['api_calls']) ? $usage['api_calls'] : $usage;
+
+        $used = isset($api_calls['used']) ? max(0, (int) $api_calls['used']) : 0;
+        $limit = isset($api_calls['limit']) ? (int) $api_calls['limit'] : $default_limit;
+        $is_unlimited = isset($api_calls['is_unlimited']) ? (bool) $api_calls['is_unlimited'] : ($limit < 0);
+
+        if ($is_unlimited) {
+            return [
+                'api_calls' => [
+                    'used' => $used,
+                    'limit' => -1,
+                    'remaining' => -1,
+                    'percentage_used' => 0.0,
+                    'is_unlimited' => true,
+                ],
+            ];
+        }
+
+        if ($limit <= 0) {
+            $limit = $default_limit > 0 ? $default_limit : 1000;
+        }
+
+        $remaining = isset($api_calls['remaining'])
+            ? max(0, (int) $api_calls['remaining'])
+            : max(0, $limit - $used);
+        $percentage_used = isset($api_calls['percentage_used'])
+            ? (float) $api_calls['percentage_used']
+            : ($limit > 0 ? round(($used / $limit) * 100, 2) : 0.0);
+
+        return [
+            'api_calls' => [
+                'used' => $used,
+                'limit' => $limit,
+                'remaining' => $remaining,
+                'percentage_used' => min(100.0, max(0.0, $percentage_used)),
+                'is_unlimited' => false,
+            ],
+        ];
+    }
+
+    private function render_usage_progress_bar(array $usage): void
+    {
+        $api_calls = isset($usage['api_calls']) && is_array($usage['api_calls']) ? $usage['api_calls'] : [];
+        $used = isset($api_calls['used']) ? (int) $api_calls['used'] : 0;
+        $limit = isset($api_calls['limit']) ? (int) $api_calls['limit'] : 1000;
+        $remaining = isset($api_calls['remaining']) ? (int) $api_calls['remaining'] : max(0, $limit - $used);
+        $percentage = isset($api_calls['percentage_used']) ? (float) $api_calls['percentage_used'] : 0.0;
+        $is_unlimited = ! empty($api_calls['is_unlimited']) || $limit < 0;
+        ?>
+        <div class="encypher-bulk-usage-progress">
+            <h2><?php esc_html_e('Monthly API call usage', 'encypher-provenance'); ?></h2>
+            <?php if ($is_unlimited): ?>
+                <p>
+                    <strong><?php esc_html_e('Monthly API calls this month:', 'encypher-provenance'); ?></strong>
+                    <?php echo esc_html(number_format_i18n($used)); ?>
+                    <span class="description"><?php esc_html_e('Unlimited plan', 'encypher-provenance'); ?></span>
+                </p>
+            <?php else: ?>
+                <p>
+                    <strong><?php esc_html_e('Monthly API calls this month:', 'encypher-provenance'); ?></strong>
+                    <?php echo esc_html(number_format_i18n($used)); ?> / <?php echo esc_html(number_format_i18n($limit)); ?>
+                    (<?php echo esc_html(number_format_i18n((int) round($percentage))); ?>%)
+                </p>
+                <div class="encypher-usage-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo esc_attr((int) round($percentage)); ?>">
+                    <div class="encypher-usage-progress-fill" style="width: <?php echo esc_attr($percentage); ?>%;"></div>
+                </div>
+                <p class="description">
+                    <strong><?php esc_html_e('API calls remaining this month:', 'encypher-provenance'); ?></strong>
+                    <?php echo esc_html(number_format_i18n(max(0, $remaining))); ?>
+                </p>
+            <?php endif; ?>
         </div>
         <?php
     }

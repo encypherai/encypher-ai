@@ -41,7 +41,7 @@ C2PA (Coalition for Content Provenance and Authenticity) is an open standard dev
 
 **Privacy & Security:**
 
-- No tracking or analytics
+- Anonymous signed-content discovery analytics (always on, no personal user identifiers)
 - API key stored securely in your browser
 - Only signed content blocks are sent for verification
 - 1-hour local verification cache (no redundant API calls)

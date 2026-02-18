@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_validate_key_returns_certificate_pem(client, monkeypatch) -> None:
     from app.services.key_service import KeyService
 
@@ -167,3 +170,55 @@ def test_user_level_super_admin_key_uses_configured_publisher_identity(monkeypat
     assert result["organization_name"] == "Encypher Publisher"
     assert result["display_name"] == "Encypher Publisher"
     assert result["account_type"] == "organization"
+
+
+def test_create_key_enforces_free_tier_active_key_cap(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from app.models.schemas import ApiKeyCreate
+    from app.services.key_service import ApiKey, KeyService, Organization
+
+    class _OrgQuery:
+        def filter(self, *args, **kwargs):
+            return self
+
+        def first(self):
+            return SimpleNamespace(id="org_test", name="Test Org", tier="free")
+
+    class _KeyQuery:
+        def filter(self, *args, **kwargs):
+            return self
+
+        def count(self):
+            return 2
+
+    class _DummyDB:
+        def query(self, model):
+            if model is Organization:
+                return _OrgQuery()
+            if model is ApiKey:
+                return _KeyQuery()
+            raise AssertionError("Unexpected model")
+
+        def add(self, _obj):
+            raise AssertionError("Should not add key when limit reached")
+
+        def commit(self):
+            raise AssertionError("Should not commit when limit reached")
+
+        def refresh(self, _obj):
+            raise AssertionError("Should not refresh when limit reached")
+
+    monkeypatch.setattr(KeyService, "_ensure_organization_exists", lambda db, org_id, authorization: True)
+    monkeypatch.setattr(KeyService, "_ensure_organization_certificate", lambda **kwargs: True)
+
+    with pytest.raises(ValueError) as exc_info:
+        KeyService.create_key(
+            db=_DummyDB(),
+            user_id="user_123",
+            key_data=ApiKeyCreate(name="Test Key", organization_id="org_test"),
+            organization_id="org_test",
+            authorization="Bearer test",
+        )
+
+    assert "2 active API keys" in str(exc_info.value)

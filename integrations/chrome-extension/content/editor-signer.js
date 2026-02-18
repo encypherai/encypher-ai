@@ -469,8 +469,11 @@ function createSignButton(editorId) {
   
   // Use the Encypher logo (defined in detector.js, which loads first in the
   // same content-script group).  Fall back to a simple shield if unavailable.
-  const logoSvg = (typeof ENCYPHER_LOGO_SVG !== 'undefined')
-    ? ENCYPHER_LOGO_SVG
+  const sharedLogoSvg = typeof globalThis?.ENCYPHER_LOGO_SVG === 'string'
+    ? globalThis.ENCYPHER_LOGO_SVG
+    : null;
+  const logoSvg = sharedLogoSvg
+    ? sharedLogoSvg
     : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>';
 
   button.innerHTML = `
@@ -1133,6 +1136,7 @@ function _handleMutations(mutations) {
       for (const node of mutation.addedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) {
           if (node.shadowRoot) {
+            scanForEditorsInRoot(node.shadowRoot);
             _observeShadowRoot(node.shadowRoot);
             shouldScan = true;
           }

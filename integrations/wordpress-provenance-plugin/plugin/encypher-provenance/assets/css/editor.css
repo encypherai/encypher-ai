@@ -23,6 +23,69 @@
     margin-top: 12px;
 }
 
+.encypher-provenance-panel .encypher-brand-banner {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border: 1px solid #c4d6e8;
+    border-left: 4px solid #2a87c4;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #f2f8ff 0%, #ffffff 100%);
+}
+
+.encypher-provenance-panel .encypher-brand-copy {
+    margin: 0;
+    color: #1b2f50;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.encypher-provenance-panel .encypher-plan-note {
+    margin: 6px 0 0;
+    color: #34495e;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.encypher-provenance-panel .encypher-usage-meter {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border: 1px solid #d3dde7;
+    border-radius: 6px;
+    background: #fafcff;
+}
+
+.encypher-provenance-panel .encypher-usage-summary,
+.encypher-provenance-panel .encypher-usage-remaining {
+    margin: 0;
+    font-size: 12px;
+    color: #1f2937;
+}
+
+.encypher-provenance-panel .encypher-usage-remaining {
+    margin-top: 8px;
+}
+
+.encypher-provenance-panel .encypher-usage-track {
+    width: 100%;
+    height: 8px;
+    margin-top: 8px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #dce6f0;
+}
+
+.encypher-provenance-panel .encypher-usage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1b2f50 0%, #2a87c4 100%);
+}
+
+.encypher-prepublish-usage {
+    margin: 10px 0 0;
+    font-size: 12px;
+    color: #334155;
+}
+
 .encypher-provenance-verification {
     border: 2px solid #2271b1;
     border-radius: 6px;

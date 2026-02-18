@@ -13,6 +13,7 @@ os.environ.setdefault("AUTH_SERVICE_URL", "http://auth-service:8001")
 import pytest
 from datetime import datetime
 from pydantic import ValidationError
+from pathlib import Path
 
 # Import schemas directly for unit tests
 from app.models.schemas import DiscoveryEvent, DiscoveryBatchRequest, DiscoveryResponse, DiscoveryStats
@@ -79,6 +80,24 @@ class TestDiscoveryEventSchema:
         assert event.organizationId == "org_123"
         assert event.documentId == "doc_456"
         assert event.markerType == "c2pa"
+
+    def test_event_accepts_privacy_safe_context_fields(self, sample_discovery_event_data):
+        """Discovery schema should allow non-PII context fields used for mismatch analytics."""
+        enriched = {
+            **sample_discovery_event_data,
+            "domainMismatch": True,
+            "mismatchReason": "original_domain_mismatch",
+            "discoverySource": "page_scan",
+            "contentLengthBucket": "medium",
+            "embeddingByteLength": 256,
+        }
+
+        event = DiscoveryEvent(**enriched)
+        assert event.domainMismatch is True
+        assert event.mismatchReason == "original_domain_mismatch"
+        assert event.discoverySource == "page_scan"
+        assert event.contentLengthBucket == "medium"
+        assert event.embeddingByteLength == 256
 
     def test_invalid_event_missing_required(self):
         """Test event fails without required fields."""
@@ -186,3 +205,13 @@ class TestDiscoveryAuthHeaderVerification:
     def test_rejects_empty_value(self):
         """Empty headers should be ignored for verification."""
         assert _should_verify_auth_header("") is False
+
+
+class TestDiscoveryPrivacyMetadata:
+    """Privacy guardrails for discovery metadata persistence."""
+
+    def test_endpoint_does_not_persist_client_ip_in_metric_metadata(self):
+        """IP may be used for rate limiting but should not be stored in metric metadata."""
+        endpoints_path = Path(__file__).resolve().parents[1] / "app" / "api" / "v1" / "endpoints.py"
+        endpoints_code = endpoints_path.read_text(encoding="utf-8")
+        assert '"client_ip"' not in endpoints_code

@@ -6,12 +6,11 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pytest
-from datetime import datetime, timezone, timedelta
-from unittest.mock import MagicMock, patch
+from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.db.models import Base, ContentDiscovery, DiscoveryDomainSummary, OwnedDomain
+from app.db.models import Base, ContentDiscovery, DiscoveryDomainSummary
 from app.models.schemas import DiscoveryEvent
 from app.services.discovery_service import DiscoveryService, domain_matches_pattern
 
@@ -291,6 +290,32 @@ class TestDomainMismatchDetection:
         result = DiscoveryService.record_discovery(db_session, event)
         assert result.is_external_domain == 1
 
+    def test_explicit_domain_mismatch_without_signer_sets_external(self, db_session):
+        """Client-provided mismatch should classify as external even without signer/org IDs."""
+        event = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://copier.com/stolen",
+            pageDomain="copier.com",
+            originalDomain="publisher.com",
+            domainMismatch=True,
+            mismatchReason="original_domain_mismatch",
+            verified=True,
+        )
+        result = DiscoveryService.record_discovery(db_session, event)
+        assert result.is_external_domain == 1
+
+    def test_original_domain_without_signer_falls_back_to_direct_compare(self, db_session):
+        """If signer/org are missing, originalDomain should still infer mismatch when possible."""
+        event = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://copier.com/stolen",
+            pageDomain="copier.com",
+            originalDomain="publisher.com",
+            verified=True,
+        )
+        result = DiscoveryService.record_discovery(db_session, event)
+        assert result.is_external_domain == 1
+
 
 class TestDomainAlerts:
     """Tests for domain alert functionality."""
@@ -536,7 +561,7 @@ class TestOwnedDomainCRUD:
         assert "b.com" in patterns
 
     def test_get_owned_domains_active_only(self, db_session):
-        d1 = DiscoveryService.add_owned_domain(db_session, "org_1", "active.com")
+        DiscoveryService.add_owned_domain(db_session, "org_1", "active.com")
         d2 = DiscoveryService.add_owned_domain(db_session, "org_1", "inactive.com")
         DiscoveryService.update_owned_domain(db_session, d2.id, "org_1", is_active=False)
 
