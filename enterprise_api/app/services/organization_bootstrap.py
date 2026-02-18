@@ -8,6 +8,7 @@ import logging
 from typing import Dict
 
 from app.config import settings
+from app.core.tier_config import get_tier_limits
 from app.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,7 +48,8 @@ async def ensure_organization_exists(db: AsyncSession, organization: Dict) -> bo
 
     name = organization.get("organization_name") or "Demo Organization"
     tier = organization.get("tier") or "free"
-    monthly_api_limit = organization.get("monthly_api_limit", 10000)
+    default_limits = get_tier_limits(str(tier))
+    monthly_api_limit = organization.get("monthly_api_limit", default_limits.get("api_calls", 1000))
     monthly_api_usage = organization.get("monthly_api_usage", 0)
     coalition_member = organization.get("coalition_member", True)
     coalition_rev_share = organization.get("coalition_rev_share", DEFAULT_COALITION_PUBLISHER_PERCENT)

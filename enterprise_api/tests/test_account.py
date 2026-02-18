@@ -6,7 +6,10 @@ Uses async fixtures from conftest.py for proper database and auth handling.
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import text
 
+from app.dependencies import get_current_organization
+from app.main import app
 from app.routers.account import resolve_user_account_name
 
 
@@ -103,3 +106,107 @@ class TestGetAccountQuota:
             # Check period info
             assert "period_start" in data
             assert "reset_date" in data
+
+    async def test_user_level_quota_reports_persisted_api_usage(self, client: AsyncClient, db):
+        """User-level quota should report DB-backed usage, not hardcoded zero values."""
+        org_id = "user_quota_stats_test"
+        await db.execute(
+            text(
+                """
+                INSERT INTO organizations (
+                    id, name, email, tier, monthly_api_limit, monthly_api_usage,
+                    coalition_member, coalition_rev_share, created_at, updated_at
+                ) VALUES (
+                    :id, :name, :email, :tier, :monthly_api_limit, :monthly_api_usage,
+                    :coalition_member, :coalition_rev_share, NOW(), NOW()
+                )
+                ON CONFLICT (id) DO UPDATE SET
+                    monthly_api_limit = EXCLUDED.monthly_api_limit,
+                    monthly_api_usage = EXCLUDED.monthly_api_usage,
+                    updated_at = NOW()
+                """
+            ),
+            {
+                "id": org_id,
+                "name": "Personal Account",
+                "email": "user_quota_stats_test@personal.local",
+                "tier": "free",
+                "monthly_api_limit": 1000,
+                "monthly_api_usage": 9,
+                "coalition_member": True,
+                "coalition_rev_share": 65,
+            },
+        )
+        await db.commit()
+
+        async def _override_current_org():
+            return {
+                "organization_id": org_id,
+                "organization_name": "Personal Account",
+                "tier": "free",
+                "permissions": ["read"],
+            }
+
+        app.dependency_overrides[get_current_organization] = _override_current_org
+        try:
+            response = await client.get("/api/v1/account/quota")
+        finally:
+            app.dependency_overrides.pop(get_current_organization, None)
+
+        assert response.status_code == 200
+        payload = response.json()["data"]
+        assert payload["organization_id"] == org_id
+        assert payload["metrics"]["api_calls"]["used"] == 9
+        assert payload["metrics"]["api_calls"]["limit"] == 1000
+        assert payload["metrics"]["c2pa_signatures"]["limit"] == 1000
+
+    async def test_free_tier_quota_clamps_stale_db_api_limit_to_policy_cap(self, client: AsyncClient, db):
+        """Free tier should never expose API call limits above the 1,000/month policy cap."""
+        org_id = "user_quota_limit_clamp_test"
+        await db.execute(
+            text(
+                """
+                INSERT INTO organizations (
+                    id, name, email, tier, monthly_api_limit, monthly_api_usage,
+                    coalition_member, coalition_rev_share, created_at, updated_at
+                ) VALUES (
+                    :id, :name, :email, :tier, :monthly_api_limit, :monthly_api_usage,
+                    :coalition_member, :coalition_rev_share, NOW(), NOW()
+                )
+                ON CONFLICT (id) DO UPDATE SET
+                    monthly_api_limit = EXCLUDED.monthly_api_limit,
+                    monthly_api_usage = EXCLUDED.monthly_api_usage,
+                    updated_at = NOW()
+                """
+            ),
+            {
+                "id": org_id,
+                "name": "Personal Account",
+                "email": "user_quota_limit_clamp_test@personal.local",
+                "tier": "free",
+                "monthly_api_limit": 10000,
+                "monthly_api_usage": 17,
+                "coalition_member": True,
+                "coalition_rev_share": 65,
+            },
+        )
+        await db.commit()
+
+        async def _override_current_org():
+            return {
+                "organization_id": org_id,
+                "organization_name": "Personal Account",
+                "tier": "free",
+                "permissions": ["read"],
+            }
+
+        app.dependency_overrides[get_current_organization] = _override_current_org
+        try:
+            response = await client.get("/api/v1/account/quota")
+        finally:
+            app.dependency_overrides.pop(get_current_organization, None)
+
+        assert response.status_code == 200
+        payload = response.json()["data"]
+        assert payload["metrics"]["api_calls"]["used"] == 17
+        assert payload["metrics"]["api_calls"]["limit"] == 1000

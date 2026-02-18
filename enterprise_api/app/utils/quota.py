@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Any, Dict, Optional
 
 from fastapi import HTTPException, status
-from sqlalchemy import select, update
+from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.organization import Organization, OrganizationTier
@@ -83,7 +83,7 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
         QuotaType.FUZZY_INDEX: 0,  # Enterprise only
         QuotaType.FUZZY_SEARCH: 0,  # Enterprise only
         QuotaType.BATCH_OPERATIONS: 0,  # Enterprise only
-        QuotaType.API_CALLS: 10000,
+        QuotaType.API_CALLS: 1000,
     },
     OrganizationTier.ENTERPRISE: {
         QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
@@ -118,6 +118,37 @@ class QuotaManager:
     """
 
     @staticmethod
+    async def _ensure_user_organization_exists(
+        db: AsyncSession,
+        organization_id: str,
+        tier: OrganizationTier,
+    ) -> None:
+        """Ensure a synthetic user-level organization exists for quota tracking."""
+        limit = QuotaManager.get_quota_limit(tier, QuotaType.API_CALLS)
+        await db.execute(
+            text(
+                """
+                INSERT INTO organizations (
+                    id, name, email, tier, monthly_api_limit, monthly_api_usage,
+                    coalition_member, coalition_rev_share, created_at, updated_at
+                ) VALUES (
+                    :id, :name, :email, :tier, :monthly_api_limit, 0,
+                    TRUE, 65, NOW(), NOW()
+                )
+                ON CONFLICT (id) DO NOTHING
+                """
+            ),
+            {
+                "id": organization_id,
+                "name": "Personal Account",
+                "email": f"{organization_id}@personal.local",
+                "tier": tier.value,
+                "monthly_api_limit": limit if limit >= 0 else 10000,
+            },
+        )
+        await db.flush()
+
+    @staticmethod
     async def check_quota(
         db: AsyncSession,
         organization_id: str,
@@ -144,31 +175,17 @@ class QuotaManager:
             HTTPException: If quota exceeded
         """
         # Handle user-level keys (synthetic org IDs like "user_{user_id}")
-        # These don't have a record in the organizations table
         if organization_id.startswith("user_"):
             # Check if this is a super admin key (unlimited access)
             if features and features.get("is_super_admin", False):
                 logger.debug(f"Super admin key {organization_id}: allowing unlimited {quota_type.value}")
                 return True
 
-            # Use free tier limits for user-level keys
-            tier = OrganizationTier.FREE
-            quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
-
-            # For user-level keys, we don't track usage in DB - just check if feature is available
-            if quota_limit == 0:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail={
-                        "error": "FeatureNotAvailable",
-                        "message": f"'{quota_type.value}' is not available on free tier",
-                        "current_tier": "free",
-                        "upgrade_url": "https://dashboard.encypherai.com/billing",
-                    },
-                )
-            # Allow the request - user-level keys have generous limits
-            logger.debug(f"User-level key {organization_id}: allowing {quota_type.value} (limit: {quota_limit})")
-            return True
+            await QuotaManager._ensure_user_organization_exists(
+                db=db,
+                organization_id=organization_id,
+                tier=OrganizationTier.FREE,
+            )
 
         # Check if this is a demo key (doesn't require database lookup)
         # NMA starter orgs (org_nma_*) are also demo keys
@@ -357,23 +374,6 @@ class QuotaManager:
         - X-Quota-Remaining: 3766
         - X-Quota-Reset: 2025-01-01T00:00:00Z
         """
-        # Handle user-level keys (synthetic org IDs)
-        if organization_id.startswith("user_"):
-            limit = QuotaManager.get_quota_limit(OrganizationTier.FREE, quota_type)
-            if limit == -1:
-                return {
-                    "X-Quota-Limit": "unlimited",
-                    "X-Quota-Used": "0",
-                    "X-Quota-Remaining": "unlimited",
-                    "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
-                }
-            return {
-                "X-Quota-Limit": str(limit),
-                "X-Quota-Used": "0",  # Not tracked for user-level keys
-                "X-Quota-Remaining": str(limit),
-                "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
-            }
-
         # Check if this is a demo key (doesn't require database lookup)
         is_demo_key = organization_id.startswith("org_demo") or organization_id.startswith("org_encypher")
 
@@ -438,28 +438,6 @@ class QuotaManager:
         Returns:
             Dictionary with quota status for all quota types
         """
-        # Handle user-level keys (synthetic org IDs)
-        if organization_id.startswith("user_"):
-            tier = OrganizationTier.FREE
-            quotas: Dict[str, Dict[str, Any]] = {}
-            status_dict: Dict[str, Any] = {
-                "organization_id": organization_id,
-                "tier": "free",
-                "reset_date": QuotaManager._get_reset_date().isoformat(),
-                "quotas": quotas,
-            }
-
-            for quota_type in QuotaType:
-                limit = QuotaManager.get_quota_limit(tier, quota_type)
-                quotas[quota_type.value] = {
-                    "limit": limit,
-                    "used": 0,  # Not tracked for user-level keys
-                    "remaining": limit if limit > 0 else 0,
-                    "percentage_used": 0,
-                }
-
-            return status_dict
-
         # Get organization from database
         result = await db.execute(select(Organization).where(Organization.organization_id == organization_id))
         org = result.scalar_one_or_none()
@@ -486,7 +464,7 @@ class QuotaManager:
                 "percentage_used": round((usage / limit * 100) if limit > 0 else 0, 2),
             }
 
-        return status_dict
+        return org_status
 
     @staticmethod
     async def reset_monthly_quotas(db: AsyncSession):

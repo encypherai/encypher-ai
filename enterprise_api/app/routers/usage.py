@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_content_db, get_db
 from app.dependencies import require_read_permission, require_super_admin_dep
+from app.services.organization_bootstrap import ensure_organization_exists
 
 router = APIRouter()
 
@@ -107,7 +108,7 @@ def _build_user_level_response(org_id: str, tier: str, limits: dict) -> UsageRes
             "c2pa_signatures": _build_metric("c2pa_signatures", 0, limits.get("c2pa_signatures", 0)),
             "sentences_tracked": _build_metric("sentences_tracked", 0, limits.get("sentences_tracked", 0)),
             "batch_operations": _build_metric("batch_operations", 0, limits.get("batch_operations", 0)),
-            "api_calls": _build_metric("api_calls", 0, -1),
+            "api_calls": _build_metric("api_calls", 0, limits.get("api_calls", 1000)),
         },
         reset_date=period_end.date().isoformat(),
     )
@@ -165,15 +166,20 @@ async def get_usage_stats(
     """
     org_id = organization["organization_id"]
 
-    # Handle user-level keys (synthetic org IDs like "user_{user_id}")
-    if org_id.startswith("user_"):
-        tier = "free"
-        limits = _get_tier_limits(tier)
-        return _build_user_level_response(org_id, tier, limits)
+    # Ensure synthetic user-level orgs are persisted so usage can be tracked.
+    await ensure_organization_exists(db, organization)
 
     tier, api_calls, api_limit, documents_signed, sentences_tracked, batch_operations = await _fetch_usage_counts(db, content_db, org_id)
     tier = _coerce_tier(tier)
     limits = _get_tier_limits(tier)
+    tier_api_call_limit = limits.get("api_calls", 1000)
+    if tier == "free":
+        if api_limit is None or api_limit < 0:
+            effective_api_limit = tier_api_call_limit
+        else:
+            effective_api_limit = min(int(api_limit), tier_api_call_limit)
+    else:
+        effective_api_limit = int(api_limit) if api_limit is not None else tier_api_call_limit
 
     # Calculate period dates (monthly billing cycle)
     now = datetime.now(timezone.utc)
@@ -202,7 +208,7 @@ async def get_usage_stats(
         ),
         "api_calls": _calculate_metric(
             used=api_calls,
-            limit=api_limit if api_limit != -1 else -1,
+            limit=effective_api_limit if effective_api_limit != -1 else -1,
             name="API Calls",
         ),
     }
@@ -300,25 +306,8 @@ async def get_usage_history(
     """
     org_id = organization["organization_id"]
 
-    if org_id.startswith("user_"):
-        now = datetime.now(timezone.utc)
-        history = []
-        for i in range(months):
-            month = now.month - i
-            year = now.year
-            if month <= 0:
-                month += 12
-                year -= 1
-            history.append(
-                {
-                    "period": f"{year}-{month:02d}",
-                    "c2pa_signatures": 0,
-                    "sentences_tracked": 0,
-                    "batch_operations": 0,
-                    "api_calls": 0,
-                }
-            )
-        return {"organization_id": org_id, "history": history}
+    # Ensure synthetic user-level orgs are persisted so usage history can be tracked.
+    await ensure_organization_exists(db, organization)
 
     result = await db.execute(
         text(

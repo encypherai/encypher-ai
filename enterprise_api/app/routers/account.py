@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_content_db, get_db
 from app.dependencies import get_current_organization
+from app.services.organization_bootstrap import ensure_organization_exists
 
 router = APIRouter(prefix="/account", tags=["Account"])
 
@@ -217,35 +218,8 @@ async def get_account_quota(
     else:
         period_end = period_start.replace(month=now.month + 1)
 
-    # Handle user-level keys
-    if org_id and org_id.startswith("user_"):
-        tier = "free"
-        limits = _get_tier_limits(tier)
-        return QuotaResponse(
-            data=QuotaInfo(
-                organization_id=org_id,
-                tier=tier,
-                period_start=period_start.isoformat(),
-                period_end=period_end.isoformat(),
-                metrics={
-                    "c2pa_signatures": QuotaMetric(
-                        name="C2PA Signatures",
-                        used=0,
-                        limit=limits["c2pa_signatures"],
-                        remaining=limits["c2pa_signatures"],
-                        percentage_used=0.0,
-                    ),
-                    "api_keys": QuotaMetric(
-                        name="API Keys",
-                        used=1,
-                        limit=limits["api_keys"],
-                        remaining=limits["api_keys"] - 1,
-                        percentage_used=50.0,
-                    ),
-                },
-                reset_date=period_end.isoformat(),
-            )
-        )
+    # Ensure synthetic user-level orgs are persisted so quota can be tracked.
+    await ensure_organization_exists(db, organization)
 
     # Get organization tier
     result = await db.execute(
@@ -262,6 +236,15 @@ async def get_account_quota(
 
     tier = _coerce_tier_name(row.tier or "free")
     limits = _get_tier_limits(tier)
+    tier_api_call_limit = limits.get("api_calls", 1000)
+    raw_api_call_limit = row.monthly_api_limit
+    if tier == "free":
+        if raw_api_call_limit is None or raw_api_call_limit < 0:
+            api_call_limit = tier_api_call_limit
+        else:
+            api_call_limit = min(int(raw_api_call_limit), tier_api_call_limit)
+    else:
+        api_call_limit = int(raw_api_call_limit) if raw_api_call_limit is not None else tier_api_call_limit
 
     # Get document count
     doc_result = await content_db.execute(
@@ -315,7 +298,7 @@ async def get_account_quota(
                 "api_calls": build_metric(
                     "API Calls",
                     row.monthly_api_usage or 0,
-                    row.monthly_api_limit if row.monthly_api_limit != -1 else -1,
+                    api_call_limit if api_call_limit != -1 else -1,
                 ),
             },
             reset_date=period_end.isoformat(),

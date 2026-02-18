@@ -128,7 +128,7 @@ TIER_LIMITS: Dict[str, Dict[str, int]] = {
         "sentences_tracked": 10000,
         "batch_operations": 0,
         "api_keys": 2,
-        "api_calls": 10000,
+        "api_calls": 1000,
     },
     "enterprise": {
         "c2pa_signatures": -1,

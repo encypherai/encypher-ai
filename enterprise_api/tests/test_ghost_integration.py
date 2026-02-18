@@ -181,6 +181,18 @@ class TestEmbedSignedText:
         result = embed_signed_text_in_html(html, signed)
         assert result == html
 
+    def test_embeds_visible_paragraph_not_matching_skipped_card_text(self):
+        html = (
+            '<div class="kg-code-card"><pre><code>Hello world.</code></pre></div>'
+            "<p>Hello world.</p>"
+        )
+        signed = "Hello\uFE01 world."
+
+        result = embed_signed_text_in_html(html, signed)
+
+        assert "<code>Hello world.</code>" in result
+        assert "<p>Hello\uFE01 world.</p>" in result
+
 
 # =============================================================================
 # Badge Injection Tests

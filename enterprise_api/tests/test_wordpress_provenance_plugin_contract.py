@@ -86,8 +86,65 @@ def test_plugin_requests_embedding_plan_and_has_plan_application_path() -> None:
     )
     src = rest_php.read_text(encoding="utf-8")
 
+    # Canonical unified micro options (TEAM_166+):
+    assert "'manifest_mode' => 'micro'" in src
+    assert "'ecc' => true" in src
+    assert "'embed_c2pa' => true" in src
+    assert "'manifest_mode' => 'micro_ecc_c2pa'" not in src
+
+    # Keep sentence-level signing + embedding-plan reconstruction path.
+    assert "'segmentation_level' => 'sentence'" in src
     assert "'return_embedding_plan' => true" in src
     assert "resolve_signed_text_with_embedding_plan" in src
+
+
+def test_mark_post_needs_verification_does_not_overwrite_signed_hash_on_manual_edit() -> None:
+    repo_root = _repo_root()
+    rest_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-rest.php"
+    )
+    src = rest_php.read_text(encoding="utf-8")
+
+    fn_marker = "public function mark_post_needs_verification"
+    start = src.find(fn_marker)
+    assert start != -1
+    window = src[start : start + 2200]
+
+    # If a post is already signed and visible content changes, keep the previous
+    # signed-content hash so auto_sign_on_update can detect the delta and re-sign.
+    assert "_encypher_marked" in window
+    assert "$is_marked && $previous_content && $previous_content !== $current_hash" in window
+    assert "return;" in window
+
+
+def test_call_backend_only_sends_authorization_when_auth_required() -> None:
+    repo_root = _repo_root()
+    rest_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-rest.php"
+    )
+    src = rest_php.read_text(encoding="utf-8")
+
+    fn_marker = "private function call_backend"
+    start = src.find(fn_marker)
+    assert start != -1
+    window = src[start : start + 1600]
+
+    # Public verify requests must not be forced to send potentially stale/invalid
+    # Authorization headers just because a key is present in plugin settings.
+    assert "if ($require_auth && $api_key)" in window
+    assert "} elseif ($require_auth) {" in window
 
 
 def test_verify_text_extraction_preserves_inline_boundaries_without_forced_spaces() -> None:
@@ -128,6 +185,231 @@ def test_verify_response_prefers_signing_identity_and_full_manifest_payload() ->
     assert "$normalized['signer_name'] = $normalized['signing_identity'] ?: $this->resolve_signer_display($verdict);" in src
 
 
+def test_frontend_verify_modal_maps_common_error_categories() -> None:
+    repo_root = _repo_root()
+    frontend_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-frontend.php"
+    )
+    src = frontend_php.read_text(encoding="utf-8")
+
+    assert "function buildVerificationFailureHint" in src
+    assert "Invalid API key" in src
+    assert "No valid C2PA manifest found for this content." in src
+    assert "Failed to verify content. Please try again." in src
+
+
+def test_frontend_verify_modal_surfaces_edited_action_copy() -> None:
+    repo_root = _repo_root()
+    frontend_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-frontend.php"
+    )
+    src = frontend_php.read_text(encoding="utf-8")
+
+    assert "Latest action:" in src
+    assert "Edited (provenance chain updated)" in src
+
+
+def test_settings_page_surfaces_launch_readiness_checklist_and_health_card() -> None:
+    repo_root = _repo_root()
+    admin_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-admin.php"
+    )
+    js_file = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "assets"
+        / "js"
+        / "settings-page.js"
+    )
+
+    admin_src = admin_php.read_text(encoding="utf-8")
+    js_src = js_file.read_text(encoding="utf-8")
+
+    assert "Launch Readiness Checklist" in admin_src
+    assert "Connection Health" in admin_src
+    assert "Step 1: Configure API base URL" in admin_src
+    assert "Step 2: Add API key" in admin_src
+    assert "Step 3: Run connection test" in admin_src
+
+    assert "Connected and ready" in js_src
+    assert "Auth required" in js_src
+    assert "Disconnected" in js_src
+    assert "Last check:" in js_src
+
+
+def test_content_page_surfaces_expanded_provenance_states_and_recovery_ctas() -> None:
+    repo_root = _repo_root()
+    admin_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-admin.php"
+    )
+    src = admin_php.read_text(encoding="utf-8")
+
+    assert "Modified since signing" in src
+    assert "Verification failed" in src
+    assert "Unsigned (needs signing)" in src
+    assert "Re-sign by updating this post." in src
+    assert "Run Verify to refresh status." in src
+
+
+def test_settings_page_optional_polish_includes_accessibility_live_regions() -> None:
+    repo_root = _repo_root()
+    admin_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-admin.php"
+    )
+    src = admin_php.read_text(encoding="utf-8")
+
+    assert 'id="connection-status" role="status" aria-live="polite"' in src
+    assert 'id="test-connection-result" role="status" aria-live="polite"' in src
+    assert 'id="encypher-connection-health-state" class="encypher-health-state" role="status" aria-live="polite"' in src
+
+
+def test_settings_page_optional_polish_includes_explanatory_help_copy() -> None:
+    repo_root = _repo_root()
+    admin_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-admin.php"
+    )
+    src = admin_php.read_text(encoding="utf-8")
+
+    assert "What is BYOK?" in src
+    assert "What is hard binding?" in src
+    assert "No verification link yet. Sign this post first." in src
+    assert "Whitelabel is also available as a paid add-on for Free plans" in src
+    assert "1,000 sign requests/month included; $0.02/sign request after the monthly cap." in src
+    assert "Verification requests remain available with a soft cap of 10,000/month." in src
+
+
+def test_editor_sidebar_surfaces_encypher_branding_c2pa_compatibility_and_free_plan_cap() -> None:
+    repo_root = _repo_root()
+    sidebar_js = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "assets"
+        / "js"
+        / "editor-sidebar.js"
+    )
+    src = sidebar_js.read_text(encoding="utf-8")
+
+    assert "Encypher powers this provenance workflow with C2PA-compatible signing and verification." in src
+    assert "Free plan includes up to 1,000 sign requests/month." in src
+    assert "$0.02/sign request after the monthly cap." in src
+    assert "Verification stays available with a soft cap of 10,000 requests/month." in src
+    assert "Whitelabel and advanced controls are available as add-ons, or included with Enterprise." in src
+    assert "Encypher Content Signing (C2PA-compatible)" in src
+
+
+def test_admin_pages_surface_free_plan_cap_messaging() -> None:
+    repo_root = _repo_root()
+    admin_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-admin.php"
+    )
+    src = admin_php.read_text(encoding="utf-8")
+
+    assert "Free plan includes up to 1,000 sign requests/month for publishing workflows." in src
+    assert "Need more than 1,000 sign requests/month?" in src
+
+
+def test_usage_progress_bars_surface_across_plugin_surfaces() -> None:
+    repo_root = _repo_root()
+    admin_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-admin.php"
+    )
+    bulk_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-bulk.php"
+    )
+    sidebar_js = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "assets"
+        / "js"
+        / "editor-sidebar.js"
+    )
+
+    admin_src = admin_php.read_text(encoding="utf-8")
+    bulk_src = bulk_php.read_text(encoding="utf-8")
+    sidebar_src = sidebar_js.read_text(encoding="utf-8")
+
+    assert "encypher-usage-progress" in admin_src
+    assert "Monthly API calls this month" in admin_src
+    assert "API calls remaining this month" in admin_src
+    assert "Usage resets on:" in admin_src
+    assert "encypher-usage-progress-compact" in admin_src
+
+    quick_actions_idx = admin_src.find("Quick Actions")
+    dashboard_usage_idx = admin_src.find("encypher-dashboard-usage-progress")
+    assert quick_actions_idx != -1
+    assert dashboard_usage_idx != -1
+    assert dashboard_usage_idx > quick_actions_idx
+
+    assert "encypher-bulk-usage-progress" in bulk_src
+    assert "Monthly API call usage" in bulk_src
+
+    assert "EncypherProvenanceConfig.usage" in sidebar_src
+    assert "Monthly API call usage" in sidebar_src
+
+
 def test_wordpress_plugin_docs_do_not_reference_legacy_embeddings_endpoints() -> None:
     repo_root = _repo_root()
     docs = [
@@ -142,6 +424,8 @@ def test_wordpress_plugin_docs_do_not_reference_legacy_embeddings_endpoints() ->
     forbidden = [
         "/api/v1/enterprise/embeddings/encode-with-embeddings",
         "/enterprise/embeddings/encode-with-embeddings",
+        "/api/v1/sign/advanced",
+        "/api/v1/verify/advanced",
     ]
 
     for path in docs:

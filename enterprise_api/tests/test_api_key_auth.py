@@ -241,6 +241,7 @@ class TestAuthenticateAPIKey:
         result = await authenticate_api_key(api_key="ency_test_12345678901234567890", db=db)
 
         assert result["organization_id"] == "org_ks_123"
+        assert result["monthly_quota"] == 1000
         assert result["can_sign"] is True
         assert result["can_verify"] is True
         assert result["can_lookup"] is True

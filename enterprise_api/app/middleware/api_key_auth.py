@@ -18,12 +18,27 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.core.tier_config import coerce_tier_name, get_tier_limits
 from app.database import get_db
 
 logger = logging.getLogger(__name__)
 
 # Cache for key-service client
 _key_service_client: Optional[httpx.AsyncClient] = None
+
+
+def _effective_monthly_quota(tier: str, reported_limit: Optional[int]) -> int:
+    normalized_tier = coerce_tier_name(tier or "free")
+    tier_limit = get_tier_limits(normalized_tier).get("api_calls", 1000)
+
+    if normalized_tier == "free":
+        if reported_limit is None or reported_limit < 0:
+            return tier_limit
+        return min(int(reported_limit), tier_limit)
+
+    if reported_limit is None:
+        return tier_limit
+    return int(reported_limit)
 
 
 def _normalize_service_base_url(raw_url: str) -> str:
@@ -135,16 +150,18 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
 
                 # Map key-service response to our expected format
                 permissions = key_data.get("permissions", [])
+                tier = key_data.get("tier", "free")
+                monthly_quota = _effective_monthly_quota(tier, key_data.get("monthly_api_limit"))
                 return {
                     "api_key": api_key,
                     "organization_id": key_data.get("organization_id"),
                     "organization_name": key_data.get("organization_name", "Personal Account"),
                     "organization_type": "user" if key_data.get("is_demo") else "organization",
-                    "tier": key_data.get("tier", "free"),
+                    "tier": tier,
                     "can_sign": "sign" in permissions or key_data.get("is_demo", False),
                     "can_verify": "verify" in permissions or key_data.get("is_demo", False),
                     "can_lookup": "read" in permissions or key_data.get("is_demo", False),
-                    "monthly_quota": key_data.get("monthly_api_limit", 10_000),
+                    "monthly_quota": monthly_quota,
                     "api_calls_this_month": key_data.get("monthly_api_usage", 0),
                     "is_demo": key_data.get("is_demo", False),
                     "private_key_encrypted": settings.demo_private_key_bytes or b"" if key_data.get("is_demo") else b"",
@@ -223,8 +240,10 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
             logger.warning(f"Authentication failed: Expired API key for org {row.organization_id}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key has expired", headers={"WWW-Authenticate": "Bearer"})
 
+        monthly_quota = _effective_monthly_quota(row.tier, row.monthly_api_limit)
+
         # Check quota (if not on unlimited plan)
-        if row.monthly_api_limit not in (-1, None) and row.monthly_api_usage >= row.monthly_api_limit:
+        if monthly_quota != -1 and row.monthly_api_usage >= monthly_quota:
             logger.warning(f"Authentication failed: Quota exceeded for org {row.organization_id}")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Monthly API quota exceeded. Please upgrade your plan or wait until next month."
@@ -261,7 +280,7 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
             "can_sign": "sign" in scopes,
             "can_verify": "verify" in scopes,
             "can_lookup": "lookup" in scopes or "read" in scopes,
-            "monthly_quota": row.monthly_api_limit,
+            "monthly_quota": monthly_quota,
             "api_calls_this_month": row.monthly_api_usage + 1,
             "is_demo": False,
             "private_key_encrypted": row.private_key_encrypted,

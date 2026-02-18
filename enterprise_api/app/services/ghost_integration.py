@@ -209,6 +209,10 @@ _VOID_ELEMENTS = frozenset({
     "link", "meta", "param", "source", "track", "wbr",
 })
 
+_TAG_SPLIT_RE = re.compile(r"(<[^>]+>)")
+_TAG_NAME_RE = re.compile(r"^</?\s*([a-zA-Z0-9:_-]+)")
+_CLASS_ATTR_RE = re.compile(r"\bclass\s*=\s*(['\"])(.*?)\1", re.IGNORECASE | re.DOTALL)
+
 
 class _TextExtractor(HTMLParser):
     """HTML parser that extracts visible text, skipping non-textual Ghost cards."""
@@ -287,28 +291,69 @@ def embed_signed_text_in_html(original_html: str, signed_text: str) -> str:
     # For now, we use the simple approach since the Enterprise API returns
     # the full signed text as a single string.
 
-    # Strip existing embeddings from original HTML for clean comparison
     clean_html = strip_c2pa_embeddings(original_html)
-
-    # Extract original text for mapping
     original_text = extract_text_from_html(clean_html)
-
     if not original_text.strip():
         return original_html
 
-    # Split both original and signed text into paragraphs
-    original_paragraphs = [p.strip() for p in original_text.split("\n") if p.strip()]
-    signed_paragraphs = [p.strip() for p in signed_text.split("\n") if p.strip()]
+    signed_parts = [p.strip() for p in signed_text.split("\n") if p.strip()]
+    if not signed_parts:
+        return clean_html
 
-    # Build a mapping from clean text → signed text
-    result_html = clean_html
-    for i, orig_para in enumerate(original_paragraphs):
-        if i < len(signed_paragraphs):
-            # Replace the clean paragraph text with the signed version
-            # Use the first occurrence to avoid replacing duplicates incorrectly
-            result_html = result_html.replace(orig_para, signed_paragraphs[i], 1)
+    parts = _TAG_SPLIT_RE.split(clean_html)
+    output_parts: List[str] = []
+    signed_index = 0
+    in_skip = False
+    skip_depth = 0
 
-    return result_html
+    for part in parts:
+        if not part:
+            continue
+
+        if part.startswith("<") and part.endswith(">"):
+            output_parts.append(part)
+
+            tag_match = _TAG_NAME_RE.match(part)
+            if not tag_match:
+                continue
+
+            tag_name = tag_match.group(1).lower()
+            is_end = part.startswith("</")
+            is_self_closing = part.rstrip().endswith("/>") or tag_name in _VOID_ELEMENTS
+
+            if is_end:
+                if in_skip:
+                    skip_depth -= 1
+                    if skip_depth <= 0:
+                        in_skip = False
+                        skip_depth = 0
+                continue
+
+            if in_skip:
+                if not is_self_closing:
+                    skip_depth += 1
+                continue
+
+            class_match = _CLASS_ATTR_RE.search(part)
+            classes = set((class_match.group(2) if class_match else "").split())
+            should_skip = bool(classes & _SKIP_CARD_CLASSES) or tag_name in ("script", "style", "code", "pre")
+            if should_skip:
+                in_skip = True
+                skip_depth = 1
+            continue
+
+        if in_skip:
+            output_parts.append(part)
+            continue
+
+        stripped = part.strip()
+        if stripped and signed_index < len(signed_parts):
+            output_parts.append(part.replace(stripped, signed_parts[signed_index], 1))
+            signed_index += 1
+        else:
+            output_parts.append(part)
+
+    return "".join(output_parts)
 
 
 # =============================================================================
