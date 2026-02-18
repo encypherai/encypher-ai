@@ -37,18 +37,12 @@ const signAnotherBtn = document.getElementById('sign-another');
 const signRetryBtn = document.getElementById('sign-retry');
 const signErrorMessageEl = document.getElementById('sign-error-message');
 const signIdentityEl = document.getElementById('sign-identity');
-const openSettingsBtn = document.getElementById('open-settings');
-const onboardingEmailEl = document.getElementById('onboarding-email');
-const onboardingLoginBtn = document.getElementById('onboarding-login');
 const onboardingStatusEl = document.getElementById('onboarding-status');
 const onboardingDashboardLoginBtn = document.getElementById('onboarding-dashboard-login');
 const onboardingDashboardSignupBtn = document.getElementById('onboarding-dashboard-signup');
 const onboardingDashboardGoogleBtn = document.getElementById('onboarding-dashboard-google');
 const onboardingDashboardGithubBtn = document.getElementById('onboarding-dashboard-github');
 const onboardingDashboardPasskeyBtn = document.getElementById('onboarding-dashboard-passkey');
-const quickApiKeyEl = document.getElementById('quick-api-key');
-const quickSaveApiKeyBtn = document.getElementById('quick-save-api-key');
-const signingIdentityHintEl = document.getElementById('signing-identity-hint');
 
 // DOM elements - Advanced options
 const tierBadgeEl = document.getElementById('tier-badge');
@@ -167,60 +161,6 @@ async function openDashboardAuth(mode, provider = '') {
   }
 }
 
-async function saveQuickApiKey() {
-  const apiKey = quickApiKeyEl?.value?.trim() || '';
-  if (!isPlausibleApiKey(apiKey)) {
-    onboardingStatusEl.textContent = 'Enter a valid API key that starts with ency_ or demo_.';
-    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
-    return;
-  }
-
-  if (quickSaveApiKeyBtn) {
-    quickSaveApiKeyBtn.disabled = true;
-    quickSaveApiKeyBtn.textContent = 'Validating...';
-  }
-  onboardingStatusEl.textContent = 'Validating API key and loading your signing identity...';
-  onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--neutral';
-
-  try {
-    const accountResponse = await chrome.runtime.sendMessage({
-      type: 'GET_ACCOUNT_INFO',
-      apiKey,
-    });
-
-    if (!accountResponse?.success || !accountResponse?.data) {
-      throw new Error(accountResponse?.error || 'API key validation failed.');
-    }
-
-    const accountPayload = accountResponse.data;
-    const identity = accountPayload.publisherDisplayName || accountPayload.organizationName || 'your organization';
-
-    await chrome.storage.local.set({ apiKey });
-    await chrome.storage.sync.set({
-      extensionSetupStatus: 'completed',
-      onboardingCompletedAt: new Date().toISOString(),
-    });
-
-    onboardingStatusEl.textContent = `Connected. Signing as ${identity}.`;
-    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--success';
-    if (signingIdentityHintEl) {
-      signingIdentityHintEl.textContent = `Signing identity ready: ${identity}`;
-    }
-    if (quickApiKeyEl) {
-      quickApiKeyEl.value = '';
-    }
-
-    await checkApiKeyAndShowSignState();
-  } catch (error) {
-    onboardingStatusEl.textContent = error?.message || 'Unable to save API key.';
-    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
-  } finally {
-    if (quickSaveApiKeyBtn) {
-      quickSaveApiKeyBtn.disabled = false;
-      quickSaveApiKeyBtn.textContent = 'Save API Key & Continue';
-    }
-  }
-}
 
 function switchToSignTab() {
   switchTab('sign');
@@ -472,47 +412,6 @@ async function checkApiKeyAndShowSignState() {
   }
 }
 
-/**
- * Optional onboarding flow: create tracked account + provision API key
- */
-async function startOptionalOnboarding() {
-  if (!onboardingLoginBtn) return;
-
-  const email = onboardingEmailEl?.value?.trim() || '';
-  if (!email) {
-    onboardingStatusEl.textContent = 'Enter an email to set up your tracked account.';
-    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
-    return;
-  }
-
-  onboardingLoginBtn.disabled = true;
-  onboardingLoginBtn.textContent = 'Setting up...';
-  onboardingStatusEl.textContent = 'Creating account and provisioning your API key...';
-  onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--neutral';
-
-  try {
-    const response = await chrome.runtime.sendMessage({
-      type: 'AUTO_PROVISION_EXTENSION_USER',
-      email
-    });
-
-    if (response?.success) {
-      onboardingStatusEl.textContent = 'Setup complete. You can now sign content.';
-      onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--success';
-      await checkApiKeyAndShowSignState();
-      return;
-    }
-
-    onboardingStatusEl.textContent = response?.error || 'Setup failed. You can still add your API key manually.';
-    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
-  } catch (error) {
-    onboardingStatusEl.textContent = error.message || 'Setup failed. Please try again or add API key manually.';
-    onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--error';
-  } finally {
-    onboardingLoginBtn.disabled = false;
-    onboardingLoginBtn.textContent = 'Instant setup by email';
-  }
-}
 
 /**
  * Fetch account info to determine tier and features
@@ -733,14 +632,11 @@ signBtn?.addEventListener('click', signContent);
 copySignedBtn?.addEventListener('click', copySignedOutput);
 signAnotherBtn?.addEventListener('click', resetSignForm);
 signRetryBtn?.addEventListener('click', () => showSignState('ready'));
-openSettingsBtn?.addEventListener('click', openSettings);
-onboardingLoginBtn?.addEventListener('click', startOptionalOnboarding);
 onboardingDashboardLoginBtn?.addEventListener('click', () => openDashboardAuth('login'));
 onboardingDashboardSignupBtn?.addEventListener('click', () => openDashboardAuth('signup'));
 onboardingDashboardGoogleBtn?.addEventListener('click', () => openDashboardAuth('login', 'google'));
 onboardingDashboardGithubBtn?.addEventListener('click', () => openDashboardAuth('login', 'github'));
 onboardingDashboardPasskeyBtn?.addEventListener('click', () => openDashboardAuth('login', 'passkey'));
-quickSaveApiKeyBtn?.addEventListener('click', saveQuickApiKey);
 verifySignCtaEl?.addEventListener('click', switchToSignTab);
 
 // Event listener - Advanced options toggle

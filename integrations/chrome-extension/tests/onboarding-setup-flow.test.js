@@ -27,18 +27,6 @@ describe('Optional login onboarding + setup tracking', () => {
 
     assert.match(
       popupHtml,
-      /id="onboarding-login"/,
-      'Popup should expose a login/setup CTA button'
-    );
-
-    assert.match(
-      popupHtml,
-      /id="onboarding-email"/,
-      'Popup should include an email field for optional onboarding setup'
-    );
-
-    assert.match(
-      popupHtml,
       /id="onboarding-dashboard-login"/,
       'Popup should provide a dashboard login CTA for extension onboarding'
     );
@@ -65,18 +53,6 @@ describe('Optional login onboarding + setup tracking', () => {
       popupHtml,
       /id="onboarding-dashboard-passkey"/,
       'Popup should expose a passkey dashboard auth quick action'
-    );
-
-    assert.match(
-      popupHtml,
-      /id="quick-api-key"/,
-      'Popup should support quick API key sync after dashboard setup'
-    );
-
-    assert.match(
-      popupHtml,
-      /id="quick-save-api-key"/,
-      'Popup should include an action to save synced dashboard credentials'
     );
 
     assert.match(
@@ -120,11 +96,6 @@ describe('Optional login onboarding + setup tracking', () => {
       'Popup should support dashboard passkey auth redirects'
     );
 
-    assert.match(
-      popupJs,
-      /function\s+saveQuickApiKey\(/,
-      'Popup should implement quick API key sync helper for dashboard credential handoff'
-    );
   });
 
   it('implements background auto-provisioning message handler for extension users', () => {
