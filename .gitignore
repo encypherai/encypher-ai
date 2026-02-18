@@ -212,3 +212,4 @@ enterprise_api/scripts/.env.bench*
 
 # Duplicate middleware files
 apps/dashboard/middleware.ts
+.claude/settings.local.json
