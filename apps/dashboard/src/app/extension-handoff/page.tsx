@@ -135,7 +135,7 @@ function ExtensionHandoffContent() {
     try {
       const response = await apiClient.createApiKey(
         accessToken,
-        `Chrome Extension ${new Date().toISOString().slice(0, 10)}`,
+        'Encypher Verify Extension Key',
         ['sign', 'verify', 'read']
       );
       const fullKey = extractFullKey(response);

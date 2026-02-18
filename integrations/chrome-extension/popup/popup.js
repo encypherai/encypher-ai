@@ -153,7 +153,7 @@ async function openDashboardAuth(mode, provider = '') {
     if (!response?.success) {
       throw new Error(response?.error || 'Unable to open dashboard auth flow.');
     }
-    onboardingStatusEl.textContent = 'Opened Dashboard. Complete sign-in, create your API key, then paste it below.';
+    onboardingStatusEl.textContent = 'Dashboard opened. Complete sign-in and your extension will connect automatically.';
     onboardingStatusEl.className = 'popup__onboarding-status popup__onboarding-status--neutral';
   } catch (error) {
     onboardingStatusEl.textContent = error?.message || 'Unable to open Dashboard auth flow.';
