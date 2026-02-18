@@ -17,7 +17,8 @@
   },
   "ignorePatterns": [
     "node_modules/",
-    "store-assets/"
+    "store-assets/",
+    "dist/"
   ],
   "overrides": [
     {

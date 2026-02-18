@@ -172,7 +172,7 @@ https://encypherai.com/privacy
 - Service worker architecture
 - Secure API key storage
 - 1-hour local verification cache
-- 42 unit tests, E2E tested with Puppeteer
+- 156 unit tests, E2E tested with Puppeteer
 - Brand-consistent SVG icons (no emojis)
 - Free/Enterprise tier support with usage tracking
 

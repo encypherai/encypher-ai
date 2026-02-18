@@ -145,14 +145,6 @@ If you have questions about this privacy policy or our data practices:
 
 - **Email**: support@encypherai.com
 - **Website**: https://encypherai.com/privacy
-- **GitHub Issues**: https://github.com/encypherai/encypherai-commercial/issues
-
-## Open Source
-
-This extension is open source. You can review the code to verify our privacy claims:
-
-- **Repository**: https://github.com/encypherai/encypherai-commercial
-- **Extension Code**: `/integrations/chrome-extension/`
 
 ## Summary
 

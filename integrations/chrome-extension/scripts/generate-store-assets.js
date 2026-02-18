@@ -364,6 +364,7 @@ body {
 }
 .popup-stat.verified .popup-stat-num { color: ${AZURE_BLUE}; }
 .popup-stat.pending .popup-stat-num { color: #f59e0b; }
+.popup-stat.revoked .popup-stat-num { color: #6b7280; }
 .popup-detail-item {
   display: flex;
   align-items: center;
@@ -459,6 +460,10 @@ body {
         <div class="popup-stat-num">0</div>
         <div class="popup-stat-label">Invalid</div>
       </div>
+      <div class="popup-stat revoked">
+        <div class="popup-stat-num">0</div>
+        <div class="popup-stat-label">Revoked</div>
+      </div>
     </div>
     <div class="popup-detail-item">
       <div class="popup-detail-icon verified">
@@ -487,13 +492,11 @@ body {
         <div class="popup-detail-date">Feb 11, 2026 &bull; C2PA Text Manifest</div>
       </div>
     </div>
-    <button class="popup-btn popup-btn-primary">Rescan Page</button>
-    <div class="usage-section">
-      <div class="usage-label">
-        <span>Free tier: 120 / 1,000 signings</span>
-        <span>12%</span>
-      </div>
-      <div class="usage-bar"><div class="usage-fill"></div></div>
+  </div>
+  <div style="padding:10px 20px 14px;border-top:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+    <button class="popup-btn popup-btn-primary" style="margin-top:0;flex:1;">Rescan</button>
+    <div style="width:32px;height:32px;border-radius:6px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </div>
   </div>
 </div>
@@ -629,12 +632,12 @@ body {
   <div class="options-section">
     <h2>API Key</h2>
     <div class="options-field">
-      <label>Enterprise API Key</label>
+      <label>API Key</label>
       <div style="display:flex;gap:8px">
-        <input class="options-input" type="password" value="enc_live_sk_7f3a9b2c..." style="flex:1" readonly>
-        <button class="options-btn" style="padding:10px 16px;font-size:12px">Save</button>
+        <input class="options-input" type="password" value="ency_live_sk_7f3a9b2c..." style="flex:1" readonly>
+        <button class="options-btn" style="padding:10px 16px;font-size:12px">Save API Key</button>
       </div>
-      <div class="options-hint">Connected as The Encypher Times</div>
+      <div class="options-hint">Signing as: The Encypher Times</div>
     </div>
   </div>
   <div class="options-section">
@@ -644,23 +647,33 @@ body {
       <div class="options-toggle"></div>
     </div>
     <div class="options-row">
-      <span class="options-row-label">Show verification badges</span>
+      <span class="options-row-label">Show inline badges</span>
       <div class="options-toggle"></div>
     </div>
   </div>
   <div class="options-section">
-    <h2>Advanced</h2>
-    <div class="options-field">
-      <label>API Base URL</label>
-      <input class="options-input" value="https://api.encypherai.com" readonly>
+    <h2>Signing</h2>
+    <div class="options-row">
+      <span class="options-row-label">Default Embedding Mode</span>
+      <span style="font-size:12px;color:#6b7280;background:#f3f4f6;padding:4px 10px;border-radius:6px;">Standard</span>
     </div>
-    <div class="options-field">
-      <label>Cache Duration (minutes)</label>
-      <input class="options-input" type="number" value="60" readonly style="width:100px">
+    <div class="options-row">
+      <span class="options-row-label">Embedding Frequency</span>
+      <span style="font-size:12px;color:#6b7280;background:#f3f4f6;padding:4px 10px;border-radius:6px;">Per sentence</span>
+    </div>
+    <div class="options-row" style="border-bottom:none">
+      <span class="options-row-label">Show sign buttons on editors</span>
+      <div class="options-toggle"></div>
+    </div>
+  </div>
+  <div class="options-section">
+    <h2>Analytics</h2>
+    <div style="font-size:12px;color:#374151;line-height:1.6;padding:8px 12px;background:#f8f9fa;border-radius:8px;border-left:3px solid ${AZURE_BLUE};">
+      <strong>Discovery analytics always on.</strong> Only privacy-safe signals are reported — sanitized page URL, signer metadata, and verification status. No personal data or user identifiers collected.
     </div>
   </div>
 </div>
-<div class="caption">Configure API key and verification preferences</div>
+<div class="caption">Configure API key, signing defaults, and verification preferences</div>
 </div>
 </body></html>`;
 }
@@ -721,7 +734,7 @@ body::before {
 </style></head><body>
 <div class="content">
   <div class="logo-icon"><img src="${LOGO_WHITE_PNG_URI}" style="height:48px;width:auto;" /></div>
-  <div class="title">Verify</div>
+  <div class="title">Encypher Verify</div>
   <div class="subtitle">Verify and sign Encypher and C2PA-compatible content on any webpage</div>
   <div class="badge-row">
     <span class="feature-badge">C2PA Standard</span>

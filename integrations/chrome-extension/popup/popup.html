@@ -13,12 +13,12 @@
         <img class="popup__logo-icon" src="../icons/encypher_full_logo_white.svg" alt="Encypher" width="132" height="24">
         <span class="popup__title">Verify</span>
       </div>
-      <div class="popup__tabs">
-        <button class="popup__tab popup__tab--active" data-tab="verify">Verify</button>
-        <button class="popup__tab" data-tab="sign">Sign</button>
-        <button class="popup__tab popup__tab--debug" data-tab="debug" hidden>Debug</button>
-      </div>
     </header>
+    <div class="popup__tabs">
+      <button class="popup__tab popup__tab--active" data-tab="verify">Verify</button>
+      <button class="popup__tab" data-tab="sign">Sign</button>
+      <button class="popup__tab popup__tab--debug" data-tab="debug" hidden>Debug</button>
+    </div>
 
     <main class="popup__content">
       <!-- Loading state -->
@@ -241,13 +241,10 @@
     </main>
 
     <footer class="popup__footer">
-      <button id="rescan-btn" class="popup__btn popup__btn--secondary">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Rescan
+      <button id="rescan-btn" class="popup__btn popup__btn--primary" style="flex:1;">
+        Rescan
       </button>
-      <a href="https://github.com/encypherai/encypherai-commercial/issues/new" target="_blank" class="popup__btn popup__btn--secondary" title="Report Issue">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      </a>
-      <button id="settings-btn" class="popup__btn popup__btn--icon" title="Settings">
+      <button id="settings-btn" class="popup__btn popup__btn--icon" title="Settings" style="flex:0 0 auto;width:36px;padding:8px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </button>
     </footer>
