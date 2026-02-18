@@ -12,6 +12,11 @@ function isOpaqueIdentity(value) {
 export function resolveSigningIdentity({ data, accountInfo } = {}) {
   const payload = data || {};
 
+  const publisherName = String(payload.publisher_name || '').trim();
+  if (publisherName && !isOpaqueIdentity(publisherName)) {
+    return publisherName;
+  }
+
   const explicitIdentity = String(
     payload.signing_identity || payload.publisher_display_name || payload.publisherDisplayName || ''
   ).trim();

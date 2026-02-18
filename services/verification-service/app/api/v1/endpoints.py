@@ -175,6 +175,54 @@ async def _fetch_trust_anchor(*, signer_id: str) -> tuple[str | None, str | None
     return public_key_pem, signer_name
 
 
+def _extract_publisher_name_from_manifest(manifest: dict | None) -> str | None:
+    """Extract human-readable publisher name from C2PA manifest assertions.
+
+    Checks ``c2pa.metadata`` assertion for ``publisher.identifier`` (preferred)
+    then ``publisher.name``, then falls back to ``author.name``.
+
+    Handles two manifest shapes:
+    - Direct: ``{"assertions": [...]}``
+    - Wrapped: ``{"manifest": {"custom_metadata": {"assertions": [...]}}}``
+      (returned by ``UnicodeMetadata.verify_metadata`` for the "manifest" format)
+
+    Returns ``None`` if nothing useful is found.
+    """
+    if not isinstance(manifest, dict):
+        return None
+
+    # Resolve assertions list from either shape
+    assertions = manifest.get("assertions")
+    if not isinstance(assertions, list):
+        inner = manifest.get("manifest")
+        if isinstance(inner, dict):
+            custom = inner.get("custom_metadata")
+            if isinstance(custom, dict):
+                assertions = custom.get("assertions")
+    if not isinstance(assertions, list):
+        return None
+    for assertion in assertions:
+        if not isinstance(assertion, dict):
+            continue
+        if assertion.get("label") != "c2pa.metadata":
+            continue
+        data = assertion.get("data")
+        if not isinstance(data, dict):
+            continue
+        publisher = data.get("publisher")
+        if isinstance(publisher, dict):
+            for key in ("identifier", "name"):
+                candidate = publisher.get(key)
+                if isinstance(candidate, str) and candidate.strip():
+                    return candidate.strip()
+        author = data.get("author")
+        if isinstance(author, dict):
+            name = author.get("name")
+            if isinstance(name, str) and name.strip():
+                return name.strip()
+    return None
+
+
 def _count_variation_selectors(text: str) -> int:
     count = 0
     for ch in text:
@@ -946,14 +994,23 @@ async def verify_text(
                 verified=is_valid,
             )
 
+    # TEAM_210: Extract publisher name from C2PA manifest assertions (c2pa.metadata).
+    # This is the most authoritative human-readable identity — it is embedded in the
+    # signed content itself and takes priority over all backend-derived names.
+    manifest_for_publisher = resolved_c2pa_manifest if resolved_c2pa_manifest else (manifest if isinstance(manifest, dict) else None)
+    publisher_name = _extract_publisher_name_from_manifest(manifest_for_publisher)
+
     verdict = VerifyVerdict(
         valid=is_valid,
         tampered=(not is_valid and reason_code == "SIGNATURE_INVALID"),
         reason_code=reason_code,
         signer_id=signer_id,
-        # TEAM_156: Prefer org name from authenticated context, then trust anchor, then signer_id
+        publisher_name=publisher_name,
+        # TEAM_210: Prefer publisher name from signed manifest, then org name from
+        # authenticated context, then trust anchor name, then signer_id.
         signer_name=(
-            organization_name if (signer_id and signer_id == organization_id and organization_name)
+            publisher_name if publisher_name
+            else organization_name if (signer_id and signer_id == organization_id and organization_name)
             else trust_anchor_name if trust_anchor_name
             else signer_id
         ),

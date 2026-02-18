@@ -80,6 +80,7 @@ class VerifyVerdict(BaseModel):
     reason_code: str
     signer_id: Optional[str] = None
     signer_name: Optional[str] = None
+    publisher_name: Optional[str] = None
     organization_id: Optional[str] = None
     organization_name: Optional[str] = None
     timestamp: Optional[datetime] = None
