@@ -1116,7 +1116,7 @@ body::before {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <div>
-          <div class="fc-pub">Reuters News Agency</div>
+          <div class="fc-pub">Meridian Press</div>
           <div class="fc-status">Verified &bull; Encypher Format</div>
         </div>
       </div>
@@ -1125,7 +1125,7 @@ body::before {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <div>
-          <div class="fc-pub">Associated Press</div>
+          <div class="fc-pub">Vantage Newswire</div>
           <div class="fc-status">Verified &bull; C2PA Text Manifest</div>
         </div>
       </div>
