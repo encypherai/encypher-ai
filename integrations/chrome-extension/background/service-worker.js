@@ -875,11 +875,16 @@ function _mapQuotaMetricsToUsage(quotaPayload) {
   const metrics = quotaPayload.metrics && typeof quotaPayload.metrics === 'object'
     ? quotaPayload.metrics
     : quotaPayload;
-  const c2paMetrics = metrics?.c2pa_signatures;
-  if (!c2paMetrics || typeof c2paMetrics !== 'object') return null;
 
-  const used = Number(c2paMetrics?.used);
-  const limit = Number(c2paMetrics?.limit);
+  // Prefer api_calls (monthly_api_usage — resets each month) over c2pa_signatures
+  // (all-time document count from the documents table, which never resets).
+  const apiCallMetrics = metrics?.api_calls;
+  const c2paMetrics = metrics?.c2pa_signatures;
+  const primary = (apiCallMetrics && typeof apiCallMetrics === 'object') ? apiCallMetrics : c2paMetrics;
+  if (!primary || typeof primary !== 'object') return null;
+
+  const used = Number(primary?.used);
+  const limit = Number(primary?.limit);
   if (!Number.isFinite(used) && !Number.isFinite(limit)) {
     return null;
   }
