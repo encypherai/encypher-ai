@@ -28,4 +28,24 @@ describe('detector UI contract', () => {
     assert.match(detectorSource, /uncached\s*=\s*_dedupeDetectionsByElement\(uncached\)/);
     assert.match(detectorSource, /cached\s*=\s*_dedupeDetectionsByElement\(cached\)/);
   });
+
+  it('tracks in-flight verifications by textHash so DOM-expanded elements subscribe to the existing promise instead of getting a stuck pending badge', () => {
+    assert.match(detectorSource, /_verificationInFlight/);
+    assert.match(detectorSource, /_verificationInFlight\.has\(detection\.textHash\)/);
+    assert.match(detectorSource, /_verificationInFlight\.set\(detection\.textHash/);
+    assert.match(detectorSource, /_verificationInFlight\.delete\(detection\.textHash\)/);
+  });
+
+  it('resolves pending badges on newly-expanded elements when an in-flight verification for the same hash completes', () => {
+    assert.match(detectorSource, /_pendingElementsByHash/);
+    assert.match(detectorSource, /_pendingElementsByHash\.get\(/);
+    assert.match(detectorSource, /_pendingElementsByHash\.set\(/);
+  });
+
+  it('sweeps orphaned pending badges on hidden ancestors after verification completes (cross-hash LinkedIn see-more case)', () => {
+    assert.match(detectorSource, /function\s+_sweepOrphanedPendingBadges\s*\(/);
+    assert.match(detectorSource, /display.*none|visibility.*hidden/);
+    assert.match(detectorSource, /_sweepOrphanedPendingBadges\(\)/);
+    assert.match(detectorSource, /_pendingBadgesByHash/);
+  });
 });

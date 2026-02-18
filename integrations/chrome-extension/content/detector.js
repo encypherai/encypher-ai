@@ -57,6 +57,22 @@ let _detectionSequence = 0;
 // Uses Set (not WeakSet) so it can be cleared on RESCAN.
 const _processedElements = new Set();
 
+// Track in-flight verifications by textHash → Promise<{status, details}>.
+// When a DOM expansion (e.g. LinkedIn "see more") reveals a new element whose
+// content is already being verified, the new element subscribes to the existing
+// promise instead of starting a duplicate API call and getting a stuck pending badge.
+const _verificationInFlight = new Map();
+
+// Elements waiting for an in-flight verification result, keyed by textHash.
+// When the in-flight promise resolves, all registered elements get their badge updated.
+const _pendingElementsByHash = new Map();
+
+// Pending badge DOM nodes keyed by textHash.
+// When a verification for a given hash completes (possibly on a different element
+// than the one that originally got the pending badge — e.g. LinkedIn truncated vs
+// expanded element), we remove any orphaned pending badges for the same hash.
+const _pendingBadgesByHash = new Map();
+
 // Guard against extension context invalidation (e.g. after extension reload)
 let _extensionContextValid = true;
 
@@ -1032,9 +1048,65 @@ function _buildBadgeDetails(response, markerType) {
 }
 
 /**
+ * Remove pending badges that are inside elements no longer visible to the user.
+ * LinkedIn (and similar SPAs) hide the truncated element when "see more" is clicked
+ * but keep it in the DOM, leaving its pending badge stuck. This sweep removes any
+ * pending badge whose closest ancestor is hidden (display:none / visibility:hidden /
+ * aria-hidden) or whose containing element is no longer connected.
+ */
+function _sweepOrphanedPendingBadges() {
+  const pendingBadges = document.querySelectorAll('.encypher-badge--pending');
+  for (const badge of pendingBadges) {
+    if (!badge.isConnected) {
+      badge.remove();
+      continue;
+    }
+    // Walk ancestors to check for hidden containers
+    let el = badge.parentElement;
+    let hidden = false;
+    while (el && el !== document.body) {
+      const style = window.getComputedStyle(el);
+      if (
+        style.display === 'none' ||
+        style.visibility === 'hidden' ||
+        el.getAttribute('aria-hidden') === 'true'
+      ) {
+        hidden = true;
+        break;
+      }
+      el = el.parentElement;
+    }
+    if (hidden) {
+      badge.remove();
+    }
+  }
+}
+
+/**
+ * Apply a completed verification result to all elements waiting on a given textHash.
+ * Called after the primary verification resolves to update any DOM-expanded siblings.
+ */
+function _resolveWaitingElements(textHash, status, details) {
+  const waiting = _pendingElementsByHash.get(textHash);
+  if (!waiting) return;
+  _pendingElementsByHash.delete(textHash);
+  for (const el of waiting) {
+    if (el.isConnected) {
+      injectBadge(el, status, { ...details });
+    }
+  }
+}
+
+/**
  * Verify a list of detections against the API and inject badges.
  * Uses _safeSendMessage to handle extension context invalidation.
  * Stores results in the local browser cache (1-hour TTL).
+ *
+ * In-flight deduplication: if a verification for the same textHash is already
+ * running (e.g. a LinkedIn "see more" expansion revealed a new element while the
+ * truncated version was still being verified), the new element subscribes to the
+ * existing promise instead of starting a duplicate API call. This prevents the
+ * stuck "Verifying..." pending badge that would otherwise never resolve.
  */
 async function _verifyDetections(detections) {
   if (detections.length === 0) return;
@@ -1042,6 +1114,21 @@ async function _verifyDetections(detections) {
   for (const detection of detections) {
     // Mark as processed immediately to prevent duplicate work
     _processedElements.add(detection.element);
+
+    // If a verification for this exact hash is already in-flight (e.g. the page
+    // expanded a truncated section while we were verifying the truncated version),
+    // subscribe this element to the existing promise and skip a new API call.
+    if (_verificationInFlight.has(detection.textHash)) {
+      injectBadge(detection.element, 'pending', {
+        message: 'Verifying...',
+        markerType: detection.markerType
+      });
+      const existing = _pendingElementsByHash.get(detection.textHash) || new Set();
+      existing.add(detection.element);
+      _pendingElementsByHash.set(detection.textHash, existing);
+      _debugLog('DEBUG', 'detector', `Subscribed element to in-flight verification (hash=${detection.textHash})`);
+      continue;
+    }
     
     // Show pending badge
     const markerLabel = detection.markerType === 'micro' ? 'micro-embedding' : detection.markerType;
@@ -1050,55 +1137,92 @@ async function _verifyDetections(detections) {
       message: 'Verifying...',
       markerType: detection.markerType
     });
-    
-    try {
-      const response = await Promise.race([
-        _safeSendMessage({
-        type: 'VERIFY_CONTENT',
-        detectionId: detection.detectionId,
-        text: detection.text,
-        visibleText: detection.visibleText,
-        markerType: detection.markerType,
-        pageUrl: window.location.href,
-        pageDomain: window.location.hostname,
-        pageTitle: document.title,
-        discoverySource: 'page_scan',
-        embeddingCount: 1,
-        visibleTextLength: detection.visibleText?.length || 0,
-        embeddingByteLength: detection.bytes?.length || 0,
-        }),
-        new Promise((resolve) => setTimeout(() => resolve(null), 15000)),
-      ]);
-      
-      if (!response) {
-        // Extension context invalidated or no response
-        injectBadge(detection.element, 'error', {
-          error: 'Extension disconnected',
-          markerType: detection.markerType
-        });
-        continue;
+    // Track the pending badge so we can remove it if verification completes on a
+    // different element (e.g. LinkedIn expands the section after the pending badge
+    // was injected on the truncated element).
+    {
+      const pendingBadge = detection.element.querySelector('.encypher-badge--pending');
+      if (pendingBadge) {
+        const existing = _pendingBadgesByHash.get(detection.textHash) || new Set();
+        existing.add(pendingBadge);
+        _pendingBadgesByHash.set(detection.textHash, existing);
       }
-      
-      const { status, details } = _buildBadgeDetails(response, detection.markerType);
-      details.detectionId = detection.detectionId;
-      details.visibleTextLength = detection.visibleText?.length || 0;
-      details.embeddingByteLength = detection.bytes?.length || 0;
-      
-      // Store in local browser cache
-      _verificationCache.set(detection.textHash, {
-        status,
-        details,
-        timestamp: Date.now()
-      });
-      
-      injectBadge(detection.element, status, details);
-    } catch (error) {
-      const details = {
-        error: error.message || 'Verification error',
-        markerType: detection.markerType
-      };
-      injectBadge(detection.element, 'error', details);
     }
+
+    // Build the verification promise and register it as in-flight
+    const verifyPromise = (async () => {
+      try {
+        const response = await Promise.race([
+          _safeSendMessage({
+            type: 'VERIFY_CONTENT',
+            detectionId: detection.detectionId,
+            text: detection.text,
+            visibleText: detection.visibleText,
+            markerType: detection.markerType,
+            pageUrl: window.location.href,
+            pageDomain: window.location.hostname,
+            pageTitle: document.title,
+            discoverySource: 'page_scan',
+            embeddingCount: 1,
+            visibleTextLength: detection.visibleText?.length || 0,
+            embeddingByteLength: detection.bytes?.length || 0,
+          }),
+          new Promise((resolve) => setTimeout(() => resolve(null), 15000)),
+        ]);
+
+        if (!response) {
+          const errDetails = { error: 'Extension disconnected', markerType: detection.markerType };
+          injectBadge(detection.element, 'error', errDetails);
+          return { status: 'error', details: errDetails };
+        }
+
+        const { status, details } = _buildBadgeDetails(response, detection.markerType);
+        details.detectionId = detection.detectionId;
+        details.visibleTextLength = detection.visibleText?.length || 0;
+        details.embeddingByteLength = detection.bytes?.length || 0;
+
+        // Store in local browser cache
+        _verificationCache.set(detection.textHash, {
+          status,
+          details,
+          timestamp: Date.now()
+        });
+
+        injectBadge(detection.element, status, details);
+        return { status, details };
+      } catch (error) {
+        const errDetails = { error: error.message || 'Verification error', markerType: detection.markerType };
+        injectBadge(detection.element, 'error', errDetails);
+        return { status: 'error', details: errDetails };
+      }
+    })();
+
+    _verificationInFlight.set(detection.textHash, verifyPromise);
+
+    const result = await verifyPromise;
+
+    _verificationInFlight.delete(detection.textHash);
+
+    // Remove any orphaned pending badges for this hash (e.g. the truncated element
+    // that LinkedIn hid when the user clicked "see more" — its pending badge would
+    // otherwise remain stuck since verification completed on the expanded element).
+    const orphanedPending = _pendingBadgesByHash.get(detection.textHash);
+    if (orphanedPending) {
+      for (const orphan of orphanedPending) {
+        if (orphan.isConnected && orphan.classList.contains('encypher-badge--pending')) {
+          orphan.remove();
+        }
+      }
+      _pendingBadgesByHash.delete(detection.textHash);
+    }
+
+    // Sweep any remaining pending badges that are inside hidden/invisible ancestors.
+    // This catches the cross-hash case: LinkedIn truncated element has a different
+    // textHash than the expanded element, so hash-based cleanup above won't find it,
+    // but the truncated element is now display:none so the sweep removes it.
+    _sweepOrphanedPendingBadges();
+
+    _resolveWaitingElements(detection.textHash, result.status, result.details);
   }
 }
 
