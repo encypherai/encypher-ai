@@ -275,7 +275,16 @@ def build_trusted_hosts() -> list[str]:
     if not settings.is_production:
         # TEAM_156: Include Docker service name for inter-container calls
         # TEAM_159: Add "traefik" — marketing-site container calls http://traefik:8000
-        for host in ("localhost", "127.0.0.1", "test", "testserver", "enterprise-api", "encypher-enterprise-api", "traefik"):
+        for host in (
+            "localhost",
+            "127.0.0.1",
+            "host.docker.internal",
+            "test",
+            "testserver",
+            "enterprise-api",
+            "encypher-enterprise-api",
+            "traefik",
+        ):
             if host not in host_values:
                 host_values.append(host)
 

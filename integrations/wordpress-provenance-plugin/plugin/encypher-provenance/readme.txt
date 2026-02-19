@@ -1,14 +1,14 @@
-=== Encypher Provenance - C2PA Content Authentication ===
+=== Encypher Provenance - Text Authorship Verification ===
 Contributors: encypherai
-Tags: c2pa, content authenticity, provenance, verification, ai detection, misinformation, plagiarism, copyright, digital signature, blockchain
+Tags: content authenticity, provenance, verification, proof of origin, authorship verification, misinformation, plagiarism, copyright, digital signature
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.0.0-beta
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Protect your content with cryptographic proof of authorship. C2PA-compliant digital signatures prove when content was created, by whom, and detect AI-generated or tampered text. Fight misinformation, plagiarism, and content theft.
+Protect your content with cryptographic proof of authorship. Invisible signatures prove when content was created, by whom, and whether it was tampered with.
 
 == Description ==
 
@@ -16,7 +16,7 @@ Protect your content with cryptographic proof of authorship. C2PA-compliant digi
 
 = Why Content Authenticity Matters =
 
-In an era of AI-generated content and misinformation, proving the authenticity of your content is more important than ever. Encypher Provenance helps you:
+In an era of rapid content reuse and misinformation, proving the authenticity of your content is more important than ever. Encypher Provenance helps you:
 
 * **Prove Original Authorship** - Cryptographic signatures tied to your organization
 * **Detect Tampering** - Know if content has been modified after signing
@@ -104,6 +104,25 @@ Yes, content is sent to Encypher's API for signing. The API creates cryptographi
 
 == Changelog ==
 
+= 1.0.0-beta =
+* Public beta release for Encypher Provenance
+* Settings UI streamlined: hard binding is always on and no longer configurable
+* Added dashboard support contact section with direct email CTA
+* Unified branded full-wordmark headers across Dashboard, Content, Settings, Analytics, Account, Bulk Sign, and Coalition pages
+* Improved analytics cards/status presentation and coalition early-rollout placeholder experience
+
+= 1.2.0 =
+* Migrated verify calls from deprecated POST /verify to POST /verify/advanced
+* Added per-post admin notice on auto-sign failure (dismissible, links to error log)
+* Added site-wide error log ring buffer (last 50 entries) on Analytics page
+* Added verification hits counter (30d + lifetime) on Analytics page
+* Added outbound webhook alerting on repeated failures (enterprise add-on)
+* Fixed auto-sign to respect configured post_types setting
+* Added content page pagination (50 posts/page)
+* Fixed status guidance copy: distinguishes embedded vs verified provenance
+* Removed debug console.log calls from frontend JS
+* All debug logging now gated behind WP_DEBUG
+
 = 1.1.0 =
 * Updated API endpoints to use unified /sign and /verify
 * Improved C2PA compliance validation
@@ -124,6 +143,12 @@ Yes, content is sent to Encypher's API for signing. The API creates cryptographi
 * Bulk signing tool
 
 == Upgrade Notice ==
+
+= 1.0.0-beta =
+Public beta with polished admin UX and production-ready signing/verification defaults. Hard binding is enforced by default.
+
+= 1.2.0 =
+This version migrates verification to the /verify/advanced endpoint (requires API key). All existing signed content remains valid. Error reporting and analytics improvements included.
 
 = 1.1.0 =
 This version updates API endpoints for improved compatibility. All existing signed content remains valid.

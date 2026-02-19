@@ -12,7 +12,6 @@ async def test_verify_surfaces_encypher_rights_metadata(async_client: AsyncClien
         headers={"X-Forwarded-For": "203.0.113.252"},
     )
 
-    assert resp.status_code == 410
-    payload = resp.json()
-    assert payload["success"] is False
-    assert payload["error"]["code"] == "ENDPOINT_DEPRECATED"
+    # POST /api/v1/verify is not registered in the enterprise API.
+    # It is routed by Traefik to the verification-service.
+    assert resp.status_code == 404

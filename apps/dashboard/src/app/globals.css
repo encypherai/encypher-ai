@@ -58,32 +58,32 @@
   --radius: 0.625rem;
 }
 
-/* ===== DARK MODE ===== */
+/* ===== DARK MODE ===== */ /* v2 */
 .dark {
   --background: 213 49% 21%;
   --foreground: 0 0% 100%;
-  --heading: 0 0% 100%; /* white in dark mode */
+  --heading: 0 0% 100%;
   
   --primary: 205 62% 82%;
   --primary-foreground: 213 49% 21%;
   
-  --secondary: 217 33% 29%;
+  --secondary: 215 25% 27%;
   --secondary-foreground: 0 0% 100%;
   
   --accent: 203 65% 47%;
   --accent-foreground: 0 0% 100%;
   
-  --muted: 217 33% 17%;
+  --muted: 213 43% 33%;
   --muted-foreground: 215 20% 65%;
   
-  --card: 217 33% 17%;
+  --card: 213 43% 33%;
   --card-foreground: 0 0% 100%;
   
-  --popover: 217 33% 17%;
+  --popover: 213 43% 33%;
   --popover-foreground: 0 0% 100%;
   
-  --border: 217 33% 29%;
-  --input: 217 33% 29%;
+  --border: 215 25% 27%;
+  --input: 215 25% 27%;
   --ring: 205 62% 82%;
   
   --destructive: 0 84% 60%;

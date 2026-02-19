@@ -43,7 +43,7 @@ export function ChromeExtensionCard() {
               </h3>
             </div>
             <p className="text-xs text-muted-foreground ml-8 mb-3">
-              Install the Encypher C2PA Verifier from the Chrome Web Store. It works on Chrome, Edge, Brave, and any Chromium-based browser.
+              Install Encypher Verify from the Chrome Web Store. It works on Chrome, Edge, Brave, and any Chromium-based browser.
             </p>
             <div className="ml-8">
               <a
@@ -113,16 +113,16 @@ export function ChromeExtensionCard() {
             </div>
             <div className="ml-8 space-y-2">
               <p className="text-xs text-muted-foreground">
-                The extension automatically scans pages for C2PA-signed content and shows verification badges inline.
+                The extension automatically scans pages for proof-of-origin markers and shows verified authorship inline.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <FeatureItem
                   title="Auto-detect"
-                  description="Scans pages for signed content"
+                  description="Scans pages for proof-of-origin markers"
                 />
                 <FeatureItem
-                  title="Inline badges"
-                  description="Color-coded verification status"
+                  title="Inline authorship"
+                  description="Color-coded verified authorship status"
                 />
                 <FeatureItem
                   title="Sign from browser"
@@ -181,7 +181,7 @@ export function ChromeExtensionCard() {
               </span>
             </div>
             <CardDescription className="mt-1">
-              Verify and sign C2PA content on any webpage. Auto-detects signed content and shows inline trust badges.
+              Verify who authored text on any webpage and sign your own content with invisible cryptographic watermarks.
             </CardDescription>
           </div>
         </div>

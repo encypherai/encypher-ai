@@ -6,6 +6,30 @@
     max-width: 900px;
 }
 
+.encypher-bulk-mark-page .encypher-page-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.encypher-bulk-mark-page .encypher-logo {
+    display: inline-flex;
+    align-items: center;
+}
+
+.encypher-bulk-mark-page .encypher-brand-lockup {
+    width: 120px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.encypher-bulk-mark-page .encypher-title-divider {
+    color: #8c8f94;
+    font-weight: 400;
+}
+
 .encypher-bulk-intro {
     margin: 20px 0;
     padding: 15px;

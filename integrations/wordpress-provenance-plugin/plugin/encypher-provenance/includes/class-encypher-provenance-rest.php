@@ -31,12 +31,21 @@ class Rest
         return $this->parser;
     }
 
+    private function debug_log(string $message): void
+    {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('Encypher: ' . $message);
+        }
+    }
+
     public function register_hooks(): void
     {
         add_action('rest_api_init', [$this, 'register_routes']);
         add_action('save_post', [$this, 'mark_post_needs_verification'], 20, 3);
         add_action('transition_post_status', [$this, 'auto_sign_on_publish'], 10, 3);
         add_action('save_post', [$this, 'auto_sign_on_update'], 30, 3); // Higher priority to run after mark_post_needs_verification
+        add_action('admin_notices', [$this, 'render_sign_error_notice']);
+        add_action('wp_ajax_encypher_dismiss_sign_error', [$this, 'ajax_dismiss_sign_error']);
     }
 
     public function handle_public_extract_request(WP_REST_Request $request)
@@ -201,37 +210,34 @@ class Rest
         $metadata_format = $settings['metadata_format'] ?? 'c2pa';
         $add_hard_binding = $settings['add_hard_binding'] ?? true;
         
-        // Check for existing C2PA embeddings and verify them
-        $existing_embeddings = $this->detect_c2pa_embeddings($post->post_content);
-        $clean_content = $post->post_content;
-        
-        if ($existing_embeddings['count'] > 0) {
-            // Log existing embeddings for audit trail
-            error_log(sprintf(
-                'Encypher: Post %d has %d existing C2PA embedding(s). Stripping before re-signing.',
-                $post_id,
-                $existing_embeddings['count']
+        // Always strip invisible provenance markers before re-signing.
+        // Some historical payloads contain sentence-level VS markers without a
+        // full C2PA wrapper magic sequence. If we only strip when wrapper magic
+        // is detected, those invisible markers leak back into the next /sign
+        // request and can break HTML re-embedding.
+        $clean_content = $this->strip_c2pa_embeddings($post->post_content);
+        if ($clean_content !== $post->post_content) {
+            $this->debug_log(sprintf(
+                'Post %d contained existing invisible provenance markers. Stripped before re-signing.',
+                $post_id
             ));
-            
-            // Strip all existing embeddings to ensure clean re-signing
-            $clean_content = $this->strip_c2pa_embeddings($post->post_content);
-            
-            // Repair WordPress block comments that may have been corrupted by
-            // VS char stripping.  Previous signings could embed VS chars adjacent
-            // to block comment delimiters; stripping them leaves stray spaces
-            // (e.g. "<!-- /wp :paragraph -->" instead of "<!-- /wp:paragraph -->")
-            // which breaks Gutenberg's block parser.
-            $clean_content = $this->sanitize_wp_block_comments($clean_content);
-            
-            // Verify stripping was successful
-            $verify_clean = $this->detect_c2pa_embeddings($clean_content);
-            if ($verify_clean['count'] > 0) {
-                return new WP_Error(
-                    'embedding_strip_failed',
-                    __('Failed to strip existing C2PA embeddings. Please contact support.', 'encypher-provenance'),
-                    ['status' => 500]
-                );
-            }
+        }
+
+        // Repair WordPress block comments that may have been corrupted by
+        // VS char stripping. Previous signings could embed VS chars adjacent
+        // to block comment delimiters; stripping them leaves stray spaces
+        // (e.g. "<!-- /wp :paragraph -->" instead of "<!-- /wp:paragraph -->")
+        // which breaks Gutenberg's block parser.
+        $clean_content = $this->sanitize_wp_block_comments($clean_content);
+
+        // Verify wrapper stripping was successful.
+        $verify_clean = $this->detect_c2pa_embeddings($clean_content);
+        if ($verify_clean['count'] > 0) {
+            return new WP_Error(
+                'embedding_strip_failed',
+                __('Failed to strip existing C2PA embeddings. Please contact support.', 'encypher-provenance'),
+                ['status' => 500]
+            );
         }
         
         // Determine action type (c2pa.created or c2pa.edited)
@@ -246,8 +252,8 @@ class Rest
         if ($action_type === 'c2pa.edited') {
             $previous_instance_id = get_post_meta($post_id, '_encypher_provenance_instance_id', true);
             if ($previous_instance_id) {
-                error_log(sprintf(
-                    'Encypher: Post %d is being edited. Previous instance_id: %s',
+                $this->debug_log(sprintf(
+                    'Post %d is being edited. Previous instance_id: %s',
                     $post_id,
                     $previous_instance_id
                 ));
@@ -291,8 +297,8 @@ class Rest
             );
         }
         
-        error_log(sprintf(
-            'Encypher: Post %d extracted %d chars of plain text from %d chars of HTML',
+        $this->debug_log(sprintf(
+            'Post %d extracted %d chars of plain text from %d chars of HTML',
             $post_id,
             strlen($extracted_text),
             strlen($clean_content)
@@ -357,6 +363,18 @@ class Rest
             $result = $response['data'];
         }
 
+        // Normalize fields that may be returned at response.data level instead of
+        // nested response.data.document in some backend builds.
+        if (!isset($result['embedding_plan']) && isset($response['data']['embedding_plan']) && is_array($response['data']['embedding_plan'])) {
+            $result['embedding_plan'] = $response['data']['embedding_plan'];
+        }
+        if (!isset($result['signed_text']) && isset($response['data']['signed_text']) && is_string($response['data']['signed_text'])) {
+            $result['signed_text'] = $response['data']['signed_text'];
+        }
+        if (!isset($result['embedded_content']) && isset($response['data']['embedded_content']) && is_string($response['data']['embedded_content'])) {
+            $result['embedded_content'] = $response['data']['embedded_content'];
+        }
+
         // Prefer reconstructing signed text from embedding_plan (format-preserving),
         // then fall back to signed_text/embedded_content for compatibility.
         $signed_text = $this->resolve_signed_text_with_embedding_plan($result, $extracted_text);
@@ -366,8 +384,8 @@ class Rest
 
         $final_check = $this->detect_c2pa_embeddings($signed_text);
         if ($final_check['count'] < 1) {
-            error_log(sprintf(
-                'Encypher: C2PA compliance violation! Expected at least 1 wrapper, found %d in post %d',
+            $this->debug_log(sprintf(
+                'C2PA compliance violation! Expected at least 1 wrapper, found %d in post %d',
                 $final_check['count'],
                 $post_id
             ));
@@ -383,9 +401,24 @@ class Rest
         
         // Embed signed text (with invisible markers) back into the original HTML
         $embedded_content = $this->embed_signed_text_in_html($clean_content, $signed_text);
+
+        $embedded_check = $this->detect_c2pa_embeddings($embedded_content);
+        if ($embedded_check['count'] < 1) {
+            $this->debug_log(sprintf(
+                'C2PA embed persistence failure! Signed text had %d wrappers but embedded HTML has %d for post %d',
+                $final_check['count'],
+                $embedded_check['count'],
+                $post_id
+            ));
+            return new WP_Error(
+                'c2pa_embed_persist_failed',
+                __('C2PA embedding could not be persisted into the WordPress post content. Please contact support.', 'encypher-provenance'),
+                ['status' => 500]
+            );
+        }
         
-        error_log(sprintf(
-            'Encypher: Post %d successfully signed with C2PA wrapper (spec compliant). HTML: %d chars, signed text: %d chars',
+        $this->debug_log(sprintf(
+            'Post %d successfully signed with C2PA wrapper (spec compliant). HTML: %d chars, signed text: %d chars',
             $post_id,
             strlen($embedded_content),
             strlen($signed_text)
@@ -443,8 +476,8 @@ class Rest
         // Store new instance_id for next edit's provenance chain
         if ($new_instance_id) {
             update_post_meta($post_id, '_encypher_provenance_instance_id', $new_instance_id);
-            error_log(sprintf(
-                'Encypher: Stored new instance_id for post %d: %s',
+            $this->debug_log(sprintf(
+                'Stored new instance_id for post %d: %s',
                 $post_id,
                 $new_instance_id
             ));
@@ -453,15 +486,27 @@ class Rest
         // Clear action type meta so it doesn't get reused
         delete_post_meta($post_id, '_encypher_action_type');
         
-        $this->persist_sentence_segments(
-            $post_id,
-            isset($result['embeddings']) && is_array($result['embeddings']) ? $result['embeddings'] : []
-        );
+        $response_embeddings = [];
+        if (isset($result['embeddings']) && is_array($result['embeddings'])) {
+            $response_embeddings = $result['embeddings'];
+        } elseif (isset($response['data']['embeddings']) && is_array($response['data']['embeddings'])) {
+            $response_embeddings = $response['data']['embeddings'];
+        } elseif (isset($response['embeddings']) && is_array($response['embeddings'])) {
+            $response_embeddings = $response['embeddings'];
+        }
+
+        $this->persist_sentence_segments($post_id, $response_embeddings);
         
         // Clear any pending marking flags
         delete_post_meta($post_id, '_encypher_needs_marking');
         delete_post_meta($post_id, '_encypher_action_type');
         delete_post_meta($post_id, '_encypher_provenance_verification');
+
+        // Record success in error log (clears any previous failure streak)
+        ErrorLog::record_success($post_id);
+
+        $settings_for_usage = get_option('encypher_provenance_settings', []);
+        $updated_usage = $this->resolve_usage_snapshot($settings_for_usage, true);
 
         return new WP_REST_Response([
             'status' => 'c2pa_protected',
@@ -469,6 +514,7 @@ class Rest
             'verification_url' => $verification_url,
             'embedded_content' => $embedded_content,
             'total_sentences' => $total_sentences,
+            'usage' => $updated_usage,
         ]);
     }
 
@@ -484,6 +530,11 @@ class Rest
         $verification = get_post_meta($post_id, '_encypher_provenance_verification', true);
         $sentences = $this->get_sentence_segments_payload($post_id);
         $settings = get_option('encypher_provenance_settings', []);
+        if (!is_array($settings)) {
+            $settings = [];
+        }
+        $tier = isset($settings['tier']) ? (string) $settings['tier'] : 'free';
+        $usage = $this->resolve_usage_snapshot($settings, true);
 
         // Generate verification URL using instance_id if available, otherwise document_id
         $verification_id = $instance_id ?: $document_id;
@@ -501,7 +552,8 @@ class Rest
             'verification' => $verification,
             'sentences' => $sentences['items'],
             'sentences_total' => $sentences['total'],
-            'tier' => isset($settings['tier']) ? $settings['tier'] : 'free',
+            'usage' => $usage,
+            'tier' => $tier,
             'signing_mode' => isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed',
         ]);
     }
@@ -541,12 +593,12 @@ class Rest
         if ($cache_enabled) {
             $cached = get_transient($cache_key);
             if (false !== $cached && is_array($cached)) {
-                error_log(sprintf('Encypher: Returning cached verification for post %d', $post_id));
+                $this->debug_log(sprintf('Returning cached verification for post %d', $post_id));
                 $cached['cached'] = true;
                 return new WP_REST_Response($cached);
             }
         } else {
-            error_log(sprintf('Encypher: Cache disabled (WP_DEBUG=true), performing fresh verification for post %d', $post_id));
+            $this->debug_log(sprintf('Cache disabled (WP_DEBUG=true), performing fresh verification for post %d', $post_id));
         }
 
         $payload = [
@@ -554,10 +606,10 @@ class Rest
         ];
 
         $verification_mode = 'standard';
-        error_log(sprintf('Encypher: Calling %s for post %d (content length: %d)', $endpoint, $post_id, strlen($raw_content)));
+        $this->debug_log(sprintf('Calling %s for post %d (content length: %d)', $endpoint, $post_id, strlen($raw_content)));
         $response = $this->call_backend($endpoint, $payload, $require_auth);
         if (is_wp_error($response)) {
-            error_log(sprintf('Encypher: Verification API error for post %d: %s', $post_id, $response->get_error_message()));
+            $this->debug_log(sprintf('Verification API error for post %d: %s', $post_id, $response->get_error_message()));
             return $response;
         }
 
@@ -610,7 +662,7 @@ class Rest
             $normalized['error'] = (string) $response['error']['message'];
         }
 
-        error_log(sprintf('Encypher: Verification response for post %d: valid=%s', $post_id, $normalized['valid'] ? 'true' : 'false'));
+        $this->debug_log(sprintf('Verification response for post %d: valid=%s', $post_id, $normalized['valid'] ? 'true' : 'false'));
 
         // Cache the verification result for 5 minutes (only if caching is enabled)
         if ($cache_enabled) {
@@ -636,7 +688,38 @@ class Rest
         update_post_meta($post_id, '_encypher_provenance_status', $status);
 
         $normalized['cached'] = false;
+
+        // Increment site-wide verification hit counter
+        $this->increment_verify_hits();
+
         return new WP_REST_Response($normalized);
+    }
+
+    /**
+     * Increment the site-wide verification hit counter and daily bucket.
+     */
+    private function increment_verify_hits(): void
+    {
+        // Total lifetime counter
+        $total = (int) get_option('encypher_verify_hits', 0);
+        update_option('encypher_verify_hits', $total + 1, false);
+
+        // Daily bucket: array keyed by 'Y-m-d', last 30 days retained
+        $today = gmdate('Y-m-d');
+        $daily = get_option('encypher_verify_hits_daily', []);
+        if (! is_array($daily)) {
+            $daily = [];
+        }
+        $daily[$today] = ($daily[$today] ?? 0) + 1;
+
+        // Prune entries older than 30 days
+        $cutoff = gmdate('Y-m-d', strtotime('-30 days'));
+        foreach (array_keys($daily) as $date) {
+            if ($date < $cutoff) {
+                unset($daily[$date]);
+            }
+        }
+        update_option('encypher_verify_hits_daily', $daily, false);
     }
 
     /**
@@ -834,21 +917,24 @@ class Rest
      */
     public function auto_sign_on_publish(string $new_status, string $old_status, $post): void
     {
-        // Only process posts (not pages, custom post types, etc.) - can be configured
-        if ('post' !== $post->post_type) {
-            return;
-        }
-
         // Only act when post becomes published (not already published)
         if ('publish' !== $new_status || 'publish' === $old_status) {
             return;
         }
 
-        // Check if auto-signing is enabled
+        // Check if auto-signing is enabled and post type is configured
         $settings = get_option('encypher_provenance_settings', []);
         $auto_sign = isset($settings['auto_mark_on_publish']) ? (bool) $settings['auto_mark_on_publish'] : true;
-        
+
         if (!$auto_sign) {
+            return;
+        }
+
+        $configured_post_types = isset($settings['post_types']) && is_array($settings['post_types'])
+            ? $settings['post_types']
+            : ['post', 'page'];
+
+        if (!in_array($post->post_type, $configured_post_types, true)) {
             return;
         }
 
@@ -869,7 +955,7 @@ class Rest
     {
         // Skip if this is the signing operation itself
         if ($this->is_signing) {
-            error_log("Encypher: Skipping auto_sign_on_update - is_signing flag is true");
+            $this->debug_log('Skipping auto_sign_on_update - is_signing flag is true');
             return;
         }
 
@@ -878,40 +964,43 @@ class Rest
             return;
         }
 
-        // Only process posts (not pages, custom post types, etc.)
-        if ('post' !== $post->post_type) {
-            return;
-        }
-
         // Only process published posts
         if ('publish' !== $post->post_status) {
-            error_log(sprintf('Encypher: Post %d status is %s, not publish', $post_id, $post->post_status));
-            return;
-        }
-        
-        // Don't trigger on initial publish (status change from non-publish to publish)
-        // The initial signing will be handled by the first wp_insert_post_data hook
-        if ($post_before && is_object($post_before) && $post_before->post_status !== 'publish') {
-            error_log(sprintf('Encypher: Skipping auto_sign_on_update - initial publish (status changed from %s to publish)', $post_before->post_status));
+            $this->debug_log(sprintf('Post %d status is %s, not publish', $post_id, $post->post_status));
             return;
         }
 
-        // Check if auto-signing on update is enabled
+        // Don't trigger on initial publish (status change from non-publish to publish)
+        // The initial signing will be handled by auto_sign_on_publish
+        if ($post_before && is_object($post_before) && $post_before->post_status !== 'publish') {
+            $this->debug_log(sprintf('Skipping auto_sign_on_update - initial publish (status changed from %s to publish)', $post_before->post_status));
+            return;
+        }
+
+        // Check if auto-signing on update is enabled and post type is configured
         $settings = get_option('encypher_provenance_settings', []);
         $auto_sign_on_update = isset($settings['auto_mark_on_update']) ? (bool) $settings['auto_mark_on_update'] : true;
-        
+
         if (!$auto_sign_on_update) {
-            error_log('Encypher: Auto-signing on update is disabled in settings');
+            $this->debug_log('Auto-signing on update is disabled in settings');
+            return;
+        }
+
+        $configured_post_types = isset($settings['post_types']) && is_array($settings['post_types'])
+            ? $settings['post_types']
+            : ['post', 'page'];
+
+        if (!in_array($post->post_type, $configured_post_types, true)) {
             return;
         }
 
         // Check if post is already marked
         $is_marked = get_post_meta($post_id, '_encypher_marked', true);
-        error_log(sprintf('Encypher: Post %d is_marked = %s', $post_id, $is_marked ? 'true' : 'false'));
-        
+        $this->debug_log(sprintf('Post %d is_marked = %s', $post_id, $is_marked ? 'true' : 'false'));
+
         if (!$is_marked) {
             // Not signed yet - sign it now with c2pa.created
-            error_log(sprintf('Encypher: Post %d not marked yet, signing now with c2pa.created', $post_id));
+            $this->debug_log(sprintf('Post %d not marked yet, signing now with c2pa.created', $post_id));
             update_post_meta($post_id, '_encypher_action_type', 'c2pa.created');
             $this->perform_signing($post_id, false); // false = new signing
             return;
@@ -921,7 +1010,7 @@ class Rest
         $action_type = get_post_meta($post_id, '_encypher_action_type', true);
         if ($action_type === 'c2pa.edited') {
             // Action already set to edited - honor it and re-sign
-            error_log(sprintf('Encypher: Post %d action type already set to c2pa.edited, performing re-sign', $post_id));
+            $this->debug_log(sprintf('Post %d action type already set to c2pa.edited, performing re-sign', $post_id));
             $this->perform_signing($post_id, true); // true = is_update
             return;
         }
@@ -931,25 +1020,22 @@ class Rest
         // This prevents re-signing when the only change is the C2PA wrapper itself
         $cached_hash = get_post_meta($post_id, '_encypher_provenance_cached_content_hash', true);
         $current_hash = md5($post->post_content);
-        
-        error_log(sprintf(
-            'Encypher: Post %d hash check - cached: %s, current: %s',
+
+        $this->debug_log(sprintf(
+            'Post %d hash check - cached: %s, current: %s',
             $post_id,
             $cached_hash ? substr($cached_hash, 0, 8) : 'none',
             substr($current_hash, 0, 8)
         ));
-        
+
         if ($cached_hash && $cached_hash === $current_hash) {
             // Content unchanged since last signing - skip re-signing
-            error_log(sprintf('Encypher: Post %d content unchanged since last signing, skipping re-sign', $post_id));
+            $this->debug_log(sprintf('Post %d content unchanged since last signing, skipping re-sign', $post_id));
             return;
         }
-        
+
         // Content changed - re-sign with c2pa.edited action
-        error_log(sprintf(
-            'Encypher: Content changed for post %d, triggering re-sign with c2pa.edited',
-            $post_id
-        ));
+        $this->debug_log(sprintf('Content changed for post %d, triggering re-sign with c2pa.edited', $post_id));
         update_post_meta($post_id, '_encypher_action_type', 'c2pa.edited');
         $this->perform_signing($post_id, true); // true = is_update
     }
@@ -977,25 +1063,138 @@ class Rest
             $response = $this->handle_sign_request($request);
             
             if (is_wp_error($response)) {
-                error_log(sprintf(
-                    'Encypher: Auto-sign failed for post %d: %s',
+                $this->debug_log(sprintf(
+                    'Auto-sign failed for post %d: %s',
                     $post_id,
                     $response->get_error_message()
                 ));
+                $context = $is_update ? 'auto_sign' : 'auto_sign';
+                ErrorLog::record_failure(
+                    $post_id,
+                    $response->get_error_code(),
+                    $response->get_error_message(),
+                    $context
+                );
+                $consecutive = ErrorLog::get_consecutive_failures($post_id);
+                ErrorLog::maybe_fire_webhook($post_id, [
+                    'post_title'          => get_the_title($post_id) ?: sprintf('Post #%d', $post_id),
+                    'error_code'          => $response->get_error_code(),
+                    'error_message'       => $response->get_error_message(),
+                    'consecutive_failures' => $consecutive,
+                    'timestamp'           => gmdate('c'),
+                    'context'             => $context,
+                ]);
             } else {
-                error_log(sprintf(
-                    'Encypher: Auto-signed post %d (%s)',
+                $this->debug_log(sprintf(
+                    'Auto-signed post %d (%s)',
                     $post_id,
                     $is_update ? 'updated' : 'new'
                 ));
+                ErrorLog::record_success($post_id);
             }
         } catch (\Exception $e) {
-            error_log(sprintf(
-                'Encypher: Auto-sign exception for post %d: %s',
+            $this->debug_log(sprintf(
+                'Auto-sign exception for post %d: %s',
                 $post_id,
                 $e->getMessage()
             ));
+            ErrorLog::record_failure(
+                $post_id,
+                'exception',
+                $e->getMessage(),
+                'auto_sign'
+            );
+            ErrorLog::maybe_fire_webhook($post_id, [
+                'post_title'          => get_the_title($post_id) ?: sprintf('Post #%d', $post_id),
+                'error_code'          => 'exception',
+                'error_message'       => $e->getMessage(),
+                'consecutive_failures' => ErrorLog::get_consecutive_failures($post_id),
+                'timestamp'           => gmdate('c'),
+                'context'             => 'auto_sign',
+            ]);
         }
+    }
+
+    /**
+     * Show a dismissible admin notice on the post edit screen when the last
+     * auto-sign attempt failed.
+     */
+    public function render_sign_error_notice(): void
+    {
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (! $screen || ! in_array($screen->base, ['post', 'post-new'], true)) {
+            return;
+        }
+
+        $post_id = isset($_GET['post']) ? (int) $_GET['post'] : 0;
+        if ($post_id <= 0) {
+            return;
+        }
+
+        $dismissed = get_post_meta($post_id, '_encypher_sign_error_dismissed', true);
+        if ($dismissed) {
+            return;
+        }
+
+        $error = get_post_meta($post_id, '_encypher_last_sign_error', true);
+        if (! is_array($error) || empty($error['message'])) {
+            return;
+        }
+
+        $consecutive = (int) ($error['consecutive'] ?? 1);
+        $timestamp   = isset($error['timestamp']) ? wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($error['timestamp'])) : '';
+        $nonce       = wp_create_nonce('encypher_dismiss_sign_error_' . $post_id);
+        ?>
+        <div class="notice notice-error encypher-sign-error-notice" style="position:relative;padding-right:48px;">
+            <p>
+                <strong><?php esc_html_e('Encypher: Auto-sign failed', 'encypher-provenance'); ?></strong>
+                <?php if ($timestamp): ?>
+                    <span style="color:#646970;font-size:12px;margin-left:8px;"><?php echo esc_html($timestamp); ?></span>
+                <?php endif; ?>
+            </p>
+            <p>
+                <?php echo esc_html($error['message']); ?>
+                <?php if ($consecutive > 1): ?>
+                    <span style="color:#d63638;margin-left:8px;">
+                        <?php echo esc_html(sprintf(
+                            /* translators: %d: number of consecutive failures */
+                            _n('%d consecutive failure', '%d consecutive failures', $consecutive, 'encypher-provenance'),
+                            $consecutive
+                        )); ?>
+                    </span>
+                <?php endif; ?>
+            </p>
+            <p>
+                <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-analytics#error-log')); ?>">
+                    <?php esc_html_e('View error log', 'encypher-provenance'); ?>
+                </a>
+                &nbsp;&middot;&nbsp;
+                <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>">
+                    <?php esc_html_e('Check API settings', 'encypher-provenance'); ?>
+                </a>
+            </p>
+            <button type="button"
+                class="notice-dismiss"
+                onclick="jQuery.post(ajaxurl, {action:'encypher_dismiss_sign_error', post_id:<?php echo (int) $post_id; ?>, _wpnonce:'<?php echo esc_js($nonce); ?>'});"
+                style="position:absolute;top:8px;right:8px;">
+                <span class="screen-reader-text"><?php esc_html_e('Dismiss this notice', 'encypher-provenance'); ?></span>
+            </button>
+        </div>
+        <?php
+    }
+
+    /**
+     * AJAX handler: dismiss the sign-error notice for a post.
+     */
+    public function ajax_dismiss_sign_error(): void
+    {
+        $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+        if ($post_id <= 0 || ! current_user_can('edit_post', $post_id)) {
+            wp_send_json_error('Unauthorized', 403);
+        }
+        check_ajax_referer('encypher_dismiss_sign_error_' . $post_id);
+        update_post_meta($post_id, '_encypher_sign_error_dismissed', true);
+        wp_send_json_success();
     }
 
     private function derive_status_from_verification(array $response): string
@@ -1267,7 +1466,7 @@ class Rest
                     // FastAPI validation errors return detail as array
                     if (is_array($decoded['detail'])) {
                         $message = wp_json_encode($decoded['detail'], JSON_PRETTY_PRINT);
-                        error_log('Encypher: Validation error details: ' . $message);
+                        $this->debug_log('Validation error details: ' . $message);
                     } else {
                         $message = (string) $decoded['detail'];
                     }
@@ -1450,5 +1649,146 @@ class Rest
         set_site_transient($cache_key, $account, 15 * MINUTE_IN_SECONDS);
 
         return $account;
+    }
+
+    private function resolve_usage_snapshot($settings, bool $refresh_remote = false): array
+    {
+        if (!is_array($settings)) {
+            $settings = [];
+        }
+
+        $tier = isset($settings['tier']) ? (string) $settings['tier'] : 'free';
+        $usage = $this->normalize_usage_snapshot(
+            isset($settings['usage']) && is_array($settings['usage']) ? $settings['usage'] : [],
+            $tier
+        );
+
+        if (! $refresh_remote) {
+            return $usage;
+        }
+
+        $api_key = isset($settings['api_key']) ? trim((string) $settings['api_key']) : '';
+        $api_base_url = isset($settings['api_base_url']) ? trim((string) $settings['api_base_url']) : '';
+        if ('' === $api_key || '' === $api_base_url) {
+            return $usage;
+        }
+
+        $remote_usage = $this->fetch_remote_usage_quota($api_base_url, $api_key, $tier, [
+            'usage' => $usage,
+        ]);
+
+        if (isset($remote_usage['api_calls']) && is_array($remote_usage['api_calls'])) {
+            return $remote_usage;
+        }
+
+        return $usage;
+    }
+
+    private function fetch_remote_usage_quota(string $api_base_url, string $api_key, string $tier, array $fallback = []): array
+    {
+        $fallback_usage = isset($fallback['usage']) && is_array($fallback['usage'])
+            ? $fallback['usage']
+            : [];
+        $normalized_fallback = $this->normalize_usage_snapshot($fallback_usage, $tier);
+        $base = rtrim((string) $api_base_url, '/');
+        if ('' === $base || '' === trim($api_key)) {
+            return $normalized_fallback;
+        }
+
+        $cache_key = 'encypher_usage_' . md5(strtolower($base) . '|' . substr(hash('sha256', $api_key), 0, 16));
+        $cached = get_site_transient($cache_key);
+        if (is_array($cached) && isset($cached['api_calls']) && is_array($cached['api_calls'])) {
+            return $cached;
+        }
+
+        $quota_url = $base . '/account/quota';
+        $response = wp_remote_get($quota_url, [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+        ]);
+
+        if (is_wp_error($response)) {
+            return $normalized_fallback;
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code >= 400) {
+            return $normalized_fallback;
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (! is_array($body)) {
+            return $normalized_fallback;
+        }
+
+        $data = isset($body['data']) && is_array($body['data']) ? $body['data'] : [];
+        $metrics = isset($data['metrics']) && is_array($data['metrics']) ? $data['metrics'] : [];
+        $api_calls = isset($metrics['api_calls']) && is_array($metrics['api_calls']) ? $metrics['api_calls'] : [];
+
+        if (empty($api_calls)) {
+            return $normalized_fallback;
+        }
+
+        $resolved_usage = $this->normalize_usage_snapshot([
+            'api_calls' => [
+                'used' => isset($api_calls['used']) ? (int) $api_calls['used'] : 0,
+                'limit' => isset($api_calls['limit']) ? (int) $api_calls['limit'] : ('free' === $tier ? 1000 : -1),
+                'remaining' => isset($api_calls['remaining']) ? (int) $api_calls['remaining'] : 0,
+                'percentage_used' => isset($api_calls['percentage_used']) ? (float) $api_calls['percentage_used'] : 0,
+                'is_unlimited' => isset($api_calls['limit']) ? ((int) $api_calls['limit'] < 0) : ('free' !== $tier),
+                'reset_date' => isset($data['reset_date']) ? sanitize_text_field((string) $data['reset_date']) : '',
+                'period_end' => isset($data['period_end']) ? sanitize_text_field((string) $data['period_end']) : '',
+            ],
+        ], $tier);
+
+        // Keep this cache short so editor-sidebar status checks remain close to API truth.
+        set_site_transient($cache_key, $resolved_usage, 30);
+
+        return $resolved_usage;
+    }
+
+    private function normalize_usage_snapshot(array $usage, string $tier): array
+    {
+        $default_limit = 'free' === $tier ? 1000 : -1;
+        $api_calls = isset($usage['api_calls']) && is_array($usage['api_calls']) ? $usage['api_calls'] : $usage;
+
+        $used = isset($api_calls['used']) ? max(0, (int) $api_calls['used']) : 0;
+        $limit = isset($api_calls['limit']) ? (int) $api_calls['limit'] : $default_limit;
+        $is_unlimited = isset($api_calls['is_unlimited']) ? (bool) $api_calls['is_unlimited'] : ($limit < 0);
+
+        if ($is_unlimited) {
+            $limit = -1;
+            $remaining = -1;
+            $percentage_used = 0.0;
+        } else {
+            if ($limit <= 0) {
+                $limit = $default_limit > 0 ? $default_limit : 1000;
+            }
+            $remaining = isset($api_calls['remaining'])
+                ? max(0, (int) $api_calls['remaining'])
+                : max(0, $limit - $used);
+            $percentage_used = isset($api_calls['percentage_used'])
+                ? (float) $api_calls['percentage_used']
+                : ($limit > 0 ? round(($used / $limit) * 100, 2) : 0.0);
+        }
+
+        if (! $is_unlimited) {
+            $percentage_used = min(100.0, max(0.0, $percentage_used));
+        }
+
+        return [
+            'api_calls' => [
+                'used' => $used,
+                'limit' => $limit,
+                'remaining' => $remaining,
+                'percentage_used' => $percentage_used,
+                'is_unlimited' => $is_unlimited,
+                'reset_date' => isset($api_calls['reset_date']) ? sanitize_text_field((string) $api_calls['reset_date']) : '',
+                'period_end' => isset($api_calls['period_end']) ? sanitize_text_field((string) $api_calls['period_end']) : '',
+            ],
+        ];
     }
 }

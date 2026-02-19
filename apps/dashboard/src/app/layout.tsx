@@ -29,8 +29,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Blocking script: sets dark class before first paint to prevent flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem('encypher_theme');var d=document.documentElement;if(s==='dark'||(s!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches)){d.classList.add('dark');}else{d.classList.remove('dark');}}catch(e){}})();`,
+          }}
+        />
         {/* Preconnect to critical third-party origins */}
         {isProd && (
           <>

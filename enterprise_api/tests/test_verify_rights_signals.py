@@ -12,7 +12,6 @@ async def test_verify_surfaces_training_mining_rights_signals(async_client: Asyn
         headers={"X-Forwarded-For": "203.0.113.252"},
     )
 
-    assert resp.status_code == 410
-    payload = resp.json()
-    assert payload["success"] is False
-    assert payload["error"]["code"] == "ENDPOINT_DEPRECATED"
+    # POST /api/v1/verify is not registered in the verification-service.
+    # It is routed by Traefik to the verification-service.
+    assert resp.status_code == 404

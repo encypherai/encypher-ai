@@ -2,7 +2,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.config import settings
-from app.main import build_cors_settings
+from app.main import build_cors_settings, build_trusted_hosts
 from app.middleware.security_headers import DEFAULT_CSP, DOCS_CSP, build_security_headers
 
 
@@ -64,6 +64,14 @@ def test_cors_wildcard_disables_credentials(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert cors_settings["allow_origins"] == ["*"]
     assert cors_settings["allow_credentials"] is False
+
+
+def test_trusted_hosts_include_host_docker_internal_outside_production(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "environment", "development")
+    hosts = build_trusted_hosts()
+    assert "host.docker.internal" in hosts
 
 
 @pytest.mark.asyncio

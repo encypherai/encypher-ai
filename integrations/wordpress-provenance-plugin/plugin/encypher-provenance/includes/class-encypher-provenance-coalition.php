@@ -11,6 +11,13 @@ if (! defined('ABSPATH')) {
  */
 class Coalition
 {
+    private function debug_log(string $message): void
+    {
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('Encypher: ' . $message);
+        }
+    }
+
     /**
      * Register WordPress hooks.
      */
@@ -106,14 +113,14 @@ class Coalition
         }
 
         // Check transient cache first (1 hour)
-        $cache_key = 'encypher_coalition_stats_' . md5($api_key);
+        $cache_key = 'encypher_coalition_stats_' . md5(strtolower((string) $api_base) . '|' . (string) $api_key);
         $cached = get_transient($cache_key);
         if ($cached !== false) {
             return $cached;
         }
 
         $response = wp_remote_get(
-            $api_base . '/coalition/stats',
+            $api_base . '/coalition/dashboard',
             [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $api_key,
@@ -124,24 +131,32 @@ class Coalition
         );
 
         if (is_wp_error($response)) {
-            error_log('Encypher Coalition: API error - ' . $response->get_error_message());
+            $this->debug_log('Coalition API error - ' . $response->get_error_message());
             return null;
         }
 
         $status_code = wp_remote_retrieve_response_code($response);
-        if ($status_code !== 200) {
-            error_log('Encypher Coalition: API returned status ' . $status_code);
+        if ($status_code >= 500) {
+            $this->debug_log('Coalition API returned status ' . $status_code);
             return null;
+        }
+
+        if ($status_code !== 200) {
+            $this->debug_log('Coalition API returned non-fatal status ' . $status_code . '; using empty stats fallback');
+            return $this->build_empty_stats_payload();
         }
 
         $body = json_decode(wp_remote_retrieve_body($response), true);
-        
-        if (!isset($body['success']) || !$body['success']) {
-            error_log('Encypher Coalition: API returned unsuccessful response');
-            return null;
+        if (!is_array($body)) {
+            $this->debug_log('Coalition API returned invalid JSON payload');
+            return $this->build_empty_stats_payload();
         }
 
-        $stats = $body['data'] ?? null;
+        $raw_stats = isset($body['data']) && is_array($body['data']) ? $body['data'] : $body;
+        $stats = $this->normalize_stats_payload($raw_stats);
+        if (!is_array($stats)) {
+            return $this->build_empty_stats_payload();
+        }
 
         // Cache for 1 hour
         if ($stats) {
@@ -149,6 +164,60 @@ class Coalition
         }
 
         return $stats;
+    }
+
+    /**
+     * Normalize coalition payloads from API into the legacy widget/page shape.
+     *
+     * @param array $payload Raw API payload.
+     * @return array|null
+     */
+    private function normalize_stats_payload(array $payload): ?array
+    {
+        if (isset($payload['content_stats']) && isset($payload['coalition_stats'])) {
+            return $payload;
+        }
+
+        if (!isset($payload['current_period']) || !is_array($payload['current_period'])) {
+            return null;
+        }
+
+        $current_period = $payload['current_period'];
+
+        return [
+            'content_stats' => [
+                'total_documents' => isset($current_period['documents_count']) ? (int) $current_period['documents_count'] : 0,
+                'total_word_count' => isset($current_period['sentences_count']) ? (int) $current_period['sentences_count'] : 0,
+                'verification_count' => 0,
+                'last_signed' => null,
+            ],
+            'coalition_stats' => [
+                'total_members' => 0,
+                'total_content_pool' => isset($current_period['documents_count']) ? (int) $current_period['documents_count'] : 0,
+                'active_agreements' => isset($payload['recent_earnings']) && is_array($payload['recent_earnings']) ? count($payload['recent_earnings']) : 0,
+            ],
+        ];
+    }
+
+    /**
+     * Provide a predictable zero-state payload so dashboard surfaces can render
+     * even when coalition data is unavailable for the current account.
+     */
+    private function build_empty_stats_payload(): array
+    {
+        return [
+            'content_stats' => [
+                'total_documents' => 0,
+                'total_word_count' => 0,
+                'verification_count' => 0,
+                'last_signed' => null,
+            ],
+            'coalition_stats' => [
+                'total_members' => 0,
+                'total_content_pool' => 0,
+                'active_agreements' => 0,
+            ],
+        ];
     }
 
 }

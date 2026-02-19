@@ -32,6 +32,13 @@ console.log(`[Next Config] Using API base URL: ${apiBaseUrl}`);
 const nextConfig = {
   // Enable compression
   compress: true,
+  webpack(config) {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      three: require.resolve('three'),
+    };
+    return config;
+  },
   // Optimize production builds
   productionBrowserSourceMaps: false,
   // Optimize React

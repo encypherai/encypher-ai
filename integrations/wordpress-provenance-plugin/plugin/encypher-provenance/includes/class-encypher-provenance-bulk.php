@@ -96,7 +96,17 @@ class Bulk
         
         ?>
         <div class="wrap encypher-bulk-mark-page">
-            <h1><?php esc_html_e('Bulk Mark WordPress Archives', 'encypher-provenance'); ?></h1>
+            <h1 class="encypher-page-title">
+                <span class="encypher-logo">
+                    <img
+                        class="encypher-brand-lockup"
+                        src="<?php echo esc_url(ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/images/encypher_full_logo_color.svg'); ?>"
+                        alt="<?php echo esc_attr__('Encypher', 'encypher-provenance'); ?>"
+                    />
+                </span>
+                <span class="encypher-title-divider" aria-hidden="true">|</span>
+                <span><?php esc_html_e('Bulk Sign', 'encypher-provenance'); ?></span>
+            </h1>
             
             <div class="encypher-bulk-intro">
                 <p><?php esc_html_e('Programmatically mark existing WordPress content with C2PA-compliant invisible embeddings.', 'encypher-provenance'); ?></p>

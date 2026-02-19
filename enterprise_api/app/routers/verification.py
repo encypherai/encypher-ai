@@ -32,6 +32,7 @@ from app.utils.quota import QuotaManager, QuotaType
 router = APIRouter()
 
 
+
 class VerifyAdvancedRequest(BaseModel):
     text: str = Field(..., min_length=1)
     include_attribution: bool = Field(default=False)

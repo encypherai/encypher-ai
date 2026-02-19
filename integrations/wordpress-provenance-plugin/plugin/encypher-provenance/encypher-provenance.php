@@ -3,7 +3,7 @@
  * Plugin Name:       Encypher Provenance
  * Plugin URI:        https://encypherai.com/wordpress
  * Description:       C2PA-compliant text authentication. Embed cryptographic proof of origin into your WordPress content. Built on standards we're developing with Google, BBC, OpenAI, Adobe, and Microsoft.
- * Version:           1.1.0
+ * Version:           1.0.0-beta
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Encypher Corporation
@@ -19,7 +19,7 @@ if (! defined('ABSPATH')) {
 }
 
 if (! defined('ENCYPHER_PROVENANCE_VERSION')) {
-    define('ENCYPHER_PROVENANCE_VERSION', '1.1.0');
+    define('ENCYPHER_PROVENANCE_VERSION', '1.0.0-beta');
 }
 
 define('ENCYPHER_PROVENANCE_PLUGIN_FILE', __FILE__);

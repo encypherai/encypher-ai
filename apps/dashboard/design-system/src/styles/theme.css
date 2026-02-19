@@ -112,16 +112,16 @@
   --accent-foreground: var(--white);
   
   /* Muted */
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
+  --muted: 213 43% 33%;
+  --muted-foreground: 215 20% 65%;
   
   /* Cards */
-  --card: #1e293b;
-  --card-foreground: var(--white);
+  --card: 213 43% 33%;
+  --card-foreground: 0 0% 100%;
   
   /* Popovers */
-  --popover: #1e293b;
-  --popover-foreground: var(--white);
+  --popover: 213 43% 33%;
+  --popover-foreground: 0 0% 100%;
   
   /* Borders */
   --border: #334155;

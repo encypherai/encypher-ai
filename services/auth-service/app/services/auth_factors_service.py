@@ -177,6 +177,11 @@ class AuthFactorsService:
         user = self._get_user(user_id)
         if not user.passkey_challenge:
             raise ValueError("No passkey registration in progress")
+        if not user.passkey_challenge_expires_at or _utcnow() > user.passkey_challenge_expires_at:
+            user.passkey_challenge = None
+            user.passkey_challenge_expires_at = None
+            self.db.commit()
+            raise ValueError("Passkey challenge has expired")
 
         verified = verify_registration_response(
             credential=credential,
@@ -232,6 +237,11 @@ class AuthFactorsService:
         user = self._get_user_by_email(email)
         if not user.passkey_challenge:
             raise ValueError("No passkey authentication in progress")
+        if not user.passkey_challenge_expires_at or _utcnow() > user.passkey_challenge_expires_at:
+            user.passkey_challenge = None
+            user.passkey_challenge_expires_at = None
+            self.db.commit()
+            raise ValueError("Passkey challenge has expired")
 
         credential_id = credential.get("id")
         if not credential_id:

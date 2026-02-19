@@ -20,7 +20,7 @@ function generatePoints(count: number, radius: number) {
   return points;
 }
 
-function Particles({ count = 2000, color = '#2a87c4' }: { count?: number; color?: string }) {
+function Particles({ count = 2000, color }: { count?: number; color?: string }) {
   const pointsRef = useRef<THREE.Points>(null!);
   const [positions] = useState(() => generatePoints(count, 3));
 
@@ -105,11 +105,23 @@ function UnicodeVariationSelectors({ refs }: { refs: React.RefObject<THREE.Group
           <Float speed={1 + Math.random() * 0.5} rotationIntensity={0.3 + Math.random() * 0.5} floatIntensity={0.3 + Math.random() * 0.5}>
             <mesh>
               <octahedronGeometry args={[0.15, 0]} />
-              <meshBasicMaterial color="#1b2f50" wireframe transparent opacity={0.3} />
+              <meshBasicMaterial
+                color={isDark ? '#b7d5ed' : '#1b2f50'}
+                wireframe
+                transparent
+                opacity={0.3}
+              />
             </mesh>
           </Float>
           <Billboard follow={true}>
-            <Text color="#1b2f50" fontSize={0.2} anchorX="center" anchorY="middle">{item.symbol}</Text>
+            <Text
+              color={isDark ? '#b7d5ed' : '#1b2f50'}
+              fontSize={0.2}
+              anchorX="center"
+              anchorY="middle"
+            >
+              {item.symbol}
+            </Text>
           </Billboard>
         </group>
       ))}
@@ -142,7 +154,14 @@ function MetadataObjects({ refs }: { refs: React.RefObject<THREE.Group | null>[]
             <group />
           </Float>
           <Billboard follow={true}>
-            <Text color="#1b2f50" fontSize={0.15} maxWidth={2} anchorX="center" anchorY="middle" fillOpacity={0.7}>
+            <Text
+              color={isDark ? '#b7d5ed' : '#1b2f50'}
+              fontSize={0.15}
+              maxWidth={2}
+              anchorX="center"
+              anchorY="middle"
+              fillOpacity={0.7}
+            >
               {item.text}
             </Text>
           </Billboard>
@@ -166,7 +185,12 @@ const EncypherHub = React.forwardRef<THREE.Mesh>((props, ref) => {
   return (
     <mesh ref={ref as React.Ref<THREE.Mesh>} position={[0, 0, 0]}>
       <dodecahedronGeometry args={[0.3, 0]} />
-      <meshBasicMaterial color="#1b2f50" wireframe transparent opacity={0.7} />
+      <meshBasicMaterial
+        color={isDark ? '#b7d5ed' : '#1b2f50'}
+        wireframe
+        transparent
+        opacity={0.7}
+      />
     </mesh>
   );
 });
@@ -198,7 +222,8 @@ function ConnectionLines({
 
 function Scene() {
   const { resolvedTheme } = useTheme();
-  const lineColor = '#1b2f50';
+  const isDark = resolvedTheme === 'dark';
+  const lineColor = isDark ? '#b7d5ed' : '#1b2f50';
 
   const unicodeRefs = useMemo(
     () => Array.from({ length: 6 }, () => createRef<THREE.Group>()),
@@ -224,7 +249,7 @@ function Scene() {
 
   return (
     <>
-      <Particles color="#1b2f50" />
+      <Particles color={isDark ? '#b7d5ed' : '#1b2f50'} count={2000} />
       <group ref={symbolsGroupRef}>
         <UnicodeVariationSelectors refs={unicodeRefs} />
       </group>
@@ -241,7 +266,7 @@ export default function MetadataBackground() {
   const { resolvedTheme } = useTheme();
 
   return (
-    <div className="absolute inset-0 bg-background opacity-20">
+    <div className="absolute inset-0">
       <Canvas key={resolvedTheme} camera={{ position: [0, 0, 5], fov: 50 }}>
         <ambientLight intensity={0.3} />
         <Scene />

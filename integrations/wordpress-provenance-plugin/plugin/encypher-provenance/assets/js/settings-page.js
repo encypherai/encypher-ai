@@ -115,6 +115,7 @@
         async testConnection() {
             const $btn = $('#test-connection-btn');
             const $result = $('#test-connection-result');
+            const $status = $('#connection-status');
 
             $btn.prop('disabled', true).text('Testing...');
             $result.html('<div class="notice notice-info"><p>Testing connection via WordPress server...</p></div>');
@@ -164,8 +165,10 @@
                 message += '</ul></div>';
                 $result.html(message);
 
-                // Update connection status indicator
-                this.checkConnection();
+                // Update connection status indicator using the same unsaved values tested above.
+                $status.html('<span class="status-indicator dashicons dashicons-yes-alt"></span> <span class="status-text-success">Connected</span>');
+                this.setChecklistStepState('connection-test', true);
+                this.updateChecklistProgress();
 
                 this.updateHealthCard({
                     state: data.status || 'connected',
@@ -178,6 +181,9 @@
 
             } catch (error) {
                 $result.html(`<div class="notice notice-error"><p><strong>Connection failed:</strong> ${error.message}</p></div>`);
+                $status.html('<span class="status-indicator dashicons dashicons-dismiss"></span> <span class="status-text-error">Not connected</span>');
+                this.setChecklistStepState('connection-test', false);
+                this.updateChecklistProgress();
                 this.updateHealthCard({
                     state: 'disconnected',
                     stateLabel: 'Disconnected',

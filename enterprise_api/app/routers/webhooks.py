@@ -6,6 +6,7 @@ Provides endpoints for registering, listing, and managing webhooks.
 
 import hashlib
 import hmac
+import httpx
 import logging
 import secrets
 from datetime import datetime, timezone
@@ -519,7 +520,6 @@ async def test_webhook(
         )
 
     # Build test payload
-    import httpx
     import json
 
     test_payload = {

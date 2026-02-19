@@ -2,6 +2,30 @@
  * Settings page styles for Encypher Provenance plugin.
  */
 
+.encypher-page-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.encypher-page-title .encypher-logo {
+    display: inline-flex;
+    align-items: center;
+}
+
+.encypher-page-title .encypher-brand-lockup {
+    width: 120px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.encypher-page-title .encypher-title-divider {
+    color: #8c8f94;
+    font-weight: 400;
+}
+
 /* Connection Status Indicator */
 #connection-status {
     margin: 10px 0;

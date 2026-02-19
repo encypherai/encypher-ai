@@ -86,7 +86,8 @@ async def test_webhook_test_rejects_untrusted_stored_url(
             _ = kwargs
             raise AssertionError("Outbound request should not be attempted for untrusted webhook URL")
 
-    monkeypatch.setattr(httpx, "AsyncClient", FakeAsyncClient)
+    import app.routers.webhooks as webhooks_module
+    monkeypatch.setattr(webhooks_module, "httpx", type("_httpx", (), {"AsyncClient": FakeAsyncClient})())
 
     try:
         response = await async_client.post(

@@ -6,6 +6,13 @@ if (process.env.NODE_ENV === 'development') {
 
 const nextConfig = {
   reactStrictMode: true,
+  webpack(config) {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      three: require.resolve('three'),
+    };
+    return config;
+  },
   allowedDevOrigins: [
     "s-dashboard.encypherai.com",
     "http://localhost:3001",

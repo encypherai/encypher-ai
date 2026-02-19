@@ -6,6 +6,7 @@ if (! defined('ABSPATH')) {
 }
 
 require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-html-parser.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-error-log.php';
 require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-admin.php';
 require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-rest.php';
 require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-verification.php';

@@ -1,6 +1,6 @@
 """Tests for TOTP 2FA + passkey factor service."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -122,7 +122,7 @@ def test_begin_passkey_registration_sets_challenge(service, mock_db, user):
 def test_complete_passkey_registration_stores_credential(service, mock_db, user):
     _wire_user(mock_db, user)
     user.passkey_challenge = "Y2hhbGxlbmdl"
-    user.passkey_challenge_expires_at = datetime.now(timezone.utc)
+    user.passkey_challenge_expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     verified = SimpleNamespace(
         credential_id=b"cred-id",
@@ -155,7 +155,7 @@ def test_begin_passkey_authentication_uses_existing_credentials(service, mock_db
 
 def test_complete_passkey_authentication_updates_counter(service, mock_db, user):
     user.passkey_challenge = "Y2hhbGxlbmdl"
-    user.passkey_challenge_expires_at = datetime.now(timezone.utc)
+    user.passkey_challenge_expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
     user.passkey_credentials = [
         {"credential_id": "Y3JlZC1pZA", "public_key": "cHViLWtleQ", "sign_count": 1, "name": "Laptop"}
     ]

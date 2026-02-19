@@ -90,14 +90,12 @@ async def test_sign_without_auth():
 
 @pytest.mark.asyncio
 async def test_verify_endpoint():
-    """Test verification endpoint (public, no auth required)."""
+    """POST /api/v1/verify routes via Traefik to the verification-service.
+    The enterprise API does not register this route and correctly returns 404."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post("/api/v1/verify", json={"text": "Some text without a manifest"})
-        assert response.status_code == 410
-        data = response.json()
-        assert data["success"] is False
-        assert data["error"]["code"] == "ENDPOINT_DEPRECATED"
+        assert response.status_code == 404
 
 
 @pytest.mark.asyncio

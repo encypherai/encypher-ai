@@ -5,6 +5,10 @@ import { GhostIntegrationCard } from './GhostIntegrationCard';
 import { ChromeExtensionCard } from './ChromeExtensionCard';
 import { Card, CardHeader, CardTitle, CardDescription } from '@encypher/design-system';
 
+const WORDPRESS_PLUGIN_DOWNLOAD_URL =
+  process.env.NEXT_PUBLIC_WORDPRESS_PLUGIN_DOWNLOAD_URL ||
+  '/downloads/encypher-provenance-1.0.0-beta.zip';
+
 const comingSoonIntegrations = [
   {
     name: 'WordPress',
@@ -15,7 +19,8 @@ const comingSoonIntegrations = [
       </svg>
     ),
     status: 'Plugin available' as const,
-    href: '/docs/publisher-integration',
+    setupHref: '/docs/publisher-integration',
+    downloadHref: WORDPRESS_PLUGIN_DOWNLOAD_URL,
   },
   {
     name: 'Substack',
@@ -103,6 +108,26 @@ export default function IntegrationsPage() {
                     </div>
                   </div>
                 </CardHeader>
+                {(integration.setupHref || integration.downloadHref) && (
+                  <div className="px-6 pb-4 flex flex-wrap items-center gap-4">
+                    {integration.setupHref && (
+                      <a
+                        href={integration.setupHref}
+                        className="text-sm text-blue-ncs hover:underline font-medium"
+                      >
+                        View setup guide &rarr;
+                      </a>
+                    )}
+                    {integration.downloadHref && (
+                      <a
+                        href={integration.downloadHref}
+                        className="text-sm text-blue-ncs hover:underline font-medium"
+                      >
+                        Download plugin &rarr;
+                      </a>
+                    )}
+                  </div>
+                )}
                 {integration.href && (
                   <div className="px-6 pb-4">
                     <a

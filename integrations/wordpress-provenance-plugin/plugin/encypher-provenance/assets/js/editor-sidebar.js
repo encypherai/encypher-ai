@@ -24,25 +24,11 @@
         const [sentencesTotal, setSentencesTotal] = useState(0);
         const [showAllSentences, setShowAllSentences] = useState(false);
         const tier = (typeof EncypherProvenanceConfig !== 'undefined' && EncypherProvenanceConfig.tier) ? EncypherProvenanceConfig.tier : 'free';
-        const upgradeUrl = (typeof EncypherProvenanceConfig !== 'undefined' && EncypherProvenanceConfig.upgradeUrl) ? EncypherProvenanceConfig.upgradeUrl : 'https://dashboard.encypherai.com/billing';
-        const usage = (typeof EncypherProvenanceConfig !== 'undefined' && EncypherProvenanceConfig.usage && EncypherProvenanceConfig.usage.api_calls)
-            ? EncypherProvenanceConfig.usage.api_calls
-            : { used: 0, limit: 1000, remaining: 1000, percentage_used: 0, is_unlimited: false };
-
-        const renderUpgradeCallout = (message) => {
-            return wp.element.createElement(
-                'div',
-                { className: 'encypher-upgrade-callout' },
-                wp.element.createElement('p', null, message),
-                upgradeUrl
-                    ? wp.element.createElement(
-                          'a',
-                          { href: upgradeUrl, className: 'button button-primary', target: '_blank', rel: 'noopener noreferrer' },
-                          'Upgrade to Enterprise'
-                      )
-                    : null
-            );
-        };
+        const [usage, setUsage] = useState(
+            (typeof EncypherProvenanceConfig !== 'undefined' && EncypherProvenanceConfig.usage && EncypherProvenanceConfig.usage.api_calls)
+                ? EncypherProvenanceConfig.usage.api_calls
+                : { used: 0, limit: 1000, remaining: 1000, percentage_used: 0, is_unlimited: false }
+        );
 
         const renderBrandingPrimer = () => {
             const children = [
@@ -159,6 +145,9 @@
                     setLastSigned(response.last_signed || '');
                     setSentenceSegments(Array.isArray(response.sentences) ? response.sentences : []);
                     setSentencesTotal(typeof response.sentences_total === 'number' ? response.sentences_total : 0);
+                    if (response.usage && response.usage.api_calls) {
+                        setUsage(response.usage.api_calls);
+                    }
                     setShowAllSentences(false);
                 })
                 .catch(() => {
@@ -172,12 +161,6 @@
 
         const fetchManifest = () => {
             if (!postId || !isSigned) {
-                return;
-            }
-            if (tier === 'free') {
-                if (upgradeUrl) {
-                    window.open(upgradeUrl, '_blank', 'noopener,noreferrer');
-                }
                 return;
             }
             setVerifying(true);
@@ -241,7 +224,6 @@
             }
 
             const items = [];
-            const canViewManifest = tier !== 'free';
 
             if (lastSigned) {
                 items.push(
@@ -279,7 +261,7 @@
                 );
             }
 
-            if (isSigned && canViewManifest) {
+            if (isSigned) {
                 items.push(
                     wp.element.createElement(
                         'li',
@@ -296,21 +278,13 @@
                         )
                     )
                 );
-            } else if (isSigned && !canViewManifest) {
-                items.push(
-                    wp.element.createElement(
-                        'li',
-                        { key: 'upgrade-manifest', style: { marginTop: '12px' } },
-                        renderUpgradeCallout('Upgrade to view the underlying C2PA manifest.')
-                    )
-                );
             }
 
             return wp.element.createElement('ul', { className: 'verification-meta', style: { listStyle: 'none', padding: 0, marginTop: '12px' } }, items);
         };
 
         const renderManifestViewer = () => {
-            if (!showManifest || !manifestData || tier === 'free') {
+            if (!showManifest || !manifestData) {
                 return null;
             }
 

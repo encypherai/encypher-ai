@@ -10,9 +10,18 @@
 if (! defined('ABSPATH')) {
     exit;
 }
+
+$content_stats = is_array($stats) && isset($stats['content_stats']) && is_array($stats['content_stats']) ? $stats['content_stats'] : [];
+$coalition_stats = is_array($stats) && isset($stats['coalition_stats']) && is_array($stats['coalition_stats']) ? $stats['coalition_stats'] : [];
+$has_coalition_traction =
+    ((int) ($content_stats['total_documents'] ?? 0) > 0)
+    || ((int) ($content_stats['verification_count'] ?? 0) > 0)
+    || ((int) ($coalition_stats['total_members'] ?? 0) > 0)
+    || ((int) ($coalition_stats['total_content_pool'] ?? 0) > 0)
+    || ((int) ($coalition_stats['active_agreements'] ?? 0) > 0);
 ?>
 
-<?php if ($stats): ?>
+<?php if ($stats && $has_coalition_traction): ?>
 <div class="encypher-coalition-stats">
     <!-- Stats Grid -->
     <div class="coalition-stat-grid">
@@ -46,13 +55,27 @@ if (! defined('ABSPATH')) {
     </div>
 </div>
 
+<?php elseif ($stats): ?>
+<div class="encypher-coalition-empty-state">
+    <h4><?php esc_html_e('Coalition is in early rollout', 'encypher-provenance'); ?></h4>
+    <p><?php esc_html_e('Coalition analytics will appear here once participation and reporting are active for your workspace.', 'encypher-provenance'); ?></p>
+    <div class="coalition-actions">
+        <a href="https://encypherai.com/coalition" class="button button-secondary" target="_blank">
+            <?php esc_html_e('Learn About Coalition', 'encypher-provenance'); ?>
+        </a>
+        <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="button button-link">
+            <?php esc_html_e('Review Settings', 'encypher-provenance'); ?>
+        </a>
+    </div>
+</div>
+
 <?php else: ?>
 <div class="encypher-coalition-error">
     <p>
         <span class="dashicons dashicons-warning"></span>
         <?php esc_html_e('Unable to load coalition stats. Please check your API connection.', 'encypher-provenance'); ?>
     </p>
-    <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-provenance')); ?>" class="button button-small">
+    <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="button button-small">
         <?php esc_html_e('Check Settings', 'encypher-provenance'); ?>
     </a>
 </div>

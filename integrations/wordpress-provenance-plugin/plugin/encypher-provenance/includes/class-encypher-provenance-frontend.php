@@ -284,13 +284,10 @@ class Frontend
         
         <script>
         (function() {
-            console.log('Encypher: Initializing verification modal');
             const modal = document.getElementById('encypher-c2pa-modal');
             const badges = document.querySelectorAll('.encypher-c2pa-badge');
-            console.log('Encypher: Found', badges.length, 'badge(s)');
             
             if (!modal) {
-                console.error('Encypher: Modal element not found');
                 return;
             }
             
@@ -300,14 +297,11 @@ class Frontend
             const result = modal.querySelector('.encypher-c2pa-modal-result');
             
             function openModal(postId) {
-                console.log('Encypher: Opening modal for post', postId);
                 modal.style.display = 'block';
                 document.body.style.overflow = 'hidden';
                 loading.style.display = 'block';
                 result.style.display = 'none';
                 
-                // Fetch verification data
-                console.log('Encypher: Fetching verification from API');
                 fetch('<?php echo esc_url(rest_url('encypher-provenance/v1/verify')); ?>', {
                     method: 'POST',
                     headers: {
@@ -317,11 +311,9 @@ class Frontend
                     body: JSON.stringify({ post_id: postId })
                 })
                 .then(response => {
-                    console.log('Encypher: API response status:', response.status);
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Encypher: API response data:', data);
                     loading.style.display = 'none';
                     result.style.display = 'block';
                     result.innerHTML = formatVerificationData(data, postId);
@@ -591,12 +583,9 @@ class Frontend
             
             // Event listeners
             badges.forEach(badge => {
-                console.log('Encypher: Attaching click listener to badge');
                 badge.addEventListener('click', function(e) {
-                    console.log('Encypher: Badge clicked!');
                     e.preventDefault();
                     const postId = this.getAttribute('data-post-id');
-                    console.log('Encypher: Post ID:', postId);
                     openModal(postId);
                 });
             });

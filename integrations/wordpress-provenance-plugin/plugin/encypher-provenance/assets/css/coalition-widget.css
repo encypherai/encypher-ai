@@ -202,6 +202,29 @@
     font-size: 24px;
 }
 
+.coalition-page-header .encypher-page-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.coalition-page-header .encypher-logo {
+    display: inline-flex;
+    align-items: center;
+}
+
+.coalition-page-header .encypher-brand-lockup {
+    width: 120px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.coalition-page-header .encypher-title-divider {
+    color: #8c8f94;
+    font-weight: 400;
+}
+
 .coalition-page-header p {
     margin: 0;
     color: #646970;

@@ -1,49 +1,4 @@
-version: "3.9"
-
 services:
-  enterprise-db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: encypher_enterprise
-      POSTGRES_USER: encypher
-      POSTGRES_PASSWORD: encypher
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U encypher -d encypher_enterprise"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - enterprise-db-data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-
-  enterprise-api:
-    build:
-      context: ../..
-      dockerfile: enterprise_api/Dockerfile
-    depends_on:
-      enterprise-db:
-        condition: service_healthy
-    environment:
-      ENVIRONMENT: development
-      DATABASE_URL: postgresql://encypher:encypher@enterprise-db:5432/encypher_enterprise
-      KEY_ENCRYPTION_KEY: 111122223333444455556666777788889999aaaabbbbccccddddeeeeffff0000
-      ENCRYPTION_NONCE: 00112233445566778899aabb
-      SSL_COM_API_KEY: placeholder-key
-      SSL_COM_ACCOUNT_KEY: placeholder-account
-      SSL_COM_API_URL: https://sws-test.sslpki.com/
-      DEMO_API_KEY: demo-local-key
-      # Fixed demo key for development (DO NOT use in production!)
-      # This ensures the same key is used across container restarts
-      DEMO_PRIVATE_KEY_HEX: "a1b2c3d4e5f6071829384756a1b2c3d4e5f6071829384756a1b2c3d4e5f60718"
-      DEMO_ORGANIZATION_ID: org_demo
-      DEMO_ORGANIZATION_NAME: Encypher Demo Organization
-    volumes:
-      - ../../enterprise_api:/app/enterprise_api
-      - ../../encypher-ai:/app/encypher-ai
-    ports:
-      - "8001:8000"
-
   wp-db:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
@@ -65,8 +20,8 @@ services:
     depends_on:
       wp-db:
         condition: service_healthy
-      enterprise-api:
-        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8085:80"
     environment:
@@ -87,6 +42,8 @@ services:
     depends_on:
       wordpress:
         condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     entrypoint: ["wp", "--allow-root"]
     working_dir: /var/www/html
     environment:
@@ -99,6 +56,5 @@ services:
       - ./plugin/encypher-provenance:/var/www/html/wp-content/plugins/encypher-provenance
 
 volumes:
-  enterprise-db-data:
   wordpress-db-data:
   wordpress-data:

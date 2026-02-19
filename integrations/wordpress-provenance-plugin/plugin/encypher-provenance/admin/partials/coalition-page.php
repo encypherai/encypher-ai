@@ -10,16 +10,35 @@
 if (! defined('ABSPATH')) {
     exit;
 }
+
+$content_stats = is_array($stats) && isset($stats['content_stats']) && is_array($stats['content_stats']) ? $stats['content_stats'] : [];
+$coalition_stats = is_array($stats) && isset($stats['coalition_stats']) && is_array($stats['coalition_stats']) ? $stats['coalition_stats'] : [];
+$has_coalition_traction =
+    ((int) ($content_stats['total_documents'] ?? 0) > 0)
+    || ((int) ($content_stats['verification_count'] ?? 0) > 0)
+    || ((int) ($coalition_stats['total_members'] ?? 0) > 0)
+    || ((int) ($coalition_stats['total_content_pool'] ?? 0) > 0)
+    || ((int) ($coalition_stats['active_agreements'] ?? 0) > 0);
 ?>
 
 <div class="wrap encypher-coalition-page">
     <!-- Page Header -->
     <div class="coalition-page-header">
-        <h1><?php esc_html_e('Coalition Dashboard', 'encypher-provenance'); ?></h1>
+        <h1 class="encypher-page-title">
+            <span class="encypher-logo">
+                <img
+                    class="encypher-brand-lockup"
+                    src="<?php echo esc_url(ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/images/encypher_full_logo_color.svg'); ?>"
+                    alt="<?php echo esc_attr__('Encypher', 'encypher-provenance'); ?>"
+                />
+            </span>
+            <span class="encypher-title-divider" aria-hidden="true">|</span>
+            <span><?php esc_html_e('Coalition', 'encypher-provenance'); ?></span>
+        </h1>
         <p><?php esc_html_e('Track your coalition membership and content contribution.', 'encypher-provenance'); ?></p>
     </div>
 
-    <?php if ($stats): ?>
+    <?php if ($stats && $has_coalition_traction): ?>
         
         <!-- Stats Overview -->
         <div class="coalition-revenue-section">
@@ -78,6 +97,19 @@ if (! defined('ABSPATH')) {
             </div>
         </div>
 
+    <?php elseif ($stats): ?>
+
+        <div class="coalition-revenue-section">
+            <div class="encypher-coalition-empty-state">
+                <h2><?php esc_html_e('Coalition is in early rollout', 'encypher-provenance'); ?></h2>
+                <p><?php esc_html_e('We are preparing coalition analytics for broader availability. Your dashboard will populate once coalition participation and reporting are active for your workspace.', 'encypher-provenance'); ?></p>
+                <p>
+                    <a href="https://encypherai.com/coalition" target="_blank" class="button button-primary"><?php esc_html_e('Learn About Coalition', 'encypher-provenance'); ?></a>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="button button-secondary"><?php esc_html_e('Review Settings', 'encypher-provenance'); ?></a>
+                </p>
+            </div>
+        </div>
+
     <?php else: ?>
         
         <!-- Error State -->
@@ -87,7 +119,7 @@ if (! defined('ABSPATH')) {
                     <span class="dashicons dashicons-warning"></span>
                     <?php esc_html_e('Unable to load coalition stats. Please check your API connection.', 'encypher-provenance'); ?>
                 </p>
-                <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-provenance')); ?>" class="button button-primary">
+                <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="button button-primary">
                     <?php esc_html_e('Check Settings', 'encypher-provenance'); ?>
                 </a>
             </div>
