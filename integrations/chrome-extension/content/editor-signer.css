@@ -105,6 +105,26 @@
   color: white;
 }
 
+.encypher-sign-ui__header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.encypher-sign-ui__header-logo {
+  display: inline-flex;
+  align-items: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: white;
+}
+
+.encypher-sign-ui__header-logo svg {
+  width: 100%;
+  height: 100%;
+}
+
 .encypher-sign-ui__header h3 {
   margin: 0;
   font-size: 15px;

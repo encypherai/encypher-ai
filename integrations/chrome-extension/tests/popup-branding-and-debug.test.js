@@ -135,6 +135,62 @@ describe('Popup branding + debug logging regressions', () => {
     );
   });
 
+  it('exposes ENCYPHER_LOGO_SVG on globalThis so editor-signer can access it', () => {
+    const detectorPath = path.join(EXTENSION_ROOT, 'content', 'detector.js');
+    const detectorCode = fs.readFileSync(detectorPath, 'utf8');
+
+    assert.match(
+      detectorCode,
+      /globalThis\.ENCYPHER_LOGO_SVG\s*=\s*ENCYPHER_LOGO_SVG/,
+      'detector.js should assign ENCYPHER_LOGO_SVG to globalThis after declaration'
+    );
+  });
+
+  it('inline sign button reads logo from globalThis.ENCYPHER_LOGO_SVG', () => {
+    const editorSignerPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.js');
+    const editorSignerCode = fs.readFileSync(editorSignerPath, 'utf8');
+
+    assert.match(
+      editorSignerCode,
+      /globalThis\?\.ENCYPHER_LOGO_SVG/,
+      'editor-signer.js createSignButton should read logo from globalThis.ENCYPHER_LOGO_SVG'
+    );
+  });
+
+  it('signing UI modal header includes the Encypher logo', () => {
+    const editorSignerPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.js');
+    const editorSignerCode = fs.readFileSync(editorSignerPath, 'utf8');
+
+    assert.match(
+      editorSignerCode,
+      /encypher-sign-ui__header-logo/,
+      'Signing UI modal header should include a logo element with class encypher-sign-ui__header-logo'
+    );
+
+    assert.match(
+      editorSignerCode,
+      /encypher-sign-ui__header-brand/,
+      'Signing UI modal header should wrap logo + title in a brand container'
+    );
+  });
+
+  it('signing UI modal header logo CSS is defined', () => {
+    const cssPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.css');
+    const cssCode = fs.readFileSync(cssPath, 'utf8');
+
+    assert.match(
+      cssCode,
+      /\.encypher-sign-ui__header-logo/,
+      'editor-signer.css should define styles for the signing UI header logo'
+    );
+
+    assert.match(
+      cssCode,
+      /\.encypher-sign-ui__header-brand/,
+      'editor-signer.css should define styles for the signing UI header brand wrapper'
+    );
+  });
+
   it('scans open shadow roots for editor surfaces so LinkedIn interop composer editors are discoverable', () => {
     const editorSignerPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.js');
     const editorSignerCode = fs.readFileSync(editorSignerPath, 'utf8');

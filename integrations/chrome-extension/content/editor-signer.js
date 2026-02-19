@@ -514,9 +514,15 @@ function showSigningUI(editor, editorType, button) {
   
   const ui = document.createElement('div');
   ui.className = 'encypher-sign-ui';
+  const _headerLogoSvg = typeof globalThis?.ENCYPHER_LOGO_SVG === 'string'
+    ? globalThis.ENCYPHER_LOGO_SVG
+    : '';
   ui.innerHTML = `
     <div class="encypher-sign-ui__header">
-      <h3>Sign Content</h3>
+      <div class="encypher-sign-ui__header-brand">
+        ${_headerLogoSvg ? `<span class="encypher-sign-ui__header-logo" aria-hidden="true">${_headerLogoSvg}</span>` : ''}
+        <h3>Sign Content</h3>
+      </div>
       <button class="encypher-sign-ui__close" aria-label="Close">&times;</button>
     </div>
     <div class="encypher-sign-ui__body">
