@@ -58,15 +58,15 @@
           <input type="checkbox" id="autoVerify">
           <label for="autoVerify">
             <strong>Auto-verify on page load</strong>
-            <span>Automatically verify detected signed content</span>
+            <span>Automatically verify detected proof-of-origin markers</span>
           </label>
         </div>
 
         <div class="options__field options__field--checkbox">
           <input type="checkbox" id="showBadges" checked>
           <label for="showBadges">
-            <strong>Show inline badges</strong>
-            <span>Display verification badges on signed content</span>
+            <strong>Show inline verification status</strong>
+            <span>Display verified authorship markers directly in page content</span>
           </label>
         </div>
       </section>
@@ -99,9 +99,9 @@
           <label for="defaultEmbeddingTechnique">Default Embedding Mode</label>
           <select id="defaultEmbeddingTechnique">
             <option value="micro">Standard (recommended)</option>
-            <option value="micro_no_embed_c2pa">Compact (no embedded C2PA)</option>
+            <option value="micro_no_embed_c2pa">Compact (server-stored proof)</option>
           </select>
-          <p class="options__hint">Standard uses micro mode defaults (ECC + embedded C2PA). Compact keeps micro markers but stores C2PA in DB only.</p>
+          <p class="options__hint">Standard embeds proof of origin in the text. Compact keeps invisible markers while storing full proof server-side.</p>
         </div>
 
         <div class="options__field">

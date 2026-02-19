@@ -48,14 +48,14 @@ describe('Popup verification UX enhancements', () => {
     );
   });
 
-  it('shows a clear signed-content detection headline and low-friction sign CTA on verify state', () => {
+  it('shows a clear authorship-proof detection headline and low-friction sign CTA on verify state', () => {
     const popupHtmlPath = path.join(EXTENSION_ROOT, 'popup', 'popup.html');
     const popupHtml = fs.readFileSync(popupHtmlPath, 'utf8');
 
     assert.match(
       popupHtml,
-      /Signed content detected on this page/i,
-      'Verify state should clearly call out when signed content is found'
+      /Verified authorship markers detected on this page/i,
+      'Verify state should clearly call out when authorship proof is found'
     );
 
     assert.match(

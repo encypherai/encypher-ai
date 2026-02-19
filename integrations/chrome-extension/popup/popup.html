@@ -32,13 +32,13 @@
         <div class="popup__icon popup__icon--gray">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         </div>
-        <h2>No Signed Content</h2>
-        <p>No C2PA-signed content was detected on this page.</p>
+        <h2>No Authorship Proof Found</h2>
+        <p>No embedded proof of origin was detected on this page.</p>
       </div>
 
       <!-- Embeddings found -->
       <div id="content-found" class="popup__state" hidden>
-        <h2 class="popup__found-title">Signed content detected on this page.</h2>
+        <h2 class="popup__found-title">Verified authorship markers detected on this page.</h2>
         <div class="popup__summary">
           <div class="popup__stat popup__stat--verified">
             <span class="popup__stat-value" id="verified-count">0</span>
@@ -82,7 +82,7 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
           </div>
           <h2>API Key Required</h2>
-          <p id="onboarding-setup">Log in to track your signed content and get notified when it's found on the web.</p>
+          <p id="onboarding-setup">Log in to sign your own content and track where proof of origin appears on the web.</p>
 
           <div class="popup__auth-setup" id="auth-setup-flow">
             <p class="popup__auth-title">Choose a sign-in method</p>
@@ -128,7 +128,7 @@
               <label for="sign-embedding-technique">Embedding Mode</label>
               <select id="sign-embedding-technique">
                 <option value="micro">Standard (recommended)</option>
-                <option value="micro_no_embed_c2pa">Compact (no embedded C2PA)</option>
+                <option value="micro_no_embed_c2pa">Compact (server-stored proof)</option>
               </select>
             </div>
             <div class="popup__sign-options">

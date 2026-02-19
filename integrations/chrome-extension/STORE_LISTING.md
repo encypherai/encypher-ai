@@ -6,51 +6,49 @@
 Encypher Verify
 
 ### Short Description (132 characters max)
-Verify and sign Encypher and C2PA-compatible content. See trust badges for verified AI-generated and human-authored content.
+Verify who authored any text on the web. Sign your own content with invisible cryptographic watermarks that survive copy-paste.
 
 ### Detailed Description
 
-**Verify Content Authenticity and Provenance**
+**Verify Authorship. Sign with Invisible Proof.**
 
-Encypher Verify helps you identify authentic, signed content on the web. See instant verification badges on articles, social media posts, and any text content that has been signed using Encypher or the C2PA (Coalition for Content Provenance and Authenticity) standard.
+Encypher Verify helps you see who authored text across the web and confirm proof of origin instantly. It surfaces verified authorship inline on articles, social posts, and other text content while letting you sign your own writing with invisible cryptographic watermarks.
 
 **Key Features:**
 
-- **Auto-Detection**: Automatically scans pages for Encypher and C2PA-compatible signed content
-- **Verification Badges**: Shows color-coded inline badges (blue = verified, red = invalid, gray = revoked)
+- **Auto-Detection**: Automatically scans pages for embedded proof-of-origin markers
+- **Inline Verification Status**: Shows color-coded verified authorship status inline (blue = verified, red = invalid, gray = revoked)
 - **Content Signing**: Sign your own content directly from the browser (requires API key)
-- **Signing Controls**: Choose embedding mode (Standard or Lightweight) and frequency (per sentence, per paragraph, etc.)
+- **Signing Controls**: Choose proof mode (embedded or compact) and frequency (per sentence, per paragraph, etc.)
 - **Context Menu**: Right-click any text and select "Verify with Encypher"
 - **WYSIWYG Editor Support**: Floating sign buttons on TinyMCE, CKEditor, Quill, ProseMirror, and more
 - **Keyboard Shortcut**: Press Ctrl+Shift+E to sign selected text instantly
 - **Usage Tracking**: Free tier includes 1,000 signings/month with visual progress meter
-- **Privacy-First**: Only sends signed content blocks for verification, never full pages
-- **Offline Detection**: Detects signed content locally before verifying
+- **Privacy-First**: Only sends candidate text blocks for verification, never full pages
+- **Offline Detection**: Detects embedded proof locally before verifying
 
 **How It Works:**
 
-1. **For Readers**: Browse the web normally. When you encounter signed content, you'll see a verification badge showing who signed it and when.
+1. **For Readers**: Browse normally. When proof is present, you see verified authorship inline with signer and timestamp details.
 
-2. **For Authors**: Get an API key from dashboard.encypherai.com, configure it in the extension settings, then use the "Sign" tab to sign text before publishing. Choose Standard mode for full C2PA provenance or Lightweight for a smaller footprint. Set your preferred signing frequency in Settings so every signing surface uses the same defaults.
+2. **For Authors**: Get an API key from dashboard.encypherai.com, configure it in settings, then use the Sign tab to add invisible cryptographic watermarks before publishing. Choose embedded proof for portability or compact proof for a smaller payload. Set your preferred signing frequency once and reuse it everywhere.
 
-3. **For Publishers**: Integrate C2PA signing into your workflow to prove content authenticity and combat AI-generated misinformation.
+3. **For Publishers**: Add proof of origin to your editorial workflow so every update can be traced, verified, and audited.
 
-**What is C2PA?**
+**Why this is different**
 
-C2PA (Coalition for Content Provenance and Authenticity) is an open standard developed by Adobe, Microsoft, Intel, BBC, and other industry leaders to combat misinformation by providing cryptographic proof of content origin.
+Encypher embeds proof directly in text with invisible cryptographic watermarks that survive copy-paste and normal distribution workflows.
 
 **Privacy & Security:**
 
 - Anonymous signed-content discovery analytics (always on, no personal user identifiers)
 - API key stored securely in your browser
-- Only signed content blocks are sent for verification
+- Only candidate text blocks are sent for verification
 - 1-hour local verification cache (no redundant API calls)
-- Open source: github.com/encypherai/encypherai-commercial
 
 **Support:**
 
 - Documentation: encypherai.com/docs
-- Issues: github.com/encypherai/encypherai-commercial/issues
 - Email: support@encypherai.com
 
 ### Category
@@ -94,8 +92,8 @@ https://encypherai.com/privacy
 ### Screenshots (Required: 1-5 screenshots, 1280x800 or 640x400)
 
 1. **Verification in Action**
-   - Show webpage with green verification badge
-   - Caption: "Instantly verify signed content with color-coded badges"
+   - Show webpage with verified authorship marker
+   - Caption: "Instantly verify who authored text with inline proof of origin"
 
 2. **Popup Interface**
    - Show popup with verification summary
@@ -103,7 +101,7 @@ https://encypherai.com/privacy
 
 3. **Sign Tab**
    - Show sign interface with text input
-   - Caption: "Sign your own content before publishing"
+   - Caption: "Sign your own content with invisible cryptographic watermarks"
 
 4. **Options Page**
    - Show settings with API key configuration
@@ -123,13 +121,13 @@ https://encypherai.com/privacy
 ## Promotional Copy
 
 ### Tagline
-"Trust, Verified. Combat misinformation with cryptographic proof."
+"Verify who authored any text on the web. Sign your own content with invisible cryptographic watermarks that survive copy-paste."
 
 ### Key Benefits
 
-1. **For Readers**: Know what's real. See instant verification of content authenticity.
-2. **For Authors**: Prove your work is yours. Sign content to prevent plagiarism and AI impersonation.
-3. **For Publishers**: Build trust with readers. Implement C2PA signing across your platform.
+1. **For Readers**: Verify who authored any text in seconds.
+2. **For Authors**: Sign your own content with invisible proof that survives copy-paste.
+3. **For Publishers**: Deploy sentence-level verification across editorial workflows.
 
 ### Use Cases
 
@@ -141,7 +139,7 @@ https://encypherai.com/privacy
 
 ## Pricing
 
-**Free Tier**: Unlimited verification (no API key required). 1,000 content signings per month with API key. Standard and Lightweight embedding modes, all frequency levels except per-word.
+**Free Tier**: Unlimited verification (no API key required). 1,000 content signings per month with API key. Embedded and compact proof modes, all frequency levels except per-word.
 **Enterprise**: Unlimited verification and signing, per-word embedding frequency, Merkle tree verification, attribution tracking. Contact sales at encypherai.com/contact.
 
 ## Support & Links
@@ -149,7 +147,6 @@ https://encypherai.com/privacy
 - **Website**: https://encypherai.com
 - **Documentation**: https://encypherai.com/docs/chrome-extension
 - **Support Email**: support@encypherai.com
-- **GitHub**: https://github.com/encypherai/encypherai-commercial
 - **Dashboard**: https://dashboard.encypherai.com
 
 ## Version History
@@ -157,10 +154,10 @@ https://encypherai.com/privacy
 ### Version 1.0.0 (Initial Release)
 
 **Features:**
-- Auto-detection of Encypher and C2PA-compatible signed content
-- Verification badges with signer information
+- Auto-detection of embedded proof-of-origin markers
+- Inline verified authorship status with signer information
 - Content signing with API key
-- Configurable embedding mode (Standard / Lightweight) and embedding frequency (per sentence, paragraph, etc.)
+- Configurable proof mode (Embedded / Compact) and embedding frequency (per sentence, paragraph, etc.)
 - Context menu verification and signing
 - Keyboard shortcut signing (Ctrl+Shift+E)
 - WYSIWYG editor integration with floating sign buttons

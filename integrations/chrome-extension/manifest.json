@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Encypher Verify",
   "version": "1.0.0",
-  "description": "Verify and sign Encypher and C2PA-compatible content on any webpage. See trust badges for verified AI-generated and human-authored content.",
+  "description": "Verify who authored any text on the web. Sign your own content with invisible cryptographic watermarks that survive copy-paste.",
   "permissions": [
     "activeTab",
     "storage",

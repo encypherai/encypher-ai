@@ -815,11 +815,11 @@ body::before {
 <div class="content">
   <div style="margin-bottom:20px;"><img src="${LOGO_WHITE_PNG_URI}" style="height:52px;width:auto;display:block;margin:0 auto;" /></div>
   <div class="title">Encypher Verify</div>
-  <div class="subtitle">Verify and sign Encypher and C2PA-compatible content on any webpage</div>
+  <div class="subtitle">Verify who authored any text on the web and sign your own content</div>
   <div class="badge-row">
-    <span class="feature-badge">C2PA Standard</span>
+    <span class="feature-badge">Proof of Origin</span>
     <span class="feature-badge">Free to Use</span>
-    <span class="feature-badge">Privacy-First</span>
+    <span class="feature-badge">Survives Copy-Paste</span>
   </div>
 </div>
 </body></html>`;
@@ -941,10 +941,10 @@ body::before {
 <div class="layout">
   <div class="left">
     <div class="logo-icon"><img src="${LOGO_WHITE_PNG_URI}" style="height:48px;width:auto;" /></div>
-    <div class="title">Trust, Verified.</div>
-    <div class="subtitle">See instant verification badges on signed content. Combat misinformation with cryptographic proof of authorship.</div>
+    <div class="title">Verify Authorship.<br>Sign with Invisible Proof.</div>
+    <div class="subtitle">See verified authorship inline and sign your own writing with invisible cryptographic watermarks that survive copy-paste.</div>
     <div class="features">
-      <div class="feature"><div class="feature-dot"></div>Auto-detect C2PA signed content</div>
+      <div class="feature"><div class="feature-dot"></div>Auto-detect proof-of-origin markers</div>
       <div class="feature"><div class="feature-dot"></div>Sign your own content from the browser</div>
       <div class="feature"><div class="feature-dot"></div>Works on any webpage, privacy-first</div>
       <div class="feature"><div class="feature-dot"></div>Free verification, no account needed</div>
@@ -954,14 +954,14 @@ body::before {
     <div class="mock-article">
       <div class="mock-article-header">
         <div class="mock-article-pub">The Encypher Times</div>
-        <div class="mock-article-title">The Rise of Content Authenticity: How C2PA Is Changing Digital Trust</div>
+        <div class="mock-article-title">How Newsrooms Verify Who Authored Stories Across the Web</div>
       </div>
       <div class="mock-badge">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         Verified &mdash; Signed by The Encypher Times
       </div>
       <div class="mock-article-text">
-        In an era where AI-generated content is becoming indistinguishable from human writing, the need for verifiable content provenance has never been more urgent...
+        As content gets copied and republished across channels, embedded proof of origin helps readers confirm who authored text and whether it was altered...
       </div>
     </div>
   </div>
@@ -1090,8 +1090,8 @@ body::before {
     <div class="logo-row">
       <img src="${LOGO_WHITE_PNG_URI}" style="height:32px;width:auto;" />
     </div>
-    <div class="title">Verify Content.<br><span>Build Trust.</span></div>
-    <div class="subtitle">The Chrome extension that detects and verifies Encypher and C2PA-compatible signed content on any webpage. See who authored it, when, and whether it's been tampered with.</div>
+    <div class="title">Verify Who Authored Text.<br><span>Sign Your Own Content.</span></div>
+    <div class="subtitle">The Chrome extension that verifies proof of origin on any webpage and adds invisible cryptographic watermarks that survive copy-paste.</div>
     <div class="cta-row">
       <div class="cta cta-primary">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
@@ -1108,7 +1108,7 @@ body::before {
         </div>
         <div>
           <div class="fc-pub">The Encypher Times</div>
-          <div class="fc-status">Verified &bull; C2PA Text Manifest</div>
+          <div class="fc-status">Verified &bull; Proof of origin found</div>
         </div>
       </div>
       <div class="float-card">
@@ -1126,7 +1126,7 @@ body::before {
         </div>
         <div>
           <div class="fc-pub">Vantage Newswire</div>
-          <div class="fc-status">Verified &bull; C2PA Text Manifest</div>
+          <div class="fc-status">Verified &bull; Proof of origin found</div>
         </div>
       </div>
     </div>
@@ -1198,7 +1198,7 @@ async function main() {
   for (const asset of assets) {
     console.log(`  Generating ${asset.description} (${asset.width}x${asset.height})...`);
     const page = await browser.newPage();
-    await page.setViewport({ width: asset.width, height: asset.height, deviceScaleFactor: 2 });
+    await page.setViewport({ width: asset.width, height: asset.height, deviceScaleFactor: 1 });
     await page.setContent(asset.html, { waitUntil: 'networkidle0' });
     // Wait for fonts to load
     await page.evaluate(() => document.fonts.ready);

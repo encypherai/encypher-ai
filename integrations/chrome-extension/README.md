@@ -1,6 +1,6 @@
 # Encypher Verify - Chrome Extension
 
-A browser extension that automatically detects and verifies Encypher and C2PA-compatible signed content on any webpage, displaying trust badges for verified content. Also supports signing content directly from the browser and inline signing in WYSIWYG editors.
+A browser extension that helps people verify who authored text on the web and sign their own content with invisible cryptographic watermarks that survive copy-paste.
 
 ## User Journeys
 
@@ -13,7 +13,7 @@ A browser extension that automatically detects and verifies Encypher and C2PA-co
 
 ### Verification
 - **Auto-Detection**: Scans pages for Encypher and C2PA-compatible content provenance embeddings using Unicode variation selectors
-- **Verification Badges**: Shows inline badges on verified content blocks
+- **Inline Verification Status**: Shows verified authorship markers directly in page content
 - **Popup Summary**: Quick overview of verified/pending/invalid content on the page
 - **Context Menu**: Right-click to verify selected text
 - **Caching**: Verification results are cached to avoid redundant API calls
@@ -25,7 +25,7 @@ A browser extension that automatically detects and verifies Encypher and C2PA-co
 - **WYSIWYG Editor Integration**: Floating sign buttons on detected text editors
 - **Context Menu Signing**: Right-click to sign selected text or sign & copy to clipboard
 - **Keyboard Shortcut**: Ctrl+Shift+E to sign selected text in any editor
-- **Embedding Mode**: Choose between Standard (micro default: C2PA + ECC) and Compact (no embedded C2PA) signing
+- **Embedding Mode**: Choose between Standard (embedded proof of origin) and Compact (server-stored proof) signing
 - **Embedding Frequency**: Control how often signatures are embedded (entire content, per section, per paragraph, per sentence, or per word)
 - **Advanced Options**: Document type, invisible embeddings, Merkle tree (Enterprise), attribution tracking (Enterprise)
 - **Tier-Aware**: Free tier (1,000 signings/month) and Enterprise (unlimited) with usage tracking

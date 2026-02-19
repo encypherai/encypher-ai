@@ -21,7 +21,7 @@ describe('Optional login onboarding + setup tracking', () => {
 
     assert.match(
       popupHtml,
-      /Log in to track your signed content and get notified when it's found on the web/i,
+      /Log in to sign your own content and track where proof of origin appears on the web/i,
       'Popup should clearly explain the benefit of optional login'
     );
 
