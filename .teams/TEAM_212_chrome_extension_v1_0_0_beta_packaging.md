@@ -95,3 +95,40 @@ Verification:
 - npm run lint (0 errors)
 - uv run pytest enterprise_api/tests/test_wordpress_provenance_plugin_contract.py (52/52)
 ```
+
+---
+
+## Session Addendum: Dashboard + Marketing Build Failures (2026-02-19)
+
+### Scope Completed
+- Investigated Railway build failures for:
+  - `apps/dashboard`
+  - `apps/marketing-site`
+- Applied targeted code/config fixes for root causes found in logs.
+
+### Root Cause Findings
+- **Dashboard failure**: stale JSX block referenced `integration.href`, but the union type for `comingSoonIntegrations` only supports `setupHref`/`downloadHref` on plugin entries and no `href` field. This caused TypeScript build failure at `src/app/integrations/page.tsx:131`.
+- **Marketing-site failure**: Railpack selected Node 18 from app engine constraints, while dependency graph includes Tailwind v4 native oxide bindings that require newer Node/runtime compatibility. Logs also showed `EBADENGINE` warnings and `@tailwindcss/oxide` native binding failure.
+
+### Files Updated
+- `apps/dashboard/src/app/integrations/page.tsx`
+  - Removed obsolete `integration.href` rendering branch.
+- `apps/marketing-site/package.json`
+  - Updated engines from `>=18.0.0` to `>=22.0.0` to align build runtime with current frontend dependency requirements.
+
+### Verification Evidence
+- `apps/dashboard`: `npm run build` — ✅ pass (warnings only).
+- `apps/marketing-site`: local `npm run build` still blocked by pre-existing file ownership issue in workspace cache (`.next/server/app/_not-found` owned by root), but failure mode is environment-permission related and separate from Railway Node/runtime mismatch.
+- Confirmed local Node runtime is modern (`v24.12.0`), supporting the engine bump rationale.
+
+### Suggested Commit Message (comprehensive)
+```
+fix(frontend-build): resolve dashboard integrations type failure and align marketing runtime engine
+
+- remove stale integration.href render branch in dashboard integrations page
+  to fix Next/TypeScript build error on union-typed integration cards
+- bump marketing-site Node engine requirement to >=22 to match Tailwind v4
+  oxide native binding/runtime expectations in CI/Railpack builds
+- validate dashboard production build locally after fix
+- document local marketing build cache permission issue as unrelated env artifact
+```

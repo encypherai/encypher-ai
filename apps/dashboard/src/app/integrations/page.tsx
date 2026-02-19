@@ -128,16 +128,6 @@ export default function IntegrationsPage() {
                     )}
                   </div>
                 )}
-                {integration.href && (
-                  <div className="px-6 pb-4">
-                    <a
-                      href={integration.href}
-                      className="text-sm text-blue-ncs hover:underline font-medium"
-                    >
-                      View setup guide &rarr;
-                    </a>
-                  </div>
-                )}
               </Card>
             ))}
           </div>
