@@ -1,9 +1,9 @@
 # Encypher Corporation: Ideal Customer Profile Framework 3.0
 ## Standards-Driven Infrastructure Strategy
 
-**Last Updated:** January 8, 2026
+**Last Updated:** February 20, 2026
 **Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 3.1
+**Version:** 4.0
 **Distribution:** Sales & Marketing Leadership
 
 ---
@@ -23,7 +23,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 - Reframe problem from "detection failure" to "unmarked text = no proof + viable innocent infringement defense"
 - **NEW: Willful infringement frame** = formal notice + cryptographic proof eliminates "we didn't know"
 - **NEW: Quote integrity verification** = prove AI accuracy vs. hallucination
-- **NEW: Market standards development** = Syracuse Symposium February 25, 2026 defines licensing frameworks
+- **NEW: Market standards development** = Syracuse Symposium convenes February 25, 2026 to define licensing frameworks
 - Reframe AI companies from "adversaries" to "infrastructure partners"
 - Emphasize downstream survival (B2B distribution, wire services, aggregators)
 
@@ -98,7 +98,7 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
 - **Downstream Survival:** Cryptographic watermarking survives B2B distribution, wire services, aggregators, scrapers
 - **Market Standards Leadership:** Syracuse Symposium February 25, 2026 convenes GCs to define licensing frameworks
 - **Two-Track Licensing Model:** Coalition deals (60/40) or self-service deals (80/20). Free signing infrastructure builds coalition supply. Enforcement tools are self-service add-ons. No revenue = no payment.
-- **Nate Alvord Factor:** 25+ years IP licensing expertise from Digimarc/Via Licensing
+- **Matt Kaminsky Factor:** 13+ years digital media/ad-tech revenue leadership with deep sales house and publisher relationships (Mediavine, Enthusiast Gaming, Space Cow Media)
 
 **Decision Criteria:**
 - Eliminates "we didn't know" defense (willful infringement enablement)
@@ -117,7 +117,7 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
 - "Participate in invite-only industry roundtable defining market licensing frameworks (February 25)"
 - "Co-Chair of C2PA Text Provenance Task Force--standard published January 8, 2026"
 
-**Sales Approach (Led by Nate):**
+**Sales Approach (Led by Matt/Erik):**
 1. Open with standards authority (C2PA co-chair, January 8 publication)
 2. Demonstrate unmarked ' marked transformation
 3. Show cryptographic watermarking surviving copy-paste and distribution
@@ -193,6 +193,55 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 ---
 
+## ICP 1C: "The Platform Distribution Partner" -- NEW (VALIDATED)
+
+**Real-World Validation:** Kurt Donnell, CEO of Freestar, completed CEO and BD meetings February 19, 2026. Offered PubOS marketplace press release inclusion alongside Tollbit and Dapier. Heather Carver (former Freestar CRO, now CCO at tvScientific) provided introductions and validated market approach. Anthony Gonsalves (CRO, Aditude) made warm introduction to WordPress/Automattic VP of BD.
+
+**Role:** CEO, VP of Business Development, VP of Partnerships, Head of Publisher Solutions, Chief Strategy Officer
+
+**Company Type:** Publisher-facing platforms that manage monetization, ad operations, or content infrastructure for hundreds of publishers. Sales houses, CMS providers, ad management companies.
+
+**About This ICP:** These organizations are the distribution layer for Encypher's signing infrastructure. They have existing publisher relationships, integration touchpoints, and commercial incentive (their business depends on publisher survival in the AI era). Each platform partner gives access to hundreds of publishers through a single integration, making this dramatically more capital-efficient than one-by-one publisher coalition building.
+
+**Tier 1 Targets:**
+- **Freestar** (advancing): 700+ publishers, Reuters, Fortune, Al Jazeera, AP, UFC, 700-800 local news sites. CEO meeting completed, BD integration in progress, PubOS press release pending.
+- **Raptive:** ComScore top 8 publisher network. Paul Bannister (Chief Strategy Officer) brokered ProRata and Tollbit deals. Introduction pending via Heather Carver.
+- **Mediavine:** Major sales house. Matt's former employer. Call scheduled.
+- **WordPress/Automattic:** 45% of web publishers. VP BD intro made via Aditude CRO.
+
+**Tier 2 Targets:**
+- **Playwire:** Enterprise publisher focus. Call scheduled.
+- **Aditude:** CRO relationship established. Warm channel to other publishers and platforms.
+- **Alliance for Audit Media / Scott Cunningham:** 5,000-10,000 publisher domains. IAB Tech Lab and TAG founder. CEO follow-up with Rich Murphy scheduled.
+
+**Critical Pain Points:**
+1. **Publisher Survival Threat:** Their revenue depends on publisher traffic. AI scraping reduces traffic. Anything that helps publishers survive helps their business.
+2. **Competitive Differentiation:** Sales houses compete on who offers the most comprehensive publisher support. AI content protection is a differentiator.
+3. **Retention/Stickiness:** Publishers who use more platform services churn less. Content provenance is an additional stickiness layer at zero cost to the sales house.
+
+**Key Messaging:**
+- "Your publishers' content is being scraped and used to train AI models that are replacing the web traffic you monetize. We give them a way to prove ownership and create licensing leverage -- free to implement."
+- "For WordPress publishers, it's a five-minute plugin install. For others, it's an API integration. No complexity added to your ad stack."
+- "We'd love to run a pilot with two or three of your publishers who are feeling the AI traffic impact. You pick who makes sense."
+- "This is like Ad Shield for content provenance -- it makes your publishers stickier without costing you anything."
+
+**What NOT to lead with:** C2PA standards authority, willful infringement legal framework, or coalition licensing economics. These are business operators, not GCs. Speak their language: publisher retention, revenue diversification, competitive differentiation.
+
+**Buying Signals:**
+- Announcing AI-related publisher tools or initiatives
+- Partnering with Tollbit, ProRata, Dapier, or similar (means they're already in this space)
+- Hiring roles focused on publisher content strategy or AI
+- Launching "publisher operating system" or marketplace concepts
+- Public statements about helping publishers navigate AI
+
+**Channel Economics:**
+- Referral channel (introductions only): 5-10% of Encypher's share
+- Active partnership (sales house negotiates licensing deals): Deeper split of Encypher's 40% coalition share
+- No cost to the sales house for publisher implementations
+- Sales houses view this as retention/stickiness tool, not revenue line (per Heather Carver)
+
+---
+
 ## Secondary ICPs: The Ecosystem Builders
 
 ### ICP 2: "The Standards Champion" -- Marcus
@@ -231,23 +280,24 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 ## Market Segmentation by Implementation Timeline
 
-### Pre-Standard Publication (Now ' January 7, 2026): Founding Coalition Formation
-**Target:** 10 Tier 1 publishers (AP, BBC, Springer Nature, Taylor & Francis leading)
-**Approach:** Nate-led with willful infringement frame + market standards opportunity
-**Pricing:** Free tier for all + enterprise implementations ($10-30K, waived for founding members). Coalition 60/40, self-service 80/20.
-**Goal:** Critical mass for ecosystem momentum before standard publishes
+### Current Phase (February 2026): Platform Distribution + Syracuse Execution
+**Target:** 3-5 platform partners (Freestar advancing, Mediavine/Playwire/Raptive in pipeline) + direct Tier 1 publisher conversations (AP, Taylor & Francis, NMA)
+**Approach:** Matt-led platform distribution through sales houses + Erik-led GC engagement for strategic accounts + Syracuse Symposium execution (February 25)
+**Pricing:** Free tier for all publishers via platform partners + enterprise implementations ($10-30K, waived for founding members). Coalition 60/40, self-service 80/20.
+**Product:** WordPress plugin (beta), Chrome extension (beta), API, CLI tools
+**Goal:** Formalize first platform partnerships, execute Syracuse, build marked content volume
 
-### Post-Publication Q1 2026 (January 8 ' March 2026): Standards Momentum
-**Target:** 10 more publishers + 3 AI company partnerships
-**Approach:** Standards now public, closed-door roundtable (Feb 25) creates urgency for invitees
-**Pricing:** Free tier + enterprise implementations ($10-30K) + enforcement add-ons. AI company pricing deferred.
-**Goal:** Establish market licensing frameworks
+### Q2 2026 (April - June): Platform Scaling + Licensing Foundation
+**Target:** 5-7 platform partners distributing to hundreds of publishers + first enforcement tool customers
+**Approach:** Scale through platform distribution channels, formal notice campaign to AI companies, WordPress/Automattic partnership
+**Pricing:** Free tier + enforcement add-ons ($299-999/mo) + enterprise implementations ($10-30K)
+**Goal:** Reach marked content critical mass, initiate AI company licensing conversations
 
-### Q2 2026: Enterprise Expansion
-**Target:** 20 Fortune 500 companies
-**Approach:** Standards compliance + governance + performance intelligence
-**Pricing:** Enterprise implementations ($10-30K) + enforcement subscriptions
-**Goal:** Horizontal market penetration
+### Q3-Q4 2026: Licensing Activation + Enterprise Expansion
+**Target:** First AI company licensing deals + Fortune 500 governance customers
+**Approach:** Coalition licensing negotiations using marked content leverage + enterprise compliance sales
+**Pricing:** Full pricing model active -- enforcement subscriptions + licensing rev share (60/40 coalition, 80/20 self-service) + enterprise implementations
+**Goal:** First licensing revenue, horizontal market penetration
 
 ---
 
@@ -298,7 +348,7 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 ## Sales Process by ICP (Updated)
 
-### Publisher Sales Process (Nate Alvord Leading):
+### Publisher Sales Process (Matt Kaminsky & Erik Svilich Leading):
 
 **Week 1: Standards Authority + Problem Framing**
 - Lead with C2PA co-chair role (January 8, 2026 publication)
@@ -340,7 +390,7 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 **Month 3: Infrastructure Partnership**
 - Technical compatibility with marked content ecosystem
-- Publisher coalition compatibility (AP, BBC, Springer Nature, Taylor & Francis)
+- Publisher coalition compatibility (Freestar network including Reuters, Fortune, Al Jazeera, AP; Taylor & Francis; NMA member base)
 - Partnership framework (not procurement battle)
 
 **Week 12: Implementation Agreement**
@@ -354,11 +404,11 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 ## Success Metrics by Quarter
 
-### Q4 2025 (Current ' Year End):
+### Q4 2025 - Q1 2026 (Completed):
 - 5 publisher agreements signed (founding coalition foundation)
 - Enforcement tool subscriptions growing + first enterprise implementations closed
 - 3 AI company infrastructure conversations (collaborative framing)
-- Active pilot discussions: AP, BBC Studios US, Springer Nature, Taylor & Francis
+- Active discussions: Freestar (CEO and BD meetings completed, PubOS press release pending), AP (Paul Sarkis engaged, Syracuse interest), Taylor & Francis, Scott Cunningham/AAM (CEO follow-up scheduled), Apartment Therapy, NMA (presented Feb 12), Linklaters (Syracuse + March meeting); platform distribution pipeline: Mediavine, Playwire, Raptive, Aditude; WordPress/Automattic partnership intro in progress
 - NMA preferred vendor discussions advancing
 
 ### Q1 2026 (Post-Publication):
@@ -381,18 +431,19 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 ## Critical Success Factors (Updated)
 
 ### Must-Haves:
-1. **Nate closes AP or BBC pilot** (flagship credibility with willful infringement story)
+1. **Freestar partnership formalized** (platform distribution to 700+ publishers as flagship)
 2. **Patent protection secured** (sentence-level tracking competitive moat)
 3. **AI company engaged collaboratively** (validate partnership approach)
-4. **Coalition reaches 10+ publishers before January 8** (network effects before standard publishes)
+4. **WordPress/Automattic partnership advancing** (distribution to 45% of web publishers)
 5. **Syracuse Symposium executed successfully** (market standards authority)
 
 ### Game-Changers:
-1. **AP implements at scale** (Paul Sarkis as flagship validates entire strategy)
-2. **AI company implements quote integrity** ($35M+ validates collaborative approach)
-3. **NMA preferred vendor status** (access to 2,000+ publishers)
-4. **Syracuse frameworks adopted as industry standard** (market standards authority)
-5. **First willful infringement case uses our evidence** (legal transformation proof)
+1. **Freestar PubOS launch includes Encypher** (immediate visibility to 70% of US internet publishers)
+2. **AP implements at scale** (Paul Sarkis as flagship validates entire strategy)
+3. **WordPress/Automattic features or promotes plugin** (distribution to tens of thousands of publishers)
+4. **Scott Cunningham/AAM integrates Encypher into ethics AI compliance** (access to 5,000-10,000 publisher domains)
+5. **Syracuse frameworks adopted as industry standard** (market standards authority)
+6. **First willful infringement case uses our evidence** (legal transformation proof)
 
 ---
 
@@ -450,20 +501,18 @@ This isn't a sales process competing with alternatives. It's infrastructure adop
 
 ## Document Control
 
-**Last Updated:** December 21, 2025
-**Status:** Pre-Standard Publication Update
+**Last Updated:** February 20, 2026
+**Status:** Post-Standard Publication, Pre-Syracuse Symposium
 **Distribution:** Sales & Marketing Leadership
-**Next Review:** Post January 8, 2026 Publication
-**Document Owner:** Chief Revenue Officer
+**Next Review:** Post Syracuse Symposium (February 25, 2026)
+**Document Owner:** Head of Publisher Strategy
 
-**Key Changes from October 2025:**
-1. ... Added January 8, 2026 C2PA publication date (hard date)
-2. ... Added February 25, 2026 Syracuse Symposium details
-3. ... Added "willful infringement" legal frame (eliminates "we didn't know" defense)
-4. ... Added quote integrity verification use case (AI hallucination protection)
-5. ... Added market standards development emphasis (validated by Paul Sarkis)
-6. ... Added "Paul Sarkis Playbook" section with validated messaging
-7. ... Updated Eleanor persona to Paul persona based on AP engagement
-8. ... Added downstream survival specificity (B2B, wire services, aggregators)
-9. ... Added active pipeline references (AP, BBC, Springer Nature, Taylor & Francis, NMA)
-10. ... Updated timeline for pre/post-publication phases
+**Key Changes from February 2026 (v4.0):**
+1. ... Updated team: Matt Kaminsky (Head of Publisher Strategy) replaces Nate Alvord
+2. ... Added ICP 1C: "The Platform Distribution Partner" validated by Freestar CEO engagement
+3. ... Updated pipeline references to current active conversations and platform partnerships
+4. ... Updated Market Segmentation timeline to reflect current reality
+5. ... WordPress plugin and Chrome extension now in beta release
+6. ... Revenue projections updated to realistic pre-revenue timeline
+7. ... Added sales house economics and channel partner framework
+8. ... Updated success criteria to reflect platform distribution model

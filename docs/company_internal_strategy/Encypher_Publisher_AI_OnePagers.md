@@ -1,9 +1,9 @@
 # Encypher Corporation: Infrastructure for Text Provenance
 ## One-Page Overviews for Publishers and AI Companies
 
-**Last Updated:** January 8, 2026
+**Last Updated:** February 20, 2026
 **Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 3.1
+**Version:** 4.0
 **Distribution:** Sales & Business Development Teams
 
 ---
@@ -18,7 +18,7 @@
 
 The publisher ecosystem is implementing cryptographic watermarking at scale. Your training pipeline will increasingly encounter text with embedded proof of origin--you need compatible infrastructure to handle marked content properly. More importantly, text provenance data can provide unprecedented insights into model performance.
 
-**We're Building This WITH You:** As Co-Chair of the C2PA Text Provenance Task Force, we work alongside OpenAI (a C2PA member), Google (implementing SynthID), BBC, Adobe, and Microsoft to establish text authentication as the global standard. The specification publishes **January 8, 2026**. This is collaborative infrastructure building, not adversarial compliance.
+**We're Building This WITH You:** As Co-Chair of the C2PA Text Provenance Task Force, we work alongside OpenAI (a C2PA member), Google (implementing SynthID), BBC, Adobe, and Microsoft to establish text authentication as the global standard. The specification **published January 8, 2026**. This is collaborative infrastructure building, not adversarial compliance.
 
 ### The Collaborative Standards Solution
 
@@ -26,7 +26,7 @@ The publisher ecosystem is implementing cryptographic watermarking at scale. You
 Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and co-chairs the task force with industry leaders to define how text authentication works globally. We didn't just write the specification--Erik wrote it, and we built the reference implementation.
 
 **What This Enables:**
-- **Publisher Compatibility:** One integration handles marked content from growing publisher coalition (AP, BBC, Springer Nature, Taylor & Francis actively engaged)
+- **Publisher Compatibility:** One integration handles marked content from growing publisher coalition (Freestar publishers including Reuters, Fortune, Al Jazeera, AP actively engaged; Taylor & Francis, NMA members, Apartment Therapy in pipeline)
 - **Performance Intelligence:** When integrated into AI company pipelines, our patent-pending granular content attribution (83 claims filed Jan 7, 2026) can reveal which content drives model success -- temperature settings that go viral, prompts that resonate, training data that improves outputs. Requires native integration with AI company infrastructure (Tier 2)
 - **Quote Integrity Verification:** When your model outputs "According to AP..." our infrastructure proves whether that quote is accurate or hallucinated--protecting both publisher brands and your reputation
 - **Provenance Infrastructure:** Handle cryptographically signed text in training pipelines with mathematical certainty
@@ -57,7 +57,7 @@ Technical demonstration showing sentence-level tracking and performance intellig
 
 **Interactive Demo:** Visit **encypherai.com/ai-demo** to explore technical integration
 
-**Contact:** Nate Alvord, Chief Revenue Officer | nate@encypherai.com | encypherai.com
+**Contact:** Matt Kaminsky, Head of Publisher Strategy | matt.kaminsky@encypherai.com | encypherai.com
 
 ---
 
@@ -72,7 +72,7 @@ Text on the open web has no cryptographic proof of origin. When your content is 
 ### Text Provenance Infrastructure--Enhanced for Publishers
 
 **Standards Authority:**
-Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and co-chairs the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The specification publishes **January 8, 2026**. We didn't just implement a standard--Erik wrote it, and we built the reference implementation.
+Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and co-chairs the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The specification **published January 8, 2026**. We didn't just implement a standard--Erik wrote it, and we built the reference implementation.
 
 **Our Publisher-Specific Capabilities (Patent-Pending):**
 - **Cryptographic Watermarking:** Invisible to readers, embedded directly into text--survives copy-paste, B2B distribution, aggregator syndication, web scraping, and data processing
@@ -107,7 +107,7 @@ Convert unmarked content into provably owned assets. Serve formal notice. Create
 **Our Model--Free to Sign. Paid to Enforce. Aligned on Outcomes.**
 
 **Free Tier -- Every Publisher:**
-Full signing infrastructure at no cost. C2PA 2.3-compliant signing, sentence-level Merkle tree authentication, invisible Unicode embeddings, public verification pages, coalition membership. 1,000 documents/month. WordPress plugin, API, CLI, GitHub Action included.
+Full signing infrastructure at no cost. C2PA 2.3-compliant signing, sentence-level Merkle tree authentication, invisible Unicode embeddings, public verification pages, coalition membership. 1,000 documents/month. WordPress plugin (beta), Chrome extension (beta), API, CLI, GitHub Action included.
 
 **Enforcement Add-Ons (Self-Service):**
 - Attribution Analytics: $299/month (find where your signed content appears across the web -- scraped republication, aggregators, RAG systems, content platforms)
@@ -150,7 +150,7 @@ We're convening 20-30 publisher general counsels and AI company commercial leads
 **Already In Motion:**
 - C2PA text standard published January 8, 2026 ...
 - Invite-only industry roundtable confirmed February 25, 2026
-- Active pilot discussions: AP, BBC Studios US, Springer Nature, Taylor & Francis
+- Active discussions: Freestar (CEO and BD meetings completed, PubOS press release pending), AP (Paul Sarkis engaged, Syracuse interest), Taylor & Francis, Scott Cunningham/AAM (CEO follow-up scheduled), Apartment Therapy, NMA (presented Feb 12), Linklaters (Syracuse + March meeting); platform distribution pipeline: Mediavine, Playwire, Raptive, Aditude; WordPress/Automattic partnership intro in progress
 - News Media Alliance partnership discussions for preferred vendor status
 - Patent applications filed for enterprise features
 - AI companies engaging with provenance infrastructure
@@ -163,7 +163,7 @@ Technical demonstration showing how sentence-level tracking, quote integrity ver
 
 **Interactive Demo:** Visit **encypherai.com/publisher-demo** to see the technology in action
 
-**Contact:** Nate Alvord, Chief Revenue Officer | nate@encypherai.com | encypherai.com
+**Contact:** Matt Kaminsky, Head of Publisher Strategy | matt.kaminsky@encypherai.com | encypherai.com
 
 ---
 
@@ -238,7 +238,7 @@ A: Two tracks: Coalition deals where Encypher negotiates are 60/40 (publisher ge
 A: Publishers: 2-4 weeks for full deployment. AI Companies: 6-8 weeks for training pipeline integration. Both include professional services and ongoing support.
 
 **Q: When does the C2PA standard publish?**
-A: January 8, 2026 is the hard publication date. An invite-only industry roundtable on February 25, 2026 will convene stakeholders to translate the technical standard into market licensing frameworks.
+A: January 8, 2026 is the hard publication date. An invite-only industry roundtable on February 25, 2026 convenes stakeholders to translate the technical standard into market licensing frameworks.
 
 ---
 
@@ -248,22 +248,22 @@ A: January 8, 2026 is the hard publication date. An invite-only industry roundta
 1. **Schedule Technical Demo:** See cryptographic watermarking, sentence-level tracking, and quote integrity verification
 2. **Review Coalition Terms:** Understand founding member benefits (implementation fee waived, roundtable invitation, priority positioning)
 3. **Pilot Implementation:** Deploy on subset of premium content
-4. **Join Coalition:** Lock in founding rate and advisory board seat before January 8th standard publication
+4. **Join Coalition:** Lock in founding rate and advisory board seat -- standard published January 8, founding coalition forming now
 5. **Industry Roundtable:** February 25, 2026 (invite-only)--help define market licensing standards
 
 ### For AI Companies:
 1. **Technical Evaluation:** Review infrastructure compatibility requirements
 2. **Performance Intelligence Demo:** See sentence-level attribution and quote verification capabilities
-3. **Standards Collaboration:** Engage with C2PA task force ahead of January 8th publication
+3. **Standards Collaboration:** Engage with C2PA task force -- standard published January 8, 2026
 4. **Pilot Integration:** Test provenance handling in training pipeline
 
 ---
 
 ## Contact Information
 
-**Nate Alvord**
-Chief Revenue Officer
-nate@encypherai.com
+**Matt Kaminsky**
+Head of Publisher Strategy
+matt.kaminsky@encypherai.com
 
 **Website:** encypherai.com
 **Publisher Demo:** encypherai.com/publisher-demo
@@ -287,18 +287,16 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 
 ## Document Control
 
-**Last Updated:** December 21, 2025
-**Status:** Pre-Standard Publication Update
+**Last Updated:** February 20, 2026
+**Status:** Post-Standard Publication, Pre-Syracuse Symposium
 **Distribution:** Sales & Business Development Teams
-**Next Review:** Post January 8, 2026 Publication
-**Document Owner:** Chief Revenue Officer
+**Next Review:** Post Syracuse Symposium (February 25, 2026)
+**Document Owner:** Head of Publisher Strategy
 
-**Key Updates from October 2025:**
-- ... Added January 8, 2026 C2PA publication date (hard date)
-- ... Added February 25, 2026 Syracuse Symposium details
-- ... Added "willful infringement" legal frame (eliminates "we didn't know" defense)
-- ... Added quote integrity verification use case (AI hallucination protection)
-- ... Added downstream survival specificity (B2B, wire services, aggregators)
-- ... Added market standards development emphasis (Paul Sarkis validation)
-- ... Added active pipeline references (AP, BBC, Springer Nature, Taylor & Francis, NMA)
-- ... Updated founding coalition messaging for January deadline urgency
+**Key Updates from February 2026:**
+- ... Updated team: Matt Kaminsky (Head of Publisher Strategy) replaces Nate Alvord
+- ... Added platform distribution strategy (Freestar, Mediavine, Raptive, Playwire, Aditude)
+- ... Updated pipeline to reflect current active conversations and platform partnerships
+- ... WordPress plugin and Chrome extension now in beta release
+- ... Revenue projections updated to reflect realistic pre-revenue timeline
+- ... Added Platform Distribution Partner ICP (ICP 1C) validated by Freestar CEO engagement
