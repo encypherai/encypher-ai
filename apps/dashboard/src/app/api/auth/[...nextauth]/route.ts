@@ -66,6 +66,8 @@ const handler = NextAuth({
         }
 
         try {
+          let shouldRequestFreshMfaChallenge = false;
+
           if (credentials.mfaToken && credentials.mfaCode) {
             const mfaRes = await fetch(`${API_BASE}/auth/login/mfa/complete`, {
               method: 'POST',
@@ -91,6 +93,8 @@ const handler = NextAuth({
             const mfaErrorMessage = mfaData.detail || mfaData.error?.message || 'Invalid multi-factor authentication code';
             if (mfaErrorMessage === 'Invalid or expired MFA challenge') {
               console.warn('[NextAuth] Stale MFA challenge detected; retrying primary login flow');
+              // Request a fresh MFA challenge from primary login; do not send the stale code.
+              shouldRequestFreshMfaChallenge = true;
             } else {
               throw new Error(mfaErrorMessage);
             }
@@ -104,7 +108,7 @@ const handler = NextAuth({
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
-              mfa_code: credentials.mfaCode || undefined,
+              mfa_code: shouldRequestFreshMfaChallenge ? undefined : credentials.mfaCode || undefined,
               turnstile_token: credentials.turnstileToken || undefined,
             }),
           });
@@ -114,8 +118,9 @@ const handler = NextAuth({
 
           // Handle specific error responses
           if (res.status === 401) {
-            console.log('[NextAuth] Login failed - invalid credentials');
-            throw new Error('Invalid email or password');
+            const errorDetail = data?.detail || data?.error?.message;
+            console.log('[NextAuth] Login failed - unauthorized:', errorDetail || 'Invalid credentials');
+            throw new Error(errorDetail || 'Invalid email or password');
           }
           
           if (res.status === 403) {

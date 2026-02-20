@@ -62,7 +62,7 @@ const features = [
   {
     icon: FileText,
     title: "Sentence-Level Attribution",
-    description: "Track provenance at the sentence level for quote verification (Pro+).",
+    description: "Track provenance at the sentence level for quote verification (available with Enterprise and select add-ons).",
   },
   {
     icon: Users,
@@ -78,41 +78,28 @@ const features = [
 
 const tiers = [
   {
-    name: "Starter",
+    name: "Free",
     price: "Free",
-    description: "Perfect for bloggers and small publishers",
+    description: "For bloggers and teams getting started with verifiable publishing",
     features: [
       "Auto-sign on publish/update",
       "Document-level C2PA manifests",
       "Public verification badge",
-      "Coalition membership (65/35 split)",
+      "Coalition membership",
       "100 posts per bulk operation",
     ],
     cta: "Get Started Free",
-    highlighted: false,
-  },
-  {
-    name: "Professional",
-    price: "$99/mo",
-    description: "For serious publishers and newsrooms",
-    features: [
-      "Everything in Starter",
-      "Sentence-level attribution",
-      "Merkle tree encoding",
-      "BYOK (Bring Your Own Key)",
-      "Coalition membership (70/30 split)",
-      "Unlimited bulk signing",
-      "Priority support",
-    ],
-    cta: "Start Pro Trial",
     highlighted: true,
   },
   {
     name: "Enterprise",
     price: "Custom",
-    description: "For large organizations and media companies",
+    description: "For publishers that need custom controls, support, and deployment options",
     features: [
-      "Everything in Professional",
+      "Everything in Free",
+      "Sentence-level attribution",
+      "Merkle tree encoding",
+      "BYOK (Bring Your Own Key)",
       "Custom branding (white-label)",
       "SSO integration",
       "Dedicated account manager",
@@ -139,7 +126,7 @@ export default function WordPressPage() {
         keyDifferentiator="Built on C2PA standards co-authored with Google, BBC, Adobe, Microsoft, and OpenAI. Same technology used by major news organizations. Invisible embeddings that survive copy-paste."
         primaryValue="Free tier available. Auto-signs content on publish. Public verification badge lets readers verify authenticity. Coalition membership for content licensing revenue."
         pagePath="/tools/wordpress"
-        pageType="SoftwareApplication"
+        pageType="ProductPage"
       />
 
       {/* Hero Section */}
@@ -266,10 +253,10 @@ export default function WordPressPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Simple, Transparent Pricing</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Start free and upgrade as you grow. All plans include core C2PA signing.
+              Choose between Free and Enterprise plans. Add-ons are available for teams with specific needs.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8">
             {tiers.map((tier) => (
               <Card 
                 key={tier.name} 
@@ -313,6 +300,31 @@ export default function WordPressPage() {
               </Card>
             ))}
           </div>
+
+          <Card className="mt-8 border-dashed border-2">
+            <CardHeader>
+              <CardTitle className="text-2xl">Add-ons</CardTitle>
+              <CardDescription>
+                Optional enhancements available on top of Free or Enterprise plans.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">Whitelabel verification pages</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">Expanded bulk signing throughput</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <span className="text-sm">Priority onboarding support</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       </section>
 

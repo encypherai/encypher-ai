@@ -47,6 +47,10 @@ def _hash_value(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+def _normalize_factor_code(code: str) -> str:
+    return code.replace(" ", "").replace("-", "").strip()
+
+
 def _fernet() -> Fernet:
     key_seed = hashlib.sha256(settings.JWT_SECRET_KEY.encode("utf-8")).digest()
     return Fernet(base64.urlsafe_b64encode(key_seed))
@@ -112,7 +116,8 @@ class AuthFactorsService:
             raise ValueError("TOTP setup has not been initialized")
 
         secret = _fernet().decrypt(user.totp_secret_encrypted.encode("utf-8")).decode("utf-8")
-        if not pyotp.TOTP(secret).verify(code, valid_window=1):
+        normalized_code = _normalize_factor_code(code)
+        if not pyotp.TOTP(secret).verify(normalized_code, valid_window=1):
             raise ValueError("Invalid authentication code")
 
         user.totp_enabled = True
@@ -121,12 +126,13 @@ class AuthFactorsService:
         return {"enabled": True, "recovery_codes_remaining": len(user.totp_backup_code_hashes or [])}
 
     def verify_totp_or_backup(self, user: User, code: str) -> str | None:
+        normalized_code = _normalize_factor_code(code)
         if pyotp is not None and user.totp_secret_encrypted:
             secret = _fernet().decrypt(user.totp_secret_encrypted.encode("utf-8")).decode("utf-8")
-            if pyotp.TOTP(secret).verify(code, valid_window=1):
+            if pyotp.TOTP(secret).verify(normalized_code, valid_window=1):
                 return "totp"
 
-        hashed = _hash_value(code.strip())
+        hashed = _hash_value(normalized_code)
         backup_hashes = list(user.totp_backup_code_hashes or [])
         if hashed in backup_hashes:
             backup_hashes.remove(hashed)

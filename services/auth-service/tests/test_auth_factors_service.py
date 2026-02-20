@@ -59,6 +59,17 @@ def test_confirm_totp_setup_enables_factor(service, mock_db, user):
     assert user.totp_enabled_at is not None
 
 
+def test_confirm_totp_setup_accepts_code_with_spaces(service, mock_db, user):
+    _wire_user(mock_db, user)
+    setup = service.begin_totp_setup(user.id)
+    valid_code = pyotp.TOTP(setup["secret"]).now()
+
+    spaced_code = f"{valid_code[:3]} {valid_code[3:]}"
+    result = service.confirm_totp_setup(user.id, spaced_code)
+
+    assert result["enabled"] is True
+
+
 def test_confirm_totp_setup_rejects_invalid_code(service, mock_db, user):
     _wire_user(mock_db, user)
     service.begin_totp_setup(user.id)
@@ -85,6 +96,15 @@ def test_verify_totp_or_backup_accepts_backup_code_once(service, mock_db, user):
 
     method_again = service.verify_totp_or_backup(user, code)
     assert method_again is None
+
+
+def test_verify_totp_or_backup_accepts_totp_code_with_spaces(service, mock_db, user):
+    _wire_user(mock_db, user)
+    setup = service.begin_totp_setup(user.id)
+    valid_code = pyotp.TOTP(setup["secret"]).now()
+
+    method = service.verify_totp_or_backup(user, f"{valid_code[:3]} {valid_code[3:]}")
+    assert method == "totp"
 
 
 def test_verify_totp_or_backup_uses_backup_code_when_pyotp_missing(service, mock_db, user):

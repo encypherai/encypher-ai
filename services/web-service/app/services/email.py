@@ -32,6 +32,7 @@ class EmailClient:
         subject: str,
         body: str,
         html: str | None = None,
+        reply_to: str | None = None,
     ) -> bool:
         """Send an email. Returns True on success, False on failure."""
         if not settings.EMAILS_ENABLED:
@@ -42,6 +43,8 @@ class EmailClient:
         msg["Subject"] = subject
         msg["From"] = formataddr((self.from_name, self.from_email))
         msg["To"] = to_email
+        if reply_to:
+            msg["Reply-To"] = reply_to
 
         # Always add plain text
         msg.attach(MIMEText(body, "plain"))
@@ -143,10 +146,11 @@ Request ID: {demo_request.uuid}
 """
 
     email_client.send_email(
-        to_email=settings.SALES_EMAIL,
+        to_email=settings.CONTACT_EMAIL,
         subject=subject,
         body=body,
         html=html,
+        reply_to=demo_request.email,
     )
 
 

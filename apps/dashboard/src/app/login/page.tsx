@@ -160,14 +160,15 @@ function LoginPageContent() {
       });
 
       if (result?.error) {
-        if (result.error.startsWith('MFA_REQUIRED:')) {
-          setMfaToken(result.error.replace('MFA_REQUIRED:', ''));
+        const decodedError = decodeURIComponent(result.error || '');
+        if (decodedError.startsWith('MFA_REQUIRED:')) {
+          setMfaToken(decodedError.replace('MFA_REQUIRED:', ''));
           setError('Enter your authentication code to finish signing in.');
           setLoading(false);
           return;
         }
         // NextAuth passes the error message from authorize() in result.error
-        setError(result.error === 'CredentialsSignin' ? 'Invalid email or password' : result.error);
+        setError(decodedError === 'CredentialsSignin' ? 'Invalid email or password' : decodedError);
         setLoading(false);
       } else if (result?.ok) {
         // Force a hard navigation to ensure middleware re-evaluates with fresh session

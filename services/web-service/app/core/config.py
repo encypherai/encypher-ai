@@ -69,6 +69,7 @@ class Settings(BaseSettings):
     EMAILS_ENABLED: bool = False
     EMAIL_FROM_EMAIL: str = "noreply@encypherai.com"
     EMAIL_FROM_NAME: str = "Encypher"
+    CONTACT_EMAIL: str = "contact@encypherai.com"
     SALES_EMAIL: str = "sales@encypherai.com"
     DEMO_EMAIL: str = "demo@encypherai.com"
 

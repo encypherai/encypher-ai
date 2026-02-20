@@ -14,6 +14,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
+import QRCode from 'qrcode';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
@@ -88,6 +89,7 @@ export default function SettingsPage() {
   const [totpDisableCode, setTotpDisableCode] = useState('');
   const [totpSetupSecret, setTotpSetupSecret] = useState<string | null>(null);
   const [totpSetupUri, setTotpSetupUri] = useState<string | null>(null);
+  const [totpQrCodeDataUrl, setTotpQrCodeDataUrl] = useState<string | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [passkeyName, setPasskeyName] = useState('Primary device');
 
@@ -265,6 +267,10 @@ export default function SettingsPage() {
 
   // Pre-populate with session data as fallback, then update with API data
   useEffect(() => {
+    if (!session?.user) {
+      window.location.href = '/login';
+      return;
+    }
     if (session?.user) {
       setProfile((prev) => ({
         ...prev,
@@ -273,6 +279,38 @@ export default function SettingsPage() {
       }));
     }
   }, [session]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const renderQr = async () => {
+      if (!totpSetupUri) {
+        setTotpQrCodeDataUrl(null);
+        return;
+      }
+
+      try {
+        const dataUrl = await QRCode.toDataURL(totpSetupUri, {
+          errorCorrectionLevel: 'M',
+          margin: 1,
+          width: 220,
+        });
+        if (!cancelled) {
+          setTotpQrCodeDataUrl(dataUrl);
+        }
+      } catch {
+        if (!cancelled) {
+          setTotpQrCodeDataUrl(null);
+        }
+      }
+    };
+
+    renderQr();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [totpSetupUri]);
 
   useEffect(() => {
     if (profileQuery.data) {
@@ -724,6 +762,18 @@ export default function SettingsPage() {
 
                     {!mfaStatusQuery.data?.totp_enabled && totpSetupSecret && (
                       <div className="space-y-3 border border-border rounded-lg p-4">
+                        {totpQrCodeDataUrl && (
+                          <div className="text-sm">
+                            <div className="font-medium mb-2">Scan this QR code with Google Authenticator</div>
+                            <img
+                              src={totpQrCodeDataUrl}
+                              alt="TOTP setup QR code"
+                              width={220}
+                              height={220}
+                              className="rounded border border-border bg-white p-2"
+                            />
+                          </div>
+                        )}
                         <div className="text-sm">
                           <div className="font-medium">Manual setup code</div>
                           <div className="font-mono text-xs mt-1">{totpSetupSecret}</div>

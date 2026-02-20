@@ -180,6 +180,16 @@ if [[ "$SKIP_DOCKER" -eq 0 ]]; then
       fi
     done
 
+    step "  " "Clearing frontend node_modules volumes for dependency refresh..."
+    # --rebuild should refresh JS dependencies inside Docker volumes too.
+    # Otherwise, newly added packages in package.json can be missing at runtime.
+    for vol in marketing_node_modules marketing_ds_node_modules dashboard_node_modules dashboard_ds_node_modules; do
+      full_vol=$(docker volume ls -q --filter "name=${vol}" 2>/dev/null | head -1)
+      if [[ -n "$full_vol" ]]; then
+        docker volume rm "$full_vol" >/dev/null 2>&1 && ok "Removed volume ${full_vol}" || warn "Could not remove ${full_vol} (may be in use)"
+      fi
+    done
+
     step "  " "Rebuilding application services..."
     SERVICES_TO_BUILD="auth-service user-service key-service encoding-service verification-service coalition-service analytics-service billing-service notification-service enterprise-api marketing-site dashboard"
     compose_build_with_fallback "docker-compose.full-stack.yml" "$SERVICES_TO_BUILD"
