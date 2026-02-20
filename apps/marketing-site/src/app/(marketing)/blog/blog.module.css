@@ -148,7 +148,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background-color: rgba(0, 0, 0, 0.06);
+  background-color: #f1f5f9;
   font-weight: 600;
 }
 
@@ -185,7 +185,7 @@
 }
 
 :global(.dark) .blogContent th {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: #1e293b;
 }
 
 :global(.dark) .blogContent caption {
