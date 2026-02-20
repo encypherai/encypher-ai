@@ -1,5 +1,7 @@
-# Windsurf specific
-.windsurf/
+# Windsurf specific — workflows are committed so all devs benefit from shared prompts
+# .windsurf/ itself is tracked; ignore only sensitive/ephemeral content within it
+.windsurf/*.key
+.windsurf/secrets*
 *.key
 
 # AI Agent session artifacts (ephemeral)
@@ -114,6 +116,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.skills
 .env.prod
 .env.dev
 **/.env.local
