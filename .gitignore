@@ -1,5 +1,6 @@
 # Windsurf specific
 .windsurf/
+*.key
 
 # AI Agent session artifacts (ephemeral)
 .teams/TEAM_*.md
