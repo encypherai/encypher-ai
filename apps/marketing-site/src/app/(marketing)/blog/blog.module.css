@@ -1,5 +1,6 @@
 .blogContent {
   max-width: none;
+  line-height: 1.7;
 }
 
 .blogContent h1 {
@@ -30,9 +31,17 @@
   margin-bottom: 1rem;
 }
 
+.blogContent p + p {
+  margin-top: 0.25rem;
+}
+
 .blogContent ul, .blogContent ol {
   margin-bottom: 1rem;
   margin-left: 1.5rem;
+}
+
+.blogContent li + li {
+  margin-top: 0.375rem;
 }
 
 .blogContent ul {
@@ -45,11 +54,13 @@
 
 .blogContent a {
   color: var(--blue-ncs);
-  text-decoration: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 .blogContent a:hover {
-  text-decoration: underline;
+  text-decoration-thickness: 2px;
 }
 
 .blogContent blockquote {
@@ -66,6 +77,7 @@
   padding: 1rem;
   border-radius: 0.375rem;
   overflow-x: auto;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   margin-top: 1rem;
   margin-bottom: 1rem;
 }
@@ -77,8 +89,16 @@
   font-size: 0.875rem;
 }
 
+.blogContent pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
 .blogContent img {
   border-radius: 0.375rem;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   margin-left: auto;
@@ -93,23 +113,65 @@
 
 .blogContent table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  display: block;
+  overflow-x: auto;
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.blogContent caption {
+  caption-side: top;
+  text-align: left;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.7);
 }
 
 .blogContent th, .blogContent td {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 0.5rem;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0.625rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  min-width: 10rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .blogContent th {
-  background-color: rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: rgba(0, 0, 0, 0.06);
+  font-weight: 600;
+}
+
+.blogContent tr:nth-child(even) td {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.blogContent tr:last-child td {
+  border-bottom: 0;
+}
+
+.blogContent th:last-child,
+.blogContent td:last-child {
+  border-right: 0;
 }
 
 /* Dark mode adjustments */
 :global(.dark) .blogContent code {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+:global(.dark) .blogContent pre {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 :global(.dark) .blogContent blockquote {
@@ -124,6 +186,14 @@
 
 :global(.dark) .blogContent th {
   background-color: rgba(255, 255, 255, 0.05);
+}
+
+:global(.dark) .blogContent caption {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+:global(.dark) .blogContent tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 /* Mobile responsiveness */

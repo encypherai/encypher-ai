@@ -3,7 +3,7 @@ title: "C2PA 2.3 Published: Encypher Authors Text Provenance Standard"
 date: "2026-01-08"
 excerpt: "The C2PA 2.3 specification is now live, featuring Section A.7 on Embedding Manifests into Unstructured Text, authored by Encypher. This marks a milestone for text authentication."
 author: "Erik Svilich"
-image: "/images/blog/c2pa-2-3-published/c2pa-text-standard-header.jpeg"
+image: "/images/blog/c2pa-2-3-published/c2pa-text-standard-header.png"
 tags: ["C2PA", "ContentProvenance", "TextAuthenticity", "StandardsAuthority", "Milestone"]
 ---
 

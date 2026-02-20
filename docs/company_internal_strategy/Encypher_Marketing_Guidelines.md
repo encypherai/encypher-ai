@@ -1,9 +1,9 @@
 # Encypher Corporation: Brand & Marketing Standards Guide
 ## From Technology Vendor to Standards Infrastructure Authority
 
-**Last Updated:** January 8, 2026
+**Last Updated:** February 20, 2026
 **Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 3.1
+**Version:** 4.0
 **Distribution:** Internal Marketing & Sales Teams
 
 ---
@@ -302,7 +302,7 @@ Our cryptographic watermarking embeds proof directly into text. Survives copy-pa
 
 Once publishers notify AI companies their content is marked, continued unauthorized use = willful infringement. No more 'we didn't know it was yours.'
 
-The founding coalition is forming now. Syracuse Symposium February 25, 2026 will define market licensing standards.
+The founding coalition is forming now. Syracuse Symposium February 25, 2026 convenes to define market licensing standards.
 
 See the demo: encypherai.com/publisher-demo
 
@@ -421,9 +421,9 @@ See the demo: encypherai.com/publisher-demo
 
 ---
 
-## The "Nate Alvord" Voice
+## The "Matt Kaminsky" Voice
 
-When Nate speaks for Encypher:
+When Matt speaks for Encypher to publishers and sales houses:
 - Lead with standards authority and collaboration
 - Reference Digimarc/Via Licensing IP licensing experience
 - Emphasize transformation from unmarked to marked content
@@ -431,7 +431,7 @@ When Nate speaks for Encypher:
 - Frame AI companies as infrastructure partners, not adversaries
 - Reference the Syracuse Symposium for market standards development
 
-**Example Nate Quote:**
+**Example Matt Quote:**
 "I've spent 25 years building IP licensing frameworks. This is different--we're not just creating licenses, we're establishing the technical infrastructure that makes licensing enforceable. Text has never had proof of origin before. Publishers implementing our cryptographic watermarking and serving formal notice transform their legal position entirely. 'We didn't know it was yours' becomes 'you ignored our notice'--that's willful infringement, not innocent. The founding coalition forming now will Define market licensing frameworks at invite-only industry roundtable . First movers define the terms."
 
 ---
@@ -473,7 +473,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, we're building the standard 
 
 Our patent-pending cryptographic watermarking embeds proof directly into text at sentence-level granularity. It survives copy-paste, B2B distribution, and data processing. Publishers can serve formal notice that content is marked. Once notified, continued unauthorized use becomes provable willful infringement--transforming 'prove they used your content' into 'prove they ignored your notice.' That's 3x damages territory.
 
-The founding coalition is forming now. The Syracuse Symposium on February 25, 2026 will convene publisher GCs and AI company leads to define market licensing frameworks. First movers shape the terms."
+The founding coalition is forming now. The Syracuse Symposium on February 25, 2026 convenes publisher GCs and AI company leads to define market licensing frameworks. First movers shape the terms."
 
 ---
 
@@ -562,7 +562,7 @@ Our brand reflects our reality as collaborative infrastructure builders establis
 2. **Collaborative Approach:** Building WITH Google, BBC, OpenAI, Adobe, Microsoft
 3. **Technical Reality:** Unmarked text = no proof; cryptographic watermarking = proof that survives distribution
 4. **Legal Transformation:** Formal notice + cryptographic proof = willful infringement (eliminates "we didn't know")
-5. **Market Standards:** Syracuse Symposium February 25, 2026 defines licensing frameworks
+5. **Market Standards:** Syracuse Symposium convenes February 25, 2026 to define licensing frameworks
 6. **Economic Enablement:** Transform unmarked content into provably owned, licensable assets
 
 Remember the core positioning shifts:
@@ -582,20 +582,20 @@ Visit: **encypherai.com/publisher-demo** or **encypherai.com/ai-demo**
 
 ## Document Control
 
-**Document Owner:** Chief Marketing Officer
-**Review Cycle:** Monthly during pre-publication period
-**Next Review:** Post January 8, 2026 Publication
+**Document Owner:** Head of Publisher Strategy
+**Review Cycle:** Monthly
+**Next Review:** Post Syracuse Symposium (February 25, 2026)
 **Approved By:** Executive Team
 **Distribution:** All customer-facing teams
 
-**Key Changes from October 2025:**
-1. ... Added January 8, 2026 C2PA publication date (hard date)
-2. ... Added February 25, 2026 Syracuse Symposium for market standards
-3. ... Added "willful infringement" legal frame (eliminates "we didn't know" defense)
-4. ... Added quote integrity verification use case (AI hallucination protection)
-5. ... Added downstream survival specificity (B2B, wire services, aggregators)
-6. ... Added market standards development messaging (validated by Paul Sarkis, AP)
-7. ... Added legal transformation messaging pillar
-8. ... Updated elevator pitches with new legal frame
-9. ... Updated all example content with current dates and messaging
-10. ... Added "Willful Infringement Messaging Framework" section
+**Key Changes from February 2026 (v4.0):**
+1. ... Updated team: Matt Kaminsky (Head of Publisher Strategy) replaces Nate Alvord
+2. ... Added platform distribution messaging for sales house audiences
+3. ... Updated pipeline references to current active conversations
+4. ... WordPress plugin and Chrome extension now in beta release
+5. ... Added January 8, 2026 C2PA publication date (hard date)
+6. ... Added February 25, 2026 Syracuse Symposium for market standards
+7. ... Added "willful infringement" legal frame (eliminates "we didn't know" defense)
+8. ... Added quote integrity verification use case (AI hallucination protection)
+9. ... Added downstream survival specificity (B2B, wire services, aggregators)
+10. ... Added market standards development messaging (validated by Paul Sarkis, AP)

@@ -1,9 +1,9 @@
 # Encypher Corporation: Enterprise Sales Positioning
 ## Text Provenance Infrastructure Through Standards
 
-**Last Updated:** January 8, 2026
+**Last Updated:** February 20, 2026
 **Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 3.1
+**Version:** 4.0
 **Distribution:** Sales & Solutions Teams
 
 ---
@@ -45,7 +45,7 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
 
 Text on the open web has no cryptographic proof of origin. When content is distributed through B2B licensees, scraped by aggregators, or used to train AI models, ownership connections disappear. AI companies can claim "we didn't know it was yours" as an innocent infringement defense--creating expensive discovery, uncertain litigation outcomes, and weak settlement leverage.
 
-As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, we're establishing text authentication as the global standard. **The specification published January 8, 2026.** The Syracuse Symposium on **February 25, 2026** will define market licensing frameworks.
+As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, we're establishing text authentication as the global standard. **The specification published January 8, 2026.** The Syracuse Symposium on **February 25, 2026** convenes publisher GCs and AI company commercial leads to define market licensing frameworks.
 
 Our patent-pending sentence-level tracking goes beyond basic C2PA to enable what matters: **willful infringement proof**, **quote integrity verification**, and **performance intelligence**.
 
@@ -99,7 +99,7 @@ Our patent-pending technology goes beyond basic C2PA:
 ## Objection Handlers (Updated with Validated Messaging)
 
 **"We'll implement C2PA ourselves"**
-"Excellent strategy. Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and co-chairs the task force. Standard published January 8, 2026. You'd be implementing what he wrote. The consideration is that our patent-pending sentence-level tracking enables willful infringement proof, quote integrity verification, and performance intelligence--capabilities beyond the public standard Erik authored. Basic C2PA provides document authentication. Our enhancements enable the legal transformation and competitive intelligence that creates strategic value. We can accelerate your implementation of Erik's specification while providing enhanced capabilities. The Syracuse Symposium on February 25 will define market licensing frameworks--founding members shape those terms."
+"Excellent strategy. Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and co-chairs the task force. Standard published January 8, 2026. You'd be implementing what he wrote. The consideration is that our patent-pending sentence-level tracking enables willful infringement proof, quote integrity verification, and performance intelligence--capabilities beyond the public standard Erik authored. Basic C2PA provides document authentication. Our enhancements enable the legal transformation and competitive intelligence that creates strategic value. We can accelerate your implementation of Erik's specification while providing enhanced capabilities. The Syracuse Symposium on February 25 convenes publisher GCs and AI company leads to define market licensing frameworks--founding members shape the terms."
 
 **"How is this different from what exists today?"**
 "Text on the open web has no cryptographic proof of origin. AI companies can claim 'we didn't know it was yours' as an innocent infringement defense. We embed cryptographic watermarking directly into the text that survives B2B distribution, wire services, and scraping. Once you notify AI companies that your content carries these signatures, continued unauthorized use becomes provable willful infringement--not innocent. That's the difference between uncertain litigation and 3x damages territory."
@@ -137,7 +137,7 @@ All publishers get full signing capabilities at no cost:
 - Invisible Unicode embeddings--survive copy-paste, B2B distribution, scraping
 - Public verification pages and API
 - Coalition membership with content indexing
-- WordPress plugin, API, CLI, GitHub Action
+- WordPress plugin (beta), Chrome extension (beta), API, CLI, GitHub Action
 - 1,000 documents/month (overage: $0.02/doc)
 
 ### Freemium Enforcement Add-Ons (Self-Service)
@@ -173,7 +173,7 @@ All publishers get full signing capabilities at no cost:
 ## Vertical-Specific Messaging
 
 ### For News Publishers (AP, Reuters, NYT, BBC)
-"Your content flows through B2B licensees, wire services, and aggregators--ownership disappears. AI companies claim 'we didn't know it was yours.' Our cryptographic watermarking survives that entire distribution chain. Formal notification + cryptographic proof = willful infringement, not innocent. Plus, quote integrity verification protects your brand when AI claims 'According to [Your Publication]...' The Syracuse Symposium on February 25 defines market licensing frameworks--shape the terms."
+"Your content flows through B2B licensees, wire services, and aggregators--ownership disappears. AI companies claim 'we didn't know it was yours.' Our cryptographic watermarking survives that entire distribution chain. Formal notification + cryptographic proof = willful infringement, not innocent. Plus, quote integrity verification protects your brand when AI claims 'According to [Your Publication]...' The Syracuse Symposium convenes February 25 to define market licensing frameworks--shape the terms."
 
 ### For Academic Publishers (Springer Nature, Taylor & Francis)
 "Research content is being scraped and processed at scale. Our sentence-level tracking proves exactly which sentences were used, not just which papers were accessed. Willful infringement claims after formal notification create leverage that general infringement claims don't. The C2PA standard published January 8, 2026--implementing now positions you as standards leaders."
@@ -269,7 +269,7 @@ AI company pricing to be determined based on coalition leverage and market stand
 **Interactive Demo:** Visit **encypherai.com/publisher-demo** to see the technology
 
 ### For Publishers (Post-January 8):
-"The standard is live. The founding coalition is growing. The Syracuse Symposium on February 25 will define market licensing frameworks. Don't accept terms others defined--join now and participate."
+"The standard is live. The founding coalition is growing. The Syracuse Symposium on February 25 convenes to define market licensing frameworks. Don't accept terms others define--join now and participate."
 
 ### For AI Companies:
 "Publishers are implementing marked content at scale. Quote integrity verification protects your brand. Performance intelligence improves your models. We're building this WITH you through C2PA."
@@ -348,7 +348,7 @@ AI company pricing to be determined based on coalition leverage and market stand
 ## Key Messaging by Stakeholder (Updated)
 
 ### For General Counsel:
-"Eliminate the 'we didn't know it was yours' defense. Cryptographic signatures + formal notification = willful infringement proof. 3x damages leverage transforms settlement negotiations. Quote integrity verification protects your brand from AI hallucination liability. The Syracuse Symposium on February 25 defines market licensing frameworks--help shape them."
+"Eliminate the 'we didn't know it was yours' defense. Cryptographic signatures + formal notification = willful infringement proof. 3x damages leverage transforms settlement negotiations. Quote integrity verification protects your brand from AI hallucination liability. The Syracuse Symposium convenes February 25 to define market licensing frameworks--help shape them."
 
 ### For CTO/CISO:
 "Standards-based implementation with patent-pending enhancements. Reference implementation from C2PA task force co-chair--standard published January 8, 2026. Cryptographic certainty, not statistical guessing. Two-week deployment with professional services."
@@ -395,20 +395,17 @@ AI company pricing to be determined based on coalition leverage and market stand
 
 ## Document Control
 
-**Last Updated:** December 21, 2025
-**Status:** Pre-Standard Publication Update
+**Last Updated:** February 20, 2026
+**Status:** Post-Standard Publication, Pre-Syracuse Symposium
 **Distribution:** Sales & Solutions Teams
-**Next Review:** Post January 8, 2026 Publication
-**Document Owner:** Chief Revenue Officer
+**Next Review:** Post Syracuse Symposium (February 25, 2026)
+**Document Owner:** Head of Publisher Strategy
 
-**Key Updates from October 2025:**
-1. ... Added January 8, 2026 C2PA publication date (hard date)
-2. ... Added February 25, 2026 Syracuse Symposium throughout
-3. ... Added "willful infringement" legal frame as primary value proposition
-4. ... Added quote integrity verification messaging
-5. ... Added downstream survival specificity (B2B, wire services, aggregators)
-6. ... Added market standards development messaging
-7. ... Updated objection handlers with validated AP messaging
-8. ... Updated ROI framework with willful infringement leverage
-9. ... Updated closing techniques with legal transformation focus
-10. ... Added Willful Infringement Comparison table
+**Key Updates from February 2026 (v4.0):**
+1. ... Updated team: Matt Kaminsky (Head of Publisher Strategy) replaces Nate Alvord
+2. ... Added platform distribution context (sales house channel strategy)
+3. ... Updated pipeline references to current active conversations
+4. ... WordPress plugin and Chrome extension now in beta release
+5. ... Revenue projections updated to reflect realistic timeline
+6. ... Detection Capabilities Framework maintained (3 tiers)
+7. ... All Nate references replaced with Matt/Erik as appropriate

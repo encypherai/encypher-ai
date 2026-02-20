@@ -1,8 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
-import { remark } from 'remark';
-import html from 'remark-html';
 import { format } from 'date-fns';
 
 // Path to blog posts
@@ -21,6 +19,23 @@ if (isProduction) {
   } catch (error) {
     console.error('Error checking blog directory:', error);
   }
+}
+
+export async function renderBlogMarkdown(content: string): Promise<string> {
+  const [{ remark }, { default: html }, { default: remarkGfm }] = await Promise.all([
+    import('remark'),
+    import('remark-html'),
+    import('remark-gfm'),
+  ]);
+
+  const contentWithYouTubeEmbeds = processYouTubeLinks(content);
+
+  const processedContent = await remark()
+    .use(remarkGfm)
+    .use(html, { sanitize: false })
+    .process(contentWithYouTubeEmbeds);
+
+  return processedContent.toString();
 }
 
 // Function to process YouTube links into embeds
@@ -178,14 +193,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
       }
     }
 
-    // Process YouTube links before converting to HTML
-    const contentWithYouTubeEmbeds = processYouTubeLinks(matterResult.content);
-
-    // Use remark to convert markdown into HTML string
-    const processedContent = await remark()
-      .use(html, { sanitize: false }) // Disable sanitization to allow iframes
-      .process(contentWithYouTubeEmbeds);
-    const contentHtml = processedContent.toString();
+    const contentHtml = await renderBlogMarkdown(matterResult.content);
 
     // Use excerpt from frontmatter or generate from content
     const excerpt = matterResult.data.excerpt || 
