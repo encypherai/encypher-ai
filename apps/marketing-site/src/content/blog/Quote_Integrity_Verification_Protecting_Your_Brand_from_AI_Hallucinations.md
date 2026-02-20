@@ -3,7 +3,7 @@ title: "Quote Integrity Verification: Protecting Your Brand from AI Hallucinatio
 date: "2026-01-27"
 excerpt: "When AI systems claim 'According to the New York Times...' but the quote is wrong, your brand takes the hit. Here's how quote integrity verification protects publisher reputation."
 author: "Erik Svilich, Founder & CEO | Encypher | C2PA Text Co-Chair"
-image: "/images/blog/quote-integrity-verification/quote-integrity-verification-header.png"
+image: "/images/blog/quote-integrity-verification/quote-integrity-verification-header.png?v=20260220"
 tags: ["AIHallucination", "QuoteVerification", "BrandProtection", "ContentAuthenticity", "Trust"]
 ---
 **By: Erik Svilich, Founder & CEO | Encypher | C2PA Text Co-Chair**
