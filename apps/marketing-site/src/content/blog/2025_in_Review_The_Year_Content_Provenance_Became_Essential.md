@@ -226,7 +226,7 @@ Based on 2025's developments, here's what to expect:
 ### Q1 2026
 
 - California SB 942 enforcement begins
-- C2PA text provenance standard finalization
+- C2PA 2.3 text provenance standard scheduled for publication (Section A.7 authored by Encypher)
 - More publisher licensing announcements
 - AI company provenance implementations
 

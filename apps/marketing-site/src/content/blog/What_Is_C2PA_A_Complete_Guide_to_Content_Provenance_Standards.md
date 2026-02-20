@@ -3,7 +3,7 @@ title: "What Is C2PA? A Complete Guide to Content Provenance Standards"
 date: "2025-11-11"
 excerpt: "C2PA is the open standard for proving where digital content comes from. Learn how this coalition of tech giants is building the trust layer for the internet."
 author: "Erik Svilich, Founder & CEO | Encypher | C2PA Text Co-Chair"
-image: "/images/blog/what-is-c2pa/what-is-c2pa-header.png"
+image: "/images/blog/what-is-c2pa/what-is-c2pa.png"
 tags: ["C2PA", "ContentProvenance", "Standards", "DigitalTrust", "ContentAuthenticity"]
 ---
 **By: Erik Svilich, Founder & CEO | Encypher | C2PA Text Co-Chair**
