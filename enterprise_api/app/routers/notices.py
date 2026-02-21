@@ -32,6 +32,14 @@ def _notice_service():
 # Create Notice
 # ─────────────────────────────────────────────────────────────────────────────
 
+_VIOLATION_TO_NOTICE_TYPE: Dict[str, str] = {
+    "unauthorized_training": "cease_and_desist",
+    "unauthorized_scraping": "cease_and_desist",
+    "unauthorized_rag": "licensing_notice",
+    "license_violation": "cease_and_desist",
+    "other": "formal_awareness",
+}
+
 
 @router.post(
     "/create",
@@ -62,11 +70,24 @@ async def create_formal_notice(
     org_id: str = org_context["organization_id"]
     svc = _notice_service()
 
+    # Normalise dashboard-friendly field names to service field names.
+    # Accepts both the canonical service schema and the simplified dashboard schema.
+    normalised: Dict[str, Any] = dict(notice_data)
+    if "target_entity_name" not in normalised:
+        normalised["target_entity_name"] = normalised.pop("recipient_entity", None)
+    if "target_contact_email" not in normalised:
+        normalised["target_contact_email"] = normalised.pop("recipient_contact", None)
+    if "notice_type" not in normalised:
+        violation = normalised.pop("violation_type", "other")
+        normalised["notice_type"] = _VIOLATION_TO_NOTICE_TYPE.get(violation, "formal_awareness")
+    if "scope_type" not in normalised:
+        normalised["scope_type"] = normalised.pop("scope_type", "all_content")
+
     try:
         notice = await svc.create_notice(
             db=db,
             organization_id=org_id,
-            notice_data=notice_data,
+            notice_data=normalised,
             created_by=None,
         )
         return _notice_to_dict(notice)
@@ -160,10 +181,12 @@ Returns delivery receipt with timestamp and cryptographic proof.
 async def deliver_notice(
     request: Request,
     notice_id: str = Path(..., description="Notice UUID"),
-    delivery_data: Dict[str, Any] = ...,
+    delivery_data: Dict[str, Any] = None,
     db: AsyncSession = Depends(get_db),
     org_context: Dict = Depends(get_current_organization_dep),
 ) -> Dict[str, Any]:
+    if delivery_data is None:
+        delivery_data = {}
     org_id: str = org_context["organization_id"]
     svc = _notice_service()
 
@@ -264,13 +287,18 @@ def _notice_to_dict(notice, include_evidence: bool = False) -> Dict[str, Any]:
         "id": str(notice.id),
         "organization_id": notice.organization_id,
         "created_at": notice.created_at.isoformat() if notice.created_at else None,
+        # Canonical names
         "target_entity_name": notice.target_entity_name,
         "target_entity_domain": notice.target_entity_domain,
         "target_contact_email": notice.target_contact_email,
         "target_entity_type": notice.target_entity_type,
+        # Dashboard-friendly aliases
+        "recipient_entity": notice.target_entity_name,
+        "recipient_contact": notice.target_contact_email,
         "scope_type": notice.scope_type,
         "scope_document_ids": [str(d) for d in (notice.scope_document_ids or [])],
         "notice_type": notice.notice_type,
+        "violation_type": notice.notice_type,
         "notice_hash": notice.notice_hash,
         "demands": notice.demands,
         "status": notice.status,
@@ -278,10 +306,10 @@ def _notice_to_dict(notice, include_evidence: bool = False) -> Dict[str, Any]:
         "delivery_method": notice.delivery_method,
         "delivery_receipt_hash": notice.delivery_receipt_hash,
         "acknowledged_at": notice.acknowledged_at.isoformat() if notice.acknowledged_at else None,
+        "notice_text": notice.notice_text,
     }
 
     if include_evidence:
-        result["notice_text"] = notice.notice_text
         result["delivery_receipt"] = notice.delivery_receipt
         result["response"] = notice.response
         if notice.evidence_chain:

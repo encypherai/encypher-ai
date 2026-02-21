@@ -432,6 +432,7 @@ class ZWResolveResponse(BaseModel):
     total_segments: Optional[int] = None
     leaf_index: Optional[int] = None
     manifest_data: Optional[Dict[str, Any]] = None
+    rights_resolution_url: Optional[str] = None
 
 
 _RESOLVE_SQL = """
@@ -439,7 +440,8 @@ _RESOLVE_SQL = """
            embedding_metadata->>'manifest_mode' AS manifest_mode,
            embedding_metadata->'segment_location' AS segment_location,
            (embedding_metadata->>'total_segments')::int AS total_segments,
-           manifest_data
+           manifest_data,
+           rights_resolution_url
     FROM content_references
     WHERE embedding_metadata->>'segment_uuid' = :seg_uuid
     LIMIT 1
@@ -479,6 +481,7 @@ def _row_to_resolve_response(segment_uuid: str, row) -> ZWResolveResponse:
         total_segments=row.total_segments if hasattr(row, "total_segments") else None,
         leaf_index=row.leaf_index if hasattr(row, "leaf_index") else None,
         manifest_data=manifest,
+        rights_resolution_url=row.rights_resolution_url if hasattr(row, "rights_resolution_url") else None,
     )
 
 

@@ -27,6 +27,11 @@ class WebhookEvent(str, Enum):
     KEY_CREATED = "key.created"
     KEY_REVOKED = "key.revoked"
     KEY_ROTATED = "key.rotated"
+    RIGHTS_PROFILE_UPDATED = "rights.profile.updated"
+    RIGHTS_NOTICE_DELIVERED = "rights.notice.delivered"
+    RIGHTS_LICENSING_REQUEST_RECEIVED = "rights.licensing.request_received"
+    RIGHTS_LICENSING_AGREEMENT_CREATED = "rights.licensing.agreement_created"
+    RIGHTS_DETECTION_EVENT = "rights.detection.event"
 
 
 class Webhook(Base):
