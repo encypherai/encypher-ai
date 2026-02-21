@@ -109,6 +109,20 @@ function IconBilling({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
+function IconAICrawlers({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="4" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+      <circle cx="5.5" cy="7" r="1" fill="currentColor"/>
+      <circle cx="10.5" cy="7" r="1" fill="currentColor"/>
+      <path d="M5.5 10h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M6 4V2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M10 4V2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M1 8h2M13 8h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 function IconAuditLogs({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,6 +189,7 @@ const navGroups: NavGroup[] = [
     label: 'Insights',
     items: [
       { href: '/analytics', label: 'Analytics', icon: IconAnalytics },
+      { href: '/ai-crawlers', label: 'AI Crawlers', icon: IconAICrawlers },
       { href: '/docs', label: 'Docs', icon: IconDocs },
     ],
   },

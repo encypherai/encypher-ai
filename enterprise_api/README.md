@@ -413,6 +413,7 @@ Machine-readable deed system for publishers to define and enforce licensing term
 | `/api/v1/rights/rsl/import` | POST | ✅ | Business+ | Import existing RSL 1.0 XML document |
 | `/api/v1/rights/analytics/detections` | GET | ✅ | Business+ | Phone-home detection analytics |
 | `/api/v1/rights/analytics/crawlers` | GET | ✅ | Business+ | AI crawler activity breakdown |
+| `/api/v1/rights/analytics/crawlers/timeseries` | GET | ✅ | Business+ | Daily crawler activity timeseries |
 
 Rights profiles support three licensing tiers:
 - **Bronze** — Scraping / crawling terms

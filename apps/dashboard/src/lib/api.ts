@@ -1644,9 +1644,16 @@ const apiClient = {
     );
   },
 
-  async getCrawlerAnalytics(accessToken: string): Promise<CrawlerAnalytics> {
+  async getCrawlerAnalytics(accessToken: string, days = 30): Promise<CrawlerAnalytics> {
     return fetchWithAuth<CrawlerAnalytics>(
-      `${API_BASE_URL}/rights/analytics/crawlers`,
+      `${API_BASE_URL}/rights/analytics/crawlers?days=${days}`,
+      accessToken
+    );
+  },
+
+  async getCrawlerTimeseries(accessToken: string, days = 30): Promise<CrawlerTimeseries> {
+    return fetchWithAuth<CrawlerTimeseries>(
+      `${API_BASE_URL}/rights/analytics/crawlers/timeseries?days=${days}`,
       accessToken
     );
   },
@@ -1804,12 +1811,24 @@ interface CrawlerSummaryEntry {
   respects_rsl?: boolean;
   total_events: number;
   last_seen?: string | null;
+  user_agent_category?: string;
+  rsl_check_count?: number;
+  rsl_check_rate?: number;
+  rights_acknowledged_rate?: number;
+  compliance_score?: number;
+  compliance_label?: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Non-compliant';
 }
 
 interface CrawlerAnalytics {
   crawlers: CrawlerSummaryEntry[];
   total_crawler_events: number;
   known_crawlers?: CrawlerSummaryEntry[];
+}
+
+interface CrawlerTimeseries {
+  dates: string[];
+  by_crawler: Record<string, number[]>;
+  total_by_date: number[];
 }
 
 interface FormalNotice {

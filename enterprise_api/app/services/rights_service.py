@@ -18,11 +18,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import date as date_type, datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from sqlalchemy import and_, desc, func, select
+from sqlalchemy import Date as SADate, and_, cast, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -1017,25 +1017,28 @@ class RightsService:
         """
         Return AI crawler activity summary for *organization_id* over the last *days* days.
 
+        Groups by ``user_agent_category`` and enriches each entry with compliance
+        metrics derived from KnownCrawler registry data.
+
         Returns:
             Dict with keys: ``organization_id``, ``period_days``,
-            ``crawlers`` (list of per-crawler stats), ``total_crawler_events``,
-            ``known_crawlers`` (list of all registered crawlers).
+            ``crawlers`` (list of per-crawler stats with compliance fields),
+            ``total_crawler_events``, ``known_crawlers``.
         """
         cutoff = _utcnow() - timedelta(days=days)
 
-        # Per-crawler breakdown from detection events
+        # Query 1 -- aggregate detection events grouped by category
         crawler_result = await db.execute(
             select(
-                ContentDetectionEvent.requester_user_agent,
                 ContentDetectionEvent.user_agent_category,
-                func.count(ContentDetectionEvent.id).label("cnt"),
+                func.count(ContentDetectionEvent.id).label("total_cnt"),
                 func.count(ContentDetectionEvent.id).filter(
-                    ContentDetectionEvent.rights_served.is_(True)
-                ).label("rights_served_cnt"),
+                    ContentDetectionEvent.detection_source == "rsl_olp_check"
+                ).label("rsl_cnt"),
                 func.count(ContentDetectionEvent.id).filter(
                     ContentDetectionEvent.rights_acknowledged.is_(True)
-                ).label("rights_ack_cnt"),
+                ).label("ack_cnt"),
+                func.max(ContentDetectionEvent.created_at).label("last_seen"),
             )
             .where(
                 and_(
@@ -1044,27 +1047,54 @@ class RightsService:
                     ContentDetectionEvent.user_agent_category.notin_(["human_browser", "unknown"]),
                 )
             )
-            .group_by(
-                ContentDetectionEvent.requester_user_agent,
-                ContentDetectionEvent.user_agent_category,
-            )
+            .group_by(ContentDetectionEvent.user_agent_category)
         )
         crawler_rows = crawler_result.all()
+
+        # Query 2 -- build lookup dict from KnownCrawler registry
+        known_result = await db.execute(select(KnownCrawler))
+        known_list = known_result.scalars().all()
+        kc_by_type: dict[str, Any] = {c.crawler_type: c for c in known_list}
 
         crawlers = []
         total_crawler_events = 0
         for row in crawler_rows:
-            crawlers.append({
-                "user_agent": row.requester_user_agent,
-                "category": row.user_agent_category,
-                "event_count": row.cnt,
-                "rights_served": row.rights_served_cnt or 0,
-                "rights_acknowledged": row.rights_ack_cnt or 0,
-            })
-            total_crawler_events += row.cnt
+            total_cnt: int = row.total_cnt or 0
+            rsl_cnt: int = row.rsl_cnt or 0
+            ack_cnt: int = row.ack_cnt or 0
 
-        # All known crawlers from the registry
-        known_result = await db.execute(select(KnownCrawler))
+            rsl_check_rate = rsl_cnt / total_cnt if total_cnt else 0.0
+            rights_ack_rate = ack_cnt / total_cnt if total_cnt else 0.0
+            compliance_score = round(rsl_check_rate * 60 + rights_ack_rate * 40)
+
+            if compliance_score >= 80:
+                compliance_label = "Excellent"
+            elif compliance_score >= 60:
+                compliance_label = "Good"
+            elif compliance_score >= 30:
+                compliance_label = "Fair"
+            elif compliance_score > 0:
+                compliance_label = "Poor"
+            else:
+                compliance_label = "Non-compliant"
+
+            kc = kc_by_type.get(row.user_agent_category)
+            crawlers.append({
+                "crawler_name": kc.crawler_name if kc else row.user_agent_category,
+                "user_agent_category": row.user_agent_category,
+                "company": kc.operator_org if kc else None,
+                "user_agent_pattern": kc.user_agent_pattern if kc else None,
+                "respects_rsl": kc.respects_rsl if kc else None,
+                "total_events": total_cnt,
+                "rsl_check_count": rsl_cnt,
+                "rsl_check_rate": round(rsl_check_rate, 4),
+                "rights_acknowledged_rate": round(rights_ack_rate, 4),
+                "last_seen": row.last_seen.isoformat() if row.last_seen else None,
+                "compliance_score": compliance_score,
+                "compliance_label": compliance_label,
+            })
+            total_crawler_events += total_cnt
+
         known_crawlers = [
             {
                 "crawler_name": c.crawler_name,
@@ -1074,7 +1104,7 @@ class RightsService:
                 "respects_robots_txt": c.respects_robots_txt,
                 "respects_rsl": c.respects_rsl,
             }
-            for c in known_result.scalars().all()
+            for c in known_list
         ]
 
         return {
@@ -1083,6 +1113,72 @@ class RightsService:
             "crawlers": crawlers,
             "total_crawler_events": total_crawler_events,
             "known_crawlers": known_crawlers,
+        }
+
+    async def get_crawler_timeseries(
+        self,
+        db: AsyncSession,
+        organization_id: str,
+        days: int = 30,
+    ) -> dict:
+        """
+        Return daily crawler activity grouped by bot type for *organization_id*.
+
+        Returns:
+            Dict with keys: ``dates`` (list of ISO date strings),
+            ``by_crawler`` (dict mapping category -> list of counts),
+            ``total_by_date`` (list of daily totals).
+        """
+        days = min(days, 90)
+        cutoff = _utcnow() - timedelta(days=days)
+
+        date_col = cast(ContentDetectionEvent.created_at, SADate).label("event_date")
+        result = await db.execute(
+            select(
+                date_col,
+                ContentDetectionEvent.user_agent_category,
+                func.count(ContentDetectionEvent.id).label("cnt"),
+            )
+            .where(
+                and_(
+                    ContentDetectionEvent.organization_id == organization_id,
+                    ContentDetectionEvent.created_at >= cutoff,
+                    ContentDetectionEvent.user_agent_category.notin_(["human_browser", "unknown"]),
+                )
+            )
+            .group_by(date_col, ContentDetectionEvent.user_agent_category)
+        )
+        rows = result.all()
+
+        # Build lookup: (date, category) -> count
+        counts: dict[tuple[date_type, str], int] = {}
+        all_categories: set[str] = set()
+        for row in rows:
+            d = row.event_date if isinstance(row.event_date, date_type) else row.event_date.date()
+            counts[(d, row.user_agent_category)] = row.cnt
+            all_categories.add(row.user_agent_category)
+
+        # Generate complete date range with no gaps
+        today = _utcnow().date()
+        start = (today - timedelta(days=days - 1))
+        dates: list[date_type] = [start + timedelta(days=i) for i in range(days)]
+        date_strings = [d.isoformat() for d in dates]
+
+        by_crawler: dict[str, list[int]] = {}
+        total_by_date: list[int] = [0] * len(dates)
+
+        for cat in sorted(all_categories):
+            series: list[int] = []
+            for i, d in enumerate(dates):
+                val = counts.get((d, cat), 0)
+                series.append(val)
+                total_by_date[i] += val
+            by_crawler[cat] = series
+
+        return {
+            "dates": date_strings,
+            "by_crawler": by_crawler,
+            "total_by_date": total_by_date,
         }
 
     # ========================================================================

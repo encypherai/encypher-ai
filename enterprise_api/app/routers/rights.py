@@ -459,6 +459,22 @@ async def get_crawler_analytics(
     return await svc.get_crawler_summary(db=db, organization_id=org_id, days=days)
 
 
+@router.get(
+    "/analytics/crawlers/timeseries",
+    status_code=status.HTTP_200_OK,
+    summary="Get AI crawler activity timeseries",
+    description="Daily crawler activity grouped by bot type for the specified period.",
+)
+async def get_crawler_timeseries(
+    days: int = Query(30, ge=1, le=90),
+    db: AsyncSession = Depends(get_db),
+    org_context: Dict = Depends(get_current_organization_dep),
+) -> Dict[str, Any]:
+    org_id: str = org_context["organization_id"]
+    svc = _get_rights_service()
+    return await svc.get_crawler_timeseries(db=db, organization_id=org_id, days=days)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper serializers
 # ─────────────────────────────────────────────────────────────────────────────
