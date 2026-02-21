@@ -119,6 +119,7 @@ async def get_formal_notice(
     "/",
     status_code=status.HTTP_200_OK,
     summary="List formal notices for the organization",
+    description="Retrieve all formal notices issued by the authenticated organization, ordered by creation date (most recent first). Use the notice ID to fetch full evidence chain details.",
 )
 async def list_notices(
     db: AsyncSession = Depends(get_db),

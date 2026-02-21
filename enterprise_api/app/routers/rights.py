@@ -71,7 +71,6 @@ async def upsert_rights_profile(
             organization_id=org_id,
             profile_data=profile_data,
             performed_by=None,
-            ip_address=request.client.host if request.client else None,
         )
         return _profile_to_dict(profile)
     except ValueError as exc:
@@ -129,6 +128,7 @@ async def get_rights_profile_history(
     "/documents/{document_id}",
     status_code=status.HTTP_200_OK,
     summary="Set rights override for a specific document",
+    description="Override bronze/silver/gold tier terms for a single document. The override is merged on top of the publisher default profile using the priority cascade.",
 )
 async def set_document_rights_override(
     document_id: str = Path(..., description="Document ID (as stored in content_references.document_id)"),
@@ -156,6 +156,7 @@ async def set_document_rights_override(
     "/collections/{collection_id}",
     status_code=status.HTTP_200_OK,
     summary="Set rights override for a collection of documents",
+    description="Override bronze/silver/gold tier terms for all documents in a named collection. Applied after the publisher default but before any document-level override.",
 )
 async def set_collection_rights_override(
     collection_id: str = Path(..., description="Collection ID"),
@@ -302,7 +303,6 @@ async def init_profile_from_template(
             db=db,
             organization_id=org_id,
             profile_data=profile_data,
-            ip_address=request.client.host if request.client else None,
         )
         return _profile_to_dict(profile)
     except Exception:
@@ -365,7 +365,6 @@ async def delegated_publisher_setup(
             db=db,
             organization_id=publisher_org_id,
             profile_data=profile_data,
-            ip_address=request.client.host if request.client else None,
         )
         return {
             "publisher_organization_id": publisher_org_id,
@@ -447,6 +446,7 @@ async def get_detection_analytics(
     "/analytics/crawlers",
     status_code=status.HTTP_200_OK,
     summary="Get AI crawler activity for org content",
+    description="Retrieve known AI crawler activity summary for the organization's content, including crawler identity, rights lookup rate, and licensed vs. unlicensed access breakdown.",
 )
 async def get_crawler_analytics(
     days: int = Query(30, ge=1, le=365),

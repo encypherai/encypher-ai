@@ -51,7 +51,7 @@ class PublisherRightsProfile(Base):
     # Publisher identity
     publisher_name = Column(Text, nullable=False)
     publisher_url = Column(Text, nullable=True)
-    contact_email = Column(Text, nullable=False)
+    contact_email = Column(Text, nullable=True)
     contact_url = Column(Text, nullable=True)
     legal_entity = Column(Text, nullable=True)
     jurisdiction = Column(Text, nullable=False, default="US")
@@ -285,12 +285,12 @@ class RightsLicensingRequest(Base):
     # Parties
     publisher_org_id = Column(
         String(64),
-        ForeignKey("organizations.id"),
-        nullable=False,
+        ForeignKey("organizations.id", ondelete="SET NULL"),
+        nullable=True,
     )
     requester_org_id = Column(
         String(64),
-        ForeignKey("organizations.id"),
+        ForeignKey("organizations.id", ondelete="SET NULL"),
         nullable=True,
     )
 

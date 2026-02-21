@@ -748,8 +748,11 @@ RIGHTS_TEMPLATES: dict[str, dict] = {
 
 
 def get_template(template_id: str) -> dict | None:
-    """Return a single rights template by ID, or None if not found."""
-    return RIGHTS_TEMPLATES.get(template_id)
+    """Return a single rights template by ID (with 'id' injected), or None if not found."""
+    tpl = RIGHTS_TEMPLATES.get(template_id)
+    if tpl is None:
+        return None
+    return {"id": template_id, **tpl}
 
 
 def list_templates() -> list[dict]:

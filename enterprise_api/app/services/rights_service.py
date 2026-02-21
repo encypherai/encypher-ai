@@ -24,6 +24,7 @@ from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.rights import (
     ContentDetectionEvent,
@@ -131,9 +132,9 @@ class RightsService:
             created_at=now,
             updated_by=performed_by,
             # Identity
-            publisher_name=profile_data["publisher_name"],
+            publisher_name=profile_data.get("publisher_name", ""),
             publisher_url=profile_data.get("publisher_url"),
-            contact_email=profile_data["contact_email"],
+            contact_email=profile_data.get("contact_email"),
             contact_url=profile_data.get("contact_url"),
             legal_entity=profile_data.get("legal_entity"),
             jurisdiction=profile_data.get("jurisdiction", "US"),
@@ -590,13 +591,32 @@ class RightsService:
         await db.refresh(notice)
         return notice
 
+    async def list_notices(
+        self,
+        db: AsyncSession,
+        organization_id: str,
+        limit: int = 100,
+    ) -> list[FormalNotice]:
+        """Return all formal notices for *organization_id*, most recent first."""
+        result = await db.execute(
+            select(FormalNotice)
+            .where(FormalNotice.organization_id == organization_id)
+            .order_by(desc(FormalNotice.created_at))
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
     async def get_notice(
         self,
         db: AsyncSession,
         notice_id: UUID,
     ) -> Optional[FormalNotice]:
-        """Return a FormalNotice by ID, or None."""
-        result = await db.execute(select(FormalNotice).where(FormalNotice.id == notice_id))
+        """Return a FormalNotice by ID (with evidence_chain eagerly loaded), or None."""
+        result = await db.execute(
+            select(FormalNotice)
+            .options(selectinload(FormalNotice.evidence_chain))
+            .where(FormalNotice.id == notice_id)
+        )
         return result.scalar_one_or_none()
 
     async def generate_evidence_package(

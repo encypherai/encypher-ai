@@ -44,7 +44,7 @@ def upgrade() -> None:
         # Identity
         sa.Column("publisher_name", sa.Text(), nullable=False),
         sa.Column("publisher_url", sa.Text(), nullable=True),
-        sa.Column("contact_email", sa.Text(), nullable=False),
+        sa.Column("contact_email", sa.Text(), nullable=True),
         sa.Column("contact_url", sa.Text(), nullable=True),
         sa.Column("legal_entity", sa.Text(), nullable=True),
         sa.Column("jurisdiction", sa.Text(), nullable=False, server_default=sa.text("'US'")),
@@ -184,8 +184,8 @@ def upgrade() -> None:
     op.create_table(
         "rights_licensing_requests",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("publisher_org_id", sa.String(64), sa.ForeignKey("organizations.id"), nullable=False),
-        sa.Column("requester_org_id", sa.String(64), sa.ForeignKey("organizations.id"), nullable=True),
+        sa.Column("publisher_org_id", sa.String(64), sa.ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True),
+        sa.Column("requester_org_id", sa.String(64), sa.ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True),
 
         sa.Column("tier", sa.Text(), nullable=False),  # bronze, silver, gold
         sa.Column("scope", postgresql.JSONB(astext_type=sa.Text()), nullable=False),

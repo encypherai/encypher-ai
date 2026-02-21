@@ -253,6 +253,7 @@ async def respond_to_licensing_request(
     "/agreements",
     status_code=status.HTTP_200_OK,
     summary="List active licensing agreements",
+    description="List all licensing agreements where the authenticated organization is either the publisher or the licensee, ordered by creation date.",
 )
 async def list_agreements(
     db: AsyncSession = Depends(get_db),
@@ -284,6 +285,7 @@ async def list_agreements(
     "/agreements/{agreement_id}",
     status_code=status.HTTP_200_OK,
     summary="Get specific agreement details",
+    description="Retrieve the full terms, scope, and status for a specific licensing agreement. Only accessible to the publisher or licensee party to the agreement.",
 )
 async def get_agreement(
     agreement_id: str = Path(..., description="Agreement UUID"),
@@ -309,6 +311,7 @@ async def get_agreement(
     "/agreements/{agreement_id}/usage",
     status_code=status.HTTP_200_OK,
     summary="Get usage metrics for an active agreement",
+    description="Retrieve usage metrics (articles accessed, retrievals, ingestion events) for a specific licensing agreement. Useful for compliance monitoring and billing reconciliation.",
 )
 async def get_agreement_usage(
     agreement_id: str = Path(..., description="Agreement UUID"),
