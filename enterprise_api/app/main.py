@@ -38,8 +38,11 @@ from app.routers import (
     keys,
     licensing,
     lookup,
+    notices,
     onboarding,
     organizations_proxy,
+    rights,
+    rights_licensing,
     signing,
     status as status_router,
     streaming,
@@ -777,6 +780,9 @@ app.include_router(batch.router)
 app.include_router(tools.router, prefix="/api/v1", tags=["Public Tools"])
 app.include_router(organizations_proxy.router, prefix="/api/v1", tags=["Organizations Proxy"])
 app.include_router(integrations.router, prefix="/api/v1", tags=["Integrations"])
+app.include_router(rights.router, prefix="/api/v1", tags=["Rights Management"])
+app.include_router(notices.router, prefix="/api/v1", tags=["Formal Notices"])
+app.include_router(rights_licensing.router, prefix="/api/v1", tags=["Rights Licensing Transactions"])
 
 # Include v1 API router (Merkle tree endpoints)
 app.include_router(api_v1_router, prefix="/api/v1")
