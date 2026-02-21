@@ -67,7 +67,67 @@ Session 1 (TEAM_215): Full implementation of DB migrations, models, schemas, tem
 
 Session 2 (TEAM_215 continued): Task 5.0 (enhanced sign endpoint) implemented. Added `use_rights_profile` field to `SignOptions`. `_attach_rights_snapshot` post-sign hook stores rights snapshot on `content_references` and injects `rights_resolution_url` into sign response. 3 new integration tests. OpenAPI artifact regenerated. 1134 tests passing.
 
+Session 3 (TEAM_215 continued — post-PRD gap fixes): Documentation audit + rights management gap fixes:
+
+**Documentation updated:**
+- `enterprise_api/README.md` — added Rights Management Endpoints section (publisher-facing, public, notices, licensing), Business+ tier, use_rights_profile sign example, verification service endpoints, webhook events table
+- `services/README.md` — updated enterprise-api description
+- `apps/dashboard/src/app/docs/publisher-integration/page.tsx` — updated with Bronze/Silver/Gold workflow, Formal Notice guide, public discovery endpoints
+
+**Dashboard built:**
+- `apps/dashboard/src/app/rights/page.tsx` — 4-tab rights page (Profile, Analytics, Notices, Licensing)
+- `apps/dashboard/src/lib/api.ts` — 11 rights API methods + TypeScript interfaces
+- `apps/dashboard/src/components/layout/DashboardLayout.tsx` — Rights nav item added
+
+**Critical gap fixes (Session 3):**
+- `enterprise_api/app/api/v1/public/c2pa.py` — Added `rights_resolution_url` to `ZWResolveResponse` and `_RESOLVE_SQL`. Phone-home flow now returns rights URL to crawlers.
+- `enterprise_api/app/models/webhook.py` — Added 5 rights events to `WebhookEvent` enum: `rights.profile.updated`, `rights.notice.delivered`, `rights.licensing.request_received`, `rights.licensing.agreement_created`, `rights.detection.event`
+- `enterprise_api/app/routers/webhooks.py` — Added 5 rights events to `VALID_EVENTS` set
+- `enterprise_api/README.md` — Added Supported Webhook Events table documenting all 15 events
+- `apps/dashboard/src/lib/api.ts` — Added `respondToLicensingRequest()` API method
+- `apps/dashboard/src/app/rights/page.tsx` — Updated LicensingTab with Approve/Reject UI (inline reject with optional message)
+- `apps/dashboard/src/lib/pricing-config/tiers.ts` — Removed `comingSoon: true` from Formal Notice Package and Evidence Package (these are now implemented)
+
+**Tests: 1162 passed, 0 failures** (stable from session 2 to end of session 3)
+
 **Branch**: `feature/rights-management-system` — ready to merge when deferred phases decided.
+
+**Remaining known gaps (not yet built):**
+- Notification service has no rights-specific email templates (licensing request received, notice delivered, agreement created)
+- Playground uses `template_id` mechanism not `use_rights_profile` toggle
+- No dashboard profile history UI (API exists: GET /api/v1/rights/profile/history)
+- Marketing site has no dedicated rights management product page
+
+Session 4 (TEAM_215 — E2E Puppeteer testing): Full 1920×1080 headless browser verification
+of the `/rights` dashboard against a live local stack. 9 bugs found and fixed:
+
+**Bugs fixed (Session 4):**
+1. `getRightsTemplates` returned `[]` — API returns plain array; was expecting `{success,data}` envelope
+2. Profile not showing after template applied — all rights GET methods incorrectly appended `.data`
+3. `DetectionEvent` interface wrong shape — API returns aggregate `DetectionSummary`, not event array
+4. Crawler analytics: `summary`/`total_events` → `crawlers`/`total_crawler_events`
+5. Notice creation 500 — router missing field normalization (`recipient_entity` → `target_entity_name`)
+6. Notice list "Unknown recipient" — `_notice_to_dict` missing `recipient_entity` alias
+7. Notice deliver 422 required body — `delivery_data: Dict = ...` was required; fixed to `Optional[Dict] = None`
+8. Licensing tab `—` for tier/from — `LicensingRequest` interface used `requesting_org_id`/`usage_tier`; API has `requester_org_id`/`tier`
+9. Notice Deliver button hidden — dashboard checked `status === 'draft'`; API returns `"created"`. Fixed by removing server-side status mapping, updating dashboard condition to `status === 'created' || status === 'draft'`
+
+**Files modified (Session 4):**
+- `apps/dashboard/src/lib/api.ts` — `LicensingRequest`/`LicensingAgreement` interface field names fixed
+- `apps/dashboard/src/app/rights/page.tsx` — StatusBadge `created` variant added; Deliver button condition fixed; licensing component field names fixed
+- `enterprise_api/app/routers/notices.py` — Removed server-side `_status_map` (was breaking tests)
+
+**Tests: 1162 passed, 0 failed** ✅ (after Session 4 fixes)
+**TypeScript: 0 errors** ✅
+
+**E2E flows verified:**
+- [x] Profile tab: empty state, Apply template, populated profile with tier cards + public endpoints ✅
+- [x] Analytics tab: empty state renders correctly ✅
+- [x] Notices tab: create notice (form → created), deliver (created → delivered, content locked) ✅
+- [x] Licensing tab: pending request shows tier/from, Approve → approved + agreement created ✅
+- [x] Licensing tab: Reject → inline form expands → rejection message → rejected status ✅
+
+**User story written:** `docs/user-stories/rights-management-e2e-story.md`
 
 ## Git Commit Message Template
 
