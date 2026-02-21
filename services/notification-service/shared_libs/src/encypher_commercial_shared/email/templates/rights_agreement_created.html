@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Licensing Agreement Created</h1>
+
+<p>
+  Great news — a licensing agreement has been created. Both parties now have an active agreement
+  covering the specified content and usage tier.
+</p>
+
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+  style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; margin-bottom: 24px;">
+  <tr>
+    <td style="padding: 20px 24px;">
+      <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #14532d; text-transform: uppercase; letter-spacing: 0.05em;">
+        Agreement Details
+      </p>
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b; width: 160px;">Agreement ID</td>
+          <td style="padding: 4px 0; font-size: 14px; font-family: monospace; color: #1e293b;">{{ agreement_id | default('—') }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b;">Publisher</td>
+          <td style="padding: 4px 0; font-size: 14px; color: #1e293b; font-weight: 500;">{{ publisher_name | default('—') }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b;">Licensee</td>
+          <td style="padding: 4px 0; font-size: 14px; color: #1e293b; font-weight: 500;">{{ licensee_name | default('—') }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b;">License tier</td>
+          <td style="padding: 4px 0; font-size: 14px; color: #1e293b; text-transform: capitalize;">
+            {% if tier == 'gold' %}🥇{% elif tier == 'silver' %}🥈{% else %}🥉{% endif %}
+            {{ tier | default('—') | title }}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b;">Licensing track</td>
+          <td style="padding: 4px 0; font-size: 14px; color: #1e293b;">
+            {% if licensing_track == 'coalition' %}
+              Coalition (60/40 revenue split)
+            {% elif licensing_track == 'self_service' %}
+              Self-service (80/20 revenue split)
+            {% else %}
+              {{ licensing_track | default('—') }}
+            {% endif %}
+          </td>
+        </tr>
+        {% if expiry_date %}
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b;">Expires</td>
+          <td style="padding: 4px 0; font-size: 14px; color: #1e293b;">{{ expiry_date }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b;">Created</td>
+          <td style="padding: 4px 0; font-size: 14px; color: #1e293b;">{{ created_at | default('') }}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+{% if is_publisher %}
+<p>
+  <strong>Revenue distribution:</strong> Licensing revenue will be distributed to your connected
+  payout account on a quarterly basis. You can view earnings and projected payouts in your dashboard.
+</p>
+{% else %}
+<p>
+  <strong>For licensees:</strong> You now have authorization to use the publisher's content under
+  the terms of the {{ tier | default('') | title }} tier. Please ensure your usage complies with
+  the agreed terms. Machine-readable terms are available at the rights resolution URL embedded in each document.
+</p>
+{% endif %}
+
+<div class="cta-container">
+  <a href="{{ dashboard_url | default('https://dashboard.encypherai.com/rights#licensing') }}" class="cta-button">
+    View Agreement
+  </a>
+</div>
+
+<div class="divider"></div>
+
+<p style="font-size: 13px; color: #64748b;">
+  This agreement is cryptographically recorded in the Encypher system.
+  Agreement ID: <code style="background: #f8fafc; padding: 2px 6px; border-radius: 4px; font-family: monospace;">{{ agreement_id | default('—') }}</code>
+</p>
+{% endblock %}
