@@ -72,6 +72,9 @@ export function Navbar() {
               <DropdownMenuItem asChild>
                 <Link href="/solutions/enterprises">For Enterprises</Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/rights-management">Rights Management</Link>
+              </DropdownMenuItem>
               <DropdownMenuItem className="border-t border-border/40 mt-1 pt-1" disabled>
                 <span className="text-xs text-muted-foreground">Demos</span>
               </DropdownMenuItem>
@@ -213,12 +216,19 @@ export function Navbar() {
             >
               For Publishers
             </Link>
-            <Link 
-              href="/solutions/enterprises" 
+            <Link
+              href="/solutions/enterprises"
               className="text-sm font-medium hover:text-primary pl-4"
               onClick={() => setMobileMenuOpen(false)}
             >
               For Enterprises
+            </Link>
+            <Link
+              href="/rights-management"
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Rights Management
             </Link>
             {/* Mobile Demos Links */}
             <span className="text-xs text-muted-foreground pl-4 pt-2">Demos</span>
