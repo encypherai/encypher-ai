@@ -221,7 +221,7 @@ export default function AICrawlersPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-delft-blue dark:text-white">AI Crawler Intelligence</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track which AI tools access your content, measure rights compliance, and build licensing evidence.
+          Track which systems access your content, measure rights compliance, and build licensing evidence.
         </p>
       </div>
 
@@ -623,7 +623,7 @@ export default function AICrawlersPage() {
               </svg>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              RSL compliance measures whether a crawler fetched your Rights Statement Listing before accessing content.
+              RSL compliance measures whether a system fetched your Rights Statement Listing before accessing content.
               Rights Acknowledged means they confirmed your terms. Both are admissible as constructive notice evidence
               in licensing negotiations.
             </p>

@@ -315,7 +315,7 @@ function ProfileTab({ accessToken }: { accessToken: string }) {
           <CardHeader>
             <CardTitle className="text-sm font-semibold">Public discovery endpoints</CardTitle>
             <CardDescription className="text-xs">
-              These unauthenticated URLs let AI companies and aggregators discover your terms programmatically.
+              These unauthenticated URLs let any system or publisher discover your terms programmatically.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -407,9 +407,9 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">AI Crawler Analytics</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Content Access Analytics</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          Phone-home telemetry — logged when AI crawlers resolve your signed documents.
+          Phone-home telemetry — logged when any system resolves your signed documents.
         </p>
       </div>
 
@@ -487,7 +487,7 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Crawler activity</CardTitle>
-          <CardDescription>AI crawlers that have accessed your signed content.</CardDescription>
+          <CardDescription>Systems that have accessed your signed content.</CardDescription>
         </CardHeader>
         <CardContent>
           {crawlersQuery.isLoading ? (
