@@ -333,6 +333,82 @@ class RightsService:
         }
 
     # ========================================================================
+    # RSL Import
+    # ========================================================================
+
+    async def import_rsl_profile(
+        self,
+        db: AsyncSession,
+        organization_id: str,
+        rsl_xml: str,
+    ) -> PublisherRightsProfile:
+        """
+        Import an RSL 1.0 XML document and create a rights profile from it.
+
+        Mapping:
+        - RSL crawl terms -> Bronze tier
+        - RSL retrieval terms -> Silver tier
+        - RSL training terms -> Gold tier
+        """
+        import xml.etree.ElementTree as ET
+
+        try:
+            root = ET.fromstring(rsl_xml)
+        except ET.ParseError as exc:
+            raise ValueError(f"Invalid RSL XML: {exc}") from exc
+
+        ns = {"rsl": "https://rslstandard.org/rsl"}
+
+        # Extract publisher info
+        publisher_el = root.find("rsl:publisher", ns) or root.find("publisher")
+        publisher_name = ""
+        publisher_url = None
+        contact_email = None
+        if publisher_el is not None:
+            name_el = publisher_el.find("rsl:name", ns) or publisher_el.find("name")
+            url_el = publisher_el.find("rsl:url", ns) or publisher_el.find("url")
+            contact_el = publisher_el.find("rsl:contact", ns) or publisher_el.find("contact")
+            publisher_name = name_el.text if name_el is not None and name_el.text else ""
+            publisher_url = url_el.text if url_el is not None and url_el.text else None
+            contact_email = contact_el.text if contact_el is not None and contact_el.text else None
+
+        # Extract license elements and map usage to tiers
+        usage_map = {"crawl": "bronze", "retrieval": "silver", "training": "gold"}
+        tiers: dict[str, dict] = {"bronze": {}, "silver": {}, "gold": {}}
+
+        for license_el in root.iter():
+            tag = license_el.tag.split("}")[-1] if "}" in license_el.tag else license_el.tag
+            if tag != "license":
+                continue
+            usage = license_el.get("usage", "")
+            tier_key = usage_map.get(usage)
+            if not tier_key:
+                continue
+            type_el = license_el.find("rsl:type", ns) or license_el.find("type")
+            license_type = type_el.text if type_el is not None and type_el.text else "prohibited"
+            allowed = license_type in ("allowed", "paid")
+            requires_license = license_type == "paid"
+            tiers[tier_key] = {
+                "permissions": {"allowed": allowed, "requires_license": requires_license},
+            }
+
+        profile_data = {
+            "publisher_name": publisher_name,
+            "publisher_url": publisher_url,
+            "contact_email": contact_email,
+            "default_license_type": "tiered",
+            "bronze_tier": tiers["bronze"],
+            "silver_tier": tiers["silver"],
+            "gold_tier": tiers["gold"],
+        }
+
+        return await self.create_or_update_profile(
+            db=db,
+            organization_id=organization_id,
+            profile_data=profile_data,
+        )
+
+    # ========================================================================
     # Document Overrides
     # ========================================================================
 
@@ -930,6 +1006,83 @@ class RightsService:
             "rights_served_count": rights_row.served or 0,
             "rights_acknowledged_count": rights_row.acknowledged or 0,
             "unique_domains": unique_domains,
+        }
+
+    async def get_crawler_summary(
+        self,
+        db: AsyncSession,
+        organization_id: str,
+        days: int = 30,
+    ) -> dict:
+        """
+        Return AI crawler activity summary for *organization_id* over the last *days* days.
+
+        Returns:
+            Dict with keys: ``organization_id``, ``period_days``,
+            ``crawlers`` (list of per-crawler stats), ``total_crawler_events``,
+            ``known_crawlers`` (list of all registered crawlers).
+        """
+        cutoff = _utcnow() - timedelta(days=days)
+
+        # Per-crawler breakdown from detection events
+        crawler_result = await db.execute(
+            select(
+                ContentDetectionEvent.requester_user_agent,
+                ContentDetectionEvent.user_agent_category,
+                func.count(ContentDetectionEvent.id).label("cnt"),
+                func.count(ContentDetectionEvent.id).filter(
+                    ContentDetectionEvent.rights_served.is_(True)
+                ).label("rights_served_cnt"),
+                func.count(ContentDetectionEvent.id).filter(
+                    ContentDetectionEvent.rights_acknowledged.is_(True)
+                ).label("rights_ack_cnt"),
+            )
+            .where(
+                and_(
+                    ContentDetectionEvent.organization_id == organization_id,
+                    ContentDetectionEvent.created_at >= cutoff,
+                    ContentDetectionEvent.user_agent_category.notin_(["human_browser", "unknown"]),
+                )
+            )
+            .group_by(
+                ContentDetectionEvent.requester_user_agent,
+                ContentDetectionEvent.user_agent_category,
+            )
+        )
+        crawler_rows = crawler_result.all()
+
+        crawlers = []
+        total_crawler_events = 0
+        for row in crawler_rows:
+            crawlers.append({
+                "user_agent": row.requester_user_agent,
+                "category": row.user_agent_category,
+                "event_count": row.cnt,
+                "rights_served": row.rights_served_cnt or 0,
+                "rights_acknowledged": row.rights_ack_cnt or 0,
+            })
+            total_crawler_events += row.cnt
+
+        # All known crawlers from the registry
+        known_result = await db.execute(select(KnownCrawler))
+        known_crawlers = [
+            {
+                "crawler_name": c.crawler_name,
+                "operator_org": c.operator_org,
+                "crawler_type": c.crawler_type,
+                "user_agent_pattern": c.user_agent_pattern,
+                "respects_robots_txt": c.respects_robots_txt,
+                "respects_rsl": c.respects_rsl,
+            }
+            for c in known_result.scalars().all()
+        ]
+
+        return {
+            "organization_id": organization_id,
+            "period_days": days,
+            "crawlers": crawlers,
+            "total_crawler_events": total_crawler_events,
+            "known_crawlers": known_crawlers,
         }
 
     # ========================================================================
