@@ -27,6 +27,7 @@ from app.services import verification_logic
 from app.services.fuzzy_fingerprint_service import fuzzy_fingerprint_service
 from app.services.merkle_service import MerkleService
 from app.utils.merkle import MerkleTree, compute_leaf_hash
+from app.middleware.request_id_middleware import request_id_ctx
 from app.utils.print_stego import decode_print_fingerprint
 from app.utils.segmentation import HierarchicalSegmenter
 from app.utils.quota import QuotaManager, QuotaType
@@ -226,7 +227,7 @@ async def verify_advanced(
             },
         )
 
-    correlation_id = f"req-{uuid4().hex}"
+    correlation_id = request_id_ctx.get() if request_id_ctx.get() != "-" else f"req-{uuid4().hex}"
     execution = await verification_logic.execute_verification(payload_text=request.text, db=db, content_db=content_db)
     reason_code = verification_logic.determine_reason_code(execution=execution)
     verdict = verification_logic.build_verdict(
@@ -516,7 +517,7 @@ async def verify_quote_integrity(
 
     Returns a verdict indicating whether the quoted text matches signed source content.
     """
-    correlation_id = f"req-{uuid4().hex}"
+    correlation_id = request_id_ctx.get() if request_id_ctx.get() != "-" else f"req-{uuid4().hex}"
     normalized_quote = unicodedata.normalize("NFC", request.quote).strip()
 
     best_score = 0.0

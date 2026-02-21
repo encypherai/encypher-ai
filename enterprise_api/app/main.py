@@ -59,8 +59,14 @@ from app.utils.db_startup import ensure_database_ready
 from app.utils.request_logging import should_log_request
 from app.dependencies import require_super_admin_dep
 
-# Configure logging
-logging.basicConfig(level=logging.INFO if settings.is_production else logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+from app.middleware.request_id_middleware import RequestIDFilter, RequestIDMiddleware
+
+# Configure logging with request_id field from RequestIDMiddleware contextvars
+logging.basicConfig(
+    level=logging.INFO if settings.is_production else logging.DEBUG,
+    format="%(asctime)s [%(request_id)s] %(name)s %(levelname)s - %(message)s",
+)
+logging.getLogger().addFilter(RequestIDFilter())
 logger = logging.getLogger(__name__)
 
 
@@ -371,6 +377,8 @@ app.add_middleware(SecurityHeadersMiddleware)
 from app.middleware.metrics_middleware import MetricsMiddleware
 
 app.add_middleware(MetricsMiddleware)
+# RequestIDMiddleware must be added AFTER MetricsMiddleware so it wraps outermost (runs first)
+app.add_middleware(RequestIDMiddleware)
 
 
 # Request logging middleware
@@ -802,7 +810,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         JSONResponse with error details
     """
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    correlation_id = request.headers.get("x-request-id") or f"req-{uuid4().hex}"
+    correlation_id = getattr(request.state, "request_id", None) or request.headers.get("x-request-id") or f"req-{uuid4().hex}"
     return JSONResponse(
         status_code=500,
         content={
@@ -817,7 +825,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Return standardized error payloads for HTTP exceptions."""
 
-    correlation_id = request.headers.get("x-request-id") or f"req-{uuid4().hex}"
+    correlation_id = getattr(request.state, "request_id", None) or request.headers.get("x-request-id") or f"req-{uuid4().hex}"
     detail = exc.detail
     if isinstance(detail, dict):
         # Preserve full detail dictionary

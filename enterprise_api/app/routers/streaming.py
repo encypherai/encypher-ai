@@ -58,7 +58,7 @@ async def stream_signing(
 ) -> StreamingResponse:
     """Stream signing progress via SSE."""
 
-    correlation_id = request.headers.get("x-request-id") or f"req-{uuid4().hex}"
+    correlation_id = getattr(request.state, "request_id", None) or request.headers.get("x-request-id") or f"req-{uuid4().hex}"
     run_id = stream_request.run_id or f"run_{uuid4().hex}"
     document_id = stream_request.document_id or f"doc_{uuid4().hex[:16]}"
 

@@ -34,6 +34,51 @@ class MetricType(str, Enum):
     LOOKUP = "lookup"
     ERROR = "error"
     RATE_LIMIT = "rate_limit"
+    # Rights / licensing layer
+    RSL_FETCH = "rsl_fetch"
+    RIGHTS_RESOLUTION = "rights_resolution"
+    ROBOTS_TXT_FETCH = "robots_txt_fetch"
+    NOTICE_DELIVERED = "notice_delivered"
+    LICENSING_REQUEST = "licensing_request"
+
+
+# Known AI crawler user-agent substrings -> canonical category name.
+# Order matters: more specific patterns first.
+_BOT_PATTERNS: list[tuple[str, str]] = [
+    ("gptbot", "gptbot"),
+    ("claudebot", "claudebot"),
+    ("anthropic-ai", "claudebot"),
+    ("google-extended", "google-extended"),
+    ("googleother", "google-extended"),
+    ("perplexitybot", "perplexitybot"),
+    ("bytespider", "bytespider"),
+    ("meta-externalagent", "meta"),
+    ("facebookexternalhit", "meta"),
+    ("ccbot", "ccbot"),
+    ("openai", "openai-sdk"),
+    ("cohere-ai", "cohere"),
+    ("diffbot", "diffbot"),
+    ("amazonbot", "amazonbot"),
+    ("bingbot", "bingbot"),
+    ("msnbot", "bingbot"),
+    ("googlebot", "googlebot"),
+    ("curl/", "curl"),
+    ("python-httpx", "python-sdk"),
+    ("python-requests", "python-sdk"),
+]
+
+
+def classify_bot(user_agent: str) -> str:
+    """Map a User-Agent string to a canonical AI-crawler category.
+
+    Returns a short lowercase string suitable for grouping in analytics.
+    Falls back to "unknown" for unrecognised agents.
+    """
+    ua = user_agent.lower()
+    for fragment, category in _BOT_PATTERNS:
+        if fragment in ua:
+            return category
+    return "unknown"
 
 
 @dataclass

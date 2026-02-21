@@ -226,7 +226,7 @@ async def sign_content(
     This endpoint consolidates /sign and /sign/advanced into a single endpoint.
     Features are automatically gated based on the organization's tier.
     """
-    correlation_id = f"req-{uuid.uuid4().hex[:12]}"
+    correlation_id = getattr(http_request.state, "request_id", None) or f"req-{uuid.uuid4().hex[:12]}"
     # TEAM_145: Default to free tier
     tier = (organization.get("tier") or "free").lower().replace("-", "_")
     org_id = organization["organization_id"]

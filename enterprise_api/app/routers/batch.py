@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/v1", tags=["Batch"])
 
 
 def _correlation_id(request: Request) -> str:
-    return request.headers.get("x-request-id") or f"req-{uuid4().hex}"
+    return getattr(request.state, "request_id", None) or request.headers.get("x-request-id") or f"req-{uuid4().hex}"
 
 
 @router.post("/batch/sign", response_model=BatchResponseEnvelope)

@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.middleware.public_rate_limiter import public_rate_limiter
-from app.observability.metrics import increment
+from app.services.metrics_service import MetricType, classify_bot, get_metrics_service
 
 logger = logging.getLogger(__name__)
 
@@ -351,6 +351,7 @@ Publishers can host this as rsl.txt or reference it from robots.txt.
     """,
 )
 async def get_rsl_xml(
+    request: Request,
     org_id: str = Path(..., description="Organization ID"),
     db: AsyncSession = Depends(get_db),
 ) -> Any:
@@ -361,7 +362,21 @@ async def get_rsl_xml(
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
-    increment("rsl_xml_requests")
+    metrics = get_metrics_service()
+    if metrics:
+        ua = request.headers.get("user-agent", "")
+        await metrics.emit(
+            metric_type=MetricType.RSL_FETCH,
+            organization_id=org_id,
+            user_id="public",
+            endpoint=f"/api/v1/public/rights/organization/{org_id}/rsl",
+            metadata={
+                "request_id": getattr(request.state, "request_id", None),
+                "bot_category": classify_bot(ua),
+                "user_agent": ua[:256],
+            },
+        )
+
     rsl_xml = _build_rsl_xml(org_id=org_id, profile=profile)
     return PlainTextResponse(content=rsl_xml, media_type="application/xml")
 
@@ -373,6 +388,7 @@ async def get_rsl_xml(
     description="Returns a text block to append to the publisher's robots.txt file.",
 )
 async def get_robots_txt_additions(
+    request: Request,
     org_id: str = Path(..., description="Organization ID"),
     db: AsyncSession = Depends(get_db),
 ) -> Any:
@@ -383,7 +399,20 @@ async def get_robots_txt_additions(
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
-    increment("robots_txt_rsl_requests")
+    metrics = get_metrics_service()
+    if metrics:
+        ua = request.headers.get("user-agent", "")
+        await metrics.emit(
+            metric_type=MetricType.ROBOTS_TXT_FETCH,
+            organization_id=org_id,
+            user_id="public",
+            endpoint=f"/api/v1/public/rights/organization/{org_id}/robots-txt",
+            metadata={
+                "request_id": getattr(request.state, "request_id", None),
+                "bot_category": classify_bot(ua),
+                "user_agent": ua[:256],
+            },
+        )
     rsl_url = f"{_BASE_URL}/api/v1/public/rights/organization/{org_id}/rsl"
     rights_url = f"{_BASE_URL}/api/v1/public/rights/organization/{org_id}"
 
