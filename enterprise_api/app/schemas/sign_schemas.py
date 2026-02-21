@@ -232,6 +232,14 @@ class SignOptions(BaseModel):
         default=False,
         description="Include robust fingerprint that survives modifications (Enterprise)",
     )
+    enable_print_fingerprint: bool = Field(
+        default=False,
+        description=(
+            "Print Leak Detection — embed imperceptible spacing patterns that survive "
+            "printing and scanning, enabling source identification from physical or PDF "
+            "copies (Enterprise)"
+        ),
+    )
     disable_c2pa: bool = Field(
         default=False,
         description="Opt-out of C2PA embedding for non-micro modes, only basic metadata (Enterprise). For micro mode use embed_c2pa instead.",
@@ -638,7 +646,19 @@ def validate_sign_options_for_tier(
             })
         else:
             features_used.append("fingerprinting")
-    
+
+    # Check print fingerprint (Print Leak Detection)
+    if options.enable_print_fingerprint:
+        if not is_feature_available("print_fingerprint", tier_normalized):
+            features_denied.append({
+                "feature": "print_fingerprint",
+                "display_name": "Print Leak Detection",
+                "required_tier": TierName.ENTERPRISE,
+                "requested_value": "true",
+            })
+        else:
+            features_used.append("print_fingerprint")
+
     # Check batch size
     batch_limit = get_batch_limit(tier_normalized)
     if batch_size > batch_limit:

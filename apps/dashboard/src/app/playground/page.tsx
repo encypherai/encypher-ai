@@ -55,6 +55,7 @@ type PlaygroundFormState = {
   segmentation_level: string;
   manifest_mode: string;
   embedding_strategy: string;
+  enable_print_fingerprint: boolean;
 };
 
 // Tier hierarchy for comparison
@@ -132,6 +133,167 @@ const tierLabels: Record<Tier, string> = {
   enterprise: 'Enterprise',
 };
 
+function CopyPasteSurvivalTester({ apiKey }: { apiKey: string }) {
+  const [inputText, setInputText] = useState('');
+  const [signedText, setSignedText] = useState('');
+  const [pastedText, setPastedText] = useState('');
+  const [survivalResult, setSurvivalResult] = useState<null | { survived: boolean; message: string }>(null);
+  const [signing, setSigning] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleSign = async () => {
+    if (!inputText.trim()) return;
+    setSigning(true);
+    setSurvivalResult(null);
+    try {
+      const resp = await fetch(`${API_BASE}/sign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': apiKey,
+        },
+        body: JSON.stringify({ text: inputText }),
+      });
+      const data = await resp.json();
+      const signed = data?.data?.signed_text ?? data?.signed_text ?? '';
+      setSignedText(signed);
+      toast.success('Text signed. Copy it, paste elsewhere, then test survival.');
+    } catch {
+      toast.error('Signing failed.');
+    } finally {
+      setSigning(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!signedText) return;
+    await navigator.clipboard.writeText(signedText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleTestSurvival = async () => {
+    const textToTest = pastedText || signedText;
+    if (!textToTest.trim()) return;
+    setTesting(true);
+    setSurvivalResult(null);
+    try {
+      const resp = await fetch(`${API_BASE}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: textToTest }),
+      });
+      const data = await resp.json();
+      const isSignedField = data?.data?.is_signed ?? data?.is_signed ?? false;
+      const embeddingsFound = data?.data?.embeddings_found ?? false;
+      const survived = isSignedField || embeddingsFound;
+      setSurvivalResult({
+        survived,
+        message: survived
+          ? 'Watermark survived -- invisible embeddings detected in pasted text.'
+          : 'Watermark lost -- no embeddings detected. The copy-paste process may have stripped invisible characters.',
+      });
+    } catch {
+      toast.error('Verification failed.');
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">Copy-Paste Survival Test</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          Prove that invisible watermarks survive copy-paste operations. Sign text, copy it to your clipboard, paste it somewhere (email, Word, Slack), then paste it back here and test.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">1. Enter text to sign</label>
+        <textarea
+          rows={4}
+          placeholder="Paste or type any article, paragraph, or AI output here..."
+          value={inputText}
+          onChange={e => setInputText(e.target.value)}
+          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-y font-mono"
+        />
+        <Button
+          onClick={handleSign}
+          disabled={signing || !inputText.trim() || !apiKey}
+          size="sm"
+        >
+          {signing ? 'Signing...' : 'Sign text'}
+        </Button>
+      </div>
+
+      {signedText && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-slate-700 dark:text-slate-300">2. Signed text (copy this)</label>
+            <button
+              onClick={handleCopy}
+              className="text-xs px-3 py-1 rounded-md bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors font-medium"
+            >
+              {copied ? 'Copied!' : 'Copy to clipboard'}
+            </button>
+          </div>
+          <textarea
+            rows={4}
+            readOnly
+            value={signedText}
+            className="w-full rounded-lg border border-green-200 dark:border-green-800 bg-green-50/30 dark:bg-green-950/10 px-3 py-2 text-sm font-mono resize-y"
+          />
+          <p className="text-xs text-slate-400">
+            The text above contains invisible Unicode embeddings. Copy it, paste it into another app (email, Word, Slack, etc.), copy it back, and paste it below.
+          </p>
+        </div>
+      )}
+
+      {signedText && (
+        <div className="space-y-3">
+          <label className="text-xs font-medium text-slate-700 dark:text-slate-300">3. Paste here after copy</label>
+          <textarea
+            rows={4}
+            placeholder="Paste the text back here after going through another app..."
+            value={pastedText}
+            onChange={e => setPastedText(e.target.value)}
+            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono resize-y"
+          />
+          <Button
+            onClick={handleTestSurvival}
+            disabled={testing || (!pastedText.trim() && !signedText.trim())}
+            size="sm"
+            variant="outline"
+          >
+            {testing ? 'Testing...' : 'Verify survival'}
+          </Button>
+        </div>
+      )}
+
+      {survivalResult && (
+        <div className={`rounded-xl border p-4 ${survivalResult.survived
+          ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800'
+          : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800'
+        }`}>
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">{survivalResult.survived ? '\u2705' : '\u274C'}</span>
+            <div>
+              <p className={`font-semibold text-sm ${survivalResult.survived ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'}`}>
+                {survivalResult.survived ? 'Watermark survived' : 'Watermark lost'}
+              </p>
+              <p className={`text-xs mt-0.5 ${survivalResult.survived ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                {survivalResult.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PlaygroundPage() {
   const { session, status, accessToken } = useRequireAuth();
   // Get user tier from session (default to free for new users)
@@ -167,6 +329,7 @@ export default function PlaygroundPage() {
   // Guided Tour State (4 steps: 0=API Key, 1=Sign, 2=Copy, 3=Verify)
   const [tourActive, setTourActive] = useState<boolean>(false);
   const [tourStep, setTourStep] = useState<number>(0);
+  const [playgroundMode, setPlaygroundMode] = useState<'explorer' | 'copy-paste-test'>('explorer');
   const [endpointSearch, setEndpointSearch] = useState<string>('');
   const preserveRequestBodyOnEndpointChangeRef = useRef<boolean>(false);
   const [requestEditorMode, setRequestEditorMode] = useState<RequestEditorMode>('form');
@@ -179,6 +342,7 @@ export default function PlaygroundPage() {
     segmentation_level: '',
     manifest_mode: '',
     embedding_strategy: '',
+    enable_print_fingerprint: false,
   });
 
   const supportsFormBuilder =
@@ -299,6 +463,7 @@ export default function PlaygroundPage() {
           segmentation_level: parsed?.segmentation_level ?? '',
           manifest_mode: parsed?.manifest_mode ?? '',
           embedding_strategy: parsed?.embedding_strategy ?? '',
+          enable_print_fingerprint: parsed?.enable_print_fingerprint ?? false,
         };
         setFormValues(nextForm);
 
@@ -662,7 +827,38 @@ export default function PlaygroundPage() {
             View Full API Docs
           </a>
         </div>
+        {/* Mode toggle */}
+        <div className="flex gap-1 mt-4 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
+          <button
+            onClick={() => setPlaygroundMode('explorer')}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              playgroundMode === 'explorer'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+            }`}
+          >
+            API Explorer
+          </button>
+          <button
+            onClick={() => setPlaygroundMode('copy-paste-test')}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              playgroundMode === 'copy-paste-test'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+            }`}
+          >
+            Copy-Paste Test
+          </button>
+        </div>
       </div>
+
+      {playgroundMode === 'copy-paste-test' ? (
+        <Card>
+          <CardContent className="pt-6">
+            <CopyPasteSurvivalTester apiKey={effectiveApiKey} />
+          </CardContent>
+        </Card>
+      ) : (<>
 
       {/* How It Works Guide */}
       <Card className="mb-6 border-slate-200 dark:border-slate-700">
@@ -1276,6 +1472,29 @@ export default function PlaygroundPage() {
                               </select>
                             </div>
                           </div>
+                          {/* Print Leak Detection — Enterprise only */}
+                          {hasTierAccess(userTier, 'enterprise') && (
+                            <label className="flex items-center gap-2 text-sm mt-1 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={formValues.enable_print_fingerprint}
+                                onChange={(e) =>
+                                  setFormValues((prev) => ({
+                                    ...prev,
+                                    enable_print_fingerprint: e.target.checked,
+                                  }))
+                                }
+                                className="rounded border-slate-300 text-blue-ncs focus:ring-blue-ncs"
+                              />
+                              <span className="font-medium">Print Leak Detection</span>
+                              <span className="text-xs text-muted-foreground">
+                                — spacing fingerprint for print/scan tracing
+                              </span>
+                              <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
+                                Enterprise
+                              </span>
+                            </label>
+                          )}
                         </>
                       )}
 
@@ -1751,6 +1970,7 @@ export default function PlaygroundPage() {
         onSkip={skipTour}
         nextLabel="Finish Tour"
       />
+      </>)}
     </DashboardLayout>
   );
 }

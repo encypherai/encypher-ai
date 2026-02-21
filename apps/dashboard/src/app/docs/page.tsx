@@ -80,6 +80,46 @@ interface ResourceItem {
   iconBg: string;
 }
 
+function IconKey({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+    </svg>
+  );
+}
+
+function IconStream({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  );
+}
+
+function IconUsers({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+  );
+}
+
+function IconQuote({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+function IconPrint({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+    </svg>
+  );
+}
+
 const guides: GuideItem[] = [
   {
     title: 'Publisher Integration Guide',
@@ -96,6 +136,46 @@ const guides: GuideItem[] = [
     icon: IconIntegrations,
     iconBg: 'bg-gradient-to-br from-[#2A87C4] to-[#00CED1]',
     tags: ['Ghost', 'WordPress', 'Webhook', 'Setup'],
+  },
+  {
+    title: 'Bring Your Own Key (BYOK)',
+    description: 'Sign content with your own Ed25519 key pairs for full key custody and independent verification.',
+    href: '/docs/byok',
+    icon: IconKey,
+    iconBg: 'bg-gradient-to-br from-[#1B2F50] to-[#00CED1]',
+    tags: ['Enterprise', 'Security', 'Ed25519'],
+  },
+  {
+    title: 'Streaming LLM Signing',
+    description: 'Sign AI-generated text in real-time as it streams from language models with sub-millisecond overhead.',
+    href: '/docs/streaming',
+    icon: IconStream,
+    iconBg: 'bg-gradient-to-br from-[#2A87C4] to-[#1B2F50]',
+    tags: ['AI', 'Streaming', 'LLM', 'Real-time'],
+  },
+  {
+    title: 'Coalition & Licensing',
+    description: 'Join the Publisher Coalition to collectively license content to AI companies with 60/40 revenue share.',
+    href: '/docs/coalition',
+    icon: IconUsers,
+    iconBg: 'bg-gradient-to-br from-[#00CED1] to-[#2A87C4]',
+    tags: ['Coalition', 'Licensing', 'Revenue'],
+  },
+  {
+    title: 'Quote Integrity Verification',
+    description: 'Detect AI hallucinations and misattributions by verifying quotes against signed source documents.',
+    href: '/docs/quote-integrity',
+    icon: IconQuote,
+    iconBg: 'bg-gradient-to-br from-[#1B2F50] to-[#2A87C4]',
+    tags: ['Verification', 'AI', 'Fact-checking'],
+  },
+  {
+    title: 'Print Leak Detection',
+    description: 'Identify the source of leaked physical documents by embedding imperceptible spacing fingerprints that survive printing and scanning.',
+    href: '/docs/print-leak-detection',
+    icon: IconPrint,
+    iconBg: 'bg-gradient-to-br from-[#1B2F50] to-[#00CED1]',
+    tags: ['Enterprise', 'Print', 'Forensics'],
   },
 ];
 

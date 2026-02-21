@@ -21,6 +21,7 @@ from app.schemas.sign_schemas import UnifiedSignRequest
 from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.unified_signing_service import execute_unified_signing
 from app.services.webhook_dispatcher import emit_document_signed
+from app.utils.print_stego import build_payload, encode_print_fingerprint
 from app.utils.quota import QuotaManager, QuotaType
 
 logger = logging.getLogger(__name__)
@@ -115,6 +116,7 @@ Provide **either** `text` (single document) **or** `documents` (batch), plus an 
 | `include_fingerprint` | bool | `false` | Enterprise | Generate a robust content fingerprint that can survive minor text modifications. |
 | `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding for non-micro modes; only basic metadata is attached. For micro mode, use `embed_c2pa` instead. |
 | `store_c2pa_manifest` | bool | `true` | Free | Persist generated C2PA manifest in content DB for DB-backed verification. Applies to all modes that generate a manifest. |
+| `enable_print_fingerprint` | bool | `false` | Enterprise | Print Leak Detection — embed imperceptible spacing patterns (U+2009 THIN SPACE vs U+0020) that survive printing and scanning, enabling source identification from leaked physical or PDF copies. |
 
 ### Custom Assertions & Rights (Business+)
 
@@ -306,6 +308,10 @@ async def sign_content(
             content_db=content_db,
         )
 
+    # Post-sign: apply Print Leak Detection when enable_print_fingerprint=True
+    if result.get("success") and request.options.enable_print_fingerprint:
+        _apply_print_fingerprint(result=result, org_id=org_id)
+
     # Add quota headers
     quota_headers = await QuotaManager.get_quota_headers(
         db=core_db,
@@ -345,6 +351,37 @@ async def sign_content(
         return JSONResponse(status_code=status.HTTP_201_CREATED, content=result)
     else:
         return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content=result)
+
+
+def _apply_print_fingerprint(result: dict, org_id: str) -> None:
+    """Post-sign hook: encode a thin-space fingerprint into signed_text.
+
+    Operates in-place on ``result["data"]``.  Modifies ``signed_text`` for each
+    document (single or batch) and injects ``print_fingerprint`` metadata.
+    Errors are swallowed so they never break a successful sign response.
+    """
+    try:
+        data = result.get("data", {})
+
+        def _fingerprint_doc(doc: dict) -> None:
+            doc_id = doc.get("document_id", "")
+            signed_text = doc.get("signed_text")
+            if not signed_text or not doc_id:
+                return
+            payload = build_payload(org_id, doc_id)
+            doc["signed_text"] = encode_print_fingerprint(signed_text, payload)
+            doc["print_fingerprint"] = {
+                "enabled": True,
+                "payload_hex": payload.hex(),
+            }
+
+        if data.get("document"):
+            _fingerprint_doc(data["document"])
+        if data.get("documents"):
+            for doc in data["documents"]:
+                _fingerprint_doc(doc)
+    except Exception:
+        logger.warning("Failed to apply print fingerprint after signing; continuing", exc_info=True)
 
 
 async def _attach_rights_snapshot(
