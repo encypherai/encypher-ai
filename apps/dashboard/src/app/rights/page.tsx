@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
@@ -865,8 +865,8 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
                 </thead>
                 <tbody>
                   {requests.map((req: LicensingRequest) => (
-                    <>
-                      <tr key={req.id} className="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <React.Fragment key={req.id}>
+                      <tr className="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                         <td className="py-2.5 px-3 font-mono text-xs text-slate-600 dark:text-slate-400 max-w-[120px] truncate">
                           {req.requester_org_id?.slice(0, 12)}…
                         </td>
@@ -934,7 +934,7 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
