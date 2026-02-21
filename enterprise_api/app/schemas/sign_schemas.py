@@ -210,6 +210,10 @@ class SignOptions(BaseModel):
         default=None,
         description="Rights and licensing metadata to embed (Business+)",
     )
+    use_rights_profile: bool = Field(
+        default=False,
+        description="When True, fetches the publisher's rights profile, stores a rights snapshot, and adds rights_resolution_url to the response (Business+)",
+    )
     license: Optional[LicenseInfo] = Field(
         default=None,
         description="License information (Business+)",

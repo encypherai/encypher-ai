@@ -1079,6 +1079,92 @@ async def test_document_override_unauthenticated(async_client: AsyncClient) -> N
 
 
 # ════════════════════════════════════════════════════════════════════════════════
+# Integration Tests — Enhanced Sign Endpoint (use_rights_profile)
+# ════════════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.asyncio
+async def test_sign_use_rights_profile_false_default(
+    async_client: AsyncClient,
+    auth_headers: dict,
+) -> None:
+    """POST /api/v1/sign with no use_rights_profile does not add rights_resolution_url."""
+    resp = await async_client.post(
+        "/api/v1/sign",
+        json={"text": "Test content for signing without rights profile."},
+        headers=auth_headers,
+    )
+    assert resp.status_code in (200, 201), resp.text
+    body = resp.json()
+    assert body.get("success") is True
+    doc = body.get("data", {}).get("document", {})
+    # rights_resolution_url should NOT be present when use_rights_profile is False
+    assert "rights_resolution_url" not in doc
+
+
+@pytest.mark.asyncio
+async def test_sign_use_rights_profile_true_with_profile(
+    async_client: AsyncClient,
+    auth_headers: dict,
+) -> None:
+    """POST /api/v1/sign with use_rights_profile=True returns rights_resolution_url."""
+    # Set a rights profile first
+    profile_resp = await async_client.put(
+        "/api/v1/rights/profile",
+        json={
+            "publisher_name": "Sign With Rights Publisher",
+            "default_license_type": "tiered",
+            "bronze_tier": {"permissions": {"allowed": True}},
+            "silver_tier": {"permissions": {"allowed": True}},
+            "gold_tier": {"permissions": {"allowed": False}},
+        },
+        headers=auth_headers,
+    )
+    assert profile_resp.status_code in (200, 201), profile_resp.text
+
+    # Sign with use_rights_profile=True
+    resp = await async_client.post(
+        "/api/v1/sign",
+        json={
+            "text": "Test content for signing with rights profile.",
+            "options": {"use_rights_profile": True},
+        },
+        headers=auth_headers,
+    )
+    assert resp.status_code in (200, 201), resp.text
+    body = resp.json()
+    assert body.get("success") is True
+    doc = body.get("data", {}).get("document", {})
+    # rights_resolution_url should be present when use_rights_profile is True and a profile exists
+    assert "rights_resolution_url" in doc, f"Expected rights_resolution_url in {doc}"
+    url = doc["rights_resolution_url"]
+    assert "public/rights/" in url
+    doc_id = doc.get("document_id", "")
+    assert doc_id and doc_id in url
+
+
+@pytest.mark.asyncio
+async def test_sign_use_rights_profile_true_no_profile(
+    async_client: AsyncClient,
+    starter_auth_headers: dict,
+) -> None:
+    """POST /api/v1/sign with use_rights_profile=True succeeds even without a profile (graceful)."""
+    # starter org likely has no rights profile; signing should succeed regardless
+    resp = await async_client.post(
+        "/api/v1/sign",
+        json={
+            "text": "Test content for signing; no rights profile configured.",
+            "options": {"use_rights_profile": True},
+        },
+        headers=starter_auth_headers,
+    )
+    # Should succeed (200/201) — the rights snapshot hook is best-effort
+    assert resp.status_code in (200, 201), resp.text
+    body = resp.json()
+    assert body.get("success") is True
+
+
+# ════════════════════════════════════════════════════════════════════════════════
 # Regression Tests — Existing Tests Unaffected
 # ════════════════════════════════════════════════════════════════════════════════
 

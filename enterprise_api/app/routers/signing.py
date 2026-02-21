@@ -297,6 +297,15 @@ async def sign_content(
         correlation_id=correlation_id,
     )
     
+    # Post-sign: attach rights snapshot when use_rights_profile=True
+    if result.get("success") and request.options.use_rights_profile:
+        await _attach_rights_snapshot(
+            result=result,
+            org_id=org_id,
+            core_db=core_db,
+            content_db=content_db,
+        )
+
     # Add quota headers
     quota_headers = await QuotaManager.get_quota_headers(
         db=core_db,
@@ -305,7 +314,7 @@ async def sign_content(
     )
     for header, value in quota_headers.items():
         response.headers[header] = value
-    
+
     increment("sign_requests")
     
     # Emit webhook events for each document
@@ -336,6 +345,77 @@ async def sign_content(
         return JSONResponse(status_code=status.HTTP_201_CREATED, content=result)
     else:
         return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content=result)
+
+
+async def _attach_rights_snapshot(
+    result: dict,
+    org_id: str,
+    core_db: AsyncSession,
+    content_db: AsyncSession,
+) -> None:
+    """
+    Post-sign hook: fetches the publisher's rights profile, stores a rights snapshot
+    on each signed ContentReference, and injects rights_resolution_url into the result.
+
+    Operates in-place on `result["data"]`. Errors are swallowed so they never
+    break a successful sign response.
+    """
+    from sqlalchemy import update
+    from app.config import settings
+    from app.models.content_reference import ContentReference
+    from app.services.rights_service import rights_service
+
+    try:
+        profile = await rights_service.get_current_profile(
+            db=core_db, organization_id=org_id
+        )
+        if profile is None:
+            return
+
+        snapshot = {
+            "profile_version": profile.profile_version,
+            "publisher_name": profile.publisher_name,
+            "default_license_type": profile.default_license_type,
+            "bronze_tier": profile.bronze_tier,
+            "silver_tier": profile.silver_tier,
+            "gold_tier": profile.gold_tier,
+            "notice_status": profile.notice_status,
+        }
+
+        data = result.get("data", {})
+        document_ids: list[str] = []
+
+        if data.get("document"):
+            doc_id = data["document"].get("document_id")
+            if doc_id:
+                document_ids.append(doc_id)
+                rights_url = f"{settings.api_base_url}/api/v1/public/rights/{doc_id}"
+                data["document"]["rights_resolution_url"] = rights_url
+
+        if data.get("documents"):
+            for doc in data["documents"]:
+                doc_id = doc.get("document_id")
+                if doc_id:
+                    document_ids.append(doc_id)
+                    rights_url = f"{settings.api_base_url}/api/v1/public/rights/{doc_id}"
+                    doc["rights_resolution_url"] = rights_url
+
+        for doc_id in document_ids:
+            rights_url = f"{settings.api_base_url}/api/v1/public/rights/{doc_id}"
+            await content_db.execute(
+                update(ContentReference)
+                .where(ContentReference.document_id == doc_id)
+                .where(ContentReference.organization_id == org_id)
+                .values(
+                    rights_snapshot=snapshot,
+                    rights_resolution_url=rights_url,
+                )
+            )
+        if document_ids:
+            await content_db.commit()
+
+    except Exception:
+        logger.warning("Failed to attach rights snapshot after signing; continuing", exc_info=True)
 
 
 # =============================================================================
