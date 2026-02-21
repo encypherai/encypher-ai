@@ -1,13 +1,13 @@
 """Tests for Print Leak Detection (thin-space steganography).
 
-TEAM_217 — enterprise_api/app/utils/print_stego.py
+TEAM_217 - enterprise_api/app/utils/print_stego.py
 
 Tests:
-  1. encode → decode roundtrip
+  1. encode -> decode roundtrip
   2. build_payload is deterministic
   3. no thin spaces without flag
   4. enterprise tier required (403 for non-enterprise)
-  5. short text — graceful no-op
+  5. short text - graceful no-op
   6. sign response includes payload_hex
   7. verify endpoint detects fingerprint
   8. plain text has no false positive
@@ -33,9 +33,9 @@ from app.utils.print_stego import (
 )
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# 1. Encode → decode roundtrip
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
+# 1. Encode -> decode roundtrip
+# --------------------------------------------------------------------------
 
 
 def _long_text(word_count: int = 200) -> str:
@@ -45,14 +45,14 @@ def _long_text(word_count: int = 200) -> str:
 
 
 def test_encode_decode_roundtrip() -> None:
-    """Payload survives encode → decode."""
+    """Payload survives encode -> decode."""
     text = _long_text(200)
     payload = build_payload("org-abc", "doc-xyz")
 
     fingerprinted = encode_print_fingerprint(text, payload)
     recovered = decode_print_fingerprint(fingerprinted)
 
-    assert recovered is not None, "decode returned None — fingerprint not detected"
+    assert recovered is not None, "decode returned None  - fingerprint not detected"
     assert recovered == payload, f"payload mismatch: {recovered.hex()} != {payload.hex()}"
 
 
@@ -65,9 +65,9 @@ def test_encode_decode_roundtrip_various_payloads() -> None:
         assert recovered == payload, f"roundtrip failed for ({org}, {doc})"
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
 # 2. build_payload is deterministic
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
 
 
 def test_payload_builder_deterministic() -> None:
@@ -88,9 +88,9 @@ def test_payload_builder_different_inputs() -> None:
     assert p2 != p3
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
 # 3. No thin spaces without the fingerprint
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
 
 
 def test_no_thin_spaces_in_unfingerprinted_text() -> None:
@@ -105,13 +105,13 @@ def test_no_thin_spaces_in_unfingerprinted_text() -> None:
     assert fingerprinted != text, "fingerprinted text must differ from original"
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# 4. Short text — graceful no-op
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
+# 4. Short text  - graceful no-op
+# --------------------------------------------------------------------------
 
 
 def test_short_text_graceful_noop() -> None:
-    """Text too short to carry payload → returned unmodified, no exception raised."""
+    """Text too short to carry payload -> returned unmodified, no exception raised."""
     short_text = "This text is far too short."  # < 128 spaces
     payload = build_payload("org-abc", "doc-short")
 
@@ -127,13 +127,13 @@ def test_short_text_decode_returns_none() -> None:
     assert result is None
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
 # 5. Plain text has no false positive
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
 
 
 def test_regular_text_no_false_positive() -> None:
-    """Plain text with only regular spaces → decode returns None."""
+    """Plain text with only regular spaces -> decode returns None."""
     text = _long_text(300)
     assert THIN_SPACE not in text
     result = decode_print_fingerprint(text)
@@ -141,16 +141,16 @@ def test_regular_text_no_false_positive() -> None:
 
 
 def test_text_with_exactly_127_spaces_no_false_positive() -> None:
-    """Text with exactly 127 spaces (one short of minimum) → decode returns None."""
+    """Text with exactly 127 spaces (one short of minimum) -> decode returns None."""
     text = " ".join(["word"] * 128)  # 127 spaces
     assert text.count(REGULAR_SPACE) == 127
     result = decode_print_fingerprint(text)
     assert result is None
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
 # 6. Thin-space positions encode bits correctly
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
 
 
 def test_encoding_uses_correct_positions() -> None:
@@ -168,14 +168,14 @@ def test_encoding_uses_correct_positions() -> None:
         actual = 1 if spaces[i] == THIN_SPACE else 0
         assert actual == expected, f"bit {i}: expected {expected}, got {actual}"
 
-    # Remaining 15 bytes are all 0 → all remaining spaces should be REGULAR_SPACE
+    # Remaining 15 bytes are all 0 -> all remaining spaces should be REGULAR_SPACE
     for i in range(8, 128):
         assert spaces[i] == REGULAR_SPACE, f"space {i}: expected REGULAR_SPACE, got THIN_SPACE"
 
 
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
 # 7. Enterprise tier required via API (mock-based)
-# ──────────────────────────────────────────────────────────────────────────────
+# --------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio

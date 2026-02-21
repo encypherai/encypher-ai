@@ -1,4 +1,4 @@
-"""Print Leak Detection — thin-space steganography.
+"""Print Leak Detection - thin-space steganography.
 
 Encodes a compact payload (16 bytes = 128 bits) at inter-word positions using:
   U+0020 REGULAR SPACE = 0-bit
@@ -8,11 +8,11 @@ Thin spaces (~5/18 em) are visually identical to regular spaces but produce
 measurably different physical letter-spacing in high-quality print. This
 fingerprint channel:
 
-  Survives  — PDF copy-paste, high-quality OCR, ZWC stripping (orthogonal channel)
-  Lost when — aggressive whitespace normalisation, low-quality OCR, plain-text email
+  Survives  - PDF copy-paste, high-quality OCR, ZWC stripping (orthogonal channel)
+  Lost when - aggressive whitespace normalisation, low-quality OCR, plain-text email
 
-Capacity: 16 bytes × 8 bits = 128 bits → requires ≥ 128 inter-word spaces.
-A 300-word article has ~299 spaces — sufficient for most content.
+Capacity: 16 bytes x 8 bits = 128 bits -> requires >= 128 inter-word spaces.
+A 300-word article has ~299 spaces - sufficient for most content.
 """
 
 import hashlib
@@ -23,7 +23,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 REGULAR_SPACE = "\u0020"
-THIN_SPACE = "\u2009"  # THIN SPACE — ~5/18 em, Unicode General_Category=Zs
+THIN_SPACE = "\u2009"  # THIN SPACE - ~5/18 em, Unicode General_Category=Zs
 
 PAYLOAD_BYTES = 16        # 128-bit fingerprint
 MIN_SPACES = PAYLOAD_BYTES * 8  # 128 inter-word positions required
@@ -49,7 +49,7 @@ def encode_print_fingerprint(text: str, payload: bytes) -> str:
     space positions in the text (left-to-right).
 
     If the text contains fewer inter-word spaces than required, the text is
-    returned **unmodified** and a warning is logged (graceful no-op — no error).
+    returned **unmodified** and a warning is logged (graceful no-op - no error).
     """
     chars = list(text)
     space_positions = [i for i, c in enumerate(chars) if c == REGULAR_SPACE]
@@ -58,7 +58,7 @@ def encode_print_fingerprint(text: str, payload: bytes) -> str:
     if len(space_positions) < required:
         logger.warning(
             "print_stego: %d spaces available, %d required for %d-byte payload"
-            " — returning text unmodified",
+            " - returning text unmodified",
             len(space_positions),
             required,
             len(payload),
@@ -92,7 +92,7 @@ def decode_print_fingerprint(text: str) -> Optional[bytes]:
 
     candidate = space_chars[:MIN_SPACES]
     if THIN_SPACE not in candidate:
-        return None  # no fingerprint — all spaces are regular
+        return None  # no fingerprint - all spaces are regular
 
     result = bytearray()
     for byte_idx in range(PAYLOAD_BYTES):

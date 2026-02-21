@@ -9,7 +9,7 @@ Print Leak Detection is an Enterprise-tier signing option that embeds an imperce
 
 ## The Problem
 
-When you distribute signed articles, press proofs, board documents, or investor updates as PDFs or printed copies, the standard invisible Unicode watermarks (ZWC embeddings) are stripped out — once a document is printed and scanned, the cryptographic chain is lost.
+When you distribute signed articles, press proofs, board documents, or investor updates as PDFs or printed copies, the standard invisible Unicode watermarks (ZWC embeddings) are stripped out - once a document is printed and scanned, the cryptographic chain is lost.
 
 **Print Leak Detection adds a complementary channel** that encodes a compact identifier directly into the letter spacing of the text. If a copy leaks, you scan it, run OCR, and submit the result to the verify endpoint. The fingerprint tells you the exact source document.
 
@@ -26,12 +26,12 @@ A 16-byte (128-bit) HMAC-SHA256 fingerprint is encoded across the first 128 inte
 
 | Scenario | Fingerprint survives? |
 |---|---|
-| PDF copy-paste | ✅ Yes — Unicode spaces preserved |
-| High-quality OCR (Unicode-aware) | ✅ Yes — thin spaces retained |
-| Print → scan → OCR (high DPI) | ✅ Yes — measurable letter spacing difference |
-| Standard OCR (ASCII normalisation) | ⚠️ Partial — depends on OCR quality |
-| Aggressive whitespace normalisation | ❌ No — all spaces collapsed to single space |
-| ZWC stripping | ✅ Yes — orthogonal channel, not affected |
+| PDF copy-paste | Yes - Unicode spaces preserved |
+| High-quality OCR (Unicode-aware) | Yes - thin spaces retained |
+| Print -> scan -> OCR (high DPI) | Yes - measurable letter spacing difference |
+| Standard OCR (ASCII normalisation) | Partial - depends on OCR quality |
+| Aggressive whitespace normalisation | No - all spaces collapsed to single space |
+| ZWC stripping | Yes - orthogonal channel, not affected |
 
 ## Minimum Content Length
 
@@ -123,7 +123,7 @@ curl -X POST https://api.encypherai.com/api/v1/verify/advanced \\
 
 5. **Cross-reference** \`payload_hex\` against your signing records to identify the source document and recipient.
 
-The \`payload_hex\` is an HMAC-SHA256 of your org ID and document ID — you can verify it independently:
+The \`payload_hex\` is an HMAC-SHA256 of your org ID and document ID - you can verify it independently:
 
 \`\`\`python
 import hashlib, hmac

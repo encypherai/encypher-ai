@@ -453,7 +453,7 @@ async def verify_advanced(
             )
         response_payload["soft_match"] = response_payload["fuzzy_search"]
 
-    # Passive Print Leak Detection scan — always included, no flag required
+    # Passive Print Leak Detection scan - always included, no flag required
     print_fp_bytes = decode_print_fingerprint(request.text)
     response_payload["print_fingerprint"] = {
         "detected": print_fp_bytes is not None,

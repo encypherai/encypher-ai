@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.middleware.public_rate_limiter import public_rate_limiter
+from app.observability.metrics import increment
 
 logger = logging.getLogger(__name__)
 
@@ -360,6 +361,7 @@ async def get_rsl_xml(
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
+    increment("rsl_xml_requests")
     rsl_xml = _build_rsl_xml(org_id=org_id, profile=profile)
     return PlainTextResponse(content=rsl_xml, media_type="application/xml")
 
@@ -381,6 +383,7 @@ async def get_robots_txt_additions(
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
+    increment("robots_txt_rsl_requests")
     rsl_url = f"{_BASE_URL}/api/v1/public/rights/organization/{org_id}/rsl"
     rights_url = f"{_BASE_URL}/api/v1/public/rights/organization/{org_id}"
 

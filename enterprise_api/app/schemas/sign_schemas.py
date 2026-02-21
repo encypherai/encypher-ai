@@ -235,7 +235,7 @@ class SignOptions(BaseModel):
     enable_print_fingerprint: bool = Field(
         default=False,
         description=(
-            "Print Leak Detection — embed imperceptible spacing patterns that survive "
+            "Print Leak Detection - embed imperceptible spacing patterns that survive "
             "printing and scanning, enabling source identification from physical or PDF "
             "copies (Enterprise)"
         ),

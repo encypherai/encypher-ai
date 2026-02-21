@@ -116,7 +116,7 @@ Provide **either** `text` (single document) **or** `documents` (batch), plus an 
 | `include_fingerprint` | bool | `false` | Enterprise | Generate a robust content fingerprint that can survive minor text modifications. |
 | `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding for non-micro modes; only basic metadata is attached. For micro mode, use `embed_c2pa` instead. |
 | `store_c2pa_manifest` | bool | `true` | Free | Persist generated C2PA manifest in content DB for DB-backed verification. Applies to all modes that generate a manifest. |
-| `enable_print_fingerprint` | bool | `false` | Enterprise | Print Leak Detection — embed imperceptible spacing patterns (U+2009 THIN SPACE vs U+0020) that survive printing and scanning, enabling source identification from leaked physical or PDF copies. |
+| `enable_print_fingerprint` | bool | `false` | Enterprise | Print Leak Detection - embed imperceptible spacing patterns (U+2009 THIN SPACE vs U+0020) that survive printing and scanning, enabling source identification from leaked physical or PDF copies. |
 
 ### Custom Assertions & Rights (Business+)
 
