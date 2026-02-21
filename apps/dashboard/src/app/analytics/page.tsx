@@ -152,7 +152,7 @@ export default function AnalyticsPage() {
               size="sm"
               onClick={() => setTimeRange(range)}
             >
-              Last {range}d
+              {range}d
             </Button>
           ))}
         </div>
@@ -391,13 +391,13 @@ export default function AnalyticsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg border border-border bg-muted/30 p-3">
                   <p className="text-xs text-muted-foreground">Success rate</p>
-                  <p className="text-lg font-semibold text-emerald-600">
+                  <p className={`text-lg font-semibold ${successRate > 0 ? 'text-emerald-600' : 'text-muted-foreground'}`}>
                     {successRate.toFixed(1)}%
                   </p>
                 </div>
                 <div className="rounded-lg border border-border bg-muted/30 p-3">
                   <p className="text-xs text-muted-foreground">Error rate</p>
-                  <p className="text-lg font-semibold text-amber-600">
+                  <p className={`text-lg font-semibold ${errorRate > 0 && successRate > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>
                     {errorRate.toFixed(1)}%
                   </p>
                 </div>

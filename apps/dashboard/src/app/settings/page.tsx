@@ -22,6 +22,51 @@ import { useOrganization } from '../../contexts/OrganizationContext';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
 
+function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-ncs focus-visible:ring-offset-2 ${
+        checked ? 'bg-blue-ncs' : 'bg-muted'
+      }`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition-transform duration-200 ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+}
+
+function StyledSelect({ value, onChange, disabled, children }: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative w-full">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="flex w-full appearance-none rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm h-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+      >
+        {children}
+      </select>
+      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 type Profile = {
   name: string;
   email: string;
@@ -550,7 +595,7 @@ export default function SettingsPage() {
                       key={tab}
                       onClick={() => setActiveTab(tab as typeof activeTab)}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        activeTab === tab ? 'bg-columbia-blue text-white' : 'text-muted-foreground hover:bg-muted'
+                        activeTab === tab ? 'bg-blue-ncs text-white' : 'text-muted-foreground hover:bg-muted'
                       }`}
                     >
                       {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -908,15 +953,14 @@ export default function SettingsPage() {
                                 : 'Critical account and usage alerts'}
                             </p>
                           </div>
-                          <input
-                            type="checkbox"
+                          <ToggleSwitch
                             checked={Boolean(value)}
-                            onChange={(e) =>
+                            onChange={(v) =>
                               setProfile((prev) => ({
                                 ...prev,
                                 notifications: {
                                   ...(prev.notifications ?? defaultNotifications),
-                                  [key]: e.target.checked,
+                                  [key]: v,
                                 },
                               }))
                             }
@@ -962,17 +1006,16 @@ export default function SettingsPage() {
                         <form className="space-y-4" onSubmit={handlePublisherSettingsSave}>
                           <div>
                             <label className="block text-sm font-medium mb-2">Signing identity mode</label>
-                            <select
+                            <StyledSelect
                               value={signingIdentityMode}
-                              onChange={(e) => setSigningIdentityMode(e.target.value as SigningIdentityMode)}
-                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              onChange={(v) => setSigningIdentityMode(v as SigningIdentityMode)}
                             >
                               <option value="organization_name">Use verified organization name</option>
                               <option value="organization_and_author">Use author + organization</option>
                               <option value="custom" disabled={!hasCustomSigningIdentityEntitlement}>
                                 Custom signing identity {!hasCustomSigningIdentityEntitlement ? '(requires add-on)' : ''}
                               </option>
-                            </select>
+                            </StyledSelect>
                             {!hasCustomSigningIdentityEntitlement && (
                               <p className="text-xs text-muted-foreground mt-2">
                                 Custom Signing Identity add-on is available for $9/month.
@@ -1087,13 +1130,12 @@ export default function SettingsPage() {
                                     {claim.status === 'verified' && (
                                       <div className="flex items-center gap-2 text-sm">
                                         <span className="text-muted-foreground">Auto-join</span>
-                                        <input
-                                          type="checkbox"
-                                          checked={claim.auto_join_enabled}
-                                          onChange={(e) =>
+                                        <ToggleSwitch
+                                          checked={Boolean(claim.auto_join_enabled)}
+                                          onChange={(v) =>
                                             updateAutoJoinMutation.mutate({
                                               claimId: claim.id,
-                                              enabled: e.target.checked,
+                                              enabled: v,
                                             })
                                           }
                                         />
