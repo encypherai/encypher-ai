@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     coalition_service_url: str = "http://localhost:8009"
     auth_service_url: str = "http://localhost:8001"
     key_service_url: str = "http://localhost:8003"
+    notification_service_url: str = "http://localhost:8005"
+
+    # Dashboard URL for invite/claim links
+    dashboard_url: str = "https://dashboard.encypherai.com"
 
     internal_service_token: Optional[str] = None
     compose_org_context_via_auth_service: bool = False

@@ -20,6 +20,8 @@ RIGHTS_TEMPLATES: dict[str, dict] = {
             "Standard template for news organizations — scraping allowed with attribution, RAG requires license, training requires negotiation"
         ),
         "default_license_type": "all_rights_reserved",
+        "notice_status": "active",
+        "coalition_member": True,
         "bronze_tier": {
             "tier": "bronze",
             "usage_type": "scraping_crawling",

@@ -1,5 +1,6 @@
 """
 Tests for Platform Partner (delegated-setup) flow (TEAM_215 Phase 10 + 11.7).
+Extended with TEAM_222: proxy signing + bulk provisioning.
 
 Covers:
 - Task 10.1: delegated-setup endpoint auth, tier enforcement, validation
@@ -7,12 +8,15 @@ Covers:
 - Task 10.3: Partner cannot lock out publisher from updating their own profile
 - Task 5.4: Sign with use_rights_profile=True basic structure
 - Task 11.7: Full platform partner integration flow
+- TEAM_222: Proxy signing via publisher_org_id
+- TEAM_222: Bulk publisher provisioning via /partner/publishers/provision
 """
 
 from __future__ import annotations
 
 import os
 import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import pytest_asyncio
@@ -440,3 +444,451 @@ class TestPlatformPartnerFullFlow:
         doc_id = doc.get("document_id")
         assert doc_id, "Expected document_id in sign response"
         assert doc_id in rights_url
+
+
+# ================================================================================
+# TEAM_222 -- Proxy Signing
+# ================================================================================
+
+
+_DEMO_PUBLISHER_ORG_ID = "org_demo_publisher"
+
+
+@pytest_asyncio.fixture
+async def _ensure_demo_publisher_org(db: AsyncSession) -> None:
+    """Seed a free-tier publisher org for proxy signing tests."""
+    await db.execute(
+        text(
+            """
+            INSERT INTO organizations (
+                id, name, email, tier, monthly_api_limit, monthly_api_usage,
+                coalition_member, coalition_rev_share, created_at, updated_at
+            )
+            VALUES (
+                :id, :name, :email, :tier, :limit, 0,
+                TRUE, 30, NOW(), NOW()
+            )
+            ON CONFLICT (id) DO NOTHING;
+            """
+        ),
+        {
+            "id": _DEMO_PUBLISHER_ORG_ID,
+            "name": "Demo Publisher Organization",
+            "email": "publisher@tests.local",
+            "tier": "free",
+            "limit": 10000,
+        },
+    )
+    await db.commit()
+
+
+class TestProxySigning:
+    """TEAM_222: Proxy signing via publisher_org_id field."""
+
+    ENDPOINT = "/api/v1/sign"
+
+    @pytest.mark.asyncio
+    async def test_proxy_sign_requires_strategic_partner_tier(
+        self,
+        async_client: AsyncClient,
+        auth_headers: dict,
+    ) -> None:
+        """Non-strategic_partner key with publisher_org_id returns 403."""
+        resp = await async_client.post(
+            self.ENDPOINT,
+            json={
+                "text": "Some article content.",
+                "publisher_org_id": "org_some_publisher",
+            },
+            headers=auth_headers,
+        )
+        assert resp.status_code == 403, resp.text
+        body = resp.json()
+        error = body.get("error", {})
+        assert "strategic_partner" in str(error).lower()
+
+    @pytest.mark.asyncio
+    async def test_proxy_sign_unknown_publisher_returns_422(
+        self,
+        async_client: AsyncClient,
+        strategic_partner_auth_headers: dict,
+    ) -> None:
+        """Strategic partner + unknown publisher_org_id returns 422."""
+        with patch(
+            "app.routers.signing.auth_service_client.get_organization_context",
+            new_callable=AsyncMock,
+            return_value=None,
+        ):
+            resp = await async_client.post(
+                self.ENDPOINT,
+                json={
+                    "text": "Some article content.",
+                    "publisher_org_id": "org_nonexistent_publisher",
+                },
+                headers=strategic_partner_auth_headers,
+            )
+        assert resp.status_code == 422, resp.text
+        body = resp.json()
+        error = body.get("error", {})
+        assert "E_PUBLISHER_NOT_FOUND" in str(error)
+
+    @pytest.mark.asyncio
+    async def test_proxy_sign_success_returns_org_ids(
+        self,
+        async_client: AsyncClient,
+        strategic_partner_auth_headers: dict,
+        _ensure_demo_publisher_org: None,
+    ) -> None:
+        """Strategic partner + valid publisher returns 201 with partner/publisher org IDs."""
+        publisher_ctx = {
+            "id": _DEMO_PUBLISHER_ORG_ID,
+            "tier": "free",
+            "name": "Demo Publisher Organization",
+        }
+        with patch(
+            "app.routers.signing.auth_service_client.get_organization_context",
+            new_callable=AsyncMock,
+            return_value=publisher_ctx,
+        ):
+            resp = await async_client.post(
+                self.ENDPOINT,
+                json={
+                    "text": "Proxy signed article content.",
+                    "publisher_org_id": _DEMO_PUBLISHER_ORG_ID,
+                },
+                headers=strategic_partner_auth_headers,
+            )
+        assert resp.status_code == 201, resp.text
+        body = resp.json()
+        assert body.get("success") is True
+        data = body.get("data", {})
+        assert data.get("partner_org_id") == _PARTNER_ORG_ID
+        assert data.get("publisher_org_id") == _DEMO_PUBLISHER_ORG_ID
+
+    @pytest.mark.asyncio
+    async def test_proxy_sign_quota_uses_publisher_org(
+        self,
+        async_client: AsyncClient,
+        strategic_partner_auth_headers: dict,
+        _ensure_demo_publisher_org: None,
+    ) -> None:
+        """QuotaManager.check_quota is called with publisher's org_id, not partner's."""
+        publisher_ctx = {
+            "id": _DEMO_PUBLISHER_ORG_ID,
+            "tier": "free",
+            "name": "Demo Publisher Organization",
+        }
+        quota_calls: list[str] = []
+
+        original_check_quota = None
+        from app.utils import quota as quota_mod
+
+        original_check_quota = quota_mod.QuotaManager.check_quota
+
+        async def mock_check_quota(db, organization_id, quota_type, increment):
+            quota_calls.append(organization_id)
+            # Call original to avoid breaking the test
+            await original_check_quota(
+                db=db,
+                organization_id=organization_id,
+                quota_type=quota_type,
+                increment=increment,
+            )
+
+        with patch(
+            "app.routers.signing.auth_service_client.get_organization_context",
+            new_callable=AsyncMock,
+            return_value=publisher_ctx,
+        ), patch.object(quota_mod.QuotaManager, "check_quota", side_effect=mock_check_quota):
+            resp = await async_client.post(
+                self.ENDPOINT,
+                json={
+                    "text": "Proxy signed article content quota test.",
+                    "publisher_org_id": _DEMO_PUBLISHER_ORG_ID,
+                },
+                headers=strategic_partner_auth_headers,
+            )
+        assert resp.status_code == 201, resp.text
+        assert _DEMO_PUBLISHER_ORG_ID in quota_calls, (
+            f"Expected quota check for publisher org, got: {quota_calls}"
+        )
+
+
+# ================================================================================
+# TEAM_222 -- Bulk Provisioning
+# ================================================================================
+
+
+class TestBulkProvision:
+    """TEAM_222: Bulk publisher provisioning via /partner/publishers/provision."""
+
+    ENDPOINT = "/api/v1/partner/publishers/provision"
+
+    @pytest.mark.asyncio
+    async def test_bulk_provision_requires_strategic_partner_tier(
+        self,
+        async_client: AsyncClient,
+        auth_headers: dict,
+    ) -> None:
+        """Non-strategic_partner tier returns 403."""
+        resp = await async_client.post(
+            self.ENDPOINT,
+            json={
+                "partner_name": "Freestar",
+                "publishers": [
+                    {"name": "Daily Tribune", "contact_email": "ed@dailytribune.example.com"}
+                ],
+            },
+            headers=auth_headers,
+        )
+        assert resp.status_code == 403, resp.text
+
+    @pytest.mark.asyncio
+    async def test_bulk_provision_single_publisher(
+        self,
+        async_client: AsyncClient,
+        strategic_partner_auth_headers: dict,
+    ) -> None:
+        """Single publisher provision returns success with org_id and claim_url."""
+        mock_auth_result = {
+            "success": True,
+            "data": {
+                "provisioned": [
+                    {
+                        "org_id": "org_provisioned_001",
+                        "org_name": "Daily Tribune",
+                        "contact_email": "ed@dailytribune.example.com",
+                        "invitation_token": "tok_abc123",
+                        "domain": None,
+                    }
+                ],
+                "failed": [],
+                "total": 1,
+                "success_count": 1,
+                "failure_count": 0,
+            },
+        }
+
+        with patch(
+            "app.routers.partner.auth_service_client.bulk_provision_publishers",
+            new_callable=AsyncMock,
+            return_value=mock_auth_result,
+        ), patch(
+            "app.routers.partner.rights_service.create_or_update_profile",
+            new_callable=AsyncMock,
+            return_value=MagicMock(profile_version=1),
+        ), patch(
+            "app.routers.partner._send_partner_claim_email",
+            new_callable=AsyncMock,
+        ):
+            resp = await async_client.post(
+                self.ENDPOINT,
+                json={
+                    "partner_name": "Freestar",
+                    "publishers": [
+                        {
+                            "name": "Daily Tribune",
+                            "contact_email": "ed@dailytribune.example.com",
+                        }
+                    ],
+                },
+                headers=strategic_partner_auth_headers,
+            )
+
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["success"] is True
+        data = body["data"]
+        assert data["success_count"] == 1
+        assert len(data["provisioned"]) == 1
+        prov = data["provisioned"][0]
+        assert prov["org_id"] == "org_provisioned_001"
+        assert "invite" in prov["claim_url"]
+        assert prov["rights_profile_version"] == 1
+
+    @pytest.mark.asyncio
+    async def test_bulk_provision_three_publishers(
+        self,
+        async_client: AsyncClient,
+        strategic_partner_auth_headers: dict,
+    ) -> None:
+        """Three publishers all provisioned successfully."""
+        orgs = [
+            {
+                "org_id": f"org_p{i}",
+                "org_name": f"Publisher {i}",
+                "contact_email": f"editor{i}@pub{i}.example.com",
+                "invitation_token": f"tok_{i}",
+                "domain": None,
+            }
+            for i in range(1, 4)
+        ]
+        mock_auth_result = {
+            "success": True,
+            "data": {
+                "provisioned": orgs,
+                "failed": [],
+                "total": 3,
+                "success_count": 3,
+                "failure_count": 0,
+            },
+        }
+
+        with patch(
+            "app.routers.partner.auth_service_client.bulk_provision_publishers",
+            new_callable=AsyncMock,
+            return_value=mock_auth_result,
+        ), patch(
+            "app.routers.partner.rights_service.create_or_update_profile",
+            new_callable=AsyncMock,
+            return_value=MagicMock(profile_version=1),
+        ), patch(
+            "app.routers.partner._send_partner_claim_email",
+            new_callable=AsyncMock,
+        ):
+            resp = await async_client.post(
+                self.ENDPOINT,
+                json={
+                    "partner_name": "Freestar",
+                    "publishers": [
+                        {"name": f"Publisher {i}", "contact_email": f"editor{i}@pub{i}.example.com"}
+                        for i in range(1, 4)
+                    ],
+                },
+                headers=strategic_partner_auth_headers,
+            )
+
+        assert resp.status_code == 200, resp.text
+        data = resp.json()["data"]
+        assert data["success_count"] == 3
+        assert data["failure_count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_bulk_provision_rights_profile_has_active_notice_and_coalition(
+        self,
+        async_client: AsyncClient,
+        strategic_partner_auth_headers: dict,
+    ) -> None:
+        """Rights profile is created with notice_status=active and coalition_member=True."""
+        captured_profile_data: list[dict] = []
+
+        mock_auth_result = {
+            "success": True,
+            "data": {
+                "provisioned": [
+                    {
+                        "org_id": "org_test_rights",
+                        "org_name": "Test Publisher",
+                        "contact_email": "editor@testpub.example.com",
+                        "invitation_token": "tok_xyz",
+                        "domain": None,
+                    }
+                ],
+                "failed": [],
+                "total": 1,
+                "success_count": 1,
+                "failure_count": 0,
+            },
+        }
+
+        async def capture_create_or_update(db, organization_id, profile_data):
+            captured_profile_data.append(profile_data)
+            mock = MagicMock(profile_version=1)
+            return mock
+
+        with patch(
+            "app.routers.partner.auth_service_client.bulk_provision_publishers",
+            new_callable=AsyncMock,
+            return_value=mock_auth_result,
+        ), patch(
+            "app.routers.partner.rights_service.create_or_update_profile",
+            side_effect=capture_create_or_update,
+        ), patch(
+            "app.routers.partner._send_partner_claim_email",
+            new_callable=AsyncMock,
+        ):
+            resp = await async_client.post(
+                self.ENDPOINT,
+                json={
+                    "partner_name": "Freestar",
+                    "coalition_member": True,
+                    "publishers": [
+                        {
+                            "name": "Test Publisher",
+                            "contact_email": "editor@testpub.example.com",
+                        }
+                    ],
+                },
+                headers=strategic_partner_auth_headers,
+            )
+
+        assert resp.status_code == 200, resp.text
+        assert len(captured_profile_data) == 1
+        pd = captured_profile_data[0]
+        assert pd.get("notice_status") == "active"
+        assert pd.get("coalition_member") is True
+
+    @pytest.mark.asyncio
+    async def test_bulk_provision_sends_claim_email_per_publisher(
+        self,
+        async_client: AsyncClient,
+        strategic_partner_auth_headers: dict,
+    ) -> None:
+        """With send_claim_email=True, partner claim email is sent for each provisioned org."""
+        email_calls: list[dict] = []
+
+        async def capture_email(**kwargs):
+            email_calls.append(kwargs)
+
+        mock_auth_result = {
+            "success": True,
+            "data": {
+                "provisioned": [
+                    {
+                        "org_id": "org_email_test",
+                        "org_name": "Email Test Publisher",
+                        "contact_email": "editor@emailtest.example.com",
+                        "invitation_token": "tok_email",
+                        "domain": None,
+                    }
+                ],
+                "failed": [],
+                "total": 1,
+                "success_count": 1,
+                "failure_count": 0,
+            },
+        }
+
+        with patch(
+            "app.routers.partner.auth_service_client.bulk_provision_publishers",
+            new_callable=AsyncMock,
+            return_value=mock_auth_result,
+        ), patch(
+            "app.routers.partner.rights_service.create_or_update_profile",
+            new_callable=AsyncMock,
+            return_value=MagicMock(profile_version=1),
+        ), patch(
+            "app.routers.partner._send_partner_claim_email",
+            side_effect=capture_email,
+        ):
+            resp = await async_client.post(
+                self.ENDPOINT,
+                json={
+                    "partner_name": "Freestar",
+                    "send_claim_email": True,
+                    "publishers": [
+                        {
+                            "name": "Email Test Publisher",
+                            "contact_email": "editor@emailtest.example.com",
+                        }
+                    ],
+                },
+                headers=strategic_partner_auth_headers,
+            )
+
+        assert resp.status_code == 200, resp.text
+        assert len(email_calls) == 1
+        call = email_calls[0]
+        assert call["publisher_name"] == "Email Test Publisher"
+        assert call["partner_name"] == "Freestar"
+        assert call["invitation_token"] == "tok_email"

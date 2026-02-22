@@ -191,6 +191,19 @@ DEMO_KEYS = {
         "coalition_member": True,
         "coalition_rev_share": get_tier_rev_share("enterprise")["publisher"],
     },
+    # Strategic partner key for testing (TEAM_222)
+    "strategic-partner-api-key-for-testing": {
+        "organization_id": "org_strategic_partner",
+        "organization_name": "Strategic Partner Test Organization",
+        "tier": "strategic_partner",
+        "is_demo": True,
+        "features": {**_enterprise_features},
+        "permissions": ["sign", "verify", "lookup"],
+        "monthly_api_limit": -1,
+        "monthly_api_usage": 0,
+        "coalition_member": True,
+        "coalition_rev_share": get_tier_rev_share("enterprise")["publisher"],
+    },
     # Marketing site production key - free tier for public tools
     "ency_marketing_site_prod_2026": {
         "organization_id": "org_encypher_marketing",

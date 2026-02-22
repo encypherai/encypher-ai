@@ -198,6 +198,26 @@ Add-ons are purchased separately. Enterprise tier includes all add-ons at no add
 
 ---
 
+## Platform Partner Tier (Strategic Partner)
+
+The `strategic_partner` tier is a non-public, integration-partnership tier assigned to platform partners (e.g. Freestar) who onboard publishers en masse on behalf of Encypher. It is not purchasable through the dashboard.
+
+| Feature | strategic_partner |
+|---------|:-----------------:|
+| All Enterprise signing features | Yes |
+| Unlimited quota and rate limits | Yes |
+| Proxy signing (`publisher_org_id` on `POST /sign`) | Yes - signs on behalf of provisioned publishers; publisher pays quota |
+| Bulk publisher provisioning (`POST /api/v1/partner/publishers/provision`) | Yes - creates orgs, rights profiles, and claim emails in one call |
+| Delegated rights setup (`POST /api/v1/rights/profile/delegated-setup`) | Yes |
+| Publisher dashboard claim flow (existing `/invite/[token]` page) | Yes - publishers claim via email link |
+
+Publishers provisioned by a strategic partner receive:
+- A `free`-tier organization created on their behalf
+- A `news_publisher_default` rights profile with `notice_status=active` and `coalition_member=True`
+- A partner-branded claim email linking to their dashboard
+
+---
+
 ## Dashboard Feature Gating (Implementation)
 
 The dashboard uses `userTier` from the session JWT to gate features. The sidebar hides enterprise-only pages for free users.

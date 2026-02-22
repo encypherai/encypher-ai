@@ -427,6 +427,16 @@ class UnifiedSignRequest(BaseModel):
         description="Signing options - features gated by tier",
     )
 
+    # Platform partner proxy signing
+    publisher_org_id: Optional[str] = Field(
+        default=None,
+        description=(
+            "Platform partner only (strategic_partner tier): sign on behalf of this "
+            "publisher organization. Publisher's quota and rate limits apply."
+        ),
+        max_length=128,
+    )
+
     @model_validator(mode="after")
     def validate_single_or_batch(self) -> "UnifiedSignRequest":
         """Ensure either text or documents is provided, not both."""

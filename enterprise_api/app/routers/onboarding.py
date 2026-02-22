@@ -72,7 +72,7 @@ async def request_certificate(organization: dict = Depends(get_current_organizat
             logger.debug("Creating SSL.com certificate order...")
             order = await ssl_client.create_code_signing_order(
                 organization=organization["organization_name"],
-                country="US",  # TODO: Get from organization data
+                country=organization.get("country") or organization.get("billing_country") or "US",
                 email=organization.get("email", "noreply@encypherai.com"),
                 validity_years=2,
             )

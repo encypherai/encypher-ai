@@ -18,6 +18,7 @@ from app.middleware.api_rate_limiter import api_rate_limiter
 from app.observability.metrics import increment
 from app.schemas.api_response import ErrorCode, get_batch_limit
 from app.schemas.sign_schemas import UnifiedSignRequest
+from app.services.auth_service_client import auth_service_client
 from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.unified_signing_service import execute_unified_signing
 from app.services.webhook_dispatcher import emit_document_signed
@@ -230,11 +231,52 @@ async def sign_content(
     # TEAM_145: Default to free tier
     tier = (organization.get("tier") or "free").lower().replace("-", "_")
     org_id = organization["organization_id"]
-    
+
+    # --- Platform partner proxy signing (TEAM_222) ---
+    proxy_publisher_org_id: str | None = request.publisher_org_id
+    is_proxy = proxy_publisher_org_id is not None
+    effective_org_id = org_id  # used for quota, rate limit, rights, and webhooks
+
+    if is_proxy and proxy_publisher_org_id is not None:
+        if tier not in ("strategic_partner",):
+            return JSONResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={
+                    "success": False,
+                    "data": None,
+                    "error": {
+                        "code": ErrorCode.E_TIER_REQUIRED,
+                        "message": "publisher_org_id requires strategic_partner tier",
+                    },
+                    "correlation_id": correlation_id,
+                    "meta": {"tier": tier},
+                },
+            )
+        publisher_ctx = await auth_service_client.get_organization_context(
+            proxy_publisher_org_id
+        )
+        if publisher_ctx is None:
+            return JSONResponse(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                content={
+                    "success": False,
+                    "data": None,
+                    "error": {
+                        "code": "E_PUBLISHER_NOT_FOUND",
+                        "message": f"Publisher org '{proxy_publisher_org_id}' not found or inaccessible",
+                    },
+                    "correlation_id": correlation_id,
+                    "meta": {},
+                },
+            )
+        # Switch to publisher's identity for quota, rate limits, rights, and webhooks
+        effective_org_id = proxy_publisher_org_id
+        tier = (publisher_ctx.get("tier") or "free").lower().replace("-", "_")
+
     # Get batch size for rate limiting
     documents = request.get_documents()
     batch_size = len(documents)
-    
+
     # Check batch limit
     batch_limit = get_batch_limit(tier)
     if batch_size > batch_limit:
@@ -252,17 +294,17 @@ async def sign_content(
                 "meta": {"tier": tier},
             },
         )
-    
-    # Rate limiting
+
+    # Rate limiting (uses effective_org_id: publisher's for proxy, partner's for direct)
     rate_result = api_rate_limiter.check_with_reset(
-        organization_id=org_id,
+        organization_id=effective_org_id,
         scope="sign",
         tier=tier,
     )
-    
+
     for header, value in api_rate_limiter.get_headers(rate_result).items():
         response.headers[header] = value
-    
+
     if not rate_result.allowed:
         return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -279,13 +321,15 @@ async def sign_content(
             },
             headers=api_rate_limiter.get_headers(rate_result),
         )
-    
-    await ensure_organization_exists(core_db, organization)
-    
-    # Check monthly quota
+
+    # For proxy signing, skip ensure_organization_exists (publisher bootstrapping runs separately)
+    if not is_proxy:
+        await ensure_organization_exists(core_db, organization)
+
+    # Check monthly quota against publisher's org when proxying
     await QuotaManager.check_quota(
         db=core_db,
-        organization_id=org_id,
+        organization_id=effective_org_id,
         quota_type=QuotaType.C2PA_SIGNATURES,
         increment=batch_size,
     )
@@ -300,36 +344,42 @@ async def sign_content(
     )
     
     # Post-sign: attach rights snapshot when use_rights_profile=True
+    # For proxy signing, use publisher's org for rights profile lookup
     if result.get("success") and request.options.use_rights_profile:
         await _attach_rights_snapshot(
             result=result,
-            org_id=org_id,
+            org_id=effective_org_id,
             core_db=core_db,
             content_db=content_db,
         )
 
     # Post-sign: apply Print Leak Detection when enable_print_fingerprint=True
     if result.get("success") and request.options.enable_print_fingerprint:
-        _apply_print_fingerprint(result=result, org_id=org_id)
+        _apply_print_fingerprint(result=result, org_id=effective_org_id)
 
-    # Add quota headers
+    # Add quota headers (publisher's quota for proxy signing)
     quota_headers = await QuotaManager.get_quota_headers(
         db=core_db,
-        organization_id=org_id,
+        organization_id=effective_org_id,
         quota_type=QuotaType.C2PA_SIGNATURES,
     )
     for header, value in quota_headers.items():
         response.headers[header] = value
 
+    # Inject proxy metadata into result when proxy signing
+    if is_proxy and result.get("success") and result.get("data"):
+        result["data"]["partner_org_id"] = org_id
+        result["data"]["publisher_org_id"] = effective_org_id
+
     increment("sign_requests")
-    
-    # Emit webhook events for each document
+
+    # Emit webhook events for each document (publisher's org for proxy signing)
     if result.get("success") and result.get("data"):
         data = result["data"]
         if data.get("document"):
             asyncio.create_task(
                 emit_document_signed(
-                    organization_id=org_id,
+                    organization_id=effective_org_id,
                     document_id=data["document"]["document_id"],
                     title=request.document_title,
                     document_type=request.options.document_type,
@@ -339,13 +389,13 @@ async def sign_content(
             for doc_result in data["documents"]:
                 asyncio.create_task(
                     emit_document_signed(
-                        organization_id=org_id,
+                        organization_id=effective_org_id,
                         document_id=doc_result["document_id"],
                         title=doc_result.get("metadata", {}).get("title"),
                         document_type=request.options.document_type,
                     )
                 )
-    
+
     # Return appropriate status code
     if result.get("success"):
         return JSONResponse(status_code=status.HTTP_201_CREATED, content=result)

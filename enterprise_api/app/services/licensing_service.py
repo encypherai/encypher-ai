@@ -458,6 +458,19 @@ class LicensingService:
         return list(result.scalars().all())
 
     @staticmethod
+    async def count_accesses_since(db: AsyncSession, agreement_id: UUID, since: datetime) -> int:
+        """Count content access log entries for an agreement since a given timestamp."""
+        from sqlalchemy import func
+
+        result = await db.execute(
+            select(func.count()).where(
+                ContentAccessLog.agreement_id == agreement_id,
+                ContentAccessLog.accessed_at >= since,
+            )
+        )
+        return result.scalar() or 0
+
+    @staticmethod
     async def process_payouts(db: AsyncSession, distribution_id: UUID, payment_method: str = "stripe") -> Dict:
         """
         Process payouts for a distribution.
