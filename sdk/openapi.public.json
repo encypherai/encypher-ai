@@ -6391,6 +6391,200 @@
           }
         }
       }
+    },
+    "/api/v1/org/invites/public/{token}": {
+      "get": {
+        "tags": [
+          "Team Invites",
+          "Team Invites"
+        ],
+        "summary": "Get Public Invite",
+        "description": "Return invite metadata for a pending team invitation (no auth required).\n\nUsed by the /invite/team/[token] dashboard page to render invite details\nbefore the user is logged in.",
+        "operationId": "get_public_invite_api_v1_org_invites_public__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/org/invites/public/{token}/accept-new": {
+      "post": {
+        "tags": [
+          "Team Invites",
+          "Team Invites"
+        ],
+        "summary": "Accept Invite New User",
+        "description": "Accept a team invitation and create a new user account in one step.\n\n- Validates the invite token\n- Creates a new user account via auth-service internal endpoint (email auto-verified)\n- Creates the org member record\n- Marks the invite as accepted\n- Returns access + refresh tokens so the dashboard can auto-login\n\nReturns 409 if the email is already registered (frontend shows 'sign in instead').\nReturns 404/410 if the invite is missing or expired.",
+        "operationId": "accept_invite_new_user_api_v1_org_invites_public__token__accept_new_post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteNewUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partner/publishers/provision": {
+      "post": {
+        "tags": [
+          "Partner",
+          "Partner"
+        ],
+        "summary": "Bulk-provision publisher organizations",
+        "description": "Platform partners (strategic_partner tier) can provision up to 1000 publisher organizations in a single call. Each publisher gets a free-tier org, a rights profile using the specified template, and a partner-branded claim email.",
+        "operationId": "bulk_provision_publishers_api_v1_partner_publishers_provision_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerBulkProvisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rights/analytics/crawlers/timeseries": {
+      "get": {
+        "tags": [
+          "Rights Management",
+          "Rights Management"
+        ],
+        "summary": "Get AI crawler activity timeseries",
+        "description": "Daily crawler activity grouped by bot type for the specified period.",
+        "operationId": "get_crawler_timeseries_api_v1_rights_analytics_crawlers_timeseries_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Crawler Timeseries Api V1 Rights Analytics Crawlers Timeseries Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -13486,6 +13680,63 @@
             "default": 0.85
           }
         }
+      },
+      "AcceptInviteNewUserRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "password"
+        ],
+        "title": "AcceptInviteNewUserRequest",
+        "description": "Payload for accepting a team invite as a brand-new user."
+      },
+      "PartnerBulkProvisionRequest": {
+        "properties": {
+          "publishers": {
+            "items": {
+              "$ref": "#/components/schemas/PartnerPublisherSpec"
+            },
+            "type": "array",
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Publishers"
+          },
+          "partner_name": {
+            "type": "string",
+            "title": "Partner Name"
+          },
+          "default_template": {
+            "type": "string",
+            "title": "Default Template",
+            "default": "news_publisher_default"
+          },
+          "coalition_member": {
+            "type": "boolean",
+            "title": "Coalition Member",
+            "default": true
+          },
+          "send_claim_email": {
+            "type": "boolean",
+            "title": "Send Claim Email",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "publishers",
+          "partner_name"
+        ],
+        "title": "PartnerBulkProvisionRequest"
       }
     },
     "securitySchemes": {

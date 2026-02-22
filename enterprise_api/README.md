@@ -352,6 +352,8 @@ In addition to trusted CA subjects, this endpoint returns active trust-policy me
 | `/api/v1/org/members/{member_id}/role` | PATCH | ✅ | Internal | Update member role |
 | `/api/v1/org/members/{member_id}` | DELETE | ✅ | Internal | Remove a team member |
 | `/api/v1/org/members/accept-invite` | POST | ✅ | Internal | Accept an invitation |
+| `/api/v1/org/invites/public/{token}` | GET | None | Public | Look up invite metadata by token |
+| `/api/v1/org/invites/public/{token}/accept-new` | POST | None | Public | Register new user and accept invite |
 
 ### Audit Log Endpoints
 
@@ -410,6 +412,7 @@ Machine-readable deed system for publishers to define and enforce licensing term
 | `/api/v1/rights/templates` | GET | ✅ | All | List available rights template presets |
 | `/api/v1/rights/profile/from-template/{template_id}` | POST | ✅ | Business+ | Initialize profile from a template |
 | `/api/v1/rights/profile/delegated-setup` | POST | ✅ | Strategic Partner | Platform partner sets up rights profile on behalf of publisher |
+| `/api/v1/partner/publishers/provision` | POST | ✅ | Strategic Partner | Bulk-provision publisher orgs, rights profiles, and claim emails in one call |
 | `/api/v1/rights/rsl/import` | POST | ✅ | Business+ | Import existing RSL 1.0 XML document |
 | `/api/v1/rights/analytics/detections` | GET | ✅ | Business+ | Phone-home detection analytics |
 | `/api/v1/rights/analytics/crawlers` | GET | ✅ | Business+ | AI crawler activity breakdown |
@@ -610,11 +613,14 @@ Free tier supports up to 1 custom assertion per request on this endpoint.
   "use_sentence_tracking": true,
   "options": {
     "use_rights_profile": true
-  }
+  },
+  "publisher_org_id": null
 }
 ```
 
 When `use_rights_profile: true`, the sign endpoint fetches the publisher's active rights profile, stores a snapshot on the content reference, and injects `rights_resolution_url` into the response for each document. This enables any downstream party (AI crawler, aggregator) to call the public rights endpoint directly from the signed content.
+
+**Proxy Signing** (`publisher_org_id`): Platform partners with a `strategic_partner`-tier API key may set `publisher_org_id` to sign content on behalf of a provisioned publisher organization. The publisher's quota, rate limits, rights profile, and webhooks are used (publisher pays). The response includes `partner_org_id` and `publisher_org_id` fields to identify both parties. Requires the publisher org to exist (provisioned via `POST /api/v1/partner/publishers/provision`).
 
 **Response:**
 
@@ -1104,7 +1110,7 @@ The Enterprise API is part of a comprehensive microservices ecosystem. Each serv
 │ - Content Indexing      │       │ - User Authentication   │
 │ - Revenue Distribution  │       │ - JWT Management        │
 │ - Licensing Management  │       │ - OAuth Integration     │
-│ - Member Stats          │       │                         │
+│ - Member Stats          │       │ - Org Provisioning      │
 └─────────────────────────┘       └─────────────────────────┘
             ↓                                   ↓
 ┌─────────────────────────┐       ┌─────────────────────────┐
@@ -1432,8 +1438,17 @@ KEY_SERVICE_URL=http://localhost:8003
 # Coalition Service (Optional)
 COALITION_SERVICE_URL=http://localhost:8009
 
-# Auth Service (Future)
+# Auth Service (Required for proxy signing and bulk provisioning)
 AUTH_SERVICE_URL=http://localhost:8001
+
+# Internal service token (shared secret for inter-service calls)
+INTERNAL_SERVICE_TOKEN=<shared-secret>
+
+# Notification Service (Required for partner claim emails)
+NOTIFICATION_SERVICE_URL=http://localhost:8005
+
+# Dashboard base URL (used in partner claim email links)
+DASHBOARD_URL=https://dashboard.encypherai.com
 ```
 
 #### Database Configuration

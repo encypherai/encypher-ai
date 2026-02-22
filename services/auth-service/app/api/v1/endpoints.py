@@ -55,7 +55,7 @@ from ...services.onboarding_service import OnboardingService
 from ...services.auth_factors_service import AuthFactorsService
 from ...services.turnstile_service import verify_turnstile_token
 from ...core.config import settings
-from ...core.security import create_typed_token, verify_token as verify_jwt_token
+from ...core.security import create_typed_token, verify_token as verify_jwt_token, get_password_hash
 from ...db.models import Organization
 from ...deps.rate_limit import rate_limiter
 from ...db.models import User
@@ -224,6 +224,25 @@ async def login(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Email not verified. Please check your inbox for the verification email.",
         )
+
+    # Org-level MFA enforcement: if org mandates 2FA and user has none, block login
+    if getattr(user, "default_organization_id", None):
+        org = db.query(Organization).filter(Organization.id == user.default_organization_id).first()
+        if org and (org.features or {}).get("enforce_mfa"):
+            if not user.totp_enabled:
+                return {
+                    "success": False,
+                    "data": {
+                        "mfa_setup_required": True,
+                    },
+                    "error": {
+                        "code": "E_MFA_SETUP_REQUIRED",
+                        "message": (
+                            "Your organization requires two-factor authentication. "
+                            "Please sign in and go to Settings > Security to set up 2FA."
+                        ),
+                    },
+                }
 
     mfa_method = None
     if user.totp_enabled:
@@ -2090,4 +2109,70 @@ async def complete_setup(
             "display_name": org.display_name,
         },
         "error": None,
+    }
+
+
+# ============================================================
+# INTERNAL: User creation for invite flow (TEAM_224)
+# ============================================================
+
+
+class InternalCreateUserRequest(BaseModel):
+    """Payload for internal user creation (team invite accept-new flow)."""
+
+    email: EmailStr
+    name: str
+    password: str
+
+
+@router.post("/internal/users/create", include_in_schema=False)
+async def create_user_internal(
+    payload: InternalCreateUserRequest,
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+    db: Session = Depends(get_db),
+):
+    """
+    Create a new user account for an invite-based signup.
+
+    Internal-only endpoint (X-Internal-Token required).
+    The user's email is auto-verified and API access pre-approved so they
+    can start using the platform immediately after accepting the invite.
+
+    Returns 409 if the email is already registered.
+    """
+    if settings.INTERNAL_SERVICE_TOKEN:
+        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+    existing = db.query(User).filter(User.email == payload.email).first()
+    if existing:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
+
+    from datetime import datetime as _dt
+    from ...db.models import ApiAccessStatus as _ApiAccessStatus
+
+    password_hash = get_password_hash(payload.password)
+
+    user = User(
+        email=payload.email,
+        name=payload.name,
+        password_hash=password_hash,
+        email_verified=True,
+        email_verified_at=_dt.utcnow(),
+        api_access_status=_ApiAccessStatus.APPROVED.value,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    access_token, refresh_token = AuthService.create_tokens(user)
+    AuthService.store_refresh_token(db, user.id, refresh_token)
+
+    return {
+        "success": True,
+        "data": {
+            "user_id": user.id,
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        },
     }

@@ -41,6 +41,7 @@ from app.routers import (
     notices,
     onboarding,
     organizations_proxy,
+    partner,
     rights,
     rights_licensing,
     signing,
@@ -782,6 +783,7 @@ app.include_router(licensing.router, prefix="/api/v1", tags=["Licensing"])
 app.include_router(usage.router, prefix="/api/v1", tags=["Usage"])
 app.include_router(audit.router, prefix="/api/v1", tags=["Audit"])
 app.include_router(team.router, prefix="/api/v1", tags=["Team Management"])
+app.include_router(team.invite_router, prefix="/api/v1", tags=["Team Invites"])
 app.include_router(coalition.router, prefix="/api/v1", tags=["Coalition"])
 app.include_router(status_router.router, prefix="/api/v1", tags=["Status & Revocation"])
 app.include_router(batch.router)
@@ -791,6 +793,7 @@ app.include_router(integrations.router, prefix="/api/v1", tags=["Integrations"])
 app.include_router(rights.router, prefix="/api/v1", tags=["Rights Management"])
 app.include_router(notices.router, prefix="/api/v1", tags=["Formal Notices"])
 app.include_router(rights_licensing.router, prefix="/api/v1", tags=["Rights Licensing Transactions"])
+app.include_router(partner.router, prefix="/api/v1", tags=["Partner"])
 
 # Include v1 API router (Merkle tree endpoints)
 app.include_router(api_v1_router, prefix="/api/v1")
