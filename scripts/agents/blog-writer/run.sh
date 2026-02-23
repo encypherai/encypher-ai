@@ -130,6 +130,9 @@ log "Research notes saved. Topic: $(grep -m1 '^## Topic' -A1 "$RESEARCH_NOTES" |
 # =========================================================================
 log "Phase 2: Opus writer agent..."
 
+# Snapshot HEAD before the writer runs so we can find exactly what it adds
+PRE_WRITER_COMMIT=$(git rev-parse HEAD)
+
 WRITER_PROMPT="$(sed \
   -e "s|CURRENT_DATE|$TODAY|g" \
   -e "s|RESEARCH_NOTES_PATH|$RESEARCH_NOTES|g" \
@@ -152,17 +155,8 @@ if ! git diff --cached --quiet; then
   git commit -m "chore(blog): auto-stage writer output $TODAY"
 fi
 
-# Find the new post added since the last common ancestor with main
-MERGE_BASE=$(git merge-base HEAD main 2>/dev/null || git rev-parse HEAD~1 2>/dev/null || echo "")
-if [ -n "$MERGE_BASE" ]; then
-  NEW_POST=$(git diff --diff-filter=A --name-only "$MERGE_BASE"..HEAD -- "$BLOG_DIR" | head -1 | tr -d '[:space:]')
-else
-  NEW_POST=$(git diff --diff-filter=A --name-only HEAD~1..HEAD -- "$BLOG_DIR" 2>/dev/null | head -1 | tr -d '[:space:]')
-fi
-
-if [ -z "$NEW_POST" ]; then
-  NEW_POST=$(git log --diff-filter=A --name-only --pretty=format: main..HEAD -- "$BLOG_DIR" 2>/dev/null | grep -v '^$' | head -1 | tr -d '[:space:]')
-fi
+# Find exactly what the writer added (diff from the snapshot we took before it ran)
+NEW_POST=$(git diff --diff-filter=A --name-only "$PRE_WRITER_COMMIT"..HEAD -- "$BLOG_DIR" | tail -1 | tr -d '[:space:]')
 
 if [ -z "$NEW_POST" ]; then
   log "ERROR: No new blog post detected in $BLOG_DIR after writer phase."
@@ -199,11 +193,12 @@ generate_image() {
   local image_dir
   image_dir="$(dirname "$IMAGE_ABS")"
 
-  # Derive a short display title (text before first colon, max 40 chars)
+  # Derive a short display title: part before first colon, max 5 words.
+  # Shorter titles render more reliably in Gemini without truncation or repetition.
   local full_title
   full_title=$(grep -m1 '^title:' "$NEW_POST_ABS" | sed 's/title:[[:space:]]*//' | tr -d '"')
   local short_title
-  short_title=$(echo "$full_title" | cut -d: -f1 | cut -c1-40)
+  short_title=$(echo "$full_title" | cut -d: -f1 | tr ' ' '\n' | head -5 | tr '\n' ' ' | sed 's/[[:space:]]*$//')
 
   log "Phase 3: Sonnet image agent -> $IMAGE_ABS (title: '$short_title')"
 
@@ -320,22 +315,31 @@ while true; do
     generate_image "$IMAGE_FEEDBACK"
   fi
 
-  # Phase 5: revise post if writer session available and content issues remain
-  if [ -z "$WRITER_SESSION" ] || [ "$REVISION" -ge "$MAX_REVISIONS" ]; then
-    log "Max revisions reached or no writer session. Opening draft PR."
-    break
-  fi
+  # Check whether the post content itself has issues (separate from image)
+  POST_WORD_OK=$(echo "$REVIEW_DATA" | jq -r '.word_count_ok // true')
+  POST_SRC_OK=$(echo "$REVIEW_DATA" | jq -r '.source_count_ok // true')
+  POST_ASCII_COUNT=$(echo "$REVIEW_DATA" | jq -r '(.ascii_violations // []) | length')
+  POST_FAKE_COUNT=$(echo "$REVIEW_DATA" | jq -r '(.fabricated_claims // []) | length')
+  POST_HAS_ISSUES=false
+  { [ "$POST_WORD_OK" = "false" ] || [ "$POST_SRC_OK" = "false" ] || \
+    [ "$POST_ASCII_COUNT" -gt 0 ] || [ "$POST_FAKE_COUNT" -gt 0 ]; } && POST_HAS_ISSUES=true
+  # Also treat feedback mentioning thought-leadership or provenance failures as a post issue
+  echo "$FEEDBACK" | grep -qi "criterion 1\|criterion 7\|thought-leadership\|provenance" && POST_HAS_ISSUES=true
 
-  # Only do a writer revision if the post itself has issues (not just the image)
-  POST_ONLY_FEEDBACK=$(echo "$FEEDBACK" | grep -v -i "image" || true)
-  if [ -z "$POST_ONLY_FEEDBACK" ] && [ "$IMAGE_OK" = "false" ]; then
-    # Only image issues; if regen is also maxed, give up
+  # If only the image failed, skip Opus revision and just loop back for re-review
+  if [ "$POST_HAS_ISSUES" = "false" ]; then
     if [ "$IMAGE_REGEN" -ge "$MAX_IMAGE_REGEN" ]; then
       log "Only image issues remain and max regen reached. Opening draft PR."
       break
     fi
-    # Otherwise loop back and re-review after regen
+    log "Post content is fine; only image issues. Skipping Opus revision, re-reviewing after regen."
     continue
+  fi
+
+  # Phase 5: revise post content
+  if [ -z "$WRITER_SESSION" ] || [ "$REVISION" -ge "$MAX_REVISIONS" ]; then
+    log "Max revisions reached or no writer session. Opening draft PR."
+    break
   fi
 
   REVISION=$((REVISION + 1))

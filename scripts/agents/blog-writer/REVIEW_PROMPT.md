@@ -143,9 +143,14 @@ Set image_ok to true if:
 - Visual composition is relevant to the article topic
 - No forbidden elements (logos, faces, neon colors)
 
+CRITICAL: image_ok and image_feedback must be consistent. If you identify ANY image problem,
+you MUST set image_ok to false. Do not describe an image problem in image_feedback and then set
+image_ok to true -- that is a contradiction and breaks the pipeline. When in doubt, set image_ok
+to false and describe the issue; it is better to regenerate a good image than to approve a bad one.
+
 Always describe specifically what is wrong in image_feedback so the image can be regenerated
-with a targeted fix. If image_ok is false, state clearly: what the text shows vs. what it should
-show, and what visual element needs to change.
+with a targeted fix. State clearly: what the text shows vs. what it should show, and what
+visual element needs to change.
 
 ---
 
