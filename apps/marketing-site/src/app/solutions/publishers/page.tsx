@@ -77,11 +77,15 @@ export default function PublishersPage() {
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm"><strong>Ghost, Substack, Medium:</strong> Webhook integration -- automatic signing on publish</span>
+                    <span className="text-sm"><strong>WordPress:</strong> Plugin available -- one-click activation</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm"><strong>WordPress:</strong> Plugin available -- one-click activation</span>
+                    <span className="text-sm"><strong>Ghost:</strong> Webhook integration -- automatic signing on publish</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm"><strong>Substack &amp; Medium:</strong> Coming soon</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
@@ -99,7 +103,7 @@ export default function PublishersPage() {
                   {[
                     'Sign up free (no credit card)',
                     'Copy your API key from dashboard',
-                    'Paste into Ghost / WordPress / CMS settings',
+                    'Paste into WordPress / Ghost / CMS settings',
                     'Publish your next article -- signed automatically',
                   ].map((step, i) => (
                     <div key={i} className="flex items-center gap-3 text-sm">
@@ -307,7 +311,7 @@ export default function PublishersPage() {
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>C2PA signing + Merkle auth</span>
+                    <span>Encypher Patent-Pending Tech + C2PA</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -410,7 +414,7 @@ export default function PublishersPage() {
               <AccordionItem value="item-1">
                 <AccordionTrigger>Step 1: Automatic Signing at Publication</AccordionTrigger>
                 <AccordionContent>
-                  All new articles are watermarked at the moment you hit publish. Integrate via webhook (Ghost, Substack, WordPress) or the REST API. No manual steps for your editorial team -- protection begins automatically. Each article carries an invisible, tamper-evident cryptographic signature embedded at the sentence level.
+                  All new articles are watermarked at the moment you hit publish. Integrate via the WordPress plugin, Ghost webhook, or the REST API. No manual steps for your editorial team -- protection begins automatically. Each article carries an invisible, tamper-evident cryptographic signature embedded at the sentence level.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
