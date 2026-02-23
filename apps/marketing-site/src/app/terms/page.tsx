@@ -18,7 +18,7 @@ export default function TermsPage() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
           <p className="mb-4">
-            By accessing or using Encypher&apos;s website, APIs, Chrome extension, dashboard, and related services (collectively, the &quot;Services&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you do not agree to these Terms, please do not use our Services.
+            By accessing or using Encypher&apos;s website, APIs, Chrome extension, dashboard, and related services (collectively, the &quot;Services&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you are accepting these Terms on behalf of an organization, you represent that you have authority to bind that organization. If you do not agree to these Terms, please do not use our Services.
           </p>
         </section>
 
@@ -82,6 +82,16 @@ export default function TermsPage() {
           <p className="mb-4">
             You retain all ownership rights in any content you sign using our Services. Signing your content with Encypher does not transfer any ownership rights to us, except as expressly described in Section 7 (Publisher Coalition Program).
           </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">5.1 Trademark License</h3>
+          <p className="mb-4">
+            Subject to these Terms, Encypher grants you a limited, non-exclusive, revocable, non-transferable, royalty-free license to use Encypher&apos;s name, logo, and &quot;Verified by Encypher&quot; badge solely to truthfully indicate that your content has been signed using Encypher&apos;s Services. You may not alter or distort our marks, use them in a way that implies endorsement of your views or products beyond content signing, or use them in a manner that could damage Encypher&apos;s reputation. This license terminates automatically upon termination of your account.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">5.2 Feedback</h3>
+          <p className="mb-4">
+            If you provide Encypher with any feedback, suggestions, ideas, or improvements regarding the Services (&quot;Feedback&quot;), you hereby assign to Encypher all rights in that Feedback. Encypher may use and incorporate your Feedback into the Services without any obligation to you.
+          </p>
         </section>
 
         <section className="mb-8">
@@ -124,6 +134,9 @@ export default function TermsPage() {
           <h3 className="text-xl font-semibold mb-3 mt-6">6.2 Signed Content Metadata</h3>
           <p className="mb-4">
             When you sign content using any Encypher tool (API, Chrome extension, WordPress plugin, or CLI), we store the following metadata on our servers: document ID, signer ID, timestamp, signing configuration, and a content fingerprint. This metadata enables verification, audit trails, and (where applicable) Coalition licensing. We do not store the full text of signed content on our servers.
+          </p>
+          <p className="mb-4">
+            Signing records and associated metadata are part of the public verification infrastructure. Organization names, document IDs, and signing timestamps associated with verified content may be returned through the public verification API.
           </p>
         </section>
 
@@ -181,8 +194,16 @@ export default function TermsPage() {
           <p className="mb-4">
             &quot;Net Revenue&quot; means gross payments received by Encypher from licensees for Coalition content, less payment processing fees, applicable taxes, and third-party platform transaction fees. Encypher will not deduct its internal operating costs or personnel costs from Net Revenue.
           </p>
+          <p className="mb-4">
+            Encypher will make payment statements available through your dashboard. You must dispute any payment statement within <strong>30 days</strong> of the statement date by contacting support@encypherai.com. Undisputed statements are deemed accepted after that period.
+          </p>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">7.5 Licensing Program</h3>
+          <h3 className="text-xl font-semibold mb-3 mt-6">7.5 No Revenue Guarantee</h3>
+          <p className="mb-4">
+            <strong>Encypher does not guarantee that Coalition enrollment will result in any licensing revenue.</strong> The Coalition program depends on Encypher&apos;s ability to negotiate licensing agreements with third parties, which Encypher pursues on a commercially reasonable best-efforts basis. Coalition enrollment provides access to the licensing infrastructure and the right to participate in deals when they occur; it does not create any obligation on Encypher to secure deals within any particular timeframe. You should not enroll in the Coalition in reliance on projected earnings.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">7.6 Licensing Program</h3>
           <p className="mb-4">
             Encypher is actively developing the licensing infrastructure through which Coalition content is made available to licensees and revenue share payments are distributed to publishers. Encypher will notify enrolled publishers by email as licensing program milestones are reached.
           </p>
@@ -190,7 +211,7 @@ export default function TermsPage() {
             Once licensing deals are active, payments will be calculated on a periodic basis and distributed to enrolled publishers according to the terms of the Publisher Coalition Agreement. Encypher will provide account-level reporting through your dashboard showing licensing activity and payment calculations.
           </p>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">7.6 Withdrawal from the Coalition</h3>
+          <h3 className="text-xl font-semibold mb-3 mt-6">7.7 Withdrawal from the Coalition</h3>
           <p className="mb-4">
             You may withdraw from the Coalition at any time through your account settings. Withdrawal is effective immediately for new content: no content signed after withdrawal will be included in the Coalition.
           </p>
@@ -201,7 +222,7 @@ export default function TermsPage() {
             Withdrawal does not affect your access to Encypher&apos;s signing and verification tools. You may re-enroll at any time, but re-enrollment applies prospectively only.
           </p>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">7.7 Content Warranties for Coalition Enrollment</h3>
+          <h3 className="text-xl font-semibold mb-3 mt-6">7.8 Content Warranties for Coalition Enrollment</h3>
           <p className="mb-4">
             By enrolling content in the Coalition, you represent and warrant that:
           </p>
@@ -232,7 +253,21 @@ export default function TermsPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">9. Disclaimers and Limitation of Liability</h2>
+          <h2 className="text-2xl font-semibold mb-4">9. Representations and Warranties</h2>
+          <p className="mb-4">
+            You represent and warrant to Encypher that:
+          </p>
+          <ul className="list-disc ml-6 mb-4 space-y-2">
+            <li>You have full power and authority to enter into these Terms and to perform your obligations under them</li>
+            <li>Your use of the Services will comply with all applicable laws and regulations</li>
+            <li>You will not use the Services to infringe any third party&apos;s intellectual property, privacy, or other rights</li>
+            <li>Any information you provide to Encypher is accurate and complete at the time of submission</li>
+            <li>You have the right to grant the licenses and authorizations set out in these Terms</li>
+          </ul>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">10. Disclaimers and Limitation of Liability</h2>
           <p className="mb-4">
             THE SERVICES ARE PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED. TO THE FULLEST EXTENT PERMITTED BY LAW, ENCYPHER DISCLAIMS ALL WARRANTIES, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
           </p>
@@ -240,40 +275,100 @@ export default function TermsPage() {
             IN NO EVENT SHALL ENCYPHER BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING OUT OF OR RELATED TO YOUR USE OF THE SERVICES.
           </p>
           <p className="mb-4">
+            <strong>Liability Cap:</strong> Encypher&apos;s total aggregate liability arising out of or related to these Terms or the Services will not exceed the greater of (a) the total fees you paid to Encypher in the twelve (12) months immediately preceding the event giving rise to the claim, or (b) one thousand US dollars ($1,000 USD). This cap applies regardless of the theory of liability (contract, tort, or otherwise) and even if Encypher has been advised of the possibility of such damages.
+          </p>
+          <p className="mb-4">
             Encypher does not guarantee that signing your content will result in any particular legal outcome, licensing revenue, or enforcement result. The willful infringement framework described in our marketing materials reflects our understanding of applicable law but is not legal advice. We recommend consulting qualified legal counsel regarding your specific situation.
           </p>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">10. Indemnification</h2>
+          <h2 className="text-2xl font-semibold mb-4">11. Indemnification</h2>
           <p className="mb-4">
-            You agree to indemnify and hold harmless Encypher, its officers, directors, employees, and agents from any claims, damages, losses, liabilities, and expenses arising out of your use of the Services, your violation of these Terms, or your enrollment of content in the Coalition that infringes third-party rights.
+            You agree to indemnify and hold harmless Encypher, its officers, directors, employees, and agents from any claims, damages, losses, liabilities, and expenses (including reasonable legal fees) arising out of: (a) your use of the Services; (b) your violation of these Terms; (c) your enrollment of content in the Coalition that infringes third-party rights; or (d) your breach of any representation or warranty in these Terms.
           </p>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">11. Modifications to Terms</h2>
+          <h2 className="text-2xl font-semibold mb-4">12. Modifications to Terms</h2>
           <p className="mb-4">
             We reserve the right to modify these Terms at any time. We will notify users of material changes by posting the updated Terms on our website with a new &quot;Last Updated&quot; date. For material changes to Section 7 (Publisher Coalition Program), we will provide at least 30 days notice by email to enrolled Coalition members before the changes take effect. Your continued use of the Services after such changes constitutes acceptance of the modified Terms.
           </p>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">12. Termination</h2>
+          <h2 className="text-2xl font-semibold mb-4">13. Termination</h2>
           <p className="mb-4">
-            We may terminate or suspend your access to the Services at any time, without prior notice or liability, for any reason, including if you breach these Terms. Upon termination, Coalition membership and any associated license grants terminate subject to the wind-down provisions in Section 7.6. Any revenue share accrued before termination for cause will be paid according to the standard payment schedule.
+            <strong>Termination for Cause:</strong> Encypher may terminate or suspend your access to the Services immediately and without prior notice if you materially breach these Terms, including violation of Section 4 (Acceptable Use) or Section 7.8 (Content Warranties).
+          </p>
+          <p className="mb-4">
+            <strong>Termination Without Cause:</strong> Either party may terminate these Terms without cause by providing 30 days written notice to the other party. Notice from Encypher will be delivered by email to your registered address or by posting to your dashboard.
+          </p>
+          <p className="mb-4">
+            Upon termination: (a) Coalition membership and any associated license grants terminate subject to the wind-down provisions in Section 7.7; (b) any revenue share accrued before the termination effective date will be paid according to the standard payment schedule; (c) your right to access and use the Services ceases.
+          </p>
+          <p className="mb-4">
+            <strong>Survival:</strong> Sections 5 (Intellectual Property), 6 (User Data and Privacy), 7.4 (Revenue Share obligations for pre-termination activity), 7.7 (Withdrawal wind-down), 9 (Representations and Warranties), 10 (Disclaimers and Limitation of Liability), 11 (Indemnification), 14 (Governing Law and Dispute Resolution), and 15 (General Provisions) survive any termination of these Terms.
           </p>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">13. Governing Law</h2>
+          <h2 className="text-2xl font-semibold mb-4">14. Governing Law and Dispute Resolution</h2>
           <p className="mb-4">
-            These Terms shall be governed by and construed in accordance with the laws of the United States, without regard to its conflict of law provisions.
+            These Terms are governed by the laws of the State of Delaware, without regard to its conflict of law principles.
+          </p>
+          <p className="mb-4">
+            <strong>Arbitration:</strong> Any dispute, claim, or controversy arising out of or relating to these Terms or the Services that cannot be resolved through good-faith negotiation within 30 days will be resolved by binding arbitration administered by the American Arbitration Association (&quot;AAA&quot;) under its Commercial Arbitration Rules. Arbitration will be conducted in Wilmington, Delaware, or via videoconference for disputes where claims are under $10,000 USD. The arbitrator&apos;s decision is final and binding.
+          </p>
+          <p className="mb-4">
+            <strong>Class Action Waiver:</strong> EACH PARTY WAIVES ANY RIGHT TO BRING OR PARTICIPATE IN A CLASS, COLLECTIVE, OR REPRESENTATIVE ACTION. All disputes must be brought on an individual basis only.
+          </p>
+          <p className="mb-4">
+            <strong>Exceptions:</strong> Either party may seek injunctive or other equitable relief in a court of competent jurisdiction to prevent irreparable harm, including to protect intellectual property rights.
           </p>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">14. Contact Information</h2>
+          <h2 className="text-2xl font-semibold mb-4">15. General Provisions</h2>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">15.1 Severability</h3>
+          <p className="mb-4">
+            If any provision of these Terms is found to be unenforceable or invalid under applicable law, that provision will be limited or eliminated to the minimum extent necessary, and the remaining provisions will continue in full force and effect.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">15.2 Assignment</h3>
+          <p className="mb-4">
+            You may not assign or transfer these Terms, or any rights or obligations under them, without Encypher&apos;s prior written consent. Encypher may assign these Terms without restriction in connection with a merger, acquisition, corporate reorganization, or sale of all or substantially all of its assets. Any attempted assignment in violation of this section is void.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">15.3 Independent Contractors</h3>
+          <p className="mb-4">
+            The parties are independent contractors. Nothing in these Terms creates a partnership, joint venture, employment, franchise, or agency relationship between you and Encypher. Neither party has authority to bind the other to any obligation.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">15.4 Force Majeure</h3>
+          <p className="mb-4">
+            Neither party will be liable for any delay or failure to perform due to causes beyond their reasonable control, including acts of God, natural disasters, war, terrorism, civil unrest, strikes, government actions, internet or telecommunications failures, or power outages. The affected party must promptly notify the other and resume performance as soon as reasonably practicable.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">15.5 Notices</h3>
+          <p className="mb-4">
+            Notices from Encypher to you may be delivered by email to your registered address, by posting to your dashboard, or by posting prominently on our website. Email and dashboard notices are effective upon transmission. You may provide notices to Encypher by email to legal@encypherai.com.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">15.6 Entire Agreement</h3>
+          <p className="mb-4">
+            These Terms, together with our Privacy Policy and any Publisher Coalition Agreement applicable to your account, constitute the entire agreement between you and Encypher regarding the Services and supersede all prior or contemporaneous agreements, representations, or understandings.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">15.7 Waiver</h3>
+          <p className="mb-4">
+            Encypher&apos;s failure to enforce any provision of these Terms does not constitute a waiver of its right to enforce that provision in the future.
+          </p>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">16. Contact Information</h2>
           <p className="mb-4">
             If you have any questions about these Terms, please contact us at:
           </p>
