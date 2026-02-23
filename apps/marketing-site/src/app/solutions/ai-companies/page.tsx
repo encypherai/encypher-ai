@@ -280,41 +280,6 @@ export default function AiCompaniesPage() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Real scenario callout                                               */}
-      {/* ------------------------------------------------------------------ */}
-      <section className="py-16 w-full bg-background border-b border-border">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto bg-primary/5 border border-primary/20 rounded-xl p-8">
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-4">
-              Real Scenario
-            </p>
-            <blockquote className="text-lg font-medium leading-relaxed mb-4">
-              "We went from being the defendant in a formal notice to being the only AI platform
-              in our space that can prove provenance in a customer audit. The same infrastructure
-              that resolved our liability became a product feature."
-            </blockquote>
-            <p className="text-sm text-muted-foreground mb-6">
-              An enterprise AI company received a formal notice containing cryptographic
-              evidence from a publisher. Their outside counsel confirmed the documentation
-              was unusually strong -- sentence-level Merkle proofs, tamper-evident
-              chain-of-custody, timestamps embedded in the content itself.
-            </p>
-            <p className="text-sm text-muted-foreground mb-6">
-              They integrated Encypher, joined the coalition, and resolved the notice as part
-              of the agreement. Four months later they launched a "Verified Sources" product
-              feature. Three enterprise prospects in the next quarter cited it as a reason
-              they chose this company over competitors. Estimated ARR contribution: $1.4M.
-            </p>
-            <p className="text-sm font-medium">
-              The evidence package that publishers use as legal documentation is Encypher&apos;s
-              most effective AI company sales motion -- it converts a potential dispute into
-              an enterprise conversation.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ------------------------------------------------------------------ */}
       {/* Interactive Demo                                                    */}
       {/* ------------------------------------------------------------------ */}
       <section className="py-20 w-full bg-muted/30 border-b border-border">
