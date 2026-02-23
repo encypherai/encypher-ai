@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Shield, TrendingUp, FileCheck, AlertTriangle, CheckCircle2, Building2 } from 'lucide-react';
+import { ArrowRight, Shield, TrendingUp, FileCheck, AlertTriangle, CheckCircle2, Building2, Key, Layers } from 'lucide-react';
 import Link from 'next/link';
 import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
@@ -148,6 +148,105 @@ export default function EnterprisePage() {
         </div>
       </section>
 
+      {/* Key Custody Section */}
+      <section className="py-16 w-full bg-background border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-start gap-4 mb-8">
+              <Key className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
+                  BYOK: Your Keys Stay in Your Infrastructure
+                </h2>
+                <p className="text-muted-foreground">
+                  Enterprise customers own and manage their signing keys. Encypher provides the signing infrastructure -- we never store, transmit, or access your key material. Supports HSM integration, AWS KMS, Azure Key Vault, and self-hosted solutions.
+                </p>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6 mb-4">
+              <div className="bg-card p-5 rounded-lg border border-border text-center">
+                <p className="text-3xl font-bold text-primary mb-1">100%</p>
+                <p className="text-sm text-muted-foreground">Key ownership stays with your organization</p>
+              </div>
+              <div className="bg-card p-5 rounded-lg border border-border text-center">
+                <p className="text-3xl font-bold text-primary mb-1">0</p>
+                <p className="text-sm text-muted-foreground">Key material stored or transmitted to Encypher</p>
+              </div>
+              <div className="bg-card p-5 rounded-lg border border-border text-center">
+                <p className="text-3xl font-bold text-primary mb-1">C2PA</p>
+                <p className="text-sm text-muted-foreground">Assertions embed your certificate, independently verifiable</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Result: Independent verifiers check signatures against your public key -- without trusting Encypher at all.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Multi-Org Architecture Section */}
+      <section className="py-16 w-full bg-muted/30 border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-start gap-4 mb-8">
+              <Layers className="h-8 w-8 text-primary flex-shrink-0 mt-1" />
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
+                  Multi-Organization Architecture
+                </h2>
+                <p className="text-muted-foreground">
+                  One enterprise account supporting multiple organizations -- mastheads, brands, departments -- each with independent rights profiles, licensing terms, and enforcement queues. All via API, all org-scoped.
+                </p>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-card p-6 rounded-lg border border-border">
+                <h3 className="font-semibold mb-4">Per-Organization Controls</h3>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span>Independent content licensing rules per brand (Bronze/Silver/Gold)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span>Isolated enforcement queues and formal notice workflows</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span>Role-based access control (RBAC) per organization</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span>Separate revenue attribution and licensing analytics per brand</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="bg-card p-6 rounded-lg border border-border">
+                <h3 className="font-semibold mb-4">Enterprise API Scale</h3>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span>Batch signing -- sign millions of articles programmatically</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span>Org-scoped API calls (org_id parameter on every endpoint)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span>Streaming signing for Kafka and event-driven pipelines</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span>OpenAPI 3.1 spec + SDKs (Python, TypeScript, Go, Rust)</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How Encypher Solves It */}
       <section className="py-20 w-full bg-muted/30 border-y border-border">
         <div className="container mx-auto px-4">
@@ -181,6 +280,10 @@ export default function EnterprisePage() {
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span>Cryptographic proof generation</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>BYOK (Bring Your Own Key) -- full key custody model</span>
                 </li>
               </ul>
               <div className="mt-4 pt-4 border-t border-border">

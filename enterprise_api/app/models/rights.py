@@ -475,6 +475,11 @@ class ContentDetectionEvent(Base):
     rights_served = Column(Boolean, nullable=False, default=False)
     rights_acknowledged = Column(Boolean, nullable=False, default=False)
 
+    # Set True when a bot that claims robots.txt/RSL compliance accessed content
+    # without a prior RSL OLP token check (detected via CDN log ingestion).
+    # NULL = not applicable (event did not come from log ingestion).
+    robots_txt_bypassed = Column(Boolean, nullable=True)
+
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)
 
     def __repr__(self) -> str:

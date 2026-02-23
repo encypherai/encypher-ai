@@ -86,7 +86,7 @@ export const ADD_ONS: AddOnConfig[] = [
     id: 'attribution-analytics',
     name: 'Attribution Analytics',
     category: 'enforcement',
-    priceMonthly: 299,
+    priceMonthly: 0,
     description: 'Full dashboard showing where your signed content appears in AI outputs. Usage patterns, frequency, context analysis.',
     includes: [
       'Where your signed content appears in AI model outputs',
@@ -95,14 +95,13 @@ export const ADD_ONS: AddOnConfig[] = [
       'Trend data over time',
       'Export targeting lists for formal notice campaigns',
     ],
+    comingSoon: true,
   },
   {
     id: 'formal-notice',
     name: 'Formal Notice Package',
     category: 'enforcement',
     priceMonthly: 0,
-    pricePerUnit: 499,
-    unitLabel: '/notice',
     description: 'Cryptographically-backed formal notice to a specific AI company establishing willful infringement framework.',
     includes: [
       'Formal notification letter with cryptographic evidence citations',
@@ -111,14 +110,13 @@ export const ADD_ONS: AddOnConfig[] = [
       'Chain-of-custody record for the notification itself',
       'Delivery confirmation and timestamped proof of receipt',
     ],
+    comingSoon: true,
   },
   {
     id: 'evidence-package',
     name: 'Evidence Package',
     category: 'enforcement',
     priceMonthly: 0,
-    pricePerUnit: 999,
-    unitLabel: '/package',
     description: 'Court-ready evidence bundle for a specific infringement claim.',
     includes: [
       'Merkle tree proofs establishing sentence-level provenance',
@@ -129,6 +127,7 @@ export const ADD_ONS: AddOnConfig[] = [
       'Cryptographic verification instructions for opposing counsel',
       'Export in standard litigation support formats',
     ],
+    comingSoon: true,
   },
 
   // --- Infrastructure Add-Ons ---
@@ -198,7 +197,7 @@ export const BUNDLES: BundleConfig[] = [
   {
     id: 'enforcement-bundle',
     name: 'Enforcement Bundle',
-    priceMonthly: 999,
+    priceMonthly: 0,
     includes: [
       'Attribution Analytics',
       '2 Formal Notices per month',
@@ -206,6 +205,7 @@ export const BUNDLES: BundleConfig[] = [
     ],
     savings: '57%',
     description: 'The "I want to start licensing" package. Full enforcement pipeline in one subscription.',
+    comingSoon: true,
   },
   {
     id: 'publisher-identity',
@@ -222,13 +222,14 @@ export const BUNDLES: BundleConfig[] = [
   {
     id: 'full-stack',
     name: 'Full Stack',
-    priceMonthly: 649,
+    priceMonthly: 0,
     includes: [
       'Enforcement Bundle',
       'Publisher Identity',
     ],
     savings: '51%',
     description: 'Everything you need to sign, enforce, and license — with your brand on everything.',
+    comingSoon: true,
   },
 ];
 

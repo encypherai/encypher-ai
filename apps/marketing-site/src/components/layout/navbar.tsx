@@ -34,7 +34,10 @@ export function Navbar() {
   }, []);
 
   if (!mounted) {
-    return null;
+    // Render layout placeholder so no layout shift occurs on hydration
+    return (
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 h-16" aria-hidden="true" />
+    );
   }
 
   return (
@@ -125,10 +128,9 @@ export function Navbar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {/* Platform link disabled for publisher demo branch */}
-          {/* <Link href="/platform" className="text-sm font-medium hover:text-primary">
+          <Link href="/platform" className="text-sm font-medium hover:text-primary">
             Platform
-          </Link> */}
+          </Link>
           {/* Auth Buttons */}
           {status === "loading" ? null : session ? (
             <>
@@ -143,12 +145,12 @@ export function Navbar() {
               <Button variant="outline" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>Sign out</Button>
             </>
           ) : (
-            <div className="flex gap-2">
-              <Button asChild variant="outline" size="sm">
-                <Link href="/auth/register">Sign Up</Link>
-              </Button>
-              <Button asChild variant="outline" size="sm">
+            <div className="flex gap-2 items-center">
+              <Button asChild variant="ghost" size="sm">
                 <Link href="/auth/register?mode=signin">Sign In</Link>
+              </Button>
+              <Button asChild size="sm" className="font-semibold">
+                <Link href="/auth/register">Get Started</Link>
               </Button>
             </div>
           )}
@@ -192,14 +194,13 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden p-4 border-t border-border/40 bg-background">
           <nav className="flex flex-col space-y-4">
-            {/* Platform link disabled for publisher demo branch */}
-            {/* <Link 
-              href="/platform" 
+            <Link
+              href="/platform"
               className="text-sm font-medium hover:text-primary"
               onClick={() => setMobileMenuOpen(false)}
             >
               Platform
-            </Link> */}
+            </Link>
             {/* Mobile Solutions Links */}
             <span className="text-sm font-medium">Solutions</span>
             <Link 

@@ -77,6 +77,7 @@ const SOURCE_LABELS: Record<string, string> = {
   chrome_extension: 'Chrome Extension',
   http_header_lookup: 'HTTP Header',
   crawl_detected: 'Crawl Detected',
+  cloudflare_logpush: 'Cloudflare Logpush',
 };
 
 function getComplianceBadgeClass(label?: string): string {
@@ -165,6 +166,7 @@ export default function AICrawlersPage() {
   // Compute stat card values
   const totalCrawlEvents = detectionData?.total_events ?? 0;
   const uniqueCrawlers = crawlerData?.crawlers?.length ?? 0;
+  const bypassCount = detectionData?.robots_txt_bypass_count ?? 0;
 
   const avgRslCheckRate = crawlerData?.crawlers?.length
     ? crawlerData.crawlers.reduce((sum, c) => sum + (c.rsl_check_rate ?? 0), 0) / crawlerData.crawlers.length
@@ -218,11 +220,31 @@ export default function AICrawlersPage() {
   return (
     <DashboardLayout>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-delft-blue dark:text-white">AI Crawler Intelligence</h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Provenance Activity</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track which systems access your content, measure rights compliance, and build licensing evidence.
+          Provenance-checking activity -- entities verifying your content&apos;s authenticity and rights status via the Encypher network.
         </p>
+      </div>
+
+      {/* Capability callout */}
+      <div className="rounded-xl border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900/40 p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 w-5 h-5 flex-shrink-0 text-blue-600 dark:text-blue-400">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
+              What this shows
+            </p>
+            <p className="text-sm text-blue-700 dark:text-blue-400">
+              Tracks provenance-checking events (RSL lookups, API verifications, Chrome extension sightings) and passive access logs
+              from your CDN. Connect Cloudflare Logpush in Settings to see all AI bot traffic to your site and detect robots.txt bypass attempts.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Time Range + Export */}
@@ -256,9 +278,10 @@ export default function AICrawlersPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {isLoading ? (
           <>
+            <StatCardSkeleton />
             <StatCardSkeleton />
             <StatCardSkeleton />
             <StatCardSkeleton />
@@ -332,6 +355,27 @@ export default function AICrawlersPage() {
                 </div>
               </div>
               <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
+            </div>
+
+            <div className={`rounded-xl border p-4 hover:shadow-md transition-shadow ${bypassCount > 0 ? 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/40' : 'bg-white dark:bg-slate-800 border-border'}`}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className={`text-xs font-medium mb-1 ${bypassCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>
+                    Bypass Attempts
+                  </p>
+                  <p className={`text-2xl font-bold ${bypassCount > 0 ? 'text-red-700 dark:text-red-300' : 'text-delft-blue dark:text-white'}`}>
+                    {formatNumber(bypassCount)}
+                  </p>
+                </div>
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white ${bypassCount > 0 ? 'bg-gradient-to-br from-red-500 to-red-700' : 'bg-gradient-to-br from-slate-400 to-slate-600'}`}>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">
+                {bypassCount > 0 ? 'Bots that skipped RSL check' : 'No bypass events detected'}
+              </p>
             </div>
           </>
         )}
@@ -493,6 +537,7 @@ export default function AICrawlersPage() {
                       {!isEnterprise && <span className="ml-1 inline-flex items-center"><LockIcon /></span>}
                     </th>
                     <th className="pb-3 font-medium text-muted-foreground text-right">Rights Acknowledged</th>
+                    <th className="pb-3 font-medium text-muted-foreground text-right">Bypasses</th>
                     <th className="pb-3 font-medium text-muted-foreground">
                       Compliance
                       {!isEnterprise && <span className="ml-1 inline-flex items-center"><LockIcon /></span>}
@@ -515,6 +560,15 @@ export default function AICrawlersPage() {
                         }
                       </td>
                       <td className="py-3 text-right">{formatPercent(crawler.rights_acknowledged_rate)}</td>
+                      <td className="py-3 text-right">
+                        {(crawler.bypass_count ?? 0) > 0 ? (
+                          <span className="text-red-600 dark:text-red-400 font-medium">
+                            {formatNumber(crawler.bypass_count ?? 0)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </td>
                       <td className="py-3">
                         {isEnterprise ? (
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getComplianceBadgeClass(crawler.compliance_label)}`}>

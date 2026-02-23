@@ -31,6 +31,7 @@ from app.routers import (
     audit,
     batch,
     byok,
+    cdn_integrations,
     chat,
     coalition,
     documents,
@@ -790,6 +791,7 @@ app.include_router(batch.router)
 app.include_router(tools.router, prefix="/api/v1", tags=["Public Tools"])
 app.include_router(organizations_proxy.router, prefix="/api/v1", tags=["Organizations Proxy"])
 app.include_router(integrations.router, prefix="/api/v1", tags=["Integrations"])
+app.include_router(cdn_integrations.router, prefix="/api/v1", tags=["CDN Integrations"])
 app.include_router(rights.router, prefix="/api/v1", tags=["Rights Management"])
 app.include_router(notices.router, prefix="/api/v1", tags=["Formal Notices"])
 app.include_router(rights_licensing.router, prefix="/api/v1", tags=["Rights Licensing Transactions"])

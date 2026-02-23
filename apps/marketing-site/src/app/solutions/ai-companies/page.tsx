@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BarChart, Zap, Shield } from 'lucide-react';
+import { ArrowRight, BarChart, Zap, Shield, Award } from 'lucide-react';
 import Link from 'next/link';
 import {
   Accordion,
@@ -35,10 +35,10 @@ export default function AiCompaniesPage() {
       <section className="relative w-full py-20 md:py-32 bg-muted/30 border-b border-border">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Performance Intelligence + Regulatory Compliance
+            License Content at Scale. Prove You Did It Right.
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
-            Real-world engagement data on how your models perform across the internet. One integration for EU AI Act, China watermarking mandate, and C2PA compliance. We're building standards WITH you through C2PA—OpenAI is a member.
+            AI companies that license publisher content through Encypher get three things in one: access to a growing coalition of publishers, proof of compliance for regulators, and a trust signal for users. Built collaboratively through C2PA -- OpenAI, Google, Adobe, and Microsoft are members.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold py-3 px-6 rounded-lg shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
@@ -141,26 +141,33 @@ export default function AiCompaniesPage() {
       {/* Value Props Section */}
       <section className="py-20 w-full bg-background">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 max-w-6xl mx-auto">
             <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border text-center">
               <BarChart className="h-12 w-12 text-primary mb-4 mx-auto" />
-              <h3 className="text-2xl font-semibold mb-3">Performance Intelligence</h3>
-              <p className="text-muted-foreground">
-                Unlock powerful model performance insights by tracing viral content and understanding what truly drives engagement.
+              <h3 className="text-xl font-semibold mb-3">Performance Intelligence</h3>
+              <p className="text-muted-foreground text-sm">
+                Track which outputs go viral, which training data drives engagement, and how your models perform in the real world.
               </p>
             </div>
             <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border text-center">
               <Zap className="h-12 w-12 text-primary mb-4 mx-auto" />
-              <h3 className="text-2xl font-semibold mb-3">Regulatory Compliance</h3>
-              <p className="text-muted-foreground">
-                One integration covers EU AI Act, China watermarking mandate, and C2PA standard. Stay compliant across all jurisdictions.
+              <h3 className="text-xl font-semibold mb-3">Regulatory Compliance</h3>
+              <p className="text-muted-foreground text-sm">
+                One integration covers EU AI Act, China watermarking mandate, and C2PA. Stay compliant across all jurisdictions as regulations evolve.
               </p>
             </div>
             <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border text-center">
               <Shield className="h-12 w-12 text-primary mb-4 mx-auto" />
-              <h3 className="text-2xl font-semibold mb-3">Standards Collaboration</h3>
-              <p className="text-muted-foreground">
-                Building infrastructure WITH the AI industry through C2PA. OpenAI, Google, Adobe, and Microsoft are members. This is collaborative, not adversarial.
+              <h3 className="text-xl font-semibold mb-3">Publisher Coalition Access</h3>
+              <p className="text-muted-foreground text-sm">
+                One integration to license from a growing coalition of publishers. No bilateral negotiations at scale -- access the entire network through Encypher.
+              </p>
+            </div>
+            <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border text-center">
+              <Award className="h-12 w-12 text-primary mb-4 mx-auto" />
+              <h3 className="text-xl font-semibold mb-3">Licensed Content Mark</h3>
+              <p className="text-muted-foreground text-sm">
+                AI companies that license through Encypher can signal responsible content use to their own users and customers -- a competitive differentiator for early adopters.
               </p>
             </div>
           </div>
@@ -172,30 +179,30 @@ export default function AiCompaniesPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              From Guesswork to Certainty
+              One Integration. Three Outcomes.
             </h2>
             <p className="text-lg md:text-xl mt-4 max-w-3xl mx-auto text-muted-foreground">
-              Our technology provides verifiable proof of your content's journey, transforming AI development from an art to a science.
+              License content legitimately, satisfy regulators, and show your users you take provenance seriously. Here is how the technical infrastructure delivers all three.
             </p>
           </div>
           <div className="max-w-3xl mx-auto">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger>Step 1: Cryptographic Watermarking at Source</AccordionTrigger>
+                <AccordionTrigger>Step 1: Connect to the Publisher Coalition</AccordionTrigger>
                 <AccordionContent>
-                  We embed invisible, cryptographically signed metadata directly into your content as it's generated. This 'digital birthmark' is tamper-proof and serves as unforgeable proof of origin for every output from your models.
+                  A single API integration connects you to Encypher&apos;s growing publisher coalition. Licensing terms are established at the network level -- no bilateral negotiations required for each publisher. As the coalition grows, your access grows with it.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger>Step 2: Trace and Analyze Content Performance</AccordionTrigger>
+                <AccordionTrigger>Step 2: Verify Provenance at Inference</AccordionTrigger>
                 <AccordionContent>
-                  When your content goes viral or achieves high engagement, our system traces it back to its source. We identify the exact training data, model settings, and prompts that led to that success, providing a clear map of what works.
+                  When your model cites or uses publisher content, Encypher verifies the cryptographic watermark and records the provenance check. This creates an auditable log of licensed content use -- the documentation regulators and licensing agreements require.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">
-                <AccordionTrigger>Step 3: Actionable Intelligence for Optimization</AccordionTrigger>
+                <AccordionTrigger>Step 3: Compliance + Performance Intelligence</AccordionTrigger>
                 <AccordionContent>
-                  You receive detailed reports that enable you to systematically replicate high-performing outputs. Our infrastructure provides a technical safe harbor and unlocks powerful insights to optimize your models, training data, and overall strategy.
+                  From the same integration: EU AI Act and China watermarking mandate compliance, real-world performance analytics on your outputs, and the Licensed Content mark to signal responsible use to your own users. One integration, three compounding benefits.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

@@ -475,6 +475,117 @@ async def get_crawler_timeseries(
     return await svc.get_crawler_timeseries(db=db, organization_id=org_id, days=days)
 
 
+@router.get(
+    "/analytics/content-spread",
+    status_code=status.HTTP_200_OK,
+    summary="Content spread analytics",
+    description=(
+        "Returns external domain detections for the org's signed content. "
+        "Requires Enterprise tier or Attribution Analytics add-on. "
+        "Shows which external domains your signed content has been detected on."
+    ),
+)
+async def get_content_spread(
+    days: int = Query(30, ge=1, le=365, description="Number of days to include"),
+    db: AsyncSession = Depends(get_db),
+    org_context: Dict = Depends(get_current_organization_dep),
+) -> Dict[str, Any]:
+    from datetime import datetime, timezone, timedelta
+    from sqlalchemy import func, select, and_, text as sa_text
+
+    org_id: str = org_context["organization_id"]
+    tier: str = (org_context.get("tier") or "free").lower()
+    add_ons: dict = org_context.get("add_ons") or {}
+
+    # Gate: Enterprise or attribution_analytics add-on
+    allowed = tier in ("enterprise", "strategic_partner", "demo") or bool(add_ons.get("attribution_analytics"))
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "FEATURE_NOT_AVAILABLE",
+                "message": "Content Spread analytics requires Enterprise tier or the Attribution Analytics add-on.",
+                "required_tier": "enterprise",
+            },
+        )
+
+    from app.models.rights import ContentDetectionEvent
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    base_filter = and_(
+        ContentDetectionEvent.organization_id == org_id,
+        ContentDetectionEvent.created_at >= cutoff,
+        ContentDetectionEvent.detected_on_domain.isnot(None),
+    )
+
+    # Unique external domains + detection count per domain
+    domain_result = await db.execute(
+        select(
+            ContentDetectionEvent.detected_on_domain,
+            func.count(ContentDetectionEvent.id).label("detection_count"),
+            func.count(func.distinct(ContentDetectionEvent.document_id)).label("unique_documents"),
+            func.max(ContentDetectionEvent.created_at).label("last_detected"),
+        )
+        .where(base_filter)
+        .group_by(ContentDetectionEvent.detected_on_domain)
+        .order_by(func.count(ContentDetectionEvent.id).desc())
+        .limit(100)
+    )
+    domain_rows = domain_result.all()
+
+    # Total unique domains
+    total_domains_result = await db.execute(
+        select(func.count(func.distinct(ContentDetectionEvent.detected_on_domain))).where(base_filter)
+    )
+    total_unique_domains: int = total_domains_result.scalar_one() or 0
+
+    # Total detections
+    total_events_result = await db.execute(
+        select(func.count(ContentDetectionEvent.id)).where(base_filter)
+    )
+    total_events: int = total_events_result.scalar_one() or 0
+
+    # Per-document breakdown (top 50 documents by external detections)
+    doc_result = await db.execute(
+        select(
+            ContentDetectionEvent.document_id,
+            func.count(ContentDetectionEvent.id).label("detection_count"),
+            func.count(func.distinct(ContentDetectionEvent.detected_on_domain)).label("unique_domains"),
+            func.max(ContentDetectionEvent.created_at).label("last_detected"),
+        )
+        .where(and_(base_filter, ContentDetectionEvent.document_id.isnot(None)))
+        .group_by(ContentDetectionEvent.document_id)
+        .order_by(func.count(ContentDetectionEvent.id).desc())
+        .limit(50)
+    )
+    doc_rows = doc_result.all()
+
+    return {
+        "organization_id": org_id,
+        "period_days": days,
+        "total_external_detections": total_events,
+        "unique_external_domains": total_unique_domains,
+        "domains": [
+            {
+                "domain": row.detected_on_domain,
+                "detection_count": row.detection_count,
+                "unique_documents": row.unique_documents,
+                "last_detected": row.last_detected.isoformat() if row.last_detected else None,
+            }
+            for row in domain_rows
+        ],
+        "documents": [
+            {
+                "document_id": str(row.document_id) if row.document_id else None,
+                "detection_count": row.detection_count,
+                "unique_domains": row.unique_domains,
+                "last_detected": row.last_detected.isoformat() if row.last_detected else None,
+            }
+            for row in doc_rows
+        ],
+    }
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper serializers
 # ─────────────────────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ import { useSectionScroll } from '../../hooks/useSectionScroll';
 import { trackCTAClick } from '../../lib/analytics';
 import CTAButton from '../ui/CTAButton';
 import DemoRequestModal from '../ui/DemoRequestModal';
-import { FileText, Users, Mail } from 'lucide-react';
+import { FileText, Users, Mail, Shield, TrendingUp, DollarSign } from 'lucide-react';
 
 interface Section6CoalitionProps {
   isActive: boolean;
@@ -82,6 +82,40 @@ export default function Section6Coalition({ isActive, onComplete, onAnimationSta
               The question is not whether this becomes the standard.<br />
               The question is whether you help define it.
             </p>
+          </motion.div>
+
+          {/* Bridge Value Section */}
+          <motion.div
+            className="bg-blue-50 p-8 rounded-lg border border-blue-100 mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isActive ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <h3 className="text-xl font-bold text-slate-900 mb-2">What You Get While the Coalition Scales</h3>
+            <p className="text-slate-600 text-sm mb-6">Licensing revenue builds over time. Encypher delivers real value from the first article you sign.</p>
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="flex items-start gap-3">
+                <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-slate-800 text-sm">Protected corpus builds daily</p>
+                  <p className="text-slate-600 text-xs mt-1">Every article you publish is cryptographically signed. Your provably owned content corpus grows every day.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <TrendingUp className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-slate-800 text-sm">Evidence accumulates automatically</p>
+                  <p className="text-xs text-slate-600 mt-1">Every external provenance check is logged. At 500 verifications, you qualify to serve Formal Notice to AI companies.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <DollarSign className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-slate-800 text-sm">Content spread analytics</p>
+                  <p className="text-xs text-slate-600 mt-1">See where your signed content appears across the internet -- independent value, regardless of where licensing negotiations stand.</p>
+                </div>
+              </div>
+            </div>
           </motion.div>
 
           <motion.div

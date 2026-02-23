@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, DollarSign, Scale, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, DollarSign, Scale, TrendingUp, CheckCircle2, AlertTriangle, Shield } from 'lucide-react';
 import Link from 'next/link';
 import {
   Accordion,
@@ -62,6 +62,101 @@ export default function PublishersPage() {
         </div>
       </section>
 
+      {/* No Engineering Required Section */}
+      <section className="py-16 w-full bg-background border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
+                  No Engineering Staff Required
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  Solo newsletter writer or 800-person newsroom -- setup takes under 20 minutes using any publishing platform. Copy your API key, paste it in your CMS settings. Done.
+                </p>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm"><strong>Ghost, Substack, Medium:</strong> Webhook integration -- automatic signing on publish</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm"><strong>WordPress:</strong> Plugin available -- one-click activation</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm"><strong>Custom CMS or archive:</strong> Python/TypeScript/Go/Rust SDK -- batch-sign your entire back catalog</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm"><strong>Dashboard appears immediately:</strong> See every signed article and every external verification in real time</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="bg-muted/30 p-6 rounded-lg border border-border">
+                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-5 text-center">Setup in 4 steps</p>
+                <div className="space-y-3">
+                  {[
+                    'Sign up free (no credit card)',
+                    'Copy your API key from dashboard',
+                    'Paste into Ghost / WordPress / CMS settings',
+                    'Publish your next article -- signed automatically',
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-center gap-3 text-sm">
+                      <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</span>
+                      <span>{step}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 pt-4 border-t border-border text-center">
+                  <p className="text-xs text-muted-foreground">Average setup time: under 20 minutes</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Legal Reality Section */}
+      <section className="py-16 w-full bg-background border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-start gap-4 mb-8">
+              <AlertTriangle className="h-8 w-8 text-amber-500 flex-shrink-0 mt-1" />
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-2">
+                  The Legal Landscape Has Changed
+                </h2>
+                <p className="text-muted-foreground">
+                  US copyright law distinguishes between innocent and willful infringement. Cryptographic proof of ownership -- and of when your content was published -- directly affects which applies.
+                </p>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-card p-6 rounded-lg border border-amber-200 dark:border-amber-900">
+                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Without cryptographic proof</p>
+                <p className="text-3xl font-bold mb-1">$30,000</p>
+                <p className="text-sm text-muted-foreground">per work (innocent infringement)</p>
+                <p className="text-sm mt-3 text-muted-foreground">
+                  Hard to prove willful use. Defendant claims they did not know the content was protected.
+                </p>
+              </div>
+              <div className="bg-card p-6 rounded-lg border border-primary">
+                <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">With Encypher watermarking</p>
+                <p className="text-3xl font-bold mb-1">$150,000</p>
+                <p className="text-sm text-muted-foreground">per work (willful infringement)</p>
+                <p className="text-sm mt-3 text-muted-foreground">
+                  Cryptographic evidence makes willful use mathematically demonstrable. Every sentence carries a tamper-evident signature.
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground text-center">
+              Note: Statutory damages reflect US Copyright Act maximums. Actual outcomes depend on specific facts and legal counsel. Encypher provides technical infrastructure, not legal advice.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Interactive Demo Section */}
       <section className="py-20 w-full bg-background border-b border-border">
         <div className="container mx-auto px-4">
@@ -92,12 +187,112 @@ export default function PublishersPage() {
         </div>
       </section>
 
+      {/* Bridge Value Section */}
+      <section className="py-16 w-full bg-muted/30 border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
+                See Which AI Companies Are Using Your Content -- Free
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Your free dashboard shows every external verification event in real time. Licensing revenue builds over months -- but you get proof of value from day one.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-card p-5 rounded-lg border border-border">
+                <Shield className="h-8 w-8 text-primary mb-3" />
+                <h3 className="font-semibold mb-2">Day 1: Your Free Dashboard</h3>
+                <p className="text-sm text-muted-foreground">
+                  Every article you sign appears in your dashboard immediately. Each time an AI company checks your content&apos;s provenance, you see it -- which company, which article, which day.
+                </p>
+              </div>
+              <div className="bg-card p-5 rounded-lg border border-border">
+                <TrendingUp className="h-8 w-8 text-primary mb-3" />
+                <h3 className="font-semibold mb-2">$299/mo: Attribution Analytics</h3>
+                <p className="text-sm text-muted-foreground">
+                  When you want the full picture: detailed breakdown by entity, date, and content category. At 500 verifications you qualify to issue Formal Notice -- Analytics shows you exactly when you hit that threshold.
+                </p>
+              </div>
+              <div className="bg-card p-5 rounded-lg border border-border">
+                <DollarSign className="h-8 w-8 text-primary mb-3" />
+                <h3 className="font-semibold mb-2">500+ Verifications: Enforce</h3>
+                <p className="text-sm text-muted-foreground">
+                  Issue Formal Notice ($499) to companies using your content without a license. After notice, any continued use becomes willful infringement. Many publishers find notice opens licensing talks.
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-center text-muted-foreground">
+              You control the timeline. See evidence. Upgrade when ready. Enforce when it makes sense.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Rights + Revenue Section */}
+      <section className="py-16 w-full bg-background border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-10">
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
+                Set Your Licensing Rules. You Approve Every Deal.
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Granular content licensing is not managed manually -- you set rules once in your rights profile, and Encypher enforces them cryptographically. Licensing requests flow into your dashboard for review and approval.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              <div className="bg-card p-6 rounded-lg border border-border">
+                <h3 className="font-semibold mb-4">Example Rights Profile</h3>
+                <div className="bg-muted/50 p-4 rounded-lg font-mono text-xs space-y-3">
+                  <div>
+                    <span className="text-primary font-semibold">Bronze (crawling):</span>
+                    <p className="text-muted-foreground mt-1">Permitted -- search indexing fine</p>
+                  </div>
+                  <div>
+                    <span className="text-amber-600 dark:text-amber-400 font-semibold">Silver (RAG/citation):</span>
+                    <p className="text-muted-foreground mt-1">Permitted -- author name + canonical URL required</p>
+                  </div>
+                  <div>
+                    <span className="text-destructive font-semibold">Gold (training):</span>
+                    <p className="text-muted-foreground mt-1">License required -- contact licensing@yourorg.com</p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Set in minutes. AI companies discover your terms automatically via C2PA provenance. No manual negotiation needed for Silver-tier access.
+                </p>
+              </div>
+              <div className="bg-card p-6 rounded-lg border border-border">
+                <h3 className="font-semibold mb-4">Example: First 6 Months</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex gap-3">
+                    <span className="text-muted-foreground w-20 flex-shrink-0">Month 1-2</span>
+                    <span>Archive signed, monitoring begins. Dashboard shows external verifications accumulating.</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-muted-foreground w-20 flex-shrink-0">Month 3</span>
+                    <span>First Gold-tier licensing request. AI company licenses archive access. First revenue.</span>
+                  </div>
+                  <div className="flex gap-3">
+                    <span className="text-muted-foreground w-20 flex-shrink-0">Month 4-6</span>
+                    <span>Coalition grows. Additional licensing deals compound. Monthly recurring revenue stabilizes.</span>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground pt-3 border-t border-border mt-3">
+                  Results vary by content volume, market value, and coalition deal flow. Majority of licensing revenue goes to publishers.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section className="py-16 w-full bg-muted/30 border-b border-border">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4 text-center">
-              Free to Sign. Paid to Enforce.
+              Start Free. Upgrade When You See Results.
             </h2>
             <p className="text-lg text-muted-foreground mb-8 text-center">
               Full signing infrastructure at $0. Add enforcement tools when you&apos;re ready to license. Same revenue splits for everyone.
@@ -198,30 +393,42 @@ export default function PublishersPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              How It Works: Your Technical Advantage
+              Protection From Day One
             </h2>
             <p className="text-lg md:text-xl mt-4 max-w-3xl mx-auto text-muted-foreground">
-              Our technology provides verifiable proof, not just statistical likelihood. Here’s how we deliver mathematical certainty.
+              Unlike models that require opt-in licensing deals before protection begins, Encypher protects content at the moment of publication. Your rights documentation starts accumulating on day one.
             </p>
           </div>
           <div className="max-w-3xl mx-auto">
             <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="item-1">
-                <AccordionTrigger>Step 1: Cryptographic Watermarking</AccordionTrigger>
+              <AccordionItem value="item-0">
+                <AccordionTrigger>Step 0: Protect Your Archive (One-Time Foundation)</AccordionTrigger>
                 <AccordionContent>
-                  We embed invisible, cryptographically signed metadata directly into your content at the moment of publication. This 'digital birthmark' is tamper-proof and serves as unforgeable proof of origin.
+                  Sign your entire content library -- 500 articles or 500,000 -- using our bulk signing API. The Python SDK lets you sign your full archive in a single overnight job. This is a one-time investment that converts your existing content into a provably owned corpus. Every article becomes a citable asset in any licensing or enforcement conversation. Free tier covers 1,000 docs/month; overage is fractions of a cent per document.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-1">
+                <AccordionTrigger>Step 1: Automatic Signing at Publication</AccordionTrigger>
+                <AccordionContent>
+                  All new articles are watermarked at the moment you hit publish. Integrate via webhook (Ghost, Substack, WordPress) or the REST API. No manual steps for your editorial team -- protection begins automatically. Each article carries an invisible, tamper-evident cryptographic signature embedded at the sentence level.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger>Step 2: Automated Content Monitoring</AccordionTrigger>
+                <AccordionTrigger>Step 2: Dashboard -- See Who Is Using Your Content</AccordionTrigger>
                 <AccordionContent>
-                  Our systems continuously monitor the web to see how your content is being used. We identify unauthorized use and provide the data needed to enforce your IP rights or create new licensing agreements.
+                  Your free dashboard shows every external verification event: which AI companies are checking your content&apos;s provenance, how often, and which articles. When you reach 500 verifications, you qualify to issue Formal Notice. Upgrade to Attribution Analytics ($299/mo) for detailed breakdown by entity, date, and content category.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">
-                <AccordionTrigger>Step 3: Revenue & Compliance Reports</AccordionTrigger>
+                <AccordionTrigger>Step 3: Enforce and License</AccordionTrigger>
                 <AccordionContent>
-                  Receive detailed, tamper-evident reports that you can use to support infringement claims or negotiate performance-based licensing deals. Turn your content archive into a revenue-generating asset.
+                  Use your evidence package to issue Formal Notice to AI companies using your content without a license. After notice, any continued use is willful infringement -- a meaningfully higher legal threshold. Many publishers find that formal notice opens licensing negotiations rather than litigation. Coalition licensing deals flow in as the network grows -- approved in your dashboard, paid monthly.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-4">
+                <AccordionTrigger>Bonus: Quote Integrity for Editorial QA</AccordionTrigger>
+                <AccordionContent>
+                  If your team uses AI-assisted writing or research tools, the Quote Integrity API helps catch hallucinated citations before publication. Submit any quote and attribution -- the API checks whether the cited source actually contains that language. Used by editorial teams as a standard pre-publication check for AI-assisted drafts.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

@@ -16,7 +16,7 @@ import {
   Globe,
   Terminal,
   BookOpen,
-  Zap,
+  Server,
 } from 'lucide-react';
 import Link from 'next/link';
 import StandardsCompliance from '@/components/solutions/standards-compliance';
@@ -60,7 +60,7 @@ const CORE_CAPABILITIES = [
     icon: Globe,
     title: 'Coalition Licensing',
     description:
-      'Auto-enrolled in the Encypher Coalition. Content is indexed for licensing deals. Revenue share: 60/40 (coalition) or 80/20 (self-service).',
+      'Auto-enrolled in the Encypher Coalition. Content is indexed for licensing deals. Publishers receive the majority of revenue on every deal -- same splits across all tiers.',
   },
 ];
 
@@ -231,34 +231,75 @@ export default function PlatformPage() {
               Built for Developers
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-              One API call to sign. One API call to verify. SDKs, plugins, and CLI tools for every workflow.
+              One API call to sign. One API call to verify. Production-grade SLAs for every scale.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            {/* API Specifications */}
+            <div className="bg-card p-6 rounded-lg border border-border">
+              <Server className="h-8 w-8 text-primary mb-4" />
+              <h3 className="text-lg font-semibold mb-2">API Specifications</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Production-grade infrastructure with documented limits and uptime guarantees.
+              </p>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-start border-b border-border pb-2">
+                  <span className="text-muted-foreground">Rate limit</span>
+                  <span className="font-mono font-medium text-right text-xs">1K / min (Growth)<br />10K / min (Ent.)</span>
+                </div>
+                <div className="flex justify-between items-start border-b border-border pb-2">
+                  <span className="text-muted-foreground">Batch size</span>
+                  <span className="font-mono font-medium">10K docs/req</span>
+                </div>
+                <div className="flex justify-between items-start border-b border-border pb-2">
+                  <span className="text-muted-foreground">Uptime SLA</span>
+                  <span className="font-mono font-medium">99.95%</span>
+                </div>
+                <div className="flex justify-between items-start">
+                  <span className="text-muted-foreground">Idempotency</span>
+                  <span className="font-mono font-medium text-xs">Idempotency-Key</span>
+                </div>
+              </div>
+            </div>
+
+            {/* REST API */}
             <div className="bg-card p-6 rounded-lg border border-border">
               <Terminal className="h-8 w-8 text-primary mb-4" />
               <h3 className="text-lg font-semibold mb-2">REST API</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Full-featured REST API with Python SDK. Sign, verify, attribute, and manage content programmatically.
+                Full-featured REST API with Python, TypeScript, Go, and Rust SDKs. Batch endpoints for archive workflows.
               </p>
-              <div className="bg-muted rounded-md p-3 font-mono text-xs">
-                <span className="text-muted-foreground">POST</span>{' '}
-                <span className="text-primary">/api/v1/sign</span>
-                <br />
-                <span className="text-muted-foreground">POST</span>{' '}
-                <span className="text-primary">/api/v1/verify/advanced</span>
-                <br />
-                <span className="text-muted-foreground">POST</span>{' '}
-                <span className="text-primary">/api/v1/verify/quote-integrity</span>
+              <div className="bg-muted rounded-md p-3 font-mono text-xs space-y-1">
+                <div>
+                  <span className="text-muted-foreground">POST</span>{' '}
+                  <span className="text-primary">/api/v1/sign</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">POST</span>{' '}
+                  <span className="text-primary">/api/v1/sign/batch</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">POST</span>{' '}
+                  <span className="text-primary">/api/v1/verify/advanced</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">POST</span>{' '}
+                  <span className="text-primary">/api/v1/verify/quote-integrity</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">GET</span>{' '}
+                  <span className="text-primary">/api/v1/rights/analytics</span>
+                </div>
               </div>
             </div>
 
+            {/* Integrations */}
             <div className="bg-card p-6 rounded-lg border border-border">
               <Code2 className="h-8 w-8 text-primary mb-4" />
               <h3 className="text-lg font-semibold mb-2">Integrations</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Drop-in plugins and tools for existing workflows. No architecture changes required.
+                Drop-in plugins for existing workflows. Kafka event streaming for high-throughput pipelines.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2">
@@ -271,20 +312,25 @@ export default function PlatformPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                  CLI tool
+                  Kafka event streaming
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                  Browser extension
+                  CLI tool + browser extension
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                  OpenAPI 3.1 spec included
                 </li>
               </ul>
             </div>
 
+            {/* Documentation */}
             <div className="bg-card p-6 rounded-lg border border-border">
               <BookOpen className="h-8 w-8 text-primary mb-4" />
               <h3 className="text-lg font-semibold mb-2">Documentation</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Comprehensive guides, API reference, and interactive playground for testing.
+                Comprehensive guides, API reference, and interactive playground for testing before you commit.
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2">
@@ -293,7 +339,7 @@ export default function PlatformPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                  API reference
+                  Full API reference
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
@@ -302,6 +348,10 @@ export default function PlatformPage() {
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
                   Publisher integration guide
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                  Archive signing cookbook
                 </li>
               </ul>
             </div>

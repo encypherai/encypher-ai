@@ -882,6 +882,7 @@ class RightsService:
             integrity_status=event_data.get("integrity_status"),
             rights_served=event_data.get("rights_served", False),
             rights_acknowledged=event_data.get("rights_acknowledged", False),
+            robots_txt_bypassed=event_data.get("robots_txt_bypassed"),
             created_at=_utcnow(),
         )
         db.add(event)
@@ -996,6 +997,14 @@ class RightsService:
         )
         unique_domains: int = domain_result.scalar_one() or 0
 
+        # robots.txt bypass count (events flagged from CDN log ingestion)
+        bypass_result = await db.execute(
+            select(func.count(ContentDetectionEvent.id)).where(
+                and_(base_filter, ContentDetectionEvent.robots_txt_bypassed.is_(True))
+            )
+        )
+        robots_txt_bypass_count: int = bypass_result.scalar_one() or 0
+
         return {
             "organization_id": organization_id,
             "period_days": days,
@@ -1006,6 +1015,7 @@ class RightsService:
             "rights_served_count": rights_row.served or 0,
             "rights_acknowledged_count": rights_row.acknowledged or 0,
             "unique_domains": unique_domains,
+            "robots_txt_bypass_count": robots_txt_bypass_count,
         }
 
     async def get_crawler_summary(
@@ -1038,6 +1048,9 @@ class RightsService:
                 func.count(ContentDetectionEvent.id).filter(
                     ContentDetectionEvent.rights_acknowledged.is_(True)
                 ).label("ack_cnt"),
+                func.count(ContentDetectionEvent.id).filter(
+                    ContentDetectionEvent.robots_txt_bypassed.is_(True)
+                ).label("bypass_cnt"),
                 func.max(ContentDetectionEvent.created_at).label("last_seen"),
             )
             .where(
@@ -1062,6 +1075,7 @@ class RightsService:
             total_cnt: int = row.total_cnt or 0
             rsl_cnt: int = row.rsl_cnt or 0
             ack_cnt: int = row.ack_cnt or 0
+            bypass_cnt: int = row.bypass_cnt or 0
 
             rsl_check_rate = rsl_cnt / total_cnt if total_cnt else 0.0
             rights_ack_rate = ack_cnt / total_cnt if total_cnt else 0.0
@@ -1089,6 +1103,7 @@ class RightsService:
                 "rsl_check_count": rsl_cnt,
                 "rsl_check_rate": round(rsl_check_rate, 4),
                 "rights_acknowledged_rate": round(rights_ack_rate, 4),
+                "bypass_count": bypass_cnt,
                 "last_seen": row.last_seen.isoformat() if row.last_seen else None,
                 "compliance_score": compliance_score,
                 "compliance_label": compliance_label,

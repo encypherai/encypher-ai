@@ -12,13 +12,25 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
+import Link from 'next/link';
 import { ActivityFeed } from '../../components/ActivityFeed';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient from '../../lib/api';
 import { exportAnalyticsData, exportTimeSeriesData } from '../../lib/exportCsv';
 import { toast } from 'sonner';
 
-// Skeleton components
+// -- Skeleton components --
+
+function FunnelSkeleton() {
+  return (
+    <div className="space-y-3">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="h-16 bg-muted rounded-xl animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
 function StatCardSkeleton() {
   return (
     <Card>
@@ -31,32 +43,14 @@ function StatCardSkeleton() {
   );
 }
 
-function formatDateRange(start?: string, end?: string): string {
-  if (!start || !end) return '';
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  return `${startDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })} – ${endDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-  })}`;
-}
-
-function formatShortDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
 function ChartSkeleton() {
   return (
     <div className="h-64 flex items-end justify-between space-x-2">
       {[1, 2, 3, 4, 5, 6, 7].map((i) => (
         <div key={i} className="flex-1 flex flex-col items-center">
-          <div 
+          <div
             className="w-full bg-muted rounded-t animate-pulse"
-            style={{ height: `${Math.random() * 60 + 20}%` }}
+            style={{ height: `${20 + (i * 8) % 60}%` }}
           />
           <div className="h-3 w-8 bg-muted rounded animate-pulse mt-2" />
         </div>
@@ -65,12 +59,119 @@ function ChartSkeleton() {
   );
 }
 
-export default function AnalyticsPage() {
+// -- Helpers --
+
+function formatNumber(num: number) {
+  return num?.toLocaleString() ?? '0';
+}
+
+function formatCurrency(cents: number) {
+  if (!cents) return '$0';
+  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function formatDateRange(start?: string, end?: string): string {
+  if (!start || !end) return '';
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  return `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+}
+
+function formatShortDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// -- Funnel stage component --
+
+interface FunnelStageProps {
+  step: number;
+  label: string;
+  value: string;
+  sublabel?: string;
+  status: 'active' | 'pending' | 'locked' | 'cta';
+  ctaLabel?: string;
+  ctaHref?: string;
+  description?: string;
+  isLast?: boolean;
+}
+
+function FunnelStage({
+  step,
+  label,
+  value,
+  sublabel,
+  status,
+  ctaLabel,
+  ctaHref,
+  description,
+  isLast,
+}: FunnelStageProps) {
+  const bgColor = {
+    active: 'bg-white dark:bg-slate-800 border-blue-ncs/30',
+    pending: 'bg-white dark:bg-slate-800 border-border',
+    locked: 'bg-muted/30 dark:bg-slate-900/50 border-border opacity-60',
+    cta: 'bg-gradient-to-r from-blue-ncs/5 to-columbia-blue/5 border-blue-ncs/40',
+  }[status];
+
+  const stepColor = {
+    active: 'bg-gradient-to-br from-blue-ncs to-columbia-blue text-white',
+    pending: 'bg-muted text-muted-foreground',
+    locked: 'bg-muted/50 text-muted-foreground',
+    cta: 'bg-gradient-to-br from-delft-blue to-blue-ncs text-white',
+  }[status];
+
+  return (
+    <div className="relative">
+      <div className={`rounded-xl border ${bgColor} p-4 transition-shadow hover:shadow-sm`}>
+        <div className="flex items-center gap-4">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${stepColor}`}>
+            {status === 'active' || status === 'cta' ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              step
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
+            </div>
+            <div className="flex items-baseline gap-2 mt-0.5 flex-wrap">
+              <span className="text-lg font-bold text-delft-blue dark:text-white">{value}</span>
+              {sublabel && <span className="text-xs text-muted-foreground">{sublabel}</span>}
+            </div>
+            {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+          </div>
+          {ctaLabel && ctaHref && (
+            <Link href={ctaHref}>
+              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-ncs text-white text-xs font-semibold rounded-lg hover:bg-delft-blue transition-colors flex-shrink-0">
+                {ctaLabel}
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </Link>
+          )}
+        </div>
+      </div>
+      {!isLast && (
+        <div className="flex justify-start pl-8 py-0.5">
+          <div className="w-0.5 h-3 bg-border" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// -- Main page --
+
+export default function ContentPerformancePage() {
   const [timeRange, setTimeRange] = useState<'7' | '30' | '90'>('30');
+  const [apiHealthOpen, setApiHealthOpen] = useState(false);
   const { data: session } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
 
-  // Fetch usage stats
   const statsQuery = useQuery({
     queryKey: ['analytics-stats', timeRange],
     queryFn: async () => {
@@ -81,7 +182,6 @@ export default function AnalyticsPage() {
     refetchOnWindowFocus: false,
   });
 
-  // Fetch time series data
   const timeSeriesQuery = useQuery({
     queryKey: ['analytics-timeseries', timeRange],
     queryFn: async () => {
@@ -92,13 +192,22 @@ export default function AnalyticsPage() {
     refetchOnWindowFocus: false,
   });
 
+  const coalitionQuery = useQuery({
+    queryKey: ['coalition-earnings'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('Not authenticated');
+      return apiClient.getCoalitionEarnings(accessToken);
+    },
+    enabled: Boolean(accessToken),
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
   const stats = statsQuery.data;
   const timeSeries = timeSeriesQuery.data || [];
+  const coalition = coalitionQuery.data;
   const isLoading = statsQuery.isLoading;
   const isTimeSeriesLoading = timeSeriesQuery.isLoading;
-
-  // Format numbers
-  const formatNumber = (num: number) => num?.toLocaleString() ?? '0';
 
   const periodLabel = stats
     ? formatDateRange(stats.period_start, stats.period_end)
@@ -126,17 +235,25 @@ export default function AnalyticsPage() {
       : avgResponseTime <= 650
         ? { label: 'Monitor', variant: 'warning' as const }
         : { label: 'At Risk', variant: 'destructive' as const }
-    : { label: '—', variant: 'secondary' as const };
+    : { label: '--', variant: 'secondary' as const };
 
-  // Get max value for chart scaling
   const maxValue = Math.max(...timeSeries.map(d => d.count), 1);
+
+  // Funnel stage derivations
+  const docsSigned = stats?.total_documents_signed || 0;
+  const totalVerifications = stats?.total_verifications || 0;
+  const NOTICE_THRESHOLD = 500;
+  const noticeReady = totalVerifications >= NOTICE_THRESHOLD;
+  const coalitionActive = coalition && coalition.member && !coalition.opted_out;
+  const totalEarnings = coalition?.total_earnings || 0;
+  const pendingEarnings = coalition?.pending_earnings || 0;
 
   return (
     <DashboardLayout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Usage &amp; Analytics</h1>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Content Performance</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track your API usage, performance metrics, and activity history.
+          Track how your signed content is spreading and earning -- your path from signing to licensing revenue.
         </p>
         <p className="text-xs text-muted-foreground mt-2">Reporting window: {periodLabel}</p>
       </div>
@@ -171,246 +288,361 @@ export default function AnalyticsPage() {
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Export Summary
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (timeSeries.length > 0) {
-                exportTimeSeriesData(timeSeries);
-                toast.success('Time series exported');
-              }
-            }}
-            disabled={timeSeries.length === 0}
-          >
-            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v16h16m-4-9l-4 4-2-2-4 4" />
-            </svg>
-            Export Time Series
+            Export
           </Button>
         </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        {isLoading ? (
-          <>
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-          </>
-        ) : (
-          <>
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Total API Calls</p>
-                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
-                    {formatNumber(stats?.total_api_calls || 0)}
-                  </p>
+      {/* Value Accumulation Timeline -- primary view */}
+      <div className="grid lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2">
+          <div className="mb-4">
+            <h2 className="text-base font-semibold text-delft-blue dark:text-white">Value Accumulation Timeline</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Each stage represents progress toward licensing revenue. Activity here proves your content is working.</p>
+          </div>
+          {isLoading ? (
+            <FunnelSkeleton />
+          ) : (
+            <div>
+              <FunnelStage
+                step={1}
+                label="Signed"
+                value={`${formatNumber(docsSigned)} articles`}
+                sublabel="your protected corpus"
+                description="Content you can enforce on -- every signed article is evidence in a licensing dispute."
+                status="active"
+              />
+              <FunnelStage
+                step={2}
+                label="Verified"
+                value={`${formatNumber(totalVerifications)} provenance checks`}
+                sublabel={`this ${timeRange === '7' ? 'week' : timeRange === '30' ? 'month' : 'quarter'}`}
+                description="External entities verifying your content's authenticity and rights status. Each check is logged as enforcement evidence."
+                status={totalVerifications > 0 ? 'active' : 'pending'}
+              />
+              <FunnelStage
+                step={3}
+                label="Spread"
+                value="Tracking coming soon"
+                sublabel="external domain detections"
+                description="Where your signed content appears outside your domain -- detections via the Encypher network."
+                status="pending"
+                ctaLabel={undefined}
+                ctaHref={undefined}
+              />
+              <FunnelStage
+                step={4}
+                label="Notice Ready"
+                value={noticeReady ? 'You qualify' : `${formatNumber(totalVerifications)} / ${formatNumber(NOTICE_THRESHOLD)} verifications`}
+                sublabel={noticeReady ? `${formatNumber(totalVerifications)} verifications recorded` : `${NOTICE_THRESHOLD - totalVerifications} more to qualify`}
+                description={noticeReady
+                  ? 'You have enough provenance evidence to serve Formal Notice to infringing entities.'
+                  : `Reach ${NOTICE_THRESHOLD} external verifications to qualify for Formal Notice. This triggers willful infringement status ($150K/work max vs $30K).`}
+                status={noticeReady ? 'cta' : 'pending'}
+                ctaLabel={noticeReady ? 'Take Action' : undefined}
+                ctaHref={noticeReady ? '/rights' : undefined}
+              />
+              <FunnelStage
+                step={5}
+                label="Licensing"
+                value={coalitionActive ? 'Coalition negotiation active' : 'Not yet active'}
+                sublabel={coalitionActive ? 'Encypher negotiating on your behalf' : 'Triggered after Formal Notice'}
+                description={coalitionActive
+                  ? 'Encypher is actively negotiating licensing terms with AI companies on behalf of coalition members.'
+                  : 'Once Formal Notice is served, Encypher opens coalition licensing negotiation with AI companies.'}
+                status={coalitionActive ? 'active' : 'locked'}
+                ctaLabel={coalitionActive ? 'View Status' : undefined}
+                ctaHref={coalitionActive ? '/rights' : undefined}
+              />
+              <FunnelStage
+                step={6}
+                label="Earnings"
+                value={totalEarnings > 0 ? formatCurrency(totalEarnings) : '$0 earned'}
+                sublabel={pendingEarnings > 0 ? `${formatCurrency(pendingEarnings)} pending` : 'Coalition revenue distributes as negotiations close'}
+                description={totalEarnings === 0 && pendingEarnings === 0
+                  ? 'Coalition licensing revenue materializes as Encypher closes deals with AI companies. Verifications above are building your case now.'
+                  : `Total coalition licensing revenue distributed to your account.`}
+                status={totalEarnings > 0 ? 'active' : 'locked'}
+                isLast
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Right column: summary cards */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">This Period</CardTitle>
+              <CardDescription className="text-xs">{periodLabel}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Articles signed</span>
+                <span className="font-semibold text-sm text-delft-blue dark:text-white">{formatNumber(docsSigned)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Provenance checks</span>
+                <span className="font-semibold text-sm text-delft-blue dark:text-white">{formatNumber(totalVerifications)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">Notice threshold</span>
+                <Badge variant={noticeReady ? 'success' : 'secondary'} size="sm">
+                  {noticeReady ? 'Qualified' : `${Math.min(100, Math.round((totalVerifications / NOTICE_THRESHOLD) * 100))}%`}
+                </Badge>
+              </div>
+              {coalition && (
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Coalition status</span>
+                  <Badge variant={coalition.member ? 'success' : 'secondary'} size="sm">
+                    {coalition.member ? 'Member' : 'Not joined'}
+                  </Badge>
                 </div>
-                <div className="w-9 h-9 bg-gradient-to-br from-blue-ncs to-columbia-blue rounded-lg flex items-center justify-center text-white">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+              )}
+              <div className="pt-2 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-muted-foreground">Lifetime earnings</span>
+                  <span className="font-bold text-sm text-delft-blue dark:text-white">
+                    {formatCurrency(totalEarnings)}
+                  </span>
                 </div>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Notice Progress</CardTitle>
+              <CardDescription className="text-xs">Verifications toward Formal Notice</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-2 flex items-baseline justify-between">
+                <span className="text-2xl font-bold text-delft-blue dark:text-white">{formatNumber(totalVerifications)}</span>
+                <span className="text-xs text-muted-foreground">/ {formatNumber(NOTICE_THRESHOLD)} needed</span>
+              </div>
+              <div className="h-2.5 bg-muted rounded-full overflow-hidden mb-3">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-ncs to-columbia-blue rounded-full transition-all"
+                  style={{ width: `${Math.min(100, (totalVerifications / NOTICE_THRESHOLD) * 100)}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {noticeReady
+                  ? 'You qualify to serve Formal Notice. This converts potential infringers to willful status ($150K/work max damages).'
+                  : `${formatNumber(Math.max(0, NOTICE_THRESHOLD - totalVerifications))} more external verifications to qualify for Formal Notice.`}
+              </p>
+              {noticeReady && (
+                <Link href="/rights">
+                  <button className="mt-3 w-full py-2 bg-blue-ncs text-white text-xs font-semibold rounded-lg hover:bg-delft-blue transition-colors">
+                    Take Action
+                  </button>
+                </Link>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">What Each Stage Means</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-xs text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-blue-ncs flex-shrink-0" />
+                  <span><strong className="text-slate-700 dark:text-slate-300">Signed</strong> -- evidence base for enforcement</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-blue-ncs flex-shrink-0" />
+                  <span><strong className="text-slate-700 dark:text-slate-300">Verified</strong> -- AI companies checking your rights = documented awareness</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                  <span><strong className="text-slate-700 dark:text-slate-300">Notice Ready</strong> -- triggers willful infringement standard</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                  <span><strong className="text-slate-700 dark:text-slate-300">Earnings</strong> -- coalition licensing revenue distributed</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* API Health -- collapsible */}
+      <div className="mb-8">
+        <button
+          onClick={() => setApiHealthOpen(v => !v)}
+          className="w-full flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20 hover:bg-muted/30 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span className="text-sm font-medium text-delft-blue dark:text-white">API Health Metrics</span>
+            <Badge variant="secondary" size="sm">Technical</Badge>
+          </div>
+          <svg
+            className={`w-4 h-4 text-muted-foreground transition-transform ${apiHealthOpen ? 'rotate-180' : ''}`}
+            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {apiHealthOpen && (
+          <div className="mt-4 space-y-6">
+            {/* Stat cards */}
+            <div className="grid grid-cols-3 gap-4">
+              {isLoading ? (
+                <>
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                  <StatCardSkeleton />
+                </>
+              ) : (
+                <>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Total API Calls</p>
+                    <p className="text-2xl font-bold text-delft-blue dark:text-white">{formatNumber(stats?.total_api_calls || 0)}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">Last {timeRange} days</p>
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Success Rate</p>
+                    <p className="text-2xl font-bold text-delft-blue dark:text-white">{stats?.success_rate?.toFixed(1) || '0'}%</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      <Badge variant={responseStatus.variant} size="sm">{responseStatus.label}</Badge>
+                    </p>
+                  </div>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Avg Response</p>
+                    <p className="text-2xl font-bold text-delft-blue dark:text-white">{stats?.avg_response_time_ms?.toFixed(0) || '0'}ms</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">Target: under 400ms</p>
+                  </div>
+                </>
+              )}
             </div>
 
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Documents Signed</p>
-                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
-                    {formatNumber(stats?.total_documents_signed || 0)}
-                  </p>
-                </div>
-                <div className="w-9 h-9 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-lg flex items-center justify-center text-white">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                </div>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
-            </div>
+            {/* Chart + Highlights */}
+            <div className="grid lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>API Calls Over Time</CardTitle>
+                  <CardDescription>Daily API usage for the selected period</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isTimeSeriesLoading ? (
+                    <ChartSkeleton />
+                  ) : timeSeries.length === 0 ? (
+                    <div className="h-64 flex items-center justify-center text-muted-foreground">
+                      No data available for this period
+                    </div>
+                  ) : (
+                    <div className="h-64 flex">
+                      <div className="flex flex-col justify-between pr-3 text-[10px] text-muted-foreground" style={{ paddingBottom: '24px' }}>
+                        <span>{formatNumber(maxValue)}</span>
+                        <span>{formatNumber(Math.round(maxValue / 2))}</span>
+                        <span>0</span>
+                      </div>
+                      <div className="flex-1 flex items-end gap-1 border-l border-b border-border pl-2 relative" style={{ paddingBottom: '24px' }}>
+                        {timeSeries.slice(-14).map((day, idx) => {
+                          const pct = day.count > 0 ? Math.max((day.count / maxValue) * 100, 3) : 0;
+                          return (
+                            <div key={idx} className="flex-1 relative group flex items-end justify-center" style={{ height: '100%' }}>
+                              <div
+                                className="w-full bg-gradient-to-t from-blue-ncs to-columbia-blue rounded-t-sm hover:from-delft-blue hover:to-blue-ncs transition-colors cursor-pointer"
+                                style={{ height: `${pct}%` }}
+                              />
+                              <div className="absolute -top-1 left-1/2 -translate-x-1/2 bg-delft-blue text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                {formatNumber(day.count)}
+                              </div>
+                              <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground whitespace-nowrap">
+                                {new Date(day.timestamp).toLocaleDateString('en-US', { weekday: 'short' })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Verifications</p>
-                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
-                    {formatNumber(stats?.total_verifications || 0)}
-                  </p>
-                </div>
-                <div className="w-9 h-9 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-lg flex items-center justify-center text-white">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                </div>
+              <div className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Usage Highlights</CardTitle>
+                    <CardDescription>Key signals for the period</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Peak day</p>
+                          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                            {peakDay ? formatShortDate(peakDay.timestamp) : '--'}
+                          </p>
+                        </div>
+                        <Badge variant="secondary" size="sm">
+                          {peakDay ? `${formatNumber(peakDay.count)} calls` : 'No data'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-muted-foreground">Average per day</p>
+                          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                            {averageDailyCalls ? `${formatNumber(averageDailyCalls)} calls` : '--'}
+                          </p>
+                        </div>
+                        <Badge variant="outline" size="sm">{periodLabel}</Badge>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-lg border border-border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground">Signing share</p>
+                          <p className="text-lg font-semibold text-delft-blue dark:text-white">{signShare ? signShare.toFixed(1) : '0'}%</p>
+                        </div>
+                        <div className="rounded-lg border border-border bg-muted/30 p-3">
+                          <p className="text-xs text-muted-foreground">Verify share</p>
+                          <p className="text-lg font-semibold text-delft-blue dark:text-white">{verifyShare ? verifyShare.toFixed(1) : '0'}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Response Health</CardTitle>
+                    <CardDescription>Latency and success posture</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
+                        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{responseStatus.label}</p>
+                      </div>
+                      <Badge variant={responseStatus.variant} size="sm">
+                        {avgResponseTime ? `${avgResponseTime.toFixed(0)}ms avg` : 'No data'}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-lg border border-border bg-muted/30 p-3">
+                        <p className="text-xs text-muted-foreground">Success</p>
+                        <p className={`text-lg font-semibold ${successRate > 0 ? 'text-emerald-600' : 'text-muted-foreground'}`}>{successRate.toFixed(1)}%</p>
+                      </div>
+                      <div className="rounded-lg border border-border bg-muted/30 p-3">
+                        <p className="text-xs text-muted-foreground">Error</p>
+                        <p className={`text-lg font-semibold ${errorRate > 0 && successRate > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>{errorRate.toFixed(1)}%</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
             </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Success Rate</p>
-                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
-                    {stats?.success_rate?.toFixed(1) || '0'}%
-                  </p>
-                </div>
-                <div className="w-9 h-9 bg-gradient-to-br from-[#00CED1] to-[#2A87C4] rounded-lg flex items-center justify-center text-white">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                </div>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
-            </div>
-
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Avg Response</p>
-                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
-                    {stats?.avg_response_time_ms?.toFixed(0) || '0'}ms
-                  </p>
-                </div>
-                <div className="w-9 h-9 bg-gradient-to-br from-[#2A87C4] to-[#1B2F50] rounded-lg flex items-center justify-center text-white">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
-            </div>
-          </>
+          </div>
         )}
       </div>
 
-      {/* Usage Chart + Highlights */}
-      <div className="grid lg:grid-cols-3 gap-6 mb-8">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>API Calls Over Time</CardTitle>
-            <CardDescription>Daily API usage for the selected period</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isTimeSeriesLoading ? (
-              <ChartSkeleton />
-            ) : timeSeries.length === 0 ? (
-              <div className="h-64 flex items-center justify-center text-muted-foreground">
-                No data available for this period
-              </div>
-            ) : (
-              <div className="h-64 flex">
-                {/* Y-axis labels */}
-                <div className="flex flex-col justify-between pr-3 text-[10px] text-muted-foreground" style={{ paddingBottom: '24px' }}>
-                  <span>{formatNumber(maxValue)}</span>
-                  <span>{formatNumber(Math.round(maxValue / 2))}</span>
-                  <span>0</span>
-                </div>
-                {/* Bars */}
-                <div className="flex-1 flex items-end gap-1 border-l border-b border-border pl-2 relative" style={{ paddingBottom: '24px' }}>
-                  {timeSeries.slice(-14).map((day, idx) => {
-                    const pct = day.count > 0 ? Math.max((day.count / maxValue) * 100, 3) : 0;
-                    return (
-                      <div key={idx} className="flex-1 relative group flex items-end justify-center" style={{ height: '100%' }}>
-                        <div
-                          className="w-full bg-gradient-to-t from-blue-ncs to-columbia-blue rounded-t-sm hover:from-delft-blue hover:to-blue-ncs transition-colors cursor-pointer"
-                          style={{ height: `${pct}%` }}
-                        />
-                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 bg-delft-blue text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                          {formatNumber(day.count)}
-                        </div>
-                        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground whitespace-nowrap">
-                          {new Date(day.timestamp).toLocaleDateString('en-US', { weekday: 'short' })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Usage Highlights</CardTitle>
-              <CardDescription>Key signals for the selected period</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Peak day</p>
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                      {peakDay ? formatShortDate(peakDay.timestamp) : '—'}
-                    </p>
-                  </div>
-                  <Badge variant="secondary" size="sm">
-                    {peakDay ? `${formatNumber(peakDay.count)} calls` : 'No data'}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Average per day</p>
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                      {averageDailyCalls ? `${formatNumber(averageDailyCalls)} calls` : '—'}
-                    </p>
-                  </div>
-                  <Badge variant="outline" size="sm">{periodLabel}</Badge>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-lg border border-border bg-muted/30 p-3">
-                    <p className="text-xs text-muted-foreground">Signing share</p>
-                    <p className="text-lg font-semibold text-delft-blue dark:text-white">
-                      {signShare ? signShare.toFixed(1) : '0'}%
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-muted/30 p-3">
-                    <p className="text-xs text-muted-foreground">Verification share</p>
-                    <p className="text-lg font-semibold text-delft-blue dark:text-white">
-                      {verifyShare ? verifyShare.toFixed(1) : '0'}%
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Response Health</CardTitle>
-              <CardDescription>Latency and success posture</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Current status</p>
-                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{responseStatus.label}</p>
-                </div>
-                <Badge variant={responseStatus.variant} size="sm">
-                  {avgResponseTime ? `${avgResponseTime.toFixed(0)}ms avg` : 'No data'}
-                </Badge>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-border bg-muted/30 p-3">
-                  <p className="text-xs text-muted-foreground">Success rate</p>
-                  <p className={`text-lg font-semibold ${successRate > 0 ? 'text-emerald-600' : 'text-muted-foreground'}`}>
-                    {successRate.toFixed(1)}%
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border bg-muted/30 p-3">
-                  <p className="text-xs text-muted-foreground">Error rate</p>
-                  <p className={`text-lg font-semibold ${errorRate > 0 && successRate > 0 ? 'text-amber-600' : 'text-muted-foreground'}`}>
-                    {errorRate.toFixed(1)}%
-                  </p>
-                </div>
-              </div>
-              <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs text-muted-foreground">
-                Target latency under 400ms for real-time signing and verification workloads.
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Activity Timeline + Ops Notes */}
+      {/* Activity Timeline */}
       <div className="grid lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2">
           <ActivityFeed title="Activity Timeline" limit={6} />
@@ -418,25 +650,25 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Quick Reference</CardTitle>
-            <CardDescription>Analytics tips</CardDescription>
+            <CardDescription>Understanding your timeline</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-start gap-3">
                 <span className="mt-1 h-2 w-2 rounded-full bg-blue-ncs" />
-                <span>Use the time range selector to compare 7-day, 30-day, or 90-day windows.</span>
+                <span>Signed content is your enforcement corpus. More articles = stronger coalition bargaining position.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
-                <span>Export summary or time series data as CSV for your records.</span>
+                <span>Each verification is documented awareness -- evidence that rights were checked before use.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
-                <span>Target response latency under 400ms for real-time signing workloads.</span>
+                <span>500 verifications triggers Formal Notice eligibility. Willful infringement = up to $150K/work in damages.</span>
               </li>
             </ul>
             <div className="mt-4 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-              Need help? Visit the <a href="/docs" className="text-blue-ncs hover:underline">documentation</a> or <a href="/support" className="text-blue-ncs hover:underline">contact support</a>.
+              Questions about the timeline? <a href="/docs" className="text-blue-ncs hover:underline">See documentation</a> or contact support.
             </div>
           </CardContent>
         </Card>
@@ -445,4 +677,3 @@ export default function AnalyticsPage() {
     </DashboardLayout>
   );
 }
-

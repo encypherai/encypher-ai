@@ -488,3 +488,248 @@ a strategic asset, not an operational expense.
 5. **Formal notice → license negotiation is the most common conversion path** at
    midsized and large scale. The evidence package needs to be court-credible.
    Invest in its format and completeness.
+
+---
+---
+
+## Persona 4 -- AI Company: Enterprise Knowledge Platform
+
+**Profile**: Sam Okafor, Head of Legal Engineering at *Meridian AI*. Meridian builds an
+AI-powered enterprise knowledge management and research platform -- think AI-assisted
+due diligence, policy analysis, and competitive intelligence for Fortune 500 clients.
+Series C, 280 employees. Their RAG pipeline ingests licensed news, research reports,
+regulatory filings, and analysis from dozens of premium publishers.
+Annual ARR: $22M. Roughly 30% of their value proposition rests on the quality
+and recency of their licensed content corpus.
+
+**Problem**: Meridian received a formal notice from Pacific Standard News containing
+an Encypher evidence package -- cryptographic documentation of 14 articles ingested
+at Gold tier (training-level access) without a license on file. Their outside counsel
+reviewed it and said the documentation was unusually strong: sentence-level Merkle
+proofs, tamper-evident chain-of-custody, timestamps linked to the signed content
+itself. Estimated exposure: $2-4M if Pacific Standard escalated to litigation.
+
+At the same time, the EU AI Act compliance deadline is 9 months out and Meridian has
+no watermarking strategy for AI-generated outputs. Two enterprise clients have
+specifically asked about content provenance in recent security questionnaires.
+The problems converged on Sam's desk in the same week.
+
+---
+
+### Phase 1 -- Inbound Discovery via Formal Notice (Month -1)
+
+Meridian did not seek out Encypher. Encypher found them -- via a publisher they
+had already been ingesting.
+
+Sam's first action was to look up Encypher from the evidence package header. He
+lands on the marketing site. His immediate question is not *"can I license content?"*
+-- it is *"what exactly did I just receive, and how legally significant is it?"*
+
+The marketing site's AI company messaging addresses this directly: Encypher is
+neutral infrastructure, not a litigation weapon. The publisher used Encypher's tools
+to document a licensing gap; Sam can use the same infrastructure to close it and
+demonstrate good-faith compliance going forward.
+
+Sam reads through the `/solutions/ai-companies` page. The framing -- *"License
+Content at Scale. Prove You Did It Right."* -- maps exactly to his two simultaneous
+problems: resolve the Pacific Standard notice, and get ahead of EU AI Act exposure.
+
+He schedules a technical evaluation.
+
+---
+
+### Phase 2 -- Technical Evaluation (Month 0)
+
+Sam's team runs a structured evaluation over two weeks:
+
+**Legal engineering review**:
+- Reads the C2PA 2.3 spec (Section A.7 -- the text standard Encypher authored)
+- Reviews the verification endpoint: `GET /api/v1/public/verify`
+- Confirms the cryptographic claims in the evidence package are independently verifiable
+  (the signature is against the publisher's public key, not Encypher's)
+- Key finding: *"The evidence package is not dependent on Encypher's infrastructure
+  being trusted. The proof is embedded in the content itself."* This matters for
+  their own customers' security questionnaires.
+
+**Engineering review**:
+- Tests the verification API against the 14 Pacific Standard articles in the notice
+- All 14 return valid C2PA manifests with sentence-level Merkle trees
+- Reviews the OpenAPI spec -- production-grade, versioned, clean
+- Confirms one integration covers: C2PA verification, EU AI Act output watermarking,
+  China watermarking mandate compliance, and publisher coalition access
+
+**Business review**:
+- Confirms coalition access is network-level: one agreement, not bilateral negotiations
+  per publisher
+- Notes the Licensed Content mark concept: the ability to display "Licensed by
+  Encypher / C2PA Verified" in their product could differentiate them from competitors
+  who have not resolved their licensing exposure
+
+Sam's evaluation summary to the CEO: *"We have $2-4M in exposure on the current
+Pacific Standard notice. We have a 9-month EU AI Act deadline. One integration
+resolves both and turns them into a competitive advantage."*
+
+---
+
+### Phase 3 -- Integration and Coalition Access (Month 1)
+
+Meridian integrates the Encypher API in two parallel workstreams:
+
+**Provenance verification at inference time**:
+When Meridian's platform cites publisher content in a RAG response, it now runs
+a provenance check:
+
+```python
+from encypher import EncypherClient
+
+client = EncypherClient(api_key=os.environ["ENCYPHER_API_KEY"])
+
+def cite_with_verification(cited_text: str, source_url: str) -> dict:
+    result = client.verify(content=cited_text)
+    return {
+        "text": cited_text,
+        "source_url": source_url,
+        "provenance_verified": result.verified,
+        "publisher_rights_url": result.rights_resolution_url,
+        "license_tier": result.detected_tier,
+    }
+```
+
+Every citation now carries a cryptographic verification status. The platform
+knows which content is from coalition-licensed publishers (safe to cite at any tier)
+and which is from unlicensed sources (flag for legal review).
+
+**EU AI Act output watermarking**:
+Meridian's AI-generated summaries, memos, and analysis are signed at generation
+time using streaming LLM signing. Every AI output from the platform now carries
+a C2PA assertion identifying it as AI-generated, satisfying the EU AI Act output
+disclosure requirement. The same integration covers the China watermarking mandate
+for their APAC customers.
+
+---
+
+### Phase 4 -- Coalition Licensing Agreement (Month 2)
+
+Meridian signs a publisher coalition licensing agreement. Key terms negotiated
+through Encypher's coalition team:
+
+- Access to all current and future coalition publishers at Silver and Gold tiers
+- Pacific Standard News is a coalition member -- their formal notice is resolved
+  as part of the agreement
+- Rate structure: per-seat annual license based on Meridian's enterprise customer
+  count, not per-publisher bilateral rate (this is the coalition's core value)
+- Agreement records a cryptographic timestamp: Meridian is now a licensed member
+  of the Encypher publisher coalition
+
+Sam exports the coalition membership documentation and attaches it to the two
+pending enterprise client security questionnaires. Both clients mark the content
+provenance question as resolved.
+
+---
+
+### Phase 5 -- "Verified Sources" Product Launch (Month 4)
+
+Meridian's product team has been watching the integration data. Every RAG citation
+their platform generates is now tagged with a provenance status. They decide to
+surface this to end users.
+
+They launch **Verified Sources** -- a UI indicator in the Meridian platform that
+shows, for any AI-generated analysis, which sources were verified via C2PA provenance
+and are covered by the coalition license. Non-licensed sources are shown separately
+with a note.
+
+The sales team immediately picks this up as a competitive differentiator:
+
+> *"Unlike [Competitor], Meridian only cites content we are licensed to use.
+> Every citation is cryptographically verified. You can audit it."*
+
+In the first quarter after launch, three enterprise prospects specifically cite
+"verified content sourcing" as a reason they chose Meridian over competitors.
+The AE team estimates it contributed to $1.4M in new ARR.
+
+Sam's legal observation: *"We went from being the defendant in a formal notice to
+being the only AI platform in our space that can prove provenance in a customer audit.
+The same infrastructure that resolved our liability is now a product feature."*
+
+---
+
+### Phase 6 -- Performance Intelligence (Month 9)
+
+Six months into coalition access, Meridian's engineering team starts using the
+performance analytics in the Encypher dashboard.
+
+They can now see:
+- Which coalition publishers' content generates the most downstream engagement in
+  their platform (measured by user satisfaction scores and session length after RAG responses)
+- Which content categories drive the most enterprise user retention
+- Which publishers are most frequently cited in winning sales demos vs. churned accounts
+
+This feeds back into their coalition licensing renewal negotiation: Meridian has
+concrete data showing which publishers are contributing the most value to their
+product. They negotiate expanded Gold-tier access to the five highest-performing
+publishers, and reduce Silver-tier access for lower-signal sources.
+
+Previously, content licensing decisions were made by gut feel or by which publishers
+had the most aggressive sales teams. Now they are made from verified engagement data.
+
+---
+
+### Lifetime Value Trajectory
+
+| Phase | Product | Annual Value to Meridian | Annual Value to Encypher |
+|-------|---------|--------------------------|--------------------------|
+| Month 0 | Technical evaluation | Resolved $2-4M exposure | Enterprise prospect |
+| Month 1-2 | Integration + coalition license | EU AI Act compliance | Enterprise SaaS deal |
+| Month 4 | Verified Sources launch | $1.4M new ARR attributed | License renewal expansion |
+| Month 9 | Performance intelligence | Data-driven content strategy | Multi-year renewal |
+
+**Key insight**: Meridian's entry point was a formal notice -- not a marketing campaign.
+The evidence package that publishers use as legal documentation is the same artifact
+that drives inbound enterprise AI company deals. The quality and credibility of that
+package is a direct sales motion for the AI company side of the business.
+
+---
+
+## Cross-Persona Patterns (Updated)
+
+| Pattern | Small (Maya) | Midsized (Alex) | Large (CMG) | AI Company (Meridian) |
+|---------|-------------|-----------------|-------------|----------------------|
+| Entry trigger | AI stealing content, no recourse | Competitive threat, lost revenue | Enterprise licensing negotiation | Received formal notice with cryptographic evidence |
+| First value | Copy-paste survival "aha moment" | Archive signing = legal asset | BYOK + cryptographic evidence | Formal notice resolved + EU AI Act compliance |
+| Free-to-paid trigger | Seeing crawlers in analytics | Direct licensing revenue | Enterprise deal from Day 1 | Regulatory exposure + enterprise client questionnaires |
+| Best growth lever | Coalition passive income | Evidence package -> license negotiation | Coalition as revenue program | Verified Sources product differentiation |
+| Unexpected use case | Media law clinic referral | Quote integrity for editorial QA | Verified Facts product badge | Performance intelligence for content strategy |
+| Long-term stickiness | Rights profile = their standard | Integration = editorial workflow | Infrastructure = business model | Coalition data = licensing strategy |
+
+---
+
+## What These Stories Tell Us About Product Investment (Updated)
+
+1. **The copy-paste survival tester is the conversion moment for small publishers** -- it
+   makes invisible infrastructure tangible. It must always work perfectly.
+
+2. **The archive signing job is the midsized publisher wedge** -- it creates the asset
+   that generates downstream licensing revenue. API ergonomics for bulk operations matter.
+
+3. **BYOK is a hard requirement for large publishers** -- it's not a nice-to-have. Any
+   enterprise publisher with an existing PKI won't sign a deal without it.
+
+4. **Quote Integrity found unexpected adoption as editorial QA** -- the original pitch
+   was "detect AI hallucinations about your content." The actual use case emerged as
+   "detect AI hallucinations in our own AI-assisted drafts." Design for both.
+
+5. **Formal notice -> license negotiation is the most common conversion path** at
+   midsized and large scale. The evidence package needs to be court-credible.
+   Invest in its format and completeness.
+
+6. **The formal notice evidence package is Encypher's most effective AI company
+   sales motion** -- it is the artifact that converts a potential adversarial situation
+   into an enterprise sales conversation. The quality of that package directly affects
+   both publisher outcomes and AI company inbound deal flow. These two sides are
+   not in tension: better evidence = more licensing revenue for publishers AND clearer
+   signal to AI companies that licensing is the rational path forward.
+
+7. **Licensed Content mark (Verified Sources) is a product differentiator for AI
+   companies** -- the first AI companies to license through Encypher get a concrete,
+   marketable trust signal. The window for being a "first mover" on this is finite.
+   The messaging on `/solutions/ai-companies` should emphasize this explicitly.

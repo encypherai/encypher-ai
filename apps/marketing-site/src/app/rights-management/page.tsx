@@ -242,7 +242,7 @@ const RightsManagementPage: NextPage = () => {
             </table>
           </div>
           <div className="mt-6 p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900 text-sm text-blue-700 dark:text-blue-300">
-            <strong>Coalition licensing revenue:</strong> When AI companies license content through the Encypher Coalition, publishers keep 60% of revenue. Self-service licensing: 80% to publishers.
+            <strong>Coalition licensing revenue:</strong> When AI companies license content through the Encypher Coalition, the majority of revenue goes to publishers. Same splits for all tiers -- contact us for details.
           </div>
         </div>
       </section>

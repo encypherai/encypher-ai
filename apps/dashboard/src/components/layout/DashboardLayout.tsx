@@ -188,8 +188,8 @@ const navGroups: NavGroup[] = [
   {
     label: 'Insights',
     items: [
-      { href: '/analytics', label: 'Analytics', icon: IconAnalytics },
-      { href: '/ai-crawlers', label: 'AI Crawlers', icon: IconAICrawlers },
+      { href: '/analytics', label: 'Content Performance', icon: IconAnalytics },
+      { href: '/ai-crawlers', label: 'Provenance Activity', icon: IconAICrawlers },
       { href: '/docs', label: 'Docs', icon: IconDocs },
     ],
   },
