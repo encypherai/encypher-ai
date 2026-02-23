@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import {
   Badge,
   Button,
@@ -83,6 +84,13 @@ function formatShortDate(dateStr: string): string {
 
 // -- Funnel stage component --
 
+interface ContentSpreadResponse {
+  total_external_detections: number;
+  unique_external_domains: number;
+  domains: string[];
+  documents: { document_id: string; domain: string; detected_at: string }[];
+}
+
 interface FunnelStageProps {
   step: number;
   label: string;
@@ -93,6 +101,7 @@ interface FunnelStageProps {
   ctaHref?: string;
   description?: string;
   isLast?: boolean;
+  children?: React.ReactNode;
 }
 
 function FunnelStage({
@@ -105,6 +114,7 @@ function FunnelStage({
   ctaHref,
   description,
   isLast,
+  children,
 }: FunnelStageProps) {
   const bgColor = {
     active: 'bg-white dark:bg-slate-800 border-blue-ncs/30',
@@ -142,6 +152,7 @@ function FunnelStage({
               {sublabel && <span className="text-xs text-muted-foreground">{sublabel}</span>}
             </div>
             {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+          {children && <div className="mt-2">{children}</div>}
           </div>
           {ctaLabel && ctaHref && (
             <Link href={ctaHref}>
@@ -203,6 +214,18 @@ export default function ContentPerformancePage() {
     retry: false,
   });
 
+  const contentSpreadQuery = useQuery({
+    queryKey: ['content-spread', timeRange],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('Not authenticated');
+      const data = await apiClient.getContentSpread(accessToken, parseInt(timeRange));
+      return data as ContentSpreadResponse;
+    },
+    enabled: Boolean(accessToken),
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
   const stats = statsQuery.data;
   const timeSeries = timeSeriesQuery.data || [];
   const coalition = coalitionQuery.data;
@@ -247,6 +270,12 @@ export default function ContentPerformancePage() {
   const coalitionActive = coalition && coalition.member && !coalition.opted_out;
   const totalEarnings = coalition?.total_earnings || 0;
   const pendingEarnings = coalition?.pending_earnings || 0;
+
+  const contentSpread = contentSpreadQuery.data;
+  const contentSpreadLoading = contentSpreadQuery.isLoading;
+  const contentSpreadAccessDenied = (contentSpreadQuery.error as any)?.status === 403;
+  const totalDetections = contentSpread?.total_external_detections || 0;
+  const uniqueDomains = contentSpread?.unique_external_domains || 0;
 
   return (
     <DashboardLayout>
@@ -323,13 +352,42 @@ export default function ContentPerformancePage() {
               <FunnelStage
                 step={3}
                 label="Spread"
-                value="Tracking coming soon"
+                value={
+                  contentSpreadLoading
+                    ? 'Loading...'
+                    : contentSpreadAccessDenied
+                    ? 'Upgrade to view'
+                    : totalDetections > 0
+                    ? `${formatNumber(totalDetections)} detection${totalDetections !== 1 ? 's' : ''} across ${formatNumber(uniqueDomains)} domain${uniqueDomains !== 1 ? 's' : ''}`
+                    : 'No external detections yet'
+                }
                 sublabel="external domain detections"
-                description="Where your signed content appears outside your domain -- detections via the Encypher network."
-                status="pending"
-                ctaLabel={undefined}
-                ctaHref={undefined}
-              />
+                description={
+                  contentSpreadAccessDenied
+                    ? 'Content spread analytics is available on the Enterprise plan or with the Attribution Analytics add-on.'
+                    : totalDetections > 0
+                    ? `Your signed content has been detected on ${uniqueDomains} external domain${uniqueDomains !== 1 ? 's' : ''} in the last ${timeRange} days.`
+                    : 'Where your signed content appears outside your domain -- detections via the Encypher network. As your content spreads, detections appear here.'
+                }
+                status={totalDetections > 0 ? 'active' : 'pending'}
+                ctaLabel={contentSpreadAccessDenied ? 'Upgrade Plan' : undefined}
+                ctaHref={contentSpreadAccessDenied ? '/settings/billing' : undefined}
+              >
+                {!contentSpreadLoading && !contentSpreadAccessDenied && contentSpread && contentSpread.domains.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {contentSpread.domains.slice(0, 5).map((domain) => (
+                      <span key={domain} className="text-xs bg-blue-ncs/10 text-blue-ncs border border-blue-ncs/20 rounded px-1.5 py-0.5">
+                        {domain}
+                      </span>
+                    ))}
+                    {contentSpread.domains.length > 5 && (
+                      <span className="text-xs text-muted-foreground px-1">
+                        +{contentSpread.domains.length - 5} more
+                      </span>
+                    )}
+                  </div>
+                )}
+              </FunnelStage>
               <FunnelStage
                 step={4}
                 label="Notice Ready"

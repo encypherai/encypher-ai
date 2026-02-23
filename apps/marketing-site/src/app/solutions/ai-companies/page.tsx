@@ -52,7 +52,7 @@ export default function AiCompaniesPage() {
       <section className="relative w-full py-20 md:py-32 bg-muted/30 border-b border-border">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            License Content at Scale. Prove You Did It Right.
+            License Content at Scale.<br />Prove You Did It Right.
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
             AI companies that license publisher content through Encypher get three things at once:

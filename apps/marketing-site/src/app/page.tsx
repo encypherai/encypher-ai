@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -11,8 +11,21 @@ import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.encypherai.com';
+
 export default function HomePage() {
   const [showContactModal, setShowContactModal] = useState(false);
+  const [coalitionStats, setCoalitionStats] = useState<{
+    coalition_members: number;
+    total_signed_documents: number;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/v1/coalition/public/stats`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setCoalitionStats(data); })
+      .catch(() => {});
+  }, []);
 
   return (
     <>
@@ -321,6 +334,19 @@ export default function HomePage() {
           <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
             Publishers who protect their content today are building the evidence package and the coalition that determines how licensing works tomorrow. Start free.
           </p>
+          {coalitionStats && (
+            <div className="inline-flex items-center gap-6 mb-8 px-6 py-3 bg-muted/40 border border-border rounded-full text-sm">
+              <span className="font-semibold text-primary">
+                {coalitionStats.coalition_members.toLocaleString()} publishers
+              </span>
+              <span className="text-muted-foreground">in the coalition</span>
+              <span className="w-px h-4 bg-border" />
+              <span className="font-semibold text-primary">
+                {coalitionStats.total_signed_documents.toLocaleString()} articles
+              </span>
+              <span className="text-muted-foreground">protected</span>
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
             <Button asChild size="lg" className="w-full sm:w-auto shadow-lg font-semibold" style={{ backgroundColor: '#1a365d', color: '#ffffff' }}>
               <Link href="/auth/register">

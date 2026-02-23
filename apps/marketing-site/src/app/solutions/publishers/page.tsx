@@ -248,17 +248,17 @@ export default function PublishersPage() {
             <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div className="bg-card p-6 rounded-lg border border-border">
                 <h3 className="font-semibold mb-4">Example Rights Profile</h3>
-                <div className="bg-muted/50 p-4 rounded-lg font-mono text-xs space-y-3">
+                <div className="bg-muted/30 p-4 rounded-lg border border-border font-mono text-xs space-y-3">
                   <div>
-                    <span className="text-primary font-semibold">Bronze (crawling):</span>
+                    <span className="text-amber-700 dark:text-amber-500 font-semibold">Bronze (crawling):</span>
                     <p className="text-muted-foreground mt-1">Permitted -- search indexing fine</p>
                   </div>
                   <div>
-                    <span className="text-amber-600 dark:text-amber-400 font-semibold">Silver (RAG/citation):</span>
+                    <span className="text-zinc-500 dark:text-zinc-300 font-semibold">Silver (RAG/citation):</span>
                     <p className="text-muted-foreground mt-1">Permitted -- author name + canonical URL required</p>
                   </div>
                   <div>
-                    <span className="text-destructive font-semibold">Gold (training):</span>
+                    <span className="text-yellow-600 dark:text-yellow-400 font-semibold">Gold (training):</span>
                     <p className="text-muted-foreground mt-1">License required -- contact licensing@yourorg.com</p>
                   </div>
                 </div>
@@ -439,7 +439,105 @@ export default function PublishersPage() {
           </div>
         </div>
       </section>
+      {/* FAQ Section */}
+      <section className="py-20 w-full bg-background border-t border-border">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
+              Common questions from publishers before they get started.
+            </p>
+          </div>
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="space-y-2">
+              {[
+                {
+                  q: 'Will my content look different to readers?',
+                  a: 'No. The cryptographic watermark is completely invisible. It is embedded using zero-width Unicode characters between words -- characters that are present in the text but invisible to the human eye. Your readers, your fonts, and your layout are not affected in any way.',
+                },
+                {
+                  q: 'Will this slow down my website?',
+                  a: 'No. Signing happens server-side at publish time, not on page load. Once an article is signed, there is no additional overhead for readers or for your site. The signed content is stored exactly as you published it.',
+                },
+                {
+                  q: 'Who gets the licensing revenue?',
+                  a: 'The majority goes to you, the publisher. When an AI company licenses your content through the Encypher Coalition, the split strongly favors publishers -- the same split regardless of whether you are on a free or paid plan. We publish the revenue share terms transparently. Encypher takes a small platform fee.',
+                },
+                {
+                  q: 'Do I need a lawyer to issue a formal notice?',
+                  a: "No. Encypher generates the formal notice package automatically from your evidence -- a cryptographically-backed letter that you can send directly, or forward to counsel. Many publishers find that receiving a notice is enough to open licensing talks. If it escalates, your lawyer will have everything they need: a complete evidence chain, tamper-evident delivery confirmation, and documentation in standard litigation support formats. You don't need a lawyer to start -- but the package is designed to meet one's requirements when you do.",
+                },
+                {
+                  q: 'What if AI companies just ignore the rights terms?',
+                  a: 'Ignoring machine-readable rights terms that are embedded in every document is what converts innocent infringement into willful infringement under US copyright law. Willful infringement carries statutory damages up to $150,000 per work vs. $30,000 for innocent infringement. EU AI Act compliance (effective August 2026) also requires AI providers to respect machine-readable rights reservations. The terms do not need to be actively accepted -- publishing them and embedding them in the content is sufficient to establish they were available.',
+                },
+                {
+                  q: 'Can I sign content from years ago?',
+                  a: 'Yes. You can backfill your entire archive using the Encypher API or our SDK batch tools. The Python and TypeScript SDKs let you sign thousands of articles in a single overnight job. The free tier covers 1,000 documents per month; volume pricing is available for large archives. We recommend starting with your most valuable evergreen content -- the articles most likely to appear in AI training datasets.',
+                },
+                {
+                  q: 'What happens if I stop using Encypher?',
+                  a: 'All content you signed remains signed -- permanently. The cryptographic signatures are embedded in the text itself and do not depend on Encypher servers to remain valid. The free tier will always exist at $0. If you stop a paid plan, you keep the signing infrastructure and your signed archive. You just lose access to the paid analytics and enforcement tools until you re-subscribe.',
+                },
+                {
+                  q: 'Is my content stored on Encypher servers?',
+                  a: 'No. Encypher signs your content at the moment of publication and returns it to your CMS. We store metadata and cryptographic hashes (fingerprints) for verification purposes -- not the full text of your articles. Your content stays on your servers. We can verify a piece of text is yours using the hash without needing a copy of the original.',
+                },
+              ].map((faq, i) => (
+                <AccordionItem
+                  key={i}
+                  value={`publisher-faq-${i}`}
+                  className="bg-card border border-border rounded-lg px-6"
+                >
+                  <AccordionTrigger className="text-left font-medium py-5 hover:no-underline">
+                    {faq.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground pb-5 leading-relaxed">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
       <StandardsCompliance />
+
+      {/* Final CTA */}
+      <section className="py-20 w-full bg-background border-t border-border">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            Start Protecting Your Content Today
+          </h2>
+          <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
+            Free signing infrastructure. See which AI companies are using your content from day one.
+            Enforcement tools available when you are ready.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button asChild size="lg" className="font-semibold py-3 px-6 rounded-lg shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+              <Link href="/publisher-demo">
+                Get Your Content Protection Demo <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="font-semibold py-3 px-6 rounded-lg">
+              <Link href="/auth/signin?mode=signup&source=publishers">
+                Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button
+              onClick={() => setShowContactModal(true)}
+              size="lg"
+              variant="ghost"
+              className="font-semibold"
+            >
+              Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
 
       {/* Sales Contact Modal */}
       <AnimatePresence>

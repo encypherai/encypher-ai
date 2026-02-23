@@ -15,6 +15,12 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import AISummary from '@/components/seo/AISummary';
 
 const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypherai.com';
@@ -141,6 +147,41 @@ const AI_COMPANY_FEATURES = [
   },
 ];
 
+const FAQS = [
+  {
+    q: 'Is Encypher compatible with RSL (Rights Signals Language)?',
+    a: "Yes. Encypher is fully RSL 1.0 compatible and adds an extra layer of protection on top. RSL defines how rights signals are expressed in a machine-readable format -- Encypher embeds those signals cryptographically inside every document so they travel with the content itself, not just as a flag on a server. RSL tells AI companies what your terms are. Encypher makes it impossible for them to claim they never saw them.",
+  },
+  {
+    q: 'Is Encypher compatible with C2PA?',
+    a: "Yes -- we wrote the standard. Encypher co-authors the C2PA text provenance specification (Section A.7) alongside Adobe, Microsoft, Google, OpenAI, and the BBC. Every document signed with Encypher produces a C2PA 2.3-compliant manifest. If you are already using another C2PA tool, Encypher layers on top and adds the rights-resolution URL so AI companies can retrieve your licensing terms automatically.",
+  },
+  {
+    q: 'Does Encypher work alongside Tollbit, ProRata, or Cloudflare bot management?',
+    a: "Yes, and it is actually a deeper layer of security. Think of Tollbit, ProRata, and Cloudflare as locking your front door -- they control who gets in at the server level. Encypher locks every individual piece of content, so your rights terms travel with the content across the internet even after it leaves your site. If an AI company scrapes through a cache, a third-party aggregator, or a data broker, your signed content still carries your rights profile. The two approaches are complementary, not competing.",
+  },
+  {
+    q: 'Do I need a developer to set this up?',
+    a: "No. If you publish on WordPress or Ghost, setup is a plugin or webhook -- no code required. If you use a different CMS or publish directly, Encypher provides a simple REST API. Most publishers are fully set up within a day. Once configured, signing happens automatically in the background every time you publish.",
+  },
+  {
+    q: 'Will this affect how my content looks or my search rankings?',
+    a: "No. The cryptographic watermark is invisible -- it is embedded in zero-width Unicode characters between words, not in the visible text. Your content reads exactly the same to human visitors. Search engines are not affected. There is no change to your HTML structure, page speed, or SEO.",
+  },
+  {
+    q: 'What about content I published before signing up?',
+    a: "You can backfill existing content through the Encypher API or CMS integration. New content is signed automatically going forward. We recommend starting with your highest-value archives first -- evergreen articles, research, and long-form content are the most valuable to AI training datasets and the most worth protecting.",
+  },
+  {
+    q: 'What if an AI company strips the watermark?',
+    a: "Deliberate removal of a cryptographic watermark is itself evidence of willful infringement -- it demonstrates they knew the content was marked and chose to circumvent it. Encypher's evidence system logs the signed state of every document at time of publication. If a stripped version appears in a training dataset, the original signed version is the proof of ownership. Stripping the mark makes the legal case stronger, not weaker.",
+  },
+  {
+    q: 'Do AI companies actually check these rights terms?',
+    a: "Leading AI companies -- including those building legal compliance programs ahead of the EU AI Act -- are actively building systems to read machine-readable rights signals. The EU AI Act (effective August 2026) requires AI providers to respect machine-readable rights reservations. RSL and C2PA are the two formats being adopted industry-wide. Encypher supports both. Even for companies not yet checking today, having signed content establishes a documented record that your terms were available -- which is what converts unauthorized use into actionable willful infringement.",
+  },
+];
+
 export default function RightsManagementPage() {
   return (
     <div className="bg-background text-foreground">
@@ -160,7 +201,7 @@ export default function RightsManagementPage() {
             C2PA 2.3 Compatible &middot; RSL 1.0 Compatible
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            License Your Content<br />to the AI Age
+            License Your Content<br />in the AI Age
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
             Every document you sign embeds machine-readable licensing terms. AI companies discover
@@ -194,15 +235,20 @@ export default function RightsManagementPage() {
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {TIERS.map((tier) => {
+            {TIERS.map((tier, i) => {
               const IconComponent = tier.icon;
+              const tierColor = i === 0
+                ? 'text-amber-700 dark:text-amber-500'
+                : i === 1
+                ? 'text-zinc-500 dark:text-zinc-300'
+                : 'text-yellow-600 dark:text-yellow-400';
               return (
                 <div
                   key={tier.name}
                   className="bg-card p-6 rounded-lg border border-border hover:border-primary/30 transition-colors"
                 >
-                  <IconComponent className="h-10 w-10 text-primary mb-4" />
-                  <h3 className="text-lg font-semibold mb-1">{tier.name}</h3>
+                  <IconComponent className={`h-10 w-10 mb-4 ${tierColor}`} />
+                  <h3 className={`text-lg font-semibold mb-1 ${tierColor}`}>{tier.name}</h3>
                   <p className="text-xs text-muted-foreground mb-3">{tier.use}</p>
                   <p className="text-sm text-muted-foreground mb-4">{tier.description}</p>
                   <ul className="space-y-1.5">
@@ -394,6 +440,38 @@ export default function RightsManagementPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-20 w-full bg-muted/30 border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
+              Common questions from publishers evaluating rights management for their content.
+            </p>
+          </div>
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="space-y-2">
+              {FAQS.map((faq, i) => (
+                <AccordionItem
+                  key={i}
+                  value={`faq-${i}`}
+                  className="bg-card border border-border rounded-lg px-6"
+                >
+                  <AccordionTrigger className="text-left font-medium py-5 hover:no-underline">
+                    {faq.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground pb-5 leading-relaxed">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </div>
       </section>
