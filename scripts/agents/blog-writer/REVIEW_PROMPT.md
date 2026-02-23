@@ -17,6 +17,12 @@ Check for these style issues and include them in feedback if found (do not fail 
 - Missing clincher sentences: each key section should end with a short (5-15 word) declarative
   that crystallizes the argument
 - Double-hyphen (--) used as a dash anywhere in prose body text (flag each instance)
+- Banned closing patterns: "the window is closing/opening", "the clock is ticking",
+  "organizations that move first", "the time to act is now", or any urgency-deadline metaphor
+  in the closing paragraph. Flag if present - the closing should be a prediction, challenge,
+  reframe, or pointed question, not a deadline warning.
+- A dedicated "What Encypher Sees From the Inside" section header (or equivalent authority-
+  building heading). Encypher's position should be woven into the argument, not announced.
 
 If more than 3 of these issues appear, recommend a revision and describe exactly what to change.
 

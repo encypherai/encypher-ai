@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { getAllPostSlugs, getPostBySlug } from '@/lib/blog';
 import { SocialShare } from '@/components/blog/social-share';
+import { BlogNewsletter } from '@/components/blog/BlogNewsletter';
 import styles from '../blog.module.css';
 import { getSiteUrl } from '@/lib/env';
 import Script from 'next/script';
@@ -209,12 +210,14 @@ export default async function BlogPostPage({
         </div>
       </header>
       
-      <div 
+      <div
         className={`prose dark:prose-invert prose-headings:font-semibold prose-a:text-primary max-w-none ${styles.blogContent}`}
         dangerouslySetInnerHTML={{ __html: post.contentHtml || '' }}
       />
-      
-      <div className="mt-12 pt-6 border-t border-border">
+
+      <BlogNewsletter />
+
+      <div className="mt-4 pt-6 border-t border-border">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="flex flex-col space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground">Topics</h3>

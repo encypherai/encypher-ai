@@ -117,14 +117,40 @@ Rules:
 
 ## [Section 4: Implications - what changes for publishers / AI companies / enterprises]
 
-## [What Encypher Sees From the Inside - our role, the C2PA standard, and why content
-    provenance is the technical answer to the problem this post describes]
+## [Section 5: How Content Provenance Changes This - C2PA as the technical answer,
+    woven naturally into the argument rather than presented as a sales pitch]
 
-[Closing: specific call to action or prediction tied back to content provenance]
+[Closing: varies - see closing guidance below]
 ```
 
-Rename sections to fit the post. Do not force the structure if a different flow serves the
-argument better. But the content provenance anchor in the penultimate section is not optional.
+Rename sections to fit the post. Do not force the structure. The content provenance section
+must feel like a natural conclusion to the argument, not a bolt-on product mention.
+
+Do not create a section called "What Encypher Sees From the Inside" or any equivalent.
+Encypher's C2PA position should emerge from the argument itself - readers of this blog know
+who we are. Use "we" and "our standard" where the insider view adds to the point, not as a
+dedicated authority-building section.
+
+### Closing Guidance
+
+Vary the ending. Do not default to urgency metaphors.
+
+**Banned phrases and patterns:**
+- "The window is closing" / "the window is opening"
+- "The clock is ticking"
+- "Organizations that move first will..."
+- "The time to act is now"
+- Any variation of "six months to get this right before X"
+
+**Effective closings instead:**
+- A specific, falsifiable prediction: "The first major publisher to win a TDM opt-out case
+  will have used machine-readable signals, not robots.txt. That case is probably already filed."
+- A direct challenge: "The question is not whether to implement content provenance. It is
+  whether you implement it before your rights are tested in court."
+- A reframe: "The technology is not the hard part. The hard part is convincing legal teams
+  that infrastructure changes before they lose a case that infrastructure would have prevented."
+- A pointed question left for the reader: "What does your TDM opt-out actually look like at
+  the machine-readable layer? If you cannot answer that, you do not have one."
 
 ---
 
