@@ -43,7 +43,7 @@ Article 53 requires a rights reservation that travels with the content. Robots.t
 
 Between December 2025 and January 2026, the European Commission ran a [stakeholder consultation](https://digital-strategy.ec.europa.eu/en/consultations/commission-launches-consultation-protocols-reserving-rights-text-and-data-mining-under-ai-act-and) to identify which machine-readable protocols will be officially recognized under Article 53. The Commission sought "machine-readable, standardised protocols that can be implemented consistently and interoperably across different media, languages, and sectors."
 
-An EUIPO study identified eight candidate protocols: robots.txt (IETF RFC 9309), TDM Reservation Protocol (TDMRep), C2PA TDM Assertions, AI.txt, Spawning AI Do Not Train registry, JPEG Trust core foundation v2, TDM.ai protocol (Liccium), and Open Rights Data Exchange (Valunode). The Commission will publish a list of "generally agreed" protocols, to be reviewed at least every two years.
+An [EUIPO study](https://digital-strategy.ec.europa.eu/en/consultations/commission-launches-consultation-protocols-reserving-rights-text-and-data-mining-under-ai-act-and) referenced in the consultation identified eight candidate protocols: robots.txt (IETF RFC 9309), TDM Reservation Protocol (TDMRep), C2PA TDM Assertions, AI.txt, Spawning AI Do Not Train registry, JPEG Trust core foundation v2, TDM.ai protocol (Liccium), and Open Rights Data Exchange (Valunode). The Commission will publish a list of "generally agreed" protocols, to be reviewed at least every two years.
 
 This is the process that will determine what actually counts as a valid rights reservation under EU law. And most publishers did not know it was happening, let alone participate.
 
