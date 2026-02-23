@@ -33,6 +33,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Company & info
     { url: `${base}/company`, lastModified: now, priority: 0.7 },
     { url: `${base}/contact`, lastModified: now, priority: 0.7 },
+    { url: `${base}/enterprise`, lastModified: now, priority: 0.8 },
+    { url: `${base}/rights-management`, lastModified: now, priority: 0.8 },
     { url: `${base}/licensing`, lastModified: now, priority: 0.6 },
     { url: `${base}/privacy`, lastModified: now, priority: 0.4 },
     { url: `${base}/terms`, lastModified: now, priority: 0.4 },

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -22,6 +23,26 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import AISummary from '@/components/seo/AISummary';
+
+export const metadata: Metadata = {
+  title: 'Rights Management | Machine-Readable AI Content Licensing | Encypher',
+  description: 'Control how AI companies use your content. Bronze (web crawling), Silver (RAG/retrieval), Gold (training) licensing tiers. C2PA 2.3 and RSL 1.0 compatible. Machine-readable terms embedded cryptographically in every document.',
+  alternates: {
+    canonical: 'https://encypherai.com/rights-management',
+  },
+  openGraph: {
+    title: 'Encypher Rights Management: Machine-Readable AI Licensing',
+    description: 'Publisher-controlled licensing tiers for crawling, RAG, and AI training. Terms travel with your content. Compatible with C2PA 2.3 and RSL 1.0. Willful infringement documentation included.',
+    url: 'https://encypherai.com/rights-management',
+    images: ['/og-image.png'],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Rights Management | Machine-Readable AI Licensing | Encypher',
+    description: 'Bronze/Silver/Gold licensing tiers for AI crawling, RAG, and training. C2PA 2.3 and RSL 1.0 compatible. Terms travel with your content.',
+  },
+};
 
 const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypherai.com';
 
@@ -183,8 +204,19 @@ const FAQS = [
 ];
 
 export default function RightsManagementPage() {
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": FAQS.map(faq => ({
+      "@type": "Question",
+      "name": faq.q,
+      "acceptedAnswer": { "@type": "Answer", "text": faq.a },
+    })),
+  };
+
   return (
     <div className="bg-background text-foreground">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <AISummary
         title="Rights Management — Machine-Readable Licensing for the AI Age"
         whatWeDo="Publisher-controlled licensing terms embedded cryptographically in every piece of content. Bronze (crawling), Silver (RAG), Gold (training) tiers. Formal notice system establishes willful infringement. Evidence packages provide court-ready proof."
