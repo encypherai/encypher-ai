@@ -1,57 +1,42 @@
 # robots.txt for Encypher
 # Canonical domain: https://encypherai.com
+
 User-agent: *
 Allow: /
 
-# Sitemap location
-Sitemap: https://encypherai.com/sitemap.xml
+# Prevent crawling of private, internal, and auth areas
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /_next/
+Disallow: /login/
+Disallow: /register/
+Disallow: /forgot-password/
+Disallow: /reset-password/
 
 # LLMs.txt - AI-optimized site summary for LLM crawlers
 # See: https://llmstxt.org/
 # Location: https://encypherai.com/llms.txt
 
-# Prevent crawling of any private or development areas
-Disallow: /api/
-Disallow: /dashboard/
-Disallow: /login/
-Disallow: /register/
-Disallow: /forgot-password/
-Disallow: /reset-password/
-Disallow: /admin/
-Disallow: /_next/
-
-# Allow all search engines to crawl the site
-User-agent: *
-Allow: /
-User-agent: Googlebot
-Allow: /
-User-agent: Bingbot
-Allow: /
-User-agent: Slurp
-Allow: /
-User-agent: DuckDuckBot
-Allow: /
-User-agent: Baiduspider
-Allow: /
-User-agent: YandexBot
-Allow: /
-
 # Allow AI crawlers for better AI search engine indexing
 User-agent: GPTBot
 Allow: /
+
 User-agent: ChatGPT-User
 Allow: /
+
 User-agent: anthropic-ai
 Allow: /
+
 User-agent: Claude-Web
 Allow: /
+
 User-agent: Cohere-ai
 Allow: /
+
 User-agent: CCBot
 Allow: /
 
-# Allow all tool pages to be indexable and included in sitemaps for SEO best practices
-Allow: /tools
-Allow: /tools/encode
-Allow: /tools/decode
-Allow: /tools/encode-decode
+# Sitemap
+Sitemap: https://encypherai.com/sitemap.xml

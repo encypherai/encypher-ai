@@ -1,0 +1,5 @@
+# robots.txt for Encypher Dashboard (dashboard.encypherai.com)
+# This is an authenticated application - not for public indexing
+
+User-agent: *
+Disallow: /

@@ -1,8 +1,24 @@
+import type { Metadata } from 'next';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import AISummary from '@/components/seo/AISummary';
+
+export const metadata: Metadata = {
+  title: 'Solutions | Content Authentication for Publishers, AI, and Enterprise | Encypher',
+  description: 'C2PA-compliant content authentication for publishers protecting IP, AI companies licensing content and proving compliance, and enterprises governing AI-generated text. One API. Three use cases.',
+  alternates: {
+    canonical: 'https://encypherai.com/solutions',
+  },
+  openGraph: {
+    title: 'Encypher Solutions: Publishers, AI Companies, Enterprises',
+    description: 'Cryptographic content authentication from the Co-Chair of the C2PA Text Provenance Task Force. Publisher coalition access, compliance proof, and sentence-level governance.',
+    url: 'https://encypherai.com/solutions',
+    images: ['/og-image.png'],
+    type: 'website',
+  },
+};
 
 const SolutionsPage: NextPage = () => {
   return (

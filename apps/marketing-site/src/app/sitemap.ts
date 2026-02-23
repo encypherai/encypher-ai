@@ -6,29 +6,36 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date().toISOString();
 
   const staticUrls: MetadataRoute.Sitemap = [
-    { url: `${base}/`, lastModified: now },
-    { url: `${base}/tools`, lastModified: now },
-    { url: `${base}/tools/sign`, lastModified: now },
-    { url: `${base}/tools/verify`, lastModified: now },
-    { url: `${base}/tools/sign-verify`, lastModified: now },
-    { url: `${base}/demo`, lastModified: now },
-    { url: `${base}/ai-demo`, lastModified: now },
-    { url: `${base}/publisher-demo`, lastModified: now },
-    { url: `${base}/ai`, lastModified: now },
-    { url: `${base}/publishers`, lastModified: now },
-    { url: `${base}/enterprises`, lastModified: now },
-    { url: `${base}/pricing`, lastModified: now },
-    { url: `${base}/company`, lastModified: now },
-    { url: `${base}/privacy`, lastModified: now },
-    { url: `${base}/terms`, lastModified: now },
-    { url: `${base}/licensing`, lastModified: now },
-    { url: `${base}/blog`, lastModified: now },
-    { url: `${base}/ai-detector`, lastModified: now },
-    { url: `${base}/deepfake-detection`, lastModified: now },
-    { url: `${base}/ai-copyright-infringement`, lastModified: now },
-    { url: `${base}/solutions/publishers`, lastModified: now },
-    { url: `${base}/solutions/ai-companies`, lastModified: now },
-    { url: `${base}/solutions/enterprises`, lastModified: now },
+    // Core
+    { url: `${base}/`, lastModified: now, priority: 1.0 },
+    { url: `${base}/platform`, lastModified: now, priority: 0.9 },
+    { url: `${base}/pricing`, lastModified: now, priority: 0.9 },
+    { url: `${base}/solutions`, lastModified: now, priority: 0.9 },
+    // Solutions
+    { url: `${base}/solutions/publishers`, lastModified: now, priority: 0.9 },
+    { url: `${base}/solutions/ai-companies`, lastModified: now, priority: 0.9 },
+    { url: `${base}/solutions/enterprises`, lastModified: now, priority: 0.9 },
+    // Landing pages (keyword traffic)
+    { url: `${base}/ai-detector`, lastModified: now, priority: 0.8 },
+    { url: `${base}/deepfake-detection`, lastModified: now, priority: 0.8 },
+    { url: `${base}/ai-copyright-infringement`, lastModified: now, priority: 0.8 },
+    // Demo & try
+    { url: `${base}/ai-demo`, lastModified: now, priority: 0.8 },
+    { url: `${base}/publisher-demo`, lastModified: now, priority: 0.8 },
+    { url: `${base}/demo`, lastModified: now, priority: 0.7 },
+    // Tools
+    { url: `${base}/tools`, lastModified: now, priority: 0.7 },
+    { url: `${base}/tools/sign`, lastModified: now, priority: 0.6 },
+    { url: `${base}/tools/verify`, lastModified: now, priority: 0.6 },
+    { url: `${base}/tools/sign-verify`, lastModified: now, priority: 0.6 },
+    // Blog
+    { url: `${base}/blog`, lastModified: now, priority: 0.8 },
+    // Company & info
+    { url: `${base}/company`, lastModified: now, priority: 0.7 },
+    { url: `${base}/contact`, lastModified: now, priority: 0.7 },
+    { url: `${base}/licensing`, lastModified: now, priority: 0.6 },
+    { url: `${base}/privacy`, lastModified: now, priority: 0.4 },
+    { url: `${base}/terms`, lastModified: now, priority: 0.4 },
   ];
 
   const posts = getAllPostSlugs();
