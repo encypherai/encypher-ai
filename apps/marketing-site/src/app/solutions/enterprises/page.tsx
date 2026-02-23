@@ -25,12 +25,19 @@ import {
 import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
+import Script from 'next/script';
+import { enterprisesFaqSchema } from '@/lib/seo';
 
 export default function EnterprisePage() {
   const [showContactModal, setShowContactModal] = useState(false);
 
   return (
     <div className="bg-background text-foreground">
+      <Script
+        id="schema-faq-enterprises"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(enterprisesFaqSchema) }}
+      />
       <AISummary
         title="Encypher for Enterprise Governance"
         whatWeDo="Authors of C2PA Section A.7. Patent-pending API and SDKs for sentence-level document provenance. Cryptographic proof of which passages were AI-generated, AI-assisted, or human-written -- exportable as tamper-evident evidence packages."

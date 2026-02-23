@@ -26,7 +26,7 @@ import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 import Script from 'next/script';
-import { faqSchema } from '@/lib/seo';
+import { aiCompaniesFaqSchema } from '@/lib/seo';
 
 export default function AiCompaniesPage() {
   const [showContactModal, setShowContactModal] = useState(false);
@@ -43,7 +43,7 @@ export default function AiCompaniesPage() {
       <Script
         id="schema-faq-ai"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(aiCompaniesFaqSchema) }}
       />
 
       {/* ------------------------------------------------------------------ */}

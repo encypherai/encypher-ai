@@ -10,6 +10,8 @@ import MetadataBackground from '@/components/hero/MetadataBackground';
 import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
+import Script from 'next/script';
+import { organizationSchema } from '@/lib/seo';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.encypherai.com';
 
@@ -29,6 +31,11 @@ export default function HomePage() {
 
   return (
     <>
+      <Script
+        id="schema-organization"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
       <AISummary
         title="Encypher – Content Intelligence Infrastructure"
         whatWeDo="Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text). We provide API and SDKs in Python, TypeScript, Go, and Rust for patent-pending granular content attribution and licensing infrastructure. Standard published January 8, 2026."

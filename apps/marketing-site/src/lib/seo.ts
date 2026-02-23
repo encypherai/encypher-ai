@@ -237,30 +237,30 @@ export function getEnterpriseMetadata(): Metadata {
  */
 export function getAILabMetadata(): Metadata {
   return {
-    title: "AI Performance Intelligence | Encypher",
-    description: "See which parameters drive viral content. Track every output at sentence-level. One integration covers the entire publisher ecosystem.",
+    title: "AI Content Licensing & C2PA Compliance | Encypher",
+    description: "One API for publisher coalition access, C2PA compliance proof, and EU AI Act transparency watermarking. No per-publisher negotiations. Built with OpenAI, Google, Adobe, and Microsoft.",
     keywords: [...keywords.core, ...keywords.aiLabs],
     openGraph: {
-      title: "See Which Parameters Drive Viral Content | Encypher",
-      description: "Track every output. Optimize your models. One integration covers the entire publisher ecosystem.",
+      title: "License Publisher Content at Scale | Encypher",
+      description: "One agreement covers the entire publisher coalition. Cryptographic proof of C2PA compliance, EU AI Act Article 52 transparency, and real-world performance intelligence.",
       images: [
         {
           url: siteConfig.images.ai,
           width: 1200,
           height: 630,
-          alt: "Encypher for AI Labs - See Which Parameters Drive Viral Content",
+          alt: "Encypher for AI Companies - Publisher Content Licensing and C2PA Compliance",
         }
       ],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "See Which Parameters Drive Viral Content | Encypher",
-      description: "Track every output. Optimize your models. Performance intelligence + compliance infrastructure.",
+      title: "License Publisher Content at Scale | Encypher",
+      description: "One API for publisher coalition licensing, C2PA compliance proof, and EU AI Act transparency. Built with OpenAI, Google, Adobe, Microsoft.",
       images: [siteConfig.images.ai],
     },
     alternates: {
-      canonical: `${siteConfig.url}/ai`,
+      canonical: `${siteConfig.url}/solutions/ai-companies`,
     },
   };
 }
@@ -446,6 +446,148 @@ export const faqSchema = {
 };
 
 /**
+ * Page-specific FAQ schema for /solutions/ai-companies
+ * Must match the visible FAQ accordion content on that page.
+ */
+export const aiCompaniesFaqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Do we need to negotiate with each publisher separately?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. The Encypher publisher coalition operates as a network license -- one agreement with Encypher covers access to all coalition members at the tiers each publisher has set (Bronze for indexing, Silver for RAG and attribution, Gold for training). You never negotiate directly with individual publishers. As new publishers join the coalition, your license extends to them automatically."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "We received a formal notice with an Encypher evidence package. What does that mean?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The evidence package contains cryptographic proof that is independently verifiable -- it does not depend on trusting Encypher's servers. The signature is embedded in the content itself, verified against the publisher's own key. Your legal team should treat it as valid documentation of when content was published, who authored it, and what licensing tier it was marked for. The practical path forward is to join the coalition; AI companies that resolve notices this way typically complete the process within 60 days."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does provenance verification add latency to our inference pipeline?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Verification is a single API call with under 50ms p99 latency at enterprise tier. It can run asynchronously post-inference without blocking the user response. The batch verification endpoint handles up to 10,000 documents per request. The C2PA verification logic is also available as an open-source library that runs entirely within your own infrastructure for zero-latency isolation."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "We may have fair use or training exemptions under US law. Why license?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The legal landscape is unsettled with active litigation ongoing. Licensing is defensible regardless of how copyright law evolves -- it removes the question entirely. Enterprise customers are now asking about content provenance in security questionnaires, and AI companies that can prove they license content close deals that competitors cannot. The legal exemption argument only addresses the legal risk; licensing addresses both the legal risk and the competitive advantage."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does this relate to robots.txt and noai directives?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "robots.txt and noai directives apply at crawl time, on the publisher's server. C2PA provenance is embedded in the content itself -- it travels with the text wherever it goes, including content already in your training corpus before any crawl directive existed. A publisher who signs their archive retroactively attaches licensing terms to every copy of that content, on any server. Encypher is not an enforcement mechanism -- it is infrastructure that makes licensing terms machine-readable and verifiable."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What data do you see from our inference calls?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For verification calls: we receive the text submitted for verification and return provenance metadata. We do not train on your data, do not retain content beyond the verification transaction, and offer a standard data processing agreement at enterprise tier. For performance intelligence: we record that a provenance check occurred, the result, and the timestamp -- not the full content of your AI-generated outputs unless you opt into spread analytics via explicit configuration."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is this sufficient for EU AI Act compliance?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Encypher's output watermarking is designed to satisfy Article 52(1) transparency obligations -- the requirement that AI-generated content be detectable as such. The C2PA manifest embedded in each output identifies it as AI-generated, records the generation timestamp, and links to the source model. The China watermarking mandate is covered by the same integration under a separate configuration flag. Confirm with your counsel that our implementation satisfies your specific obligations in the jurisdictions where you operate."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does performance intelligence work if a publisher is not in the coalition yet?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You can still verify content from publishers who have signed their content independently -- C2PA is an open standard and any publisher can embed provenance metadata. If the content carries a valid C2PA manifest, Encypher can verify it and attribute it to the source, regardless of coalition membership. Coalition membership adds the licensing agreement layer; the provenance verification layer works on any signed content."
+      }
+    }
+  ]
+};
+
+/**
+ * Page-specific FAQ schema for /solutions/enterprises
+ * Must match the visible FAQ accordion content on that page.
+ */
+export const enterprisesFaqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Does Encypher satisfy court AI disclosure requirements?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Court AI disclosure orders vary significantly by jurisdiction. Most require attorneys to certify that AI-generated content was reviewed and citations were verified. Encypher provides the provenance record that supports such a certification: which passages were AI-generated, when, by which model, and that the document is unmodified since signing. Confirm with ethics counsel that your implementation satisfies the specific orders in your jurisdictions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does paragraph-level signing work in a real drafting workflow?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The typical integration is through your AI drafting tool or document management system. When an AI assistant generates a passage, the output is signed via the Encypher API before insertion into the document -- the manifest records the model, timestamp, and generation context. When an attorney writes a passage, it can be signed as human-authored with their credentials. Integration points include REST API, Python and TypeScript SDKs, Word and Google Docs add-ins, and webhook-based CMS integrations."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "If an attorney edits an AI-generated paragraph, what does the record show?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The record shows both events. The original AI-generated passage has its own signed manifest with model, timestamp, and generation context. When the attorney edits and re-signs, the updated passage carries the attorney's credentials and a new timestamp -- with the prior AI-generation manifest preserved in the chain. The modification log is tamper-evident, showing precisely what changed and when."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can opposing counsel or regulators independently verify the provenance claims?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes -- and this is a deliberate design property. The C2PA standard is open and the verification libraries are open source. Any party with the signed document and your organization's public key can independently verify every provenance claim without Encypher's involvement. With BYOK, the signature is against your own certificate, making it much harder to contest than a declaration from a vendor."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Encypher see the content of our documents?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "In the standard API integration, document content passes through Encypher's signing service to have provenance metadata embedded. We do not store, train on, or use document content beyond the signing transaction. Enterprise customers receive a standard data processing agreement. For the highest isolation -- appropriate for attorney-client privilege or strict data residency requirements -- Encypher supports on-premises deployment and BYOK configurations where document content never leaves your environment."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does this integrate with Word, Google Docs, or our DMS?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Encypher provides a REST API and SDKs in Python and TypeScript that integrate into any document workflow. For common document management systems like iManage, NetDocuments, and SharePoint, integration is typically built at the document save or export event. Word and Google Docs add-ins for real-time sentence-level provenance are available for enterprise customers. Contact us to discuss your specific DMS and AI tooling environment."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if we need to prove provenance for documents created before we integrated Encypher?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For documents created before integration, Encypher supports batch signing of completed documents, which produces a document-level signature recording that the document existed and was unmodified as of the signing date. This provides a tamper-evident record but is weaker than sentence-level provenance. The strongest provenance comes from signing at the point of generation. Contact us to discuss your retroactive requirements."
+      }
+    }
+  ]
+};
+
+/**
  * Blog post schema generator
  */
 export function getBlogPostSchema(post: {
@@ -610,6 +752,8 @@ export default {
   organizationSchema,
   softwareSchema,
   faqSchema,
+  aiCompaniesFaqSchema,
+  enterprisesFaqSchema,
   getPublisherMetadata,
   getAILabMetadata,
   getEnterpriseMetadata,
