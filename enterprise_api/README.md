@@ -1,4 +1,4 @@
-# Encypher Enterprise API
+Try one more time, # Encypher Enterprise API
 
 <div align="center">
 
@@ -338,6 +338,7 @@ In addition to trusted CA subjects, this endpoint returns active trust-policy me
 | `/api/v1/coalition/earnings` | GET | ✅ | All | Get detailed earnings history |
 | `/api/v1/coalition/opt-out` | POST | ✅ | All | Opt out of coalition revenue sharing |
 | `/api/v1/coalition/opt-in` | POST | ✅ | All | Opt in to coalition revenue sharing |
+| `/api/v1/coalition/public/stats` | GET | ❌ | Public | Aggregate coalition stats for marketing display (no auth) |
 
 ### Team Management Endpoints
 
@@ -417,6 +418,7 @@ Machine-readable deed system for publishers to define and enforce licensing term
 | `/api/v1/rights/analytics/detections` | GET | ✅ | Business+ | Phone-home detection analytics |
 | `/api/v1/rights/analytics/crawlers` | GET | ✅ | Business+ | AI crawler activity breakdown |
 | `/api/v1/rights/analytics/crawlers/timeseries` | GET | ✅ | Business+ | Daily crawler activity timeseries |
+| `/api/v1/rights/analytics/content-spread` | GET | ✅ | Enterprise+ | External domain detection analytics (content spread) |
 
 Rights profiles support three licensing tiers:
 - **Bronze** — Scraping / crawling terms
@@ -447,6 +449,7 @@ Rights profiles support three licensing tiers:
 | `/api/v1/notices/{notice_id}` | GET | ✅ | Business+ | Retrieve a formal notice |
 | `/api/v1/notices/{notice_id}/deliver` | POST | ✅ | Business+ | Deliver notice to an AI company |
 | `/api/v1/notices/{notice_id}/evidence` | GET | ✅ | Business+ | Get cryptographic evidence package (court-ready) |
+| `/api/v1/notices/{notice_id}/evidence/pdf` | GET | ✅ | Business+ | Download Encypher-branded PDF evidence package |
 
 Notices are append-only with SHA-256 content hashing for tamper-evidence. Each evidence package includes a linked `notice_evidence_chain` for chain-of-custody documentation.
 
@@ -461,12 +464,21 @@ Notices are append-only with SHA-256 content hashing for tamper-evidence. Each e
 | `/api/v1/rights-licensing/agreements/{agreement_id}` | GET | ✅ | All | Get a specific licensing agreement |
 | `/api/v1/rights-licensing/agreements/{agreement_id}/usage` | GET | ✅ | All | Get usage metrics for an agreement |
 
+### CDN Integration Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/cdn/cloudflare` | POST | ✅ | Business+ | Create or update Cloudflare Logpush integration |
+| `/api/v1/cdn/cloudflare` | GET | ✅ | Business+ | Get current Cloudflare Logpush integration config |
+| `/api/v1/cdn/cloudflare` | DELETE | ✅ | Business+ | Remove Cloudflare Logpush integration |
+
 ### Onboarding & Provisioning Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
 | `/api/v1/onboarding/request-certificate` | POST | ✅ | All | Request SSL.com code signing certificate |
 | `/api/v1/onboarding/certificate-status` | GET | ✅ | All | Get current certificate status |
+| `/api/v1/onboarding/progression-status` | GET | ✅ | All | Publisher value journey progression (6-stage Sign->Earnings) |
 
 ### Health & Monitoring Endpoints
 

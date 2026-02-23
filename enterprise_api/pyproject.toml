@@ -41,6 +41,7 @@ dependencies = [
     "pypdf==6.6.2",
     "reedsolo>=1.7.0",
     "pyjwt>=2.11.0",
+    "reportlab>=4.4.9",
 ]
 
 [project.optional-dependencies]

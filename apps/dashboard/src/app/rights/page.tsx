@@ -543,6 +543,7 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [evidenceNoticeId, setEvidenceNoticeId] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [form, setForm] = useState({
     recipient_entity: '',
     recipient_contact: '',
@@ -771,7 +772,7 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
                     ))}
                   </div>
                 </div>
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(JSON.stringify(evidenceQuery.data, null, 2));
@@ -780,6 +781,27 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
                     className="text-xs px-3 py-1.5 rounded bg-slate-100 dark:bg-slate-700 hover:opacity-80 transition-opacity text-slate-700 dark:text-slate-300"
                   >
                     Copy as JSON
+                  </button>
+                  <button
+                    disabled={pdfLoading}
+                    onClick={async () => {
+                      if (!evidenceNoticeId) return;
+                      setPdfLoading(true);
+                      try {
+                        await apiClient.downloadEvidencePackagePdf(accessToken, evidenceNoticeId);
+                        toast.success('Evidence package downloaded.');
+                      } catch {
+                        toast.error('Failed to download PDF. Please try again.');
+                      } finally {
+                        setPdfLoading(false);
+                      }
+                    }}
+                    className="text-xs px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white flex items-center gap-1.5"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    {pdfLoading ? 'Generating...' : 'Download PDF'}
                   </button>
                 </div>
               </div>

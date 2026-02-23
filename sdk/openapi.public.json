@@ -1281,7 +1281,7 @@
           "Signing"
         ],
         "summary": "Sign content with C2PA manifest",
-        "description": "Sign content with C2PA manifest. Features are gated by tier.\n\n---\n\n## Tier Feature Matrix\n\n| Feature | Free | Enterprise |\n|---------|------|------------|\n| Basic C2PA signing | ✅ | ✅ |\n| Sentence / paragraph / section segmentation | ✅ | ✅ |\n| Advanced manifest modes | ✅ | ✅ |\n| Attribution indexing | ✅ | ✅ |\n| Custom assertions | ✅ | ✅ |\n| Rights metadata | ✅ | ✅ |\n| Batch signing | up to 10 | up to 100 |\n| Word-level segmentation | ❌ | ✅ |\n| Dual binding | ❌ | ✅ |\n| Fingerprinting | ❌ | ✅ |\n\n---\n\n## Request Body\n\nProvide **either** `text` (single document) **or** `documents` (batch), plus an `options` object.\n\n### Top-level fields\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `text` | string | one of `text` / `documents` | Content to sign (single document, max 1 MB). |\n| `document_id` | string | no | Custom document identifier (1-255 chars). Auto-generated if omitted. |\n| `document_title` | string | no | Human-readable title (max 500 chars). |\n| `document_url` | string | no | Canonical URL of the document (max 1000 chars). |\n| `metadata` | object | no | Arbitrary key-value metadata attached to the document. |\n| `documents` | array | one of `text` / `documents` | List of `{text, document_id?, document_title?, document_url?, metadata?}` objects for batch signing. |\n| `options` | object | no | Signing options (see below). All fields have sensible defaults. |\n\n---\n\n## Options Reference\n\n### Segmentation & Structure\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `segmentation_level` | string | `\"document\"` | `document`, `sentence`, `paragraph`, `section`, `word` | `word` requires Enterprise | Granularity at which text is split and individually signed. Higher granularity enables per-segment tamper detection. |\n| `segmentation_levels` | string[] | *null* | subset of `sentence`, `paragraph`, `section` | Free | Build Merkle trees at multiple levels simultaneously for multi-resolution verification. |\n\n### Manifest & Embedding\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `manifest_mode` | string | `\"full\"` | `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`, `micro` | Free | Controls how the C2PA manifest and per-segment markers are embedded. `full` = standard C2PA wrapper. `micro` = ultra-compact per-segment markers controlled by `ecc` and `embed_c2pa` flags. A C2PA manifest is always generated; `embed_c2pa` controls whether it's embedded in content; `store_c2pa_manifest` controls DB persistence. |\n| `ecc` | bool | `true` | | Free | Enable Reed-Solomon error correction for micro mode (44 chars/segment vs 36). Ignored for non-micro modes. |\n| `embed_c2pa` | bool | `true` | | Free | Embed full C2PA document manifest into signed content for micro mode. When false, per-sentence markers only; C2PA manifest is still generated and stored in DB. Ignored for non-micro modes. |\n| `embedding_strategy` | string | `\"single_point\"` | `single_point`, `distributed`, `distributed_redundant` | `distributed_redundant` requires Enterprise | How the invisible signature is placed within each segment. `single_point` = one location. `distributed` = spread across the segment. `distributed_redundant` = distributed with ECC for resilience. |\n| `distribution_target` | string | *null* | `whitespace`, `punctuation`, `all_chars` | Free | Which character positions are used when `embedding_strategy` is `distributed` or `distributed_redundant`. |\n\n### C2PA Provenance\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `action` | string | `\"c2pa.created\"` | `c2pa.created`, `c2pa.edited` | Free | C2PA action type. Use `c2pa.created` for new content, `c2pa.edited` for modifications. |\n| `previous_instance_id` | string | *null* | any | Free | The `instance_id` from a previous signing response. Required when `action` is `c2pa.edited` to form a provenance chain. |\n| `document_type` | string | `\"article\"` | `article`, `legal_brief`, `contract`, `ai_output` | Free | Semantic document type included in the manifest. |\n| `claim_generator` | string | *null* | any | Free | Optional claim generator identifier for C2PA manifests (e.g. your application name). |\n| `digital_source_type` | string | *null* | IPTC URI | Free | IPTC digital source type URI, e.g. for AI-generated content. |\n\n### Advanced Features\n\n| Option | Type | Default | Tier | Description |\n|--------|------|---------|------|-------------|\n| `index_for_attribution` | bool | `false` | Free | Index content segments for later attribution and plagiarism detection via `/verify/advanced`. |\n| `add_dual_binding` | bool | `false` | Enterprise | Enable an additional integrity binding layer for enhanced tamper resistance. |\n| `include_fingerprint` | bool | `false` | Enterprise | Generate a robust content fingerprint that can survive minor text modifications. |\n| `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding for non-micro modes; only basic metadata is attached. For micro mode, use `embed_c2pa` instead. |\n| `store_c2pa_manifest` | bool | `true` | Free | Persist generated C2PA manifest in content DB for DB-backed verification. Applies to all modes that generate a manifest. |\n\n### Custom Assertions & Rights (Business+)\n\n| Option | Type | Default | Tier | Description |\n|--------|------|---------|------|-------------|\n| `custom_assertions` | array | *null* | Free | List of `{label, data}` objects to include as custom C2PA assertions. |\n| `template_id` | string | *null* | Free | ID of a pre-registered assertion template to apply. |\n| `validate_assertions` | bool | `true` | Free | Whether to validate custom assertions against registered JSON schemas. |\n| `rights` | object | *null* | Free | Rights metadata: `{copyright_holder, license_url, usage_terms, syndication_allowed, embargo_until, contact_email}`. |\n| `license` | object | *null* | Free | License info: `{type, url, contact_email}`. |\n| `actions` | array | *null* | Free | List of C2PA action assertion objects. |\n\n### Output Options\n\n| Option | Type | Default | Values | Description |\n|--------|------|---------|--------|-------------|\n| `embedding_options.format` | string | `\"plain\"` | `plain`, `html`, `markdown`, `json` | Output format for the signed text. |\n| `embedding_options.method` | string | `\"invisible\"` | `invisible`, `data-attribute`, `span`, `comment` | How the embedding is represented. `invisible` uses zero-width Unicode characters. |\n| `embedding_options.include_text` | bool | `true` | | Whether to include the embedded text in the response. |\n| `return_embedding_plan` | bool | `false` | | When `true`, includes `document.embedding_plan` with codepoint-based marker insertion operations for formatting-preserving clients. |\n| `expires_at` | datetime | *null* | ISO 8601 | Optional expiration timestamp for the embeddings. |\n\n---\n\n## Examples\n\n**Single document (minimal):**\n```json\n{\n    \"text\": \"The Senate passed a landmark bill today.\",\n    \"document_title\": \"Senate Bill\"\n}\n```\n\n**Single document (with options):**\n```json\n{\n    \"text\": \"The Senate passed a landmark bill today. The vote was 67-33.\",\n    \"document_title\": \"Senate Bill\",\n    \"options\": {\n        \"segmentation_level\": \"sentence\",\n        \"manifest_mode\": \"micro\",\n        \"index_for_attribution\": true,\n        \"action\": \"c2pa.created\"\n    }\n}\n```\n\n**Batch:**\n```json\n{\n    \"documents\": [\n        {\"text\": \"First article...\", \"document_title\": \"Article 1\"},\n        {\"text\": \"Second article...\", \"document_title\": \"Article 2\"}\n    ],\n    \"options\": {\n        \"segmentation_level\": \"sentence\",\n        \"embedding_strategy\": \"distributed\"\n    }\n}\n```\n\n**Edit provenance chain:**\n```json\n{\n    \"text\": \"Updated article content...\",\n    \"options\": {\n        \"action\": \"c2pa.edited\",\n        \"previous_instance_id\": \"urn:uuid:abc123...\"\n    }\n}\n```\n\nThe response includes `meta.features_gated` showing features available at higher tiers.\n\nWhen `options.return_embedding_plan=true`, each signed document may also include:\n\n```json\n\"embedding_plan\": {\n  \"index_unit\": \"codepoint\",\n  \"operations\": [\n    {\"insert_after_index\": 128, \"marker\": \"...\"}\n  ]\n}\n```\n\nThis allows clients (e.g. Office add-ins) to insert only invisible markers at indexed positions while preserving native formatting.",
+        "description": "Sign content with C2PA manifest. Features are gated by tier.\n\n---\n\n## Tier Feature Matrix\n\n| Feature | Free | Enterprise |\n|---------|------|------------|\n| Basic C2PA signing | \u2705 | \u2705 |\n| Sentence / paragraph / section segmentation | \u2705 | \u2705 |\n| Advanced manifest modes | \u2705 | \u2705 |\n| Attribution indexing | \u2705 | \u2705 |\n| Custom assertions | \u2705 | \u2705 |\n| Rights metadata | \u2705 | \u2705 |\n| Batch signing | up to 10 | up to 100 |\n| Word-level segmentation | \u274c | \u2705 |\n| Dual binding | \u274c | \u2705 |\n| Fingerprinting | \u274c | \u2705 |\n\n---\n\n## Request Body\n\nProvide **either** `text` (single document) **or** `documents` (batch), plus an `options` object.\n\n### Top-level fields\n\n| Field | Type | Required | Description |\n|-------|------|----------|-------------|\n| `text` | string | one of `text` / `documents` | Content to sign (single document, max 1 MB). |\n| `document_id` | string | no | Custom document identifier (1-255 chars). Auto-generated if omitted. |\n| `document_title` | string | no | Human-readable title (max 500 chars). |\n| `document_url` | string | no | Canonical URL of the document (max 1000 chars). |\n| `metadata` | object | no | Arbitrary key-value metadata attached to the document. |\n| `documents` | array | one of `text` / `documents` | List of `{text, document_id?, document_title?, document_url?, metadata?}` objects for batch signing. |\n| `options` | object | no | Signing options (see below). All fields have sensible defaults. |\n\n---\n\n## Options Reference\n\n### Segmentation & Structure\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `segmentation_level` | string | `\"document\"` | `document`, `sentence`, `paragraph`, `section`, `word` | `word` requires Enterprise | Granularity at which text is split and individually signed. Higher granularity enables per-segment tamper detection. |\n| `segmentation_levels` | string[] | *null* | subset of `sentence`, `paragraph`, `section` | Free | Build Merkle trees at multiple levels simultaneously for multi-resolution verification. |\n\n### Manifest & Embedding\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `manifest_mode` | string | `\"full\"` | `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`, `micro` | Free | Controls how the C2PA manifest and per-segment markers are embedded. `full` = standard C2PA wrapper. `micro` = ultra-compact per-segment markers controlled by `ecc` and `embed_c2pa` flags. A C2PA manifest is always generated; `embed_c2pa` controls whether it's embedded in content; `store_c2pa_manifest` controls DB persistence. |\n| `ecc` | bool | `true` | | Free | Enable Reed-Solomon error correction for micro mode (44 chars/segment vs 36). Ignored for non-micro modes. |\n| `embed_c2pa` | bool | `true` | | Free | Embed full C2PA document manifest into signed content for micro mode. When false, per-sentence markers only; C2PA manifest is still generated and stored in DB. Ignored for non-micro modes. |\n| `embedding_strategy` | string | `\"single_point\"` | `single_point`, `distributed`, `distributed_redundant` | `distributed_redundant` requires Enterprise | How the invisible signature is placed within each segment. `single_point` = one location. `distributed` = spread across the segment. `distributed_redundant` = distributed with ECC for resilience. |\n| `distribution_target` | string | *null* | `whitespace`, `punctuation`, `all_chars` | Free | Which character positions are used when `embedding_strategy` is `distributed` or `distributed_redundant`. |\n\n### C2PA Provenance\n\n| Option | Type | Default | Values | Tier | Description |\n|--------|------|---------|--------|------|-------------|\n| `action` | string | `\"c2pa.created\"` | `c2pa.created`, `c2pa.edited` | Free | C2PA action type. Use `c2pa.created` for new content, `c2pa.edited` for modifications. |\n| `previous_instance_id` | string | *null* | any | Free | The `instance_id` from a previous signing response. Required when `action` is `c2pa.edited` to form a provenance chain. |\n| `document_type` | string | `\"article\"` | `article`, `legal_brief`, `contract`, `ai_output` | Free | Semantic document type included in the manifest. |\n| `claim_generator` | string | *null* | any | Free | Optional claim generator identifier for C2PA manifests (e.g. your application name). |\n| `digital_source_type` | string | *null* | IPTC URI | Free | IPTC digital source type URI, e.g. for AI-generated content. |\n\n### Advanced Features\n\n| Option | Type | Default | Tier | Description |\n|--------|------|---------|------|-------------|\n| `index_for_attribution` | bool | `false` | Free | Index content segments for later attribution and plagiarism detection via `/verify/advanced`. |\n| `add_dual_binding` | bool | `false` | Enterprise | Enable an additional integrity binding layer for enhanced tamper resistance. |\n| `include_fingerprint` | bool | `false` | Enterprise | Generate a robust content fingerprint that can survive minor text modifications. |\n| `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding for non-micro modes; only basic metadata is attached. For micro mode, use `embed_c2pa` instead. |\n| `store_c2pa_manifest` | bool | `true` | Free | Persist generated C2PA manifest in content DB for DB-backed verification. Applies to all modes that generate a manifest. |\n\n### Custom Assertions & Rights (Business+)\n\n| Option | Type | Default | Tier | Description |\n|--------|------|---------|------|-------------|\n| `custom_assertions` | array | *null* | Free | List of `{label, data}` objects to include as custom C2PA assertions. |\n| `template_id` | string | *null* | Free | ID of a pre-registered assertion template to apply. |\n| `validate_assertions` | bool | `true` | Free | Whether to validate custom assertions against registered JSON schemas. |\n| `rights` | object | *null* | Free | Rights metadata: `{copyright_holder, license_url, usage_terms, syndication_allowed, embargo_until, contact_email}`. |\n| `license` | object | *null* | Free | License info: `{type, url, contact_email}`. |\n| `actions` | array | *null* | Free | List of C2PA action assertion objects. |\n\n### Output Options\n\n| Option | Type | Default | Values | Description |\n|--------|------|---------|--------|-------------|\n| `embedding_options.format` | string | `\"plain\"` | `plain`, `html`, `markdown`, `json` | Output format for the signed text. |\n| `embedding_options.method` | string | `\"invisible\"` | `invisible`, `data-attribute`, `span`, `comment` | How the embedding is represented. `invisible` uses zero-width Unicode characters. |\n| `embedding_options.include_text` | bool | `true` | | Whether to include the embedded text in the response. |\n| `return_embedding_plan` | bool | `false` | | When `true`, includes `document.embedding_plan` with codepoint-based marker insertion operations for formatting-preserving clients. |\n| `expires_at` | datetime | *null* | ISO 8601 | Optional expiration timestamp for the embeddings. |\n\n---\n\n## Examples\n\n**Single document (minimal):**\n```json\n{\n    \"text\": \"The Senate passed a landmark bill today.\",\n    \"document_title\": \"Senate Bill\"\n}\n```\n\n**Single document (with options):**\n```json\n{\n    \"text\": \"The Senate passed a landmark bill today. The vote was 67-33.\",\n    \"document_title\": \"Senate Bill\",\n    \"options\": {\n        \"segmentation_level\": \"sentence\",\n        \"manifest_mode\": \"micro\",\n        \"index_for_attribution\": true,\n        \"action\": \"c2pa.created\"\n    }\n}\n```\n\n**Batch:**\n```json\n{\n    \"documents\": [\n        {\"text\": \"First article...\", \"document_title\": \"Article 1\"},\n        {\"text\": \"Second article...\", \"document_title\": \"Article 2\"}\n    ],\n    \"options\": {\n        \"segmentation_level\": \"sentence\",\n        \"embedding_strategy\": \"distributed\"\n    }\n}\n```\n\n**Edit provenance chain:**\n```json\n{\n    \"text\": \"Updated article content...\",\n    \"options\": {\n        \"action\": \"c2pa.edited\",\n        \"previous_instance_id\": \"urn:uuid:abc123...\"\n    }\n}\n```\n\nThe response includes `meta.features_gated` showing features available at higher tiers.\n\nWhen `options.return_embedding_plan=true`, each signed document may also include:\n\n```json\n\"embedding_plan\": {\n  \"index_unit\": \"codepoint\",\n  \"operations\": [\n    {\"insert_after_index\": 128, \"marker\": \"...\"}\n  ]\n}\n```\n\nThis allows clients (e.g. Office add-ins) to insert only invisible markers at indexed positions while preserving native formatting.",
         "operationId": "sign_content_api_v1_sign_post",
         "requestBody": {
           "content": {
@@ -1335,7 +1335,7 @@
           "Signing"
         ],
         "summary": "REMOVED - Use POST /sign with options instead",
-        "description": "**⚠️ REMOVED: This endpoint has been removed.**\n\nPlease use `POST /sign` with options instead.\n\nMigration example:\n```json\n// Old /sign/advanced request\n{\n    \"document_id\": \"doc1\",\n    \"text\": \"...\",\n    \"segmentation_level\": \"sentence\"\n}\n\n// New /sign request\n{\n    \"text\": \"...\",\n    \"document_id\": \"doc1\",\n    \"options\": {\n        \"segmentation_level\": \"sentence\"\n    }\n}\n```",
+        "description": "**\u26a0\ufe0f REMOVED: This endpoint has been removed.**\n\nPlease use `POST /sign` with options instead.\n\nMigration example:\n```json\n// Old /sign/advanced request\n{\n    \"document_id\": \"doc1\",\n    \"text\": \"...\",\n    \"segmentation_level\": \"sentence\"\n}\n\n// New /sign request\n{\n    \"text\": \"...\",\n    \"document_id\": \"doc1\",\n    \"options\": {\n        \"segmentation_level\": \"sentence\"\n    }\n}\n```",
         "operationId": "sign_advanced_api_v1_sign_advanced_post",
         "responses": {
           "200": {
@@ -1359,7 +1359,7 @@
           "Verification"
         ],
         "summary": "Advanced verification",
-        "description": "Verify signed content and optionally run attribution, plagiarism detection, and fuzzy fingerprint search.\n\nRequires an authenticated API key with verify permission.\n\n---\n\n## Request Fields\n\n| Field | Type | Default | Values | Tier | Description |\n|-------|------|---------|--------|------|-------------|\n| `text` | string | *(required)* | any (min 1 char) | Free | The text to verify. Should contain invisible C2PA embeddings from a prior `/sign` call. |\n| `segmentation_level` | string | `\"sentence\"` | `document`, `sentence`, `paragraph`, `section` | Free | Granularity used for tamper detection. Should match the level used during signing. |\n| `search_scope` | string | `\"organization\"` | `organization`, `public`, `all` | `all` requires Enterprise | Scope for attribution / plagiarism lookups. `organization` = only your org's documents. `public` = publicly indexed docs. `all` = cross-organization (Enterprise only). |\n| `include_attribution` | bool | `false` | | Free | Run attribution analysis — find source documents that match segments of the submitted text. |\n| `detect_plagiarism` | bool | `false` | | Free | Run plagiarism detection — generate a full plagiarism report with match percentages per source. |\n| `include_heat_map` | bool | `false` | | Free | Include a segment-level heat map in the plagiarism report (only used when `detect_plagiarism` is `true`). |\n| `min_match_percentage` | float | `0.0` | 0.0 – 100.0 | Free | Minimum match percentage to include a source in the plagiarism report. |\n| `fuzzy_search` | object | *null* | see below | Enterprise | Optional fuzzy fingerprint search configuration. |\n\n### `fuzzy_search` Object (Enterprise)\n\n| Field | Type | Default | Values | Description |\n|-------|------|---------|--------|-------------|\n| `enabled` | bool | `false` | | Whether to run fuzzy fingerprint search. |\n| `algorithm` | string | `\"simhash\"` | `simhash` | Fingerprint algorithm. |\n| `levels` | string[] | `[\"sentence\", \"paragraph\"]` | `sentence`, `paragraph`, `document` | Segmentation levels to search. |\n| `similarity_threshold` | float | `0.82` | 0.0 – 1.0 | Minimum similarity score for a match. |\n| `max_candidates` | int | `20` | 1 – 200 | Maximum number of candidate matches to return. |\n| `include_merkle_proof` | bool | `true` | | Whether to include Merkle proofs for matches. |\n| `fallback_when_no_binding` | bool | `true` | | Only run fuzzy search when no embeddings are found in the text. |\n\n---\n\n## Response\n\nThe response always includes:\n\n- **`data`** — Verification verdict with `is_signed`, `reason_code`, `embeddings_found`, etc.\n- **`tamper_detection`** — Merkle root comparison at the requested segmentation level.\n- **`tamper_localization`** — Per-segment diff showing changed / inserted / deleted segments (when Merkle root exists).\n\nConditionally included based on request flags:\n\n- **`attribution`** — List of source document matches with `document_id`, `organization_id`, `confidence`.\n- **`plagiarism`** — Full plagiarism report with `overall_match_percentage`, `source_documents`, optional `heat_map_data`.\n- **`fuzzy_search`** — Fuzzy fingerprint matches with similarity scores.\n\n---\n\n## Examples\n\n**Basic verification:**\n```json\n{\n    \"text\": \"Signed content with invisible C2PA embeddings...\"\n}\n```\n\n**Verification with attribution and plagiarism:**\n```json\n{\n    \"text\": \"Content to check...\",\n    \"segmentation_level\": \"sentence\",\n    \"include_attribution\": true,\n    \"detect_plagiarism\": true,\n    \"include_heat_map\": true,\n    \"min_match_percentage\": 10.0\n}\n```\n\n**Verification with fuzzy search (Enterprise):**\n```json\n{\n    \"text\": \"Content that may have been modified...\",\n    \"fuzzy_search\": {\n        \"enabled\": true,\n        \"similarity_threshold\": 0.75,\n        \"max_candidates\": 50,\n        \"fallback_when_no_binding\": false\n    }\n}\n```",
+        "description": "Verify signed content and optionally run attribution, plagiarism detection, and fuzzy fingerprint search.\n\nRequires an authenticated API key with verify permission.\n\n---\n\n## Request Fields\n\n| Field | Type | Default | Values | Tier | Description |\n|-------|------|---------|--------|------|-------------|\n| `text` | string | *(required)* | any (min 1 char) | Free | The text to verify. Should contain invisible C2PA embeddings from a prior `/sign` call. |\n| `segmentation_level` | string | `\"sentence\"` | `document`, `sentence`, `paragraph`, `section` | Free | Granularity used for tamper detection. Should match the level used during signing. |\n| `search_scope` | string | `\"organization\"` | `organization`, `public`, `all` | `all` requires Enterprise | Scope for attribution / plagiarism lookups. `organization` = only your org's documents. `public` = publicly indexed docs. `all` = cross-organization (Enterprise only). |\n| `include_attribution` | bool | `false` | | Free | Run attribution analysis \u2014 find source documents that match segments of the submitted text. |\n| `detect_plagiarism` | bool | `false` | | Free | Run plagiarism detection \u2014 generate a full plagiarism report with match percentages per source. |\n| `include_heat_map` | bool | `false` | | Free | Include a segment-level heat map in the plagiarism report (only used when `detect_plagiarism` is `true`). |\n| `min_match_percentage` | float | `0.0` | 0.0 \u2013 100.0 | Free | Minimum match percentage to include a source in the plagiarism report. |\n| `fuzzy_search` | object | *null* | see below | Enterprise | Optional fuzzy fingerprint search configuration. |\n\n### `fuzzy_search` Object (Enterprise)\n\n| Field | Type | Default | Values | Description |\n|-------|------|---------|--------|-------------|\n| `enabled` | bool | `false` | | Whether to run fuzzy fingerprint search. |\n| `algorithm` | string | `\"simhash\"` | `simhash` | Fingerprint algorithm. |\n| `levels` | string[] | `[\"sentence\", \"paragraph\"]` | `sentence`, `paragraph`, `document` | Segmentation levels to search. |\n| `similarity_threshold` | float | `0.82` | 0.0 \u2013 1.0 | Minimum similarity score for a match. |\n| `max_candidates` | int | `20` | 1 \u2013 200 | Maximum number of candidate matches to return. |\n| `include_merkle_proof` | bool | `true` | | Whether to include Merkle proofs for matches. |\n| `fallback_when_no_binding` | bool | `true` | | Only run fuzzy search when no embeddings are found in the text. |\n\n---\n\n## Response\n\nThe response always includes:\n\n- **`data`** \u2014 Verification verdict with `is_signed`, `reason_code`, `embeddings_found`, etc.\n- **`tamper_detection`** \u2014 Merkle root comparison at the requested segmentation level.\n- **`tamper_localization`** \u2014 Per-segment diff showing changed / inserted / deleted segments (when Merkle root exists).\n\nConditionally included based on request flags:\n\n- **`attribution`** \u2014 List of source document matches with `document_id`, `organization_id`, `confidence`.\n- **`plagiarism`** \u2014 Full plagiarism report with `overall_match_percentage`, `source_documents`, optional `heat_map_data`.\n- **`fuzzy_search`** \u2014 Fuzzy fingerprint matches with similarity scores.\n\n---\n\n## Examples\n\n**Basic verification:**\n```json\n{\n    \"text\": \"Signed content with invisible C2PA embeddings...\"\n}\n```\n\n**Verification with attribution and plagiarism:**\n```json\n{\n    \"text\": \"Content to check...\",\n    \"segmentation_level\": \"sentence\",\n    \"include_attribution\": true,\n    \"detect_plagiarism\": true,\n    \"include_heat_map\": true,\n    \"min_match_percentage\": 10.0\n}\n```\n\n**Verification with fuzzy search (Enterprise):**\n```json\n{\n    \"text\": \"Content that may have been modified...\",\n    \"fuzzy_search\": {\n        \"enabled\": true,\n        \"similarity_threshold\": 0.75,\n        \"max_candidates\": 50,\n        \"fallback_when_no_binding\": false\n    }\n}\n```",
         "operationId": "verify_advanced_api_v1_verify_advanced_post",
         "requestBody": {
           "content": {
@@ -1515,6 +1515,31 @@
         "summary": "Get Certificate Status",
         "description": "Get current certificate status for organization.\n\nArgs:\n    organization: Organization details from authentication\n    db: Database session\n\nReturns:\n    dict: Current certificate status",
         "operationId": "get_certificate_status_api_v1_onboarding_certificate_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/onboarding/progression-status": {
+      "get": {
+        "tags": [
+          "Onboarding"
+        ],
+        "summary": "Get Publisher Progression Status",
+        "description": "Returns the publisher's current stage in the 6-stage value journey: Sign -> Verify -> Spread -> Notice Ready -> Licensing -> Earnings. Used to power the progression component on the home page and analytics page.",
+        "operationId": "get_progression_status_api_v1_onboarding_progression_status_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2128,6 +2153,26 @@
         ]
       }
     },
+    "/api/v1/coalition/public/stats": {
+      "get": {
+        "tags": [
+          "Coalition"
+        ],
+        "summary": "Get Public Coalition Stats",
+        "description": "Returns aggregate-only coalition statistics for public display. No authentication required. Individual member data is never exposed. Used by the marketing site to show coalition scale.",
+        "operationId": "get_public_coalition_stats_api_v1_coalition_public_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/status/documents/{document_id}/revoke": {
       "post": {
         "tags": [
@@ -2481,7 +2526,7 @@
           "Integrations"
         ],
         "summary": "Configure Ghost integration",
-        "description": "Save your Ghost instance URL and Admin API key to enable automatic signing via webhooks. Returns a webhook URL containing a scoped token — copy it into Ghost.",
+        "description": "Save your Ghost instance URL and Admin API key to enable automatic signing via webhooks. Returns a webhook URL containing a scoped token \u2014 copy it into Ghost.",
         "operationId": "create_ghost_integration_api_v1_integrations_ghost_post",
         "requestBody": {
           "content": {
@@ -2576,7 +2621,7 @@
           "Integrations"
         ],
         "summary": "Receive Ghost CMS webhooks",
-        "description": "Webhook endpoint for Ghost CMS. Configure in Ghost Admin → Integrations → Webhooks.\n\nUse the `webhook_url` returned when you created the integration — it contains a scoped token.\n\nSupported events: `post.published`, `post.published.edited`, `page.published`, `page.published.edited`",
+        "description": "Webhook endpoint for Ghost CMS. Configure in Ghost Admin \u2192 Integrations \u2192 Webhooks.\n\nUse the `webhook_url` returned when you created the integration \u2014 it contains a scoped token.\n\nSupported events: `post.published`, `post.published.edited`, `page.published`, `page.published.edited`",
         "operationId": "ghost_webhook_api_v1_integrations_ghost_webhook_post",
         "parameters": [
           {
@@ -3042,7 +3087,7 @@
           "Rights Management"
         ],
         "summary": "List available rights profile templates",
-        "description": "Public reference endpoint — no authentication required. Returns pre-built templates for common publisher types.",
+        "description": "Public reference endpoint \u2014 no authentication required. Returns pre-built templates for common publisher types.",
         "operationId": "list_rights_templates_api_v1_rights_templates_get",
         "responses": {
           "200": {
@@ -3193,7 +3238,7 @@
           "Rights Management"
         ],
         "summary": "Import existing RSL document as rights profile",
-        "description": "Import an existing RSL 1.0 XML document and create a rights profile from it.\nFor publishers who already have RSL set up — Encypher ingests their terms\nand enhances them with provenance layer.\n\nMapping:\n- RSL crawl terms → Bronze tier\n- RSL retrieval terms → Silver tier\n- RSL training terms → Gold tier",
+        "description": "Import an existing RSL 1.0 XML document and create a rights profile from it.\nFor publishers who already have RSL set up \u2014 Encypher ingests their terms\nand enhances them with provenance layer.\n\nMapping:\n- RSL crawl terms \u2192 Bronze tier\n- RSL retrieval terms \u2192 Silver tier\n- RSL training terms \u2192 Gold tier",
         "operationId": "import_rsl_document_api_v1_rights_rsl_import_post",
         "requestBody": {
           "content": {
@@ -3245,7 +3290,7 @@
           "Rights Management"
         ],
         "summary": "Get content detection analytics",
-        "description": "Returns detection events for the org's signed content — grouped by source, domain, and date.",
+        "description": "Returns detection events for the org's signed content \u2014 grouped by source, domain, and date.",
         "operationId": "get_detection_analytics_api_v1_rights_analytics_detections_get",
         "security": [
           {
@@ -3355,7 +3400,7 @@
           "Formal Notices"
         ],
         "summary": "Create a formal notice",
-        "description": "Create a formal notice for an AI company or other entity.\n\nThe notice text is SHA-256 hashed on creation. Once delivered, the content is\ncryptographically locked and cannot be changed. Every event in the notice\nlifecycle is recorded in an append-only evidence chain.\n\n**Notice types:**\n- `licensing_notice` — Informational notice that content is registered\n- `cease_and_desist` — Legal demand to stop using content without license\n- `dmca_takedown` — DMCA formal takedown notice\n- `formal_awareness` — Formal record that the entity is aware of rights\n\nRequires: Organization admin.",
+        "description": "Create a formal notice for an AI company or other entity.\n\nThe notice text is SHA-256 hashed on creation. Once delivered, the content is\ncryptographically locked and cannot be changed. Every event in the notice\nlifecycle is recorded in an append-only evidence chain.\n\n**Notice types:**\n- `licensing_notice` \u2014 Informational notice that content is registered\n- `cease_and_desist` \u2014 Legal demand to stop using content without license\n- `dmca_takedown` \u2014 DMCA formal takedown notice\n- `formal_awareness` \u2014 Formal record that the entity is aware of rights\n\nRequires: Organization admin.",
         "operationId": "create_formal_notice_api_v1_notices_create_post",
         "requestBody": {
           "content": {
@@ -3493,7 +3538,7 @@
           "Formal Notices"
         ],
         "summary": "Deliver a formal notice",
-        "description": "Deliver the formal notice via available channels (email, API, registered mail).\n\n**Once a notice is delivered:**\n1. Its content is cryptographically locked (notice_text and notice_hash cannot change)\n2. A delivery receipt is generated with timestamp and cryptographic proof\n3. The delivery event is appended to the evidence chain\n\nDelivery methods:\n- `email` — Send via Encypher notification service\n- `api` — Record as API-delivered (recipient must acknowledge via API)\n- `registered_mail` — Record manual registered mail delivery\n\nReturns delivery receipt with timestamp and cryptographic proof.",
+        "description": "Deliver the formal notice via available channels (email, API, registered mail).\n\n**Once a notice is delivered:**\n1. Its content is cryptographically locked (notice_text and notice_hash cannot change)\n2. A delivery receipt is generated with timestamp and cryptographic proof\n3. The delivery event is appended to the evidence chain\n\nDelivery methods:\n- `email` \u2014 Send via Encypher notification service\n- `api` \u2014 Record as API-delivered (recipient must acknowledge via API)\n- `registered_mail` \u2014 Record manual registered mail delivery\n\nReturns delivery receipt with timestamp and cryptographic proof.",
         "operationId": "deliver_notice_api_v1_notices__notice_id__deliver_post",
         "security": [
           {
@@ -5156,7 +5201,7 @@
           "Public - Verification"
         ],
         "summary": "DEPRECATED - Use POST /api/v1/verify instead",
-        "description": "**⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**\n    \n    Please use `POST /api/v1/verify` instead, which provides:\n    - Full C2PA trust chain validation\n    - Document info, licensing, and C2PA details (all free)\n    - Merkle proof (with API key)\n    - Better performance via verification-service",
+        "description": "**\u26a0\ufe0f DEPRECATED: This endpoint is deprecated and will be removed.**\n    \n    Please use `POST /api/v1/verify` instead, which provides:\n    - Full C2PA trust chain validation\n    - Document info, licensing, and C2PA details (all free)\n    - Merkle proof (with API key)\n    - Better performance via verification-service",
         "operationId": "extract_and_verify_embedding_api_v1_public_extract_and_verify_post",
         "requestBody": {
           "content": {
@@ -5320,7 +5365,7 @@
           "Public - C2PA"
         ],
         "summary": "Lookup trust anchor for C2PA verification (Public)",
-        "description": "Lookup a trust anchor (public key) for external C2PA validators.\n\nThis endpoint enables third-party validators to verify Encypher-signed\ncontent by providing the signer's public key. This implements the\n\"Private Credential Store\" model per C2PA spec §14.4.3.\n\n**Special signer IDs:**\n- `encypher.public` or `org_demo`: Returns Encypher's official demo/free-tier key\n- `demo-*`: Returns demo/test keys (non-production)\n\n**C2PA Spec Reference:**\nhttps://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_trust_lists",
+        "description": "Lookup a trust anchor (public key) for external C2PA validators.\n\nThis endpoint enables third-party validators to verify Encypher-signed\ncontent by providing the signer's public key. This implements the\n\"Private Credential Store\" model per C2PA spec \u00a714.4.3.\n\n**Special signer IDs:**\n- `encypher.public` or `org_demo`: Returns Encypher's official demo/free-tier key\n- `demo-*`: Returns demo/test keys (non-production)\n\n**C2PA Spec Reference:**\nhttps://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_trust_lists",
         "operationId": "get_trust_anchor_api_v1_public_c2pa_trust_anchors__signer_id__get",
         "parameters": [
           {
@@ -5458,7 +5503,7 @@
           "Public - Rights"
         ],
         "summary": "Resolve rights for a specific document",
-        "description": "Resolve the full rights and licensing terms for a signed document.\n\nThis endpoint is public and rate-limited. Any entity — AI companies, developers,\nresearchers — can call this to discover the publisher's licensing terms for content\nthey have encountered.\n\nCalling this endpoint constitutes **constructive notice** — the information was\navailable, accessible, and machine-readable.",
+        "description": "Resolve the full rights and licensing terms for a signed document.\n\nThis endpoint is public and rate-limited. Any entity \u2014 AI companies, developers,\nresearchers \u2014 can call this to discover the publisher's licensing terms for content\nthey have encountered.\n\nCalling this endpoint constitutes **constructive notice** \u2014 the information was\navailable, accessible, and machine-readable.",
         "operationId": "get_document_rights_api_v1_public_rights__document_id__get",
         "parameters": [
           {
@@ -5687,7 +5732,7 @@
           "Public - Rights"
         ],
         "summary": "Rights as ODRL (W3C Open Digital Rights Language)",
-        "description": "Returns the document's rights in W3C ODRL format — machine-readable by semantic web crawlers.",
+        "description": "Returns the document's rights in W3C ODRL format \u2014 machine-readable by semantic web crawlers.",
         "operationId": "get_document_rights_odrl_api_v1_public_rights__document_id__odrl_get",
         "parameters": [
           {
@@ -6358,7 +6403,7 @@
           "Verification"
         ],
         "summary": "Quote Integrity Verification",
-        "description": "Verify whether an AI-attributed quote matches signed source documents.\n\nPublic endpoint — no API key required for cross-publisher search.\n\n## Request Fields\n\n| Field | Type | Default | Description |\n|-------|------|---------|-------------|\n| `quote` | string | *(required)* | The exact text the AI cited |\n| `attribution` | string | *(required)* | Claimed source (e.g. 'According to Reuters...') |\n| `org_id` | string | *null* | Publisher org to check (if known) |\n| `doc_id` | string | *null* | Specific document (if known) |\n| `fuzzy_threshold` | float | `0.85` | Minimum similarity threshold |\n\n## Response\n\n| Verdict | Meaning |\n|---------|---------|\n| `accurate` | Similarity ≥ 0.95 — quote matches signed source |\n| `approximate` | Similarity 0.85–0.95 — close but not exact |\n| `hallucinated` | Similarity < threshold — no match found |\n| `unverifiable` | No signed content found to compare against |",
+        "description": "Verify whether an AI-attributed quote matches signed source documents.\n\nPublic endpoint \u2014 no API key required for cross-publisher search.\n\n## Request Fields\n\n| Field | Type | Default | Description |\n|-------|------|---------|-------------|\n| `quote` | string | *(required)* | The exact text the AI cited |\n| `attribution` | string | *(required)* | Claimed source (e.g. 'According to Reuters...') |\n| `org_id` | string | *null* | Publisher org to check (if known) |\n| `doc_id` | string | *null* | Specific document (if known) |\n| `fuzzy_threshold` | float | `0.85` | Minimum similarity threshold |\n\n## Response\n\n| Verdict | Meaning |\n|---------|---------|\n| `accurate` | Similarity \u2265 0.95 \u2014 quote matches signed source |\n| `approximate` | Similarity 0.85\u20130.95 \u2014 close but not exact |\n| `hallucinated` | Similarity < threshold \u2014 no match found |\n| `unverifiable` | No signed content found to compare against |",
         "operationId": "verify_quote_integrity_api_v1_verify_quote_integrity_post",
         "requestBody": {
           "content": {
@@ -6582,6 +6627,201 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/rights/analytics/content-spread": {
+      "get": {
+        "tags": [
+          "Rights Management"
+        ],
+        "summary": "Content Spread Analytics",
+        "description": "Returns external domain detections for the org's signed content. Requires Enterprise tier or Attribution Analytics add-on.",
+        "operationId": "get_content_spread_api_v1_rights_analytics_content_spread_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "default": 30,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notices/{notice_id}/evidence/pdf": {
+      "get": {
+        "tags": [
+          "Formal Notices"
+        ],
+        "summary": "Download court-ready evidence package as PDF",
+        "description": "Generate and download an Encypher-branded PDF evidence package for the notice.\n\nThe PDF contains:\n- Cover page with issuing org, recipient, scope, and notice details\n- Notice text with SHA-256 hash and verification status\n- Full evidence chain table (tamper-evident linked list)\n\nSuitable for attachment to legal correspondence or submission to media law clinics.",
+        "operationId": "get_evidence_package_pdf_api_v1_notices__notice_id__evidence_pdf_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notice_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Notice UUID",
+              "title": "Notice Id"
+            },
+            "description": "Notice UUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF evidence package",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Notice not found"
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cdn/cloudflare": {
+      "post": {
+        "tags": [
+          "CDN Integrations"
+        ],
+        "summary": "Create or update Cloudflare Logpush integration",
+        "description": "Configure Cloudflare Logpush to forward AI scraping events to Encypher for detection analytics.",
+        "operationId": "create_cdn_integration_api_v1_cdn_cloudflare_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Integration configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "CDN Integrations"
+        ],
+        "summary": "Get current Cloudflare Logpush integration config",
+        "description": "Retrieve the current Cloudflare Logpush integration configuration for the organization.",
+        "operationId": "get_cdn_integration_api_v1_cdn_cloudflare_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Integration configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Integration not configured"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "CDN Integrations"
+        ],
+        "summary": "Remove Cloudflare Logpush integration",
+        "description": "Remove the Cloudflare Logpush integration for the organization.",
+        "operationId": "delete_cdn_integration_api_v1_cdn_cloudflare_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Integration removed"
+          },
+          "404": {
+            "description": "Integration not configured"
           }
         }
       }
@@ -9065,7 +9305,7 @@
               }
             ],
             "title": "Webhook Token",
-            "description": "Webhook token (ghwh_...). Only returned on creation or regeneration — store it now, it won't be shown again."
+            "description": "Webhook token (ghwh_...). Only returned on creation or regeneration \u2014 store it now, it won't be shown again."
           },
           "last_webhook_at": {
             "anyOf": [
@@ -9963,7 +10203,7 @@
           "certificate_status"
         ],
         "title": "SignerIdentity",
-        "description": "Signer identity and trust chain information.\n\nTEAM_165: When an org starts with a self-signed key managed by Encypher,\nmicro markers are already cryptographically bound to that key. If the org\nlater obtains a CA-signed certificate (via /byok/certificates), the trust\nchain upgrades automatically — no re-signing needed."
+        "description": "Signer identity and trust chain information.\n\nTEAM_165: When an org starts with a self-signed key managed by Encypher,\nmicro markers are already cryptographically bound to that key. If the org\nlater obtains a CA-signed certificate (via /byok/certificates), the trust\nchain upgrades automatically \u2014 no re-signing needed."
       },
       "StreamMerkleStatusRequest": {
         "properties": {
@@ -11655,7 +11895,7 @@
           "webhook_token": {
             "type": "string",
             "title": "Webhook Token",
-            "description": "New webhook token (ghwh_...). Store it now — it won't be shown again."
+            "description": "New webhook token (ghwh_...). Store it now \u2014 it won't be shown again."
           }
         },
         "type": "object",
@@ -12739,7 +12979,7 @@
           "enable_print_fingerprint": {
             "type": "boolean",
             "title": "Enable Print Fingerprint",
-            "description": "Print Leak Detection — embed imperceptible spacing patterns (U+2009 THIN SPACE vs U+0020) that survive printing and scanning, enabling source identification from leaked physical or PDF copies (Enterprise)",
+            "description": "Print Leak Detection \u2014 embed imperceptible spacing patterns (U+2009 THIN SPACE vs U+0020) that survive printing and scanning, enabling source identification from leaked physical or PDF copies (Enterprise)",
             "default": false
           },
           "disable_c2pa": {
@@ -12780,7 +13020,7 @@
         },
         "type": "object",
         "title": "SignOptions",
-        "description": "Options for signing - features are gated by tier.\n\nTier Feature Matrix:\n\n| Feature                  | Free/Starter | Professional | Business | Enterprise |\n|--------------------------|--------------|--------------|----------|------------|\n| document_type            | ✅           | ✅           | ✅       | ✅         |\n| claim_generator          | ✅           | ✅           | ✅       | ✅         |\n| segmentation_level       | document     | all          | all      | all        |\n| manifest_mode            | full         | all          | all      | all        |\n| embedding_strategy       | single_point | all          | all      | all        |\n| index_for_attribution    | ❌           | ✅           | ✅       | ✅         |\n| custom_assertions        | ❌           | ❌           | ✅       | ✅         |\n| template_id              | ❌           | ❌           | ✅       | ✅         |\n| rights                   | ❌           | ❌           | ✅       | ✅         |\n| add_dual_binding         | ❌           | ❌           | ❌       | ✅         |\n| include_fingerprint      | ❌           | ❌           | ❌       | ✅         |\n| enable_print_fingerprint | ❌           | ❌           | ❌       | ✅         |\n| batch (documents array)  | 1            | 10           | 50       | 100        |"
+        "description": "Options for signing - features are gated by tier.\n\nTier Feature Matrix:\n\n| Feature                  | Free/Starter | Professional | Business | Enterprise |\n|--------------------------|--------------|--------------|----------|------------|\n| document_type            | \u2705           | \u2705           | \u2705       | \u2705         |\n| claim_generator          | \u2705           | \u2705           | \u2705       | \u2705         |\n| segmentation_level       | document     | all          | all      | all        |\n| manifest_mode            | full         | all          | all      | all        |\n| embedding_strategy       | single_point | all          | all      | all        |\n| index_for_attribution    | \u274c           | \u2705           | \u2705       | \u2705         |\n| custom_assertions        | \u274c           | \u274c           | \u2705       | \u2705         |\n| template_id              | \u274c           | \u274c           | \u2705       | \u2705         |\n| rights                   | \u274c           | \u274c           | \u2705       | \u2705         |\n| add_dual_binding         | \u274c           | \u274c           | \u274c       | \u2705         |\n| include_fingerprint      | \u274c           | \u274c           | \u274c       | \u2705         |\n| enable_print_fingerprint | \u274c           | \u274c           | \u274c       | \u2705         |\n| batch (documents array)  | 1            | 10           | 50       | 100        |"
       },
       "EmbeddingOptions": {
         "properties": {

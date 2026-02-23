@@ -1131,6 +1131,39 @@ const apiClient = {
     );
   },
 
+  // ============================================
+  // Publisher Value Journey (TEAM_225)
+  // ============================================
+
+  /**
+   * Get publisher progression status (6-stage value journey)
+   */
+  async getProgressionStatus(accessToken: string): Promise<unknown> {
+    return fetchWithAuth(
+      `${API_BASE_URL}/onboarding/progression-status`,
+      accessToken
+    );
+  },
+
+  /**
+   * Get content spread analytics (external domain detections)
+   */
+  async getContentSpread(accessToken: string, days = 30): Promise<unknown> {
+    return fetchWithAuth(
+      `${API_BASE_URL}/rights/analytics/content-spread?days=${days}`,
+      accessToken
+    );
+  },
+
+  /**
+   * Get public coalition stats (no auth required)
+   */
+  async getPublicCoalitionStats(): Promise<{ coalition_members: number; total_signed_documents: number; as_of: string }> {
+    const res = await fetch(`${API_BASE_URL}/coalition/public/stats`);
+    if (!res.ok) throw new Error('Failed to fetch coalition stats');
+    return res.json();
+  },
+
   /**
    * Create a Stripe Checkout session for upgrading
    */
@@ -1658,6 +1691,36 @@ const apiClient = {
     );
   },
 
+  async getCdnIntegration(accessToken: string): Promise<CdnIntegrationResponse | null> {
+    try {
+      return await fetchWithAuth<CdnIntegrationResponse>(
+        `${API_BASE_URL}/cdn/cloudflare`,
+        accessToken
+      );
+    } catch {
+      return null;
+    }
+  },
+
+  async saveCdnIntegration(
+    accessToken: string,
+    payload: CdnIntegrationCreate
+  ): Promise<CdnIntegrationResponse> {
+    return fetchWithAuth<CdnIntegrationResponse>(
+      `${API_BASE_URL}/cdn/cloudflare`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify(payload) }
+    );
+  },
+
+  async deleteCdnIntegration(accessToken: string): Promise<void> {
+    await fetchWithAuth<void>(
+      `${API_BASE_URL}/cdn/cloudflare`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+  },
+
   async listNotices(accessToken: string): Promise<FormalNotice[]> {
     const response = await fetchWithAuth<FormalNotice[]>(
       `${API_BASE_URL}/notices/`,
@@ -1741,6 +1804,21 @@ const apiClient = {
       accessToken
     );
   },
+
+  async downloadEvidencePackagePdf(accessToken: string, noticeId: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/notices/${encodeURIComponent(noticeId)}/evidence/pdf`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!response.ok) throw new Error('Failed to generate PDF');
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `notice-${noticeId}-evidence.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };
 
 // ── Rights Management types ───────────────────────────────────────────────────
@@ -1801,6 +1879,7 @@ interface DetectionSummary {
   rights_served_count: number;
   rights_acknowledged_count: number;
   unique_domains: number;
+  robots_txt_bypass_count: number;
 }
 
 interface CrawlerSummaryEntry {
@@ -1815,8 +1894,26 @@ interface CrawlerSummaryEntry {
   rsl_check_count?: number;
   rsl_check_rate?: number;
   rights_acknowledged_rate?: number;
+  bypass_count?: number;
   compliance_score?: number;
   compliance_label?: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Non-compliant';
+}
+
+export interface CdnIntegrationCreate {
+  provider?: string;
+  zone_id?: string | null;
+  webhook_secret: string;
+  enabled?: boolean;
+}
+
+export interface CdnIntegrationResponse {
+  id: string;
+  provider: string;
+  zone_id?: string | null;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+  webhook_url: string;
 }
 
 interface CrawlerAnalytics {

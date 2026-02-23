@@ -12,7 +12,7 @@ import logging
 from typing import Any, Dict, List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -275,6 +275,65 @@ async def get_evidence_package(
     except Exception:
         logger.exception("Failed to generate evidence package for notice %s", notice_id)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to generate evidence package")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Evidence Package — PDF
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@router.get(
+    "/{notice_id}/evidence/pdf",
+    status_code=status.HTTP_200_OK,
+    summary="Download court-ready evidence package as PDF",
+    description="""
+Generate and download an Encypher-branded PDF evidence package for the notice.
+
+The PDF contains:
+- Cover page with issuing org, recipient, scope, and notice details
+- Notice text with SHA-256 hash and verification status
+- Full evidence chain table (tamper-evident linked list)
+
+Suitable for attachment to legal correspondence or submission to media law clinics.
+    """,
+    response_class=Response,
+)
+async def get_evidence_package_pdf(
+    notice_id: str = Path(..., description="Notice UUID"),
+    db: AsyncSession = Depends(get_db),
+    org_context: Dict = Depends(get_current_organization_dep),
+) -> Response:
+    org_id: str = org_context["organization_id"]
+    svc = _notice_service()
+
+    notice = await svc.get_notice(db=db, notice_id=notice_id)
+    if not notice:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notice not found")
+
+    if notice.organization_id != org_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    try:
+        package = await svc.generate_evidence_package(db=db, notice_id=notice_id)
+    except Exception:
+        logger.exception("Failed to generate evidence package for notice %s", notice_id)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to generate evidence package")
+
+    org_name = org_context.get("name") or org_context.get("organization_id")
+
+    try:
+        from app.services.evidence_pdf_service import generate_evidence_pdf
+        pdf_bytes = generate_evidence_pdf(package, org_name=org_name)
+    except Exception:
+        logger.exception("Failed to render PDF for notice %s", notice_id)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to generate PDF")
+
+    filename = f"notice-{notice_id}-evidence.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
