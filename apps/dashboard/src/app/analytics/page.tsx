@@ -84,11 +84,18 @@ function formatShortDate(dateStr: string): string {
 
 // -- Funnel stage component --
 
+interface ContentSpreadDomain {
+  domain: string;
+  detection_count: number;
+  unique_documents: number;
+  last_detected: string | null;
+}
+
 interface ContentSpreadResponse {
   total_external_detections: number;
   unique_external_domains: number;
-  domains: string[];
-  documents: { document_id: string; domain: string; detected_at: string }[];
+  domains: ContentSpreadDomain[];
+  documents: { document_id: string; detection_count: number; unique_domains: number; last_detected: string | null }[];
 }
 
 interface FunnelStageProps {
@@ -375,9 +382,9 @@ export default function ContentPerformancePage() {
               >
                 {!contentSpreadLoading && !contentSpreadAccessDenied && contentSpread && contentSpread.domains.length > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1">
-                    {contentSpread.domains.slice(0, 5).map((domain) => (
-                      <span key={domain} className="text-xs bg-blue-ncs/10 text-blue-ncs border border-blue-ncs/20 rounded px-1.5 py-0.5">
-                        {domain}
+                    {contentSpread.domains.slice(0, 5).map((d) => (
+                      <span key={d.domain} className="text-xs bg-blue-ncs/10 text-blue-ncs border border-blue-ncs/20 rounded px-1.5 py-0.5">
+                        {d.domain}
                       </span>
                     ))}
                     {contentSpread.domains.length > 5 && (
