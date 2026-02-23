@@ -66,7 +66,7 @@ const HOW_IT_WORKS = [
     icon: Shield,
     step: '1',
     title: 'Sign',
-    desc: 'Publish content with Encypher. Every document gets a cryptographic signature with rights_resolution_url embedded.',
+    desc: 'Publish content with Encypher. Every document gets a C2PA 2.3-compliant signature with your rights_resolution_url embedded in the manifest.',
   },
   {
     icon: ListChecks,
@@ -78,7 +78,7 @@ const HOW_IT_WORKS = [
     icon: Bot,
     step: '3',
     title: 'AI Discovers',
-    desc: 'AI crawlers resolve the rights URL. Machine-readable terms tell them exactly what requires a license.',
+    desc: 'AI crawlers resolve the rights URL and receive W3C ODRL-compatible terms in RSL 1.0 format — machine-readable, no manual review required.',
   },
   {
     icon: Scale,
@@ -131,8 +131,8 @@ const AI_COMPANY_FEATURES = [
   },
   {
     icon: ScrollText,
-    title: 'Machine-Readable Terms',
-    desc: 'GET /public/rights/organization/{id} returns W3C ODRL-compatible licensing terms. RSL 1.0 XML available.',
+    title: 'RSL 1.0 & W3C ODRL Compatible',
+    desc: 'GET /public/rights/organization/{id} returns RSL 1.0 XML and W3C ODRL-compatible JSON. Drop into existing rights infrastructure without format conversion.',
   },
   {
     icon: Users,
@@ -157,7 +157,7 @@ export default function RightsManagementPage() {
         <div className="container mx-auto px-4 text-center">
           <Badge variant="outline" className="mb-6 text-sm px-4 py-1.5">
             <Scale className="h-3.5 w-3.5 mr-1.5" />
-            Machine-Readable Licensing
+            C2PA 2.3 Compatible &middot; RSL 1.0 Compatible
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
             License Your Content<br />to the AI Age
