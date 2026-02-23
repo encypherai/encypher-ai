@@ -11,7 +11,7 @@ import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 import Script from 'next/script';
-import { organizationSchema } from '@/lib/seo';
+import { organizationSchema, homepageFaqSchema } from '@/lib/seo';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.encypherai.com';
 
@@ -35,6 +35,11 @@ export default function HomePage() {
         id="schema-organization"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <Script
+        id="schema-faq-homepage"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageFaqSchema) }}
       />
       <AISummary
         title="Encypher – Content Intelligence Infrastructure"

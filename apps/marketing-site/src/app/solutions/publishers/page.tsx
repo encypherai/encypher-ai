@@ -15,7 +15,7 @@ import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 import Script from 'next/script';
-import { faqSchema } from '@/lib/seo';
+import { publishersFaqSchema } from '@/lib/seo';
 
 // using real iframe embed (/publisher-demo/embed)
 export default function PublishersPage() {
@@ -29,7 +29,7 @@ export default function PublishersPage() {
         keyDifferentiator="Patent-pending Merkle tree authentication documents exactly which sentences were used. Tamper-evident documentation designed for legal proceedings. Quote integrity verification protects brand from AI hallucinations."
         primaryValue="Provide technical infrastructure for content licensing. Encypher serves as Co-Chair of the C2PA Text Provenance Task Force, with technology reviewed by C2PA members including Google, OpenAI, Adobe, and Microsoft."
       />
-      <Script id="schema-faq-publishers" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <Script id="schema-faq-publishers" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(publishersFaqSchema) }} />
       {/* Hero Section */}
       <section className="relative w-full py-20 md:py-32 bg-muted/30 border-b border-border">
         <div className="container mx-auto px-4 text-center">
