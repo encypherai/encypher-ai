@@ -67,12 +67,12 @@ export default function HomePage() {
         <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20 lg:py-28 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6">
             <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-3 sm:mb-4 md:mb-6 text-shadow-md leading-tight px-2" style={{ minHeight: '3rem' }}>
-              The Licensing Infrastructure for AI Content
+              Get Paid When AI Uses Your Content
             </h1>
             <p className="text-sm xs:text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 text-shadow-md max-w-3xl mx-auto leading-relaxed px-2" style={{ minHeight: '4rem' }}>
               Publishers need to get paid when AI companies use their content.<br />
               AI companies need proof they licensed it properly.<br />
-              Encypher connects both sides -- built on the C2PA standard we authored.
+              Encypher makes both happen -- cryptographic proof of ownership, machine-readable rights, and a single integration for compliant licensing at scale.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center items-center px-2">
