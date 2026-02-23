@@ -43,7 +43,7 @@ Article 53 requires a rights reservation that travels with the content. Robots.t
 
 Between December 2025 and January 2026, the European Commission ran a [stakeholder consultation](https://digital-strategy.ec.europa.eu/en/consultations/commission-launches-consultation-protocols-reserving-rights-text-and-data-mining-under-ai-act-and) to identify which machine-readable protocols will be officially recognized under Article 53. The Commission sought "machine-readable, standardised protocols that can be implemented consistently and interoperably across different media, languages, and sectors."
 
-An [EUIPO study](https://digital-strategy.ec.europa.eu/en/consultations/commission-launches-consultation-protocols-reserving-rights-text-and-data-mining-under-ai-act-and) referenced in the consultation identified eight candidate protocols: robots.txt (IETF RFC 9309), TDM Reservation Protocol (TDMRep), C2PA TDM Assertions, AI.txt, Spawning AI Do Not Train registry, JPEG Trust core foundation v2, TDM.ai protocol (Liccium), and Open Rights Data Exchange (Valunode). The Commission will publish a list of "generally agreed" protocols, to be reviewed at least every two years.
+That [consultation](https://digital-strategy.ec.europa.eu/en/consultations/commission-launches-consultation-protocols-reserving-rights-text-and-data-mining-under-ai-act-and) put eight candidate protocols on the table: robots.txt (IETF RFC 9309), TDM Reservation Protocol (TDMRep), C2PA TDM Assertions, AI.txt, Spawning AI Do Not Train registry, JPEG Trust core foundation v2, TDM.ai protocol (Liccium), and Open Rights Data Exchange (Valunode). The Commission will publish a list of "generally agreed" protocols, to be reviewed at least every two years.
 
 This is the process that will determine what actually counts as a valid rights reservation under EU law. And most publishers did not know it was happening, let alone participate.
 
@@ -55,7 +55,7 @@ There is also a fair point that C2PA TDM Assertions are not yet part of the C2PA
 
 ## What Encypher Sees From the Inside
 
-We co-chair the C2PA Text Provenance Task Force and authored Section A.7 of the C2PA specification, published in January 2026. That section defines how authentication manifests -- including rights metadata -- can be embedded directly into unstructured text. This work was reviewed by Google, OpenAI, Adobe, Microsoft, the New York Times, BBC, and AP through the C2PA consortium.
+We co-chair the C2PA Text Provenance Task Force and authored Section A.7 of the C2PA specification, published in January 2026. That section defines how authentication manifests -- including rights metadata -- can be embedded directly into unstructured text. This work was developed inside the [C2PA consortium](https://c2pa.org), whose members include major AI companies, publishers, and platform providers.
 
 From our seat at the standard-setting table, the trajectory is unambiguous. The Commission's consultation asked for protocols that are machine-readable, per-work, and interoperable across media types. Content-level cryptographic signals -- metadata embedded in the text itself, traveling with every copy, readable by automated systems -- are the only class of mechanism that satisfies both the legal requirement and the practical reality that content moves off your server the moment you publish it.
 
