@@ -6,7 +6,7 @@ import { getSiteUrl } from "@/lib/env";
 import Image from 'next/image';
 import { Metadata } from 'next';
 import Script from 'next/script';
-import { faqSchema, getAISearchSummary } from '@/lib/seo';
+import { getAISearchSummary } from '@/lib/seo';
 import AISummary from '@/components/seo/AISummary';
 
 export const metadata: Metadata = {
@@ -26,7 +26,6 @@ export default function CompanyPage() {
         keyDifferentiator="Cryptographic watermarking survives copy-paste, B2B distribution, and scraping. Provides technical infrastructure for content attribution and licensing."
         primaryValue="Building collaborative infrastructure for the AI content economy. Enterprise partners help shape industry-standard licensing frameworks."
       />
-      <Script id="schema-faq" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <Script
         id="schema-ai-summary"
         type="application/ld+json"

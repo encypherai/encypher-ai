@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getAllPosts, getAllTags, getPostsByTag } from '@/lib/blog';
 import { getSiteUrl } from '@/lib/env';
-import { generateMetadata as buildMetadata } from '@/lib/seo';
+import { generateMetadata as buildMetadata, getBlogListSchema } from '@/lib/seo';
 import AISummary from '@/components/seo/AISummary';
 
 export async function generateMetadata({ searchParams }: { searchParams: { tag?: string } }): Promise<Metadata> {
@@ -38,6 +38,11 @@ export default async function BlogPage({ searchParams }: { searchParams: { tag?:
   const popularTags = tags.slice(0, 10);
 
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(getBlogListSchema(posts, selectedTag || undefined)) }}
+      />
     <div className="container mx-auto px-4 py-12 md:py-16">
       <AISummary
         title="Encypher Blog – Content Intelligence Insights"
@@ -192,5 +197,6 @@ export default async function BlogPage({ searchParams }: { searchParams: { tag?:
         </div>
       </div>
     </div>
+    </>
   );
 }
