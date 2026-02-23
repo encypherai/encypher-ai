@@ -2,12 +2,13 @@
 # Encypher Automated Blog Writer
 #
 # Pipeline:
-#   Phase 1 -- Sonnet research:  selects topic, formulates thesis, gathers verified sources
-#   Phase 2 -- Opus writer:      reads research notes, writes post, commits markdown
-#   Phase 3 -- Sonnet image:     generates blog header image via Gemini API, commits PNG
-#   Phase 4 -- Sonnet review:    structured approval/rejection against quality criteria
-#   Phase 5 -- Revision loop:    Opus revises (--resume), Sonnet re-reviews (up to MAX_REVISIONS)
-#   Phase 6 -- Push + PR:        regular PR if approved, draft PR if not (skipped in --test mode)
+#   Phase 1   Sonnet research:  selects topic, formulates thesis, gathers verified sources
+#   Phase 2   Opus writer:      reads research notes, writes post, commits markdown
+#   Phase 3   Sonnet image:     generates blog header image via Gemini API at 2K resolution
+#   Phase 4   Sonnet review:    structured approval covering post quality + visual image check
+#   Phase 3b  Sonnet regen:     regenerates image if review flags visual issues (up to MAX_IMAGE_REGEN)
+#   Phase 5   Opus revision:    revises post if review flags content issues (up to MAX_REVISIONS)
+#   Phase 6   Push + PR:        regular PR if approved, draft PR if not (skipped in --test mode)
 #
 # Cron schedule (Tuesday 9:00 AM EST = 14:00 UTC):
 #   0 14 * * 2 /path/to/repo/scripts/agents/blog-writer/run.sh >> /var/log/encypher-blog-writer.log 2>&1
@@ -37,10 +38,11 @@ BRANCH_NAME="$BRANCH_PREFIX-$TODAY"
 CUSTOM_TOPIC=""
 TEST_MODE=false
 MAX_REVISIONS=2
+MAX_IMAGE_REGEN=2
 
 log() { echo "[$(date -u +%H:%M:%S)] $*"; }
 
-# Allow claude -p subprocesses when this script is invoked from inside a Claude Code session
+# Allow claude -p subprocesses when invoked from inside a Claude Code session
 unset CLAUDECODE
 
 # Parse arguments
@@ -74,7 +76,6 @@ if [ "$TEST_MODE" = false ]; then
   git checkout main
   git pull origin main
 
-  # Idempotent: skip if today's branch already exists on remote
   if git ls-remote --exit-code --heads origin "$BRANCH_NAME" &>/dev/null; then
     log "Branch $BRANCH_NAME already exists on remote. Skipping."
     exit 0
@@ -87,7 +88,7 @@ else
 fi
 
 # Research notes written inside the repo so the Write tool can reach them.
-# The file is deleted on exit and is .gitignored.
+# Gitignored and deleted on exit.
 RESEARCH_NOTES="$REPO_ROOT/.blog-research-temp.md"
 cleanup() { rm -f "$RESEARCH_NOTES"; }
 trap cleanup EXIT
@@ -159,7 +160,6 @@ else
   NEW_POST=$(git diff --diff-filter=A --name-only HEAD~1..HEAD -- "$BLOG_DIR" 2>/dev/null | head -1 | tr -d '[:space:]')
 fi
 
-# Fallback: look at all commits on this branch vs main
 if [ -z "$NEW_POST" ]; then
   NEW_POST=$(git log --diff-filter=A --name-only --pretty=format: main..HEAD -- "$BLOG_DIR" 2>/dev/null | grep -v '^$' | head -1 | tr -d '[:space:]')
 fi
@@ -173,71 +173,113 @@ log "New post: $NEW_POST"
 NEW_POST_ABS="$REPO_ROOT/$NEW_POST"
 
 # =========================================================================
-# Phase 3 -- Sonnet image agent
+# Phase 3 -- Sonnet image agent (function, called for initial gen + regen)
 # =========================================================================
 IMAGE_ABS=""
+IMAGE_REGEN=0
 
-if [ ! -f "$REPO_ROOT/.env.skills" ]; then
-  log "WARNING: .env.skills not found. Skipping image generation."
-else
-  IMAGE_FIELD=$(grep -m1 '^image:' "$NEW_POST_ABS" | sed 's/image:[[:space:]]*//' | tr -d '"'"'" | tr -d '[:space:]')
+generate_image() {
+  local feedback="${1:-}"   # optional: feedback from reviewer for regen pass
 
-  if [ -z "$IMAGE_FIELD" ]; then
+  if [ ! -f "$REPO_ROOT/.env.skills" ]; then
+    log "WARNING: .env.skills not found. Skipping image generation."
+    return 0
+  fi
+
+  local image_field
+  image_field=$(grep -m1 '^image:' "$NEW_POST_ABS" | sed 's/image:[[:space:]]*//' | tr -d '"'"'" | tr -d '[:space:]')
+
+  if [ -z "$image_field" ]; then
     log "WARNING: No image field in post frontmatter. Skipping image generation."
-  else
-    IMAGE_REL="${IMAGE_FIELD#/}"
-    IMAGE_ABS="$REPO_ROOT/apps/marketing-site/public/$IMAGE_REL"
-    IMAGE_DIR="$(dirname "$IMAGE_ABS")"
+    return 0
+  fi
 
-    log "Phase 3: Sonnet image agent -> $IMAGE_ABS"
+  local image_rel="${image_field#/}"
+  IMAGE_ABS="$REPO_ROOT/apps/marketing-site/public/$image_rel"
+  local image_dir
+  image_dir="$(dirname "$IMAGE_ABS")"
 
-    IMAGE_PROMPT="Read the blog post at $NEW_POST_ABS and the generate-image skill at $REPO_ROOT/.windsurf/workflows/generate-image.md.
+  # Derive a short display title (text before first colon, max 40 chars)
+  local full_title
+  full_title=$(grep -m1 '^title:' "$NEW_POST_ABS" | sed 's/title:[[:space:]]*//' | tr -d '"')
+  local short_title
+  short_title=$(echo "$full_title" | cut -d: -f1 | cut -c1-40)
+
+  log "Phase 3: Sonnet image agent -> $IMAGE_ABS (title: '$short_title')"
+
+  local regen_note=""
+  if [ -n "$feedback" ]; then
+    regen_note="
+
+IMPORTANT: The previous image was rejected. Here is the reviewer's feedback:
+$feedback
+
+Fix every issue described above. Pay special attention to the title text."
+  fi
+
+  local image_prompt="Read the blog post at $NEW_POST_ABS and the generate-image skill at $REPO_ROOT/.windsurf/workflows/generate-image.md.
 
 Generate a blog-header image for this post:
-1. Read the post frontmatter to get the exact title and excerpt.
-2. Derive IMAGE_DESCRIPTION from the Visual Metaphor Guide in the skill doc based on the article topic.
-3. Create the output directory (Linux bash only): mkdir -p $IMAGE_DIR
-4. Write the generation script to $REPO_ROOT/generate-image-temp.mjs. Substitute ALL placeholders -- TITLE, SUBTITLE (excerpt truncated to ~12 words), IMAGE_DESCRIPTION, ASPECT_RATIO (16:9), IMAGE_SIZE (1K), LAYOUT_INSTRUCTIONS (blog-header preset from skill doc), and OUTPUT_PATH ($IMAGE_ABS) -- with actual values. No placeholder text may remain in the script.
-5. Run: node --env-file=$REPO_ROOT/.env.skills $REPO_ROOT/generate-image-temp.mjs
-6. Remove the temp script: rm $REPO_ROOT/generate-image-temp.mjs
-7. Commit: git add $IMAGE_ABS && git commit -m 'feat(blog): add header image $TODAY'
+1. Read the post frontmatter to get the excerpt (use as subtitle, truncated to ~12 words).
+2. Use this SHORT display title in the image (not the full article title):
+   \"$short_title\"
+   This shorter title prevents text rendering errors. Do not use the full article title.
+3. Derive IMAGE_DESCRIPTION from the Visual Metaphor Guide in the skill doc based on the article topic.
+4. Create the output directory (Linux bash only): mkdir -p $image_dir
+5. Write the generation script to $REPO_ROOT/generate-image-temp.mjs. Substitute ALL placeholders:
+   - TITLE: \"$short_title\" (the short title above, not the full title)
+   - SUBTITLE: excerpt truncated to ~12 words
+   - IMAGE_DESCRIPTION: from the Visual Metaphor Guide
+   - ASPECT_RATIO: 16:9
+   - IMAGE_SIZE: 2K
+   - LAYOUT_INSTRUCTIONS: blog-header preset from the skill doc
+   - OUTPUT_PATH: $IMAGE_ABS
+   No placeholder text may remain in the script.
+6. Run: node --env-file=$REPO_ROOT/.env.skills $REPO_ROOT/generate-image-temp.mjs
+7. Remove the temp script: rm $REPO_ROOT/generate-image-temp.mjs
+8. Commit: git add $IMAGE_ABS && git commit -m 'feat(blog): add header image $TODAY'
 
-Use Linux bash only. No PowerShell."
+Use Linux bash only. No PowerShell.$regen_note"
 
-    claude -p "$IMAGE_PROMPT" \
-      --allowedTools "Read,Write,Bash(mkdir *),Bash(node *),Bash(rm *),Bash(git add *),Bash(git commit *),Bash(git status *),Bash(ls *)" \
-      --output-format json > /dev/null || {
-      log "WARNING: Image generation failed. Continuing without image."
-      IMAGE_ABS=""
-    }
+  claude -p "$image_prompt" \
+    --allowedTools "Read,Write,Bash(mkdir *),Bash(node *),Bash(rm *),Bash(git add *),Bash(git commit *),Bash(git status *),Bash(ls *)" \
+    --output-format json > /dev/null || {
+    log "WARNING: Image generation failed. Continuing without image."
+    IMAGE_ABS=""
+    return 0
+  }
 
-    if [ -n "$IMAGE_ABS" ] && [ ! -s "$IMAGE_ABS" ]; then
-      log "WARNING: Image file missing or empty after generation. Continuing without image."
-      IMAGE_ABS=""
-    fi
+  if [ -n "$IMAGE_ABS" ] && [ ! -s "$IMAGE_ABS" ]; then
+    log "WARNING: Image file missing or empty after generation."
+    IMAGE_ABS=""
   fi
-fi
+}
+
+generate_image ""
 
 # =========================================================================
-# Phase 4 + 5 -- Sonnet review, Opus revision loop
+# Phase 4 + 3b + 5 -- Sonnet review, image regen, Opus revision loop
 # =========================================================================
-REVIEW_SCHEMA='{"type":"object","required":["approved","feedback","ascii_violations","fabricated_claims","word_count_ok","source_count_ok"],"properties":{"approved":{"type":"boolean"},"feedback":{"type":"string"},"ascii_violations":{"type":"array","items":{"type":"string"}},"fabricated_claims":{"type":"array","items":{"type":"string"}},"word_count_ok":{"type":"boolean"},"source_count_ok":{"type":"boolean"}}}'
+REVIEW_SCHEMA='{"type":"object","required":["approved","image_ok","feedback","image_feedback","ascii_violations","fabricated_claims","word_count_ok","source_count_ok"],"properties":{"approved":{"type":"boolean"},"image_ok":{"type":"boolean"},"feedback":{"type":"string"},"image_feedback":{"type":"string"},"ascii_violations":{"type":"array","items":{"type":"string"}},"fabricated_claims":{"type":"array","items":{"type":"string"}},"word_count_ok":{"type":"boolean"},"source_count_ok":{"type":"boolean"}}}'
 
 REVIEW_BASE="$(sed "s/CURRENT_DATE/$TODAY/g" "$REVIEW_PROMPT_FILE")"
 
-REVIEW_PROMPT_TEXT="$REVIEW_BASE
+build_review_prompt() {
+  local prompt="$REVIEW_BASE
 
 Blog post to review: $NEW_POST_ABS"
-[ -n "$IMAGE_ABS" ] && REVIEW_PROMPT_TEXT="$REVIEW_PROMPT_TEXT
-Header image to check: $IMAGE_ABS"
+  [ -n "$IMAGE_ABS" ] && prompt="$prompt
+Header image to review (use the Read tool to open and visually inspect it): $IMAGE_ABS"
+  echo "$prompt"
+}
 
 APPROVED=false
 REVISION=0
 
 while true; do
-  log "Phase 4/5: Sonnet review (revision=$REVISION)..."
+  log "Phase 4: Sonnet review (revision=$REVISION, image_regen=$IMAGE_REGEN)..."
 
-  REVIEW_JSON=$(echo "$REVIEW_PROMPT_TEXT" | claude -p - \
+  REVIEW_JSON=$(build_review_prompt | claude -p - \
     --allowedTools "Read,Bash(ls *),Bash(wc *)" \
     --output-format json \
     --json-schema "$REVIEW_SCHEMA") || {
@@ -253,24 +295,47 @@ while true; do
   fi
 
   APPROVED_VAL=$(echo "$REVIEW_DATA" | jq -r '.approved // false')
+  IMAGE_OK=$(echo "$REVIEW_DATA" | jq -r '.image_ok // true')
   FEEDBACK=$(echo "$REVIEW_DATA" | jq -r '.feedback // ""')
+  IMAGE_FEEDBACK=$(echo "$REVIEW_DATA" | jq -r '.image_feedback // ""')
   ASCII_ISSUES=$(echo "$REVIEW_DATA" | jq -r '(.ascii_violations // []) | join("; ")')
   FAKE_CLAIMS=$(echo "$REVIEW_DATA" | jq -r '(.fabricated_claims // []) | join("; ")')
 
-  log "Review verdict: approved=$APPROVED_VAL"
-  log "Feedback: $FEEDBACK"
+  log "Review: approved=$APPROVED_VAL  image_ok=$IMAGE_OK"
+  log "Post feedback: $FEEDBACK"
+  [ "$IMAGE_OK" != "true" ] && log "Image feedback: $IMAGE_FEEDBACK"
   [ -n "$ASCII_ISSUES" ] && log "ASCII violations: $ASCII_ISSUES"
   [ -n "$FAKE_CLAIMS" ]  && log "Suspicious claims: $FAKE_CLAIMS"
 
   if [ "$APPROVED_VAL" = "true" ]; then
     APPROVED=true
-    log "Post approved by reviewer."
+    log "Approved."
     break
   fi
 
+  # Phase 3b: regenerate image if reviewer flagged it
+  if [ "$IMAGE_OK" = "false" ] && [ -n "$IMAGE_ABS" ] && [ "$IMAGE_REGEN" -lt "$MAX_IMAGE_REGEN" ]; then
+    IMAGE_REGEN=$((IMAGE_REGEN + 1))
+    log "Phase 3b: Image regeneration $IMAGE_REGEN/$MAX_IMAGE_REGEN..."
+    generate_image "$IMAGE_FEEDBACK"
+  fi
+
+  # Phase 5: revise post if writer session available and content issues remain
   if [ -z "$WRITER_SESSION" ] || [ "$REVISION" -ge "$MAX_REVISIONS" ]; then
     log "Max revisions reached or no writer session. Opening draft PR."
     break
+  fi
+
+  # Only do a writer revision if the post itself has issues (not just the image)
+  POST_ONLY_FEEDBACK=$(echo "$FEEDBACK" | grep -v -i "image" || true)
+  if [ -z "$POST_ONLY_FEEDBACK" ] && [ "$IMAGE_OK" = "false" ]; then
+    # Only image issues; if regen is also maxed, give up
+    if [ "$IMAGE_REGEN" -ge "$MAX_IMAGE_REGEN" ]; then
+      log "Only image issues remain and max regen reached. Opening draft PR."
+      break
+    fi
+    # Otherwise loop back and re-review after regen
+    continue
   fi
 
   REVISION=$((REVISION + 1))
@@ -281,18 +346,16 @@ while true; do
 Reviewer feedback:
 $FEEDBACK
 
-ASCII violations to fix (replace each with ASCII equivalent):
-${ASCII_ISSUES:-None listed -- re-scan the full text for any character with codepoint above 127}
-
-Unverifiable claims to remove or source:
-${FAKE_CLAIMS:-None listed}
+Dash rule: Never use -- in prose. Replace every double-hyphen with a single hyphen - with spaces around it.
+ASCII violations to fix: ${ASCII_ISSUES:-None listed - but re-scan for any codepoint above 127}
+Unverifiable claims to remove or source: ${FAKE_CLAIMS:-None listed}
 
 Instructions:
 1. Open $NEW_POST_ABS and fix every issue listed above.
-2. Dash rule: never use -- in prose. Replace every -- with a single hyphen - (with spaces around it). Unicode em-dash must also become -. Quotes must be straight \", apostrophe must be straight ', ellipsis must be ...
-3. For any claim flagged as unverifiable: add the real source URL from the original research notes, or remove the claim.
-4. Save the file.
-5. Run: git add $NEW_POST_ABS && git commit -m 'fix(blog): revision $REVISION -- address review feedback'
+2. If the content provenance connection is missing or weak, add a substantive section explaining
+   how C2PA content authentication addresses the problem described in the post.
+3. Save the file.
+4. Run: git add $NEW_POST_ABS && git commit -m 'fix(blog): revision $REVISION - address review feedback'
 
 Do not change the filename, slug, or frontmatter date."
 
@@ -310,11 +373,10 @@ done
 # =========================================================================
 if [ "$TEST_MODE" = true ]; then
   CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-  log "Test mode: all phases complete. Post committed to branch '$CURRENT_BRANCH'."
-  log "Approved: $APPROVED"
-  log "Post file: $NEW_POST"
-  [ -n "$IMAGE_ABS" ] && log "Image file: $IMAGE_ABS"
-  log "To review: open $NEW_POST_ABS"
+  log "Test mode complete on branch '$CURRENT_BRANCH'."
+  log "  approved=$APPROVED"
+  log "  post:  $NEW_POST"
+  [ -n "$IMAGE_ABS" ] && log "  image: $IMAGE_ABS"
   log "No push or PR created in test mode."
   exit 0
 fi
@@ -329,7 +391,7 @@ if [ "$APPROVED" = true ]; then
   DRAFT_FLAG=""
   log "Opening regular PR."
 else
-  REVIEW_STATUS="Not approved -- human review required before merging"
+  REVIEW_STATUS="Not approved - human review required before merging"
   DRAFT_FLAG="--draft"
   log "Opening draft PR."
 fi
@@ -351,6 +413,7 @@ Generated by the blog-writer pipeline on $TODAY.
 - [ ] Word count is 1,400+
 - [ ] Tags are relevant
 - [ ] Blog header image looks correct
+- [ ] Content provenance connection is substantive
 
 ---
 *Generated by \`scripts/agents/blog-writer/run.sh\`*

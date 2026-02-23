@@ -104,13 +104,48 @@ Include any failures in the feedback string.
 
 ---
 
-## Criterion 7 -- Image Quality (if image path provided)
+## Criterion 7 -- Content Provenance Tie-In (MUST PASS)
 
-If an image path was given:
-- Verify the file exists and has non-zero size (use ls -la on the path)
-- If the file does not exist or is empty, fail this criterion and note it in feedback
+Every post must connect the topic back to Content Provenance as Encypher's central theme.
 
-You cannot visually inspect the image in this context. If the file exists and has non-zero size, pass this criterion unless the generation step logged an error.
+FAIL if:
+- The post never explicitly connects the argument to content provenance, C2PA, or machine-readable
+  authentication signals
+- The "What Encypher Sees From the Inside" section (or equivalent) does not anchor to how
+  content provenance addresses the problem described in the post
+- Content provenance is only mentioned in passing as a product mention, not as a conceptual answer
+
+PASS if:
+- At least one section explains how content provenance or C2PA authentication is the mechanism
+  that resolves or addresses the core problem the post describes
+- The connection is substantive, not just a sentence that says "Encypher does this"
+
+---
+
+## Criterion 8 -- Image Visual Review (if image path provided)
+
+If an image path was given, use the Read tool to open and view the image file. Visually inspect it.
+
+Set image_ok to false if ANY of the following are true:
+- The title text in the image contains repeated or stuttered words (e.g., "License License")
+- The title text is truncated or missing
+- The title text does not match the article title or is significantly garbled
+- The background is not deep navy or a similarly dark professional color
+- The image contains visible logos (Encypher, C2PA, any company)
+- The image contains photorealistic human faces
+- The image has a bright red, neon, or unprofessional color scheme
+- The image appears unrelated to the article topic
+- The file does not exist or has zero size
+
+Set image_ok to true if:
+- Title and subtitle text are correctly rendered and legible
+- Brand colors are consistent (deep navy background, blue/teal accents)
+- Visual composition is relevant to the article topic
+- No forbidden elements (logos, faces, neon colors)
+
+Always describe specifically what is wrong in image_feedback so the image can be regenerated
+with a targeted fix. If image_ok is false, state clearly: what the text shows vs. what it should
+show, and what visual element needs to change.
 
 ---
 
@@ -123,16 +158,22 @@ Set "approved" to true ONLY IF all of the following are true:
 - Criterion 4 (word count): word_count_ok is true
 - Criterion 5 (source count): source_count_ok is true
 - Criterion 6 (frontmatter): no missing required fields
+- Criterion 7 (content provenance): post connects to content provenance substantively
+- Criterion 8 (image): image_ok is true (or no image was provided)
 
 Set "approved" to false if any criterion fails.
 
-If "approved" is false, the "feedback" field MUST contain specific, numbered, actionable instructions for the writer to fix each failure. Be direct. Tell the writer exactly what to change and where.
+If "approved" is false, the "feedback" field MUST contain specific, numbered, actionable
+instructions for the writer to fix each failure. Be direct. Tell the writer exactly what to
+change and where.
+
+"image_feedback" should contain specific instructions for regenerating the image if image_ok
+is false. If image_ok is true, image_feedback can be empty or a brief note.
 
 ---
 
 ## Output Format
 
-Return ONLY valid JSON. No text before or after. No code fences. No explanation.
+Return ONLY valid JSON matching this exact schema. No text before or after. No code fences.
 
-Example:
-{"approved":true,"feedback":"All criteria pass. Strong thesis in paragraph one. Sources verified. No ASCII violations.","ascii_violations":[],"fabricated_claims":[],"word_count_ok":true,"source_count_ok":true}
+{"approved":true,"image_ok":true,"feedback":"All post criteria pass.","image_feedback":"Image looks correct.","ascii_violations":[],"fabricated_claims":[],"word_count_ok":true,"source_count_ok":true}

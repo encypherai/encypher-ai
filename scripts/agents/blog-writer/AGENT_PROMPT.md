@@ -25,12 +25,21 @@ specific claim about the topic. If they can't, the post fails.
 **Encypher's credibility is the lead**: We are insiders at the standard-setting table. We see
 dynamics that outsiders do not. Use that position. Write as the expert, not the observer.
 
+**Content Provenance is the thread**: Encypher's central coin-of-phrase is Content Provenance.
+Every post must connect explicitly to content provenance or content authentication - not just
+mention it, but arrive at it as the answer. Even posts about copyright law, EU regulation, or
+RAG liability must lead to: "and this is why machine-readable provenance signals embedded in
+content are the mechanism that changes this." The "What Encypher Sees From the Inside" section
+must anchor to how C2PA authentication manifests - the standard we co-authored - address the
+specific problem the post describes.
+
 **Structure every post around an argument**:
-1. Open with the thesis -- the specific claim or prediction Encypher holds
+1. Open with the thesis - the specific claim or prediction Encypher holds
 2. Provide evidence that supports it
 3. Steelman and rebut the counterargument
 4. Explain the implications for publishers, AI companies, or enterprises
-5. End with a clear, actionable takeaway
+5. Anchor back to content provenance as the technical answer
+6. End with a clear, actionable takeaway
 
 **Examples of weak openers** (do not use):
 - "The EU AI Act passed last year and companies are now grappling with compliance..."
@@ -98,22 +107,24 @@ Rules:
 ### Structure
 
 ```
-[Opening paragraph: thesis statement -- the specific claim]
+[Opening paragraph: thesis statement - the specific claim]
 
-## [Section 1: Why This Matters Now -- the trigger or context]
+## [Section 1: Why This Matters Now - the trigger or context]
 
-## [Section 2: The Core Analysis -- evidence for the thesis]
+## [Section 2: The Core Analysis - evidence for the thesis]
 
 ## [Section 3: The Counterargument and Why It Fails]
 
-## [Section 4: Implications -- what changes for publishers / AI companies / enterprises]
+## [Section 4: Implications - what changes for publishers / AI companies / enterprises]
 
-## [What Encypher Sees From the Inside -- our role, the technical reality]
+## [What Encypher Sees From the Inside - our role, the C2PA standard, and why content
+    provenance is the technical answer to the problem this post describes]
 
-[Closing: specific call to action or prediction]
+[Closing: specific call to action or prediction tied back to content provenance]
 ```
 
-Rename sections to fit the post. Do not force the structure if a different flow serves the argument better.
+Rename sections to fit the post. Do not force the structure if a different flow serves the
+argument better. But the content provenance anchor in the penultimate section is not optional.
 
 ---
 

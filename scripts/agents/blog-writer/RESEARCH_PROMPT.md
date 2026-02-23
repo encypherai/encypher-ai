@@ -43,8 +43,15 @@ State your thesis in one sentence before searching for sources. It must be:
 - Defensible with evidence you can find
 - Surprising or counter-intuitive to an informed reader
 - Grounded in Encypher's C2PA insider position
+- Connected to Content Provenance: every topic - copyright law, regulation, RAG liability,
+  AI scraping - must lead toward why machine-readable content authentication is the answer.
+  The provenance connection does not need to be the headline claim, but it must be traceable
+  through the argument.
 
 Do not proceed to research until you have a thesis that passes this test.
+
+In the Recommended Post Structure (Step 5), always include a section anchoring to content
+provenance as the technical solution or framework that addresses the problem.
 
 Examples of strong theses:
 - "Publishers are focused on the wrong clause of the EU AI Act. Article 50's machine-readable
