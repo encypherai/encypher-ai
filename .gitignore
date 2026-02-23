@@ -217,3 +217,7 @@ enterprise_api/scripts/.env.bench*
 # Duplicate middleware files
 apps/dashboard/middleware.ts
 .claude/settings.local.json
+
+# Blog writer agent temp files
+.blog-research-temp.md
+generate-image-temp.mjs
