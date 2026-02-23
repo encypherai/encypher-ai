@@ -286,6 +286,41 @@ export default function PricingPage() {
             </div>
           </div>
 
+          {/* ===== ATTRIBUTION ANALYTICS ADD-ON CALLOUT ===== */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <div className="bg-blue-ncs/5 border border-blue-ncs/20 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-2 bg-blue-ncs/10 rounded-lg flex-shrink-0">
+                  <BarChart3 className="h-5 w-5 text-blue-ncs" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold">Attribution Analytics</h3>
+                    <span className="text-xs bg-blue-ncs/10 text-blue-ncs border border-blue-ncs/20 rounded-full px-2 py-0.5 font-medium">Coming Soon</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    See exactly where your signed content is spreading across the internet --
+                    which domains are hosting it, which AI companies are using it, and how frequently.
+                    Included free for all coalition members when it launches.
+                  </p>
+                  <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
+                    {[
+                      'External domain detections -- where your content appears outside your site',
+                      'AI company usage patterns -- training, RAG, direct reproduction',
+                      'Content spread timeline -- track velocity over time',
+                      'Export targeting lists for formal notice campaigns',
+                    ].map((f) => (
+                      <div key={f} className="flex items-start gap-2">
+                        <Check className="h-3.5 w-3.5 text-blue-ncs mt-0.5 flex-shrink-0" />
+                        <span className="text-xs text-muted-foreground">{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* ===== ENTERPRISE TIER ===== */}
           <div className="max-w-4xl mx-auto mb-16">
             <div className="bg-muted/30 border-2 border-border rounded-xl p-8">

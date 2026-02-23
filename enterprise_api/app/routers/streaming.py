@@ -58,7 +58,7 @@ async def stream_signing(
 ) -> StreamingResponse:
     """Stream signing progress via SSE."""
 
-    correlation_id = request.headers.get("x-request-id") or f"req-{uuid4().hex}"
+    correlation_id = getattr(request.state, "request_id", None) or request.headers.get("x-request-id") or f"req-{uuid4().hex}"
     run_id = stream_request.run_id or f"run_{uuid4().hex}"
     document_id = stream_request.document_id or f"doc_{uuid4().hex[:16]}"
 
@@ -349,20 +349,97 @@ async def websocket_chat_endpoint(websocket: WebSocket, api_key: Optional[str] =
     WebSocket endpoint for chat application integration.
 
     Protocol:
-        Client → Server:
+        Client -> Server:
             {"type": "message", "role": "user", "content": "..."}
 
-        Server → Client:
+        Server -> Client:
             {"type": "assistant_chunk", "content": "...", "signed": true}
-            {"type": "turn_complete", "total_chunks": 10}
+            {"type": "turn_complete", "total_chunks": N, "session_id": session_id}
 
     Args:
         websocket: WebSocket connection
         api_key: API key for authentication
     """
-    # TODO: Implement chat-specific logic
-    # For now, redirect to sign endpoint
-    await websocket_sign_endpoint(websocket, session_id=None, api_key=api_key)
+    from app.routers.chat import ChatMessage, _generate_mock_response, _split_into_chunks
+
+    # Authenticate WebSocket connection
+    try:
+        organization = await authenticate_websocket(websocket, api_key)
+        await require_streaming_permission(organization)
+        org_id = organization["organization_id"]
+        private_key_encrypted = organization["private_key_encrypted"]
+    except Exception as e:
+        logger.error(f"WebSocket chat authentication failed: {e}")
+        await websocket.close(code=1008, reason="Authentication failed")
+        return
+
+    # Create a chat session
+    session_result = await streaming_service.create_session(org_id, "chat", metadata={"history": []})
+    session_id = session_result["session_id"]
+
+    try:
+        await connection_manager.connect(session_id=session_id, websocket=websocket, organization_id=org_id)
+        await connection_manager.send_message(session_id, {"type": "connected", "session_id": session_id})
+
+        while True:
+            try:
+                data = await websocket.receive_text()
+                message = json.loads(data)
+
+                if message.get("type") == "message":
+                    content = message.get("content", "")
+                    role = message.get("role", "user")
+
+                    # Build a single-element messages list for _generate_mock_response
+                    mock_messages = [ChatMessage(role=role, content=content)]
+                    response_text = _generate_mock_response(mock_messages)
+                    chunks = _split_into_chunks(response_text)
+
+                    for i, chunk in enumerate(chunks):
+                        signed_result = await streaming_service.process_chunk(
+                            chunk=chunk,
+                            session_id=session_id,
+                            organization_id=org_id,
+                            private_key_encrypted=private_key_encrypted,
+                            chunk_id=f"chunk_{i}",
+                        )
+                        await connection_manager.send_message(
+                            session_id,
+                            {
+                                "type": "assistant_chunk",
+                                "content": chunk,
+                                "signed": signed_result.get("signed", False),
+                            },
+                        )
+
+                    await connection_manager.send_message(
+                        session_id,
+                        {
+                            "type": "turn_complete",
+                            "total_chunks": len(chunks),
+                            "session_id": session_id,
+                        },
+                    )
+
+                else:
+                    await connection_manager.send_message(
+                        session_id,
+                        {"type": "error", "message": f"Unknown message type: {message.get('type')}"},
+                    )
+
+            except json.JSONDecodeError:
+                await connection_manager.send_message(session_id, {"type": "error", "message": "Invalid JSON"})
+            except Exception as e:
+                logger.error(f"Error processing chat WebSocket message: {e}", exc_info=True)
+                await connection_manager.send_message(session_id, {"type": "error", "message": "Internal server error"})
+
+    except WebSocketDisconnect:
+        logger.info(f"Chat WebSocket disconnected: {session_id}")
+    except Exception as e:
+        logger.error(f"Chat WebSocket error: {e}", exc_info=True)
+    finally:
+        await connection_manager.disconnect(session_id)
+        await streaming_service.disconnect_session(session_id)
 
 
 @router.get("/sign/stream/sessions/{session_id}/events")
@@ -390,22 +467,45 @@ async def sse_events_endpoint(
 
     async def event_generator():
         """Generate SSE events."""
-        # Send initial connection event
+        import asyncio
+
         yield f"event: connected\ndata: {json.dumps({'session_id': session_id})}\n\n"
 
         if initial_only:
             return
 
-        # Heartbeat loop
-        import asyncio
+        last_status = None
+        poll_count = 0
+        max_polls = 720  # 6 minutes max at 0.5s intervals
 
-        while True:
-            # Send heartbeat
-            yield ":heartbeat\n\n"
-            await asyncio.sleep(15)
+        while poll_count < max_polls:
+            await asyncio.sleep(0.5)
+            poll_count += 1
 
-            # TODO: Implement actual event streaming
-            # This would pull from a queue or Redis pub/sub
+            state = await session_service.get_stream_state(session_id)
+            if state is None:
+                # Send heartbeat every ~15s (every 30 polls)
+                if poll_count % 30 == 0:
+                    yield ":heartbeat\n\n"
+                continue
+
+            current_status = state.get("status")
+            if current_status != last_status:
+                last_status = current_status
+                event_name = current_status or "update"
+                payload = {k: v for k, v in state.items() if k != "organization_id"}
+                yield f"event: {event_name}\ndata: {json.dumps(payload)}\n\n"
+
+            if current_status in ("final", "error"):
+                yield f"event: done\ndata: {json.dumps({'session_id': session_id})}\n\n"
+                return
+
+            # Heartbeat every 15s
+            if poll_count % 30 == 0:
+                yield ":heartbeat\n\n"
+
+        # Timeout
+        yield f"event: timeout\ndata: {json.dumps({'session_id': session_id, 'message': 'Stream timed out'})}\n\n"
 
     return StreamingResponse(
         event_generator(),

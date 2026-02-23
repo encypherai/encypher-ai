@@ -31,6 +31,7 @@ from app.routers import (
     audit,
     batch,
     byok,
+    cdn_integrations,
     chat,
     coalition,
     documents,
@@ -38,8 +39,12 @@ from app.routers import (
     keys,
     licensing,
     lookup,
+    notices,
     onboarding,
     organizations_proxy,
+    partner,
+    rights,
+    rights_licensing,
     signing,
     status as status_router,
     streaming,
@@ -56,8 +61,14 @@ from app.utils.db_startup import ensure_database_ready
 from app.utils.request_logging import should_log_request
 from app.dependencies import require_super_admin_dep
 
-# Configure logging
-logging.basicConfig(level=logging.INFO if settings.is_production else logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+from app.middleware.request_id_middleware import RequestIDFilter, RequestIDMiddleware
+
+# Configure logging with request_id field from RequestIDMiddleware contextvars
+logging.basicConfig(
+    level=logging.INFO if settings.is_production else logging.DEBUG,
+    format="%(asctime)s [%(request_id)s] %(name)s %(levelname)s - %(message)s",
+)
+logging.getLogger().addFilter(RequestIDFilter())
 logger = logging.getLogger(__name__)
 
 
@@ -368,6 +379,8 @@ app.add_middleware(SecurityHeadersMiddleware)
 from app.middleware.metrics_middleware import MetricsMiddleware
 
 app.add_middleware(MetricsMiddleware)
+# RequestIDMiddleware must be added AFTER MetricsMiddleware so it wraps outermost (runs first)
+app.add_middleware(RequestIDMiddleware)
 
 
 # Request logging middleware
@@ -771,12 +784,18 @@ app.include_router(licensing.router, prefix="/api/v1", tags=["Licensing"])
 app.include_router(usage.router, prefix="/api/v1", tags=["Usage"])
 app.include_router(audit.router, prefix="/api/v1", tags=["Audit"])
 app.include_router(team.router, prefix="/api/v1", tags=["Team Management"])
+app.include_router(team.invite_router, prefix="/api/v1", tags=["Team Invites"])
 app.include_router(coalition.router, prefix="/api/v1", tags=["Coalition"])
 app.include_router(status_router.router, prefix="/api/v1", tags=["Status & Revocation"])
 app.include_router(batch.router)
 app.include_router(tools.router, prefix="/api/v1", tags=["Public Tools"])
 app.include_router(organizations_proxy.router, prefix="/api/v1", tags=["Organizations Proxy"])
 app.include_router(integrations.router, prefix="/api/v1", tags=["Integrations"])
+app.include_router(cdn_integrations.router, prefix="/api/v1", tags=["CDN Integrations"])
+app.include_router(rights.router, prefix="/api/v1", tags=["Rights Management"])
+app.include_router(notices.router, prefix="/api/v1", tags=["Formal Notices"])
+app.include_router(rights_licensing.router, prefix="/api/v1", tags=["Rights Licensing Transactions"])
+app.include_router(partner.router, prefix="/api/v1", tags=["Partner"])
 
 # Include v1 API router (Merkle tree endpoints)
 app.include_router(api_v1_router, prefix="/api/v1")
@@ -796,7 +815,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         JSONResponse with error details
     """
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    correlation_id = request.headers.get("x-request-id") or f"req-{uuid4().hex}"
+    correlation_id = getattr(request.state, "request_id", None) or request.headers.get("x-request-id") or f"req-{uuid4().hex}"
     return JSONResponse(
         status_code=500,
         content={
@@ -811,7 +830,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Return standardized error payloads for HTTP exceptions."""
 
-    correlation_id = request.headers.get("x-request-id") or f"req-{uuid4().hex}"
+    correlation_id = getattr(request.state, "request_id", None) or request.headers.get("x-request-id") or f"req-{uuid4().hex}"
     detail = exc.detail
     if isinstance(detail, dict):
         # Preserve full detail dictionary

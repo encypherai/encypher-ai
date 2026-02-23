@@ -20,12 +20,15 @@ from uuid import UUID, uuid4
 from app.crud import merkle as merkle_crud
 from app.database import get_content_db, get_db
 from app.dependencies import get_current_organization_dep
+from app.models.content_reference import ContentReference
 from app.models.merkle import MerkleRoot
 from app.schemas.fuzzy_fingerprint import FuzzySearchConfig
 from app.services import verification_logic
 from app.services.fuzzy_fingerprint_service import fuzzy_fingerprint_service
 from app.services.merkle_service import MerkleService
 from app.utils.merkle import MerkleTree, compute_leaf_hash
+from app.middleware.request_id_middleware import request_id_ctx
+from app.utils.print_stego import decode_print_fingerprint
 from app.utils.segmentation import HierarchicalSegmenter
 from app.utils.quota import QuotaManager, QuotaType
 
@@ -224,7 +227,7 @@ async def verify_advanced(
             },
         )
 
-    correlation_id = f"req-{uuid4().hex}"
+    correlation_id = request_id_ctx.get() if request_id_ctx.get() != "-" else f"req-{uuid4().hex}"
     execution = await verification_logic.execute_verification(payload_text=request.text, db=db, content_db=content_db)
     reason_code = verification_logic.determine_reason_code(execution=execution)
     verdict = verification_logic.build_verdict(
@@ -318,6 +321,21 @@ async def verify_advanced(
     response_payload["tamper_detection"] = tamper_detection
     if tamper_localization is not None:
         response_payload["tamper_localization"] = tamper_localization
+
+    # Attach rights resolution URL if this document has a rights profile snapshot
+    if document_id:
+        cr_stmt = (
+            select(ContentReference.rights_resolution_url, ContentReference.rights_snapshot)
+            .where(ContentReference.document_id == document_id)
+            .limit(1)
+        )
+        cr_result = await content_db.execute(cr_stmt)
+        cr_row = cr_result.first()
+        if cr_row and cr_row.rights_resolution_url:
+            response_payload["rights"] = {
+                "resolution_url": cr_row.rights_resolution_url,
+                "snapshot": cr_row.rights_snapshot,
+            }
 
     if request.include_attribution:
         # TEAM_145: Attribution is available to all tiers (free/enterprise/strategic_partner)
@@ -436,6 +454,215 @@ async def verify_advanced(
             )
         response_payload["soft_match"] = response_payload["fuzzy_search"]
 
+    # Passive Print Leak Detection scan - always included, no flag required
+    print_fp_bytes = decode_print_fingerprint(request.text)
+    response_payload["print_fingerprint"] = {
+        "detected": print_fp_bytes is not None,
+        "payload_hex": print_fp_bytes.hex() if print_fp_bytes is not None else None,
+    }
+
     return JSONResponse(status_code=status.HTTP_200_OK, content=jsonable_encoder(response_payload))
 
 
+# ---------------------------------------------------------------------------
+# Quote Integrity Verification (public endpoint — no auth required)
+# ---------------------------------------------------------------------------
+
+
+class QuoteIntegrityRequest(BaseModel):
+    quote: str = Field(..., min_length=1, description="The exact text the AI cited")
+    attribution: str = Field(
+        ..., min_length=1, description="Claimed source e.g. 'According to Reuters...'"
+    )
+    org_id: Optional[str] = Field(
+        default=None, description="Publisher org to check (if known)"
+    )
+    doc_id: Optional[str] = Field(
+        default=None, description="Specific document (if known)"
+    )
+    fuzzy_threshold: float = Field(
+        default=0.85, ge=0.0, le=1.0, description="Similarity threshold"
+    )
+
+
+class MatchedDocument(BaseModel):
+    id: str
+    title: Optional[str] = None
+    org_id: str
+    signed_at: Optional[str] = None
+
+
+class QuoteIntegrityResponse(BaseModel):
+    verdict: str  # "accurate" | "approximate" | "hallucinated" | "unverifiable"
+    similarity_score: float
+    matched_document: Optional[MatchedDocument] = None
+    matched_excerpt: Optional[str] = None
+    confidence: str  # "high" | "medium" | "low"
+    merkle_proof: Optional[Dict[str, Any]] = None
+    explanation: str
+
+
+def _compute_similarity(quote: str, text_content: str) -> float:
+    """Compute similarity between quote and a stored text segment."""
+    return difflib.SequenceMatcher(None, quote.lower(), text_content.lower()).ratio()
+
+
+@router.post("/verify/quote-integrity", summary="Quote Integrity Verification")
+async def verify_quote_integrity(
+    request: QuoteIntegrityRequest,
+    content_db: AsyncSession = Depends(get_content_db),
+) -> JSONResponse:
+    """
+    Public endpoint for AI companies to verify quote accuracy against signed content.
+
+    Returns a verdict indicating whether the quoted text matches signed source content.
+    """
+    correlation_id = request_id_ctx.get() if request_id_ctx.get() != "-" else f"req-{uuid4().hex}"
+    normalized_quote = unicodedata.normalize("NFC", request.quote).strip()
+
+    best_score = 0.0
+    best_excerpt: Optional[str] = None
+    best_doc_id: Optional[str] = None
+    best_org_id: Optional[str] = None
+    best_signed_at: Optional[str] = None
+    best_doc_title: Optional[str] = None
+
+    from app.models.merkle import MerkleSubhash
+
+    if request.doc_id:
+        # Search MerkleLeaf nodes of a specific document
+        stmt = (
+            select(MerkleSubhash, MerkleRoot)
+            .join(MerkleRoot, MerkleSubhash.root_id == MerkleRoot.id)
+            .where(
+                MerkleRoot.document_id == request.doc_id,
+                MerkleSubhash.node_type == "leaf",
+                MerkleSubhash.text_content.isnot(None),
+            )
+        )
+        if request.org_id:
+            stmt = stmt.where(MerkleRoot.organization_id == request.org_id)
+
+        result = await content_db.execute(stmt)
+        rows = result.all()
+
+        for subhash, root in rows:
+            score = _compute_similarity(normalized_quote, subhash.text_content)
+            if score > best_score:
+                best_score = score
+                best_excerpt = subhash.text_content
+                best_doc_id = root.document_id
+                best_org_id = root.organization_id
+                best_signed_at = (
+                    root.created_at.isoformat() if root.created_at else None
+                )
+
+    elif request.org_id:
+        # Search ContentReference for that org's documents
+        stmt = select(ContentReference).where(
+            ContentReference.organization_id == request.org_id,
+            ContentReference.text_content.isnot(None),
+        )
+        result = await content_db.execute(stmt)
+        refs = result.scalars().all()
+
+        for ref in refs:
+            score = _compute_similarity(normalized_quote, ref.text_content)
+            if score > best_score:
+                best_score = score
+                best_excerpt = ref.text_content
+                best_doc_id = ref.document_id
+                best_org_id = ref.organization_id
+                best_signed_at = (
+                    ref.created_at.isoformat() if ref.created_at else None
+                )
+
+    else:
+        # Public scope — search all ContentReference records
+        stmt = select(ContentReference).where(
+            ContentReference.text_content.isnot(None),
+        )
+        result = await content_db.execute(stmt)
+        refs = result.scalars().all()
+
+        for ref in refs:
+            score = _compute_similarity(normalized_quote, ref.text_content)
+            if score > best_score:
+                best_score = score
+                best_excerpt = ref.text_content
+                best_doc_id = ref.document_id
+                best_org_id = ref.organization_id
+                best_signed_at = (
+                    ref.created_at.isoformat() if ref.created_at else None
+                )
+
+    # Determine verdict
+    if best_excerpt is None:
+        verdict = "unverifiable"
+        confidence = "low"
+        explanation = (
+            "No signed content was found matching the attribution. "
+            "The source may not be registered or the quote cannot be verified."
+        )
+    elif best_score >= 0.95:
+        verdict = "accurate"
+        confidence = "high"
+        explanation = (
+            f"The quote closely matches signed content "
+            f"(similarity {best_score:.0%})."
+        )
+    elif best_score >= request.fuzzy_threshold:
+        verdict = "approximate"
+        confidence = "medium"
+        explanation = (
+            f"The quote partially matches signed content "
+            f"(similarity {best_score:.0%}). Minor differences detected."
+        )
+    else:
+        verdict = "hallucinated"
+        confidence = "high"
+        explanation = (
+            f"The quote does not match any signed content above the threshold "
+            f"(best similarity {best_score:.0%}, threshold {request.fuzzy_threshold:.0%})."
+        )
+
+    matched_document = None
+    if best_doc_id and best_org_id:
+        # Try to get title from doc_metadata
+        title_stmt = (
+            select(MerkleRoot.doc_metadata)
+            .where(MerkleRoot.document_id == best_doc_id)
+            .limit(1)
+        )
+        title_result = await content_db.execute(title_stmt)
+        doc_meta = title_result.scalar_one_or_none()
+        if isinstance(doc_meta, dict):
+            best_doc_title = doc_meta.get("title")
+
+        matched_document = MatchedDocument(
+            id=best_doc_id,
+            title=best_doc_title,
+            org_id=best_org_id,
+            signed_at=best_signed_at,
+        )
+
+    response_data = QuoteIntegrityResponse(
+        verdict=verdict,
+        similarity_score=round(best_score, 4),
+        matched_document=matched_document,
+        matched_excerpt=best_excerpt[:500] if best_excerpt else None,
+        confidence=confidence,
+        merkle_proof=None,
+        explanation=explanation,
+    )
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content=jsonable_encoder(
+            {
+                "success": True,
+                "data": response_data.model_dump(),
+                "correlation_id": correlation_id,
+            }
+        ),
+    )

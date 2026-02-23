@@ -54,7 +54,7 @@ The Encypher platform uses a microservices architecture with all services runnin
 | [**analytics-service**](./analytics-service/) | 8006 | postgres-core | ✅ Active | Usage metrics |
 | [**billing-service**](./billing-service/) | 8007 | postgres-core | ✅ Active | Subscriptions, Stripe |
 | [**notification-service**](./notification-service/) | 8008 | postgres-core | ✅ Active | Email, notifications |
-| **enterprise-api** | 9000 | core + content | ✅ Active | C2PA sign/verify API |
+| **enterprise-api** | 9000 | core + content | ✅ Active | C2PA sign/verify API, Rights Management System |
 
 ### Infrastructure
 

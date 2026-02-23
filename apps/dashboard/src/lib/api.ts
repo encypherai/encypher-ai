@@ -1131,6 +1131,39 @@ const apiClient = {
     );
   },
 
+  // ============================================
+  // Publisher Value Journey (TEAM_225)
+  // ============================================
+
+  /**
+   * Get publisher progression status (6-stage value journey)
+   */
+  async getProgressionStatus(accessToken: string): Promise<unknown> {
+    return fetchWithAuth(
+      `${API_BASE_URL}/onboarding/progression-status`,
+      accessToken
+    );
+  },
+
+  /**
+   * Get content spread analytics (external domain detections)
+   */
+  async getContentSpread(accessToken: string, days = 30): Promise<unknown> {
+    return fetchWithAuth(
+      `${API_BASE_URL}/rights/analytics/content-spread?days=${days}`,
+      accessToken
+    );
+  },
+
+  /**
+   * Get public coalition stats (no auth required)
+   */
+  async getPublicCoalitionStats(): Promise<{ coalition_members: number; total_signed_documents: number; as_of: string }> {
+    const res = await fetch(`${API_BASE_URL}/coalition/public/stats`);
+    if (!res.ok) throw new Error('Failed to fetch coalition stats');
+    return res.json();
+  },
+
   /**
    * Create a Stripe Checkout session for upgrading
    */
@@ -1597,7 +1630,375 @@ const apiClient = {
       { method: 'DELETE' }
     );
   },
+
+  // ============================================
+  // Rights Management
+  // ============================================
+
+  async getRightsProfile(accessToken: string): Promise<RightsProfile | null> {
+    try {
+      return await fetchWithAuth<RightsProfile>(
+        `${API_BASE_URL}/rights/profile`,
+        accessToken
+      );
+    } catch {
+      return null;
+    }
+  },
+
+  async upsertRightsProfile(accessToken: string, profile: Partial<RightsProfile>): Promise<RightsProfile> {
+    return fetchWithAuth<RightsProfile>(
+      `${API_BASE_URL}/rights/profile`,
+      accessToken,
+      { method: 'PUT', body: JSON.stringify(profile) }
+    );
+  },
+
+  async getRightsTemplates(accessToken: string): Promise<RightsTemplate[]> {
+    const response = await fetchWithAuth<RightsTemplate[] | { success: boolean; data: RightsTemplate[] }>(
+      `${API_BASE_URL}/rights/templates`,
+      accessToken
+    );
+    return Array.isArray(response) ? response : (response.data ?? []);
+  },
+
+  async applyRightsTemplate(accessToken: string, templateId: string): Promise<RightsProfile> {
+    return fetchWithAuth<RightsProfile>(
+      `${API_BASE_URL}/rights/profile/from-template/${encodeURIComponent(templateId)}`,
+      accessToken,
+      { method: 'POST' }
+    );
+  },
+
+  async getDetectionAnalytics(accessToken: string, days = 30): Promise<DetectionSummary> {
+    return fetchWithAuth<DetectionSummary>(
+      `${API_BASE_URL}/rights/analytics/detections?days=${days}`,
+      accessToken
+    );
+  },
+
+  async getCrawlerAnalytics(accessToken: string, days = 30): Promise<CrawlerAnalytics> {
+    return fetchWithAuth<CrawlerAnalytics>(
+      `${API_BASE_URL}/rights/analytics/crawlers?days=${days}`,
+      accessToken
+    );
+  },
+
+  async getCrawlerTimeseries(accessToken: string, days = 30): Promise<CrawlerTimeseries> {
+    return fetchWithAuth<CrawlerTimeseries>(
+      `${API_BASE_URL}/rights/analytics/crawlers/timeseries?days=${days}`,
+      accessToken
+    );
+  },
+
+  async getCdnIntegration(accessToken: string): Promise<CdnIntegrationResponse | null> {
+    try {
+      return await fetchWithAuth<CdnIntegrationResponse>(
+        `${API_BASE_URL}/cdn/cloudflare`,
+        accessToken
+      );
+    } catch {
+      return null;
+    }
+  },
+
+  async saveCdnIntegration(
+    accessToken: string,
+    payload: CdnIntegrationCreate
+  ): Promise<CdnIntegrationResponse> {
+    return fetchWithAuth<CdnIntegrationResponse>(
+      `${API_BASE_URL}/cdn/cloudflare`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify(payload) }
+    );
+  },
+
+  async deleteCdnIntegration(accessToken: string): Promise<void> {
+    await fetchWithAuth<void>(
+      `${API_BASE_URL}/cdn/cloudflare`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+  },
+
+  async listNotices(accessToken: string): Promise<FormalNotice[]> {
+    const response = await fetchWithAuth<FormalNotice[]>(
+      `${API_BASE_URL}/notices/`,
+      accessToken
+    );
+    // notices endpoint returns array directly
+    return Array.isArray(response) ? response : [];
+  },
+
+  async createNotice(accessToken: string, payload: {
+    recipient_entity: string;
+    recipient_contact?: string;
+    document_ids?: string[];
+    violation_type?: string;
+    notice_text?: string;
+  }): Promise<FormalNotice> {
+    const response = await fetchWithAuth<FormalNotice>(
+      `${API_BASE_URL}/notices/create`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify(payload) }
+    );
+    return response;
+  },
+
+  async deliverNotice(accessToken: string, noticeId: string): Promise<FormalNotice> {
+    const response = await fetchWithAuth<FormalNotice>(
+      `${API_BASE_URL}/notices/${encodeURIComponent(noticeId)}/deliver`,
+      accessToken,
+      { method: 'POST' }
+    );
+    return response;
+  },
+
+  async listLicensingRequests(accessToken: string): Promise<LicensingRequest[]> {
+    const response = await fetchWithAuth<LicensingRequest[]>(
+      `${API_BASE_URL}/rights-licensing/requests`,
+      accessToken
+    );
+    return Array.isArray(response) ? response : [];
+  },
+
+  async listLicensingAgreements(accessToken: string): Promise<LicensingAgreement[]> {
+    const response = await fetchWithAuth<LicensingAgreement[]>(
+      `${API_BASE_URL}/rights-licensing/agreements`,
+      accessToken
+    );
+    return Array.isArray(response) ? response : [];
+  },
+
+  async respondToLicensingRequest(
+    accessToken: string,
+    requestId: string,
+    action: 'approve' | 'counter' | 'reject',
+    opts?: { message?: string; terms?: Record<string, unknown> }
+  ): Promise<Record<string, unknown>> {
+    return fetchWithAuth<Record<string, unknown>>(
+      `${API_BASE_URL}/rights-licensing/requests/${encodeURIComponent(requestId)}/respond`,
+      accessToken,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ action, message: opts?.message ?? '', terms: opts?.terms ?? {} }),
+      }
+    );
+  },
+
+  // ── Rights profile history ────────────────────────────────────────────────
+
+  async getRightsProfileHistory(accessToken: string): Promise<RightsProfileVersion[]> {
+    const response = await fetchWithAuth<RightsProfileVersion[] | { success: boolean; data: RightsProfileVersion[] }>(
+      `${API_BASE_URL}/rights/profile/history`,
+      accessToken
+    );
+    if (Array.isArray(response)) return response;
+    const typed = response as { success: boolean; data: RightsProfileVersion[] };
+    return typed.data ?? [];
+  },
+
+  async getNoticeEvidence(accessToken: string, noticeId: string): Promise<EvidencePackage> {
+    return fetchWithAuth<EvidencePackage>(
+      `${API_BASE_URL}/notices/${encodeURIComponent(noticeId)}/evidence`,
+      accessToken
+    );
+  },
+
+  async downloadEvidencePackagePdf(accessToken: string, noticeId: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/notices/${encodeURIComponent(noticeId)}/evidence/pdf`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!response.ok) throw new Error('Failed to generate PDF');
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `notice-${noticeId}-evidence.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };
+
+// ── Rights Management types ───────────────────────────────────────────────────
+
+interface RightsTierPermissions {
+  allowed?: boolean;
+  requires_license?: boolean;
+  license_url?: string | null;
+  allowed_purposes?: string[];
+  prohibited_purposes?: string[];
+}
+
+interface RightsTierAttribution {
+  required?: boolean;
+  format?: string | null;
+  link_back_required?: boolean;
+}
+
+interface RightsTier {
+  tier?: string;
+  usage_type?: string;
+  description?: string | null;
+  permissions?: RightsTierPermissions;
+  attribution?: RightsTierAttribution;
+  contact_for_licensing?: string | null;
+}
+
+interface RightsProfile {
+  id?: string;
+  organization_id?: string;
+  profile_version?: number;
+  is_active?: boolean;
+  bronze_tier?: RightsTier | null;
+  silver_tier?: RightsTier | null;
+  gold_tier?: RightsTier | null;
+  contact_email?: string | null;
+  notice_endpoint?: string | null;
+  effective_date?: string | null;
+  created_at?: string;
+}
+
+interface RightsTemplate {
+  id: string;
+  name: string;
+  description: string;
+  bronze_tier?: RightsTier | null;
+  silver_tier?: RightsTier | null;
+  gold_tier?: RightsTier | null;
+}
+
+interface DetectionSummary {
+  organization_id: string;
+  period_days: number;
+  total_events: number;
+  by_source: Record<string, number>;
+  by_category: Record<string, number>;
+  by_integrity_status: Record<string, number>;
+  rights_served_count: number;
+  rights_acknowledged_count: number;
+  unique_domains: number;
+  robots_txt_bypass_count: number;
+}
+
+interface CrawlerSummaryEntry {
+  crawler_name: string;
+  user_agent_pattern?: string | null;
+  company?: string | null;
+  operator_org?: string | null;
+  respects_rsl?: boolean;
+  total_events: number;
+  last_seen?: string | null;
+  user_agent_category?: string;
+  rsl_check_count?: number;
+  rsl_check_rate?: number;
+  rights_acknowledged_rate?: number;
+  bypass_count?: number;
+  compliance_score?: number;
+  compliance_label?: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Non-compliant';
+}
+
+export interface CdnIntegrationCreate {
+  provider?: string;
+  zone_id?: string | null;
+  webhook_secret: string;
+  enabled?: boolean;
+}
+
+export interface CdnIntegrationResponse {
+  id: string;
+  provider: string;
+  zone_id?: string | null;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+  webhook_url: string;
+}
+
+interface CrawlerAnalytics {
+  crawlers: CrawlerSummaryEntry[];
+  total_crawler_events: number;
+  known_crawlers?: CrawlerSummaryEntry[];
+}
+
+interface CrawlerTimeseries {
+  dates: string[];
+  by_crawler: Record<string, number[]>;
+  total_by_date: number[];
+}
+
+interface FormalNotice {
+  id: string;
+  organization_id: string;
+  recipient_entity?: string | null;
+  recipient_contact?: string | null;
+  violation_type?: string | null;
+  notice_text?: string | null;
+  status: string;
+  delivered_at?: string | null;
+  content_hash?: string | null;
+  created_at: string;
+}
+
+interface LicensingRequest {
+  id: string;
+  publisher_org_id?: string | null;
+  requester_org_id?: string | null;
+  tier?: string | null;
+  scope?: Record<string, unknown> | null;
+  proposed_terms?: Record<string, unknown> | null;
+  requester_info?: Record<string, unknown> | null;
+  status: string;
+  response?: Record<string, unknown> | null;
+  responded_at?: string | null;
+  agreement_id?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+interface RightsProfileVersion {
+  id: string;
+  profile_version: number;
+  effective_date: string;
+  created_at: string;
+  changed_by?: string | null;
+  change_summary?: string | null;
+  bronze_tier?: RightsTier | null;
+  silver_tier?: RightsTier | null;
+  gold_tier?: RightsTier | null;
+}
+
+interface EvidencePackage {
+  notice_id: string;
+  notice_hash: string;
+  evidence_chain: Array<{
+    event_type: string;
+    timestamp: string;
+    hash: string;
+    previous_hash: string | null;
+    metadata: Record<string, unknown>;
+  }>;
+  delivery_receipt?: Record<string, unknown> | null;
+  created_at: string;
+}
+
+interface LicensingAgreement {
+  id: string;
+  request_id?: string | null;
+  publisher_org_id?: string | null;
+  licensee_org_id?: string | null;
+  licensee_name?: string | null;
+  tier?: string | null;
+  scope?: Record<string, unknown> | null;
+  terms?: Record<string, unknown> | null;
+  effective_date?: string | null;
+  expiry_date?: string | null;
+  auto_renew?: boolean | null;
+  status: string;
+  usage_metrics?: Record<string, unknown> | null;
+  created_at: string;
+}
 
 // Ghost Integration types (TEAM_187)
 interface GhostIntegrationCreatePayload {
@@ -1679,4 +2080,16 @@ export type {
   GhostIntegrationCreatePayload,
   GhostIntegrationResponse,
   GhostTokenRegenerateResponse,
+  // Rights Management
+  RightsProfile,
+  RightsTemplate,
+  RightsTier,
+  DetectionSummary,
+  CrawlerSummaryEntry,
+  CrawlerAnalytics,
+  FormalNotice,
+  LicensingRequest,
+  LicensingAgreement,
+  RightsProfileVersion,
+  EvidencePackage,
 };

@@ -451,6 +451,7 @@ async def upgrade_subscription(
 
 @router.get("/usage")
 async def get_usage_stats(
+    authorization: str = Header(...),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -485,14 +486,48 @@ async def get_usage_stats(
     else:
         period_end = period_start.replace(month=now.month + 1)
 
-    # TODO: Get actual usage from analytics service
-    # For now, return placeholder data
-    usage_data = {
-        "c2pa_signatures": {"used": 0, "limit": limits.get("c2pa_signatures", 1000)},
-        "sentences_tracked": {"used": 0, "limit": limits.get("sentences_tracked", 0)},
-        "api_calls": {"used": 0, "limit": -1},  # Unlimited
-        "verifications": {"used": 0, "limit": -1},  # Unlimited
-    }
+    # Fetch real usage from analytics service
+    usage_data_raw = None
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(
+                f"{settings.ANALYTICS_SERVICE_URL}/api/v1/usage",
+                headers={"Authorization": authorization},
+                params={"org_id": org_id},
+            )
+            if resp.status_code == 200:
+                usage_data_raw = resp.json()
+    except Exception as exc:
+        logger.warning("analytics_service_unavailable error=%s", exc)
+
+    # Build usage_data from real response or fall back to zeros
+    if usage_data_raw and isinstance(usage_data_raw, dict):
+        metrics_raw = usage_data_raw.get("metrics", {})
+        usage_data = {
+            "c2pa_signatures": {
+                "used": metrics_raw.get("c2pa_signatures", {}).get("used", 0),
+                "limit": limits.get("c2pa_signatures", 1000),
+            },
+            "sentences_tracked": {
+                "used": metrics_raw.get("sentences_tracked", {}).get("used", 0),
+                "limit": limits.get("sentences_tracked", 0),
+            },
+            "api_calls": {
+                "used": metrics_raw.get("api_calls", {}).get("used", 0),
+                "limit": -1,
+            },
+            "verifications": {
+                "used": metrics_raw.get("verifications", {}).get("used", 0),
+                "limit": -1,
+            },
+        }
+    else:
+        usage_data = {
+            "c2pa_signatures": {"used": 0, "limit": limits.get("c2pa_signatures", 1000)},
+            "sentences_tracked": {"used": 0, "limit": limits.get("sentences_tracked", 0)},
+            "api_calls": {"used": 0, "limit": -1},
+            "verifications": {"used": 0, "limit": -1},
+        }
 
     metrics = {}
     for metric_name, data in usage_data.items():
@@ -535,6 +570,7 @@ async def get_usage_stats(
 
 @router.get("/coalition")
 async def get_coalition_earnings(
+    authorization: str = Header(...),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -550,7 +586,6 @@ async def get_coalition_earnings(
     from ...services.billing_service import PRICING_TIERS
 
     user_id = current_user.get("id")
-    current_user.get("organization_id", user_id)
 
     # Get subscription to determine tier and rev share
     subscription = BillingService.get_user_subscription(db, user_id)
@@ -558,21 +593,56 @@ async def get_coalition_earnings(
     tier_info = PRICING_TIERS.get(tier, PRICING_TIERS["free"])
     rev_share = tier_info["coalition_rev_share"]
 
-    # TODO: Get actual coalition data from coalition-service
-    # For now, return placeholder data
-    return {
-        "member": True,
-        "opted_out": False,
-        "publisher_share_percent": rev_share["publisher"],
-        "encypher_share_percent": rev_share["encypher"],
-        "total_content": 0,
-        "total_earnings": 0.0,
-        "pending_earnings": 0.0,
-        "last_payout_date": None,
-        "earnings_history": [],
-        "payout_account_connected": False,
-        "payout_account_url": None,  # Will be Stripe Connect onboarding URL
-    }
+    # Fetch real coalition data from coalition-service
+    coalition_raw = None
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            status_resp = await client.get(
+                f"{settings.COALITION_SERVICE_URL}/api/v1/coalition/status/{user_id}",
+                headers={"Authorization": authorization},
+            )
+            revenue_resp = await client.get(
+                f"{settings.COALITION_SERVICE_URL}/api/v1/coalition/revenue/{user_id}",
+                headers={"Authorization": authorization},
+            )
+            if status_resp.status_code == 200 and revenue_resp.status_code == 200:
+                coalition_raw = {
+                    "status": status_resp.json().get("data", {}),
+                    "revenue": revenue_resp.json().get("data", {}),
+                }
+    except Exception as exc:
+        logger.warning("coalition_service_unavailable error=%s", exc)
+
+    if coalition_raw:
+        status_data = coalition_raw["status"]
+        revenue_data = coalition_raw["revenue"]
+        return {
+            "member": status_data.get("is_member", True),
+            "opted_out": status_data.get("opted_out", False),
+            "publisher_share_percent": rev_share["publisher"],
+            "encypher_share_percent": rev_share["encypher"],
+            "total_content": revenue_data.get("total_content", 0),
+            "total_earnings": revenue_data.get("total_earnings", 0.0),
+            "pending_earnings": revenue_data.get("pending_earnings", 0.0),
+            "last_payout_date": revenue_data.get("last_payout_date"),
+            "earnings_history": revenue_data.get("earnings_history", []),
+            "payout_account_connected": revenue_data.get("payout_account_connected", False),
+            "payout_account_url": revenue_data.get("payout_account_url"),
+        }
+    else:
+        return {
+            "member": True,
+            "opted_out": False,
+            "publisher_share_percent": rev_share["publisher"],
+            "encypher_share_percent": rev_share["encypher"],
+            "total_content": 0,
+            "total_earnings": 0.0,
+            "pending_earnings": 0.0,
+            "last_payout_date": None,
+            "earnings_history": [],
+            "payout_account_connected": False,
+            "payout_account_url": None,
+        }
 
 
 # =========================================================================

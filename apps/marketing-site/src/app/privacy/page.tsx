@@ -12,22 +12,22 @@ export default function PrivacyPage() {
       <h1 className="text-4xl font-bold mb-8">Privacy Policy</h1>
       <div className="prose prose-slate dark:prose-invert max-w-none">
         <p className="text-muted-foreground mb-8">
-          <strong>Last Updated:</strong> {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+          <strong>Last Updated:</strong> February 23, 2026
         </p>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">1. Introduction</h2>
           <p className="mb-4">
-            Encypher ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website, services, and demos (collectively, the "Services").
+            Encypher (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our website, APIs, Chrome extension, dashboard, and related services (collectively, the &quot;Services&quot;).
           </p>
           <p className="mb-4">
-            <strong className="text-primary">We will never sell your personal data to third parties.</strong> Your trust is paramount to us, and we are committed to transparent and responsible data practices.
+            <strong>We will never sell your personal data to third parties.</strong> Your trust is paramount to us, and we are committed to transparent and responsible data practices.
           </p>
         </section>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">2. Information We Collect</h2>
-          
+
           <h3 className="text-xl font-semibold mb-3 mt-6">2.1 Information You Provide</h3>
           <p className="mb-4">
             We may collect information that you voluntarily provide when you:
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
 
           <h3 className="text-xl font-semibold mb-3 mt-6">2.2 Automatically Collected Information</h3>
           <p className="mb-4">
-            When you access our Services, we automatically collect certain information, including:
+            When you access our website and dashboard, we automatically collect certain information, including:
           </p>
           <ul className="list-disc ml-6 mb-4 space-y-2">
             <li><strong>Usage Data:</strong> Pages visited, time spent, click patterns, and navigation paths</li>
@@ -54,16 +54,32 @@ export default function PrivacyPage() {
             <li><strong>Cookies and Tracking Technologies:</strong> See Section 4 for details</li>
           </ul>
 
-          <h3 className="text-xl font-semibold mb-3 mt-6">2.3 Demo Interaction Data</h3>
+          <h3 className="text-xl font-semibold mb-3 mt-6">2.3 Chrome Extension Data</h3>
           <p className="mb-4">
-            When you use our interactive demos, we may collect:
+            The Encypher Verify Chrome extension collects the following data:
           </p>
           <ul className="list-disc ml-6 mb-4 space-y-2">
-            <li>Demo completion rates and section interactions</li>
-            <li>Time spent on each demo section</li>
-            <li>User inputs and selections within demos (anonymized)</li>
-            <li>Technical performance metrics</li>
+            <li>
+              <strong>Content Discovery Events:</strong> When the extension detects signed content on a page, it reports an anonymized event to Encypher&apos;s analytics service. Each event includes the sanitized page URL and domain (query parameters and hash fragments are stripped before sending), the page title, signer information extracted from the content signature, the verification result, and an ephemeral anonymous session ID that resets each browser session. This event contains no personally identifying information about the extension user.
+            </li>
+            <li>
+              <strong>Content You Sign:</strong> When you use the extension to sign content, the text you submit and your API key are sent to the Encypher API. Signed content metadata (document ID, signer ID, timestamp, signing configuration) is stored on our servers for verification and audit purposes.
+            </li>
+            <li>
+              <strong>Content You Verify:</strong> Only the specific signed text block is sent to the Encypher API for verification. Full page content is never transmitted.
+            </li>
+            <li>
+              <strong>Local Storage:</strong> Your API key, extension settings, and a short-term verification cache are stored locally in Chrome&apos;s secure storage and are never transmitted to third parties.
+            </li>
           </ul>
+          <p className="mb-4">
+            Verification results are cached locally in your browser for up to one hour to reduce redundant API calls. The extension does not collect browsing history, full page content, or any information that could identify you as an individual.
+          </p>
+
+          <h3 className="text-xl font-semibold mb-3 mt-6">2.4 API and Signing Metadata</h3>
+          <p className="mb-4">
+            When you sign content using any Encypher tool (API, Chrome extension, WordPress plugin, or CLI), we store the following metadata on our servers: document ID, signer ID, timestamp, signing configuration, and a content fingerprint. This metadata enables content verification, audit trails, and Coalition licensing operations. We do not store the full text of signed content on our servers.
+          </p>
         </section>
 
         <section className="mb-8">
@@ -73,14 +89,13 @@ export default function PrivacyPage() {
           </p>
           <ul className="list-disc ml-6 mb-4 space-y-2">
             <li><strong>Service Delivery:</strong> To provide, maintain, and improve our Services</li>
-            <li><strong>Analytics and Optimization:</strong> To analyze usage patterns and optimize website and demo performance</li>
+            <li><strong>Analytics and Optimization:</strong> To analyze usage patterns and optimize website, API, and demo performance</li>
             <li><strong>Communication:</strong> To respond to inquiries, send updates, and provide customer support</li>
-            <li><strong>Personalization:</strong> To customize your experience and provide relevant content</li>
             <li><strong>Security:</strong> To detect, prevent, and address technical issues and security threats</li>
             <li><strong>Legal Compliance:</strong> To comply with legal obligations and protect our rights</li>
-            <li><strong>Research and Development:</strong> To improve our technology and develop new features</li>
+            <li><strong>Product Development:</strong> To improve our technology and develop new features. We do not use your personal data or signed content for AI model training.</li>
           </ul>
-          <p className="mb-4 text-primary font-semibold">
+          <p className="mb-4">
             We will never sell your personal data to third parties or use it for purposes unrelated to providing and improving our Services.
           </p>
         </section>
@@ -88,16 +103,15 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">4. Cookies and Tracking Technologies</h2>
           <p className="mb-4">
-            We use cookies and similar tracking technologies to enhance your experience and collect usage data. Types of cookies we use:
+            We use cookies and similar tracking technologies on our website and dashboard to enhance your experience and collect usage data. Types of cookies we use:
           </p>
           <ul className="list-disc ml-6 mb-4 space-y-2">
             <li><strong>Essential Cookies:</strong> Required for the Services to function properly</li>
-            <li><strong>Analytics Cookies:</strong> Help us understand how visitors interact with our Services (e.g., Google Analytics)</li>
+            <li><strong>Analytics Cookies:</strong> Help us understand how visitors interact with our Services</li>
             <li><strong>Functional Cookies:</strong> Remember your preferences and settings</li>
-            <li><strong>Performance Cookies:</strong> Collect information about how you use our Services to improve performance</li>
           </ul>
           <p className="mb-4">
-            You can control cookies through your browser settings. Note that disabling certain cookies may limit your ability to use some features of our Services.
+            The Chrome extension does not use cookies or tracking pixels. You can control website cookies through your browser settings. Disabling certain cookies may limit your ability to use some features of our Services.
           </p>
         </section>
 
@@ -107,7 +121,8 @@ export default function PrivacyPage() {
             We do not sell your personal data. We may share your information only in the following circumstances:
           </p>
           <ul className="list-disc ml-6 mb-4 space-y-2">
-            <li><strong>Service Providers:</strong> With trusted third-party vendors who assist in operating our Services (e.g., hosting, analytics, email services). These providers are contractually obligated to protect your data.</li>
+            <li><strong>Service Providers:</strong> With trusted third-party vendors who assist in operating our Services (e.g., hosting, analytics, email services, payment processors). These providers are contractually obligated to protect your data and may only use it to perform services on our behalf.</li>
+            <li><strong>Coalition Licensees:</strong> If your organization is enrolled in the Publisher Coalition, your signed content and associated signer metadata (organization name, signing date, provenance information embedded in the content) is made available to approved Coalition licensees. This is described in the Publisher Coalition terms. Personal account information (email address, billing details) is not shared with licensees.</li>
             <li><strong>Legal Requirements:</strong> When required by law, court order, or governmental authority</li>
             <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets, with appropriate safeguards for your data</li>
             <li><strong>Protection of Rights:</strong> To protect our rights, property, or safety, or that of our users or the public</li>
@@ -118,12 +133,13 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">6. Third-Party Services</h2>
           <p className="mb-4">
-            Our Services may integrate with or link to third-party services, including:
+            Our Services integrate with or are distributed through third-party platforms, including:
           </p>
           <ul className="list-disc ml-6 mb-4 space-y-2">
-            <li><strong>Google Colab:</strong> For technical demonstrations</li>
-            <li><strong>Analytics Providers:</strong> For website and demo performance tracking</li>
-            <li><strong>Communication Tools:</strong> For customer support and engagement</li>
+            <li><strong>Chrome Web Store (Google):</strong> The Encypher Verify extension is distributed through Google&apos;s Chrome Web Store. Google&apos;s privacy policy governs data collected through that platform.</li>
+            <li><strong>WordPress / Automattic:</strong> Our WordPress plugin is distributed through the WordPress plugin ecosystem.</li>
+            <li><strong>Payment Processors:</strong> Coalition revenue share payments are processed through third-party payment platforms subject to their own privacy policies.</li>
+            <li><strong>Analytics Providers:</strong> For website and dashboard performance tracking.</li>
           </ul>
           <p className="mb-4">
             These third parties have their own privacy policies. We are not responsible for their data practices and encourage you to review their policies.
@@ -136,20 +152,20 @@ export default function PrivacyPage() {
             We implement appropriate technical and organizational measures to protect your personal information, including:
           </p>
           <ul className="list-disc ml-6 mb-4 space-y-2">
-            <li>Encryption of data in transit and at rest</li>
+            <li>Encryption of data in transit (HTTPS) and at rest</li>
             <li>Regular security assessments and updates</li>
             <li>Access controls and authentication mechanisms</li>
-            <li>Employee training on data protection</li>
+            <li>Secure storage of API keys in the Chrome extension using Chrome&apos;s encrypted storage API</li>
           </ul>
           <p className="mb-4">
-            However, no method of transmission over the internet or electronic storage is 100% secure. While we strive to protect your data, we cannot guarantee absolute security.
+            No method of transmission over the internet or electronic storage is 100% secure. While we strive to protect your data, we cannot guarantee absolute security.
           </p>
         </section>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">8. Data Retention</h2>
           <p className="mb-4">
-            We retain your personal information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required or permitted by law. When data is no longer needed, we securely delete or anonymize it.
+            We retain your personal information only for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required or permitted by law. Signed content metadata is retained for as long as the associated signing record is needed for verification or audit purposes. When data is no longer needed, we securely delete or anonymize it.
           </p>
         </section>
 
@@ -164,8 +180,8 @@ export default function PrivacyPage() {
             <li><strong>Deletion:</strong> Request deletion of your personal information</li>
             <li><strong>Objection:</strong> Object to certain processing of your information</li>
             <li><strong>Portability:</strong> Request transfer of your data to another service</li>
-            <li><strong>Withdraw Consent:</strong> Withdraw consent for data processing where consent was the basis</li>
-            <li><strong>Opt-Out:</strong> Unsubscribe from marketing communications</li>
+            <li><strong>Withdraw Consent:</strong> Withdraw consent for data processing where consent was the basis, including Coalition enrollment (manageable through your account settings)</li>
+            <li><strong>Opt-Out:</strong> Unsubscribe from marketing communications at any time</li>
           </ul>
           <p className="mb-4">
             To exercise these rights, please contact us at privacy@encypherai.com.
@@ -173,9 +189,9 @@ export default function PrivacyPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">10. Children's Privacy</h2>
+          <h2 className="text-2xl font-semibold mb-4">10. Children&apos;s Privacy</h2>
           <p className="mb-4">
-            Our Services are not intended for children under the age of 13 (or the applicable age of consent in your jurisdiction). We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately.
+            Our Services are not intended for children under the age of 13 (or the applicable age of consent in your jurisdiction). We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately at privacy@encypherai.com.
           </p>
         </section>
 
@@ -189,7 +205,7 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">12. Changes to This Privacy Policy</h2>
           <p className="mb-4">
-            We may update this Privacy Policy from time to time. We will notify you of material changes by posting the updated policy on our website with a new "Last Updated" date. We encourage you to review this policy periodically.
+            We may update this Privacy Policy from time to time. We will notify you of material changes by posting the updated policy on our website with a new &quot;Last Updated&quot; date. We encourage you to review this policy periodically.
           </p>
         </section>
 
@@ -200,7 +216,7 @@ export default function PrivacyPage() {
           </p>
           <p className="mb-4">
             <strong>Encypher</strong><br />
-            Email: contact@encypherai.com
+            Email: privacy@encypherai.com
           </p>
         </section>
 
@@ -215,12 +231,15 @@ export default function PrivacyPage() {
             <li>Right to opt-out of the sale of personal information (we do not sell personal information)</li>
             <li>Right to non-discrimination for exercising your privacy rights</li>
           </ul>
+          <p className="mb-4">
+            To exercise your California privacy rights, contact us at privacy@encypherai.com.
+          </p>
         </section>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">15. European Privacy Rights (GDPR)</h2>
           <p className="mb-4">
-            If you are located in the European Economic Area (EEA), you have rights under the General Data Protection Regulation (GDPR), including those outlined in Section 9. We process your data based on legitimate interests, contractual necessity, or your consent.
+            If you are located in the European Economic Area (EEA), you have rights under the General Data Protection Regulation (GDPR), including those outlined in Section 9. We process your data based on the following legal bases: contractual necessity (to provide the Services), legitimate interests (security, fraud prevention, product improvement), and your consent (Coalition enrollment, marketing communications). You may withdraw consent at any time without affecting the lawfulness of processing prior to withdrawal.
           </p>
         </section>
       </div>

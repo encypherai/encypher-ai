@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     # ===========================================
     AUTH_SERVICE_URL: str = "http://localhost:8001"
     ANALYTICS_SERVICE_URL: str = "http://localhost:8006"
+    COALITION_SERVICE_URL: str = "http://localhost:8009"
     DASHBOARD_URL: str = "http://localhost:3001"
     INTERNAL_SERVICE_TOKEN: str = ""
 

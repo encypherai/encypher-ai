@@ -102,7 +102,50 @@ async def openai_compatible_chat(
         return StreamingResponse(_stream_chat_completion(request, organization), media_type="text/event-stream")
     else:
         # Return non-streaming response
-        raise HTTPException(status_code=501, detail="Non-streaming mode not yet implemented. Use stream=true.")
+        import time
+
+        response_text = _generate_mock_response(request.messages)
+
+        session_result = await streaming_service.create_session(
+            organization_id=organization.organization_id,
+            session_type="chat",
+            metadata={"model": request.model, "messages": [m.dict() for m in request.messages]},
+        )
+        session_id = session_result["session_id"]
+
+        await streaming_service.process_chunk(
+            chunk=response_text,
+            session_id=session_id,
+            organization_id=organization.organization_id,
+            private_key_encrypted=organization.private_key_encrypted,
+            chunk_id="chunk_0",
+        )
+
+        await streaming_service.finalize_stream(
+            session_id=session_id,
+            organization_id=organization.organization_id,
+            private_key_encrypted=organization.private_key_encrypted,
+        )
+
+        prompt_text = " ".join(m.content for m in request.messages)
+        prompt_tokens = len(prompt_text.split())
+        completion_tokens = len(response_text.split())
+        total_tokens = prompt_tokens + completion_tokens
+
+        return ChatCompletionResponse(
+            id=f"chatcmpl-{session_id}",
+            object="chat.completion",
+            created=int(time.time()),
+            model=request.model or "gpt-3.5-turbo",
+            choices=[
+                ChatCompletionChoice(
+                    index=0,
+                    message=ChatMessage(role="assistant", content=response_text),
+                    finish_reason="stop",
+                )
+            ],
+            usage={"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens, "total_tokens": total_tokens},
+        )
 
 
 async def _stream_chat_completion(request: ChatCompletionRequest, organization: Organization) -> AsyncGenerator[str, None]:

@@ -140,8 +140,7 @@ export default function CompanyPage() {
                   </CardContent>
                 </Card>
               </div>
-              
-              {/* Row 2: CRO & Advisors (2-col grid on md+) */}
+              {/* Row 2 */}
               <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
                   <CardContent className="p-6">
@@ -170,72 +169,22 @@ export default function CompanyPage() {
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex flex-col items-center text-center">
-                      <Image src="/images/headshots/Hiep_Dang_Headshot.png" alt="Hiep Dang headshot" width={96} height={96} className="h-24 w-24 rounded-full object-cover mb-4" />
-                      <h3 className="text-xl font-semibold">Hiep Dang</h3>
-                      <p className="text-sm text-muted-foreground mb-2">Strategic Advisor</p>
+                      <Image src="/images/headshots/Matt_Kaminsky_Headshot.png" alt="Matt Kaminsky headshot" width={96} height={96} className="h-24 w-24 rounded-full object-cover mb-4" />
+                      <h3 className="text-xl font-semibold">Matt Kaminsky</h3>
+                      <p className="text-sm text-muted-foreground mb-2">Head of Publisher Strategy</p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        20+ years in AI/ML and security GTM strategy. Developed GTM at Cylance (acquired by BlackBerry for $1.4B). Advises on product strategy and enterprise partnerships.
+                        13+ years creating and leading Business Development and Partnerships for MediaVine, Enthusiast Gaming, and publishers.
                       </p>
                       <div className="flex gap-2">
                         <a 
-                          href="https://www.linkedin.com/in/hiepdang/" 
+                          href="https://www.linkedin.com/in/matthew-kaminsky-b52a0042/" 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          aria-label="Hiep Dang LinkedIn Profile"
+                          aria-label="Matt Kaminsky LinkedIn Profile"
                           className="text-muted-foreground hover:text-foreground"
                         >
                           <Linkedin className="h-5 w-5" />
-                          <span className="sr-only">Hiep Dang LinkedIn Profile</span>
-                        </a>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                {/* New Advisor: Allen Guthier */}
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex flex-col items-center text-center">
-                      <Image src="/images/headshots/Allen_Guthier_Headshot.png" alt="Allen Guthier headshot" width={96} height={96} className="h-24 w-24 rounded-full object-cover mb-4" />
-                      <h3 className="text-xl font-semibold">Allen Guthier</h3>
-                      <p className="text-sm text-muted-foreground mb-2">Strategic Advisor</p>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Venture Partner at Oregon Venture Fund. Key role at CloudHealth through $535M acquisition by VMware. Advises on scaling, fundraising, and product-market fit.
-                      </p>
-                      <div className="flex gap-2">
-                        <a 
-                          href="https://www.linkedin.com/in/allenguthier/" 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          aria-label="Allen Guthier LinkedIn Profile"
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <Linkedin className="h-5 w-5" />
-                          <span className="sr-only">Allen Guthier LinkedIn Profile</span>
-                        </a>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                {/* New Advisor: Adarsh Bhatt */}
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex flex-col items-center text-center">
-                      <Image src="/images/headshots/Adarsh_Bhatt_Headshot.png" alt="Adarsh Bhatt headshot" width={96} height={96} className="h-24 w-24 rounded-full object-cover mb-4" />
-                      <h3 className="text-xl font-semibold">Adarsh Bhatt</h3>
-                      <p className="text-sm text-muted-foreground mb-2">Strategic Advisor</p>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Co-Founder & GP at Comma Capital. First BD hire at multiple tech startups. Advises on fundraising, partnerships, and go-to-market strategy.
-                      </p>
-                      <div className="flex gap-2">
-                        <a 
-                          href="https://www.linkedin.com/in/adbhatt/" 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          aria-label="Adarsh Bhatt LinkedIn Profile"
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <Linkedin className="h-5 w-5" />
-                          <span className="sr-only">Adarsh Bhatt LinkedIn Profile</span>
+                          <span className="sr-only">Matt Kaminsky LinkedIn Profile</span>
                         </a>
                       </div>
                     </div>

@@ -564,3 +564,50 @@ async def attribute_deal_revenue(
         earnings_ids.append(earnings_id)
 
     return earnings_ids
+
+
+# ---------------------------------------------------------------------------
+# Public coalition stats (no auth required) -- TEAM_225
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/public/stats",
+    summary="Public coalition aggregate statistics",
+    description=(
+        "Returns aggregate-only coalition statistics for public display. "
+        "No authentication required. Individual member data is never exposed. "
+        "Used by the marketing site to show coalition scale."
+    ),
+)
+async def get_public_coalition_stats(
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return aggregate coalition stats for public marketing use. No auth required."""
+    # Count of active coalition members (opted-in orgs)
+    member_result = await db.execute(
+        text(
+            """
+            SELECT COUNT(*) FROM organizations
+            WHERE coalition_opted_in = true
+            """
+        )
+    )
+    member_count: int = member_result.scalar() or 0
+
+    # Total signed documents across all coalition members (from organizations table)
+    doc_result = await db.execute(
+        text(
+            """
+            SELECT COALESCE(SUM(monthly_api_usage), 0) FROM organizations
+            WHERE coalition_opted_in = true
+            """
+        )
+    )
+    total_api_activity: int = doc_result.scalar() or 0
+
+    return {
+        "coalition_members": member_count,
+        "total_signed_documents": total_api_activity,
+        "as_of": datetime.utcnow().isoformat() + "Z",
+    }

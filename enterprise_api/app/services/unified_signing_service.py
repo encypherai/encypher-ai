@@ -198,6 +198,7 @@ def _needs_advanced_signing(options: SignOptions) -> bool:
         or options.custom_assertions is not None
         or options.template_id is not None
         or options.rights is not None
+        or options.use_rights_profile
         or options.add_dual_binding
         or options.include_fingerprint
         or options.segmentation_levels is not None

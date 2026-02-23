@@ -39,6 +39,11 @@ VALID_EVENTS = {
     "key.created",
     "key.revoked",
     "key.rotated",
+    "rights.profile.updated",
+    "rights.notice.delivered",
+    "rights.licensing.request_received",
+    "rights.licensing.agreement_created",
+    "rights.detection.event",
 }
 
 

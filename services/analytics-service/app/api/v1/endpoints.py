@@ -602,6 +602,62 @@ async def health_check():
     return {"status": "healthy", "service": "analytics-service"}
 
 
+@router.get("/trace/{request_id}")
+async def get_request_trace(
+    request_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Return all metric events recorded for a single request ID.
+
+    Enables full stack-trace reconstruction for any API call by correlating
+    every event emitted while handling the request (sign, verify, rights, etc.).
+    Events are sorted oldest-first for chronological replay.
+
+    - **request_id**: The X-Request-ID value returned in the response header
+    """
+    identity = _resolve_identity(current_user)
+
+    events = (
+        db.query(UsageMetric)
+        .filter(UsageMetric.meta["request_id"].astext == request_id)
+        .filter(
+            (UsageMetric.organization_id == identity) | (UsageMetric.user_id == identity)
+        )
+        .order_by(UsageMetric.created_at.asc())
+        .all()
+    )
+
+    if not events:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No events found for request_id: {request_id}",
+        )
+
+    items = []
+    for m in events:
+        items.append({
+            "id": str(m.id),
+            "metric_type": m.metric_type,
+            "endpoint": m.endpoint,
+            "method": m.meta.get("method") if isinstance(m.meta, dict) else None,
+            "status_code": m.status_code,
+            "response_time_ms": m.response_time_ms,
+            "organization_id": m.organization_id,
+            "user_id": m.user_id,
+            "api_key_id": m.api_key_id,
+            "timestamp": m.created_at.isoformat() if m.created_at else None,
+            "metadata": m.meta,
+        })
+
+    return {
+        "request_id": request_id,
+        "event_count": len(items),
+        "events": items,
+    }
+
+
 # ============================================
 # Public Discovery Analytics Endpoints
 # ============================================

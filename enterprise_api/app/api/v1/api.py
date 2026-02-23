@@ -10,6 +10,7 @@ from app.api.v1.endpoints import merkle, provisioning
 from app.api.v1.endpoints import streaming_merkle, evidence, fingerprint, multi_source
 from app.api.v1.enterprise import c2pa
 from app.api.v1.public import c2pa as public_c2pa
+from app.api.v1.public import rights as public_rights
 from app.api.v1.public import verify
 
 api_router = APIRouter()
@@ -41,3 +42,7 @@ api_router.include_router(verify.router)
 
 # Include public C2PA endpoints (no auth)
 api_router.include_router(public_c2pa.router)
+
+# === Rights Management System (TEAM_215) ===
+# Include public rights resolution endpoints (no auth — discoverability is the point)
+api_router.include_router(public_rights.router)

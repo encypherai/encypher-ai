@@ -396,9 +396,9 @@ export default function InvitationPage() {
                   
                   <p className="text-xs text-muted-foreground text-center">
                     By creating an account, you agree to our{' '}
-                    <a href="/terms" className="text-blue-ncs hover:underline">Terms of Service</a>
+                    <a href="https://encypherai.com/terms" className="text-blue-ncs hover:underline">Terms of Service</a>
                     {' '}and{' '}
-                    <a href="/privacy" className="text-blue-ncs hover:underline">Privacy Policy</a>
+                    <a href="https://encypherai.com/privacy" className="text-blue-ncs hover:underline">Privacy Policy</a>
                   </p>
                 </form>
               )}

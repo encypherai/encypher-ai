@@ -179,9 +179,19 @@ async def list_available_content(
             access_type="list",
         )
 
-    # TODO: Implement quota tracking based on agreement terms
-    # For now, quota_remaining is None (unlimited)
-    return ContentListResponse(content=content_list, total=total, quota_remaining=None)
+    quota_remaining = None
+    agreement_max = getattr(agreement, "max_monthly_calls", None) or getattr(agreement, "monthly_call_limit", None)
+    if agreement_max:
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        monthly_count = await LicensingService.count_accesses_since(
+            db=db,
+            agreement_id=cast(UUID, agreement.id),
+            since=month_start,
+        )
+        quota_remaining = max(0, agreement_max - monthly_count)
+    return ContentListResponse(content=content_list, total=total, quota_remaining=quota_remaining)
 
 
 @router.post("/track-access", response_model=ContentAccessLogResponse)

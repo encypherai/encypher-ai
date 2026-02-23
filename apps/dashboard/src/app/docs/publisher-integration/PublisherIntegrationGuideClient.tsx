@@ -64,7 +64,7 @@ type TocItem = { id: string; title: string };
 
 export function PublisherIntegrationGuideClient({ markdown }: { markdown: string }) {
   const [activeSection, setActiveSection] = useState<string>('');
-  const NAV_OFFSET_PX = 120;
+  const NAV_OFFSET_PX = 72; // sticky header h-14 (56px) + 16px clearance
 
   const sanitizedMarkdown = useMemo(() => stripEmojis(markdown), [markdown]);
 
@@ -160,7 +160,7 @@ export function PublisherIntegrationGuideClient({ markdown }: { markdown: string
 
           <div
             className="prose prose-slate dark:prose-invert max-w-none 
-              prose-headings:scroll-mt-28
+              prose-headings:scroll-mt-[72px]
               prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-16 prose-h2:mb-6 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-200 dark:prose-h2:border-slate-800
               prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-10 prose-h3:mb-4
               prose-p:text-slate-600 dark:prose-p:text-slate-400 prose-p:leading-8 prose-p:mb-6
@@ -285,7 +285,7 @@ export function PublisherIntegrationGuideClient({ markdown }: { markdown: string
 
         {/* Table of Contents Sidebar */}
         <aside className="hidden xl:block w-72 flex-shrink-0">
-          <div className="sticky top-28 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <div className="sticky top-20 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-800">
             <h4 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">On this page</h4>
             <nav className="space-y-1">
               {tableOfContents.map((item) => (

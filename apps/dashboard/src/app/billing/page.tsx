@@ -174,9 +174,13 @@ function BillingPageContent() {
               <p className="text-2xl font-bold text-delft-blue dark:text-white">
                 {currentTierLabel}
               </p>
-              <p className="text-muted-foreground">
+              <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                currentTier === 'enterprise'
+                  ? 'bg-blue-ncs/10 text-blue-ncs'
+                  : 'bg-muted text-muted-foreground'
+              }`}>
                 {currentPriceLabel}
-              </p>
+              </span>
               {isDowngradeScheduled && downgradeEffectiveDate && (
                 <p className="mt-2 text-xs text-amber-600">
                   Access ends {formatDate(downgradeEffectiveDate)}
@@ -194,9 +198,14 @@ function BillingPageContent() {
             )}
             <div>
               <p className="text-sm text-muted-foreground mb-1">Status</p>
-              <p className="text-foreground capitalize">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                isDowngradeScheduled
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
+                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${isDowngradeScheduled ? 'bg-amber-500' : 'bg-emerald-500'}`} />
                 {isDowngradeScheduled ? 'Downgrade scheduled' : subscription?.status || 'Active'}
-              </p>
+              </span>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">

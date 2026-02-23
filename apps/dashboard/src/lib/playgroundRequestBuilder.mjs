@@ -8,6 +8,7 @@
  *   segmentation_level?: string,
  *   manifest_mode?: string,
  *   embedding_strategy?: string,
+ *   enable_print_fingerprint?: boolean,
  * }} PlaygroundFormValues
  */
 
@@ -72,6 +73,7 @@ export function buildRequestObject(endpointId, values) {
     if (manifest_mode) options.manifest_mode = manifest_mode;
     const embedding_strategy = normalizeString(values.embedding_strategy);
     if (embedding_strategy) options.embedding_strategy = embedding_strategy;
+    if (values.enable_print_fingerprint === true) options.enable_print_fingerprint = true;
 
     return {
       text,
@@ -136,6 +138,7 @@ export function parseRequestBodyJson(endpointId, json) {
       ...(segmentation_level ? { segmentation_level } : {}),
       ...(manifest_mode ? { manifest_mode } : {}),
       ...(embedding_strategy ? { embedding_strategy } : {}),
+      enable_print_fingerprint: opts.enable_print_fingerprint === true,
     };
   }
 

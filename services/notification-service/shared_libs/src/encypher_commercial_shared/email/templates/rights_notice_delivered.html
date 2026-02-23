@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Formal Notice Delivered</h1>
+
+<p>
+  Your formal notice has been successfully delivered. This notice establishes a documented record that
+  the recipient is aware of your rights and has been formally notified of potential infringement.
+</p>
+
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+  style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; margin-bottom: 24px;">
+  <tr>
+    <td style="padding: 20px 24px;">
+      <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600; color: #9a3412; text-transform: uppercase; letter-spacing: 0.05em;">
+        Notice Details
+      </p>
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b; width: 160px;">Notice ID</td>
+          <td style="padding: 4px 0; font-size: 14px; font-family: monospace; color: #1e293b;">{{ notice_id | default('—') }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b;">Recipient</td>
+          <td style="padding: 4px 0; font-size: 14px; color: #1e293b; font-weight: 500;">{{ recipient_entity | default('—') }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b;">Violation type</td>
+          <td style="padding: 4px 0; font-size: 14px; color: #1e293b; text-transform: replace;">{{ violation_type | default('—') | replace('_', ' ') | title }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b;">Delivered at</td>
+          <td style="padding: 4px 0; font-size: 14px; color: #1e293b;">{{ delivered_at | default('') }}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; font-size: 14px; color: #64748b;">Notice hash</td>
+          <td style="padding: 4px 0; font-size: 14px; font-family: monospace; font-size: 11px; color: #64748b; word-break: break-all;">{{ notice_hash | default('—') }}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<p>
+  <strong>What this means:</strong> The recipient can no longer claim innocent infringement for any continued
+  use of your content. Any use after this notice date is <em>willful infringement</em>, which carries
+  significantly higher statutory damages.
+</p>
+
+<p>
+  Your evidence package is available in your dashboard. It contains the Merkle tree proofs,
+  chain-of-custody records, and delivery confirmation needed for any legal proceedings.
+</p>
+
+<div class="cta-container">
+  <a href="{{ dashboard_url | default('https://dashboard.encypherai.com/rights#notices') }}" class="cta-button">
+    View Notice &amp; Evidence
+  </a>
+</div>
+
+<div class="divider"></div>
+
+<p style="font-size: 13px; color: #64748b;">
+  Notice ID <code style="background: #f8fafc; padding: 2px 6px; border-radius: 4px; font-family: monospace;">{{ notice_id | default('—') }}</code>
+  is permanently recorded in the Encypher evidence chain. This email is not legal advice.
+  Consult your legal counsel for guidance on next steps.
+</p>
+{% endblock %}

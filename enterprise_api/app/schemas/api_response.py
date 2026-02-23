@@ -152,6 +152,13 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
         required_tier=TierName.ENTERPRISE,
         category="signing",
     ),
+    "print_fingerprint": FeatureDefinition(
+        name="print_fingerprint",
+        display_name="Print Leak Detection",
+        description="Embed imperceptible spacing patterns that survive printing and scanning for source identification",
+        required_tier=TierName.ENTERPRISE,
+        category="signing",
+    ),
     "batch_signing": FeatureDefinition(
         name="batch_signing",
         display_name="Batch Signing",

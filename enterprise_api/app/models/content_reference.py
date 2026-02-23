@@ -18,6 +18,7 @@ from sqlalchemy import (
     String,
     Text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
@@ -75,6 +76,10 @@ class ContentReference(Base):
     signature_hash = Column(String(64), nullable=False)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, index=True)
     expires_at = Column(TIMESTAMP, nullable=True, index=True)
+
+    # Rights management
+    rights_snapshot = Column(JSONB, nullable=True)
+    rights_resolution_url = Column(Text, nullable=True)
 
     # Additional metadata
     embedding_metadata = Column(JSON, default={})

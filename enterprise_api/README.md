@@ -1,4 +1,4 @@
-# Encypher Enterprise API
+Try one more time, # Encypher Enterprise API
 
 <div align="center">
 
@@ -98,6 +98,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | Advanced manifest modes | ✅ | ✅ |
 | Word segmentation | ❌ | ✅ |
 | Robust fingerprinting | ❌ | ✅ |
+| Print Leak Detection (`enable_print_fingerprint`) | ❌ | ✅ |
 | **Batch size limit** | 10 | 100 |
 | **Monthly signing quota** | 1,000 | Unlimited |
 
@@ -158,6 +159,21 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/public/c2pa/trust-anchors/{signer_id}` | GET | ❌ | Public | Lookup trust anchor (public key) for external C2PA validators (public, IP rate-limited) |
 | `/api/v1/public/c2pa/zw/resolve/{segment_uuid}` | GET | ❌ | Public | Resolve a ZW-embedded segment UUID to its source document and provenance metadata |
 | `/api/v1/public/c2pa/zw/resolve` | POST | ❌ | Public | Bulk resolve multiple ZW segment UUIDs in a single call |
+
+### Verification Service Endpoints
+
+The following endpoints are provided by the verification microservice (merged into the public API spec):
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/verify/health` | GET | ❌ | Public | Verification service health check |
+| `/api/v1/verify/stats` | GET | ✅ | All | Get verification statistics |
+| `/api/v1/verify/{document_id}` | GET | ✅ | All | Get verification history for a document |
+| `/api/v1/verify/history/{document_id}` | GET | ✅ | All | Get full verification history for a document |
+| `/api/v1/verify/document` | POST | ✅ | All | Verify document authenticity |
+| `/api/v1/verify/signature` | POST | ✅ | All | Verify a C2PA signature |
+| `/api/v1/verify/advanced` | POST | ✅ | All | Advanced verification with attribution and plagiarism detection |
+| `/api/v1/verify/quote-integrity` | POST | ❌ | Public | Verify AI attribution accuracy — check if a cited quote matches signed source documents (accurate/approximate/hallucinated/unverifiable) |
 
 ### Enterprise Merkle Endpoints
 
@@ -273,6 +289,25 @@ Look up content across multiple sources with chronological ordering.
 | `/api/v1/webhooks/{webhook_id}/deliveries` | GET | ✅ | Enterprise | List webhook deliveries |
 | `/api/v1/webhooks/{webhook_id}/test` | POST | ✅ | Enterprise | Send a test delivery |
 
+#### Supported Webhook Events
+
+| Event | Description |
+|-------|-------------|
+| `document.signed` | Document was successfully signed |
+| `document.verified` | Document was verified (any result) |
+| `document.revoked` | Document revocation recorded |
+| `document.reinstated` | Document revocation lifted |
+| `quota.warning` | Quota usage crossed 80% threshold |
+| `quota.exceeded` | Quota limit reached |
+| `key.created` | API key created |
+| `key.revoked` | API key revoked |
+| `key.rotated` | API key rotated |
+| `rights.profile.updated` | Publisher rights profile created or updated |
+| `rights.notice.delivered` | Formal notice delivery confirmed |
+| `rights.licensing.request_received` | Inbound licensing request from an AI company |
+| `rights.licensing.agreement_created` | Licensing agreement created (request approved) |
+| `rights.detection.event` | Crawler or AI system detected accessing signed content |
+
 ### Ghost CMS Integration Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
@@ -303,25 +338,32 @@ In addition to trusted CA subjects, this endpoint returns active trust-policy me
 | `/api/v1/coalition/earnings` | GET | ✅ | All | Get detailed earnings history |
 | `/api/v1/coalition/opt-out` | POST | ✅ | All | Opt out of coalition revenue sharing |
 | `/api/v1/coalition/opt-in` | POST | ✅ | All | Opt in to coalition revenue sharing |
+| `/api/v1/coalition/public/stats` | GET | ❌ | Public | Aggregate coalition stats for marketing display (no auth) |
 
 ### Team Management Endpoints
 
+> **Note:** Team management endpoints are tagged internal in the public API spec but are accessible to Enterprise users.
+
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/org/members` | GET | ✅ | Enterprise | List team members |
-| `/api/v1/org/members/invite` | POST | ✅ | Enterprise | Invite a team member |
-| `/api/v1/org/members/invites` | GET | ✅ | Enterprise | List pending invitations |
-| `/api/v1/org/members/invites/{invite_id}` | DELETE | ✅ | Enterprise | Revoke an invitation |
-| `/api/v1/org/members/{member_id}/role` | PATCH | ✅ | Enterprise | Update member role |
-| `/api/v1/org/members/{member_id}` | DELETE | ✅ | Enterprise | Remove a team member |
-| `/api/v1/org/members/accept-invite` | POST | ✅ | Enterprise | Accept an invitation |
+| `/api/v1/org/members` | GET | ✅ | Internal | List team members |
+| `/api/v1/org/members/invite` | POST | ✅ | Internal | Invite a team member |
+| `/api/v1/org/members/invites` | GET | ✅ | Internal | List pending invitations |
+| `/api/v1/org/members/invites/{invite_id}` | DELETE | ✅ | Internal | Revoke an invitation |
+| `/api/v1/org/members/{member_id}/role` | PATCH | ✅ | Internal | Update member role |
+| `/api/v1/org/members/{member_id}` | DELETE | ✅ | Internal | Remove a team member |
+| `/api/v1/org/members/accept-invite` | POST | ✅ | Internal | Accept an invitation |
+| `/api/v1/org/invites/public/{token}` | GET | None | Public | Look up invite metadata by token |
+| `/api/v1/org/invites/public/{token}/accept-new` | POST | None | Public | Register new user and accept invite |
 
 ### Audit Log Endpoints
 
+> **Note:** Audit log endpoints are tagged internal in the public API spec but are accessible to all authenticated users.
+
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/audit-logs` | GET | ✅ | All | Get paginated audit logs |
-| `/api/v1/audit-logs/export` | GET | ✅ | All | Export audit logs (JSON or CSV) |
+| `/api/v1/audit-logs` | GET | ✅ | Internal | Get paginated audit logs |
+| `/api/v1/audit-logs/export` | GET | ✅ | Internal | Export audit logs (JSON or CSV) |
 
 ### Provisioning Endpoints (Internal)
 
@@ -332,7 +374,7 @@ In addition to trusted CA subjects, this endpoint returns active trust-policy me
 | `/api/v1/provisioning/api-keys` | GET | Token | Internal | List API keys for an organization |
 | `/api/v1/provisioning/api-keys/{key_id}` | DELETE | Token | Internal | Revoke an API key |
 | `/api/v1/provisioning/users` | POST | Token | Internal | Create a user account |
-| `/api/v1/provisioning/health` | GET | ❌ | Public | Provisioning service health check |
+| `/api/v1/provisioning/health` | GET | ❌ | Internal | Provisioning service health check |
 
 ### Document Revocation Endpoints (NEW)
 
@@ -341,7 +383,7 @@ In addition to trusted CA subjects, this endpoint returns active trust-policy me
 | `POST /api/v1/status/documents/{document_id}/revoke` | Revoke a document's authenticity | Enterprise |
 | `POST /api/v1/status/documents/{document_id}/reinstate` | Reinstate a revoked document | Enterprise |
 | `GET /api/v1/status/documents/{document_id}` | Get document revocation status | Enterprise |
-| `GET /api/v1/status/list/{organization_id}/{list_index}` | Get status list credential (public, CDN-cacheable) | Public |
+| `GET /api/v1/status/lists/{list_id}` | Get status list credential (public, CDN-cacheable) | Public |
 | `GET /api/v1/status/stats` | Get revocation statistics | Enterprise |
 
 Signing endpoints embed an `org.encypher.status` C2PA assertion containing the
@@ -353,12 +395,90 @@ Licensing endpoints are internal-only and intentionally excluded from the public
 
 For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 
+### Rights Management Endpoints (NEW)
+
+Machine-readable deed system for publishers to define and enforce licensing terms across AI use cases. Built on top of the existing enterprise_api; all data stored in the Core DB.
+
+#### Publisher-Facing (Authenticated)
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/rights/profile` | PUT | ✅ | Business+ | Create or update default rights profile (versioned) |
+| `/api/v1/rights/profile` | GET | ✅ | Business+ | Get current rights profile |
+| `/api/v1/rights/profile/history` | GET | ✅ | Business+ | Get full version history of rights profile |
+| `/api/v1/rights/documents/{document_id}` | PUT | ✅ | Business+ | Override rights for a specific document |
+| `/api/v1/rights/collections/{collection_id}` | PUT | ✅ | Business+ | Override rights for a collection |
+| `/api/v1/rights/content-types/{content_type}` | PUT | ✅ | Business+ | Override rights for a content type |
+| `/api/v1/rights/bulk-update` | POST | ✅ | Business+ | Bulk update rights across documents/collections/types |
+| `/api/v1/rights/templates` | GET | ✅ | All | List available rights template presets |
+| `/api/v1/rights/profile/from-template/{template_id}` | POST | ✅ | Business+ | Initialize profile from a template |
+| `/api/v1/rights/profile/delegated-setup` | POST | ✅ | Strategic Partner | Platform partner sets up rights profile on behalf of publisher |
+| `/api/v1/partner/publishers/provision` | POST | ✅ | Strategic Partner | Bulk-provision publisher orgs, rights profiles, and claim emails in one call |
+| `/api/v1/rights/rsl/import` | POST | ✅ | Business+ | Import existing RSL 1.0 XML document |
+| `/api/v1/rights/analytics/detections` | GET | ✅ | Business+ | Phone-home detection analytics |
+| `/api/v1/rights/analytics/crawlers` | GET | ✅ | Business+ | AI crawler activity breakdown |
+| `/api/v1/rights/analytics/crawlers/timeseries` | GET | ✅ | Business+ | Daily crawler activity timeseries |
+| `/api/v1/rights/analytics/content-spread` | GET | ✅ | Enterprise+ | External domain detection analytics (content spread) |
+
+Rights profiles support three licensing tiers:
+- **Bronze** — Scraping / crawling terms
+- **Silver** — RAG / retrieval / search terms
+- **Gold** — Training / fine-tuning terms
+
+#### Public Rights Resolution (Unauthenticated)
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/public/rights/{document_id}` | GET | ❌ | Resolve rights for a specific signed document |
+| `/api/v1/public/rights/resolve` | POST | ❌ | Resolve rights from raw signed text |
+| `/api/v1/public/rights/organization/{org_id}` | GET | ❌ | Get organization's default rights profile |
+| `/api/v1/public/rights/{document_id}/json-ld` | GET | ❌ | Machine-readable rights in JSON-LD (Schema.org) format |
+| `/api/v1/public/rights/{document_id}/odrl` | GET | ❌ | Machine-readable rights in W3C ODRL format |
+| `/api/v1/public/rights/organization/{org_id}/robots-meta` | GET | ❌ | AI-specific robots meta tag directives |
+| `/api/v1/public/rights/organization/{org_id}/rsl` | GET | ❌ | Generate RSL 1.0 XML document |
+| `/api/v1/public/rights/organization/{org_id}/robots-txt` | GET | ❌ | robots.txt additions with RSL/AI directives |
+| `/api/v1/public/rights/rsl/olp/token` | POST | ❌ | RSL Open License Protocol — generate access token |
+| `/api/v1/public/rights/rsl/olp/validate/{token}` | GET | ❌ | Validate RSL OLP token |
+
+#### Formal Notices (Authenticated)
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/notices/` | GET | ✅ | Business+ | List all formal notices for the organization |
+| `/api/v1/notices/create` | POST | ✅ | Business+ | Create an immutable formal notice |
+| `/api/v1/notices/{notice_id}` | GET | ✅ | Business+ | Retrieve a formal notice |
+| `/api/v1/notices/{notice_id}/deliver` | POST | ✅ | Business+ | Deliver notice to an AI company |
+| `/api/v1/notices/{notice_id}/evidence` | GET | ✅ | Business+ | Get cryptographic evidence package (court-ready) |
+| `/api/v1/notices/{notice_id}/evidence/pdf` | GET | ✅ | Business+ | Download Encypher-branded PDF evidence package |
+
+Notices are append-only with SHA-256 content hashing for tamper-evidence. Each evidence package includes a linked `notice_evidence_chain` for chain-of-custody documentation.
+
+#### Rights Licensing Transactions (Authenticated)
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/rights-licensing/request` | POST | ✅ | All | Submit a licensing request |
+| `/api/v1/rights-licensing/requests` | GET | ✅ | All | List licensing requests |
+| `/api/v1/rights-licensing/requests/{request_id}/respond` | PUT | ✅ | Business+ | Approve or reject a licensing request |
+| `/api/v1/rights-licensing/agreements` | GET | ✅ | All | List active licensing agreements |
+| `/api/v1/rights-licensing/agreements/{agreement_id}` | GET | ✅ | All | Get a specific licensing agreement |
+| `/api/v1/rights-licensing/agreements/{agreement_id}/usage` | GET | ✅ | All | Get usage metrics for an agreement |
+
+### CDN Integration Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/cdn/cloudflare` | POST | ✅ | Business+ | Create or update Cloudflare Logpush integration |
+| `/api/v1/cdn/cloudflare` | GET | ✅ | Business+ | Get current Cloudflare Logpush integration config |
+| `/api/v1/cdn/cloudflare` | DELETE | ✅ | Business+ | Remove Cloudflare Logpush integration |
+
 ### Onboarding & Provisioning Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
 | `/api/v1/onboarding/request-certificate` | POST | ✅ | All | Request SSL.com code signing certificate |
 | `/api/v1/onboarding/certificate-status` | GET | ✅ | All | Get current certificate status |
+| `/api/v1/onboarding/progression-status` | GET | ✅ | All | Publisher value journey progression (6-stage Sign->Earnings) |
 
 ### Health & Monitoring Endpoints
 
@@ -386,8 +506,17 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 - ✅ REST API, CLI, GitHub Action
 - ✅ Two-track licensing: Coalition deals (60% publisher / 40% Encypher) or Self-service deals (80% publisher / 20% Encypher)
 
+#### Business+ Tier
+- ✅ Everything in Free
+- ✅ **Rights Management**: Bronze/Silver/Gold tier licensing profiles
+- ✅ **Formal Notices**: Cryptographically-provable, court-ready notice infrastructure
+- ✅ **Rights Resolution**: Public API for machine-readable deed discovery
+- ✅ **RSL 1.0 Interoperability**: Import/export RSL XML; generate robots.txt directives
+- ✅ **Licensing Transactions**: Request/respond/agreement lifecycle
+- ✅ **AI Crawler Analytics**: Phone-home detection events and crawler activity
+
 #### Enterprise Tier (Custom pricing)
-- ✅ Everything in Free — unlimited (no caps on volume or API calls)
+- ✅ Everything in Business+ — unlimited (no caps on volume or API calls)
 - ✅ **Cross-Org Search**: Verify content across all organizations (`search_scope=all`)
 - ✅ **Fuzzy Matching**: Detect paraphrased/rewritten content via fuzzy fingerprinting
 - ✅ **C2PA Provenance Chain**: Full edit history tracking
@@ -403,6 +532,7 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 - ✅ SSO integration (SAML, OAuth)
 - ✅ Bring Your Own Keys (BYOK)
 - ✅ Dedicated SLA (99.9%), 24/7 support, named account manager
+- ✅ **Platform Partner Delegated Setup**: One-call publisher onboarding with rights profiles
 - ✅ Two-track licensing: Coalition deals (60% publisher / 40% Encypher) or Self-service deals (80% publisher / 20% Encypher)
 
 ---
@@ -492,9 +622,17 @@ Free tier supports up to 1 custom assertion per request on this endpoint.
       }
     }
   ],
-  "use_sentence_tracking": true
+  "use_sentence_tracking": true,
+  "options": {
+    "use_rights_profile": true
+  },
+  "publisher_org_id": null
 }
 ```
+
+When `use_rights_profile: true`, the sign endpoint fetches the publisher's active rights profile, stores a snapshot on the content reference, and injects `rights_resolution_url` into the response for each document. This enables any downstream party (AI crawler, aggregator) to call the public rights endpoint directly from the signed content.
+
+**Proxy Signing** (`publisher_org_id`): Platform partners with a `strategic_partner`-tier API key may set `publisher_org_id` to sign content on behalf of a provisioned publisher organization. The publisher's quota, rate limits, rights profile, and webhooks are used (publisher pays). The response includes `partner_org_id` and `publisher_org_id` fields to identify both parties. Requires the publisher org to exist (provisioned via `POST /api/v1/partner/publishers/provision`).
 
 **Response:**
 
@@ -504,6 +642,7 @@ Free tier supports up to 1 custom assertion per request on this endpoint.
   "document_id": "doc_abc123xyz",
   "signed_text": "Your content here...",
   "verification_url": "https://encypherai.com/verify/doc_abc123xyz",
+  "rights_resolution_url": "https://api.encypherai.com/api/v1/public/rights/doc_abc123xyz",
   "manifest": {
     "version": "2.2",
     "claim_generator": "Encypher Enterprise API v1.0",
@@ -983,7 +1122,7 @@ The Enterprise API is part of a comprehensive microservices ecosystem. Each serv
 │ - Content Indexing      │       │ - User Authentication   │
 │ - Revenue Distribution  │       │ - JWT Management        │
 │ - Licensing Management  │       │ - OAuth Integration     │
-│ - Member Stats          │       │                         │
+│ - Member Stats          │       │ - Org Provisioning      │
 └─────────────────────────┘       └─────────────────────────┘
             ↓                                   ↓
 ┌─────────────────────────┐       ┌─────────────────────────┐
@@ -1311,8 +1450,17 @@ KEY_SERVICE_URL=http://localhost:8003
 # Coalition Service (Optional)
 COALITION_SERVICE_URL=http://localhost:8009
 
-# Auth Service (Future)
+# Auth Service (Required for proxy signing and bulk provisioning)
 AUTH_SERVICE_URL=http://localhost:8001
+
+# Internal service token (shared secret for inter-service calls)
+INTERNAL_SERVICE_TOKEN=<shared-secret>
+
+# Notification Service (Required for partner claim emails)
+NOTIFICATION_SERVICE_URL=http://localhost:8005
+
+# Dashboard base URL (used in partner claim email links)
+DASHBOARD_URL=https://dashboard.encypherai.com
 ```
 
 #### Database Configuration

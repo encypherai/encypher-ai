@@ -26,3 +26,19 @@ export {
   type CardFooterProps,
 } from './components/Card';
 export { Input, type InputProps } from './components/Input';
+export { Switch, type SwitchProps } from './components/Switch';
+export { Select, type SelectProps } from './components/Select';
+export {
+  Tabs,
+  TabList,
+  Tab,
+  TabPanel,
+  type TabsProps,
+  type TabListProps,
+  type TabProps,
+  type TabPanelProps,
+} from './components/Tabs';
+export { Alert, type AlertProps } from './components/Alert';
+export { Skeleton, type SkeletonProps } from './components/Skeleton';
+export { EmptyState, type EmptyStateProps } from './components/EmptyState';
+export { Avatar, type AvatarProps } from './components/Avatar';

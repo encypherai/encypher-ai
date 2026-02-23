@@ -94,6 +94,86 @@ function ApiKeysSkeleton() {
   );
 }
 
+interface UsageStats {
+  total_api_calls: number;
+  total_documents_signed: number;
+  total_verifications: number;
+  success_rate: number;
+  avg_response_time_ms: number;
+  period_start: string;
+  period_end: string;
+}
+
+// Value Proof Card -- answers "what has Encypher done for me this month?"
+function ValueProofCard({ stats, isLoading }: { stats?: UsageStats; isLoading: boolean }) {
+  const docsSigned = stats?.total_documents_signed || 0;
+  const verifications = stats?.total_verifications || 0;
+  const NOTICE_THRESHOLD = 500;
+  const pct = Math.min(100, Math.round((verifications / NOTICE_THRESHOLD) * 100));
+
+  return (
+    <div className="bg-gradient-to-br from-delft-blue/5 to-blue-ncs/5 dark:from-delft-blue/20 dark:to-blue-ncs/10 rounded-xl border border-blue-ncs/20 p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-7 h-7 bg-gradient-to-br from-blue-ncs to-columbia-blue rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <div>
+          <h3 className="text-sm font-bold text-delft-blue dark:text-white">Your Content Protection</h3>
+          <p className="text-xs text-muted-foreground">Last 30 days</p>
+        </div>
+      </div>
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map(i => <div key={i} className="h-8 bg-muted rounded animate-pulse" />)}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Content protected</span>
+            <span className="text-sm font-bold text-delft-blue dark:text-white">
+              {docsSigned.toLocaleString()} articles
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">External verifications</span>
+            <span className="text-sm font-bold text-delft-blue dark:text-white">
+              {verifications.toLocaleString()}
+            </span>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-muted-foreground">Formal Notice progress</span>
+              <span className="text-xs font-medium text-blue-ncs">{pct}%</span>
+            </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-blue-ncs to-columbia-blue rounded-full"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            {pct < 100 ? (
+              <p className="text-[11px] text-muted-foreground mt-1.5">
+                {(NOTICE_THRESHOLD - verifications).toLocaleString()} more verifications to qualify
+              </p>
+            ) : (
+              <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">
+                Qualified for Formal Notice -- take action in Rights
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+      <Link href="/analytics" className="block mt-4">
+        <button className="w-full py-1.5 text-xs font-medium text-blue-ncs border border-blue-ncs/30 rounded-lg hover:bg-blue-ncs/10 transition-colors">
+          View Content Performance
+        </button>
+      </Link>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { session, status, accessToken, isLoading } = useRequireAuth();
   const { activeOrganization } = useOrganization();
@@ -367,6 +447,9 @@ export default function DashboardPage() {
 
         {/* Quick Actions Sidebar */}
         <div className="space-y-4">
+          {/* TEAM_225: Value Proof Card - above OnboardingChecklist */}
+          <ValueProofCard stats={stats} isLoading={isLoadingStats} />
+
           {/* TEAM_191: Server-backed onboarding checklist */}
           <OnboardingChecklist />
 
@@ -392,8 +475,8 @@ export default function DashboardPage() {
                   <IconChart />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-delft-blue dark:text-white text-sm">Analytics</p>
-                  <p className="text-xs text-muted-foreground">View usage metrics</p>
+                  <p className="font-medium text-delft-blue dark:text-white text-sm">Content Performance</p>
+                  <p className="text-xs text-muted-foreground">Track your protection timeline</p>
                 </div>
                 <IconArrowRight />
               </Link>

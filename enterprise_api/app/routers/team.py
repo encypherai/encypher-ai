@@ -1,21 +1,26 @@
 """Team management router for Business+ tier organizations."""
 
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import List, Optional
 from uuid import uuid4
 
+import httpx
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import require_read_permission
 from app.routers.audit import AuditAction, log_audit_event
+from app.services.auth_service_client import auth_service_client
 
 router = APIRouter(prefix="/org/members", tags=["Team Management"])
+invite_router = APIRouter(prefix="/org/invites", tags=["Team Invites"])
 
 
 class TeamRole(str, Enum):
@@ -212,6 +217,40 @@ async def list_team_members(
     )
 
 
+async def _send_team_invite_email(
+    *,
+    recipient_email: str,
+    inviter_name: str,
+    org_name: str,
+    role: str,
+    invite_token: str,
+) -> None:
+    """Send team invitation email via notification service. Non-fatal on failure."""
+    claim_url = f"{settings.dashboard_url}/invite/team/{invite_token}"
+    subject = f"You've been invited to join {org_name} on Encypher"
+    html_body = f"""
+    <p>Hi,</p>
+    <p><strong>{inviter_name}</strong> has invited you to join <strong>{org_name}</strong> on Encypher as a <strong>{role}</strong>.</p>
+    <p>Encypher provides cryptographic content provenance and rights management for publishers.</p>
+    <p><a href="{claim_url}" style="background:#2563eb;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;">Accept Invitation</a></p>
+    <p>This invitation expires in 7 days. If you did not expect this invitation, you can ignore this email.</p>
+    <p>Powered by <a href="https://encypherai.com">Encypher</a></p>
+    """.strip()
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(
+                f"{settings.notification_service_url}/api/v1/notifications/send",
+                json={
+                    "notification_type": "email",
+                    "recipient_email": recipient_email,
+                    "subject": subject,
+                    "html_body": html_body,
+                },
+            )
+    except Exception as exc:
+        logging.getLogger(__name__).warning("team_invite_email_failed email=%s error=%s", recipient_email, exc)
+
+
 @router.post("/invite", response_model=InviteResponse)
 async def invite_member(
     request: InviteRequest,
@@ -313,8 +352,16 @@ async def invite_member(
 
     await db.commit()
 
-    # TODO: Send email invitation in background
-    # background_tasks.add_task(send_invite_email, request.email, invite_token, org_id)
+    org_name = organization.get("organization_name", org_id)
+    inviter_name = organization.get("user_name") or organization.get("organization_name") or "Your team admin"
+    background_tasks.add_task(
+        _send_team_invite_email,
+        recipient_email=request.email,
+        inviter_name=inviter_name,
+        org_name=org_name,
+        role=request.role.value,
+        invite_token=invite_token,
+    )
 
     return InviteResponse(
         success=True,
@@ -607,4 +654,157 @@ async def accept_invite(
         "organization_id": invite.organization_id,
         "role": invite.role,
         "message": "You have joined the organization",
+    }
+
+
+# ============================================================
+# PUBLIC INVITE ENDPOINTS (no auth required)
+# ============================================================
+
+
+class AcceptInviteNewUserRequest(BaseModel):
+    """Payload for accepting a team invite as a brand-new user."""
+
+    name: str
+    password: str
+
+
+@invite_router.get("/public/{token}", response_model=None)
+async def get_public_invite(token: str, db: AsyncSession = Depends(get_db)):
+    """
+    Return invite metadata for a pending team invitation (no auth required).
+
+    Used by the /invite/team/[token] dashboard page to render invite details
+    before the user is logged in.
+    """
+    result = await db.execute(
+        text("""
+            SELECT oi.id, oi.organization_id, oi.email, oi.role,
+                   oi.expires_at, oi.status, oi.created_at,
+                   o.name AS org_name
+            FROM organization_invites oi
+            LEFT JOIN organizations o ON o.id = oi.organization_id
+            WHERE oi.token = :token AND oi.status = 'pending'
+        """),
+        {"token": token},
+    )
+    invite = result.fetchone()
+
+    if not invite:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found or expired")
+
+    now = datetime.now(timezone.utc)
+    if invite.expires_at and invite.expires_at.replace(tzinfo=timezone.utc) < now:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Invitation expired")
+
+    return {
+        "success": True,
+        "data": {
+            "email": invite.email,
+            "org_name": invite.org_name or invite.organization_id,
+            "role": invite.role,
+            "expires_at": invite.expires_at.isoformat() if invite.expires_at else None,
+            "status": invite.status,
+        },
+    }
+
+
+@invite_router.post("/public/{token}/accept-new", response_model=None)
+async def accept_invite_new_user(
+    token: str,
+    payload: AcceptInviteNewUserRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Accept a team invitation and create a new user account in one step.
+
+    - Validates the invite token
+    - Creates a new user account via auth-service internal endpoint (email auto-verified)
+    - Creates the org member record
+    - Marks the invite as accepted
+    - Returns access + refresh tokens so the dashboard can auto-login
+
+    Returns 409 if the email is already registered (frontend shows 'sign in instead').
+    Returns 404/410 if the invite is missing or expired.
+    """
+    result = await db.execute(
+        text("""
+            SELECT id, organization_id, email, role, expires_at, created_at
+            FROM organization_invites
+            WHERE token = :token AND status = 'pending'
+        """),
+        {"token": token},
+    )
+    invite = result.fetchone()
+
+    if not invite:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found or expired")
+
+    now = datetime.now(timezone.utc)
+    if invite.expires_at and invite.expires_at.replace(tzinfo=timezone.utc) < now:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Invitation expired")
+
+    # Create user via auth-service
+    try:
+        user_result = await auth_service_client.create_user_internal(
+            email=invite.email,
+            name=payload.name,
+            password=payload.password,
+        )
+    except RuntimeError as exc:
+        if "409" in str(exc):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email already registered. Please sign in to accept this invitation.",
+            )
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="User creation failed")
+
+    user_id = user_result["user_id"]
+
+    # Sync minimal user record to enterprise_api DB to satisfy org_members FK
+    await db.execute(
+        text("""
+            INSERT INTO users (id, email, name, email_verified)
+            VALUES (:id, :email, :name, TRUE)
+            ON CONFLICT DO NOTHING
+        """),
+        {"id": user_id, "email": invite.email, "name": payload.name},
+    )
+
+    # Create org member record
+    member_id = f"mem_{uuid4().hex[:16]}"
+    await db.execute(
+        text("""
+            INSERT INTO organization_members (
+                id, organization_id, user_id, role, joined_at
+            )
+            VALUES (
+                :id, :org_id, :user_id, :role, :joined_at
+            )
+            ON CONFLICT (organization_id, user_id) DO NOTHING
+        """),
+        {
+            "id": member_id,
+            "org_id": invite.organization_id,
+            "user_id": user_id,
+            "role": invite.role,
+            "joined_at": now,
+        },
+    )
+
+    # Mark invite accepted
+    await db.execute(
+        text("UPDATE organization_invites SET status = 'accepted', accepted_at = :now WHERE id = :id"),
+        {"id": invite.id, "now": now},
+    )
+    await db.commit()
+
+    return {
+        "success": True,
+        "data": {
+            "access_token": user_result["access_token"],
+            "refresh_token": user_result["refresh_token"],
+            "organization_id": str(invite.organization_id),
+            "role": invite.role,
+        },
     }

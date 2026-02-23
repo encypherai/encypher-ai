@@ -14,13 +14,60 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
+import { Copy, Check } from 'lucide-react';
 import QRCode from 'qrcode';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
+import type { DomainClaimInfo } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { useOrganization } from '../../contexts/OrganizationContext';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+
+function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-ncs focus-visible:ring-offset-2 ${
+        checked ? 'bg-blue-ncs' : 'bg-muted'
+      }`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition-transform duration-200 ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+}
+
+function StyledSelect({ value, onChange, disabled, children }: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="relative w-full">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="flex w-full appearance-none rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm h-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+      >
+        {children}
+      </select>
+      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+  );
+}
 
 type Profile = {
   name: string;
@@ -82,6 +129,8 @@ export default function SettingsPage() {
   const [pendingEmailChange, setPendingEmailChange] = useState<string | null>(null);
   const [domainName, setDomainName] = useState('');
   const [domainEmail, setDomainEmail] = useState('');
+  const [newlyCreatedClaim, setNewlyCreatedClaim] = useState<DomainClaimInfo | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [publisherDisplayName, setPublisherDisplayName] = useState('');
   const [signingIdentityMode, setSigningIdentityMode] = useState<SigningIdentityMode>('organization_name');
   const [anonymousPublisher, setAnonymousPublisher] = useState(false);
@@ -92,6 +141,7 @@ export default function SettingsPage() {
   const [totpQrCodeDataUrl, setTotpQrCodeDataUrl] = useState<string | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [passkeyName, setPasskeyName] = useState('Primary device');
+  const [enforceMfa, setEnforceMfa] = useState(false);
 
   const mfaStatusQuery = useQuery({
     queryKey: ['mfa-status'],
@@ -432,10 +482,11 @@ export default function SettingsPage() {
         verification_email: domainEmail,
       });
     },
-    onSuccess: () => {
-      toast.success('Domain claim created. Check your inbox to verify email ownership.');
+    onSuccess: (response) => {
+      toast.success('Domain added. Check your email for DNS setup instructions.');
       setDomainName('');
       setDomainEmail('');
+      setNewlyCreatedClaim(response?.data ?? null);
       domainClaimsQuery.refetch();
     },
     onError: (err: any) => {
@@ -450,9 +501,9 @@ export default function SettingsPage() {
     },
     onSuccess: (response) => {
       if (response?.data?.status === 'verified') {
-        toast.success('Domain fully verified (DNS + email).');
+        toast.success('Domain verified.');
       } else {
-        toast.success('DNS verified. Finish email verification to complete domain verification.');
+        toast.info('DNS record not yet detected. Propagation may take a few minutes.');
       }
       domainClaimsQuery.refetch();
     },
@@ -515,6 +566,50 @@ export default function SettingsPage() {
     requestEmailChangeMutation.mutate({ newEmail, password: emailChangePassword });
   };
 
+  const orgSecurityQuery = useQuery({
+    queryKey: ['org-security', orgId],
+    queryFn: async () => {
+      if (!accessToken || !orgId) return null;
+      const response = await fetch(`${API_BASE}/organizations/${orgId}/security`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.data as { enforce_mfa: boolean };
+    },
+    enabled: Boolean(accessToken && orgId && activeTab === 'organization'),
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (orgSecurityQuery.data) {
+      setEnforceMfa(Boolean(orgSecurityQuery.data.enforce_mfa));
+    }
+  }, [orgSecurityQuery.data]);
+
+  const updateOrgSecurityMutation = useMutation({
+    mutationFn: async (enforce: boolean) => {
+      if (!accessToken || !orgId) throw new Error('You must be signed in.');
+      const response = await fetch(`${API_BASE}/organizations/${orgId}/security`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ enforce_mfa: enforce }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Failed to update security settings');
+      }
+      return response.json();
+    },
+    onSuccess: (_, enforce) => {
+      setEnforceMfa(enforce);
+      toast.success(enforce ? '2FA enforcement enabled.' : '2FA enforcement disabled.');
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to update security settings.');
+    },
+  });
+
   const handleCreateDomainClaim = (e: React.FormEvent) => {
     e.preventDefault();
     if (!domainName.trim()) {
@@ -550,7 +645,7 @@ export default function SettingsPage() {
                       key={tab}
                       onClick={() => setActiveTab(tab as typeof activeTab)}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        activeTab === tab ? 'bg-columbia-blue text-white' : 'text-muted-foreground hover:bg-muted'
+                        activeTab === tab ? 'bg-blue-ncs text-white' : 'text-muted-foreground hover:bg-muted'
                       }`}
                     >
                       {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -908,15 +1003,14 @@ export default function SettingsPage() {
                                 : 'Critical account and usage alerts'}
                             </p>
                           </div>
-                          <input
-                            type="checkbox"
+                          <ToggleSwitch
                             checked={Boolean(value)}
-                            onChange={(e) =>
+                            onChange={(v) =>
                               setProfile((prev) => ({
                                 ...prev,
                                 notifications: {
                                   ...(prev.notifications ?? defaultNotifications),
-                                  [key]: e.target.checked,
+                                  [key]: v,
                                 },
                               }))
                             }
@@ -962,17 +1056,16 @@ export default function SettingsPage() {
                         <form className="space-y-4" onSubmit={handlePublisherSettingsSave}>
                           <div>
                             <label className="block text-sm font-medium mb-2">Signing identity mode</label>
-                            <select
+                            <StyledSelect
                               value={signingIdentityMode}
-                              onChange={(e) => setSigningIdentityMode(e.target.value as SigningIdentityMode)}
-                              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                              onChange={(v) => setSigningIdentityMode(v as SigningIdentityMode)}
                             >
                               <option value="organization_name">Use verified organization name</option>
                               <option value="organization_and_author">Use author + organization</option>
                               <option value="custom" disabled={!hasCustomSigningIdentityEntitlement}>
                                 Custom signing identity {!hasCustomSigningIdentityEntitlement ? '(requires add-on)' : ''}
                               </option>
-                            </select>
+                            </StyledSelect>
                             {!hasCustomSigningIdentityEntitlement && (
                               <p className="text-xs text-muted-foreground mt-2">
                                 Custom Signing Identity add-on is available for $9/month.
@@ -991,20 +1084,18 @@ export default function SettingsPage() {
                             </div>
                           )}
 
-                          <label className="flex items-start gap-3 text-sm">
-                            <input
-                              type="checkbox"
-                              className="mt-0.5"
+                          <div className="flex items-start gap-3">
+                            <ToggleSwitch
                               checked={anonymousPublisher}
-                              onChange={(e) => setAnonymousPublisher(e.target.checked)}
+                              onChange={setAnonymousPublisher}
                             />
-                            <span>
-                              <span className="font-medium">Don&apos;t show my name/org on verification</span>
+                            <span className="text-sm">
+                              <span className="font-medium">Anonymous publisher</span>
                               <span className="block text-xs text-muted-foreground mt-1">
-                                Show only organization ID instead (e.g. {orgId}).
+                                Show only organization ID instead of name (e.g. {orgId}).
                               </span>
                             </span>
-                          </label>
+                          </div>
 
                           <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
                             Preview: {signingIdentityPreview}
@@ -1027,87 +1118,180 @@ export default function SettingsPage() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium mb-2">Verification email</label>
+                            <label className="block text-sm font-medium mb-2">Contact email</label>
                             <Input
                               type="email"
                               placeholder="admin@example.com"
                               value={domainEmail}
                               onChange={(e) => setDomainEmail(e.target.value)}
                             />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Must match the domain you are verifying. Used only to send DNS setup instructions.
+                            </p>
                           </div>
                         </div>
                         <Button type="submit" variant="primary" disabled={createDomainClaimMutation.isPending}>
-                          {createDomainClaimMutation.isPending ? 'Submitting…' : 'Request verification'}
+                          {createDomainClaimMutation.isPending ? 'Adding…' : 'Add domain'}
                         </Button>
                       </form>
+
+                      {newlyCreatedClaim && (
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                              DNS setup required for {newlyCreatedClaim.domain}
+                            </h5>
+                            <button
+                              type="button"
+                              onClick={() => setNewlyCreatedClaim(null)}
+                              className="text-amber-500 hover:text-amber-700 text-xs"
+                            >
+                              Dismiss
+                            </button>
+                          </div>
+                          <p className="text-xs text-amber-800 dark:text-amber-300">
+                            Add this TXT record to your DNS provider under the{' '}
+                            <strong>{newlyCreatedClaim.domain}</strong> zone, then click Verify DNS.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <code className="flex-1 text-xs bg-white dark:bg-black/30 border border-amber-200 dark:border-amber-800 rounded px-3 py-2 font-mono break-all">
+                              {newlyCreatedClaim.dns_txt_record || `encypher-domain-claim=${newlyCreatedClaim.dns_token}`}
+                            </code>
+                            <button
+                              type="button"
+                              title="Copy TXT record"
+                              onClick={() => {
+                                const val = newlyCreatedClaim.dns_txt_record || `encypher-domain-claim=${newlyCreatedClaim.dns_token}`;
+                                navigator.clipboard.writeText(val).then(() => {
+                                  setCopiedId('new');
+                                  setTimeout(() => setCopiedId(null), 2000);
+                                });
+                              }}
+                              className="shrink-0 p-1.5 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-300"
+                            >
+                              {copiedId === 'new' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="border-t border-border pt-6">
+                        <h4 className="text-sm font-semibold mb-3">Security requirements</h4>
+                        <div className="flex items-start gap-4 py-3">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Require two-factor authentication</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              When enabled, members without 2FA set up will be blocked from signing in.
+                            </p>
+                          </div>
+                          <ToggleSwitch
+                            checked={enforceMfa}
+                            onChange={(v) => updateOrgSecurityMutation.mutate(v)}
+                          />
+                        </div>
+                      </div>
 
                       <div className="border-t border-border pt-6">
                         <h4 className="text-sm font-semibold mb-3">Domain claims</h4>
                         {domainClaimsQuery.isLoading ? (
                           <div className="text-muted-foreground">Loading domain claims…</div>
                         ) : (domainClaimsQuery.data ?? []).length === 0 ? (
-                          <div className="text-muted-foreground">No domain claims yet.</div>
+                          <div className="text-center py-8 text-muted-foreground text-sm">
+                            No domains added yet. Add your first domain to verify publisher identity.
+                          </div>
                         ) : (
                           <div className="space-y-4">
-                            {(domainClaimsQuery.data ?? []).map((claim) => (
-                              <div key={claim.id} className="border border-border rounded-lg p-4 space-y-3">
-                                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                                  <div>
-                                    <div className="font-medium">{claim.domain}</div>
-                                    <div className="text-xs text-muted-foreground">{claim.verification_email}</div>
+                            {(domainClaimsQuery.data ?? []).map((claim) => {
+                              const txtRecord = claim.dns_txt_record || `encypher-domain-claim=${claim.dns_token}`;
+                              const statusBadge =
+                                claim.status === 'verified'
+                                  ? <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                      Verified
+                                      {claim.dns_verified_at && (
+                                        <span className="text-emerald-600 dark:text-emerald-400">
+                                          {' '}&mdash; {new Date(claim.dns_verified_at).toLocaleDateString()}
+                                        </span>
+                                      )}
+                                    </span>
+                                  : claim.status === 'failed'
+                                  ? <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                      Check failed
+                                    </span>
+                                  : <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                      Pending DNS
+                                    </span>;
+                              return (
+                                <div key={claim.id} className="border border-border rounded-lg p-4 space-y-3">
+                                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                    <div>
+                                      <div className="font-medium">{claim.domain}</div>
+                                      <div className="text-xs text-muted-foreground">{claim.verification_email}</div>
+                                    </div>
+                                    {statusBadge}
                                   </div>
-                                  <Badge variant="outline">{claim.status}</Badge>
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  DNS TXT:{' '}
-                                  <span className="font-mono">
-                                    {claim.dns_txt_record || `encypher-domain-claim=${claim.dns_token}`}
-                                  </span>
-                                </div>
-                                <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
                                   <div className="flex items-center gap-2">
-                                    <Button
+                                    <code className="flex-1 text-xs bg-muted rounded px-3 py-2 font-mono break-all">
+                                      {txtRecord}
+                                    </code>
+                                    <button
                                       type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => verifyDnsMutation.mutate(claim.id)}
-                                      disabled={verifyDnsMutation.isPending}
+                                      title="Copy TXT record"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(txtRecord).then(() => {
+                                          setCopiedId(claim.id);
+                                          setTimeout(() => setCopiedId(null), 2000);
+                                        });
+                                      }}
+                                      className="shrink-0 p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
                                     >
-                                      Verify DNS
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => deleteDomainClaimMutation.mutate(claim.id)}
-                                      disabled={deleteDomainClaimMutation.isPending}
-                                    >
-                                      Remove
-                                    </Button>
-                                    {claim.status === 'verified' && (
-                                      <div className="flex items-center gap-2 text-sm">
-                                        <span className="text-muted-foreground">Auto-join</span>
-                                        <input
-                                          type="checkbox"
-                                          checked={claim.auto_join_enabled}
-                                          onChange={(e) =>
-                                            updateAutoJoinMutation.mutate({
-                                              claimId: claim.id,
-                                              enabled: e.target.checked,
-                                            })
-                                          }
-                                        />
-                                      </div>
-                                    )}
+                                      {copiedId === claim.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                    </button>
                                   </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {claim.verified_at
-                                      ? `Verified ${new Date(claim.verified_at).toLocaleDateString()}`
-                                      : 'Awaiting verification'}
+                                  <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+                                    <div className="flex items-center gap-2">
+                                      {claim.status !== 'verified' && (
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => verifyDnsMutation.mutate(claim.id)}
+                                          disabled={verifyDnsMutation.isPending}
+                                          title="Check that your TXT record is live"
+                                        >
+                                          Verify DNS
+                                        </Button>
+                                      )}
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => deleteDomainClaimMutation.mutate(claim.id)}
+                                        disabled={deleteDomainClaimMutation.isPending}
+                                      >
+                                        Remove
+                                      </Button>
+                                      {claim.status === 'verified' && (
+                                        <div className="flex items-center gap-2 text-sm">
+                                          <span className="text-muted-foreground">Auto-join</span>
+                                          <ToggleSwitch
+                                            checked={Boolean(claim.auto_join_enabled)}
+                                            onChange={(v) =>
+                                              updateAutoJoinMutation.mutate({
+                                                claimId: claim.id,
+                                                enabled: v,
+                                              })
+                                            }
+                                          />
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </div>

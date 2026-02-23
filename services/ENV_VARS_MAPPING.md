@@ -72,12 +72,19 @@ This document maps which shared environment variables are used by each service.
 ### key-service
 - `KEY_PREFIX`, `KEY_LENGTH`
 
+### enterprise-api
+- `DATABASE_URL` / `CORE_DATABASE_URL` — Core DB (publisher_rights_profiles, formal_notices, notice_evidence_chain, rights_licensing_requests, rights_licensing_agreements, rights_audit_log, content_detection_events, known_crawlers)
+- `CONTENT_DATABASE_URL` — Content DB (content_references — rights_snapshot, rights_resolution_url columns)
+- `API_BASE_URL` — Base URL used to build `rights_resolution_url` in sign responses (e.g., `https://api.encypherai.com`)
+- `KEY_ENCRYPTION_KEY`, `ENCRYPTION_NONCE` — C2PA signing key encryption
+- `RATE_LIMIT_PER_MINUTE` — Rate limit for all endpoints including public rights lookup
+
 ## Database Assignment
 
 | Database | Services |
 |----------|----------|
-| **postgres-core** (sensitive data) | auth-service, key-service, billing-service, user-service, notification-service |
-| **postgres-content** (content data) | encoding-service, verification-service, analytics-service, coalition-service |
+| **postgres-core** (sensitive data) | auth-service, key-service, billing-service, user-service, notification-service, enterprise-api (rights/org data) |
+| **postgres-content** (content data) | encoding-service, verification-service, analytics-service, coalition-service, enterprise-api (content_references) |
 
 ## Railway Configuration
 

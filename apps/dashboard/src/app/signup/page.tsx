@@ -273,8 +273,8 @@ function SignupPageContent() {
 
           <div className="text-xs text-muted-foreground text-center">
             By using Encypher you agree to our{' '}
-            <Link href="/terms" className="underline">Terms of Service</Link>,{' '}
-            <Link href="/privacy" className="underline">Privacy</Link>, and Security policies and practices.
+            <Link href="https://encypherai.com/terms" className="underline">Terms of Service</Link>,{' '}
+            <Link href="https://encypherai.com/privacy" className="underline">Privacy</Link>, and Security policies and practices.
           </div>
         </div>
       </section>

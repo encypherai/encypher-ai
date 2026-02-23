@@ -6,6 +6,7 @@ Optional API key authentication is supported for higher rate limits.
 All endpoints in this module are explicitly non-cryptographic.
 """
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -18,7 +19,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database import get_db, get_content_db
+from app.database import get_db, get_content_db, core_session_factory
 from app.dependencies import DEMO_KEYS, _normalize_org_context
 from app.middleware.api_key_auth import authenticate_api_key, get_api_key_from_header
 from app.middleware.public_rate_limiter import public_rate_limiter
@@ -29,6 +30,34 @@ from app.utils.crypto_utils import get_demo_private_key, load_organization_publi
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/public/c2pa", tags=["Public - C2PA"])
+
+
+async def _fire_detection_event(
+    document_id: Optional[str],
+    organization_id: str,
+    request: Request,
+) -> None:
+    """Log a detection event in a standalone DB session (fire-and-forget)."""
+    try:
+        from app.services.detection_service import detection_service
+
+        user_agent = request.headers.get("user-agent", "")
+        referer = request.headers.get("referer")
+        requester_ip = request.client.host if request.client else None
+
+        async with core_session_factory() as session:
+            await detection_service(
+                session,
+                document_id=document_id,
+                organization_id=organization_id,
+                detection_source="zw_resolve",
+                requester_ip=requester_ip,
+                requester_user_agent=user_agent,
+                detected_on_url=referer,
+            )
+            await session.commit()
+    except Exception:
+        logger.debug("Background detection event failed", exc_info=True)
 
 MAX_CREATE_MANIFEST_BYTES = 256 * 1024
 
@@ -403,6 +432,7 @@ class ZWResolveResponse(BaseModel):
     total_segments: Optional[int] = None
     leaf_index: Optional[int] = None
     manifest_data: Optional[Dict[str, Any]] = None
+    rights_resolution_url: Optional[str] = None
 
 
 _RESOLVE_SQL = """
@@ -410,7 +440,8 @@ _RESOLVE_SQL = """
            embedding_metadata->>'manifest_mode' AS manifest_mode,
            embedding_metadata->'segment_location' AS segment_location,
            (embedding_metadata->>'total_segments')::int AS total_segments,
-           manifest_data
+           manifest_data,
+           rights_resolution_url
     FROM content_references
     WHERE embedding_metadata->>'segment_uuid' = :seg_uuid
     LIMIT 1
@@ -450,6 +481,7 @@ def _row_to_resolve_response(segment_uuid: str, row) -> ZWResolveResponse:
         total_segments=row.total_segments if hasattr(row, "total_segments") else None,
         leaf_index=row.leaf_index if hasattr(row, "leaf_index") else None,
         manifest_data=manifest,
+        rights_resolution_url=row.rights_resolution_url if hasattr(row, "rights_resolution_url") else None,
     )
 
 
@@ -486,7 +518,15 @@ async def resolve_zw_segment_uuid(
             },
         )
 
-    return _row_to_resolve_response(segment_uuid, row)
+    response = _row_to_resolve_response(segment_uuid, row)
+    asyncio.create_task(
+        _fire_detection_event(
+            document_id=row.document_id,
+            organization_id=row.organization_id,
+            request=request,
+        )
+    )
+    return response
 
 
 class BulkResolveRequest(BaseModel):
@@ -552,5 +592,18 @@ async def bulk_resolve_segment_uuids(
             results.append(_row_to_resolve_response(uuid_str, row))
         else:
             not_found.append(uuid_str)
+
+    # Fire detection events for all resolved segments (one task per unique org)
+    seen_orgs: set[str] = set()
+    for row in found_uuids.values():
+        if row.organization_id not in seen_orgs:
+            seen_orgs.add(row.organization_id)
+            asyncio.create_task(
+                _fire_detection_event(
+                    document_id=row.document_id,
+                    organization_id=row.organization_id,
+                    request=request,
+                )
+            )
 
     return BulkResolveResponse(results=results, not_found=not_found)

@@ -3,6 +3,7 @@
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { GhostIntegrationCard } from './GhostIntegrationCard';
 import { ChromeExtensionCard } from './ChromeExtensionCard';
+import { CloudflareIntegrationCard } from './CloudflareIntegrationCard';
 import { Card, CardHeader, CardTitle, CardDescription } from '@encypher/design-system';
 
 const WORDPRESS_PLUGIN_DOWNLOAD_URL =
@@ -130,6 +131,20 @@ export default function IntegrationsPage() {
                 )}
               </Card>
             ))}
+          </div>
+        </section>
+
+        {/* CDN & Analytics */}
+        <section className="mb-10">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+            CDN &amp; Analytics
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
+            Connect your CDN to stream access logs into Encypher. This surfaces AI bot traffic that never calls the RSL API,
+            and detects when bots bypass robots.txt protocols.
+          </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <CloudflareIntegrationCard />
           </div>
         </section>
 

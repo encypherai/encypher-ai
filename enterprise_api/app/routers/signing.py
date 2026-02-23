@@ -18,9 +18,11 @@ from app.middleware.api_rate_limiter import api_rate_limiter
 from app.observability.metrics import increment
 from app.schemas.api_response import ErrorCode, get_batch_limit
 from app.schemas.sign_schemas import UnifiedSignRequest
+from app.services.auth_service_client import auth_service_client
 from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.unified_signing_service import execute_unified_signing
 from app.services.webhook_dispatcher import emit_document_signed
+from app.utils.print_stego import build_payload, encode_print_fingerprint
 from app.utils.quota import QuotaManager, QuotaType
 
 logger = logging.getLogger(__name__)
@@ -115,6 +117,7 @@ Provide **either** `text` (single document) **or** `documents` (batch), plus an 
 | `include_fingerprint` | bool | `false` | Enterprise | Generate a robust content fingerprint that can survive minor text modifications. |
 | `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding for non-micro modes; only basic metadata is attached. For micro mode, use `embed_c2pa` instead. |
 | `store_c2pa_manifest` | bool | `true` | Free | Persist generated C2PA manifest in content DB for DB-backed verification. Applies to all modes that generate a manifest. |
+| `enable_print_fingerprint` | bool | `false` | Enterprise | Print Leak Detection - embed imperceptible spacing patterns (U+2009 THIN SPACE vs U+0020) that survive printing and scanning, enabling source identification from leaked physical or PDF copies. |
 
 ### Custom Assertions & Rights (Business+)
 
@@ -224,15 +227,56 @@ async def sign_content(
     This endpoint consolidates /sign and /sign/advanced into a single endpoint.
     Features are automatically gated based on the organization's tier.
     """
-    correlation_id = f"req-{uuid.uuid4().hex[:12]}"
+    correlation_id = getattr(http_request.state, "request_id", None) or f"req-{uuid.uuid4().hex[:12]}"
     # TEAM_145: Default to free tier
     tier = (organization.get("tier") or "free").lower().replace("-", "_")
     org_id = organization["organization_id"]
-    
+
+    # --- Platform partner proxy signing (TEAM_222) ---
+    proxy_publisher_org_id: str | None = request.publisher_org_id
+    is_proxy = proxy_publisher_org_id is not None
+    effective_org_id = org_id  # used for quota, rate limit, rights, and webhooks
+
+    if is_proxy and proxy_publisher_org_id is not None:
+        if tier not in ("strategic_partner",):
+            return JSONResponse(
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={
+                    "success": False,
+                    "data": None,
+                    "error": {
+                        "code": ErrorCode.E_TIER_REQUIRED,
+                        "message": "publisher_org_id requires strategic_partner tier",
+                    },
+                    "correlation_id": correlation_id,
+                    "meta": {"tier": tier},
+                },
+            )
+        publisher_ctx = await auth_service_client.get_organization_context(
+            proxy_publisher_org_id
+        )
+        if publisher_ctx is None:
+            return JSONResponse(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                content={
+                    "success": False,
+                    "data": None,
+                    "error": {
+                        "code": "E_PUBLISHER_NOT_FOUND",
+                        "message": f"Publisher org '{proxy_publisher_org_id}' not found or inaccessible",
+                    },
+                    "correlation_id": correlation_id,
+                    "meta": {},
+                },
+            )
+        # Switch to publisher's identity for quota, rate limits, rights, and webhooks
+        effective_org_id = proxy_publisher_org_id
+        tier = (publisher_ctx.get("tier") or "free").lower().replace("-", "_")
+
     # Get batch size for rate limiting
     documents = request.get_documents()
     batch_size = len(documents)
-    
+
     # Check batch limit
     batch_limit = get_batch_limit(tier)
     if batch_size > batch_limit:
@@ -250,17 +294,17 @@ async def sign_content(
                 "meta": {"tier": tier},
             },
         )
-    
-    # Rate limiting
+
+    # Rate limiting (uses effective_org_id: publisher's for proxy, partner's for direct)
     rate_result = api_rate_limiter.check_with_reset(
-        organization_id=org_id,
+        organization_id=effective_org_id,
         scope="sign",
         tier=tier,
     )
-    
+
     for header, value in api_rate_limiter.get_headers(rate_result).items():
         response.headers[header] = value
-    
+
     if not rate_result.allowed:
         return JSONResponse(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -277,13 +321,15 @@ async def sign_content(
             },
             headers=api_rate_limiter.get_headers(rate_result),
         )
-    
-    await ensure_organization_exists(core_db, organization)
-    
-    # Check monthly quota
+
+    # For proxy signing, skip ensure_organization_exists (publisher bootstrapping runs separately)
+    if not is_proxy:
+        await ensure_organization_exists(core_db, organization)
+
+    # Check monthly quota against publisher's org when proxying
     await QuotaManager.check_quota(
         db=core_db,
-        organization_id=org_id,
+        organization_id=effective_org_id,
         quota_type=QuotaType.C2PA_SIGNATURES,
         increment=batch_size,
     )
@@ -297,24 +343,43 @@ async def sign_content(
         correlation_id=correlation_id,
     )
     
-    # Add quota headers
+    # Post-sign: attach rights snapshot when use_rights_profile=True
+    # For proxy signing, use publisher's org for rights profile lookup
+    if result.get("success") and request.options.use_rights_profile:
+        await _attach_rights_snapshot(
+            result=result,
+            org_id=effective_org_id,
+            core_db=core_db,
+            content_db=content_db,
+        )
+
+    # Post-sign: apply Print Leak Detection when enable_print_fingerprint=True
+    if result.get("success") and request.options.enable_print_fingerprint:
+        _apply_print_fingerprint(result=result, org_id=effective_org_id)
+
+    # Add quota headers (publisher's quota for proxy signing)
     quota_headers = await QuotaManager.get_quota_headers(
         db=core_db,
-        organization_id=org_id,
+        organization_id=effective_org_id,
         quota_type=QuotaType.C2PA_SIGNATURES,
     )
     for header, value in quota_headers.items():
         response.headers[header] = value
-    
+
+    # Inject proxy metadata into result when proxy signing
+    if is_proxy and result.get("success") and result.get("data"):
+        result["data"]["partner_org_id"] = org_id
+        result["data"]["publisher_org_id"] = effective_org_id
+
     increment("sign_requests")
-    
-    # Emit webhook events for each document
+
+    # Emit webhook events for each document (publisher's org for proxy signing)
     if result.get("success") and result.get("data"):
         data = result["data"]
         if data.get("document"):
             asyncio.create_task(
                 emit_document_signed(
-                    organization_id=org_id,
+                    organization_id=effective_org_id,
                     document_id=data["document"]["document_id"],
                     title=request.document_title,
                     document_type=request.options.document_type,
@@ -324,18 +389,120 @@ async def sign_content(
             for doc_result in data["documents"]:
                 asyncio.create_task(
                     emit_document_signed(
-                        organization_id=org_id,
+                        organization_id=effective_org_id,
                         document_id=doc_result["document_id"],
                         title=doc_result.get("metadata", {}).get("title"),
                         document_type=request.options.document_type,
                     )
                 )
-    
+
     # Return appropriate status code
     if result.get("success"):
         return JSONResponse(status_code=status.HTTP_201_CREATED, content=result)
     else:
         return JSONResponse(status_code=status.HTTP_403_FORBIDDEN, content=result)
+
+
+def _apply_print_fingerprint(result: dict, org_id: str) -> None:
+    """Post-sign hook: encode a thin-space fingerprint into signed_text.
+
+    Operates in-place on ``result["data"]``.  Modifies ``signed_text`` for each
+    document (single or batch) and injects ``print_fingerprint`` metadata.
+    Errors are swallowed so they never break a successful sign response.
+    """
+    try:
+        data = result.get("data", {})
+
+        def _fingerprint_doc(doc: dict) -> None:
+            doc_id = doc.get("document_id", "")
+            signed_text = doc.get("signed_text")
+            if not signed_text or not doc_id:
+                return
+            payload = build_payload(org_id, doc_id)
+            doc["signed_text"] = encode_print_fingerprint(signed_text, payload)
+            doc["print_fingerprint"] = {
+                "enabled": True,
+                "payload_hex": payload.hex(),
+            }
+
+        if data.get("document"):
+            _fingerprint_doc(data["document"])
+        if data.get("documents"):
+            for doc in data["documents"]:
+                _fingerprint_doc(doc)
+    except Exception:
+        logger.warning("Failed to apply print fingerprint after signing; continuing", exc_info=True)
+
+
+async def _attach_rights_snapshot(
+    result: dict,
+    org_id: str,
+    core_db: AsyncSession,
+    content_db: AsyncSession,
+) -> None:
+    """
+    Post-sign hook: fetches the publisher's rights profile, stores a rights snapshot
+    on each signed ContentReference, and injects rights_resolution_url into the result.
+
+    Operates in-place on `result["data"]`. Errors are swallowed so they never
+    break a successful sign response.
+    """
+    from sqlalchemy import update
+    from app.config import settings
+    from app.models.content_reference import ContentReference
+    from app.services.rights_service import rights_service
+
+    try:
+        profile = await rights_service.get_current_profile(
+            db=core_db, organization_id=org_id
+        )
+        if profile is None:
+            return
+
+        snapshot = {
+            "profile_version": profile.profile_version,
+            "publisher_name": profile.publisher_name,
+            "default_license_type": profile.default_license_type,
+            "bronze_tier": profile.bronze_tier,
+            "silver_tier": profile.silver_tier,
+            "gold_tier": profile.gold_tier,
+            "notice_status": profile.notice_status,
+        }
+
+        data = result.get("data", {})
+        document_ids: list[str] = []
+
+        if data.get("document"):
+            doc_id = data["document"].get("document_id")
+            if doc_id:
+                document_ids.append(doc_id)
+                rights_url = f"{settings.api_base_url}/api/v1/public/rights/{doc_id}"
+                data["document"]["rights_resolution_url"] = rights_url
+
+        if data.get("documents"):
+            for doc in data["documents"]:
+                doc_id = doc.get("document_id")
+                if doc_id:
+                    document_ids.append(doc_id)
+                    rights_url = f"{settings.api_base_url}/api/v1/public/rights/{doc_id}"
+                    doc["rights_resolution_url"] = rights_url
+
+        for doc_id in document_ids:
+            rights_url = f"{settings.api_base_url}/api/v1/public/rights/{doc_id}"
+            await content_db.execute(
+                update(ContentReference)
+                .where(ContentReference.document_id == doc_id)
+                .where(ContentReference.organization_id == org_id)
+                .values(
+                    rights_snapshot=snapshot,
+                    rights_resolution_url=rights_url,
+                )
+            )
+        if document_ids:
+            await content_db.commit()
+
+    except Exception:
+        logger.warning("Failed to attach rights snapshot after signing; continuing", exc_info=True)
 
 
 # =============================================================================

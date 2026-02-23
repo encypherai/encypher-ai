@@ -8,7 +8,7 @@ import html
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
@@ -182,21 +182,37 @@ async def _send_domain_claim_email(
     organization_name: str,
     domain: str,
     email_token: str,
+    dns_token: str,
 ) -> None:
     config = _get_email_config()
     base_url = config.dashboard_url or config.frontend_url
-    verification_url = f"{base_url}/verify-domain?token={email_token}"
-    subject = f"Verify {domain} for {organization_name}"
+    audit_url = f"{base_url}/verify-domain?token={email_token}"
+    settings_url = f"{base_url}/settings?tab=organization"
+    dns_record = f"encypher-domain-claim={dns_token}"
+    subject = f"Set up DNS verification for {domain}"
     html_content = (
-        f"<p>Confirm domain ownership for <strong>{organization_name}</strong>.</p>"
-        f"<p>Verify <strong>{domain}</strong> by clicking the link below:</p>"
-        f"<p><a href=\"{verification_url}\">Verify domain</a></p>"
-        "<p>If you did not request this, you can ignore this email.</p>"
+        f"<p>You've initiated domain verification for <strong>{domain}</strong> "
+        f"on behalf of <strong>{organization_name}</strong>.</p>"
+        "<p>To verify ownership, add the following TXT record to your DNS provider "
+        f"under the <strong>{domain}</strong> zone:</p>"
+        f"<pre style=\"background:#f4f4f4;padding:12px;border-radius:4px;font-family:monospace\">"
+        f"{dns_record}</pre>"
+        "<p>Once the record is live (propagation may take a few minutes), open your "
+        f"dashboard settings and click <strong>Verify DNS</strong>:</p>"
+        f"<p><a href=\"{settings_url}\">Go to Settings</a></p>"
+        "<hr style=\"margin:24px 0;border:none;border-top:1px solid #eee\">"
+        f"<p style=\"font-size:12px;color:#888\">If you did not request this, you can ignore "
+        f"this email. <a href=\"{audit_url}\">Confirm this request</a> (optional audit trail).</p>"
     )
     plain_content = (
-        f"Verify {domain} for {organization_name}\n\n"
-        f"Verify domain: {verification_url}\n\n"
-        "If you did not request this, you can ignore this email."
+        f"Set up DNS verification for {domain}\n\n"
+        f"You've initiated domain verification for {domain} ({organization_name}).\n\n"
+        "Add this TXT record to your DNS provider under the domain zone:\n\n"
+        f"  {dns_record}\n\n"
+        "Once the record is live, go to Settings > Organization and click Verify DNS:\n"
+        f"  {settings_url}\n\n"
+        "If you did not request this, ignore this email.\n"
+        f"Optional audit confirmation: {audit_url}"
     )
 
     payload = {
@@ -547,6 +563,34 @@ async def update_organization_tier_internal(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
+# ==========================================
+# BULK PROVISION SCHEMAS (TEAM_222)
+# ==========================================
+
+
+class BulkPublisherSpec(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    contact_email: EmailStr
+    domain: Optional[str] = None
+    display_name: Optional[str] = None
+
+
+class BulkProvisionRequest(BaseModel):
+    publishers: List[BulkPublisherSpec] = Field(min_length=1, max_length=1000)
+    partner_org_id: str
+    partner_name: str
+    send_claim_email: bool = True
+
+
+class BulkProvisionedResult(BaseModel):
+    org_id: Optional[str] = None
+    org_name: str
+    contact_email: str
+    invitation_token: Optional[str] = None
+    domain: Optional[str] = None
+    error: Optional[str] = None
+
+
 class CertificateUpdateRequest(BaseModel):
     certificate_pem: str = Field(..., description="PEM-encoded certificate")
 
@@ -576,6 +620,100 @@ async def update_organization_certificate_internal(
 
     logger.info(f"Updated certificate for organization {org_id}")
     return {"success": True, "data": {"organization_id": org_id, "certificate_updated": True}}
+
+
+@router.post("/internal/bulk-provision", include_in_schema=False)
+async def bulk_provision_publishers(
+    payload: BulkProvisionRequest,
+    db: Session = Depends(get_db),
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+):
+    """Bulk-provision publisher organizations for a platform partner (TEAM_222).
+
+    Creates org + invitation for each publisher. Domain claims are attempted but
+    failures do not fail the overall provisioning.
+    """
+    if settings.INTERNAL_SERVICE_TOKEN:
+        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+    org_service = OrganizationService(db)
+    provisioned: list[BulkProvisionedResult] = []
+    failed: list[BulkProvisionedResult] = []
+
+    for pub in payload.publishers:
+        try:
+            # 1. Create org without owner
+            org = org_service.create_organization_without_owner(
+                name=pub.name,
+                email=str(pub.contact_email),
+                tier="free",
+                created_by=payload.partner_org_id,
+            )
+
+            # 2. Create invitation (owner role so publisher can manage their org)
+            inv = org_service.create_invitation(
+                org_id=org.id,
+                email=str(pub.contact_email),
+                role="owner",
+                inviter_user_id=payload.partner_org_id,
+                message=f"Provisioned by {payload.partner_name}",
+                allow_owner=True,
+                skip_permission=True,
+                skip_seat_check=True,
+            )
+
+            # 3. Optional domain claim (failure does not fail provisioning)
+            if pub.domain:
+                try:
+                    org_service.create_domain_claim(
+                        org_id=org.id,
+                        domain=pub.domain,
+                        verification_email=str(pub.contact_email),
+                        actor_user_id=payload.partner_org_id,
+                    )
+                except Exception as domain_exc:
+                    logger.warning(
+                        "bulk_provision_domain_claim_failed org=%s domain=%s error=%s",
+                        org.id,
+                        pub.domain,
+                        str(domain_exc),
+                    )
+
+            provisioned.append(
+                BulkProvisionedResult(
+                    org_id=org.id,
+                    org_name=pub.name,
+                    contact_email=str(pub.contact_email),
+                    invitation_token=inv.token,
+                    domain=pub.domain,
+                )
+            )
+        except Exception as exc:
+            logger.warning(
+                "bulk_provision_publisher_failed name=%s error=%s",
+                pub.name,
+                str(exc),
+            )
+            failed.append(
+                BulkProvisionedResult(
+                    org_name=pub.name,
+                    contact_email=str(pub.contact_email),
+                    domain=pub.domain,
+                    error=str(exc),
+                )
+            )
+
+    return {
+        "success": True,
+        "data": {
+            "provisioned": [p.model_dump() for p in provisioned],
+            "failed": [f.model_dump() for f in failed],
+            "total": len(payload.publishers),
+            "success_count": len(provisioned),
+            "failure_count": len(failed),
+        },
+    }
 
 
 # ==========================================
@@ -632,6 +770,7 @@ async def create_domain_claim(
                     organization_name=org.name,
                     domain=claim.domain,
                     email_token=claim.email_token,
+                    dns_token=claim.dns_token,
                 )
             except Exception as exc:
                 # Domain claims are persisted before notification dispatch; email failures
@@ -1354,6 +1493,74 @@ async def update_publisher_settings(
             "custom_signing_identity_enabled": bool((org.add_ons or {}).get("custom-signing-identity"))
             or org.tier in {"enterprise", "strategic_partner"},
             "anonymous_publisher": org.anonymous_publisher,
+        },
+        "error": None,
+    }
+
+
+# ============================================================
+# ORG SECURITY SETTINGS (TEAM_224)
+# ============================================================
+
+
+class OrgSecuritySettingsUpdate(BaseModel):
+    enforce_mfa: Optional[bool] = None
+
+
+@router.get("/{org_id}/security")
+async def get_org_security_settings(
+    org_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Get security settings for an organization (admin/owner only)."""
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+
+    if not org_service._has_permission(org_id, user_id, {"owner", "admin"}):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin or owner role required")
+
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    return {
+        "success": True,
+        "data": {
+            "enforce_mfa": bool((org.features or {}).get("enforce_mfa", False)),
+        },
+        "error": None,
+    }
+
+
+@router.patch("/{org_id}/security")
+async def update_org_security_settings(
+    org_id: str,
+    payload: OrgSecuritySettingsUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Update security settings for an organization (admin/owner only)."""
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+
+    if not org_service._has_permission(org_id, user_id, {"owner", "admin"}):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin or owner role required")
+
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    features = dict(org.features or {})
+    if payload.enforce_mfa is not None:
+        features["enforce_mfa"] = payload.enforce_mfa
+    org.features = features
+    db.commit()
+
+    return {
+        "success": True,
+        "data": {
+            "enforce_mfa": bool(features.get("enforce_mfa", False)),
         },
         "error": None,
     }

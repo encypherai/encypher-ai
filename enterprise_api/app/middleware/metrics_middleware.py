@@ -74,7 +74,8 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         api_key_prefix = getattr(request.state, "api_key_prefix", None)
 
         metadata = {
-            "request_id": request.headers.get("x-request-id"),
+            "request_id": getattr(request.state, "request_id", None)
+                         or request.headers.get("x-request-id"),
             "method": request.method,
             "api_key_prefix": api_key_prefix,
         }
@@ -129,7 +130,8 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         api_key_prefix = getattr(request.state, "api_key_prefix", None)
 
         metadata = {
-            "request_id": request.headers.get("x-request-id"),
+            "request_id": getattr(request.state, "request_id", None)
+                         or request.headers.get("x-request-id"),
             "method": request.method,
             "api_key_prefix": api_key_prefix,
             "error_code": "E_UNHANDLED",
@@ -227,5 +229,15 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             return MetricType.MERKLE_ENCODE
         elif "/lookup" in path_lower:
             return MetricType.LOOKUP
+        elif "/rsl" in path_lower:
+            return MetricType.RSL_FETCH
+        elif "/robots" in path_lower:
+            return MetricType.ROBOTS_TXT_FETCH
+        elif "/rights" in path_lower:
+            return MetricType.RIGHTS_RESOLUTION
+        elif "/notices" in path_lower:
+            return MetricType.NOTICE_DELIVERED
+        elif "/licensing" in path_lower:
+            return MetricType.LICENSING_REQUEST
         else:
             return MetricType.API_CALL
