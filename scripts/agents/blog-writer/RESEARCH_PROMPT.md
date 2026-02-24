@@ -72,13 +72,23 @@ Use WebSearch to find 3-5 credible sources. Prioritize:
 - c2pa.org, EUR-Lex, official regulatory bodies
 
 For each source collect:
-- The full URL
+- The full URL (must be the primary/authoritative source - court filing, official government
+  publication, original press release, or direct reporting from the outlet that broke the news;
+  not a secondary aggregator or summary site)
 - Publication date
 - The specific fact, statistic, or direct quote (with attribution) that supports the thesis
+- For any direct quote: the exact verbatim text as it appears in the source, confirmed by
+  reading the source - not paraphrased. If you cannot confirm the exact wording, do not use
+  quotation marks.
+- For any statistic or figure (case counts, dollar amounts, percentages, named companies):
+  a second URL confirming the same figure from a different source if possible, or a note
+  that this figure appears only in one source
 - Any counterargument the source raises
 
 Do NOT fabricate statistics, quotes, case names, or source URLs. If you cannot find a verifiable
-source for a claim, exclude the claim.
+primary source for a claim, exclude the claim. A secondary summary (blog post, aggregator,
+trade newsletter) is acceptable as a backup URL but must not be the only source for a
+specific figure or direct quote.
 
 ---
 
@@ -105,12 +115,14 @@ EU AI Act, AI Watermarking, AI Governance, Copyright Law, AI Training Data, Cont
 Publisher Strategy, AI Companies, Legal Analysis, Industry News]
 
 ## Sources
-1. URL: [full URL]
+1. URL: [full primary/authoritative URL]
    Date: [publication date]
    Key finding: [specific fact, stat, or direct quote with attribution]
+   Exact quotes: [any verbatim text the writer may quote, confirmed from the source]
+   Backup URL: [second source confirming same figures, if found - or "none found"]
    Supports: [which aspect of the thesis]
 
-2. URL: [full URL]
+2. URL: [full primary/authoritative URL]
    ...
 
 ## Counterarguments Found

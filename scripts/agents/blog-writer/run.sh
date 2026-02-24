@@ -193,14 +193,11 @@ generate_image() {
   local image_dir
   image_dir="$(dirname "$IMAGE_ABS")"
 
-  # Derive a short display title: part before first colon, max 5 words.
-  # Shorter titles render more reliably in Gemini without truncation or repetition.
+  # Use the full post title as the image display title.
   local full_title
   full_title=$(grep -m1 '^title:' "$NEW_POST_ABS" | sed 's/title:[[:space:]]*//' | tr -d '"')
-  local short_title
-  short_title=$(echo "$full_title" | cut -d: -f1 | tr ' ' '\n' | head -5 | tr '\n' ' ' | sed 's/[[:space:]]*$//')
 
-  log "Phase 3: Sonnet image agent -> $IMAGE_ABS (title: '$short_title')"
+  log "Phase 3: Sonnet image agent -> $IMAGE_ABS (title: '$full_title')"
 
   local regen_note=""
   if [ -n "$feedback" ]; then
@@ -216,13 +213,12 @@ Fix every issue described above. Pay special attention to the title text."
 
 Generate a blog-header image for this post:
 1. Read the post frontmatter to get the excerpt (use as subtitle, truncated to ~12 words).
-2. Use this SHORT display title in the image (not the full article title):
-   \"$short_title\"
-   This shorter title prevents text rendering errors. Do not use the full article title.
+2. Use this exact title in the image:
+   \"$full_title\"
 3. Derive IMAGE_DESCRIPTION from the Visual Metaphor Guide in the skill doc based on the article topic.
 4. Create the output directory (Linux bash only): mkdir -p $image_dir
 5. Write the generation script to $REPO_ROOT/generate-image-temp.mjs. Substitute ALL placeholders:
-   - TITLE: \"$short_title\" (the short title above, not the full title)
+   - TITLE: \"$full_title\"
    - SUBTITLE: excerpt truncated to ~12 words
    - IMAGE_DESCRIPTION: from the Visual Metaphor Guide
    - ASPECT_RATIO: 16:9

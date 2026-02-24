@@ -58,14 +58,20 @@ fi
 GITHUB_OUTPUT=$(mktemp)
 export GITHUB_OUTPUT
 
+TMPSCRIPT=""
 cleanup() {
   git -C "$REPO_ROOT" remote set-url origin "$CLEAN_GIT_URL"
-  rm -f "$GITHUB_OUTPUT" "$REPO_ROOT/.env.skills"
+  rm -f "$GITHUB_OUTPUT" "$REPO_ROOT/.env.skills" "${TMPSCRIPT:-}"
 }
 trap cleanup EXIT
 
 # --- run the pipeline ---
-bash "$SCRIPT_DIR/run.sh"
+# Copy run.sh to a temp file before executing so that any git commits made
+# during the run (e.g. writer agent self-improvements to run.sh) cannot
+# modify the script while bash is reading it lazily from disk.
+TMPSCRIPT=$(mktemp /tmp/blog-writer-run.XXXXXX.sh)
+cp "$SCRIPT_DIR/run.sh" "$TMPSCRIPT"
+bash "$TMPSCRIPT"
 PIPELINE_EXIT=$?
 
 if [ "$PIPELINE_EXIT" -ne 0 ]; then

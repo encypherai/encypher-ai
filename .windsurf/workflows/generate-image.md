@@ -264,13 +264,27 @@ Use this to derive `IMAGE_DESCRIPTION` from a blog post title/excerpt when the u
 |---------------|----------------|--------------|
 | Watermarking / provenance | X-Ray effect — document with Cyber Teal cryptographic signature glowing beneath the surface | Document layers, hash strings, signature status |
 | Verification / detection | Left→Center→Right flow — problem state → processing node → verified output | Panels, data flow arrows, checkmarks |
-| Copyright / legal / willful infringement | Sword not shield — Azure Blue vector beam piercing a Neutral Gray barrier | Active capability, lock icons, legal status labels |
+| Copyright / legal / RAG liability | Two-stage pipeline — document nodes with copyright symbols flowing into an INDEX cylinder (ingestion), then RETRIEVAL arrow pulling content into a response window (output). Muted Coral warning badges label each liability stage. Monospace labels: "COPY 1: INDEX INGESTION", "COPY 2: QUERY RESPONSE", "LICENSED: UNKNOWN" | Document stacks with (c) symbols, cylindrical database, terminal node, response window, coral warning badges |
 | AI training / scraping | Data pipeline — content flowing through extraction nodes into a processing system | Pipeline stages, document blocks, ingestion nodes |
 | Standards / C2PA / coalition | Network constellation — hexagonal nodes connected by precise Azure Blue lines | Orderly node network, institution labels, central hub |
 | Regulation / compliance | Compliance pipeline — fragmented input → regulatory engine → verified compliant output | Regulatory grid, compliance status, enforcement timestamps |
 | AI hallucination / quote integrity | Comparison panel — claimed quote (Muted Coral uncertainty) vs. verified source (Cyber Teal confirmed) | Side-by-side panels, source attribution, accuracy status |
 | Infrastructure / how it works | Isometric stacked layers — foundation → processing → output | Layer diagram, data containers, connection lines |
 | Year in review / editorial | Abstract data landscape — timeline with milestone nodes and data points | Timeline, milestone markers, trend lines |
+
+---
+
+## Proven Style: Simple Pipeline Diagrams
+
+The clearest blog headers use a **2-3 stage left-to-right pipeline** as the scene:
+- Each stage is a distinct labeled node (document stack, cylinder, terminal, window panel)
+- **Muted Coral badges** name the problem at each stage (e.g., "INGESTION LIABILITY", "OUTPUT LIABILITY")
+- **Azure Blue arrows** connect stages with direction
+- **Roboto Mono labels** below nodes provide technical detail (e.g., "COPY 1: INDEX INGESTION", "LICENSED: UNKNOWN")
+- Title in the top third is very large — dominant over the scene
+- Scene fills the bottom two-thirds without competing with the text
+
+Keep scenes **simple and readable**: 3-5 elements max, no overlapping labels, generous spacing. This style scales well from thumbnail to full size and reads clearly at a glance. Prefer this over abstract or decorative compositions for any article that has a clear process or mechanism to illustrate.
 
 ---
 
