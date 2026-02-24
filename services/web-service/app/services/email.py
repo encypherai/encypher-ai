@@ -156,7 +156,8 @@ Request ID: {demo_request.uuid}
 
 # Logo URL - hosted on production site for email compatibility
 # White logo used on blue gradient header background
-LOGO_URL = "https://encypherai.com/encypher_full_logo_white.svg"
+# Must be PNG: SVG is blocked by Gmail, Outlook, and most email clients
+LOGO_URL = "https://encypherai.com/encypher_full_logo_white.png"
 
 
 # ICP-specific email content configuration
