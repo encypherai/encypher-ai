@@ -352,3 +352,138 @@ https://encypherai.com
         body=body,
         html=html,
     )
+
+
+def send_newsletter_welcome(to_email: str) -> None:
+    """Send welcome email to new newsletter subscriber."""
+    subject = "You're subscribed to the Encypher blog"
+
+    body = """Welcome to the Encypher blog!
+
+You'll receive an email when we publish new posts on AI provenance, content authentication, and the evolving legal landscape around AI-generated content.
+
+That's it - no spam, just blog posts.
+
+Best regards,
+The Encypher Team
+
+---
+Encypher - https://encypherai.com
+"""
+
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #1b2f50; background-color: #f5f5f5;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f5f5f5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+            <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <tr><td style="background: linear-gradient(135deg, #1b2f50 0%, #2a87c4 100%); padding: 40px 30px; text-align: center;">
+                    <img src="{LOGO_URL}" alt="Encypher" width="200" style="max-width: 200px; height: auto;">
+                </td></tr>
+                <tr><td style="padding: 40px 30px;">
+                    <h2 style="margin: 0 0 16px 0; color: #1b2f50; font-size: 22px;">You're subscribed!</h2>
+                    <p style="margin: 0 0 16px 0; color: #1b2f50; font-size: 15px;">
+                        You'll receive an email when we publish new posts on AI provenance, content authentication,
+                        and the evolving legal landscape around AI-generated content.
+                    </p>
+                    <p style="margin: 0 0 24px 0; color: #1b2f50; font-size: 15px;">
+                        That's it - no spam, just blog posts.
+                    </p>
+                    <p style="margin: 28px 0 0 0; color: #1b2f50; font-size: 15px;">
+                        Best regards,<br><strong>The Encypher Team</strong>
+                    </p>
+                </td></tr>
+                <tr><td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                        &copy; 2026 Encypher Corporation. All rights reserved.<br>
+                        <a href="https://encypherai.com" style="color: #2a87c4; text-decoration: none;">encypherai.com</a>
+                    </p>
+                </td></tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>
+"""
+
+    email_client.send_email(to_email=to_email, subject=subject, body=body, html=html)
+
+
+def send_newsletter_broadcast(
+    to_email: str,
+    unsubscribe_token: str,
+    title: str,
+    excerpt: str,
+    post_url: str,
+    image_url: str | None = None,
+    site_url: str = "https://encypherai.com",
+) -> None:
+    """Send blog post notification email to a newsletter subscriber."""
+    unsubscribe_url = f"{site_url}/newsletter/unsubscribe?token={unsubscribe_token}"
+    subject = f"New post: {title}"
+
+    body = f"""{title}
+
+{excerpt}
+
+Read the full post: {post_url}
+
+---
+You subscribed at encypherai.com/blog.
+Unsubscribe: {unsubscribe_url}
+"""
+
+    image_html = ""
+    if image_url:
+        image_html = (
+            f'<img src="{image_url}" alt="" width="600" '
+            f'style="width: 100%; max-width: 600px; height: auto; '
+            f'display: block; border-radius: 8px 8px 0 0;">'
+        )
+
+    image_row = ""
+    if image_url:
+        image_row = f'<tr><td style="padding: 0;">{image_html}</td></tr>'
+
+    html = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; line-height: 1.6; color: #1b2f50; background-color: #f5f5f5;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f5f5f5;">
+        <tr><td align="center" style="padding: 40px 20px;">
+            <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <tr><td style="background: linear-gradient(135deg, #1b2f50 0%, #2a87c4 100%); padding: 24px 30px; text-align: center;">
+                    <img src="{LOGO_URL}" alt="Encypher" width="160" style="max-width: 160px; height: auto;">
+                </td></tr>
+                {image_row}
+                <tr><td style="padding: 36px 30px;">
+                    <h1 style="margin: 0 0 16px 0; color: #1b2f50; font-size: 24px; line-height: 1.3;">{title}</h1>
+                    <p style="margin: 0 0 28px 0; color: #475569; font-size: 15px; line-height: 1.6;">{excerpt}</p>
+                    <table role="presentation" cellspacing="0" cellpadding="0">
+                        <tr><td style="border-radius: 8px; background-color: #2a87c4;">
+                            <a href="{post_url}" style="display: inline-block; padding: 12px 24px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 15px;">
+                                Read the full post
+                            </a>
+                        </td></tr>
+                    </table>
+                </td></tr>
+                <tr><td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                        You subscribed at encypherai.com/blog.<br>
+                        <a href="{unsubscribe_url}" style="color: #94a3b8;">Unsubscribe</a>
+                        &nbsp;&middot;&nbsp;
+                        <a href="https://encypherai.com" style="color: #2a87c4; text-decoration: none;">encypherai.com</a><br>
+                        &copy; 2026 Encypher Corporation. All rights reserved.
+                    </p>
+                </td></tr>
+            </table>
+        </td></tr>
+    </table>
+</body>
+</html>
+"""
+
+    email_client.send_email(to_email=to_email, subject=subject, body=body, html=html)

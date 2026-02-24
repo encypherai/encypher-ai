@@ -73,6 +73,10 @@ class Settings(BaseSettings):
     SALES_EMAIL: str = "sales@encypherai.com"
     DEMO_EMAIL: str = "demo@encypherai.com"
 
+    # Newsletter
+    NEWSLETTER_BROADCAST_SECRET: str = ""  # noqa: S105
+    SITE_URL: str = "https://encypherai.com"
+
     # Web Analytics
     ANALYTICS_ENABLED: bool = True
     ANALYTICS_DB_URI: PostgresDsn | None = None

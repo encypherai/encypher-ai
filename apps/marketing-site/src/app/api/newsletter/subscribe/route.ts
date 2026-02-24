@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Newsletter subscription endpoint.
  *
  * Architecture mirrors demo-request:
- * - Production: Forwards to WEB_SERVICE_URL/newsletter/subscribe
+ * - Production: Forwards to WEB_SERVICE_URL/api/v1/newsletter/subscribe
  * - Development: Logs and returns success (no backend required)
  */
 export async function POST(request: NextRequest) {
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const webServiceUrl = process.env.WEB_SERVICE_URL || process.env.NEXT_PUBLIC_WEB_SERVICE_URL;
 
     if (webServiceUrl) {
-      const response = await fetch(`${webServiceUrl}/newsletter/subscribe`, {
+      const response = await fetch(`${webServiceUrl}/api/v1/newsletter/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, source: body.source || 'blog' }),

@@ -400,7 +400,7 @@ else
   log "Opening draft PR."
 fi
 
-gh pr create \
+PR_URL=$(gh pr create \
   --title "Blog: $POST_TITLE" \
   --body "$(cat <<EOF
 ## Automated Weekly Blog Post
@@ -425,6 +425,13 @@ EOF
 )" \
   --base main \
   --head "$BRANCH_NAME" \
-  $DRAFT_FLAG
+  $DRAFT_FLAG)
+
+log "PR: $PR_URL"
+
+# Signal the workflow notify step when human review is required
+if [ "$APPROVED" = false ] && [ -n "${GITHUB_OUTPUT:-}" ]; then
+  echo "draft_pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
+fi
 
 log "Done."
