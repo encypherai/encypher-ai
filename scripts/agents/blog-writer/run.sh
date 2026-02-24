@@ -373,6 +373,31 @@ Do not change the filename, slug, or frontmatter date."
 done
 
 # =========================================================================
+# Phase 5.5 -- Sign final post with Encypher (micro + ECC, no C2PA embed)
+# =========================================================================
+log "Phase 5.5: Signing post with Encypher provenance markers..."
+
+ENCYPHER_API_KEY="${ENCYPHER_API_KEY:-${ENYCPHER_API_KEY:-}}"
+if [ -z "$ENCYPHER_API_KEY" ]; then
+  log "WARNING: ENCYPHER_API_KEY not set - skipping signing."
+else
+  cd "$REPO_ROOT"
+  if uv run python enterprise_api/scripts/sign_blog_posts.py \
+      "$NEW_POST_ABS" \
+      --api-key "$ENCYPHER_API_KEY" \
+      --manifest-mode micro \
+      --output-dir "$REPO_ROOT/enterprise_api/output/signed_blog_posts"; then
+    git add "$NEW_POST_ABS"
+    if ! git diff --cached --quiet; then
+      git commit -m "feat(blog): sign post with Encypher provenance markers $TODAY"
+    fi
+    log "Post signed and committed."
+  else
+    log "WARNING: Signing failed - continuing with unsigned post."
+  fi
+fi
+
+# =========================================================================
 # Phase 6 -- Push and open PR (skipped in test mode)
 # =========================================================================
 if [ "$TEST_MODE" = true ]; then

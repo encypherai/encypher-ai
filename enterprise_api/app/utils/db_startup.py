@@ -104,6 +104,7 @@ def run_alembic_migrations(
     if database_url:
         env["DATABASE_URL"] = database_url
         env["CORE_DATABASE_URL"] = database_url
+        env["CONTENT_DATABASE_URL"] = database_url
 
     try:
         completed = subprocess.run(

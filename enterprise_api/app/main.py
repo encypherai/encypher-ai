@@ -5,6 +5,7 @@ FastAPI application for C2PA-compliant content signing and verification.
 """
 
 import logging
+import sys
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -57,7 +58,7 @@ from app.routers import (
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.services.session_service import session_service
 from app.services.metrics_service import init_metrics_service, shutdown_metrics_service, get_metrics_service
-from app.utils.db_startup import ensure_database_ready
+from app.utils.db_startup import ensure_database_ready, run_alembic_migrations
 from app.utils.request_logging import should_log_request
 from app.dependencies import require_super_admin_dep
 
@@ -129,13 +130,28 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("SSL.com API: Not configured (optional for staging)")
 
-    # Ensure database is ready and run migrations (Alembic SSOT)
+    # Ensure core database is ready and run migrations (Alembic SSOT)
     ensure_database_ready(
         database_url=db_url,
         service_name="enterprise-api",
         run_migrations=True,
         exit_on_failure=True,
     )
+
+    # Also run migrations against content database if it is a separate instance.
+    # content_references and related content tables live in CONTENT_DATABASE_URL;
+    # the startup above only migrates CORE_DATABASE_URL.
+    content_db_url = settings.content_database_url_resolved
+    if content_db_url and content_db_url != db_url:
+        logger.info("Running Alembic migrations against content database...")
+        try:
+            run_alembic_migrations(
+                service_name="enterprise-api-content",
+                database_url=content_db_url,
+            )
+        except Exception as e:
+            logger.error("Content database migration failed: %s", e)
+            sys.exit(1)
 
     # Initialize Redis connection for session management
     try:

@@ -189,6 +189,8 @@ def sign_markdown_text(
     api_key: str,
     base_url: str,
     client: Any | None = None,
+    manifest_mode: str = "micro",
+    ecc: bool = True,
 ) -> str:
     vs_chars = _get_vs_char_set()
     unsigned_body = _strip_invisible_markers(post.body, vs_chars)
@@ -199,8 +201,8 @@ def sign_markdown_text(
         "document_title": post.title,
         "options": {
             "document_type": "article",
-            "manifest_mode": "micro",
-            "ecc": True,
+            "manifest_mode": manifest_mode,
+            "ecc": ecc,
             "embed_c2pa": False,
             "return_embedding_plan": True,
             "segmentation_level": "sentence",
@@ -298,6 +300,17 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Include posts with date <= YYYY-MM-DD",
     )
+    parser.add_argument(
+        "--manifest-mode",
+        default="micro",
+        choices=["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding", "micro"],
+        help="Manifest mode (default: micro)",
+    )
+    parser.add_argument(
+        "--no-ecc",
+        action="store_true",
+        help="Disable Reed-Solomon ECC (micro mode only)",
+    )
     parser.add_argument("--dry-run", action="store_true")
     return parser
 
@@ -352,6 +365,8 @@ def main() -> int:
             post=post,
             api_key=api_key,
             base_url=base_url,
+            manifest_mode=args.manifest_mode,
+            ecc=not args.no_ecc,
         )
 
         signed_markdown = build_signed_markdown(post, signed_text)
