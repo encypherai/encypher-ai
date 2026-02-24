@@ -58,18 +58,22 @@ from app.routers import (
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.services.session_service import session_service
 from app.services.metrics_service import init_metrics_service, shutdown_metrics_service, get_metrics_service
-from app.utils.db_startup import ensure_database_ready, run_alembic_migrations
+from app.utils.db_startup import ensure_database_ready
 from app.utils.request_logging import should_log_request
 from app.dependencies import require_super_admin_dep
 
 from app.middleware.request_id_middleware import RequestIDFilter, RequestIDMiddleware
 
-# Configure logging with request_id field from RequestIDMiddleware contextvars
+# Configure logging with request_id field from RequestIDMiddleware contextvars.
+# The filter MUST be on the handler, not just the logger: Python's callHandlers
+# propagates records to parent handlers directly, bypassing parent logger filters.
 logging.basicConfig(
     level=logging.INFO if settings.is_production else logging.DEBUG,
     format="%(asctime)s [%(request_id)s] %(name)s %(levelname)s - %(message)s",
 )
-logging.getLogger().addFilter(RequestIDFilter())
+_request_id_filter = RequestIDFilter()
+for _handler in logging.getLogger().handlers:
+    _handler.addFilter(_request_id_filter)
 logger = logging.getLogger(__name__)
 
 
@@ -138,19 +142,31 @@ async def lifespan(app: FastAPI):
         exit_on_failure=True,
     )
 
-    # Also run migrations against content database if it is a separate instance.
-    # content_references and related content tables live in CONTENT_DATABASE_URL;
-    # the startup above only migrates CORE_DATABASE_URL.
+    # Apply schema patches to the content database if it is a separate instance.
+    # The single Alembic migration chain mixes CORE-only DDL (ghost_integrations, etc.)
+    # with CONTENT-only DDL (content_references columns), so running alembic upgrade head
+    # against CONTENT DB fails on CORE-only migrations. Apply only the targeted columns.
     content_db_url = settings.content_database_url_resolved
     if content_db_url and content_db_url != db_url:
-        logger.info("Running Alembic migrations against content database...")
+        logger.info("Applying schema patches to content database...")
         try:
-            run_alembic_migrations(
-                service_name="enterprise-api-content",
-                database_url=content_db_url,
-            )
+            from sqlalchemy import create_engine
+            from sqlalchemy import text as sa_text
+            _sync_content_url = content_db_url.replace("+asyncpg", "").replace("+aiopg", "")
+            _content_engine = create_engine(_sync_content_url, pool_pre_ping=True)
+            with _content_engine.connect() as _conn:
+                # Add columns introduced in migration 20260221_120000 (rights management).
+                # ADD COLUMN IF NOT EXISTS is idempotent; safe to run on every startup.
+                _conn.execute(sa_text(
+                    "ALTER TABLE content_references"
+                    " ADD COLUMN IF NOT EXISTS rights_snapshot JSONB,"
+                    " ADD COLUMN IF NOT EXISTS rights_resolution_url TEXT"
+                ))
+                _conn.commit()
+            _content_engine.dispose()
+            logger.info("Content database schema patches applied.")
         except Exception as e:
-            logger.error("Content database migration failed: %s", e)
+            logger.error("Content database schema patch failed: %s", e)
             sys.exit(1)
 
     # Initialize Redis connection for session management
