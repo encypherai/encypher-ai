@@ -272,7 +272,9 @@ export default function ContentPerformancePage() {
   // Funnel stage derivations
   const docsSigned = stats?.total_documents_signed || 0;
   const totalVerifications = stats?.total_verifications || 0;
+  const PRELIMINARY_THRESHOLD = 100;
   const NOTICE_THRESHOLD = 500;
+  const preliminaryReady = totalVerifications >= PRELIMINARY_THRESHOLD && totalVerifications < NOTICE_THRESHOLD;
   const noticeReady = totalVerifications >= NOTICE_THRESHOLD;
   const coalitionActive = coalition && coalition.member && !coalition.opted_out;
   const totalEarnings = coalition?.total_earnings || 0;
@@ -397,15 +399,31 @@ export default function ContentPerformancePage() {
               </FunnelStage>
               <FunnelStage
                 step={4}
-                label="Notice Ready"
-                value={noticeReady ? 'You qualify' : `${formatNumber(totalVerifications)} / ${formatNumber(NOTICE_THRESHOLD)} verifications`}
-                sublabel={noticeReady ? `${formatNumber(totalVerifications)} verifications recorded` : `${NOTICE_THRESHOLD - totalVerifications} more to qualify`}
-                description={noticeReady
-                  ? 'You have enough provenance evidence to serve Formal Notice to infringing entities.'
-                  : `Reach ${NOTICE_THRESHOLD} external verifications to qualify for Formal Notice. This triggers willful infringement status ($150K/work max vs $30K).`}
-                status={noticeReady ? 'cta' : 'pending'}
-                ctaLabel={noticeReady ? 'Take Action' : undefined}
-                ctaHref={noticeReady ? '/rights' : undefined}
+                label="Enforcement Readiness"
+                value={
+                  noticeReady
+                    ? `${formatNumber(totalVerifications)} documented encounters`
+                    : preliminaryReady
+                    ? `${formatNumber(totalVerifications)} documented encounters`
+                    : `${formatNumber(totalVerifications)} / ${formatNumber(NOTICE_THRESHOLD)} recommended`
+                }
+                sublabel={
+                  noticeReady
+                    ? 'Maximum legal leverage -- formal notice recommended'
+                    : preliminaryReady
+                    ? `${formatNumber(NOTICE_THRESHOLD - totalVerifications)} more encounters for maximum leverage`
+                    : `${formatNumber(PRELIMINARY_THRESHOLD - totalVerifications)} more to unlock preliminary notice`
+                }
+                description={
+                  noticeReady
+                    ? `${formatNumber(totalVerifications)} documented encounters. Formal notices backed by 500+ verified encounters carry substantially stronger standing in willful infringement proceedings -- courts recognize the pattern of documented awareness.`
+                    : preliminaryReady
+                    ? `${formatNumber(totalVerifications)} documented encounters qualifies you to send a Preliminary Awareness Notice. This puts AI companies on formal documented notice without yet triggering willful infringement proceedings. Reach 500 encounters for maximum legal leverage and the full formal notice.`
+                    : `Each verification is a documented moment of AI company awareness they must account for in court. Preliminary awareness notice available at 100 encounters | Full formal notice recommended at 500 for maximum willful infringement standing.`
+                }
+                status={noticeReady || preliminaryReady ? 'cta' : 'pending'}
+                ctaLabel={noticeReady ? 'Send Formal Notice' : preliminaryReady ? 'Send Awareness Notice' : undefined}
+                ctaHref={noticeReady || preliminaryReady ? '/rights' : undefined}
               />
               <FunnelStage
                 step={5}
@@ -451,9 +469,9 @@ export default function ContentPerformancePage() {
                 <span className="font-semibold text-sm text-delft-blue dark:text-white">{formatNumber(totalVerifications)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-muted-foreground">Notice threshold</span>
-                <Badge variant={noticeReady ? 'success' : 'secondary'} size="sm">
-                  {noticeReady ? 'Qualified' : `${Math.min(100, Math.round((totalVerifications / NOTICE_THRESHOLD) * 100))}%`}
+                <span className="text-xs text-muted-foreground">Evidence strength</span>
+                <Badge variant={noticeReady ? 'success' : preliminaryReady ? 'warning' : 'secondary'} size="sm">
+                  {noticeReady ? 'Full notice ready' : preliminaryReady ? 'Preliminary ready' : `${Math.min(100, Math.round((totalVerifications / NOTICE_THRESHOLD) * 100))}%`}
                 </Badge>
               </div>
               {coalition && (
@@ -477,29 +495,39 @@ export default function ContentPerformancePage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Notice Progress</CardTitle>
-              <CardDescription className="text-xs">Verifications toward Formal Notice</CardDescription>
+              <CardTitle className="text-sm">Evidence Strength</CardTitle>
+              <CardDescription className="text-xs">Documented encounters toward maximum enforcement leverage</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-2 flex items-baseline justify-between">
                 <span className="text-2xl font-bold text-delft-blue dark:text-white">{formatNumber(totalVerifications)}</span>
-                <span className="text-xs text-muted-foreground">/ {formatNumber(NOTICE_THRESHOLD)} needed</span>
+                <span className="text-xs text-muted-foreground">/ {formatNumber(NOTICE_THRESHOLD)} for maximum leverage</span>
               </div>
-              <div className="h-2.5 bg-muted rounded-full overflow-hidden mb-3">
+              {/* Dual-threshold progress bar */}
+              <div className="relative h-2.5 bg-muted rounded-full overflow-hidden mb-1">
                 <div
-                  className="h-full bg-gradient-to-r from-blue-ncs to-columbia-blue rounded-full transition-all"
+                  className={`h-full rounded-full transition-all ${noticeReady ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : preliminaryReady ? 'bg-gradient-to-r from-amber-400 to-amber-300' : 'bg-gradient-to-r from-blue-ncs to-columbia-blue'}`}
                   style={{ width: `${Math.min(100, (totalVerifications / NOTICE_THRESHOLD) * 100)}%` }}
                 />
+                {/* Preliminary threshold marker at 20% (100/500) */}
+                <div className="absolute top-0 bottom-0 w-px bg-white/60" style={{ left: '20%' }} />
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground mb-3">
+                <span>0</span>
+                <span className={preliminaryReady || noticeReady ? 'text-amber-500 font-medium' : ''}>100 preliminary</span>
+                <span className={noticeReady ? 'text-emerald-500 font-medium' : ''}>500 full notice</span>
               </div>
               <p className="text-xs text-muted-foreground">
                 {noticeReady
-                  ? 'You qualify to serve Formal Notice. This converts potential infringers to willful status ($150K/work max damages).'
-                  : `${formatNumber(Math.max(0, NOTICE_THRESHOLD - totalVerifications))} more external verifications to qualify for Formal Notice.`}
+                  ? `${formatNumber(totalVerifications)} documented encounters — formal notices backed by 500+ verified encounters have substantially stronger standing in willful infringement proceedings.`
+                  : preliminaryReady
+                  ? `${formatNumber(totalVerifications)} encounters qualifies for a Preliminary Awareness Notice. This creates a documented moment of awareness without yet triggering formal willful proceedings. ${formatNumber(NOTICE_THRESHOLD - totalVerifications)} more encounters recommended for maximum legal leverage.`
+                  : `${formatNumber(Math.max(0, PRELIMINARY_THRESHOLD - totalVerifications))} more encounters to unlock preliminary notice. ${formatNumber(Math.max(0, NOTICE_THRESHOLD - totalVerifications))} recommended for maximum legal leverage.`}
               </p>
-              {noticeReady && (
+              {(noticeReady || preliminaryReady) && (
                 <Link href="/rights">
-                  <button className="mt-3 w-full py-2 bg-blue-ncs text-white text-xs font-semibold rounded-lg hover:bg-delft-blue transition-colors">
-                    Take Action
+                  <button className={`mt-3 w-full py-2 text-white text-xs font-semibold rounded-lg transition-colors ${noticeReady ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-500 hover:bg-amber-600'}`}>
+                    {noticeReady ? 'Send Formal Notice' : 'Send Awareness Notice'}
                   </button>
                 </Link>
               )}
@@ -522,7 +550,7 @@ export default function ContentPerformancePage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
-                  <span><strong className="text-slate-700 dark:text-slate-300">Notice Ready</strong> -- triggers willful infringement standard</span>
+                  <span><strong className="text-slate-700 dark:text-slate-300">Enforcement Readiness</strong> -- 100 encounters: preliminary notice | 500: maximum willful infringement leverage</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
