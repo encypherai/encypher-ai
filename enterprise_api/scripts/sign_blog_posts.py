@@ -59,15 +59,17 @@ def apply_embedding_plan(visible_text: str, embedding_plan: dict[str, Any]) -> s
         idx = int(op.get("insert_after_index", -2))
         marker = str(op.get("marker", ""))
         
-        # Shift marker past inline markdown syntax chars and punctuation, but NOT past newlines.
-        # Skipping newlines (\n\r\t) was the root cause of markers jumping over block boundaries
-        # (\n\n before ATX headings), causing the ## to appear mid-paragraph with no preceding
-        # blank line.  Keeping \n out of the exclusion set means a marker placed at the end of a
-        # sentence (e.g. after a period before \n\n## Heading) stays right after the period so
-        # the \n\n block separator is preserved intact in the output.
-        # Space is kept so markers shift past the '## ' prefix into heading body text.
+        # Shift marker past closing punctuation, but NOT past:
+        #   - \n \r \t : would cross block boundaries (\n\n before ATX headings)
+        #   - * _ : these can be OPENING emphasis delimiters; shifting past them lands the
+        #           marker inside the emphasis span (between * and the first word), which
+        #           breaks CommonMark italic/bold parsing.  Markers that land before * stay
+        #           outside the span and are invisible to the parser.
+        #   - ~ ` : same reasoning for strikethrough / code spans
+        # Space is kept so markers can shift past the '## ' prefix into heading body text
+        # (headings are already protected because \n is excluded and ## only appears after \n\n).
         if idx >= 0:
-            while idx < len(visible_text) - 1 and visible_text[idx + 1] in "#*_~`\"')]}.!,;:? ":
+            while idx < len(visible_text) - 1 and visible_text[idx + 1] in "#\"')]}.!,;:? ":
                 idx += 1
 
         if idx not in marker_after_index:

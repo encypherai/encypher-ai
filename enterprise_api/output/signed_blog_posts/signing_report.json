@@ -1,5 +1,137 @@
 [
   {
+    "source": "apps/marketing-site/src/content/blog/AI Plagiarism Detection Is Broken Heres How We Fix It.md",
+    "date": "2025-03-25",
+    "title": "AI Plagiarism Detection Is Broken: Here's How We Fix It",
+    "updated_file": "apps/marketing-site/src/content/blog/AI Plagiarism Detection Is Broken Heres How We Fix It.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/What If AI Content Came With Built-In Proof of Origin.md",
+    "date": "2025-04-04",
+    "title": "What If AI Content Came With Built-In Proof of Origin?",
+    "updated_file": "apps/marketing-site/src/content/blog/What If AI Content Came With Built-In Proof of Origin.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/EncypherAI Joins C2PA Task Force - Advancing Content Provenance for AI-Generated Text.md",
+    "date": "2025-06-04",
+    "title": "Encypher Joins C2PA Task Force: Advancing Content Provenance for AI-Generated Text",
+    "updated_file": "apps/marketing-site/src/content/blog/EncypherAI Joins C2PA Task Force - Advancing Content Provenance for AI-Generated Text.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/The AI Copyright Wars Are Here A Technical Peace Treaty Is the Only Way Forward.md",
+    "date": "2025-06-09",
+    "title": "The AI Copyright Wars Are Here. A Technical Peace Treaty Is the Only Way Forward.",
+    "updated_file": "apps/marketing-site/src/content/blog/The AI Copyright Wars Are Here A Technical Peace Treaty Is the Only Way Forward.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/The Evidence Crisis in AI Copyright Litigation.md",
+    "date": "2025-07-16",
+    "title": "The Evidence Crisis in AI Copyright Litigation",
+    "updated_file": "apps/marketing-site/src/content/blog/The Evidence Crisis in AI Copyright Litigation.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/Industry Veterans Call New Web Authentication Technology Magical as Content and AI Companies Unite on Universal Standard.md",
+    "date": "2025-07-21",
+    "title": "Industry Veterans Call New Web Authentication Technology 'Magical' as Content and AI Companies Unite on Universal Standard",
+    "updated_file": "apps/marketing-site/src/content/blog/Industry Veterans Call New Web Authentication Technology Magical as Content and AI Companies Unite on Universal Standard.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/A Digitial Fingerprint.md",
+    "date": "2025-09-30",
+    "title": "A Digital Fingerprint: Ending AI\u2019s Billion-Dollar Guessing Game",
+    "updated_file": "apps/marketing-site/src/content/blog/A Digitial Fingerprint.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/What_Is_C2PA_A_Complete_Guide_to_Content_Provenance_Standards.md",
+    "date": "2025-11-11",
+    "title": "What Is C2PA? A Complete Guide to Content Provenance Standards",
+    "updated_file": "apps/marketing-site/src/content/blog/What_Is_C2PA_A_Complete_Guide_to_Content_Provenance_Standards.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/How_AI_Training_Data_Scraping_Works_And_Why_Publishers_Cant_Track_It.md",
+    "date": "2025-11-18",
+    "title": "How AI Training Data Scraping Works\u2014And Why Publishers Can't Track It",
+    "updated_file": "apps/marketing-site/src/content/blog/How_AI_Training_Data_Scraping_Works_And_Why_Publishers_Cant_Track_It.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/The_Downstream_Distribution_Problem_Why_Your_Content_Disappears_After_Publication.md",
+    "date": "2025-11-25",
+    "title": "The Downstream Distribution Problem: Why Your Content Disappears After Publication",
+    "updated_file": "apps/marketing-site/src/content/blog/The_Downstream_Distribution_Problem_Why_Your_Content_Disappears_After_Publication.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/The_We_Didnt_Know_Defense_How_AI_Companies_Avoid_Copyright_Liability.md",
+    "date": "2025-12-02",
+    "title": "The \\\"We Didn't Know\\\" Defense: How AI Companies Avoid Copyright Liability",
+    "updated_file": "apps/marketing-site/src/content/blog/The_We_Didnt_Know_Defense_How_AI_Companies_Avoid_Copyright_Liability.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/What_Is_Willful_Copyright_Infringement_A_Guide_for_Content_Owners.md",
+    "date": "2025-12-09",
+    "title": "What Is Willful Copyright Infringement? A Guide for Content Owners",
+    "updated_file": "apps/marketing-site/src/content/blog/What_Is_Willful_Copyright_Infringement_A_Guide_for_Content_Owners.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/California_SB_942_AI_Transparency_Requirements_Starting_January_2026.md",
+    "date": "2025-12-16",
+    "title": "California SB 942: AI Transparency Requirements Starting January 2026",
+    "updated_file": "apps/marketing-site/src/content/blog/California_SB_942_AI_Transparency_Requirements_Starting_January_2026.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/2025_in_Review_The_Year_Content_Provenance_Became_Essential.md",
+    "date": "2025-12-23",
+    "title": "2025 in Review: The Year Content Provenance Became Essential",
+    "updated_file": "apps/marketing-site/src/content/blog/2025_in_Review_The_Year_Content_Provenance_Became_Essential.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/Content_Licensing_in_2026_What_Publishers_and_AI_Companies_Should_Expect.md",
+    "date": "2025-12-30",
+    "title": "Content Licensing in 2026: What Publishers and AI Companies Should Expect",
+    "updated_file": "apps/marketing-site/src/content/blog/Content_Licensing_in_2026_What_Publishers_and_AI_Companies_Should_Expect.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/Cryptographic_Watermarking_vs_AI_Detection_Why_Proof_Beats_Probability.md",
+    "date": "2026-01-06",
+    "title": "Cryptographic Watermarking vs. AI Detection: Why Proof Beats Probability",
+    "updated_file": "apps/marketing-site/src/content/blog/Cryptographic_Watermarking_vs_AI_Detection_Why_Proof_Beats_Probability.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/C2PA 2.3 Published - Encypher Authors Text Provenance Standard.md",
+    "date": "2026-01-08",
+    "title": "C2PA 2.3 Published: Encypher Authors Text Provenance Standard",
+    "updated_file": "apps/marketing-site/src/content/blog/C2PA 2.3 Published - Encypher Authors Text Provenance Standard.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/Why_Text_Was_the_Missing_Piece_in_Content_Authenticity.md",
+    "date": "2026-01-13",
+    "title": "Why Text Was the Missing Piece in Content Authenticity",
+    "updated_file": "apps/marketing-site/src/content/blog/Why_Text_Was_the_Missing_Piece_in_Content_Authenticity.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/The_Publishers_Guide_to_AI_Content_Licensing_in_2026.md",
+    "date": "2026-01-20",
+    "title": "The Publisher's Guide to AI Content Licensing in 2026",
+    "updated_file": "apps/marketing-site/src/content/blog/The_Publishers_Guide_to_AI_Content_Licensing_in_2026.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/Quote_Integrity_Verification_Protecting_Your_Brand_from_AI_Hallucinations.md",
+    "date": "2026-01-27",
+    "title": "Quote Integrity Verification: Protecting Your Brand from AI Hallucinations",
+    "updated_file": "apps/marketing-site/src/content/blog/Quote_Integrity_Verification_Protecting_Your_Brand_from_AI_Hallucinations.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/Model_Collapse_Is_Coming_Why_AI_Companies_Need_Verified_Training_Data.md",
+    "date": "2026-02-03",
+    "title": "Model Collapse Is Coming: Why AI Companies Need Verified Training Data",
+    "updated_file": "apps/marketing-site/src/content/blog/Model_Collapse_Is_Coming_Why_AI_Companies_Need_Verified_Training_Data.md"
+  },
+  {
+    "source": "apps/marketing-site/src/content/blog/EU_AI_Act_Content_Disclosure_What_Publishers_Must_Know.md",
+    "date": "2026-02-10",
+    "title": "EU AI Act Content Disclosure: What Publishers Must Know",
+    "updated_file": "apps/marketing-site/src/content/blog/EU_AI_Act_Content_Disclosure_What_Publishers_Must_Know.md"
+  },
+  {
     "source": "apps/marketing-site/src/content/blog/RAG_Copyright_Trap_Why_Retrieval_Is_Not_Safe_Harbor.md",
     "date": "2026-02-24",
     "title": "The RAG Copyright Trap: Why Retrieval Is Not Safe Harbor",
