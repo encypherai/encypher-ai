@@ -256,6 +256,78 @@ http:
       tls: {}
       priority: 100
 
+    # Rights management + analytics endpoints used by dashboard (rights profile, crawler analytics, etc.)
+    api-rights:
+      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/rights`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      middlewares:
+        - cors-api
+      tls: {}
+      priority: 100
+
+    # Rights licensing workflows used by dashboard licensing surfaces
+    api-rights-licensing:
+      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/rights-licensing`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      middlewares:
+        - cors-api
+      tls: {}
+      priority: 100
+
+    # Notice workflows for rights enforcement dashboard pages
+    api-notices:
+      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/notices`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      middlewares:
+        - cors-api
+      tls: {}
+      priority: 100
+
+    # Content discovery/crawler integrations
+    api-integrations:
+      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/integrations`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      middlewares:
+        - cors-api
+      tls: {}
+      priority: 100
+
+    # CDN integration endpoints powering crawler intelligence views
+    api-cdn:
+      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/cdn`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      middlewares:
+        - cors-api
+      tls: {}
+      priority: 100
+
+    # Enterprise admin endpoints used by dashboard admin/security tooling
+    api-admin:
+      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/admin`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      middlewares:
+        - cors-api
+      tls: {}
+      priority: 100
+
     api-streaming:
       rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/sign/stream`)"
       service: enterprise-api
