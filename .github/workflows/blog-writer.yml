@@ -41,15 +41,22 @@ jobs:
           git config user.name "Encypher Blog Bot"
           git config user.email "bot@encypherai.com"
 
-      - name: Create .env.skills for image generation
+      - name: Create .env.skills for image generation and signing
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ENCYPHER_API_KEY: ${{ secrets.ENCYPHER_API_KEY }}
         run: |
           if [ -n "$GEMINI_API_KEY" ]; then
-            echo "GEMINI_API_KEY=$GEMINI_API_KEY" > .env.skills
+            echo "GEMINI_API_KEY=$GEMINI_API_KEY" >> .env.skills
             echo "Image generation enabled."
           else
             echo "GEMINI_API_KEY secret not set -- image generation will be skipped."
+          fi
+          if [ -n "$ENCYPHER_API_KEY" ]; then
+            echo "ENCYPHER_API_KEY=$ENCYPHER_API_KEY" >> .env.skills
+            echo "Encypher signing enabled."
+          else
+            echo "ENCYPHER_API_KEY secret not set -- provenance signing will be skipped."
           fi
 
       - name: Run blog writer pipeline
@@ -57,6 +64,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENCYPHER_API_KEY: ${{ secrets.ENCYPHER_API_KEY }}
         run: |
           TOPIC_HINT="${{ inputs.topic_hint }}"
           if [ -n "$TOPIC_HINT" ]; then
