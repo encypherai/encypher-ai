@@ -21,11 +21,13 @@ if (!webServiceUrl || !secret) {
 const content = fs.readFileSync(filePath, 'utf8');
 const { data } = matter(content);
 
-const filename = filePath.split('/').pop().replace(/\.md$/, '');
+const rawFilename = filePath.split('/').pop().replace(/\.md$/, '');
+// Blog slugs are lowercased and spaces replaced with hyphens (matches blog.ts getAllPosts logic)
+const slug = rawFilename.toLowerCase().replace(/\s+/g, '-');
 const title = data.title || '';
 const excerpt = data.excerpt || data.description || '';
 const image = data.image || data.headerImage || data.coverImage || null;
-const postUrl = `${siteUrl}/blog/${filename}`;
+const postUrl = `${siteUrl}/blog/${slug}`;
 const imageUrl = image ? `${siteUrl}${image.startsWith('/') ? '' : '/'}${image}` : null;
 
 if (!title || !excerpt) {
