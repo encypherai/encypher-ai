@@ -59,10 +59,15 @@ def apply_embedding_plan(visible_text: str, embedding_plan: dict[str, Any]) -> s
         idx = int(op.get("insert_after_index", -2))
         marker = str(op.get("marker", ""))
         
-        # Shift marker past any immediately following markdown formatting chars, punctuation, or whitespace
-        # to prevent it from attaching to and breaking markdown formatting tokens (like ** or *)
+        # Shift marker past inline markdown syntax chars and punctuation, but NOT past newlines.
+        # Skipping newlines (\n\r\t) was the root cause of markers jumping over block boundaries
+        # (\n\n before ATX headings), causing the ## to appear mid-paragraph with no preceding
+        # blank line.  Keeping \n out of the exclusion set means a marker placed at the end of a
+        # sentence (e.g. after a period before \n\n## Heading) stays right after the period so
+        # the \n\n block separator is preserved intact in the output.
+        # Space is kept so markers shift past the '## ' prefix into heading body text.
         if idx >= 0:
-            while idx < len(visible_text) - 1 and visible_text[idx + 1] in "*_~`\"')]}.!,;:? \t\n\r":
+            while idx < len(visible_text) - 1 and visible_text[idx + 1] in "#*_~`\"')]}.!,;:? ":
                 idx += 1
 
         if idx not in marker_after_index:
@@ -248,14 +253,21 @@ def sign_markdown_text(
             headers=headers,
             json={"text": signed_text},
         )
-        if verify_response.status_code != 200:
+        if verify_response.status_code == 503:
+            # Key service unavailable (e.g. local dev without full stack).
+            # Signing succeeded; skip verification rather than failing the whole run.
+            logger.warning(
+                "Verify skipped for %s — key service unavailable (503); signed content written as-is.",
+                post.path,
+            )
+        elif verify_response.status_code != 200:
             raise RuntimeError(
                 f"Verify API returned {verify_response.status_code}: {verify_response.text[:500]}"
             )
-
-        verify_data = verify_response.json()
-        if not verify_data.get("data", {}).get("valid", False):
-            raise RuntimeError(f"Verification failed for {post.path}")
+        else:
+            verify_data = verify_response.json()
+            if not verify_data.get("data", {}).get("valid", False):
+                raise RuntimeError(f"Verification failed for {post.path}")
 
         return signed_text
     finally:

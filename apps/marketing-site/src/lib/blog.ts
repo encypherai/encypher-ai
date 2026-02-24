@@ -21,6 +21,15 @@ if (isProduction) {
   }
 }
 
+// Strip Unicode variation-selector chars used for VS256 provenance watermarking.
+// These invisible chars are stored in .md files for offline verification but must be
+// removed before markdown parsing so they cannot break heading/emphasis/link syntax.
+// Ranges: U+FE00-U+FE0F (Variation Selectors), U+E0100-U+E01EF (VS Supplement), U+FEFF (BOM).
+function stripProvenanceMarkers(content: string): string {
+  // eslint-disable-next-line no-control-regex
+  return content.replace(/[\uFE00-\uFE0F\uFEFF]|[\u{E0100}-\u{E01EF}]/gu, '');
+}
+
 export async function renderBlogMarkdown(content: string): Promise<string> {
   const [{ remark }, { default: html }, { default: remarkGfm }] = await Promise.all([
     import('remark'),
@@ -28,7 +37,7 @@ export async function renderBlogMarkdown(content: string): Promise<string> {
     import('remark-gfm'),
   ]);
 
-  const contentWithYouTubeEmbeds = processYouTubeLinks(content);
+  const contentWithYouTubeEmbeds = processYouTubeLinks(stripProvenanceMarkers(content));
 
   const processedContent = await remark()
     .use(remarkGfm)

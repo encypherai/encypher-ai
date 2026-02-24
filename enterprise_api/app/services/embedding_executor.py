@@ -468,6 +468,7 @@ async def encode_document_with_embeddings(
             disable_c2pa=request.disable_c2pa,
             store_c2pa_manifest=request.store_c2pa_manifest,
             organization_name=organization.get("publisher_identity_base") or organization.get("organization_name"),
+            original_text=document_text,  # Preserve inter-segment whitespace (e.g. \n\n before headings)
         )
 
         # Step 4: Convert embeddings to response format

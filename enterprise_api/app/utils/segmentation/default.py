@@ -130,14 +130,17 @@ def segment_sentences_default(text: str, normalize: bool = True) -> List[str]:
         # Use spaCy for accurate sentence boundary detection
         doc = _default_nlp(text_for_detection)
 
-        # Extract sentences, but map back to original text positions
+        # Extract sentences, but map back to original text positions.
+        # Do NOT strip the original slice — stripping removes leading \n\n that precede
+        # block-level elements like ATX headings (## Heading), which breaks markdown
+        # rendering and causes build_embedding_plan to return None (text mismatch).
         sentences = []
         for sent in doc.sents:
             # Get the original text for this sentence
             start = sent.start_char
             end = sent.end_char
-            original_sent = text[start:end].strip()
-            if original_sent:
+            original_sent = text[start:end]
+            if original_sent.strip():  # filter visibly-empty spans, keep whitespace in non-empty ones
                 sentences.append(original_sent)
 
         return sentences

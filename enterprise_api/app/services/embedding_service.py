@@ -108,6 +108,47 @@ class EmbeddingService:
 
         return __version__
 
+    @staticmethod
+    def _reconstruct_with_separators(
+        original_text: str,
+        segments: List[str],
+        embedded_segments: List[str],
+    ) -> str:
+        """Reconstruct the full document preserving original inter-segment whitespace.
+
+        Sentence segmentation produces spans that exclude the whitespace (including
+        blank lines / \\n\\n) between them.  Joining with a plain space discards those
+        separators, which breaks ATX heading detection in Markdown renderers.  This
+        helper locates each segment in the NFC-normalised original text and re-inserts
+        whatever was between adjacent segment spans so block structure is preserved.
+        """
+        if not segments:
+            return ""
+
+        normalised = unicodedata.normalize("NFC", original_text)
+        result: list[str] = []
+        pos = 0
+
+        for orig, emb in zip(segments, embedded_segments):
+            seg_pos = normalised.find(orig, pos)
+            if seg_pos == -1:
+                # Fallback: segment not found verbatim - append with a space separator
+                if result:
+                    result.append(" ")
+                result.append(emb)
+                continue
+            # Preserve any content (whitespace/newlines) between previous end and this segment
+            if seg_pos > pos:
+                result.append(normalised[pos:seg_pos])
+            result.append(emb)
+            pos = seg_pos + len(orig)
+
+        # Preserve any trailing content after the last segment
+        if pos < len(normalised):
+            result.append(normalised[pos:])
+
+        return "".join(result)
+
     async def create_embeddings(
         self,
         db: AsyncSession,
@@ -137,6 +178,7 @@ class EmbeddingService:
         store_c2pa_manifest: bool = True,  # Persist extracted C2PA manifest in DB
         processing_metadata: Optional[Dict[str, Any]] = None,
         organization_name: Optional[str] = None,
+        original_text: Optional[str] = None,  # Original unsegmented document text for separator-preserving reconstruction
     ) -> Tuple[List[EmbeddingReference], str]:
         """
         Create invisible signed embeddings for all segments using encypher-ai.
@@ -617,7 +659,15 @@ class EmbeddingService:
                             if use_ecc:
                                 ref_any.embedding_metadata["rs_parity_symbols"] = 8
 
-                full_document = " ".join(micro_embedded_segments)
+                # Reconstruct full document preserving original whitespace (e.g. \n\n before
+                # ATX headings).  When original_text is available, use it as the reference
+                # for inter-segment separators; otherwise fall back to space-joining.
+                if original_text is not None:
+                    full_document = EmbeddingService._reconstruct_with_separators(
+                        original_text, segments, micro_embedded_segments
+                    )
+                else:
+                    full_document = " ".join(micro_embedded_segments)
 
                 # --- Phase 3: Always generate C2PA manifest ---
                 # We always create the manifest via embed_metadata so we can
