@@ -1,26 +1,31 @@
-# TEAM_233 — Cloudflare Logpush setup fetch failure investigation
+# TEAM_233 — Cloudflare Logpush setup reliability + UX simplification
 
 **Active PRD**: `PRDs/CURRENT/PRD_Cloudflare_Logpush_AI_Scraping_Analytics.md`
-**Working on**: Investigation (no code changes)
+**Working on**: Cloudflare Logpush routing fix + setup UX refactor
 **Started**: 2026-02-25 16:09 UTC
 **Status**: completed
 
 ## Session Progress
 - [x] Investigated frontend setup flow and backend endpoint wiring — ✅ code trace
 - [x] Identified likely root cause class for `Failed to fetch` — ✅ config/CORS analysis
+- [x] Fixed production gateway route for `/api/v1/cdn/*` — ✅ config update
+- [x] Refactored Cloudflare setup flow to auto-generate/save secret on setup click and keep URL+secret together in step 1 — ✅ contract tests
 
 ## Changes Made
-- No source code changes.
+- `services/api-gateway/dynamic.yml`: Added `PathPrefix(/api/v1/cdn)` to enterprise API router rule.
+- `apps/dashboard/src/app/integrations/CloudflareIntegrationCard.tsx`: Simplified flow to auto-generate and persist secret when setup starts; presents destination URL + secret together in first setup step.
+- `apps/dashboard/tests/e2e/integrations.cloudflare-setup.contract.test.mjs`: Added contract tests for the new setup behavior.
 
 ## Blockers
-- Need runtime confirmation from browser Network tab / deployed env vars to distinguish:
-  1. wrong `NEXT_PUBLIC_API_URL` target (e.g., localhost in deployed env), or
-  2. CORS origin not allowed on enterprise API.
+- None.
 
 ## Handoff Notes
-- Endpoint exists and returns full webhook URL after successful POST.
-- Failure is occurring before response handling (browser fetch/network layer).
-- Next step: verify request URL and CORS response headers for POST `/api/v1/cdn/cloudflare`.
+- Root cause confirmed from production trace: CORS preflight `OPTIONS /api/v1/cdn/cloudflare` returned 404 at gateway.
+- After deploying api-gateway change, verify preflight returns 200/204 and setup POST returns webhook URL.
+- Tests run:
+  - `node --test tests/e2e/integrations.wordpress-download.contract.test.mjs` ✅
+  - `node --test tests/e2e/integrations.cloudflare-setup.contract.test.mjs tests/e2e/integrations.wordpress-download.contract.test.mjs` ✅
+  - `npm run lint` ✅ (pre-existing warnings remain)
 
 ## Suggested Commit Message
-chore(investigation): trace cloudflare logpush setup fetch failure path and isolate config/cors root-cause candidates
+fix(gateway,integrations): route /api/v1/cdn through enterprise-api and streamline Cloudflare setup by auto-generating/saving secret at setup start

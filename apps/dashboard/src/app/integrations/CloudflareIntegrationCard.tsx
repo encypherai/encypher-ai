@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button, Input } from '@encypher/design-system';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, Button } from '@encypher/design-system';
 import apiClient from '../../lib/api';
-import type { CdnIntegrationResponse } from '../../lib/api';
 import { CopyButton } from './CopyButton';
 
 type ViewState = 'loading' | 'disconnected' | 'setup' | 'connected';
@@ -33,12 +32,10 @@ function generateSecret(): string {
 export function CloudflareIntegrationCard() {
   const { data: session } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
-  const orgId = (session?.user as any)?.organizationId as string | undefined;
   const queryClient = useQueryClient();
 
   const [viewState, setViewState] = useState<ViewState>('loading');
   const [setupStep, setSetupStep] = useState(1);
-  const [zoneId, setZoneId] = useState('');
   const [secret, setSecret] = useState('');
   const [savedWebhookUrl, setSavedWebhookUrl] = useState('');
   const [error, setError] = useState('');
@@ -64,18 +61,22 @@ export function CloudflareIntegrationCard() {
 
   // Save (create/update) integration
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (generatedSecret?: string) => {
       if (!accessToken) throw new Error('Not authenticated');
+      const secretToSave = generatedSecret ?? secret;
       return apiClient.saveCdnIntegration(accessToken, {
         provider: 'cloudflare',
-        zone_id: zoneId || null,
-        webhook_secret: secret,
+        zone_id: null,
+        webhook_secret: secretToSave,
         enabled: true,
       });
     },
-    onSuccess: (data) => {
+    onSuccess: (data, generatedSecret) => {
+      if (generatedSecret) {
+        setSecret(generatedSecret);
+      }
       setSavedWebhookUrl(data.webhook_url);
-      setSetupStep(2);
+      setSetupStep(1);
       queryClient.invalidateQueries({ queryKey: ['cdn-integration-cloudflare'] });
     },
     onError: (err: any) => {
@@ -93,7 +94,6 @@ export function CloudflareIntegrationCard() {
       setViewState('disconnected');
       setShowDisconnectConfirm(false);
       setSavedWebhookUrl('');
-      setZoneId('');
       setSecret('');
       setSetupStep(1);
       queryClient.invalidateQueries({ queryKey: ['cdn-integration-cloudflare'] });
@@ -108,7 +108,7 @@ export function CloudflareIntegrationCard() {
       setSecret(newSecret);
       return apiClient.saveCdnIntegration(accessToken, {
         provider: 'cloudflare',
-        zone_id: integration?.zone_id ?? zoneId ?? null,
+        zone_id: integration?.zone_id ?? null,
         webhook_secret: newSecret,
         enabled: true,
       });
@@ -121,10 +121,13 @@ export function CloudflareIntegrationCard() {
   });
 
   const handleStartSetup = () => {
-    setSecret(generateSecret());
+    const newSecret = generateSecret();
+    setSecret(newSecret);
+    setSavedWebhookUrl('');
     setViewState('setup');
     setSetupStep(1);
     setError('');
+    saveMutation.mutate(newSecret);
   };
 
   const handleSetupDone = () => {
@@ -177,8 +180,6 @@ export function CloudflareIntegrationCard() {
 
   // -- Setup wizard --
   if (viewState === 'setup') {
-    const webhookUrl = savedWebhookUrl || (orgId ? `${window.location.origin.replace('3001', '8000')}/api/v1/cdn/cloudflare/webhook/${orgId}` : '');
-
     return (
       <Card variant="bordered" className="border-blue-ncs/50 col-span-full lg:col-span-2">
         <CardHeader>
@@ -200,7 +201,7 @@ export function CloudflareIntegrationCard() {
         <CardContent>
           {/* Step indicator */}
           <div className="flex items-center gap-2 mb-6">
-            {[1, 2, 3, 4].map((step) => (
+            {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center gap-2">
                 <div
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
@@ -219,112 +220,79 @@ export function CloudflareIntegrationCard() {
                     step
                   )}
                 </div>
-                {step < 4 && (
+                {step < 3 && (
                   <div className={`w-8 h-0.5 ${step < setupStep ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
                 )}
               </div>
             ))}
           </div>
 
-          {/* Step 1: Generate secret */}
+          {/* Step 1: Copy destination URL + secret */}
           {setupStep === 1 && (
             <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-delft-blue dark:text-white mb-1">
-                  Step 1: Confirm your webhook secret
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  We generated a secure secret below. You will paste this into Cloudflare in the next steps.
-                  You can also enter your own 16+ character value.
-                </p>
+              <h3 className="text-sm font-semibold text-delft-blue dark:text-white mb-1">
+                Step 1: Copy destination URL and secret
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                We generated and saved your webhook secret automatically. Copy both values below into Cloudflare.
+              </p>
 
-                {/* Secret field */}
-                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 mb-3">
-                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2 block">
-                    Webhook Secret
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <code className="text-xs flex-1 break-all text-delft-blue dark:text-slate-200 font-mono">
-                      {secret}
-                    </code>
-                    <CopyButton text={secret} />
-                  </div>
-                  <button
-                    onClick={() => setSecret(generateSecret())}
-                    className="text-[11px] text-blue-ncs hover:underline mt-2 block"
-                  >
-                    Regenerate
-                  </button>
+              {saveMutation.isPending && !savedWebhookUrl ? (
+                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <p className="text-xs text-muted-foreground">Generating secure setup values...</p>
                 </div>
-
-                <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg mb-3">
-                  <div className="flex gap-2">
-                    <svg className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <p className="text-xs text-amber-800 dark:text-amber-300">
-                      Copy and save this secret now. After setup, Encypher stores it hashed and you cannot retrieve it. You can regenerate a new one at any time.
-                    </p>
+              ) : (
+                <>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 block">
+                      Logpush Destination URL
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs flex-1 break-all text-delft-blue dark:text-slate-200 font-mono">
+                        {savedWebhookUrl}
+                      </code>
+                      <CopyButton text={savedWebhookUrl} />
+                    </div>
                   </div>
-                </div>
 
-                {/* Optional: Cloudflare Zone ID */}
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Cloudflare Zone ID <span className="font-normal text-muted-foreground">(optional, for reference)</span>
-                </label>
-                <Input
-                  placeholder="e.g. 023e105f4ecef8ad9ca31a8372d0c353"
-                  value={zoneId}
-                  onChange={(e) => setZoneId(e.target.value)}
-                />
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  Found in Cloudflare Dashboard &rarr; your domain &rarr; Overview sidebar. Not required for the integration to work.
-                </p>
-              </div>
-              <Button variant="primary" size="sm" onClick={() => { setError(''); saveMutation.mutate(); }} loading={saveMutation.isPending}>
-                Save and Continue
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 block">
+                      Webhook Secret
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <code className="text-xs flex-1 break-all text-delft-blue dark:text-slate-200 font-mono">
+                        {secret}
+                      </code>
+                      <CopyButton text={secret} />
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                    <div className="flex gap-2">
+                      <svg className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p className="text-xs text-amber-800 dark:text-amber-300">
+                        Copy and save this secret now. After setup, Encypher stores it hashed and you cannot retrieve it. You can regenerate a new one at any time.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <Button variant="primary" size="sm" onClick={() => setSetupStep(2)} disabled={!savedWebhookUrl || !secret}>
+                Continue to Cloudflare setup
               </Button>
               {error && <p className="text-sm text-red-500">{error}</p>}
             </div>
           )}
 
-          {/* Step 2: Copy webhook URL */}
+          {/* Step 2: Create Logpush job in Cloudflare */}
           {setupStep === 2 && savedWebhookUrl && (
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-delft-blue dark:text-white mb-1">
-                  Step 2: Copy your webhook URL
-                </h3>
-                <p className="text-xs text-muted-foreground mb-3">
-                  You will paste this URL into Cloudflare as the Logpush destination in the next step.
-                </p>
-                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <label className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 block">
-                    Logpush Destination URL
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <code className="text-xs flex-1 break-all text-delft-blue dark:text-slate-200 font-mono">
-                      {savedWebhookUrl}
-                    </code>
-                    <CopyButton text={savedWebhookUrl} />
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setSetupStep(1)}>Back</Button>
-                <Button variant="primary" size="sm" onClick={() => setSetupStep(3)}>
-                  I copied it, continue
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Create Logpush job in Cloudflare */}
-          {setupStep === 3 && savedWebhookUrl && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-delft-blue dark:text-white mb-1">
-                  Step 3: Create the Logpush job in Cloudflare
+                  Step 2: Create the Logpush job in Cloudflare
                 </h3>
                 <p className="text-xs text-muted-foreground mb-4">
                   Follow these steps exactly in your Cloudflare dashboard.
@@ -440,16 +408,16 @@ export function CloudflareIntegrationCard() {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setSetupStep(2)}>Back</Button>
-                <Button variant="primary" size="sm" onClick={() => setSetupStep(4)}>
+                <Button variant="ghost" size="sm" onClick={() => setSetupStep(1)}>Back</Button>
+                <Button variant="primary" size="sm" onClick={() => setSetupStep(3)}>
                   Done, I saved the job
                 </Button>
               </div>
             </div>
           )}
 
-          {/* Step 4: Confirmation */}
-          {setupStep === 4 && (
+          {/* Step 3: Confirmation */}
+          {setupStep === 3 && (
             <div className="space-y-4">
               <div className="flex flex-col items-center text-center py-4">
                 <div className="w-14 h-14 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
