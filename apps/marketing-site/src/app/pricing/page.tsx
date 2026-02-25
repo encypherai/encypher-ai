@@ -227,7 +227,7 @@ export default function PricingPage() {
                   <span>See all free features</span>
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
                 </summary>
-                <div className="grid md:grid-cols-3 gap-6 mt-6 pt-6 border-t border-border">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6 pt-6 border-t border-border">
                   <div>
                     <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Signing & Provenance</h4>
                     <ul className="space-y-2">
@@ -243,6 +243,17 @@ export default function PricingPage() {
                     <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Distribution & Tools</h4>
                     <ul className="space-y-2">
                       {FREE_TIER.distributionFeatures.map((f: string) => (
+                        <li key={f} className="flex items-start gap-2">
+                          <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">AI Crawler Analytics</h4>
+                    <ul className="space-y-2">
+                      {FREE_TIER.analyticsFeatures.map((f: string) => (
                         <li key={f} className="flex items-start gap-2">
                           <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                           <span className="text-sm">{f}</span>

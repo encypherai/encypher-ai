@@ -118,6 +118,8 @@ export interface FreeTierConfig {
   signingFeatures: string[];
   /** Distribution & tools */
   distributionFeatures: string[];
+  /** AI crawler analytics — free, matches or exceeds TollBit free tier */
+  analyticsFeatures: string[];
   /** Coalition membership features */
   coalitionFeatures: string[];
   /** Usage limits */

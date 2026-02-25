@@ -52,11 +52,19 @@ export const FREE_TIER: FreeTierConfig = {
     'GitHub Action for CI/CD integration',
     'Browser extension for verification',
   ],
+  analyticsFeatures: [
+    'AI crawler dashboard — which bots are hitting your signed content',
+    'Request volume over time — daily, weekly, monthly trends',
+    'Top scraped pages — which URLs attract the most AI traffic',
+    'Per-bot breakdown — GPTBot, ClaudeBot, Bytespider, Perplexity, and more',
+    'robots.txt compliance tracking — detect bots ignoring directives',
+    'CSV export of all crawler activity',
+  ],
   coalitionFeatures: [
     'Auto-enrolled in Encypher Coalition',
     'Content indexed for coalition licensing',
-    'Basic attribution view',
-    'Coalition dashboard with content stats',
+    'Coalition dashboard with content stats and earnings',
+    'Two-track licensing: coalition (60/40) or self-service (80/20)',
   ],
   limits: {
     documentsPerMonth: 1000,
@@ -75,15 +83,16 @@ export const ADD_ONS: AddOnConfig[] = [
   // --- Enforcement Add-Ons ---
   {
     id: 'attribution-analytics',
-    name: 'Attribution Analytics',
+    name: 'Phone-Home Detection',
     category: 'enforcement',
     priceMonthly: 0,
-    description: 'Full dashboard showing where your signed content appears in AI outputs. Usage patterns, frequency, context analysis.',
+    description: 'See when your signed content is actually encountered or used by AI systems — not just crawled. Powered by Encypher provenance embeddings; no comparable free alternative exists.',
     includes: [
-      'Where your signed content appears in AI model outputs',
-      'Which AI companies are using your content and how frequently',
+      'Detection events when signed content is encountered by AI training pipelines',
+      'Detection events when signed content appears in RAG retrieval or grounding',
+      'AI company attribution — which systems used which specific articles',
       'Usage context — training, grounding, retrieval, direct reproduction',
-      'Trend data over time',
+      'Trend data and usage frequency over time',
       'Export targeting lists for formal notice campaigns',
     ],
     comingSoon: true,
