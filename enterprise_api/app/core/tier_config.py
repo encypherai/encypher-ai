@@ -231,6 +231,23 @@ def get_batch_limit(tier: str) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Batch worker concurrency limits (cross-request, module-level semaphores)
+# ---------------------------------------------------------------------------
+
+BATCH_WORKER_LIMITS: Dict[str, int] = {
+    "free": 2,
+    "enterprise": 8,
+    "strategic_partner": 8,
+    "demo": 2,
+}
+
+
+def get_batch_worker_limit(tier: str) -> int:
+    """Get concurrent worker limit for a tier (used by module-level semaphores)."""
+    return BATCH_WORKER_LIMITS.get(coerce_tier_name(tier), 2)
+
+
+# ---------------------------------------------------------------------------
 # API key limits per tier
 # ---------------------------------------------------------------------------
 

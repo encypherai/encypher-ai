@@ -82,7 +82,7 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
         QuotaType.MERKLE_PLAGIARISM: 0,  # Enterprise only
         QuotaType.FUZZY_INDEX: 0,  # Enterprise only
         QuotaType.FUZZY_SEARCH: 0,  # Enterprise only
-        QuotaType.BATCH_OPERATIONS: 0,  # Enterprise only
+        QuotaType.BATCH_OPERATIONS: -1,  # Unlimited; C2PA_SIGNATURES quota is the real constraint
         QuotaType.API_CALLS: 1000,
     },
     OrganizationTier.ENTERPRISE: {

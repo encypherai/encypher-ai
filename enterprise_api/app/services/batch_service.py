@@ -18,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.core.tier_config import BATCH_WORKER_LIMITS, coerce_tier_name
 from app.database import async_session_factory, content_session_factory, core_session_factory
 from app.models.batch import (
     DEFAULT_RETENTION_DAYS,
@@ -47,6 +48,11 @@ from app.services.verification_logic import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Module-level cross-request semaphores: Free gets 2 workers, Enterprise gets 8.
+# These are never shared between tiers so Enterprise is never blocked by Free traffic.
+_FREE_BATCH_SEMAPHORE: asyncio.Semaphore = asyncio.Semaphore(BATCH_WORKER_LIMITS["free"])
+_ENTERPRISE_BATCH_SEMAPHORE: asyncio.Semaphore = asyncio.Semaphore(BATCH_WORKER_LIMITS["enterprise"])
 
 
 @dataclass
@@ -189,7 +195,8 @@ class BatchService:
         batch_request_any.started_at = started_at_dt
 
         started_at = time.perf_counter()
-        worker_results = await self._run_workers(request=request, organization=organization, request_type=request_type)
+        tier = organization.get("tier", "free")
+        worker_results = await self._run_workers(request=request, organization=organization, request_type=request_type, tier=tier)
         duration_ms = int((time.perf_counter() - started_at) * 1000)
 
         success_count = sum(1 for result in worker_results if result.state == "completed")
@@ -286,8 +293,10 @@ class BatchService:
         request: BatchSignRequest | BatchVerifyRequest,
         organization: Dict[str, Any],
         request_type: BatchRequestType,
+        tier: str = "free",
     ) -> List[WorkerResult]:
-        semaphore = asyncio.Semaphore(self.worker_limit)
+        is_enterprise = coerce_tier_name(tier) in ("enterprise", "strategic_partner")
+        semaphore = _ENTERPRISE_BATCH_SEMAPHORE if is_enterprise else _FREE_BATCH_SEMAPHORE
         tasks = []
         pending_meta = {}
 

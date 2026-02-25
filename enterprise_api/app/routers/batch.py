@@ -29,16 +29,6 @@ async def batch_sign(
 ) -> BatchResponseEnvelope:
     """Sign multiple documents in a single request."""
 
-    if not organization.get("bulk_operations_enabled", False):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Batch operations require Enterprise tier",
-                "upgrade_url": "/billing/upgrade",
-            },
-        )
-
     if len(batch_request.items) < 2:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -114,16 +104,6 @@ async def batch_verify(
     db: AsyncSession = Depends(get_db),
 ) -> BatchResponseEnvelope:
     """Verify multiple documents in a single request."""
-
-    if not organization.get("bulk_operations_enabled", False):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Batch operations require Enterprise tier",
-                "upgrade_url": "/billing/upgrade",
-            },
-        )
 
     if len(batch_request.items) < 2:
         raise HTTPException(

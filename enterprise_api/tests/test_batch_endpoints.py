@@ -32,14 +32,12 @@ async def _fake_batch_response(*, correlation_id: str, **_kwargs) -> dict:
     }
 
 
-# TEAM_166: Batch operations require Enterprise tier (free tier gets 403)
-
 @pytest.mark.asyncio
-async def test_batch_sign_rejected_for_free_tier(
+async def test_batch_sign_allowed_for_free_tier(
     async_client: AsyncClient,
     starter_auth_headers: dict,
 ) -> None:
-    """Free tier (starter key) should be rejected for batch sign."""
+    """Free tier (starter key) should be allowed for batch sign (quota-gated, not feature-gated)."""
     with patch("app.routers.batch.batch_service.sign_batch", new=AsyncMock(side_effect=_fake_batch_response)):
         response = await async_client.post(
             "/api/v1/batch/sign",
@@ -47,7 +45,23 @@ async def test_batch_sign_rejected_for_free_tier(
             headers=starter_auth_headers,
         )
 
-    assert response.status_code == 403
+    assert response.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_batch_sign_rejects_single_item_for_free_tier(
+    async_client: AsyncClient,
+    starter_auth_headers: dict,
+) -> None:
+    """Free tier should still get 400 for single-item batch (min 2 items rule unchanged)."""
+    with patch("app.routers.batch.batch_service.sign_batch", new=AsyncMock(side_effect=_fake_batch_response)):
+        response = await async_client.post(
+            "/api/v1/batch/sign",
+            json=_batch_request(items=1),
+            headers=starter_auth_headers,
+        )
+
+    assert response.status_code == 400
 
 
 @pytest.mark.asyncio
@@ -67,11 +81,11 @@ async def test_batch_sign_rejects_single_item_for_enterprise(
 
 
 @pytest.mark.asyncio
-async def test_batch_verify_rejected_for_free_tier(
+async def test_batch_verify_allowed_for_free_tier(
     async_client: AsyncClient,
     starter_auth_headers: dict,
 ) -> None:
-    """Free tier should be rejected for batch verify."""
+    """Free tier should be allowed for batch verify (quota-gated, not feature-gated)."""
     with patch("app.routers.batch.batch_service.verify_batch", new=AsyncMock(side_effect=_fake_batch_response)):
         response = await async_client.post(
             "/api/v1/batch/verify",
@@ -79,7 +93,7 @@ async def test_batch_verify_rejected_for_free_tier(
             headers=starter_auth_headers,
         )
 
-    assert response.status_code == 403
+    assert response.status_code == 200
 
 
 @pytest.mark.asyncio
