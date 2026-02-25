@@ -29,12 +29,8 @@ def get_circuit_breaker(service_name: str, fail_max: int = 5, timeout_duration: 
     if service_name not in service_breakers:
         service_breakers[service_name] = CircuitBreaker(
             fail_max=fail_max,
-            timeout_duration=timeout_duration,
+            reset_timeout=timeout_duration,
             name=service_name,
-            listeners=[
-                lambda cb, *args: logger.warning("circuit_breaker_opened", service=cb.name, fail_count=cb.fail_counter),
-                lambda cb, *args: logger.info("circuit_breaker_closed", service=cb.name),
-            ],
         )
 
     return service_breakers[service_name]
