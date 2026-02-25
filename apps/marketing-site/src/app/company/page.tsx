@@ -172,7 +172,7 @@ export default function CompanyPage() {
                       <h3 className="text-xl font-semibold">Matt Kaminsky</h3>
                       <p className="text-sm text-muted-foreground mb-2">Head of Publisher Strategy</p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        13+ years creating and leading Business Development and Partnerships for MediaVine, Enthusiast Gaming, and publishers.
+                        13+ years driving large scale growth and strategic partnerships for industry leading sales houses and publishers. Former VP of Business Development at Mediavine, Enthusiast Gaming, and CRO for an online media portfolio.
                       </p>
                       <div className="flex gap-2">
                         <a 

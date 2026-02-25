@@ -112,7 +112,11 @@ function StepBadge({ n, done, active }: { n: number; done: boolean; active: bool
 // Page
 // ---------------------------------------------------------------------------
 
-export default function TryItPage() {
+interface TryItPageProps {
+  embedded?: boolean;
+}
+
+export default function TryItPage({ embedded = false }: TryItPageProps) {
   const [stage, setStage] = useState<Stage>('input');
   const [inputText, setInputText] = useState(SAMPLE_TEXT);
   const [signedText, setSignedText] = useState('');
@@ -199,19 +203,20 @@ export default function TryItPage() {
     : 'just now';
 
   return (
-    <div className="bg-background min-h-screen">
-      {/* Header */}
-      <section className="py-16 border-b border-border bg-muted/30">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
-            See It Work in 30 Seconds
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Sign any text with an invisible C2PA watermark. Copy it anywhere.
-            Verify it came back unchanged. No account required.
-          </p>
-        </div>
-      </section>
+    <div className={embedded ? 'bg-background' : 'bg-background min-h-screen'}>
+      {!embedded && (
+        <section className="py-16 border-b border-border bg-muted/30">
+          <div className="container mx-auto px-4 text-center">
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
+              See It Work in 30 Seconds
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Sign any text with an invisible C2PA watermark. Copy it anywhere.
+              Verify it came back unchanged. No account required.
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* Steps */}
       <section className="py-12">
@@ -600,22 +605,23 @@ export default function TryItPage() {
         </section>
       )}
 
-      {/* Chrome extension CTA */}
-      <section className="border-t border-border py-8 bg-background">
-        <div className="container mx-auto px-4 max-w-2xl">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-lg border border-border bg-muted/30">
-            <div>
-              <p className="font-semibold text-sm">Verify on any webpage</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Install the free Encypher Verify Chrome extension to detect C2PA
-                watermarks automatically as you browse. No account required for
-                verification.
-              </p>
+      {!embedded && (
+        <section className="border-t border-border py-8 bg-background">
+          <div className="container mx-auto px-4 max-w-2xl">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-lg border border-border bg-muted/30">
+              <div>
+                <p className="font-semibold text-sm">Verify on any webpage</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Install the free Encypher Verify Chrome extension to detect C2PA
+                  watermarks automatically as you browse. No account required for
+                  verification.
+                </p>
+              </div>
+              <ChromeInstallButton installLabel="Add to Chrome" />
             </div>
-            <ChromeInstallButton installLabel="Add to Chrome" />
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

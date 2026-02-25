@@ -11,6 +11,7 @@ import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 import { CHROME_STORE_URL } from '@/components/ui/ChromeInstallButton';
+import TryItPage from '@/app/try/page';
 import Script from 'next/script';
 import { organizationSchema } from '@/lib/seo';
 
@@ -286,12 +287,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="text-center mt-10">
-            <Button asChild variant="outline" size="lg">
-              <Link href="/try">
-                Try It Live - 30 Seconds <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+          <div className="mt-12 pt-10 border-t border-border/60">
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+              <TryItPage embedded />
+            </div>
           </div>
         </div>
       </section>
@@ -315,9 +314,9 @@ export default function HomePage() {
       {/* Lock Analogy + Comparison */}
       <section id="differentiation" className="py-20 w-full bg-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Not a Lock on Your Front Door. A Lock on Everything Inside.</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Don't Just Lock Your Front Door. Lock Everything Inside.</h2>
           <p className="text-lg text-center text-muted-foreground mb-12 max-w-3xl mx-auto">
-            Other tools protect your website. Encypher protects your content wherever it goes.
+            Other tools protect access to your page. Encypher protects your content wherever it goes.
           </p>
 
           <div className="overflow-x-auto max-w-5xl mx-auto">
