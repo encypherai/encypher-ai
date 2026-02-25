@@ -57,13 +57,13 @@ function isSessionExpiredError(error: unknown): boolean {
       return true;
     }
     
-    // Generic 401 without specific message - could be either
-    // Be conservative: don't logout unless we're sure it's session expiry
+    // Generic 401 with no message body - backend always includes a description
+    // for tier/permission issues, so a bare 401 most likely means token expiry.
     if (!errorMessage) {
-      return false;
+      return true;
     }
   }
-  
+
   return false;
 }
 
@@ -111,9 +111,10 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <SessionProvider
-      // Refetch session every 5 minutes to detect expired backend tokens
-      refetchInterval={5 * 60}
-      // Refetch when window regains focus (user returns to tab)
+      // Poll session every 4 minutes - triggers JWT callback which handles silent token refresh.
+      // Backend access tokens last 8h; this ensures refresh happens well before expiry.
+      refetchInterval={4 * 60}
+      // Re-validate immediately when the user returns to the tab
       refetchOnWindowFocus={true}
     >
       <QueryClientProvider client={queryClient}>

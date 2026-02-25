@@ -11,7 +11,7 @@ import {
 } from '@encypher/design-system';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient from '../../lib/api';
 import { downloadCsv } from '../../lib/exportCsv';
@@ -69,7 +69,49 @@ function LockIcon() {
 
 // -- Constants --
 
+const CRAWLER_NAME_TO_COMPANY: Record<string, string> = {
+  gptbot: 'OpenAI',
+  'chatgpt-user': 'OpenAI',
+  'oai-searchbot': 'OpenAI',
+  claudebot: 'Anthropic',
+  'claude-web': 'Anthropic',
+  'anthropic-ai': 'Anthropic',
+  'google-extended': 'Google',
+  googlebot: 'Google',
+  perplexitybot: 'Perplexity AI',
+  'meta-externalagent': 'Meta',
+  'meta-externalfetcher': 'Meta',
+  applebot: 'Apple',
+  'applebot-extended': 'Apple',
+  bytespider: 'ByteDance',
+  ccbot: 'Common Crawl',
+};
+
 const CRAWLER_COLORS = ['#2A87C4', '#00A8B5', '#4A9E6B', '#8B6DBF', '#C46A2A', '#C4A62A'];
+
+const COMPANY_COLORS: Record<string, string> = {
+  OpenAI: '#10a37f',
+  Anthropic: '#d97706',
+  Google: '#4285f4',
+  Meta: '#0866ff',
+  'Perplexity AI': '#20b2aa',
+  Bytedance: '#fe2c55',
+  Apple: '#6b7280',
+  Amazon: '#f59e0b',
+  'Common Crawl': '#7c3aed',
+  Microsoft: '#00adef',
+};
+
+// Bot purpose labels keyed by user_agent_category value
+const CATEGORY_LABELS: Record<string, { label: string; desc: string; colorClass: string }> = {
+  training: { label: 'Training Data', desc: 'Building AI datasets from your content', colorClass: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300' },
+  rag: { label: 'RAG / Inference', desc: 'Retrieving context for AI-generated answers', colorClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
+  rag_inference: { label: 'RAG / Inference', desc: 'Retrieving context for AI-generated answers', colorClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' },
+  search_index: { label: 'Search Indexing', desc: 'Building search and answer indices', colorClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  search: { label: 'Search Indexing', desc: 'Building search and answer indices', colorClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' },
+  browser: { label: 'User Browser', desc: 'Standard user agent access', colorClass: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' },
+  unknown: { label: 'Unclassified', desc: 'Purpose not yet identified', colorClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' },
+};
 
 const SOURCE_LABELS: Record<string, string> = {
   rsl_olp_check: 'RSL Lookup',
@@ -198,6 +240,40 @@ export default function AICrawlersPage() {
   // Bot categories
   const byCat = detectionData?.by_category ?? {};
 
+  // Group crawlers by company for company spotlight cards
+  const companySummary = useMemo(() => {
+    const map: Record<string, {
+      total_events: number;
+      crawlers: string[];
+      bypass_count: number;
+      compliance_labels: string[];
+    }> = {};
+    for (const c of sortedCrawlers) {
+      const co = c.company
+        || CRAWLER_NAME_TO_COMPANY[c.crawler_name?.toLowerCase() ?? '']
+        || 'Unknown';
+      if (!map[co]) map[co] = { total_events: 0, crawlers: [], bypass_count: 0, compliance_labels: [] };
+      map[co].total_events += c.total_events;
+      map[co].crawlers.push(c.crawler_name);
+      map[co].bypass_count += c.bypass_count ?? 0;
+      if (c.compliance_label) map[co].compliance_labels.push(c.compliance_label);
+    }
+    const COMPLIANCE_RANK: Record<string, number> = {
+      'Non-compliant': 0, 'Poor': 1, 'Fair': 2, 'Good': 3, 'Excellent': 4,
+    };
+    return Object.entries(map)
+      .map(([company, data]) => ({
+        company,
+        ...data,
+        worst_label: data.compliance_labels.length
+          ? data.compliance_labels.reduce((worst, l) =>
+              (COMPLIANCE_RANK[l] ?? 5) < (COMPLIANCE_RANK[worst] ?? 5) ? l : worst
+            )
+          : null,
+      }))
+      .sort((a, b) => b.total_events - a.total_events);
+  }, [sortedCrawlers]);
+
   // CSV export handler
   const handleExportCsv = () => {
     if (!sortedCrawlers.length) return;
@@ -221,9 +297,9 @@ export default function AICrawlersPage() {
     <DashboardLayout>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Provenance Activity</h1>
+        <h1 className="text-2xl font-bold text-delft-blue dark:text-white">AI Crawler Analytics</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Provenance-checking activity -- entities verifying your content&apos;s authenticity and rights status via the Encypher network.
+          Which AI companies are crawling your content, how often, and whether they are respecting your rights -- plus cryptographic proof of where your content appears after scraping.
         </p>
       </div>
 
@@ -237,15 +313,70 @@ export default function AICrawlersPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">
-              What this shows
+              Two layers of crawler intelligence
             </p>
             <p className="text-sm text-blue-700 dark:text-blue-400">
-              Tracks provenance-checking events (RSL lookups, API verifications, Chrome extension sightings) and passive access logs
-              from your CDN. Connect Cloudflare Logpush in Settings to see all AI bot traffic to your site and detect robots.txt bypass attempts.
+              <strong>Layer 1 -- Crawl detection:</strong> RSL lookups, API verifications, and Cloudflare Logpush identify which AI companies
+              are hitting your site, how often, and whether they checked your rights terms first.{' '}
+              <strong>Layer 2 -- Content spread:</strong> Encypher&apos;s cryptographic watermarks track where your content surfaces after
+              scraping -- AI products, aggregators, and syndication partners -- with court-admissible proof.
             </p>
           </div>
         </div>
       </div>
+
+      {/* AI Company Spotlight */}
+      {(isLoading || companySummary.length > 0) && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+              AI Company Breakdown
+            </h2>
+            <span className="text-xs text-muted-foreground">Last {timeRange} days</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {isLoading
+              ? [1, 2, 3, 4, 5, 6].map((i) => <StatCardSkeleton key={i} />)
+              : companySummary.slice(0, 6).map(({ company, total_events, crawlers, bypass_count, worst_label }) => {
+                  const accentColor = COMPANY_COLORS[company] ?? '#6b7280';
+                  return (
+                    <div
+                      key={company}
+                      className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow"
+                      style={{ borderTopWidth: '3px', borderTopColor: accentColor }}
+                    >
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: accentColor }} />
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">{company}</p>
+                      </div>
+                      <p className="text-xl font-bold text-delft-blue dark:text-white mb-0.5">
+                        {formatNumber(total_events)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mb-2">
+                        {crawlers.length === 1 ? '1 crawler' : `${crawlers.length} crawlers`}
+                      </p>
+                      {bypass_count > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-600 dark:text-red-400">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          {bypass_count} bypass{bypass_count !== 1 ? 'es' : ''}
+                        </span>
+                      )}
+                      {isEnterprise && worst_label ? (
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${getComplianceBadgeClass(worst_label)}`}>
+                          {worst_label}
+                        </span>
+                      ) : !isEnterprise && (
+                        <span className="text-[10px] text-muted-foreground blur-[2px] select-none">Compliance</span>
+                      )}
+                    </div>
+                  );
+                })
+            }
+          </div>
+        </div>
+      )}
 
       {/* Time Range + Export */}
       <div className="flex items-center justify-between mb-6">
@@ -511,6 +642,64 @@ export default function AICrawlersPage() {
         </Card>
       </div>
 
+      {/* Encypher Differentiator: Beyond Crawl Detection */}
+      <div className="grid lg:grid-cols-2 gap-6 mb-8">
+        {/* Content Spread CTA */}
+        <div className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/20 dark:border-blue-900/40 p-5">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-8 h-8 bg-blue-ncs/15 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-1">
+                Encypher goes where TollBit can&apos;t
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-400 leading-relaxed">
+                Cloudflare logs show who scraped your site. Encypher&apos;s cryptographic watermarks show{' '}
+                <span className="font-semibold">where your content appeared after</span> -- AI answers, paywalled
+                summaries, syndicated articles, and third-party aggregators -- with cryptographic proof admissible in
+                licensing negotiations.
+              </p>
+            </div>
+          </div>
+          <a href="/analytics" className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-ncs hover:underline">
+            View Content Spread Analytics
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+
+        {/* Scrape-to-Referral Ratio */}
+        <div className="rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 dark:border-amber-900/40 p-5">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-8 h-8 bg-amber-500/15 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200 mb-1">
+                Scrape-to-Referral Ratio
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+                Are AI companies scraping your content and sending traffic back? Connect your analytics to see the ratio
+                of AI crawl events to human referrals from AI products -- the key metric for licensing negotiations.
+                Industry benchmarks show ratios of 10,000:1 or worse.
+              </p>
+            </div>
+          </div>
+          <a href="/settings?tab=integrations" className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400 hover:underline">
+            Connect Analytics Integration
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+      </div>
+
       {/* Full-width Crawler Detail Table */}
       <Card className="mb-8">
         <CardHeader>
@@ -639,8 +828,8 @@ export default function AICrawlersPage() {
         {/* Bot Categories */}
         <Card>
           <CardHeader>
-            <CardTitle>Bot Categories</CardTitle>
-            <CardDescription>Crawler types by category</CardDescription>
+            <CardTitle>Bot Purpose Breakdown</CardTitle>
+            <CardDescription>What are AI crawlers doing with your content?</CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -650,17 +839,31 @@ export default function AICrawlersPage() {
                 No category data available
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3">
                 {Object.entries(byCat)
                   .sort(([, a], [, b]) => b - a)
-                  .map(([category, count]) => (
-                    <div key={category} className="rounded-lg border border-border bg-muted/30 p-3">
-                      <p className="text-xs text-muted-foreground capitalize">{category.replace(/_/g, ' ')}</p>
-                      <p className="text-lg font-semibold text-delft-blue dark:text-white">
-                        {formatNumber(count)}
-                      </p>
-                    </div>
-                  ))}
+                  .map(([category, count]) => {
+                    const meta = CATEGORY_LABELS[category] ?? {
+                      label: category.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+                      desc: '',
+                      colorClass: 'bg-slate-100 text-slate-700',
+                    };
+                    return (
+                      <div key={category} className="flex items-start justify-between gap-3 py-2 border-b border-border last:border-0">
+                        <div className="min-w-0">
+                          <span className={`inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded-full mb-1 ${meta.colorClass}`}>
+                            {meta.label}
+                          </span>
+                          {meta.desc && (
+                            <p className="text-[11px] text-muted-foreground">{meta.desc}</p>
+                          )}
+                        </div>
+                        <p className="text-lg font-bold text-delft-blue dark:text-white flex-shrink-0">
+                          {formatNumber(count)}
+                        </p>
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </CardContent>

@@ -568,6 +568,69 @@ async def get_usage_stats(
 # =========================================================================
 
 
+def _query_content_coalition_earnings(org_id: str) -> Optional[dict]:
+    """
+    Direct fallback query of encypher_content.coalition_earnings when the
+    coalition-service is unreachable or auth fails.
+    Returns a coalition summary dict or None on error.
+    """
+    try:
+        from sqlalchemy import create_engine, text as sa_text
+        # Derive encypher_content URL from the billing DB URL by swapping the DB name
+        content_url = settings.DATABASE_URL.replace("/encypher_billing", "/encypher_content")
+        if "/encypher_billing" not in settings.DATABASE_URL:
+            # URL doesn't follow expected pattern; try to find the right content DB
+            import re
+            content_url = re.sub(r"/[^/]+$", "/encypher_content", settings.DATABASE_URL)
+        engine = create_engine(content_url, pool_size=1, max_overflow=0)
+        with engine.connect() as conn:
+            rows = conn.execute(sa_text("""
+                SELECT
+                    ai_company,
+                    period_start,
+                    period_end,
+                    publisher_earnings_cents,
+                    status
+                FROM coalition_earnings
+                WHERE organization_id = :org_id
+                ORDER BY period_start DESC
+                LIMIT 50
+            """), {"org_id": org_id}).fetchall()
+
+            if not rows:
+                return None
+
+            total_cents = sum(r.publisher_earnings_cents for r in rows)
+            pending_cents = sum(r.publisher_earnings_cents for r in rows if r.status in ("pending", "confirmed"))
+            paid_rows = [r for r in rows if r.status == "paid"]
+            last_payout = paid_rows[0].period_end.isoformat() if paid_rows else None
+
+            history = [
+                {
+                    "period": r.period_start.isoformat(),
+                    "ai_company": r.ai_company,
+                    "amount": r.publisher_earnings_cents / 100.0,
+                    "status": r.status,
+                }
+                for r in rows[:12]
+            ]
+
+            return {
+                "member": True,
+                "opted_out": False,
+                "total_content": 0,
+                "total_earnings": total_cents / 100.0,
+                "pending_earnings": pending_cents / 100.0,
+                "last_payout_date": last_payout,
+                "earnings_history": history,
+                "payout_account_connected": False,
+                "payout_account_url": None,
+            }
+    except Exception as exc:
+        logger.warning("content_coalition_fallback_failed error=%s", exc)
+        return None
+
+
 @router.get("/coalition")
 async def get_coalition_earnings(
     authorization: str = Header(...),
@@ -630,6 +693,15 @@ async def get_coalition_earnings(
             "payout_account_url": revenue_data.get("payout_account_url"),
         }
     else:
+        # Coalition-service unreachable or auth failed.
+        # Fall back to direct query of encypher_content.coalition_earnings.
+        org_id = current_user.get("organization_id") or current_user.get("default_organization_id")
+        content_earnings = _query_content_coalition_earnings(org_id) if org_id else None
+        if content_earnings:
+            return content_earnings | {
+                "publisher_share_percent": rev_share["publisher"],
+                "encypher_share_percent": rev_share["encypher"],
+            }
         return {
             "member": True,
             "opted_out": False,

@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ReactNode, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { OrganizationSwitcher } from '../OrganizationSwitcher';
@@ -189,7 +189,7 @@ const navGroups: NavGroup[] = [
     label: 'Insights',
     items: [
       { href: '/analytics', label: 'Content Performance', icon: IconAnalytics },
-      { href: '/ai-crawlers', label: 'Provenance Activity', icon: IconAICrawlers },
+      { href: '/ai-crawlers', label: 'AI Crawlers', icon: IconAICrawlers },
       { href: '/docs', label: 'Docs', icon: IconDocs },
     ],
   },
@@ -211,10 +211,12 @@ const navGroups: NavGroup[] = [
 ];
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const userTier = (session?.user as any)?.tier || 'free';
+  const sessionError = (session?.user as any)?.error as string | undefined;
   const isEnterprise = userTier === 'enterprise';
   const userName = session?.user?.name || session?.user?.email || 'User';
   const userInitial = userName.charAt(0).toUpperCase();
@@ -234,6 +236,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   });
 
   const isAdmin = isSuperAdmin === true;
+
+  // Session guard: redirect unauthenticated users and force-logout on refresh failure
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login?callbackUrl=' + encodeURIComponent(pathname));
+      return;
+    }
+    if (sessionError === 'RefreshAccessTokenError') {
+      signOut({ callbackUrl: '/login?reason=session_expired' });
+    }
+  }, [status, sessionError, router, pathname]);
 
   // TEAM_191: Check if mandatory setup wizard is complete
   const { data: setupStatus, isLoading: setupLoading } = useQuery({

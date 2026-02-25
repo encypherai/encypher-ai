@@ -7,6 +7,35 @@ import GitHubProvider from 'next-auth/providers/github';
 const API_BASE =
   (process.env.API_BASE_INTERNAL || process.env.API_BASE || process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
 
+// Backend access token lifetime (8 hours), refresh 5 min before expiry
+const ACCESS_TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
+const REFRESH_BUFFER_MS = 5 * 60 * 1000;
+
+async function refreshBackendToken(refreshToken: string): Promise<{ accessToken: string; accessTokenExpires: number } | null> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    if (!res.ok) {
+      console.warn('[NextAuth] Token refresh failed:', res.status);
+      return null;
+    }
+    const data = await res.json();
+    if (data.success && data.data?.access_token) {
+      return {
+        accessToken: data.data.access_token,
+        accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
+      };
+    }
+    return null;
+  } catch (err) {
+    console.error('[NextAuth] Token refresh error:', err);
+    return null;
+  }
+}
+
 const handler = NextAuth({
   providers: [
     // Email/Password Authentication
@@ -85,6 +114,8 @@ const handler = NextAuth({
                 email: user.email,
                 name: user.name,
                 accessToken: mfaData.data.access_token,
+                refreshToken: mfaData.data.refresh_token,
+                accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
                 role: user.role ?? user.account_type ?? user.permission ?? 'member',
                 tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
               } as any;
@@ -145,6 +176,8 @@ const handler = NextAuth({
               email: user.email,
               name: user.name,
               accessToken: data.data.access_token,
+              refreshToken: data.data.refresh_token,
+              accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
               role: user.role ?? user.account_type ?? user.permission ?? 'member',
               tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
             } as any;
@@ -196,10 +229,14 @@ const handler = NextAuth({
         // @ts-expect-error - extending user type
         if (user.accessToken) token.accessToken = user.accessToken as string;
         // @ts-expect-error - extending user type
+        if (user.refreshToken) token.refreshToken = user.refreshToken as string;
+        // @ts-expect-error - extending user type
+        if (user.accessTokenExpires) token.accessTokenExpires = user.accessTokenExpires as number;
+        // @ts-expect-error - extending user type
         if (user.role) token.role = user.role as string;
         // @ts-expect-error - extending user type
         if (user.tier) token.tier = user.tier as string;
-        
+
         // For OAuth logins, exchange provider tokens for internal access token
         if (account && (account.provider === 'google' || account.provider === 'github')) {
           try {
@@ -213,11 +250,14 @@ const handler = NextAuth({
                 access_token: account.access_token,
               }),
             });
-            
+
             if (exchangeRes.ok) {
               const exchangeData = await exchangeRes.json();
               if (exchangeData.success && exchangeData.data?.access_token) {
                 token.accessToken = exchangeData.data.access_token;
+                // OAuth tokens don't come with a refresh token from our backend yet
+                // Set expiry based on standard access token lifetime
+                token.accessTokenExpires = Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS;
                 console.log('[NextAuth] OAuth token exchange successful');
               }
             } else {
@@ -227,7 +267,34 @@ const handler = NextAuth({
             console.error('[NextAuth] OAuth token exchange error:', error);
           }
         }
+        return token;
       }
+
+      // Access token still valid - return as-is
+      if (token.accessTokenExpires && Date.now() < (token.accessTokenExpires as number)) {
+        return token;
+      }
+
+      // Access token expired (or no expiry recorded for legacy sessions) - attempt silent refresh
+      if (token.refreshToken) {
+        console.log('[NextAuth] Access token expired, attempting silent refresh');
+        const refreshed = await refreshBackendToken(token.refreshToken as string);
+        if (refreshed) {
+          console.log('[NextAuth] Silent token refresh successful');
+          return {
+            ...token,
+            accessToken: refreshed.accessToken,
+            accessTokenExpires: refreshed.accessTokenExpires,
+            error: undefined,
+          };
+        }
+        console.warn('[NextAuth] Silent token refresh failed - marking session for logout');
+        return { ...token, error: 'RefreshAccessTokenError' };
+      }
+
+      // No refresh token available (OAuth logins, legacy sessions without refresh token)
+      // The access token may still be valid on the backend (8h TTL) even without recorded expiry.
+      // Return as-is so existing sessions keep working without disruption.
       return token;
     },
     async session({ session, token }) {
@@ -238,15 +305,19 @@ const handler = NextAuth({
         (session.user as Record<string, unknown>).accessToken = token.accessToken as string | undefined;
         (session.user as Record<string, unknown>).role = token.role as string | undefined;
         (session.user as Record<string, unknown>).tier = token.tier as string | undefined;
+        // propagate any token error (e.g. 'RefreshAccessTokenError') so the client can react
+        (session.user as Record<string, unknown>).error = token.error as string | undefined;
       }
       return session;
     },
   },
   session: {
     strategy: 'jwt',
-    // Match backend JWT expiration (1 hour) - industry standard for B2B SaaS
-    // This ensures NextAuth session expires around the same time as backend token
-    maxAge: 60 * 60, // 1 hour in seconds
+    // 30-day session lifetime matches refresh token lifetime.
+    // The backend access token (8h) is silently refreshed by the JWT callback,
+    // so users stay logged in as long as they're active within the refresh token window.
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60,   // Roll the session cookie once per day of activity
   },
   cookies: {
     sessionToken: {

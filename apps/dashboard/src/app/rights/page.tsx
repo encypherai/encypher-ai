@@ -545,10 +545,10 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
   const [evidenceNoticeId, setEvidenceNoticeId] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [form, setForm] = useState({
-    recipient_entity: '',
-    recipient_contact: '',
+    recipient_entity: 'OpenAI',
+    recipient_contact: 'legal@openai.com',
     violation_type: 'unauthorized_training',
-    notice_text: '',
+    notice_text: "OpenAI's GPTBot has been systematically crawling The Encypher Times content without acknowledging our Rights Signal Layer terms. Cryptographic watermarks confirm ingestion of 47 articles between October and December 2025. This constitutes unauthorized training data collection in violation of our published licensing requirements. Continued use beyond the date of this notice constitutes willful copyright infringement under 17 U.S.C. § 504(c)(2).",
   });
 
   const evidenceQuery = useQuery({
@@ -569,7 +569,7 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
       toast.success('Formal notice created.');
       queryClient.invalidateQueries({ queryKey: ['rights-notices'] });
       setShowCreate(false);
-      setForm({ recipient_entity: '', recipient_contact: '', violation_type: 'unauthorized_training', notice_text: '' });
+      setForm({ recipient_entity: 'OpenAI', recipient_contact: 'legal@openai.com', violation_type: 'unauthorized_training', notice_text: "OpenAI's GPTBot has been systematically crawling The Encypher Times content without acknowledging our Rights Signal Layer terms. Cryptographic watermarks confirm ingestion of 47 articles between October and December 2025. This constitutes unauthorized training data collection in violation of our published licensing requirements. Continued use beyond the date of this notice constitutes willful copyright infringement under 17 U.S.C. § 504(c)(2)." });
     },
     onError: () => toast.error('Failed to create notice.'),
   });
@@ -753,7 +753,7 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
               <div className="space-y-4">
                 <div className="font-mono text-xs bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
                   <p className="text-slate-500 mb-1">Notice hash (SHA-256)</p>
-                  <p className="text-slate-700 dark:text-slate-300 break-all">{evidenceQuery.data.notice_hash}</p>
+                  <p className="text-slate-700 dark:text-slate-300 break-all">{evidenceQuery.data.notice?.notice_hash}</p>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-slate-500 mb-2">Evidence chain ({evidenceQuery.data.evidence_chain?.length ?? 0} events)</p>
@@ -765,8 +765,8 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-slate-700 dark:text-slate-300 font-medium">{event.event_type}</p>
-                          <p className="text-slate-400">{formatDate(event.timestamp)}</p>
-                          <p className="font-mono text-slate-400 truncate">{event.hash}</p>
+                          <p className="text-slate-400">{formatDate(event.created_at)}</p>
+                          <p className="font-mono text-slate-400 truncate">{event.event_hash}</p>
                         </div>
                       </div>
                     ))}
@@ -990,8 +990,8 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
                 <tbody>
                   {agreements.map((agr: LicensingAgreement) => (
                     <tr key={agr.id} className="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                      <td className="py-2.5 px-3 font-mono text-xs text-slate-600 dark:text-slate-400 max-w-[120px] truncate">
-                        {agr.licensee_org_id?.slice(0, 12)}…
+                      <td className="py-2.5 px-3 text-xs text-slate-600 dark:text-slate-400">
+                        {agr.licensee_name || agr.licensee_org_id}
                       </td>
                       <td className="py-2.5 px-3">
                         {agr.tier && (

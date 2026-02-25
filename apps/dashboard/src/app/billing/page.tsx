@@ -399,6 +399,28 @@ function BillingPageContent() {
           </CardContent>
         </Card>
 
+        {/* Bulk Archive Backfill callout — shown when no documents have been signed yet */}
+        {!isLoading && (usage?.metrics?.['documents_signed']?.used ?? 0) === 0 && (
+          <div className="rounded-xl border border-blue-ncs/40 bg-blue-ncs/5 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="font-semibold text-sm text-delft-blue dark:text-white">
+                  You have 0 signed documents.
+                </p>
+                <p className="text-sm text-muted-foreground mt-0.5">
+                  Sign your existing archive at $0.01/doc -- one batch operation covers years of content.
+                </p>
+              </div>
+              <a
+                href="#addons-bundles"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-ncs text-white text-sm font-medium rounded-lg hover:bg-blue-ncs/90 transition-colors whitespace-nowrap flex-shrink-0"
+              >
+                Learn More
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* Add-Ons & Bundles Section */}
         <section id="addons-bundles" className="space-y-4 scroll-mt-8">
           <div>

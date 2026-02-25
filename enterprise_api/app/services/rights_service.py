@@ -1037,9 +1037,10 @@ class RightsService:
         """
         cutoff = _utcnow() - timedelta(days=days)
 
-        # Query 1 -- aggregate detection events grouped by category
+        # Query 1 -- aggregate detection events grouped by individual user agent string
         crawler_result = await db.execute(
             select(
+                ContentDetectionEvent.requester_user_agent,
                 ContentDetectionEvent.user_agent_category,
                 func.count(ContentDetectionEvent.id).label("total_cnt"),
                 func.count(ContentDetectionEvent.id).filter(
@@ -1060,14 +1061,26 @@ class RightsService:
                     ContentDetectionEvent.user_agent_category.notin_(["human_browser", "unknown"]),
                 )
             )
-            .group_by(ContentDetectionEvent.user_agent_category)
+            .group_by(
+                ContentDetectionEvent.requester_user_agent,
+                ContentDetectionEvent.user_agent_category,
+            )
         )
         crawler_rows = crawler_result.all()
 
-        # Query 2 -- build lookup dict from KnownCrawler registry
+        # Query 2 -- fetch all known crawlers for pattern matching
         known_result = await db.execute(select(KnownCrawler))
         known_list = known_result.scalars().all()
-        kc_by_type: dict[str, Any] = {c.crawler_type: c for c in known_list}
+
+        def _match_known_crawler(user_agent: str | None) -> Any:
+            """Case-insensitive substring match: known pattern in user_agent string."""
+            if not user_agent:
+                return None
+            ua_lower = user_agent.lower()
+            for kc in known_list:
+                if kc.user_agent_pattern and kc.user_agent_pattern.lower() in ua_lower:
+                    return kc
+            return None
 
         crawlers = []
         total_crawler_events = 0
@@ -1092,9 +1105,9 @@ class RightsService:
             else:
                 compliance_label = "Non-compliant"
 
-            kc = kc_by_type.get(row.user_agent_category)
+            kc = _match_known_crawler(row.requester_user_agent)
             crawlers.append({
-                "crawler_name": kc.crawler_name if kc else row.user_agent_category,
+                "crawler_name": kc.crawler_name if kc else (row.requester_user_agent or row.user_agent_category),
                 "user_agent_category": row.user_agent_category,
                 "company": kc.operator_org if kc else None,
                 "user_agent_pattern": kc.user_agent_pattern if kc else None,
