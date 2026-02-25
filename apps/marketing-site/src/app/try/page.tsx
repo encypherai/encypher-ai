@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ChromeInstallButton } from '@/components/ui/ChromeInstallButton';
 import {
   ArrowRight,
   CheckCircle2,
@@ -598,6 +599,23 @@ export default function TryItPage() {
           </div>
         </section>
       )}
+
+      {/* Chrome extension CTA */}
+      <section className="border-t border-border py-8 bg-background">
+        <div className="container mx-auto px-4 max-w-2xl">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-lg border border-border bg-muted/30">
+            <div>
+              <p className="font-semibold text-sm">Verify on any webpage</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Install the free Encypher Verify Chrome extension to detect C2PA
+                watermarks automatically as you browse. No account required for
+                verification.
+              </p>
+            </div>
+            <ChromeInstallButton installLabel="Add to Chrome" />
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

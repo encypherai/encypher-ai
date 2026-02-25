@@ -9,7 +9,7 @@ type ViewState = 'overview' | 'setup';
 export function ChromeExtensionCard() {
   const [viewState, setViewState] = useState<ViewState>('overview');
 
-  const chromeStoreUrl = 'https://chromewebstore.google.com/detail/encypher-c2pa-verifier/EXTENSION_ID_HERE';
+  const chromeStoreUrl = 'https://chromewebstore.google.com/detail/encypher-verify/pbmfpddbafkhdjemgcnegddmniflbjla';
   const dashboardApiKeysUrl = '/api-keys';
 
   if (viewState === 'setup') {
@@ -176,8 +176,8 @@ export function ChromeExtensionCard() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <CardTitle className="text-lg">Chrome Extension</CardTitle>
-              <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full">
-                Available
+              <span className="px-2 py-0.5 text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
+                Live on Chrome Web Store
               </span>
             </div>
             <CardDescription className="mt-1">

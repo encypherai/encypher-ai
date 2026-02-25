@@ -34,4 +34,9 @@ export const toolLinks: ToolLink[] = [
     description: "C2PA content authentication for WordPress. Protect your posts with cryptographic proof of authorship.",
     href: "/tools/wordpress",
   },
+  {
+    name: "Chrome Extension",
+    description: "Verify C2PA provenance on any webpage. Free, no account required. Signing requires an Encypher account.",
+    href: "/tools/chrome-extension",
+  },
 ];
