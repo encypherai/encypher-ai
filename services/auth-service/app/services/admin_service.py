@@ -7,7 +7,9 @@ import httpx
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.db.models import Organization, User
+from app.utils.resilience import call_service_with_breaker
 
 # Analytics service URL (internal service-to-service communication)
 ANALYTICS_SERVICE_URL = "http://analytics-service:8003"
@@ -325,3 +327,37 @@ class AdminService:
             "updated_at": membership.updated_at.isoformat() if membership.updated_at else None,
             "admin_id": admin_id,
         }
+
+    @staticmethod
+    async def get_newsletter_subscribers(
+        page: int = 1,
+        page_size: int = 50,
+        active_only: bool = False,
+    ) -> Dict[str, Any]:
+        """Fetch newsletter subscriber rows from web-service internal endpoint."""
+        params = {
+            "page": page,
+            "page_size": page_size,
+            "active_only": str(active_only).lower(),
+        }
+        headers = {}
+        if settings.INTERNAL_SERVICE_TOKEN:
+            headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
+
+        url = f"{settings.WEB_SERVICE_URL}/api/v1/newsletter/subscribers"
+
+        try:
+            response = await call_service_with_breaker(
+                service_name="web-service",
+                url=url,
+                method="GET",
+                params=params,
+                headers=headers,
+                timeout=15.0,
+            )
+            body = response.json()
+            if isinstance(body, dict) and "data" in body:
+                return body["data"]
+            return body
+        except httpx.HTTPError as exc:
+            raise RuntimeError("Failed to fetch newsletter subscribers") from exc

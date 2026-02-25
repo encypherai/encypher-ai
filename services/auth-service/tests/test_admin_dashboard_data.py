@@ -1,6 +1,6 @@
 """Tests for auth-service admin dashboard data endpoints."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import FastAPI, status
@@ -106,6 +106,50 @@ class TestAdminOrganizationSearch:
         payload = response.json()
         assert payload["success"] is True
         assert payload["data"][0]["id"] == "org_1"
+
+
+class TestAdminNewsletterSubscribers:
+    def test_admin_newsletter_subscribers_requires_super_admin(self, client):
+        with (
+            patch("app.api.v1.endpoints.AuthService.verify_access_token", return_value={"sub": "user_1"}),
+            patch("app.api.v1.endpoints.verify_super_admin", return_value=False),
+        ):
+            response = client.get(
+                "/api/v1/auth/admin/newsletter-subscribers",
+                headers={"Authorization": "Bearer test-token"},
+            )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_admin_newsletter_subscribers_success(self, client):
+        payload = {
+            "subscribers": [
+                {
+                    "id": 1,
+                    "email": "subscriber@example.com",
+                    "active": True,
+                    "source": "blog",
+                    "subscribed_at": "2026-02-24T00:00:00",
+                }
+            ],
+            "total": 1,
+            "page": 1,
+            "page_size": 50,
+            "total_pages": 1,
+        }
+        with (
+            patch("app.api.v1.endpoints.AuthService.verify_access_token", return_value={"sub": "user_admin"}),
+            patch("app.api.v1.endpoints.verify_super_admin", return_value=True),
+            patch("app.api.v1.endpoints.AdminService.get_newsletter_subscribers", new=AsyncMock(return_value=payload)),
+        ):
+            response = client.get(
+                "/api/v1/auth/admin/newsletter-subscribers",
+                headers={"Authorization": "Bearer test-token"},
+            )
+        assert response.status_code == status.HTTP_200_OK
+        body = response.json()
+        assert body["success"] is True
+        assert body["data"]["total"] == 1
+        assert body["data"]["subscribers"][0]["email"] == "subscriber@example.com"
 
 
 class TestAdminTierUpdates:

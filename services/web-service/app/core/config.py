@@ -76,6 +76,7 @@ class Settings(BaseSettings):
     # Newsletter
     NEWSLETTER_BROADCAST_SECRET: str = ""  # noqa: S105
     SITE_URL: str = "https://encypherai.com"
+    INTERNAL_SERVICE_TOKEN: str = ""  # noqa: S105
 
     # Web Analytics
     ANALYTICS_ENABLED: bool = True

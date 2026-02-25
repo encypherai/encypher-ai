@@ -201,3 +201,33 @@ def test_tools_decode_is_deprecated(client: TestClient):
     )
     assert response.status_code == 410
     assert response.json()["detail"] == "Deprecated endpoint. Use /api/v1/verify instead."
+
+
+def test_newsletter_subscribers_internal_requires_token(client: TestClient, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("app.api.v1.endpoints.newsletter.settings.INTERNAL_SERVICE_TOKEN", "internal-secret")
+
+    response = client.get("/api/v1/newsletter/subscribers")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Unauthorized"
+
+
+def test_newsletter_subscribers_internal_returns_rows(client: TestClient, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("app.api.v1.endpoints.newsletter.settings.INTERNAL_SERVICE_TOKEN", "internal-secret")
+
+    subscribe_response = client.post(
+        "/api/v1/newsletter/subscribe",
+        json={"email": "subscriber@example.com", "source": "blog"},
+    )
+    assert subscribe_response.status_code == 200
+
+    response = client.get(
+        "/api/v1/newsletter/subscribers",
+        headers={"X-Internal-Token": "internal-secret"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["total"] >= 1
+    assert payload["data"]["subscribers"][0]["email"] == "subscriber@example.com"

@@ -1219,6 +1219,56 @@ async def list_admin_users(
     }
 
 
+@router.get("/admin/newsletter-subscribers", response_model=None)
+async def list_newsletter_subscribers(
+    authorization: str = Header(...),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    active_only: bool = Query(False),
+    db: Session = Depends(get_db),
+):
+    """List newsletter subscribers for the admin dashboard (super admin only)."""
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    require_super_admin(db, admin_user_id)
+
+    try:
+        result = await AdminService.get_newsletter_subscribers(
+            page=page,
+            page_size=page_size,
+            active_only=active_only,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Newsletter service unavailable",
+        ) from exc
+
+    return {
+        "success": True,
+        "data": result,
+        "error": None,
+    }
+
+
 @router.get("/admin/organizations/search", response_model=None)
 async def search_admin_organizations(
     authorization: str = Header(...),

@@ -120,6 +120,7 @@ class Settings(BaseSettings):
     COALITION_SERVICE_URL: str = "http://localhost:8009"
     NOTIFICATION_SERVICE_URL: str = "http://localhost:8008"
     BILLING_SERVICE_URL: str = "http://localhost:8007"
+    WEB_SERVICE_URL: str = "http://localhost:8002"
     INTERNAL_SERVICE_TOKEN: str = ""
 
     model_config = SettingsConfigDict(

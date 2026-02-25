@@ -1,7 +1,9 @@
 import logging
 import secrets
+from math import ceil
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi import Header, Query
 from sqlalchemy.orm import Session
 
 from app.api import deps
@@ -17,6 +19,13 @@ from app.services.email import send_newsletter_broadcast, send_newsletter_welcom
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _require_internal_token(internal_token: str | None) -> None:
+    if not settings.INTERNAL_SERVICE_TOKEN:
+        return
+    if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
 
 @router.post("/subscribe")
@@ -90,3 +99,50 @@ def broadcast(
         )
 
     return {"success": True, "recipient_count": len(subscribers)}
+
+
+@router.get("/subscribers")
+def list_subscribers(
+    *,
+    db: Session = Depends(deps.get_db),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+    active_only: bool = Query(False),
+    internal_token: str | None = Header(None, alias="X-Internal-Token"),
+):
+    """Internal-only listing endpoint for newsletter subscribers."""
+    _require_internal_token(internal_token)
+
+    query = db.query(NewsletterSubscriber)
+    if active_only:
+        query = query.filter(NewsletterSubscriber.active.is_(True))
+
+    total = query.count()
+    offset = (page - 1) * page_size
+    rows = (
+        query.order_by(NewsletterSubscriber.subscribed_at.desc())
+        .offset(offset)
+        .limit(page_size)
+        .all()
+    )
+
+    return {
+        "success": True,
+        "data": {
+            "subscribers": [
+                {
+                    "id": subscriber.id,
+                    "email": subscriber.email,
+                    "active": subscriber.active,
+                    "source": subscriber.source,
+                    "subscribed_at": subscriber.subscribed_at.isoformat() if subscriber.subscribed_at else None,
+                }
+                for subscriber in rows
+            ],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": ceil(total / page_size) if total else 0,
+        },
+        "error": None,
+    }

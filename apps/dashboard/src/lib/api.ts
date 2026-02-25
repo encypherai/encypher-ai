@@ -295,6 +295,22 @@ interface PendingAccessRequest {
   requested_at: string;
 }
 
+interface AdminNewsletterSubscriber {
+  id: number;
+  email: string;
+  active: boolean;
+  source?: string | null;
+  subscribed_at?: string | null;
+}
+
+interface AdminNewsletterSubscribersResponse {
+  subscribers: AdminNewsletterSubscriber[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
 // TEAM_191: Onboarding Checklist types
 interface OnboardingStep {
   step_id: string;
@@ -677,6 +693,32 @@ const apiClient = {
   async getApiAccessStatus(accessToken: string): Promise<ApiAccessStatusResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: ApiAccessStatusResponse }>(
       `${AUTH_SERVICE_URL}/auth/api-access-status`,
+      accessToken
+    );
+    return response.data;
+  },
+
+  /**
+   * List newsletter subscribers (super admin only)
+   */
+  async getAdminNewsletterSubscribers(
+    accessToken: string,
+    options?: {
+      page?: number;
+      pageSize?: number;
+      activeOnly?: boolean;
+    }
+  ): Promise<AdminNewsletterSubscribersResponse> {
+    const params = new URLSearchParams();
+    if (options?.page) params.append('page', options.page.toString());
+    if (options?.pageSize) params.append('page_size', options.pageSize.toString());
+    if (options?.activeOnly) params.append('active_only', 'true');
+
+    const queryString = params.toString();
+    const url = `${AUTH_SERVICE_URL}/auth/admin/newsletter-subscribers${queryString ? `?${queryString}` : ''}`;
+
+    const response = await fetchWithAuth<{ success: boolean; data: AdminNewsletterSubscribersResponse }>(
+      url,
       accessToken
     );
     return response.data;
@@ -1970,17 +2012,27 @@ interface RightsProfileVersion {
 }
 
 interface EvidencePackage {
-  notice_id: string;
-  notice_hash: string;
+  notice: {
+    id: string;
+    notice_hash: string;
+    notice_text?: string | null;
+    target_entity_name?: string | null;
+    status: string;
+    delivered_at?: string | null;
+    [key: string]: unknown;
+  };
   evidence_chain: Array<{
+    id: string;
     event_type: string;
-    timestamp: string;
-    hash: string;
+    event_hash: string;
     previous_hash: string | null;
-    metadata: Record<string, unknown>;
+    created_at: string;
+    event_data?: Record<string, unknown> | null;
+    hash_verified?: boolean;
   }>;
-  delivery_receipt?: Record<string, unknown> | null;
-  created_at: string;
+  chain_integrity_verified: boolean;
+  package_hash: string;
+  generated_at: string;
 }
 
 interface LicensingAgreement {
@@ -2062,6 +2114,8 @@ export type {
   ApiAccessStatusResponse,
   ApiAccessRequestResponse,
   PendingAccessRequest,
+  AdminNewsletterSubscriber,
+  AdminNewsletterSubscribersResponse,
   // TEAM_044: C2PA Templates
   C2PATemplate,
   C2PATemplateListResponse,

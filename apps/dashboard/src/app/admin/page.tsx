@@ -6,7 +6,11 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState, type ChangeEvent } from 'react';
 import { toast } from 'sonner';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import apiClient, { PendingAccessRequest, ApiAccessStatusType } from '../../lib/api';
+import apiClient, {
+  PendingAccessRequest,
+  ApiAccessStatusType,
+  AdminNewsletterSubscriber,
+} from '../../lib/api';
 import UserActivityModal from '../../components/UserActivityModal';
 
 // Stat card component matching dashboard design
@@ -124,6 +128,10 @@ export default function AdminPage() {
   const [inviteRole, setInviteRole] = useState('member');
   const [inviteTier, setInviteTier] = useState('');
   const [inviteTrialMonths, setInviteTrialMonths] = useState('');
+  const [adminView, setAdminView] = useState<'overview' | 'newsletter'>('overview');
+  const [newsletterPage, setNewsletterPage] = useState(1);
+  const [newsletterPageSize, setNewsletterPageSize] = useState(25);
+  const [newsletterActiveOnly, setNewsletterActiveOnly] = useState(false);
 
   // TEAM_006: Check if user is super admin via API
   const superAdminQuery = useQuery({
@@ -143,6 +151,19 @@ export default function AdminPage() {
       if (!accessToken) throw new Error('You must be signed in.');
       const response = await apiClient.getAdminStats(accessToken);
       return normalizeAdminStats(response);
+    },
+    enabled: Boolean(accessToken) && isSuperAdmin,
+  });
+
+  const newsletterQuery = useQuery({
+    queryKey: ['admin-newsletter-subscribers', newsletterPage, newsletterPageSize, newsletterActiveOnly],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.getAdminNewsletterSubscribers(accessToken, {
+        page: newsletterPage,
+        pageSize: newsletterPageSize,
+        activeOnly: newsletterActiveOnly,
+      });
     },
     enabled: Boolean(accessToken) && isSuperAdmin,
   });
@@ -398,6 +419,8 @@ export default function AdminPage() {
   const stats = statsQuery.data;
   const pendingCount = pendingRequestsQuery.data?.length ?? 0;
   const realUsageCounts = usageCountsQuery.data ?? {};
+  const newsletterData = newsletterQuery.data;
+  const newsletterRows = newsletterData?.subscribers ?? [];
 
   const handleSendInvite = () => {
     if (!inviteEmail) {
@@ -506,6 +529,31 @@ export default function AdminPage() {
           </div>
         </div>
 
+        <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 p-1 bg-white dark:bg-slate-800 w-fit">
+          <button
+            onClick={() => setAdminView('overview')}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              adminView === 'overview'
+                ? 'bg-blue-ncs text-white'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+            }`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setAdminView('newsletter')}
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              adminView === 'newsletter'
+                ? 'bg-blue-ncs text-white'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+            }`}
+          >
+            Newsletter
+          </button>
+        </div>
+
+        {adminView === 'overview' && (
+          <>
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
@@ -1057,6 +1105,121 @@ export default function AdminPage() {
             </div>
           </div>
         </div>
+          </>
+        )}
+
+        {adminView === 'newsletter' && (
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Newsletter Subscribers</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Blog newsletter opt-ins from the marketing site.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={newsletterActiveOnly}
+                      onChange={(e) => {
+                        setNewsletterActiveOnly(e.target.checked);
+                        setNewsletterPage(1);
+                      }}
+                      className="rounded border-slate-300 text-blue-ncs focus:ring-blue-ncs"
+                    />
+                    Active only
+                  </label>
+                  <select
+                    value={newsletterPageSize}
+                    onChange={(e) => {
+                      setNewsletterPageSize(Number(e.target.value));
+                      setNewsletterPage(1);
+                    }}
+                    className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  >
+                    {[25, 50, 100].map((size) => (
+                      <option key={size} value={size}>{size} / page</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-900/50">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Source</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subscribed At</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                  {newsletterQuery.isLoading && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-12 text-center">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-ncs mx-auto"></div>
+                      </td>
+                    </tr>
+                  )}
+                  {!newsletterQuery.isLoading && newsletterRows.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                        No newsletter subscribers found.
+                      </td>
+                    </tr>
+                  )}
+                  {newsletterRows.map((subscriber: AdminNewsletterSubscriber) => (
+                    <tr key={subscriber.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors">
+                      <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{subscriber.email}</td>
+                      <td className="px-6 py-4">
+                        <Badge variant={subscriber.active ? 'success' : 'default'}>
+                          {subscriber.active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">{subscriber.source || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
+                        {subscriber.subscribed_at
+                          ? new Date(subscriber.subscribed_at).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })
+                          : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-xs text-slate-500">
+                Showing {newsletterRows.length} of {newsletterData?.total ?? 0} subscribers
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setNewsletterPage(Math.max(1, newsletterPage - 1))}
+                  disabled={newsletterPage <= 1}
+                  className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <span className="text-xs text-slate-500">
+                  Page {newsletterPage} of {Math.max(newsletterData?.total_pages ?? 1, 1)}
+                </span>
+                <button
+                  onClick={() => setNewsletterPage(newsletterPage + 1)}
+                  disabled={newsletterPage >= (newsletterData?.total_pages ?? 1)}
+                  className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* User Activity Modal */}
