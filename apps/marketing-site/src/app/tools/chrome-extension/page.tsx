@@ -2,11 +2,13 @@ import { Metadata } from "next";
 import { getSiteUrl } from "@/lib/env";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ChromeInstallButton } from "@/components/ui/ChromeInstallButton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Shield, Eye, MousePointer, Zap, Globe, ArrowRight } from "lucide-react";
 import AISummary from "@/components/seo/AISummary";
+
+const CHROME_STORE_URL =
+  "https://chromewebstore.google.com/detail/encypher-verify/pbmfpddbafkhdjemgcnegddmniflbjla";
 
 export const metadata: Metadata = {
   title: "Encypher Verify - Chrome Extension for C2PA Content Verification",
@@ -158,7 +160,12 @@ export default function ChromeExtensionPage() {
               tampered with. Free to install, no account required.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <ChromeInstallButton size="lg" installLabel="Add to Chrome - Free" />
+              <Button size="lg" asChild>
+                <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer">
+                  Add to Chrome - Free
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link href="/auth/register">
                   Get a Free Signing Account
@@ -255,7 +262,12 @@ export default function ChromeExtensionPage() {
                     </li>
                   ))}
                 </ul>
-                <ChromeInstallButton className="w-full" installLabel="Install Free Extension" />
+                <Button className="w-full" asChild>
+                  <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer">
+                    Install Free Extension
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
               </CardContent>
             </Card>
 
@@ -329,11 +341,12 @@ export default function ChromeExtensionPage() {
             Edge, and Brave.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <ChromeInstallButton
-              size="lg"
-              variant="secondary"
-              installLabel="Install from Chrome Web Store"
-            />
+            <Button size="lg" variant="secondary" asChild>
+              <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer">
+                Install from Chrome Web Store
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
             <Button
               size="lg"
               variant="outline"

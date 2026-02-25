@@ -78,7 +78,7 @@ export default function StandardsCompliance() {
       {/* Logo Sliders - CSS Animation for smooth infinite scroll */}
       <div className="relative flex flex-col gap-6">
         <h3 className="text-center text-lg font-semibold text-muted-foreground tracking-wider mb-4">
-          Collaborating with the World&apos;s Leading Companies
+          Encypher co-chairs the C2PA Text Provenance Task Force. We're building the standard together.
         </h3>
         
         {/* Slider 1 (Right to Left) */}

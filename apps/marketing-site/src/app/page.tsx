@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { AnimatePresence } from 'framer-motion';
-import { ArrowRight, FileText, Zap, Shield, TrendingUp, Users, CheckCircle2, DollarSign } from 'lucide-react';
+import { ArrowRight, FileText, CheckCircle2, Bot, Building2 } from 'lucide-react';
 import MetadataBackground from '@/components/hero/MetadataBackground';
 import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
+import { CHROME_STORE_URL } from '@/components/ui/ChromeInstallButton';
 import Script from 'next/script';
-import { organizationSchema, homepageFaqSchema } from '@/lib/seo';
+import { organizationSchema } from '@/lib/seo';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.encypherai.com';
 
@@ -36,40 +37,13 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
-      <Script
-        id="schema-faq-homepage"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageFaqSchema) }}
-      />
       <AISummary
-        title="Encypher – Content Intelligence Infrastructure"
-        whatWeDo="Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text). We provide API and SDKs in Python, TypeScript, Go, and Rust for patent-pending granular content attribution and licensing infrastructure. Standard published January 8, 2026."
-        whoItsFor="Publishers needing content licensing infrastructure and provable ownership. AI labs needing performance intelligence and compliance. Enterprises requiring EU AI Act and China watermarking mandate compliance."
-        keyDifferentiator="Patent-pending cryptographic watermarking with tamper-evident verification. Merkle tree authentication provides documentation designed for legal proceedings. Survives copy-paste, B2B distribution, and scraping."
-        primaryValue="Provide technical infrastructure for content licensing across the AI ecosystem. Encypher serves as Co-Chair of the C2PA Text Provenance Task Force, with technology reviewed by C2PA members including Google, OpenAI, Adobe, and Microsoft."
+        title="Encypher – Machine-Readable Rights for Your Content"
+        whatWeDo="Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text). We embed invisible cryptographic proof directly into text so ownership and licensing terms travel with content through copy-paste, syndication, scraping, and AI training."
+        whoItsFor="Publishers who need enforceable machine-readable rights, competitor scraping visibility, and provable ownership evidence."
+        keyDifferentiator="Not AI detection and not front-door-only controls. Encypher embeds cryptographic proof into the content itself, so provenance survives distribution and can be independently verified."
+        primaryValue="Protect content at publish time, track where it appears, and enforce your licensing terms with cryptographic evidence. Encypher co-chairs the C2PA Text Provenance Task Force."
         pagePath="/"
-        faq={[
-          {
-            question: "What is Encypher?",
-            answer: "Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text) and serves as Co-Chair of the C2PA Text Provenance Task Force. We provide API and SDKs for patent-pending granular content attribution that enables content licensing infrastructure. Standard published January 8, 2026. Technology reviewed by C2PA members including Google, OpenAI, Adobe, and Microsoft."
-          },
-          {
-            question: "What is the C2PA text standard?",
-            answer: "The C2PA text standard (Section A.7) defines how text content is cryptographically authenticated using Unicode variation selectors. Encypher authored this section of the specification. It enables verification of content origin with mathematical certainty. Published January 8, 2026."
-          },
-          {
-            question: "How is Encypher different from AI detection tools?",
-            answer: "AI detection tools provide statistical guessing with variable accuracy. Encypher provides cryptographic verification at sentence-level. Our watermarking survives copy-paste and distribution, enabling content licensing infrastructure and attribution across the AI ecosystem."
-          },
-          {
-            question: "Who uses Encypher?",
-            answer: "Publishers seeking content licensing revenue and provable ownership. AI labs needing publisher ecosystem compatibility, quote integrity verification, and performance intelligence. Enterprises requiring EU AI Act and China watermarking compliance."
-          },
-          {
-            question: "Does Encypher have an API and SDKs?",
-            answer: "Yes. Encypher provides a REST API and SDKs in Python, TypeScript, Go, and Rust. Publishers can integrate sentence-level tracking in 30 days. AI labs get one integration for the entire publisher ecosystem. Sign up at encypherai.com to access the API, documentation, and dashboard."
-          }
-        ]}
       />
       
       {/* Hero Section */}
@@ -79,26 +53,26 @@ export default function HomePage() {
         <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20 lg:py-28 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6">
             <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-3 sm:mb-4 md:mb-6 text-shadow-md leading-tight px-2" style={{ minHeight: '3rem' }}>
-              Get Paid When AI Uses Your Content
+              Your Content Carries Its Own Proof of Ownership.<br />Everywhere It Goes.
             </h1>
             <p className="text-sm xs:text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 text-shadow-md max-w-3xl mx-auto leading-relaxed px-2" style={{ minHeight: '4rem' }}>
-              Publishers need to get paid when AI companies use their content.<br />
-              AI companies need proof they licensed it properly.<br />
-              Encypher makes both happen -- cryptographic proof of ownership, machine-readable rights, and a single integration for compliant licensing at scale.
+              Invisible cryptographic signatures embed directly into your text content, surviving copy-paste, scraping, syndication, and AI training.<br />
+              When someone uses your content, you can prove it&apos;s yours.<br />
+              When they ignore your rights, you can prove that too.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center items-center px-2">
               <Button asChild size="lg" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base bg-white text-delft-blue hover:bg-columbia-blue transition-colors">
-                <Link href="/auth/register">
+                <Link href="/try">
                   <span className="flex items-center justify-center">
-                    Get Started Free <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    See It Work <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </span>
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base">
-                <Link href="/try">
+                <Link href="#differentiation">
                   <span className="flex items-center justify-center">
-                    Try It Live <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    How It&apos;s Different <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </span>
                 </Link>
               </Button>
@@ -143,99 +117,129 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">C2PA 2.3</p>
-              <p className="text-sm text-muted-foreground mt-1">Standard Authors</p>
+              <p className="text-2xl md:text-3xl font-bold text-primary">Section A.7</p>
+              <p className="text-sm text-muted-foreground mt-1">Authored in C2PA</p>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">Jan 2026</p>
+              <p className="text-2xl md:text-3xl font-bold text-primary">Jan 8, 2026</p>
               <p className="text-sm text-muted-foreground mt-1">Standard Published</p>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">1,000</p>
-              <p className="text-sm text-muted-foreground mt-1">Free Signs / Month</p>
+              <p className="text-2xl md:text-3xl font-bold text-primary">Co-Chair</p>
+              <p className="text-sm text-muted-foreground mt-1">Text Task Force</p>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">99.95%</p>
-              <p className="text-sm text-muted-foreground mt-1">Uptime SLA</p>
+              <p className="text-2xl md:text-3xl font-bold text-primary">Free</p>
+              <p className="text-sm text-muted-foreground mt-1">1,000 signs / month</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Infrastructure for Two Markets */}
+      {/* Publisher-first Value Section */}
       <section id="value-prop" className="py-20 w-full bg-muted/40 border-y border-border">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Infrastructure for the AI Content Economy
+              Infrastructure for Content Rights. Built on the C2PA Standard.
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Two markets. One infrastructure. Sentence-level tracking enables both litigation evidence and performance intelligence.
+              Publisher-first infrastructure that protects content ownership across syndication, competitor copying, and AI usage.
             </p>
           </div>
-          
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 max-w-5xl mx-auto">
-            {/* For Publishers */}
-            <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border">
+
+          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-10 gap-5">
+            <article className="lg:col-span-4 bg-card p-6 md:p-8 rounded-lg shadow-lg border-2 border-primary/20">
               <div className="flex items-center gap-4 mb-4">
                 <FileText className="h-8 w-8 text-primary" />
                 <h3 className="text-2xl font-semibold">For Publishers</h3>
               </div>
-              <h4 className="text-xl font-bold mb-3">Transform Unmarked Content Into Provably Owned Assets</h4>
+              <h4 className="text-xl font-bold mb-3">Protect Ownership Across Every Channel</h4>
               <p className="text-muted-foreground mb-4">
-                Cryptographic watermarking that survives copy-paste and scraping. Serve formal notice to AI companies with mathematical proof of ownership.
+                Other solutions put a lock on your front door. Encypher locks every piece of content you own with invisible proof that survives redistribution.
               </p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Cryptographic proof survives copy-paste and scraping</span>
+                  <span className="text-sm">Cryptographic proof survives copy-paste, scraping, and syndication</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Formal notice capability with sentence-level tracking</span>
+                  <span className="text-sm">Detect competitor and aggregator reuse with cryptographic certainty</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Success-based model: we only win when you win</span>
+                  <span className="text-sm">Set machine-readable licensing terms: your content, your rules</span>
                 </li>
               </ul>
-              <Button asChild className="w-full mt-6 shadow-lg btn-blue-hover" size="lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                <Link href="/publisher-demo">
-                  See Publisher Demo <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-
-            {/* For AI Companies */}
-            <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border">
-              <div className="flex items-center gap-4 mb-4">
-                <Zap className="h-8 w-8 text-primary" />
-                <h3 className="text-2xl font-semibold">For AI Labs</h3>
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                <Button asChild className="shadow-lg btn-blue-hover" size="lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                  <Link href="/solutions/publishers">
+                    See Publisher Demo <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
-              <h4 className="text-xl font-bold mb-3">License Content at Scale. Prove You Did It Right.</h4>
-              <p className="text-muted-foreground mb-4">
-                One integration to access licensed publisher content, satisfy regulators, and show your users you take provenance seriously. Built collaboratively through C2PA -- OpenAI, Google, Adobe, and Microsoft are members.
+            </article>
+
+            <article className="lg:col-span-3 bg-card p-6 rounded-lg border border-border shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <Bot className="h-6 w-6 text-primary" />
+                <h3 className="text-xl font-semibold">For AI Labs</h3>
+              </div>
+              <h4 className="text-lg font-bold mb-3">Compatible Infrastructure for Marked Content</h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                The publisher ecosystem is implementing cryptographic provenance at scale. Your training pipeline needs compatible infrastructure - built collaboratively through C2PA with OpenAI, Google, Adobe, and Microsoft as members.
               </p>
-              <ul className="space-y-2">
+              <ul className="space-y-2 mb-5">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Access the publisher coalition with a single integration</span>
+                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">One integration for the entire publisher ecosystem</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">EU AI Act + China mandate compliant out of the box</span>
+                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Quote integrity verification - prove &quot;According to [Source]&quot; is accurate</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Signal responsible AI with the Licensed Content mark</span>
+                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Standards-based - we co-authored the spec</span>
                 </li>
               </ul>
-              <Button asChild className="w-full mt-6 shadow-lg btn-blue-hover" size="lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                <Link href="/ai-demo">
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/solutions/ai-companies">
                   See AI Lab Demo <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-            </div>
+            </article>
+
+            <article className="lg:col-span-3 bg-card p-6 rounded-lg border border-border shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <Building2 className="h-5 w-5 text-primary" />
+                <h3 className="text-xl font-semibold">For Enterprises</h3>
+              </div>
+              <h4 className="text-lg font-bold mb-3">AI Content Governance at Scale</h4>
+              <p className="text-sm text-muted-foreground mb-4">
+                When your organization generates or ingests AI content, you need provenance infrastructure that meets regulatory requirements - EU AI Act, China watermarking mandates, and emerging US frameworks.
+              </p>
+              <ul className="space-y-2 mb-5">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">C2PA 2.3 compliant - standard published January 8, 2026</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Sentence-level authentication for audit trails</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">On-premise or cloud deployment with SSO and custom SLAs</span>
+                </li>
+              </ul>
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/solutions/enterprises">
+                  Learn More <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </article>
           </div>
         </div>
       </section>
@@ -244,9 +248,9 @@ export default function HomePage() {
       <section className="py-20 w-full bg-background border-b border-border">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">How It Works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Three Steps. Your Content Is Protected Everywhere.</h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-2xl mx-auto">
-              Three steps from unprotected content to licensed revenue.
+              Capability first: mark it, track it, own it.
             </p>
           </div>
 
@@ -255,9 +259,9 @@ export default function HomePage() {
               <div className="mx-auto w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-2xl font-bold mb-4">
                 1
               </div>
-              <h3 className="text-xl font-semibold mb-3">Sign Your Content</h3>
+              <h3 className="text-xl font-semibold mb-3">Mark It</h3>
               <p className="text-muted-foreground text-sm">
-                Invisible C2PA watermarks embed into every article at publication. Archive signing covers existing content in bulk. Zero visible changes to readers.
+                Free, invisible cryptographic proof embeds directly into your text. Survives copy-paste, scraping, syndication, and AI training with zero visible changes.
               </p>
             </div>
 
@@ -265,9 +269,9 @@ export default function HomePage() {
               <div className="mx-auto w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-2xl font-bold mb-4">
                 2
               </div>
-              <h3 className="text-xl font-semibold mb-3">Track Where It Goes</h3>
+              <h3 className="text-xl font-semibold mb-3">Track It</h3>
               <p className="text-muted-foreground text-sm">
-                Provenance verification events accumulate in your free dashboard. See which AI systems are using your content. Evidence package builds automatically.
+                Detect marked content on competitor sites, aggregators, social posts, and AI outputs. Evidence trails build automatically in your dashboard.
               </p>
             </div>
 
@@ -275,9 +279,9 @@ export default function HomePage() {
               <div className="mx-auto w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-2xl font-bold mb-4">
                 3
               </div>
-              <h3 className="text-xl font-semibold mb-3">License and Get Paid</h3>
+              <h3 className="text-xl font-semibold mb-3">Own It</h3>
               <p className="text-muted-foreground text-sm">
-                When evidence reaches threshold, send formal notice. Encypher handles licensing through the coalition -- you approve every deal, you control the terms.
+                Set machine-readable licensing terms, enforce against unauthorized use, and license through coalition pathways or direct negotiation.
               </p>
             </div>
           </div>
@@ -285,51 +289,79 @@ export default function HomePage() {
           <div className="text-center mt-10">
             <Button asChild variant="outline" size="lg">
               <Link href="/try">
-                Try It Live -- 30 Seconds <ArrowRight className="ml-2 h-4 w-4" />
+                Try It Live - 30 Seconds <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Why Encypher - Replaces "Key Features" */}
-      <section className="py-20 w-full bg-background">
+      {/* Content Theft Detection */}
+      <section className="py-20 w-full bg-muted/40 border-y border-border">
+        <div className="container mx-auto px-4 max-w-5xl text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Know When Someone Takes Your Content. With Certainty.</h2>
+          <p className="text-lg text-muted-foreground mb-8 max-w-3xl mx-auto">
+            Our Chrome extension and analytics detect when marked articles appear on competitor sites, aggregators, social platforms, or AI outputs.
+            Not statistical guessing - cryptographic proof that this specific text came from your publication.
+          </p>
+          <Button asChild size="lg" className="shadow-lg font-semibold" style={{ backgroundColor: '#1a365d', color: '#ffffff' }}>
+            <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer">
+              Install Chrome Extension <ArrowRight className="ml-2 h-4 w-4" />
+            </a>
+          </Button>
+        </div>
+      </section>
+
+      {/* Lock Analogy + Comparison */}
+      <section id="differentiation" className="py-20 w-full bg-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Why Encypher</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Not a Lock on Your Front Door. A Lock on Everything Inside.</h2>
           <p className="text-lg text-center text-muted-foreground mb-12 max-w-3xl mx-auto">
-            We wrote the standard. We built the infrastructure. Publishers and AI companies both win.
+            Other tools protect your website. Encypher protects your content wherever it goes.
           </p>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="text-center">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <Shield className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">We Wrote the Standard</h3>
-              <p className="text-muted-foreground">
-                Encypher authored C2PA Section A.7 -- the global standard for text content authentication, published January 2026. When the industry needed a solution, we wrote it.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <TrendingUp className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Proof That Holds Up</h3>
-              <p className="text-muted-foreground">
-                Invisible cryptographic signatures embedded sentence by sentence. They survive copy-paste, scraping, and distribution -- providing a tamper-evident record of what was published and when.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <Users className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Neutral Infrastructure</h3>
-              <p className="text-muted-foreground">
-                Like Visa connecting banks, Encypher connects publishers and AI companies. Neither side is the adversary. Both sides need the network to function.
-              </p>
-            </div>
+          <div className="overflow-x-auto max-w-5xl mx-auto">
+            <table className="w-full border border-border rounded-lg text-sm">
+              <thead className="bg-muted/40">
+                <tr>
+                  <th className="text-left p-4 font-semibold">Capability</th>
+                  <th className="text-left p-4 font-semibold">Front-Door Solutions</th>
+                  <th className="text-left p-4 font-semibold">Encypher</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-t border-border">
+                  <td className="p-4">Protects content on your site</td>
+                  <td className="p-4">Yes</td>
+                  <td className="p-4">Yes</td>
+                </tr>
+                <tr className="border-t border-border">
+                  <td className="p-4">Protects copied content</td>
+                  <td className="p-4">No</td>
+                  <td className="p-4">Yes</td>
+                </tr>
+                <tr className="border-t border-border">
+                  <td className="p-4">Protects through syndication</td>
+                  <td className="p-4">No</td>
+                  <td className="p-4">Yes</td>
+                </tr>
+                <tr className="border-t border-border">
+                  <td className="p-4">Protects in AI training sets</td>
+                  <td className="p-4">No</td>
+                  <td className="p-4">Yes</td>
+                </tr>
+                <tr className="border-t border-border">
+                  <td className="p-4">Cryptographic proof of ownership</td>
+                  <td className="p-4">No</td>
+                  <td className="p-4">Yes</td>
+                </tr>
+                <tr className="border-t border-border">
+                  <td className="p-4">Embeds machine-readable terms</td>
+                  <td className="p-4">Per-page</td>
+                  <td className="p-4">Per-sentence</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -341,10 +373,10 @@ export default function HomePage() {
       <section className="py-20 w-full bg-background border-t border-border">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            The AI content economy is being built right now.
+            Machine-Readable Rights for Your Content.
           </h2>
           <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
-            Publishers who protect their content today are building the evidence package and the coalition that determines how licensing works tomorrow. Start free.
+            Start free. Mark your content today, track where it goes, and build enforceable evidence before disputes begin.
           </p>
           {coalitionStats && (
             <div className="inline-flex items-center gap-6 mb-8 px-6 py-3 bg-muted/40 border border-border rounded-full text-sm">

@@ -14,7 +14,7 @@ import { getSiteUrl } from './env';
 export const siteConfig = {
   name: "Encypher",
   url: "https://encypherai.com",
-  tagline: "From the Authors of the C2PA Text Standard",
+  tagline: "Machine-Readable Rights for Your Content",
   description: "Encypher authored the C2PA text authentication standard. Patent-pending granular content attribution with Merkle tree authentication for tamper-evident documentation.",
   
   // OG Images by audience
@@ -130,7 +130,7 @@ export const allKeywords = [
 export const defaultMetadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "Encypher | Content Intelligence Infrastructure",
+    default: "Encypher | Machine-Readable Rights for Your Content",
     template: "%s | Encypher"
   },
   description: siteConfig.description,
@@ -153,7 +153,7 @@ export const defaultMetadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: siteConfig.url,
-    title: "Encypher | Content Intelligence Infrastructure",
+    title: "Encypher | Machine-Readable Rights for Your Content",
     description: siteConfig.description,
     siteName: siteConfig.name,
     images: [
@@ -161,13 +161,13 @@ export const defaultMetadata: Metadata = {
         url: siteConfig.images.default,
         width: 1200,
         height: 630,
-        alt: "Encypher - Content Intelligence Infrastructure",
+        alt: "Encypher - Machine-Readable Rights for Your Content",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Encypher | Content Intelligence Infrastructure",
+    title: "Encypher | Machine-Readable Rights for Your Content",
     description: siteConfig.description,
     images: [siteConfig.images.default],
     creator: siteConfig.social.twitter,
@@ -515,98 +515,6 @@ export const publishersFaqSchema = {
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "No. Encypher signs your content at the moment of publication and returns it to your CMS. We store metadata and cryptographic hashes for verification purposes -- not the full text of your articles. Your content stays on your servers. We can verify a piece of text is yours using the hash without needing a copy of the original."
-      }
-    }
-  ]
-};
-
-/**
- * Homepage FAQ schema -- broad brand + category questions.
- * Covers what people searching "encypher", "content provenance", "AI content licensing" etc. want to know.
- * Note: for Google FAQPage rich results, corresponding visible FAQ content should exist on the page.
- */
-export const homepageFaqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "What is Encypher?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text) and serves as Co-Chair of the C2PA Text Provenance Task Force. We provide cryptographic content signing infrastructure that embeds tamper-evident provenance into any text at the sentence level. Publishers use it to prove ownership and generate licensing revenue from AI companies. AI companies use it for C2PA compliance, EU AI Act transparency, and performance intelligence."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "What is the C2PA text standard?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "The C2PA (Coalition for Content Provenance and Authenticity) text standard defines how provenance metadata is cryptographically embedded into plain text content. Encypher authored Section A.7 of the specification, published January 8, 2026. C2PA members include Google, OpenAI, Adobe, Microsoft, the BBC, AP, and the New York Times."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "How does Encypher's content signing work?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Encypher embeds cryptographic provenance metadata as invisible Unicode characters woven into your text at the sentence level. Each sentence carries an independent signature in a Merkle tree structure. The watermark survives copy-paste, scraping, and B2B distribution. Anyone can verify the content's origin, timestamp, and author using the public verification API -- no account required."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "How is Encypher different from AI detection tools?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "AI detection tools use statistical inference and produce false positives. Encypher uses cryptographic proof -- mathematical certainty, not probability. If content is signed, verification either confirms it or it does not. There is no false positive rate. Encypher also works prospectively: you sign content at publish time, establishing an uncontestable provenance record before any dispute arises."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Who is Encypher for?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Encypher serves three audiences. Publishers (news organizations, newsletters, blogs) use it to protect content ownership and earn licensing revenue from AI companies. AI companies use it for publisher coalition licensing, C2PA compliance, EU AI Act transparency, and performance intelligence. Enterprises (law firms, consulting firms, financial services) use it for sentence-level AI governance documentation and court-ready audit trails."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "How much does Encypher cost?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "The Free tier is $0 and includes 1,000 signed documents per month, unlimited verification, and Publisher Coalition membership with revenue sharing. Paid plans add Attribution Analytics, Formal Notice packages, and enforcement tools. Enterprise pricing is custom. See encypherai.com/pricing for current details."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "What is the Publisher Coalition?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "The Publisher Coalition is Encypher's network of content publishers who have enrolled their signed content for AI licensing. AI companies sign a single agreement with Encypher that covers the entire coalition -- no per-publisher negotiations. When an AI company licenses content through the coalition, the majority of revenue goes to the publisher. Publishers can enroll for free and opt out at any time."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Does Encypher have an API and SDKs?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes. Encypher provides a REST API and SDKs in Python, TypeScript, Go, and Rust. There are also integrations for WordPress (plugin), Ghost (webhook), and LiteLLM. The public verification API requires no account. Signed content can be verified by anyone using the open C2PA standard libraries."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Is content stored on Encypher's servers when signed?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "No. Encypher returns signed content to your system and stores only metadata and cryptographic hashes -- not the full text. The cryptographic signature is embedded in the content itself, so verification does not require Encypher's infrastructure to remain operational. Enterprise customers can use BYOK (Bring Your Own Key) so signing runs entirely within their infrastructure."
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Does Encypher work for AI-generated content?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "Yes. AI companies can sign their model outputs with C2PA manifests that identify the content as AI-generated, record the generation timestamp, and link to the source model. This satisfies EU AI Act Article 52(1) output transparency requirements and the China AI watermarking mandate. The same integration provides performance intelligence on which outputs spread and which get cited or corrected."
       }
     }
   ]

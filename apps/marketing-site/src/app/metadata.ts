@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   // Page Title - Search Results & Browser Tab
-  title: "Encypher | Content Intelligence Infrastructure",
+  title: "Encypher | Machine-Readable Rights for Your Content",
   
   // Meta Description - Search Results Preview
   description: "Authors of C2PA Section A.7. Patent-pending granular content attribution with Merkle tree authentication. Court-admissible evidence for publishers, performance intelligence for AI companies.",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   
   // Open Graph (LinkedIn, Facebook, etc.)
   openGraph: {
-    title: "Turn Content Intelligence Into Market Advantage",
+    title: "Your Content Carries Its Own Proof of Ownership",
     description: "Authors of C2PA Section A.7. Patent-pending Merkle tree authentication provides court-admissible evidence for publishers and performance intelligence for AI companies.",
     images: ['/og-image.png'],
     type: 'website',
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   // Twitter/X
   twitter: {
     card: 'summary_large_image',
-    title: "Content Intelligence Infrastructure | Encypher",
+    title: "Machine-Readable Rights for Your Content | Encypher",
     description: "Authors of the C2PA text standard. Patent-pending granular attribution transforms litigation into licensing. Court-admissible evidence at sentence level.",
     images: ['/og-image.png'],
     creator: '@encypherai',

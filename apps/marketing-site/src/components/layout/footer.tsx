@@ -36,7 +36,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm text-muted-foreground">
-              Content Intelligence Infrastructure
+              Machine-Readable Rights for Your Content
             </p>
           </div>
 
