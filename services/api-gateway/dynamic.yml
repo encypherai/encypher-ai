@@ -142,10 +142,10 @@ http:
       middlewares:
         - cors
 
-    # Enterprise API - signing, batch, streaming, etc.
+    # Enterprise API - signing, batch, streaming, CDN integrations, etc.
     # Routes all C2PA core functionality to enterprise-api
     api-enterprise:
-      rule: "PathPrefix(`/api/v1/sign`) || PathPrefix(`/api/v1/batch`) || PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/onboarding`) || PathPrefix(`/api/v1/chat`) || PathPrefix(`/api/v1/licensing`) || PathPrefix(`/api/v1/usage`) || PathPrefix(`/api/v1/audit`) || PathPrefix(`/api/v1/org`) || PathPrefix(`/api/v1/enterprise`) || PathPrefix(`/api/v1/status`) || PathPrefix(`/api/v1/tools`) || PathPrefix(`/api/v1/public`) || PathPrefix(`/api/v1/provisioning`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/integrations`)"
+      rule: "PathPrefix(`/api/v1/sign`) || PathPrefix(`/api/v1/batch`) || PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/onboarding`) || PathPrefix(`/api/v1/chat`) || PathPrefix(`/api/v1/licensing`) || PathPrefix(`/api/v1/usage`) || PathPrefix(`/api/v1/audit`) || PathPrefix(`/api/v1/org`) || PathPrefix(`/api/v1/enterprise`) || PathPrefix(`/api/v1/status`) || PathPrefix(`/api/v1/tools`) || PathPrefix(`/api/v1/public`) || PathPrefix(`/api/v1/provisioning`) || PathPrefix(`/api/v1/account`) || PathPrefix(`/api/v1/integrations`) || PathPrefix(`/api/v1/cdn`)"
       service: enterprise-api
       entryPoints:
         - web
