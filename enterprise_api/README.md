@@ -83,7 +83,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 ## Tier Feature Matrix
 
-> **Pricing model:** Freemium + Enterprise. Legacy tier names (starter, professional, business) map to Free.
+> **Pricing model:** Free (full signing + rights management) + Enforcement Add-ons (paid, analytics/notices/evidence) + Enterprise (unlimited + custom). Legacy tier names (starter, professional, business, business+) all map to Free.
 
 ### Signing Features (`/api/v1/sign`)
 
@@ -403,22 +403,22 @@ Machine-readable deed system for publishers to define and enforce licensing term
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/rights/profile` | PUT | ✅ | Business+ | Create or update default rights profile (versioned) |
-| `/api/v1/rights/profile` | GET | ✅ | Business+ | Get current rights profile |
-| `/api/v1/rights/profile/history` | GET | ✅ | Business+ | Get full version history of rights profile |
-| `/api/v1/rights/documents/{document_id}` | PUT | ✅ | Business+ | Override rights for a specific document |
-| `/api/v1/rights/collections/{collection_id}` | PUT | ✅ | Business+ | Override rights for a collection |
-| `/api/v1/rights/content-types/{content_type}` | PUT | ✅ | Business+ | Override rights for a content type |
-| `/api/v1/rights/bulk-update` | POST | ✅ | Business+ | Bulk update rights across documents/collections/types |
+| `/api/v1/rights/profile` | PUT | ✅ | Free | Create or update default rights profile (versioned) |
+| `/api/v1/rights/profile` | GET | ✅ | Free | Get current rights profile |
+| `/api/v1/rights/profile/history` | GET | ✅ | Free | Get full version history of rights profile |
+| `/api/v1/rights/documents/{document_id}` | PUT | ✅ | Free | Override rights for a specific document |
+| `/api/v1/rights/collections/{collection_id}` | PUT | ✅ | Free | Override rights for a collection |
+| `/api/v1/rights/content-types/{content_type}` | PUT | ✅ | Free | Override rights for a content type |
+| `/api/v1/rights/bulk-update` | POST | ✅ | Free | Bulk update rights across documents/collections/types |
 | `/api/v1/rights/templates` | GET | ✅ | All | List available rights template presets |
-| `/api/v1/rights/profile/from-template/{template_id}` | POST | ✅ | Business+ | Initialize profile from a template |
+| `/api/v1/rights/profile/from-template/{template_id}` | POST | ✅ | Free | Initialize profile from a template |
 | `/api/v1/rights/profile/delegated-setup` | POST | ✅ | Strategic Partner | Platform partner sets up rights profile on behalf of publisher |
 | `/api/v1/partner/publishers/provision` | POST | ✅ | Strategic Partner | Bulk-provision publisher orgs, rights profiles, and claim emails in one call |
-| `/api/v1/rights/rsl/import` | POST | ✅ | Business+ | Import existing RSL 1.0 XML document |
-| `/api/v1/rights/analytics/detections` | GET | ✅ | Business+ | Phone-home detection analytics |
-| `/api/v1/rights/analytics/crawlers` | GET | ✅ | Business+ | AI crawler activity breakdown |
-| `/api/v1/rights/analytics/crawlers/timeseries` | GET | ✅ | Business+ | Daily crawler activity timeseries |
-| `/api/v1/rights/analytics/content-spread` | GET | ✅ | Enterprise+ | External domain detection analytics (content spread) |
+| `/api/v1/rights/rsl/import` | POST | ✅ | Free | Import existing RSL 1.0 XML document |
+| `/api/v1/rights/analytics/detections` | GET | ✅ | Enforcement Add-on | Phone-home detection analytics (signed content encountered by AI systems) |
+| `/api/v1/rights/analytics/crawlers` | GET | ✅ | Free | AI crawler activity breakdown |
+| `/api/v1/rights/analytics/crawlers/timeseries` | GET | ✅ | Free | Daily crawler activity timeseries |
+| `/api/v1/rights/analytics/content-spread` | GET | ✅ | Enterprise | External domain detection analytics (content spread) |
 
 Rights profiles support three licensing tiers:
 - **Bronze** — Scraping / crawling terms
@@ -444,12 +444,12 @@ Rights profiles support three licensing tiers:
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/notices/` | GET | ✅ | Business+ | List all formal notices for the organization |
-| `/api/v1/notices/create` | POST | ✅ | Business+ | Create an immutable formal notice |
-| `/api/v1/notices/{notice_id}` | GET | ✅ | Business+ | Retrieve a formal notice |
-| `/api/v1/notices/{notice_id}/deliver` | POST | ✅ | Business+ | Deliver notice to an AI company |
-| `/api/v1/notices/{notice_id}/evidence` | GET | ✅ | Business+ | Get cryptographic evidence package (court-ready) |
-| `/api/v1/notices/{notice_id}/evidence/pdf` | GET | ✅ | Business+ | Download Encypher-branded PDF evidence package |
+| `/api/v1/notices/` | GET | ✅ | Enforcement Add-on | List all formal notices for the organization |
+| `/api/v1/notices/create` | POST | ✅ | Enforcement Add-on | Create an immutable formal notice |
+| `/api/v1/notices/{notice_id}` | GET | ✅ | Enforcement Add-on | Retrieve a formal notice |
+| `/api/v1/notices/{notice_id}/deliver` | POST | ✅ | Enforcement Add-on | Deliver notice to an AI company |
+| `/api/v1/notices/{notice_id}/evidence` | GET | ✅ | Enforcement Add-on | Get cryptographic evidence package (court-ready) |
+| `/api/v1/notices/{notice_id}/evidence/pdf` | GET | ✅ | Enforcement Add-on | Download Encypher-branded PDF evidence package |
 
 Notices are append-only with SHA-256 content hashing for tamper-evidence. Each evidence package includes a linked `notice_evidence_chain` for chain-of-custody documentation.
 
@@ -459,7 +459,7 @@ Notices are append-only with SHA-256 content hashing for tamper-evidence. Each e
 |----------|--------|------|------|-------------|
 | `/api/v1/rights-licensing/request` | POST | ✅ | All | Submit a licensing request |
 | `/api/v1/rights-licensing/requests` | GET | ✅ | All | List licensing requests |
-| `/api/v1/rights-licensing/requests/{request_id}/respond` | PUT | ✅ | Business+ | Approve or reject a licensing request |
+| `/api/v1/rights-licensing/requests/{request_id}/respond` | PUT | ✅ | All | Approve or reject a licensing request |
 | `/api/v1/rights-licensing/agreements` | GET | ✅ | All | List active licensing agreements |
 | `/api/v1/rights-licensing/agreements/{agreement_id}` | GET | ✅ | All | Get a specific licensing agreement |
 | `/api/v1/rights-licensing/agreements/{agreement_id}/usage` | GET | ✅ | All | Get usage metrics for an agreement |
@@ -468,9 +468,9 @@ Notices are append-only with SHA-256 content hashing for tamper-evidence. Each e
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/cdn/cloudflare` | POST | ✅ | Business+ | Create or update Cloudflare Logpush integration |
-| `/api/v1/cdn/cloudflare` | GET | ✅ | Business+ | Get current Cloudflare Logpush integration config |
-| `/api/v1/cdn/cloudflare` | DELETE | ✅ | Business+ | Remove Cloudflare Logpush integration |
+| `/api/v1/cdn/cloudflare` | POST | ✅ | Enterprise | Create or update Cloudflare Logpush integration |
+| `/api/v1/cdn/cloudflare` | GET | ✅ | Enterprise | Get current Cloudflare Logpush integration config |
+| `/api/v1/cdn/cloudflare` | DELETE | ✅ | Enterprise | Remove Cloudflare Logpush integration |
 
 ### Onboarding & Provisioning Endpoints
 
@@ -502,29 +502,32 @@ Notices are append-only with SHA-256 content hashing for tamper-evidence. Each e
 - ✅ Custom metadata and assertions
 - ✅ Audit logs
 - ✅ Coalition membership — auto-enrolled on first signed document
+- ✅ Rights Management — Bronze/Silver/Gold licensing profiles, templates, RSL import/export
+- ✅ Public rights resolution and machine-readable deeds (JSON-LD, ODRL, robots.txt)
+- ✅ Licensing transactions — request/respond/agreement lifecycle
+- ✅ AI crawler analytics — which bots are hitting your signed content, request volume over time, daily timeseries
 - ✅ WordPress plugin — auto-sign on publish
 - ✅ REST API, CLI, GitHub Action
 - ✅ Two-track licensing: Coalition deals (60% publisher / 40% Encypher) or Self-service deals (80% publisher / 20% Encypher)
 
-#### Business+ Tier
-- ✅ Everything in Free
-- ✅ **Rights Management**: Bronze/Silver/Gold tier licensing profiles
-- ✅ **Formal Notices**: Cryptographically-provable, court-ready notice infrastructure
-- ✅ **Rights Resolution**: Public API for machine-readable deed discovery
-- ✅ **RSL 1.0 Interoperability**: Import/export RSL XML; generate robots.txt directives
-- ✅ **Licensing Transactions**: Request/respond/agreement lifecycle
-- ✅ **AI Crawler Analytics**: Phone-home detection events and crawler activity
+#### Enforcement Add-ons (paid)
+- **Phone-Home Detection**: Analytics for when signed content is actually encountered or used by AI systems (goes beyond crawl logs — requires Encypher provenance embeddings in content)
+- **Formal Notices**: Cryptographically-provable, court-ready notice infrastructure (append-only with SHA-256 content hashing, chain-of-custody documentation)
+- **Evidence Packages**: Court-ready evidence packages with Merkle proofs, tamper-evident manifests, litigation-format exports
+- **Content Spread** (Enterprise): External domain detection analytics — where signed content appears across the web
 
 #### Enterprise Tier (Custom pricing)
-- ✅ Everything in Business+ — unlimited (no caps on volume or API calls)
+- ✅ Everything in Free — unlimited (no caps on volume or API calls)
+- ✅ All enforcement add-ons included
 - ✅ **Cross-Org Search**: Verify content across all organizations (`search_scope=all`)
 - ✅ **Fuzzy Matching**: Detect paraphrased/rewritten content via fuzzy fingerprinting
 - ✅ **C2PA Provenance Chain**: Full edit history tracking
 - ✅ **Assertion Templates**: Pre-built industry templates
 - ✅ **Schema Registry**: Manage custom JSON schemas
 - ✅ **Robust Fingerprinting**: Survives paraphrasing, rewriting, and translation
-- ✅ **Evidence Generation**: Court-ready evidence packages
+- ✅ **Evidence Generation**: Court-ready evidence packages (unlimited)
 - ✅ **Authority Ranking**: Configurable source ranking
+- ✅ **Cloudflare Logpush Integration**: CDN-level AI crawler detection
 - ✅ Batch operations (up to 100 documents per request)
 - ✅ Document revocation capability (StatusList2021)
 - ✅ Unlimited team members with role-based access controls

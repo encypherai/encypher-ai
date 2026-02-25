@@ -120,21 +120,23 @@ class SignOptions(BaseModel):
     Options for signing - features are gated by tier.
     
     Tier Feature Matrix:
-    
-    | Feature                  | Free/Starter | Professional | Business | Enterprise |
-    |--------------------------|--------------|--------------|----------|------------|
-    | document_type            | ✅           | ✅           | ✅       | ✅         |
-    | claim_generator          | ✅           | ✅           | ✅       | ✅         |
-    | segmentation_level       | document     | all          | all      | all        |
-    | manifest_mode            | full         | all          | all      | all        |
-    | embedding_strategy       | single_point | all          | all      | all        |
-    | index_for_attribution    | ❌           | ✅           | ✅       | ✅         |
-    | custom_assertions        | ❌           | ❌           | ✅       | ✅         |
-    | template_id              | ❌           | ❌           | ✅       | ✅         |
-    | rights                   | ❌           | ❌           | ✅       | ✅         |
-    | add_dual_binding         | ❌           | ❌           | ❌       | ✅         |
-    | include_fingerprint      | ❌           | ❌           | ❌       | ✅         |
-    | batch (documents array)  | 1            | 10           | 50       | 100        |
+
+    | Feature                  | Free | Enterprise |
+    |--------------------------|:----:|:----------:|
+    | document_type            | yes  | yes        |
+    | claim_generator          | yes  | yes        |
+    | segmentation_level       | all except word | all |
+    | manifest_mode            | all  | all        |
+    | embedding_strategy       | all  | all        |
+    | index_for_attribution    | yes  | yes        |
+    | custom_assertions        | yes  | yes        |
+    | template_id              | yes  | yes        |
+    | rights / use_rights_profile | yes | yes     |
+    | add_dual_binding         | no   | yes        |
+    | include_fingerprint      | no   | yes        |
+    | enable_print_fingerprint | no   | yes        |
+    | word segmentation        | no   | yes        |
+    | batch (documents array)  | 10   | 100        |
     """
     
     # === Free Tier (All) ===
@@ -159,18 +161,18 @@ class SignOptions(BaseModel):
         description="IPTC digital source type URI (e.g., for AI-generated content)",
     )
     
-    # === Professional+ ===
+    # === Free Tier (signing + segmentation + manifest modes + rights) ===
     segmentation_level: str = Field(
         default="document",
-        description="Segmentation level: document (free), sentence, paragraph, section (Professional+), word (Enterprise)",
+        description="Segmentation level: document, sentence, paragraph, section (all Free); word (Enterprise only)",
     )
     segmentation_levels: Optional[List[str]] = Field(
         default=None,
-        description="Optional list of Merkle segmentation levels to build (Professional+)",
+        description="Optional list of Merkle segmentation levels to build in one pass (Free)",
     )
     manifest_mode: str = Field(
         default="full",
-        description="Manifest mode: full (free), lightweight_uuid, minimal_uuid, hybrid, zw_embedding, micro (Professional+). micro uses ultra-compact per-segment markers; behaviour controlled by ecc and embed_c2pa flags.",
+        description="Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid, zw_embedding, micro (all Free). micro uses ultra-compact per-segment markers; behaviour controlled by ecc and embed_c2pa flags.",
     )
     ecc: bool = Field(
         default=True,
@@ -182,45 +184,43 @@ class SignOptions(BaseModel):
     )
     embedding_strategy: str = Field(
         default="single_point",
-        description="Embedding strategy: single_point (free), distributed, distributed_redundant (Professional+)",
+        description="Embedding strategy: single_point, distributed, distributed_redundant (all Free)",
     )
     distribution_target: Optional[str] = Field(
         default=None,
-        description="Target for distributed embedding: whitespace, punctuation, all_chars (Professional+)",
+        description="Target for distributed embedding: whitespace, punctuation, all_chars (Free)",
     )
     index_for_attribution: bool = Field(
         default=False,
-        description="Index content for attribution/plagiarism detection (Professional+)",
+        description="Index content for attribution and plagiarism detection (Free)",
     )
-    
-    # === Business+ ===
     custom_assertions: Optional[List[Dict[str, Any]]] = Field(
         default=None,
-        description="Custom C2PA assertions to include in manifest (Business+)",
+        description="Custom C2PA assertions to include in manifest (Free)",
     )
     template_id: Optional[str] = Field(
         default=None,
-        description="Assertion template ID to apply (Business+)",
+        description="Assertion template ID to apply (Free)",
     )
     validate_assertions: bool = Field(
         default=True,
-        description="Whether to validate custom assertions against registered schemas (Business+)",
+        description="Whether to validate custom assertions against registered schemas (Free)",
     )
     rights: Optional[RightsMetadata] = Field(
         default=None,
-        description="Rights and licensing metadata to embed (Business+)",
+        description="Rights and licensing metadata to embed in the manifest (Free)",
     )
     use_rights_profile: bool = Field(
         default=False,
-        description="When True, fetches the publisher's rights profile, stores a rights snapshot, and adds rights_resolution_url to the response (Business+)",
+        description="When True, fetches the publisher's active rights profile, stores a snapshot on the content reference, and adds rights_resolution_url to the response (Free)",
     )
     license: Optional[LicenseInfo] = Field(
         default=None,
-        description="License information (Business+)",
+        description="License information to embed (Free)",
     )
     actions: Optional[List[Dict[str, Any]]] = Field(
         default=None,
-        description="Optional list of C2PA action assertions (Business+)",
+        description="Optional list of C2PA action assertions (Free)",
     )
     
     # === Enterprise ===
@@ -373,7 +373,7 @@ class UnifiedSignRequest(BaseModel):
     }
     ```
     
-    For batch signing (Professional+):
+    For batch signing (up to 10 documents Free, up to 100 Enterprise):
     ```json
     {
         "documents": [
@@ -418,7 +418,7 @@ class UnifiedSignRequest(BaseModel):
     # Batch mode
     documents: Optional[List[SignDocument]] = Field(
         default=None,
-        description="List of documents for batch signing (Professional+)",
+        description="List of documents for batch signing (up to 10 Free, up to 100 Enterprise)",
     )
     
     # Options (tier-gated)
@@ -526,7 +526,7 @@ def validate_sign_options_for_tier(
     Validate sign options against tier requirements.
     
     Returns validation result with list of denied features if any.
-    NMA members on starter tier get special access to sentence segmentation.
+    Sentence segmentation and all manifest modes are available on the Free tier.
     """
     features_used: List[str] = ["basic_signing"]
     features_denied: List[Dict[str, str]] = []
