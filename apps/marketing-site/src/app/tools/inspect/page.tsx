@@ -7,20 +7,22 @@ import FileInspectorClientWrapper from "./FileInspectorClientWrapper";
 
 export const metadata: Metadata = {
   title: "Inspect File | Encypher Tool",
-  description: "Drag and drop text files to inspect embedded C2PA provenance credentials. Verify authenticity and view metadata with Encypher's free inspection tool.",
+  description: "Drag and drop images or text files to inspect embedded C2PA and XMP provenance credentials. Verify image authenticity, view metadata, and trace provenance with Encypher's free inspection tool.",
   keywords: [
     "file inspector",
     "C2PA verification",
-    "text file verification",
+    "image provenance",
+    "XMP metadata",
     "content authenticity",
     "Encypher",
     "digital provenance",
     "drag and drop verify",
     "inspect metadata",
+    "image signing",
   ],
   openGraph: {
     title: "Inspect File | Encypher Tool",
-    description: "Drag and drop text files to inspect embedded C2PA provenance credentials. Verify authenticity and view metadata.",
+    description: "Drag and drop images or text files to inspect embedded C2PA and XMP provenance credentials. Verify authenticity and view metadata.",
     url: "https://encypherai.com/tools/inspect",
     siteName: "Encypher",
     type: "website",
@@ -28,7 +30,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Inspect File | Encypher Tool",
-    description: "Drag and drop text files to inspect embedded C2PA provenance credentials. Verify authenticity and view metadata.",
+    description: "Drag and drop images or text files to inspect embedded C2PA and XMP provenance credentials. Verify authenticity and view metadata.",
   },
   metadataBase: new URL(getSiteUrl()),
 };
