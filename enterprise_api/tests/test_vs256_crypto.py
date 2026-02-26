@@ -104,21 +104,21 @@ def test_encode_decode_boundary_values():
     """Test encoding at BMP/supplementary boundary (15/16)."""
     # Last BMP char (VS16)
     encoded_15 = encode_byte_vs256(15)
-    assert ord(encoded_15) == VS_BMP_END, f"Byte 15 should be VS16 (U+FE0F)"
+    assert ord(encoded_15) == VS_BMP_END, "Byte 15 should be VS16 (U+FE0F)"
     assert decode_byte_vs256(encoded_15) == 15
 
     # First supplementary char (VS17)
     encoded_16 = encode_byte_vs256(16)
-    assert ord(encoded_16) == VS_SUPP_START, f"Byte 16 should be VS17 (U+E0100)"
+    assert ord(encoded_16) == VS_SUPP_START, "Byte 16 should be VS17 (U+E0100)"
     assert decode_byte_vs256(encoded_16) == 16
 
     # Byte 0 (VS1)
     encoded_0 = encode_byte_vs256(0)
-    assert ord(encoded_0) == VS_BMP_START, f"Byte 0 should be VS1 (U+FE00)"
+    assert ord(encoded_0) == VS_BMP_START, "Byte 0 should be VS1 (U+FE00)"
 
     # Byte 255 (VS256)
     encoded_255 = encode_byte_vs256(255)
-    assert ord(encoded_255) == VS_SUPP_END, f"Byte 255 should be VS256 (U+E01EF)"
+    assert ord(encoded_255) == VS_SUPP_END, "Byte 255 should be VS256 (U+E01EF)"
 
 
 def test_encode_decode_bytes():
@@ -293,6 +293,91 @@ def test_minimal_signed_uuid_wrong_key(test_keypair):
     print("✓ Wrong key rejected correctly")
 
 
+def test_minimal_signed_uuid_content_binding_detects_tampering(test_keypair):
+    """Content-bound signatures should fail when sentence text changes."""
+    private_key, _ = test_keypair
+    signing_key = derive_signing_key_from_private_key(private_key)
+
+    sentence_uuid = uuid4()
+    sentence = "The central bank raised rates."
+    signature = create_minimal_signed_uuid(
+        sentence_uuid,
+        signing_key,
+        sentence_text=sentence,
+    )
+
+    # Correct sentence verifies
+    is_valid, extracted_uuid = verify_minimal_signed_uuid(
+        signature,
+        signing_key,
+        sentence_text=sentence,
+    )
+    assert is_valid
+    assert extracted_uuid == sentence_uuid
+
+    # Tampered sentence must fail
+    tampered_sentence = "The central bank cut rates."
+    is_valid_tampered, _ = verify_minimal_signed_uuid(
+        signature,
+        signing_key,
+        sentence_text=tampered_sentence,
+    )
+    assert not is_valid_tampered
+
+
+def test_minimal_signed_uuid_legacy_signature_verifies_with_sentence_text(test_keypair):
+    """Legacy signatures must still verify when verifier receives sentence_text."""
+    private_key, _ = test_keypair
+    signing_key = derive_signing_key_from_private_key(private_key)
+
+    sentence_uuid = uuid4()
+    signature = create_minimal_signed_uuid(sentence_uuid, signing_key)
+    is_valid, extracted_uuid = verify_minimal_signed_uuid(
+        signature,
+        signing_key,
+        sentence_text="Legacy content path should remain valid.",
+    )
+
+    assert is_valid
+    assert extracted_uuid == sentence_uuid
+
+
+def test_minimal_signed_uuid_content_binding_is_nfc_stable(test_keypair):
+    """Content-bound signatures should verify across NFC-equivalent forms."""
+    private_key, _ = test_keypair
+    signing_key = derive_signing_key_from_private_key(private_key)
+
+    sentence_uuid = uuid4()
+    sentence_nfc = "Cafe\u0301 prices increased."  # decomposed input
+    signature = create_minimal_signed_uuid(
+        sentence_uuid,
+        signing_key,
+        sentence_text=sentence_nfc,
+    )
+
+    sentence_nfd_equiv = "Caf\u00e9 prices increased."  # composed equivalent
+    is_valid, extracted_uuid = verify_minimal_signed_uuid(
+        signature,
+        signing_key,
+        sentence_text=sentence_nfd_equiv,
+    )
+    assert is_valid
+    assert extracted_uuid == sentence_uuid
+
+
+def test_minimal_signed_uuid_legacy_signature_still_verifies(test_keypair):
+    """Legacy UUID-only signatures should remain valid without sentence_text."""
+    private_key, _ = test_keypair
+    signing_key = derive_signing_key_from_private_key(private_key)
+
+    sentence_uuid = uuid4()
+    signature = create_minimal_signed_uuid(sentence_uuid, signing_key)
+    is_valid, extracted_uuid = verify_minimal_signed_uuid(signature, signing_key)
+
+    assert is_valid
+    assert extracted_uuid == sentence_uuid
+
+
 def test_minimal_signed_uuid_tampering():
     """Test that tampering with signature is detected."""
     signing_key = b"test_signing_key_32_bytes_long!!"
@@ -372,7 +457,7 @@ def test_remove_minimal_signed_uuid():
     signed = original + sig1
     cleaned = remove_minimal_signed_uuid(signed)
 
-    assert cleaned == original, f"Cleaned text should match original"
+    assert cleaned == original, "Cleaned text should match original"
 
 
 # =============================================================================
@@ -439,7 +524,7 @@ def test_safe_embedding_with_real_signature():
     embedded = create_safely_embedded_sentence(sentence, sentence_uuid, signing_key)
 
     # Should end with period (signature before it)
-    assert embedded.endswith("."), f"Should end with period"
+    assert embedded.endswith("."), "Should end with period"
 
     # Should contain the signature
     found_sigs = find_all_minimal_signed_uuids(embedded)

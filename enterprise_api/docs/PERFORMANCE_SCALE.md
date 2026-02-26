@@ -35,7 +35,6 @@ Performance targets ensure the Enterprise API can support archive-scale workload
 | --- | --- | --- | --- |
 | `POST /api/v1/sign` | 50ms | 200ms | 500ms |
 | `POST /api/v1/verify` | 40ms | 150ms | 400ms |
-| `POST /api/v1/sign/advanced` | 150ms | 400ms | 800ms |
 | `POST /api/v1/verify/advanced` | 120ms | 350ms | 700ms |
 
 ## 5. Batch Throughput (PRD 3.4)

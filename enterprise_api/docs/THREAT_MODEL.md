@@ -31,7 +31,7 @@ The Enterprise API ingests customer content, signs it with C2PA-compatible manif
 
 ## 4. Data Flows
 ### 4.1 Ingestion/Signing
-1. Client submits content to `/api/v1/sign` or `/api/v1/sign/advanced`.
+1. Client submits content to `/api/v1/sign`.
 2. API validates API key + scopes, loads org signing key.
 3. Service generates C2PA manifest, stores content reference + proof.
 4. Audit events captured for key/sign operations.

@@ -108,6 +108,50 @@ class TestCreateAndVerify:
         valid, _ = verify_minimal_signed_uuid(bad, signing_key)
         assert not valid
 
+    def test_content_binding_detects_tampered_sentence(self, signing_key):
+        uid = uuid4()
+        sentence = "The central bank raised rates."
+        sig = create_minimal_signed_uuid(uid, signing_key, sentence_text=sentence)
+
+        valid, extracted = verify_minimal_signed_uuid(
+            sig,
+            signing_key,
+            sentence_text=sentence,
+        )
+        assert valid
+        assert extracted == uid
+
+        valid_tampered, _ = verify_minimal_signed_uuid(
+            sig,
+            signing_key,
+            sentence_text="The central bank cut rates.",
+        )
+        assert not valid_tampered
+
+    def test_content_binding_is_nfc_stable(self, signing_key):
+        uid = uuid4()
+        sig = create_minimal_signed_uuid(
+            uid,
+            signing_key,
+            sentence_text="Cafe\u0301 prices increased.",
+        )
+
+        valid, extracted = verify_minimal_signed_uuid(
+            sig,
+            signing_key,
+            sentence_text="Caf\u00e9 prices increased.",
+        )
+        assert valid
+        assert extracted == uid
+
+    def test_legacy_signature_still_verifies_without_sentence_text(self, signing_key):
+        uid = uuid4()
+        sig = create_minimal_signed_uuid(uid, signing_key)
+        valid, extracted = verify_minimal_signed_uuid(sig, signing_key)
+
+        assert valid
+        assert extracted == uid
+
 
 # ---------------------------------------------------------------------------
 # Reed-Solomon error correction

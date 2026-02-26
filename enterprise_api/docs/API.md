@@ -82,43 +82,60 @@ Starter tier supports up to 1 custom assertion per request.
 **Authentication:** Required
 **Permission:** `can_sign`
 
-**Request:**
+**Request (unified):**
 ```json
 {
   "text": "Content to sign",
   "document_title": "Optional title",
   "document_url": "https://example.com/article",
-  "document_type": "article",
-  "custom_assertions": [
-    {
-      "label": "org.encypher.user-provenance",
-      "data": {
-        "text": "User-supplied provenance text"
-      }
-    }
-  ]
+  "options": {
+    "segmentation_level": "sentence",
+    "manifest_mode": "micro",
+    "ecc": true,
+    "embed_c2pa": true,
+    "store_c2pa_manifest": true,
+    "index_for_attribution": true
+  }
 }
 ```
 
-**Parameters:**
+**Selected parameters:**
 - `text` (string, required): Content to sign (max 1MB)
 - `document_title` (string, optional): Document title (max 500 chars)
 - `document_url` (string, optional): Original document URL (max 1000 chars)
-- `document_type` (string, optional): Document type
-  - Options: `article`, `legal_brief`, `contract`, `ai_output`
-  - Default: `article`
-- `custom_assertions` (array, optional): Custom C2PA assertions for provenance metadata
+- `options.segmentation_level` (string): `document|sentence|paragraph|section|word`
+- `options.manifest_mode` (string): `full|lightweight_uuid|minimal_uuid|hybrid|zw_embedding|micro`
+- `options.ecc` (bool): micro mode RS error correction (44-char markers when true, 36 when false)
+- `options.embed_c2pa` (bool): for micro mode, controls whether C2PA wrapper is embedded in content
+- `options.store_c2pa_manifest` (bool): controls DB persistence of generated manifest
 
-**Response:**
+For the complete options matrix (tiers/defaults), use OpenAPI/Swagger for `/api/v1/sign`.
+
+**Response (single document):**
 ```json
 {
   "success": true,
-  "document_id": "doc_abc123xyz",
-  "signed_text": "Content with invisible C2PA manifest...",
-  "total_sentences": 5,
-  "verification_url": "https://verify.encypherai.com/doc_abc123xyz"
+  "data": {
+    "document": {
+      "document_id": "doc_abc123xyz",
+      "signed_text": "Content with invisible C2PA/marker embeddings...",
+      "verification_url": "https://verify.encypherai.com/doc_abc123xyz"
+    },
+    "metadata": {
+      "manifest_mode": "micro"
+    }
+  },
+  "error": null,
+  "correlation_id": "req-123"
 }
 ```
+
+**Micro mode behavior (current):**
+- Per-sentence markers are always embedded.
+- `embed_c2pa=true` (default): C2PA manifest embedded in signed text.
+- `embed_c2pa=false`: no in-content C2PA wrapper, but manifest can still be generated and stored in DB.
+- Markers are content-bound at sentence level (tamper detection offline during fallback verification).
+- When Merkle context exists, C2PA custom assertion `com.encypher.merkle.v1` is added with root linkage metadata.
 
 **Example:**
 ```bash
@@ -192,6 +209,12 @@ Verify C2PA manifest in signed content.
   "correlation_id": "req-456"
 }
 ```
+
+**Verification semantics (current):**
+- Primary validation is C2PA signature/manifest verification.
+- If no signer is resolved, verifier falls back to embedded marker modes (`micro`, `zw_embedding`).
+- Micro verification includes sentence-bound integrity checks where available and preserves backward compatibility for legacy markers.
+- `reason_code` is the canonical machine field for status interpretation (`OK`, `SIGNATURE_INVALID`, `UNTRUSTED_SIGNER`, `CERT_NOT_FOUND`, `DOC_REVOKED`, etc.).
 
 **Example:**
 ```bash
@@ -514,14 +537,27 @@ All errors follow this format:
 
 ---
 
-## Webhooks (Planned)
+## Webhooks
 
-Webhook delivery is planned for a future Enterprise API release. The paths and payloads below represent the intended design, but **no `/api/v1/webhooks` endpoints are currently exposed by the service**.
+Webhook endpoints are available under `/api/v1/webhooks` for supported tiers.
+
+Current event taxonomy includes document, quota, key, and rights/licensing events.
 
 ### Supported Events
-- `certificate.issued` - SSL.com certificate issued/renewed
-- `quota.warning` - monthly usage exceeds configurable thresholds
-- `verification.tamper_detected` - a signed asset fails validation
+- `document.signed`
+- `document.verified`
+- `document.revoked`
+- `document.reinstated`
+- `quota.warning`
+- `quota.exceeded`
+- `key.created`
+- `key.revoked`
+- `key.rotated`
+- `rights.profile.updated`
+- `rights.notice.delivered`
+- `rights.licensing.request_received`
+- `rights.licensing.agreement_created`
+- `rights.detection.event`
 
 ### POST /api/v1/webhooks
 Register a webhook endpoint for your organization.
@@ -532,8 +568,7 @@ Register a webhook endpoint for your organization.
 ```json
 {
   "url": "https://example.com/webhooks/encypher",
-  "description": "Primary monitoring hook",
-  "events": ["certificate.issued", "verification.tamper_detected"],
+  "events": ["document.signed", "rights.notice.delivered"],
   "secret": "optional-shared-secret"
 }
 ```
@@ -542,14 +577,15 @@ Register a webhook endpoint for your organization.
 ```json
 {
   "success": true,
-  "webhook_id": "wh_01HX...",
-  "status": "pending",
-  "events": ["certificate.issued", "verification.tamper_detected"],
-  "url": "https://example.com/webhooks/encypher"
+  "data": {
+    "id": "wh_01HX...",
+    "url": "https://example.com/webhooks/encypher",
+    "events": ["document.signed", "rights.notice.delivered"],
+    "is_active": true,
+    "created_at": "2026-02-25T21:00:00Z"
+  }
 }
 ```
-
-> **Note:** While in preview the endpoint returns `status: "pending"`. Events are queued but not delivered until the webhook worker is enabled.
 
 ### GET /api/v1/webhooks
 List registered webhooks.
@@ -557,15 +593,22 @@ List registered webhooks.
 ```json
 {
   "success": true,
-  "webhooks": [
-    {
-      "webhook_id": "wh_01HX...",
-      "url": "https://example.com/webhooks/encypher",
-      "events": ["certificate.issued"],
-      "status": "pending",
-      "created_at": "2025-02-12T18:44:00Z"
-    }
-  ]
+  "data": {
+    "webhooks": [
+      {
+        "id": "wh_01HX...",
+        "url": "https://example.com/webhooks/encypher",
+        "events": ["document.signed"],
+        "is_active": true,
+        "is_verified": false,
+        "created_at": "2026-02-25T21:00:00Z",
+        "last_triggered_at": null,
+        "success_count": 0,
+        "failure_count": 0
+      }
+    ],
+    "total": 1
+  }
 }
 ```
 
@@ -578,7 +621,7 @@ Delivered events POST a JSON body with HMAC-SHA256 authentication if a secret is
 ```json
 {
   "id": "evt_01HX...",
-  "type": "verification.tamper_detected",
+  "type": "document.verified",
   "created_at": "2025-02-13T09:30:00Z",
   "data": {
     "document_id": "doc_abc123",

@@ -35,7 +35,12 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
   -d '{
     "text": "Breaking news: Scientists discover new exoplanet. The planet is located 100 light-years away.",
     "document_title": "New Exoplanet Discovered",
-    "document_type": "article"
+    "options": {
+      "segmentation_level": "sentence",
+      "manifest_mode": "micro",
+      "ecc": true,
+      "embed_c2pa": true
+    }
   }'
 ```
 
@@ -43,10 +48,18 @@ Expected response:
 ```json
 {
   "success": true,
-  "document_id": "doc_a1b2c3d4e5f6",
-  "signed_text": "Breaking news: Scientists discover new exoplanet. The planet is located 100 light-years away. [invisible C2PA manifest embedded]",
-  "total_sentences": 2,
-  "verification_url": "https://verify.encypherai.com/doc_a1b2c3d4e5f6"
+  "data": {
+    "document": {
+      "document_id": "doc_a1b2c3d4e5f6",
+      "signed_text": "Breaking news: Scientists discover new exoplanet... [invisible markers/manifest embedded]",
+      "verification_url": "https://verify.encypherai.com/doc_a1b2c3d4e5f6"
+    },
+    "metadata": {
+      "manifest_mode": "micro"
+    }
+  },
+  "error": null,
+  "correlation_id": "req-123"
 }
 ```
 
@@ -276,11 +289,12 @@ response = requests.post(
     headers={"Authorization": f"Bearer {API_KEY}"},
     json={
         "text": "Your content here.",
-        "document_title": "Document Title"
+        "document_title": "Document Title",
+        "options": {"manifest_mode": "micro", "segmentation_level": "sentence"}
     }
 )
 result = response.json()
-signed_text = result["signed_text"]
+signed_text = result["data"]["document"]["signed_text"]
 
 # Verify content
 response = requests.post(
@@ -320,9 +334,9 @@ async function verifyContent(text) {
 // Usage
 (async () => {
   const signed = await signContent('Your content here.');
-  console.log('Signed:', signed.document_id);
+  console.log('Signed:', signed.data.document.document_id);
 
-  const verified = await verifyContent(signed.signed_text);
+  const verified = await verifyContent(signed.data.document.signed_text);
   console.log('Valid:', verified.data.valid);
 })();
 ```

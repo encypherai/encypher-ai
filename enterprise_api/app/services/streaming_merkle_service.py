@@ -307,6 +307,8 @@ class StreamingMerkleService:
                     organization_id=session.organization_id,
                     document_id=session.document_id,
                     merkle_root_id=None,  # No pre-existing Merkle root
+                    merkle_root_hash=root_hash or None,
+                    merkle_segmentation_level=session.segmentation_level,
                     segments=session.segments,
                     leaf_hashes=session.segment_hashes,
                     manifest_mode=manifest_mode,

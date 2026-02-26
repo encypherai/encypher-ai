@@ -1,70 +1,97 @@
-# Streaming API Documentation
+# Streaming API
 
-**Status:** Phase 1 Implementation (Complete)  
-**Version:** 1.0.0-preview  
-**Last Updated:** 2025-10-30
+**Status:** Current implementation
 
 ---
 
 ## Overview
 
-The Streaming API provides real-time content signing capabilities for streaming LLM outputs, chat applications, and event-driven architectures. Built on WebSocket and Server-Sent Events (SSE) protocols with Redis-backed session management.
+Enterprise API exposes two streaming patterns for signing workflows:
+
+1. **SSE run-based signing** (`POST /api/v1/sign/stream`) for one-shot stream progress + final signed output.
+2. **Session-based streaming** (WebSocket + session SSE) for incremental chunk processing and reconnection/recovery.
+
+Both patterns require authenticated API access and sign permissions.
 
 ---
 
-## Features
+## 1) Stream Signing via SSE (run-based)
 
-### Phase 1 (Current) ✅
-- ✅ WebSocket connection management
-- ✅ Session management with Redis
-- ✅ Connection pooling per organization
-- ✅ Real-time chunk signing
-- ✅ Session recovery on reconnection
-- ✅ Basic authentication support
+### Endpoint
 
-### Phase 2 (Planned)
-- ⏳ Kafka producer/consumer integration
-- ⏳ Message queue support
-- ⏳ Advanced monitoring
+- `POST /api/v1/sign/stream`
 
-### Phase 3 (Planned)
-- ✅ OpenAI-compatible streaming endpoint (`POST /api/v1/chat/completions` with `stream=true`)
-- ⏳ LangChain integration
-- ⏳ LlamaIndex integration
+### Request
 
----
-
-## Architecture
-
-```
-Client (WebSocket)
-    ↓
-ConnectionManager
-    ↓
-StreamingService → SessionService (Redis)
-    ↓
-encypher-ai StreamingHandler
-    ↓
-Signed Content
-```
-
----
-
-## API Endpoints
-
-### 1. Create Streaming Session
-
-**POST** `/api/v1/sign/stream/sessions`
-
-Create a new streaming session.
-
-**Request:**
 ```json
 {
-  "session_type": "websocket",
-  "metadata": {
-    "title": "Chat Session"
-  },
+  "text": "Content to sign",
+  "document_id": "doc_optional",
+  "document_title": "Optional title",
+  "document_type": "article",
+  "run_id": "run_optional_for_idempotent_retry"
+}
+```
+
+### Event contract
+
+The endpoint responds as `text/event-stream` and emits these events in order:
+
+- `event: start`
+- `event: progress`
+- `event: partial`
+- `event: final`
+
+On failures, it emits `event: error`.
+
+### Example SSE stream
+
+```text
+event: start
+data: {"run_id":"run_123","document_id":"doc_123","status":"start","pct":0,"correlation_id":"req_abc"}
+
+event: progress
+data: {"run_id":"run_123","document_id":"doc_123","status":"progress","pct":10}
+
+event: partial
+data: {"run_id":"run_123","document_id":"doc_123","status":"partial","pct":90,"preview":"Signed content preview..."}
+
+event: final
+data: {"run_id":"run_123","document_id":"doc_123","status":"final","pct":100,"signed_text":"...","verification_url":"https://verify.encypherai.com/doc_123","duration_ms":84}
+```
+
+### Run-state lookup
+
+- `GET /api/v1/sign/stream/runs/{run_id}`
+
+Returns the most recent persisted state for recovery/resume UX.
+
+```json
+{
+  "run_id": "run_123",
+  "state": {
+    "status": "final",
+    "document_id": "doc_123",
+    "pct": 100,
+    "signed_text": "..."
+  }
+}
+```
+
+---
+
+## 2) Session-Based Streaming
+
+### Create session
+
+- `POST /api/v1/sign/stream/sessions`
+- `session_type` is accepted as query parameter (default: `websocket`)
+
+Example request body:
+
+```json
+{
+  "metadata": {"title": "Chat Session"},
   "signing_options": {
     "encode_first_chunk_only": true,
     "custom_metadata": {}
@@ -72,131 +99,89 @@ Create a new streaming session.
 }
 ```
 
-**Response:**
+Example response:
+
 ```json
 {
   "success": true,
   "session_id": "session_abc123",
   "session_type": "websocket",
-  "created_at": "2025-10-30T15:00:00Z",
-  "expires_at": "2025-10-30T16:00:00Z",
-  "signing_options": {}
+  "created_at": "2026-02-25T21:00:00Z",
+  "expires_at": "2026-02-25T22:00:00Z",
+  "signing_options": {
+    "encode_first_chunk_only": true,
+    "custom_metadata": {}
+  }
 }
 ```
 
-### 2. WebSocket Streaming
+### WebSocket endpoint
 
-**WS** `/api/v1/sign/stream?api_key=YOUR_API_KEY`
+- `WS /api/v1/sign/stream?api_key=YOUR_API_KEY`
+- Optional reconnect hint: `session_id` query parameter
 
-Real-time content signing via WebSocket.
-
-**Optional Chat Wrapper:** `WS /api/v1/chat/stream` (same protocol; optimized for chat clients)
-
-**Client → Server Messages:**
+Client -> server messages:
 
 ```json
-// Send chunk
-{
-  "type": "chunk",
-  "content": "This is a streaming chunk. ",
-  "chunk_id": "chunk_001"
-}
-
-// Finalize stream
-{
-  "type": "finalize"
-}
-
-// Recover session
-{
-  "type": "recover_session",
-  "session_id": "session_abc123"
-}
+{"type": "chunk", "content": "This is a streaming chunk.", "chunk_id": "chunk_001"}
+{"type": "finalize"}
+{"type": "recover_session", "session_id": "session_abc123"}
 ```
 
-**Server → Client Messages:**
+Server -> client messages:
 
 ```json
-// Connection confirmed
-{
-  "type": "connected",
-  "session_id": "session_abc123"
-}
-
-// Signed chunk
-{
-  "type": "signed_chunk",
-  "chunk_id": "chunk_001",
-  "content": "signed:This is a streaming chunk. ",
-  "signed": true,
-  "session_id": "session_abc123",
-  "timestamp": "2025-10-30T15:00:00Z"
-}
-
-// Stream complete
-{
-  "type": "complete",
-  "success": true,
-  "session_id": "session_abc123",
-  "document_id": "doc_xyz789",
-  "total_chunks": 42,
-  "duration_seconds": 125.5,
-  "verification_url": "https://encypherai.com/verify/doc_xyz789"
-}
-
-// Error
-{
-  "type": "error",
-  "message": "Error description"
-}
+{"type": "connected", "session_id": "session_abc123"}
+{"type": "signed_chunk", "chunk_id": "chunk_001", "content": "signed:...", "signed": true, "session_id": "session_abc123", "timestamp": "2026-02-25T21:00:00Z"}
+{"type": "complete", "success": true, "session_id": "session_abc123", "document_id": "doc_xyz789", "total_chunks": 42, "duration_seconds": 12.4, "verification_url": "https://encypherai.com/verify/doc_xyz789"}
+{"type": "error", "message": "Error description"}
 ```
 
-### 3. Close Session
+### Session SSE mirror endpoint
 
-**POST** `/api/v1/sign/stream/sessions/{session_id}/close`
+- `GET /api/v1/sign/stream/sessions/{session_id}/events?api_key=YOUR_API_KEY`
 
-Close a streaming session and get final statistics.
+This endpoint emits:
 
-**Response:**
-```json
-{
-  "type": "complete",
-  "success": true,
-  "session_id": "session_abc123",
-  "document_id": "doc_xyz789",
-  "total_chunks": 42,
-  "duration_seconds": 125.5,
-  "verification_url": "https://encypherai.com/verify/doc_xyz789"
-}
-```
+- `event: connected`
+- status events from persisted stream state (`event: start`, `event: progress`, `event: partial`, `event: final`, or `event: error`)
+- `event: done` when terminal state is reached
+- periodic `:heartbeat`
 
-### 4. Server-Sent Events (SSE)
+Example:
 
-**GET** `/api/v1/sign/stream/sessions/{session_id}/events?api_key=YOUR_API_KEY`
-
-Unidirectional event streaming via SSE.
-
-**Response Stream:**
-```
+```text
 event: connected
-data: {"session_id": "session_abc123"}
+data: {"session_id":"session_abc123"}
 
-:heartbeat
+event: start
+data: {"run_id":"run_123","status":"start","pct":0}
 
-event: chunk
-data: {"content": "Signed chunk...", "chunk_id": "001"}
+event: progress
+data: {"run_id":"run_123","status":"progress","pct":10}
 
-event: complete
-data: {"document_id": "doc_123", "status": "signed"}
+event: final
+data: {"run_id":"run_123","status":"final","pct":100,"document_id":"doc_123"}
+
+event: done
+data: {"session_id":"session_abc123"}
 ```
 
-### 5. Streaming Statistics
+### Close session
 
-**GET** `/api/v1/sign/stream/stats`
+- `POST /api/v1/sign/stream/sessions/{session_id}/close`
 
-Get streaming statistics for your organization.
+Finalizes the session and returns completion metadata.
 
-**Response:**
+---
+
+## 3) Streaming stats and health
+
+- `GET /api/v1/sign/stream/stats` (organization-scoped)
+- `GET /api/v1/sign/stream/health` (super-admin)
+
+Stats response shape:
+
 ```json
 {
   "success": true,
@@ -206,278 +191,41 @@ Get streaming statistics for your organization.
 }
 ```
 
-### 6. OpenAI-Compatible Chat Completions (SSE)
-
-**POST** `/api/v1/chat/completions`
-
-Provide `stream=true` and `sign_response=true` to receive OpenAI-compatible SSE chunks with Encypher signing metadata.
-
 ---
 
-## Usage Examples
+## 4) OpenAI-compatible chat streaming
 
-### Python WebSocket Client
+- `POST /api/v1/chat/completions`
 
-```python
-import asyncio
-import websockets
-import json
+Use:
 
-async def stream_content():
-    uri = "ws://localhost:8000/api/v1/sign/stream?api_key=YOUR_KEY"
-    
-    async with websockets.connect(uri) as websocket:
-        # Wait for connection confirmation
-        response = await websocket.recv()
-        print(f"Connected: {response}")
-        
-        # Send chunks
-        chunks = [
-            "First sentence. ",
-            "Second sentence. ",
-            "Third sentence."
-        ]
-        
-        for i, chunk in enumerate(chunks):
-            await websocket.send(json.dumps({
-                "type": "chunk",
-                "content": chunk,
-                "chunk_id": f"chunk_{i:03d}"
-            }))
-            
-            # Receive signed chunk
-            response = await websocket.recv()
-            data = json.loads(response)
-            print(f"Signed: {data['signed']}")
-        
-        # Finalize
-        await websocket.send(json.dumps({"type": "finalize"}))
-        final = await websocket.recv()
-        print(f"Complete: {final}")
+- `stream=true`
+- `sign_response=true`
 
-asyncio.run(stream_content())
-```
-
-### JavaScript WebSocket Client
-
-```javascript
-const ws = new WebSocket('ws://localhost:8000/api/v1/sign/stream?api_key=YOUR_KEY');
-
-ws.onopen = () => {
-    console.log('Connected');
-    
-    // Send chunk
-    ws.send(JSON.stringify({
-        type: 'chunk',
-        content: 'This is a test chunk. ',
-        chunk_id: 'chunk_001'
-    }));
-};
-
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    console.log('Received:', data);
-    
-    if (data.type === 'signed_chunk') {
-        console.log('Signed content:', data.content);
-    }
-};
-
-ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-};
-```
-
----
-
-## Configuration
-
-### Environment Variables
-
-```bash
-# Redis for session management
-REDIS_URL=redis://localhost:6379/0
-
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/encypher
-
-# Encryption keys
-KEY_ENCRYPTION_KEY=your_hex_key
-ENCRYPTION_NONCE=your_hex_nonce
-
-# SSL.com
-SSL_COM_API_KEY=your_ssl_com_key
-```
-
-### Connection Limits
-
-| Tier | Max Concurrent Connections | Chunks/Second |
-|------|---------------------------|---------------|
-| Professional | 10 | 100 |
-| Enterprise | 100 | 1,000 |
-| Enterprise+ | 1,000+ | 10,000+ |
-
----
-
-## Session Management
-
-### Session Lifecycle
-
-1. **Create Session** - Initialize with `POST /sign/stream/sessions`
-2. **Connect** - Establish WebSocket connection
-3. **Stream** - Send chunks and receive signed content
-4. **Finalize** - Close stream with `{"type": "finalize"}`
-5. **Cleanup** - Session auto-expires after TTL (default: 1 hour)
-
-### Session Recovery
-
-If connection drops, reconnect and send:
+When streaming, payload chunks are OpenAI-style SSE records (`data: {...}` + `data: [DONE]`) and include Encypher metadata:
 
 ```json
 {
-  "type": "recover_session",
-  "session_id": "session_abc123"
+  "object": "chat.completion.chunk",
+  "choices": [{"delta": {"content": "..."}, "finish_reason": null}],
+  "encypher": {"signed": true, "session_id": "session_abc123"}
 }
 ```
 
-The session state (buffer, chunks processed) will be restored.
+Also available: `WS /api/v1/chat/stream` for chat-specific WebSocket protocol (`message` -> `assistant_chunk` / `turn_complete`).
 
 ---
 
-## Error Handling
+## Error handling notes
 
-### Common Errors
-
-**Session Not Found:**
-```json
-{
-  "type": "error",
-  "message": "Session not found or expired: session_abc123"
-}
-```
-
-**Connection Limit Exceeded:**
-```json
-{
-  "type": "error",
-  "message": "Maximum connections exceeded for organization. Limit: 100"
-}
-```
-
-**Invalid JSON:**
-```json
-{
-  "type": "error",
-  "message": "Invalid JSON"
-}
-```
+- Authentication/authorization failures return HTTP 4xx (or WebSocket close code 1008).
+- Stream-sign SSE failures emit `event: error` with machine-friendly error code/message payload.
+- Session endpoints return `404` for missing runs/sessions and `403/404` for unauthorized cross-org access.
 
 ---
 
-## Testing
+## Related docs
 
-### Run Tests
-
-```bash
-# Unit tests
-uv run pytest tests/test_streaming_basic.py -v
-
-# Integration tests (requires Redis)
-uv run pytest tests/integration/test_streaming_e2e.py -v
-```
-
-### Manual Testing with wscat
-
-```bash
-# Install wscat
-npm install -g wscat
-
-# Connect
-wscat -c "ws://localhost:8000/api/v1/sign/stream?api_key=test"
-
-# Send message
-{"type": "chunk", "content": "Test chunk. "}
-```
-
----
-
-## Performance
-
-### Benchmarks (Target)
-
-- Connection establishment: <50ms
-- Chunk signing latency: <30ms (P95)
-- Throughput: 10,000 chunks/second per instance
-- Concurrent connections: 10,000+ per instance
-
----
-
-## Security
-
-### Authentication
-
-- API key required in query parameter or header
-- Per-organization connection limits
-- Session-level access control
-
-### Data Security
-
-- TLS 1.3 for all WebSocket connections
-- Redis encryption at rest
-- No plaintext credentials in logs
-
----
-
-## Monitoring
-
-### Metrics
-
-- Active connections per organization
-- Chunks processed per session
-- Session duration
-- Error rates
-
-### Logging
-
-All streaming events are logged with structured format:
-
-```json
-{
-  "timestamp": "2025-10-30T15:00:00Z",
-  "level": "INFO",
-  "service": "streaming",
-  "event": "chunk_signed",
-  "session_id": "session_abc123",
-  "organization_id": "org_xyz"
-}
-```
-
----
-
-## Roadmap
-
-### Phase 2 (Kafka Integration)
-- Kafka producer/consumer endpoints
-- Message queue support
-- High-throughput event processing
-
-### Phase 3 (Chat Wrappers)
-- OpenAI-compatible streaming
-- LangChain callback handler
-- LlamaIndex integration
-
----
-
-## Support
-
-For issues or questions:
-- Email: api@encypherai.com
-- Documentation: https://docs.encypherai.com/streaming
-- Status: https://verify.encypherai.com/status
-
----
-
-**Related Documents:**
-- [PRD: Enterprise Streaming Features](../../PRDs/CURRENT/PRD_Enterprise_Streaming_Features.md)
-- [Testing Plan](../../docs/implementation_plans/STREAMING_TESTING_PLAN.md)
-- [Implementation Summary](../../STREAMING_FEATURES_SUMMARY.md)
+- `docs/API.md` (canonical endpoint catalog)
+- `docs/QUICKSTART.md` (integration quick start)
+- `docs/VERIFICATION_TRUST_MODEL.md` (verify semantics)

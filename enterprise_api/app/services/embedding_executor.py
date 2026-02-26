@@ -447,6 +447,8 @@ async def encode_document_with_embeddings(
             organization_id=organization_id,
             document_id=request.document_id,
             merkle_root_id=merkle_root_id,  # None for free tier
+            merkle_root_hash=merkle_root.root_hash if merkle_root else None,
+            merkle_segmentation_level=merkle_root.segmentation_level if merkle_root else None,
             segments=segments,
             leaf_hashes=leaf_hashes,
             c2pa_manifest_url=request.c2pa_manifest_url,

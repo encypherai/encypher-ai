@@ -353,6 +353,32 @@ def _extract_uuid_from_vs256_signature(signature: str) -> Optional[str]:
         return None
 
 
+def _extract_sentence_for_signature(payload_text: str, sig_start: int, sig_end: int) -> Optional[str]:
+    """Extract the sentence containing a signature and remove that signature span.
+
+    Returns None when no containing sentence can be determined.
+    """
+    try:
+        from app.utils.segmentation import segment_sentences
+
+        current_pos = 0
+        for sentence in segment_sentences(payload_text):
+            sent_start = payload_text.find(sentence, current_pos)
+            if sent_start == -1:
+                continue
+            sent_end = sent_start + len(sentence)
+            current_pos = sent_end
+
+            if sent_start <= sig_start and sig_end <= sent_end:
+                rel_start = sig_start - sent_start
+                rel_end = sig_end - sent_start
+                return sentence[:rel_start] + sentence[rel_end:]
+    except Exception:
+        return None
+
+    return None
+
+
 async def _resolve_uuids_from_db(
     *,
     payload_text: str,
@@ -523,6 +549,7 @@ async def execute_verification(
             if vs256_sigs:
                 demo_key = get_demo_private_key()
                 _start, _end, sig_str = vs256_sigs[0]
+                clean_sentence = _extract_sentence_for_signature(payload_text, _start, _end)
 
                 # Try VS256-RS first (error-correcting variant)
                 try:
@@ -531,7 +558,11 @@ async def execute_verification(
                         derive_signing_key_from_private_key as vs256rs_derive_key,
                     )
                     rs_signing_key = vs256rs_derive_key(demo_key)
-                    sig_valid, sig_uuid = vs256rs_verify(sig_str, rs_signing_key)
+                    sig_valid, sig_uuid = vs256rs_verify(
+                        sig_str,
+                        rs_signing_key,
+                        sentence_text=clean_sentence,
+                    )
                     if sig_valid and sig_uuid:
                         from app.config import settings
                         is_valid = True
@@ -556,7 +587,11 @@ async def execute_verification(
                         derive_signing_key_from_private_key as vs256_derive_key,
                     )
                     signing_key = vs256_derive_key(demo_key)
-                    sig_valid, sig_uuid = vs256_verify(sig_str, signing_key)
+                    sig_valid, sig_uuid = vs256_verify(
+                        sig_str,
+                        signing_key,
+                        sentence_text=clean_sentence,
+                    )
                     if sig_valid and sig_uuid:
                         from app.config import settings
                         is_valid = True

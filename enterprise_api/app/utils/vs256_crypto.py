@@ -28,6 +28,7 @@ Density comparison:
 """
 
 import hashlib
+import unicodedata
 from typing import Optional, Tuple
 from uuid import UUID
 
@@ -95,6 +96,9 @@ MAGIC_PREFIX_LEN = 4
 PAYLOAD_BYTES = 32           # 16 UUID + 16 HMAC
 PAYLOAD_CHARS = 32           # 1 char per byte in base-256
 SIGNATURE_CHARS = MAGIC_PREFIX_LEN + PAYLOAD_CHARS  # 36 total
+
+# Sentence content commitment bytes appended to HMAC input when enabled.
+CONTENT_COMMITMENT_BYTES = 8
 
 
 # =============================================================================
@@ -192,6 +196,7 @@ def decode_bytes_vs256(encoded: str) -> bytes:
 def create_minimal_signed_uuid(
     sentence_uuid: UUID,
     signing_key: bytes,
+    sentence_text: str | None = None,
 ) -> str:
     """
     Create the most compact cryptographically signed UUID using base-256 VS encoding.
@@ -209,6 +214,9 @@ def create_minimal_signed_uuid(
     Args:
         sentence_uuid: UUID for this sentence (stored in DB with full metadata)
         signing_key: 32-byte secret key for HMAC (org-specific)
+        sentence_text: Optional sentence text to bind cryptographically.
+            If provided, HMAC input includes UUID + SHA256(NFC(text))[:8].
+            If omitted, legacy UUID-only signature format is produced.
 
     Returns:
         36 VS characters (invisible in supported platforms)
@@ -221,6 +229,9 @@ def create_minimal_signed_uuid(
     # Create HMAC-SHA256 over UUID, truncate to 16 bytes (128-bit security)
     h = crypto_hmac.HMAC(signing_key, hashes.SHA256(), backend=default_backend())
     h.update(uuid_bytes)
+    if sentence_text is not None:
+        nfc_bytes = unicodedata.normalize("NFC", sentence_text).encode("utf-8")
+        h.update(hashlib.sha256(nfc_bytes).digest()[:CONTENT_COMMITMENT_BYTES])
     hmac_full = h.finalize()
     hmac_truncated = hmac_full[:16]  # 128-bit security
 
@@ -234,6 +245,7 @@ def create_minimal_signed_uuid(
 def verify_minimal_signed_uuid(
     signature: str,
     signing_key: bytes,
+    sentence_text: str | None = None,
 ) -> Tuple[bool, Optional[UUID]]:
     """
     Verify a VS256 minimal signed UUID (36 chars) and extract the UUID.
@@ -241,6 +253,9 @@ def verify_minimal_signed_uuid(
     Args:
         signature: 36-character VS256 signature string
         signing_key: 32-byte secret key for HMAC verification
+        sentence_text: Optional sentence text used for content-bound signatures.
+            When provided, verifier first checks UUID+content commitment, then
+            falls back to legacy UUID-only verification for backward compatibility.
 
     Returns:
         Tuple of (is_valid, uuid) where uuid is None on failure
@@ -266,11 +281,20 @@ def verify_minimal_signed_uuid(
         # Recompute HMAC
         h = crypto_hmac.HMAC(signing_key, hashes.SHA256(), backend=default_backend())
         h.update(uuid_bytes)
+        if sentence_text is not None:
+            nfc_bytes = unicodedata.normalize("NFC", sentence_text).encode("utf-8")
+            h.update(hashlib.sha256(nfc_bytes).digest()[:CONTENT_COMMITMENT_BYTES])
         hmac_expected = h.finalize()[:16]
 
-        # Constant-time comparison
+        # Constant-time comparison (with legacy fallback when sentence_text provided)
         if hmac_received != hmac_expected:
-            return False, None
+            if sentence_text is None:
+                return False, None
+            legacy_h = crypto_hmac.HMAC(signing_key, hashes.SHA256(), backend=default_backend())
+            legacy_h.update(uuid_bytes)
+            legacy_hmac_expected = legacy_h.finalize()[:16]
+            if hmac_received != legacy_hmac_expected:
+                return False, None
 
         # Extract UUID
         sentence_uuid = UUID(bytes=uuid_bytes)

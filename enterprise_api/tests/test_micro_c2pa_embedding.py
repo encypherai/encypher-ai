@@ -709,6 +709,71 @@ async def test_sign_micro_embed_c2pa_false_still_stores_manifest_in_db(
     assert rows_with_manifest.scalar_one() > 0, "manifest_data should be persisted even when embed_c2pa=False"
 
 
+@pytest.mark.asyncio
+async def test_sign_micro_hybrid_merkle_metadata_in_manifest_and_db(
+    async_client,
+    auth_headers: dict,
+    content_db,
+) -> None:
+    """micro + C2PA should include Merkle linkage in manifest and DB metadata."""
+    response = await async_client.post(
+        "/api/v1/sign",
+        headers=auth_headers,
+        json={
+            "text": "First sentence. Second sentence.",
+            "options": {
+                "manifest_mode": "micro",
+                "ecc": True,
+                "embed_c2pa": True,
+                "segmentation_level": "sentence",
+            },
+        },
+    )
+
+    assert response.status_code == 201, response.text
+    payload = response.json()
+    document = payload.get("data", {}).get("document", {})
+    signed_text = document.get("signed_text")
+    document_id = document.get("document_id")
+
+    assert isinstance(signed_text, str) and signed_text
+    assert isinstance(document_id, str) and document_id
+
+    extracted_manifest = UnicodeMetadata.extract_metadata(signed_text)
+    assert extracted_manifest is not None
+
+    assertions = extracted_manifest.get("assertions", []) if isinstance(extracted_manifest, dict) else []
+    merkle_assertion = next(
+        (
+            assertion for assertion in assertions
+            if isinstance(assertion, dict) and assertion.get("label") == "com.encypher.merkle.v1"
+        ),
+        None,
+    )
+    assert merkle_assertion is not None, "Expected Merkle assertion in embedded C2PA manifest"
+
+    merkle_data = merkle_assertion.get("data", {})
+    assert isinstance(merkle_data, dict)
+    assert isinstance(merkle_data.get("root_hash"), str) and len(merkle_data.get("root_hash", "")) == 64
+    assert merkle_data.get("segmentation_level") == "sentence"
+    assert merkle_data.get("total_segments") == 2
+
+    db_merkle_meta = await content_db.execute(
+        text(
+            """
+            SELECT COUNT(*)
+            FROM content_references
+            WHERE document_id = :document_id
+              AND embedding_metadata->>'merkle_root_id' IS NOT NULL
+              AND embedding_metadata->>'merkle_root_hash' IS NOT NULL
+              AND embedding_metadata->>'merkle_segmentation_level' = 'sentence'
+            """
+        ),
+        {"document_id": document_id},
+    )
+    assert db_merkle_meta.scalar_one() > 0, "Expected Merkle linkage metadata on content references"
+
+
 # =============================================================================
 # Unit tests — SignerIdentity schema
 # =============================================================================

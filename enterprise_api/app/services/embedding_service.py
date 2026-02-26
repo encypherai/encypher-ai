@@ -157,6 +157,8 @@ class EmbeddingService:
         merkle_root_id: Optional[UUID],
         segments: List[str],
         leaf_hashes: List[str],
+        merkle_root_hash: Optional[str] = None,
+        merkle_segmentation_level: Optional[str] = None,
         c2pa_manifest_url: Optional[str] = None,
         c2pa_manifest_hash: Optional[str] = None,
         license_info: Optional[Dict[str, Optional[str]]] = None,
@@ -202,6 +204,8 @@ class EmbeddingService:
             organization_id: Organization ID
             document_id: Document ID
             merkle_root_id: Merkle tree root ID
+            merkle_root_hash: Optional Merkle root hash for linkage/assertions
+            merkle_segmentation_level: Optional segmentation level for Merkle linkage
             segments: List of text segments (sentences)
             leaf_hashes: List of leaf hashes (same order as segments)
             c2pa_manifest_url: Optional C2PA manifest URL
@@ -268,6 +272,12 @@ class EmbeddingService:
                 "uses_encypher_ai": True,
                 "signer_id": self.signer_id,
             }
+            if merkle_root_id:
+                embedding_metadata["merkle_root_id"] = str(merkle_root_id)
+            if merkle_root_hash:
+                embedding_metadata["merkle_root_hash"] = merkle_root_hash
+            if merkle_segmentation_level:
+                embedding_metadata["merkle_segmentation_level"] = merkle_segmentation_level
             if processing_metadata:
                 embedding_metadata["processing"] = processing_metadata
             if per_segment_uuid_mode:
@@ -340,6 +350,8 @@ class EmbeddingService:
             "document_id": document_id,
             "organization_id": organization_id,
             "merkle_root_id": str(merkle_root_id) if merkle_root_id else None,
+            "merkle_root_hash": merkle_root_hash,
+            "merkle_segmentation_level": merkle_segmentation_level,
             "total_segments": len(segments),
             "manifest_mode": manifest_mode,
         }
@@ -422,6 +434,28 @@ class EmbeddingService:
         # Create a new list for assertions to avoid modifying the input list if it's reused
         final_custom_assertions = list(custom_assertions) if custom_assertions else []
 
+        if merkle_root_hash:
+            merkle_assertion_data: Dict[str, Any] = {
+                "root_hash": merkle_root_hash,
+                "total_segments": len(segments),
+            }
+            if merkle_root_id:
+                merkle_assertion_data["root_id"] = str(merkle_root_id)
+            if merkle_segmentation_level:
+                merkle_assertion_data["segmentation_level"] = merkle_segmentation_level
+
+            has_merkle_assertion = any(
+                isinstance(assertion, dict) and assertion.get("label") == "com.encypher.merkle.v1"
+                for assertion in final_custom_assertions
+            )
+            if not has_merkle_assertion:
+                final_custom_assertions.append(
+                    {
+                        "label": "com.encypher.merkle.v1",
+                        "data": merkle_assertion_data,
+                    }
+                )
+
         # === API Feature Augmentation (TEAM_044) ===
         # Handle different manifest modes and embedding strategies
 
@@ -489,6 +523,7 @@ class EmbeddingService:
                     add_hard_binding=False,
                     claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
                     actions=c2pa_actions,
+                    custom_assertions=final_custom_assertions,
                     distribute_across_targets=use_distributed,
                     target=MetadataTarget.FILE_END,
                 )
@@ -644,7 +679,11 @@ class EmbeddingService:
                 micro_embedded_segments = []
                 for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
                     segment_uuid = uuid.uuid4()
-                    micro_signature = micro_create(segment_uuid, signing_key)
+                    micro_signature = micro_create(
+                        segment_uuid,
+                        signing_key,
+                        sentence_text=segment,
+                    )
                     embedded_segment = micro_embed_safely(segment, micro_signature)
                     micro_embedded_segments.append(embedded_segment)
 

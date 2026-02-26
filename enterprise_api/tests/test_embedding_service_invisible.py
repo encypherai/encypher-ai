@@ -184,6 +184,32 @@ class TestEmbeddingServiceInvisible:
             UUID(str(manifest_uuid))
 
     @pytest.mark.asyncio
+    async def test_create_embeddings_persists_merkle_linkage_metadata(self, service, db_session):
+        """All modes should persist Merkle linkage metadata for hybrid verification."""
+        merkle_root_id = uuid4()
+        merkle_root_hash = "a" * 64
+
+        embeddings, _ = await service.create_embeddings(
+            db=db_session,
+            organization_id="org_001",
+            document_id="doc_merkle_linkage",
+            merkle_root_id=merkle_root_id,
+            merkle_root_hash=merkle_root_hash,
+            merkle_segmentation_level="sentence",
+            segments=["One sentence."],
+            leaf_hashes=["hash1"],
+        )
+
+        assert len(embeddings) == 1
+        db_session.add_all.assert_called_once()
+        added_refs = db_session.add_all.call_args[0][0]
+        assert len(added_refs) == 1
+        metadata = added_refs[0].embedding_metadata or {}
+        assert metadata.get("merkle_root_id") == str(merkle_root_id)
+        assert metadata.get("merkle_root_hash") == merkle_root_hash
+        assert metadata.get("merkle_segmentation_level") == "sentence"
+
+    @pytest.mark.asyncio
     async def test_create_embeddings_mismatched_lengths(self, service, db_session):
         """Test that mismatched segments/hashes raises error."""
         with pytest.raises(ValueError, match="must have same length"):

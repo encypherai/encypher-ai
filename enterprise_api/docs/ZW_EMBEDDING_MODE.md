@@ -202,12 +202,14 @@ is_valid, payload = verify_zw_signature(signed_text, org_public_key)
 
 **Request:**
 ```json
-POST /api/v1/sign/advanced
+POST /api/v1/sign
 {
   "document_id": "article_001",
   "text": "Article content...",
-  "manifest_mode": "zw_embedding",
-  "segmentation_level": "document"
+  "options": {
+    "manifest_mode": "zw_embedding",
+    "segmentation_level": "document"
+  }
 }
 ```
 
@@ -215,18 +217,17 @@ POST /api/v1/sign/advanced
 ```json
 {
   "success": true,
-  "document_id": "article_001",
-  "embedded_content": "Article content...‍‌‍͏...",
-  "statistics": {
-    "signature_size_chars": 132,
-    "uses_zw_embedding": true,
-    "word_compatible": true,
-    "encoding": "base4_word_safe"
-  },
-  "metadata": {
-    "manifest_mode": "zw_embedding",
-    "zw_encoding": "base4_word_safe",
-    "signature_chars_per_segment": 132
+  "data": {
+    "document": {
+      "document_id": "article_001",
+      "signed_text": "Article content...‍‌‍͏...",
+      "verification_url": "https://verify.encypherai.com/article_001"
+    },
+    "metadata": {
+      "manifest_mode": "zw_embedding",
+      "zw_encoding": "base4_word_safe",
+      "signature_chars_per_segment": 132
+    }
   }
 }
 ```
@@ -235,7 +236,7 @@ POST /api/v1/sign/advanced
 
 **Request:**
 ```json
-POST /api/v1/public/verify
+POST /api/v1/verify
 {
   "text": "Article content...​‌​‍..."
 }
@@ -245,12 +246,14 @@ POST /api/v1/public/verify
 ```json
 {
   "success": true,
-  "valid": true,
-  "signer_id": "org_technews",
-  "signer_name": "TechNews Corp",
-  "timestamp": "2026-02-04T16:00:00Z",
-  "content_tampered": false,
-  "format": "zw_embedding"
+  "data": {
+    "valid": true,
+    "tampered": false,
+    "reason_code": "OK",
+    "signer_id": "org_technews",
+    "signer_name": "TechNews Corp"
+  },
+  "correlation_id": "req-123"
 }
 ```
 
