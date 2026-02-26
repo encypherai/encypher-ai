@@ -1113,7 +1113,13 @@ own CDN. Only metadata (hashes, pHash, c2pa_instance_id) is stored in the Encyph
 **Passthrough mode** (local dev / no signing cert configured): JUMBF embedding is
 skipped. XMP provenance is still injected into each signed image so verification by
 `instance_id` works correctly. `c2pa_signed=false` in the response indicates this mode.
-`signed_hash` will differ from `original_hash` because XMP bytes are appended.
+`signed_hash` will differ from `original_hash` because XMP bytes are appended inside
+the binary (JPEG: APP1 segment after SOI; PNG: iTXt chunk after IHDR).
+
+**XMP namespace:** `https://encypher.ai/schemas/v1` -- fields: `instance_id` (urn:uuid),
+`org_id`, `document_id`, `image_hash` (SHA-256 of original pixels), `verify` (URL).
+Readable by standard XMP tooling. WebP and TIFF are not XMP-modified; they still
+receive hard binding and pHash registration.
 
 **Free tier:** Hard binding + XMP + pHash. C2PA JUMBF requires a configured signing cert.
 
@@ -1154,6 +1160,10 @@ cross-organization pHash attribution search.
      the image record in the Encypher DB. Returns `valid=true` if the DB record
      is found, regardless of whether a full C2PA manifest is embedded. This allows
      passthrough-mode images and CDN-re-encoded copies to verify successfully.
+  Note: in the local dev Traefik stack this endpoint is served by the enterprise-api
+  (not verification-service). `verify-image-router` (priority 110) in
+  `infrastructure/traefik/routes-local.yml` overrides the catch-all `verify-router`
+  (priority 100). See `docs/image-signing/implementation-guide.md` for details.
 - POST /api/v1/verify/rich -- looks up signed article by document_id, verifies all
   components (text, images, composite manifest integrity).
 
@@ -1812,6 +1822,8 @@ For detailed instructions on running local benchmarks and load tests, please ref
 - **Microservices Overview**: [services/README.md](../services/README.md)
 - **Key Service**: [services/key-service/README.md](../services/key-service/README.md)
 - **Coalition Service**: [services/coalition-service/README.md](../services/coalition-service/README.md)
+- **Image Signing Implementation Guide**: [docs/image-signing/implementation-guide.md](../docs/image-signing/implementation-guide.md) -- XMP embedding details, passthrough mode, two-step verification, Traefik routing
+- **Inspect Tool (marketing site)**: [apps/marketing-site/src/app/tools/inspect/README.md](../apps/marketing-site/src/app/tools/inspect/README.md)
 - **C2PA Custom Assertions API**: [docs/api/C2PA_CUSTOM_ASSERTIONS_API.md](../docs/api/C2PA_CUSTOM_ASSERTIONS_API.md)
 - **C2PA Provenance Chain**: [docs/c2pa/C2PA_PROVENANCE_CHAIN.md](../docs/c2pa/C2PA_PROVENANCE_CHAIN.md)
 - **C2PA Implementation**: [docs/c2pa/C2PA Implimentation Guidance.md](../docs/c2pa/C2PA%20Implimentation%20Guidance.md)

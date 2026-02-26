@@ -70,6 +70,31 @@ Added `TestEnchypherXmp` class with 6 tests:
 - `test_passthrough_image_has_encypher_xmp` - JPEG: XMP fields match sign result
 - `test_passthrough_png_has_encypher_xmp` - PNG: same
 
+## Phase 2: Marketing Site Image Inspection (same session)
+
+### Changes
+- `apps/marketing-site/src/lib/fileInspector.ts`: split extensions/MIME types
+  into text + image sets; added `isImageFile()`, `IMAGE_MAX_SIZE_BYTES` (10 MB),
+  updated `isTextFile()` to exclude images, `validateFile()` for per-type limits
+- `apps/marketing-site/src/app/api/tools/verify-image/route.ts`: new Next.js
+  API route proxying POST {image_data, mime_type} to enterprise /api/v1/verify/image
+  with 14 MB limit and trace headers
+- `apps/marketing-site/src/components/tools/FileInspectorTool.tsx`: image
+  detection, ImageVerifyResult component (green/red banner, image_id, document_id,
+  SHA-256, verified_at, image preview panel), file info bar thumbnail
+- `apps/marketing-site/src/app/tools/inspect/page.tsx`: SEO metadata for images
+- `infrastructure/traefik/routes-local.yml`: added verify-image-router (priority
+  110) -> enterprise-api; prevents capture by verify-router (priority 100) ->
+  verification-service which lacks the endpoint
+
+### Test Results
+- 44/44 fileInspector tests passing
+- Puppeteer e2e verified:
+  - plain JPEG: "No Provenance Found" (red banner) OK
+  - XMP-signed JPEG with DB record: "Provenance Verified" (green banner,
+    all fields: image_id, document_id, SHA-256, verified_at) OK
+- Both commits pushed to origin/feat/image-signing-c2pa
+
 ## Suggested Commit Message
 
 ```
