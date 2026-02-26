@@ -44,6 +44,7 @@ from app.routers import (
     onboarding,
     organizations_proxy,
     partner,
+    rich_signing,
     rights,
     rights_licensing,
     signing,
@@ -807,6 +808,7 @@ app.include_router(documents.router, prefix="/api/v1", tags=["Documents"])
 app.include_router(keys.router, prefix="/api/v1", tags=["API Keys"])
 app.include_router(webhooks.router, prefix="/api/v1", tags=["Webhooks"])
 app.include_router(signing.router, prefix="/api/v1", tags=["Signing"])
+app.include_router(rich_signing.router, prefix="/api/v1", tags=["Rich Signing"])
 app.include_router(verification.router, prefix="/api/v1", tags=["Verification"])
 app.include_router(lookup.router, prefix="/api/v1", tags=["Lookup"])
 app.include_router(onboarding.router, prefix="/api/v1/onboarding", tags=["Onboarding"])

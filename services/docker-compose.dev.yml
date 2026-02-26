@@ -189,6 +189,27 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  # Image Service (TrustMark neural watermarking -- Enterprise only)
+  # Start explicitly: docker-compose --profile enterprise up image-service
+  image-service:
+    build:
+      context: ./image-service
+      dockerfile: Dockerfile
+    container_name: encypher-image-service
+    ports:
+      - "8010:8010"
+    environment:
+      TRUSTMARK_SECRET: ${TRUSTMARK_SECRET:-dev-trustmark-secret}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    profiles:
+      - enterprise
+
 volumes:
   postgres_data:
   redis_data:

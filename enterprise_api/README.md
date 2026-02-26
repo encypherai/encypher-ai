@@ -140,7 +140,10 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 |----------|--------|------|------|-------------|--------------|
 | `/api/v1/sign` | POST | ✅ | All (features gated) | Sign content with C2PA manifest - features gated by tier | Key Service, Coalition Service (optional) |
 | `/api/v1/sign/advanced` | POST | - | - | ⚠️ **REMOVED** - Returns 410 Gone, use `/sign` with options | - |
+| `/api/v1/sign/rich` | POST | ✅ | All | Sign rich article (text + embedded images) with C2PA | Key Service |
 | `/api/v1/verify` | POST | ✅ | All (features gated) | Verify signed content with optional attribution, plagiarism, and fuzzy search flags - features gated by tier | Key Service |
+| `/api/v1/verify/image` | POST | ❌ | Public | Verify a signed image. Checks JUMBF C2PA manifest; falls back to XMP instance_id DB lookup for passthrough-mode images | None |
+| `/api/v1/verify/rich` | POST | ❌ | Public | Verify a signed rich article by document_id | None |
 | `/api/v1/lookup` | POST | ❌ | Public | Lookup sentence provenance | None |
 | `/api/v1/provenance/lookup` | POST | ❌ | Public | Lookup provenance for a document (structured) | None |
 | `/api/v1/account` | GET | ✅ | All | Get account profile | Auth Service |
@@ -218,6 +221,15 @@ Look up content across multiple sources with chronological ordering.
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
 | `/api/v1/enterprise/attribution/multi-source` | POST | ✅ | All (authority ranking: Enterprise) | Multi-source hash lookup with authority ranking |
+
+### Image Attribution Endpoints
+
+Search for images by perceptual similarity (pHash Hamming distance). Scope "org" is
+available to all tiers; scope "all" (cross-organization) requires Enterprise.
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/images/attribution` | POST | ✅ | All (cross-org: Enterprise) | Find images by perceptual similarity (pHash) | None |
 
 ### Public Verification Endpoints
 
@@ -1075,6 +1087,83 @@ Signed references are embedded in a transport-safe form that is designed to surv
 
 ---
 
+### Rich Article Signing (Text + Images)
+
+Sign an article containing embedded images as a single provenance unit. Each image
+receives provenance data embedded directly in the image binary. The article-level
+composite manifest references each image as an ingredient, binding text and images
+together under one cryptographic record.
+
+**Endpoint:** POST /api/v1/sign/rich
+
+**Storage model:** Sign-and-return. Signed image bytes (with embedded provenance) are
+returned as base64 in the response. Publishers store and serve signed images from their
+own CDN. Only metadata (hashes, pHash, c2pa_instance_id) is stored in the Encypher DB.
+
+**Image binding layers:**
+
+| Layer | Mechanism | Survives re-encode? | Tier |
+|-------|-----------|---------------------|------|
+| Hard binding | SHA-256 of pixel bytes (original_hash) | No | All |
+| In-file reference | XMP (ISO 16684) carrying `instance_id` in APP1/iTXt | Yes (CDN-compatible) | All |
+| C2PA JUMBF | Full cryptographic manifest embedded as JUMBF box | Yes | When cert configured |
+| Soft binding | TrustMark neural watermark (survives JPEG recompression, moderate crop) | Yes | Enterprise only |
+| pHash fuzzy index | Perceptual hash for near-duplicate search (Hamming distance) | Near-duplicate | All |
+
+**Passthrough mode** (local dev / no signing cert configured): JUMBF embedding is
+skipped. XMP provenance is still injected into each signed image so verification by
+`instance_id` works correctly. `c2pa_signed=false` in the response indicates this mode.
+`signed_hash` will differ from `original_hash` because XMP bytes are appended.
+
+**Free tier:** Hard binding + XMP + pHash. C2PA JUMBF requires a configured signing cert.
+
+**Enterprise tier:** All Free features plus TrustMark neural soft binding and
+cross-organization pHash attribution search.
+
+**Request (abbreviated):**
+
+```json
+{
+  "content": "<h1>Title</h1><p>Text...</p>",
+  "content_format": "html",
+  "document_id": "article-2026-0001",
+  "document_title": "Breaking News",
+  "images": [
+    {
+      "data": "<base64-encoded-jpeg>",
+      "filename": "photo1.jpg",
+      "mime_type": "image/jpeg",
+      "position": 0,
+      "alt_text": "Caption"
+    }
+  ],
+  "options": {
+    "segmentation_level": "sentence",
+    "manifest_mode": "micro",
+    "enable_trustmark": false,
+    "image_quality": 95
+  }
+}
+```
+
+**Image verification:**
+
+- POST /api/v1/verify/image -- accepts base64 image. Two-step verification:
+  1. Extracts and validates the embedded JUMBF C2PA manifest (if present).
+  2. If no JUMBF manifest or hash miss, reads the XMP `instance_id` and looks up
+     the image record in the Encypher DB. Returns `valid=true` if the DB record
+     is found, regardless of whether a full C2PA manifest is embedded. This allows
+     passthrough-mode images and CDN-re-encoded copies to verify successfully.
+- POST /api/v1/verify/rich -- looks up signed article by document_id, verifies all
+  components (text, images, composite manifest integrity).
+
+**Image attribution (fuzzy):**
+
+POST /api/v1/enterprise/images/attribution -- finds similar images by pHash Hamming distance.
+scope="org" is available to all tiers; scope="all" (cross-org) requires Enterprise.
+
+---
+
 ## 🏗️ Architecture
 
 ### Microservices Architecture
@@ -1516,6 +1605,24 @@ TRUSTED_PROXY_IPS=10.0.0.10,10.0.0.11
 
 # Embedding signature secret (required in production for public verification)
 EMBEDDING_SIGNATURE_SECRET=<hex_or_ascii_secret>
+```
+
+#### Image Signing Configuration
+
+```bash
+# Max image size per upload (bytes, default 10MB)
+IMAGE_MAX_SIZE_BYTES=10485760
+
+# Max images per /sign/rich request
+IMAGE_MAX_COUNT_PER_REQUEST=20
+
+# Passthrough mode: skip JUMBF C2PA embedding (XMP provenance still injected).
+# Auto-enabled when MANAGED_SIGNER_PRIVATE_KEY_PEM / MANAGED_SIGNER_CERTIFICATE_CHAIN_PEM
+# are absent. Set explicitly for local dev / CI.
+IMAGE_SIGNING_PASSTHROUGH=false
+
+# TrustMark microservice URL (empty = disabled, Enterprise only)
+IMAGE_SERVICE_URL=
 ```
 
 #### C2PA Trust List Configuration

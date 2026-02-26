@@ -74,6 +74,8 @@ FREE_FEATURES: Dict[str, Any] = {
     "streaming": True,
     "custom_assertions": True,
     "audit_logs": True,
+    # image signing (all tiers get basic C2PA image signing)
+    "image_signing": True,
     # --- enterprise-only below ---
     "fuzzy_fingerprint": False,
     "bulk_operations": False,
@@ -83,6 +85,9 @@ FREE_FEATURES: Dict[str, Any] = {
     "sso": False,
     "advanced_analytics": False,
     "max_team_members": 1,
+    # image enterprise features
+    "image_fuzzy_search": False,     # pHash cross-org search (Enterprise only)
+    "trustmark_watermark": False,    # TrustMark neural watermark (Enterprise only)
 }
 
 ENTERPRISE_FEATURES: Dict[str, Any] = {
@@ -101,6 +106,11 @@ ENTERPRISE_FEATURES: Dict[str, Any] = {
     "sso": True,
     "advanced_analytics": True,
     "max_team_members": -1,  # Unlimited
+    # image signing (all tiers)
+    "image_signing": True,
+    # image enterprise features
+    "image_fuzzy_search": True,     # pHash cross-org search
+    "trustmark_watermark": True,    # TrustMark neural watermark
 }
 
 # Strategic partners get the same features as enterprise

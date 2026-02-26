@@ -9,6 +9,8 @@ from fastapi import APIRouter
 from app.api.v1.endpoints import merkle, provisioning
 from app.api.v1.endpoints import streaming_merkle, evidence, fingerprint, multi_source
 from app.api.v1.enterprise import c2pa
+from app.api.v1.enterprise import image_attribution
+from app.api.v1.image_verify import router as image_verify_router
 from app.api.v1.public import c2pa as public_c2pa
 from app.api.v1.public import rights as public_rights
 from app.api.v1.public import verify
@@ -36,6 +38,12 @@ api_router.include_router(fingerprint.router, prefix="/enterprise")
 
 # Include multi-source lookup endpoints (Business+)
 api_router.include_router(multi_source.router, prefix="/enterprise")
+
+# Include image attribution endpoint (Enterprise: cross-org pHash search)
+api_router.include_router(image_attribution.router, prefix="", tags=["Image Attribution"])
+
+# Include image verification endpoints (no auth -- public)
+api_router.include_router(image_verify_router, tags=["Image Verification"])
 
 # Include public verification endpoints (no auth)
 api_router.include_router(verify.router)

@@ -6825,6 +6825,188 @@
           }
         }
       }
+    },
+    "/api/v1/sign/rich": {
+      "post": {
+        "tags": [
+          "Rich Signing"
+        ],
+        "summary": "Sign rich article (text + images) with C2PA",
+        "description": "Sign a rich article containing both text and embedded images as a single\natomic provenance unit.\n\nEach image receives a standalone C2PA JUMBF-embedded manifest. The article-level\ncomposite manifest binds text (via Merkle root) and all images (via ingredient\nreferences) into a single provenance record.\n\n**Tier feature matrix:**\n\n| Feature | Free | Enterprise |\n|---------|------|------------|\n| Basic image C2PA signing | Yes | Yes |\n| pHash attribution indexing | Yes | Yes |\n| TrustMark neural watermark | No | Yes |\n\n**Quota:** Each call consumes (N_images + 1 text + 1 composite) signatures.\n\n**Images:** Up to 20 images per request. Each image is base64-encoded in the\nrequest body and returned base64-encoded in the response. Publishers are\nresponsible for hosting signed images on their own CDN.",
+        "operationId": "sign_rich_content_api_v1_sign_rich_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RichArticleSignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Article signed successfully",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (bad image data, unsupported MIME type)"
+          },
+          "403": {
+            "description": "Feature requires higher tier or insufficient quota"
+          },
+          "422": {
+            "description": "Image signing or text signing failed"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "503": {
+            "description": "Signing credentials not configured"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/verify/image": {
+      "post": {
+        "tags": [
+          "Image Verification"
+        ],
+        "summary": "Verify a signed image",
+        "description": "Public endpoint. Two-step verification: (1) extracts and validates the embedded JUMBF C2PA manifest; (2) if no JUMBF manifest or hash miss, reads the XMP instance_id embedded in the image and looks up the record in the Encypher DB. Returns valid=true if either step confirms provenance. Passthrough-mode images (c2pa_signed=false) are verified via XMP DB lookup.",
+        "operationId": "verify_image_api_v1_verify_image_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImageVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageVerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/rich": {
+      "post": {
+        "tags": [
+          "Image Verification"
+        ],
+        "summary": "Verify a signed rich article (text + images)",
+        "description": "Public endpoint. Looks up a signed article by document_id and verifies all components: text signature, each image C2PA manifest, and the composite manifest integrity.",
+        "operationId": "verify_rich_api_v1_verify_rich_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RichVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RichVerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/enterprise/images/attribution": {
+      "post": {
+        "tags": [
+          "Image Attribution",
+          "Image Attribution"
+        ],
+        "summary": "Find images by perceptual similarity (Enterprise: cross-org)",
+        "description": "Search for images with similar visual content using perceptual hashing (pHash). scope='org' is available to all tiers. scope='all' (cross-organization search) requires Enterprise tier.",
+        "operationId": "image_attribution_api_v1_enterprise_images_attribution_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImageAttributionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageAttributionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -13977,6 +14159,715 @@
           "partner_name"
         ],
         "title": "PartnerBulkProvisionRequest"
+      },
+      "RichArticleSignRequest": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "maxLength": 5242880,
+            "minLength": 1,
+            "title": "Content",
+            "description": "Article text/HTML/Markdown"
+          },
+          "content_format": {
+            "type": "string",
+            "enum": [
+              "html",
+              "markdown",
+              "plain"
+            ],
+            "title": "Content Format",
+            "default": "html"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "document_title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Title"
+          },
+          "document_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Url"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "images": {
+            "items": {
+              "$ref": "#/components/schemas/RichContentImage"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Images"
+          },
+          "options": {
+            "$ref": "#/components/schemas/RichSignOptions"
+          },
+          "publisher_org_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisher Org Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content",
+          "images"
+        ],
+        "title": "RichArticleSignRequest"
+      },
+      "RichContentImage": {
+        "properties": {
+          "data": {
+            "type": "string",
+            "title": "Data",
+            "description": "Base64-encoded image bytes"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename",
+            "description": "Original filename e.g. photo1.jpg"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "MIME type of the image"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Position",
+            "description": "Order of this image within the article",
+            "default": 0
+          },
+          "alt_text": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alt Text"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "filename",
+          "mime_type"
+        ],
+        "title": "RichContentImage"
+      },
+      "RichSignOptions": {
+        "properties": {
+          "segmentation_level": {
+            "type": "string",
+            "title": "Segmentation Level",
+            "default": "sentence"
+          },
+          "manifest_mode": {
+            "type": "string",
+            "title": "Manifest Mode",
+            "default": "micro"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "default": "c2pa.created"
+          },
+          "enable_trustmark": {
+            "type": "boolean",
+            "title": "Enable Trustmark",
+            "default": false
+          },
+          "image_quality": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Image Quality",
+            "default": 95
+          },
+          "use_rights_profile": {
+            "type": "boolean",
+            "title": "Use Rights Profile",
+            "default": true
+          },
+          "index_for_attribution": {
+            "type": "boolean",
+            "title": "Index For Attribution",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "RichSignOptions"
+      },
+      "ImageVerifyRequest": {
+        "properties": {
+          "image_data": {
+            "type": "string",
+            "title": "Image Data"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "default": "image/jpeg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image_data"
+        ],
+        "title": "ImageVerifyRequest"
+      },
+      "ImageVerifyResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "verified_at": {
+            "type": "string",
+            "title": "Verified At"
+          },
+          "c2pa_manifest": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "C2Pa Manifest"
+          },
+          "image_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Id"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hash"
+          },
+          "phash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phash"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "correlation_id": {
+            "type": "string",
+            "title": "Correlation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "verified_at",
+          "correlation_id"
+        ],
+        "title": "ImageVerifyResponse"
+      },
+      "RichVerifyRequest": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id"
+        ],
+        "title": "RichVerifyRequest"
+      },
+      "RichVerifyResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "verified_at": {
+            "type": "string",
+            "title": "Verified At"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type",
+            "default": "rich_article"
+          },
+          "text_verification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TextVerificationResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "image_verifications": {
+            "items": {
+              "$ref": "#/components/schemas/ImageVerificationResult"
+            },
+            "type": "array",
+            "title": "Image Verifications",
+            "default": []
+          },
+          "composite_manifest_valid": {
+            "type": "boolean",
+            "title": "Composite Manifest Valid"
+          },
+          "all_ingredients_verified": {
+            "type": "boolean",
+            "title": "All Ingredients Verified"
+          },
+          "signer_identity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SignerIdentity"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "correlation_id": {
+            "type": "string",
+            "title": "Correlation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "verified_at",
+          "document_id",
+          "composite_manifest_valid",
+          "all_ingredients_verified",
+          "correlation_id"
+        ],
+        "title": "RichVerifyResponse"
+      },
+      "ImageVerificationResult": {
+        "properties": {
+          "image_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Id"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "c2pa_manifest_valid": {
+            "type": "boolean",
+            "title": "C2Pa Manifest Valid"
+          },
+          "hash_matches": {
+            "type": "boolean",
+            "title": "Hash Matches"
+          },
+          "trustmark_valid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trustmark Valid"
+          },
+          "c2pa_instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "C2Pa Instance Id"
+          },
+          "signer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "c2pa_manifest_valid",
+          "hash_matches"
+        ],
+        "title": "ImageVerificationResult"
+      },
+      "TextVerificationResult": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "total_segments": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Segments"
+          },
+          "tampered_segments": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Tampered Segments",
+            "default": []
+          },
+          "merkle_root_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merkle Root Verified"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid"
+        ],
+        "title": "TextVerificationResult"
+      },
+      "ImageAttributionRequest": {
+        "properties": {
+          "image_data": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Data",
+            "description": "Base64-encoded image bytes. Mutually exclusive with phash."
+          },
+          "phash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phash",
+            "description": "Pre-computed pHash as 16-char hex string. Mutually exclusive with image_data."
+          },
+          "threshold": {
+            "type": "integer",
+            "maximum": 32.0,
+            "minimum": 0.0,
+            "title": "Threshold",
+            "description": "Max Hamming distance (0=exact, 10=default, 32=very loose)",
+            "default": 10
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "org",
+              "all"
+            ],
+            "title": "Scope",
+            "description": "'org' = search within your organization (all tiers). 'all' = cross-organization search (Enterprise only).",
+            "default": "org"
+          }
+        },
+        "type": "object",
+        "title": "ImageAttributionRequest"
+      },
+      "ImageAttributionResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "query_phash": {
+            "type": "string",
+            "title": "Query Phash"
+          },
+          "match_count": {
+            "type": "integer",
+            "title": "Match Count"
+          },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/ImageAttributionMatchResponse"
+            },
+            "type": "array",
+            "title": "Matches"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "threshold": {
+            "type": "integer",
+            "title": "Threshold"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query_phash",
+          "match_count",
+          "matches",
+          "scope",
+          "threshold"
+        ],
+        "title": "ImageAttributionResponse"
+      },
+      "ImageAttributionMatchResponse": {
+        "properties": {
+          "image_id": {
+            "type": "string",
+            "title": "Image Id"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "title": "Organization Id"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "hamming_distance": {
+            "type": "integer",
+            "title": "Hamming Distance"
+          },
+          "similarity_score": {
+            "type": "number",
+            "title": "Similarity Score"
+          },
+          "signed_hash": {
+            "type": "string",
+            "title": "Signed Hash"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "image_id",
+          "document_id",
+          "organization_id",
+          "filename",
+          "hamming_distance",
+          "similarity_score",
+          "signed_hash",
+          "created_at"
+        ],
+        "title": "ImageAttributionMatchResponse"
       }
     },
     "securitySchemes": {

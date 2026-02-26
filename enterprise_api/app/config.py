@@ -94,6 +94,17 @@ class Settings(BaseSettings):
     # Trusted proxy IPs (comma-separated list)
     trusted_proxy_ips: str = ""
 
+    # Image signing configuration
+    image_max_size_bytes: int = 10_485_760          # 10 MB per image
+    image_max_count_per_request: int = 20
+    image_response_format: str = "base64"            # always base64 for now
+    image_service_url: str = ""                      # TrustMark microservice URL (empty = disabled)
+    # When True: skip JUMBF embedding (no cert required). Returns original image bytes
+    # unchanged. All metadata (hash, pHash, composite manifest, DB rows) is still written.
+    # Use for local dev/CI where no CA-signed cert is available.
+    # Never set this in production -- signed images will have no C2PA manifest.
+    image_signing_passthrough: bool = False
+
     # C2PA signer trust list pinning/refresh
     c2pa_trust_list_url: Optional[str] = None
     c2pa_trust_list_sha256: Optional[str] = None
