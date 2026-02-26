@@ -95,6 +95,27 @@ Added `TestEnchypherXmp` class with 6 tests:
     all fields: image_id, document_id, SHA-256, verified_at) OK
 - Both commits pushed to origin/feat/image-signing-c2pa
 
+## Phase 3: Real Blog Image Sign + Verify (same session, context continuation)
+
+### Changes
+
+- Re-signed real blog image `RAG_Copyright_Trap_Why_Retrieval_Is_Not_Safe_Harbor.png`
+  (591 KB JPEG misnamed as .png) with `document_id=blog-rag-copyright-trap-v3` using
+  `sign/rich` passthrough mode.
+- `image_id: img_8e7149cc`, `c2pa_instance_id: urn:uuid:a9213a4c-9343-4f8a-8908-7e164fc5f0f1`
+- Verified signed image via `/verify/image` API: `valid: True` (XMP fallback lookup)
+- Puppeteer e2e: uploaded signed blog image to `http://localhost:3000/tools/inspect`,
+  confirmed "Provenance Verified" banner with all fields (image_id, document_id, SHA-256,
+  verified_at) and image preview showing the RAG Copyright Trap blog header.
+- Updated `docs/images/tools/inspect/03-provenance-verified.png` with real blog image
+  verification screenshot.
+
+### Test Results
+
+- `tests/unit/test_image_utils.py::TestEnchypherXmp`: 6/6 PASSED
+- `tests/e2e_local/test_rich_sign_passthrough.py`: 14/14 PASSED
+- Puppeteer e2e: "Provenance Verified" confirmed with real blog image
+
 ## Suggested Commit Message
 
 ```
