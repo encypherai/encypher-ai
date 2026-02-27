@@ -1619,7 +1619,7 @@ class Admin
     public function render_api_base_url_field(): void
     {
         $options = get_option('encypher_provenance_settings', []);
-        $value = isset($options['api_base_url']) ? esc_url($options['api_base_url']) : '';
+        $value = isset($options['api_base_url']) && '' !== $options['api_base_url'] ? esc_url($options['api_base_url']) : 'https://api.encypherai.com';
         ?>
         <input type="url" id="api_base_url" class="regular-text" name="encypher_provenance_settings[api_base_url]" value="<?php echo esc_attr($value); ?>" placeholder="https://api.encypherai.com/api/v1" required />
         <p class="description">
