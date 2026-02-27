@@ -23,6 +23,24 @@
                 this.testConnection();
             });
 
+            // Auto-save + connect when API key is pasted
+            let _quickConnectTimer = null;
+            $('#api_key').on('paste', () => {
+                this.showApiKeyStatus('saving', 'Verifying...');
+                clearTimeout(_quickConnectTimer);
+                // Delay slightly so the browser has updated the input value
+                _quickConnectTimer = setTimeout(() => this.quickConnect(), 50);
+            });
+
+            // Re-verify when URL changes and a key is already present
+            $('#api_base_url').on('change', () => {
+                if ($('#api_key').val()) {
+                    this.showApiKeyStatus('saving', 'Verifying...');
+                    clearTimeout(_quickConnectTimer);
+                    _quickConnectTimer = setTimeout(() => this.quickConnect(), 50);
+                }
+            });
+
             // Auto-test connection when API settings change
             $('input[name="encypher_provenance_settings[api_base_url]"], input[name="encypher_provenance_settings[api_key]"]').on('change', () => {
                 this.updateChecklistProgress();
@@ -63,7 +81,11 @@
                     headers: {
                         'Content-Type': 'application/json',
                         'X-WP-Nonce': wpApiSettings.nonce
-                    }
+                    },
+                    body: JSON.stringify({
+                        api_base_url: apiUrl,
+                        api_key: apiKey
+                    })
                 });
 
                 const data = await response.json();
@@ -101,6 +123,74 @@
             }
 
             this.updateChecklistProgress();
+        },
+
+        /**
+         * Verify credentials and save them in one shot (triggered by paste).
+         * Updates the health card and checklist with the returned org/tier info.
+         */
+        async quickConnect() {
+            const apiBaseUrl = $('#api_base_url').val();
+            const apiKey     = $('#api_key').val();
+
+            if (!apiBaseUrl || !apiKey) {
+                return;
+            }
+
+            try {
+                const response = await fetch(wpApiSettings.root + 'encypher-provenance/v1/quick-connect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': wpApiSettings.nonce
+                    },
+                    body: JSON.stringify({ api_base_url: apiBaseUrl, api_key: apiKey })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    this.showApiKeyStatus('saved', 'Saved — connected');
+                    this.setChecklistStepState('connection-test', true);
+                    this.updateHealthCard({
+                        state: 'connected',
+                        stateLabel: 'Connected and ready',
+                        apiUrl: data.api_url || apiBaseUrl,
+                        tier: data.organization?.tier || data.tier || 'free',
+                        organization: data.organization?.name || 'Not available',
+                        lastCheck: this.currentTimestamp(),
+                    });
+                    this.updateChecklistProgress();
+                    // Refresh tier constraints with new data
+                    if (window.EncypherSettingsData) {
+                        window.EncypherSettingsData.tier = data.tier || 'free';
+                        this.applyTierConstraints();
+                    }
+                } else {
+                    const msg = data.message || data.data?.message || 'Connection failed';
+                    this.showApiKeyStatus('error', msg);
+                    this.setChecklistStepState('connection-test', false);
+                    this.updateChecklistProgress();
+                }
+            } catch (error) {
+                this.showApiKeyStatus('error', error.message);
+            }
+        },
+
+        /**
+         * Show an inline status message next to the API key field.
+         * state: 'saving' | 'saved' | 'error'
+         */
+        showApiKeyStatus(state, message) {
+            let $status = $('#encypher-api-key-status');
+            if (!$status.length) {
+                $status = $('<span>', { id: 'encypher-api-key-status' });
+                $('#api_key').after($status);
+            }
+            $status
+                .removeClass('encypher-key-status-saving encypher-key-status-saved encypher-key-status-error')
+                .addClass('encypher-key-status-' + state)
+                .text(message);
         },
 
         convertToLocalhostUrl(url) {

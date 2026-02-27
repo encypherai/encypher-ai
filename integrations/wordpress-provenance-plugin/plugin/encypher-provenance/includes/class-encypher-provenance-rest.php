@@ -170,6 +170,26 @@ class Rest
             ],
             'callback' => [$this, 'handle_test_connection_request'],
         ]);
+
+        register_rest_route('encypher-provenance/v1', '/quick-connect', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'permission_callback' => function () {
+                return current_user_can('manage_options');
+            },
+            'args' => [
+                'api_base_url' => [
+                    'type' => 'string',
+                    'required' => true,
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+                'api_key' => [
+                    'type' => 'string',
+                    'required' => true,
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+            'callback' => [$this, 'handle_quick_connect_request'],
+        ]);
     }
 
     public function can_edit_post(WP_REST_Request $request): bool
@@ -1492,8 +1512,105 @@ class Rest
     }
 
     /**
+     * Probe the API server to verify it is reachable.
+     *
+     * Strategy (in order):
+     *   1. GET /health        — fastest, no auth needed
+     *   2. GET /readyz        — fallback lightweight probe
+     *   3. GET /api/v1/account — always routed in Traefik; 401 still proves the
+     *                            API is up (gateway is routing, not 404-ing)
+     *
+     * Returns decoded JSON body on 200, empty array on any other "API is up"
+     * response (401/403 from account probe), or WP_Error on genuine failure.
+     *
+     * @param string $api_base_url Already-normalized base URL (ending with /api/v1).
+     * @return array|WP_Error
+     */
+    private function probe_health(string $api_base_url)
+    {
+        $root = preg_replace('#/api/v1/?$#', '', rtrim($api_base_url, '/'));
+
+        // --- Phase 1: root-level health probes ---
+        foreach (['/health', '/readyz'] as $probe_path) {
+            $response = wp_remote_get($root . $probe_path, ['timeout' => 10]);
+
+            if (is_wp_error($response)) {
+                return new WP_Error(
+                    'connection_failed',
+                    sprintf(
+                        __('Connection failed: %s', 'encypher-provenance'),
+                        $response->get_error_message()
+                    ),
+                    ['status' => 500]
+                );
+            }
+
+            $status_code = wp_remote_retrieve_response_code($response);
+
+            if ($status_code === 200) {
+                return json_decode(wp_remote_retrieve_body($response), true) ?: [];
+            }
+
+            if ($status_code === 404) {
+                continue; // Path not routed yet — try next
+            }
+
+            return new WP_Error(
+                'health_check_failed',
+                sprintf(__('Health check failed with status %d', 'encypher-provenance'), $status_code),
+                ['status' => $status_code]
+            );
+        }
+
+        // --- Phase 2: account endpoint fallback ---
+        // /api/v1/account is guaranteed to be routed by Traefik.
+        // A 401/403 response proves the API gateway is up and routing correctly.
+        $account_probe = wp_remote_get(rtrim($api_base_url, '/') . '/account', ['timeout' => 10]);
+
+        if (is_wp_error($account_probe)) {
+            return new WP_Error(
+                'connection_failed',
+                sprintf(
+                    __('Connection failed: %s', 'encypher-provenance'),
+                    $account_probe->get_error_message()
+                ),
+                ['status' => 500]
+            );
+        }
+
+        $status_code = wp_remote_retrieve_response_code($account_probe);
+
+        // 2xx, 401, 403 all mean the API is reachable
+        if ($status_code < 500 && $status_code !== 404) {
+            return [];
+        }
+
+        return new WP_Error(
+            'health_check_failed',
+            sprintf(__('API host unreachable (status %d).', 'encypher-provenance'), $status_code),
+            ['status' => $status_code]
+        );
+    }
+
+    /**
+     * Normalizes an API base URL to always end with /api/v1 (no trailing slash).
+     * Accepts both https://api.encypherai.com/ and https://api.encypherai.com/api/v1.
+     */
+    private static function normalize_api_base_url(string $url): string
+    {
+        $url = rtrim(trim($url), '/');
+        if ('' === $url) {
+            return '';
+        }
+        if (! str_ends_with($url, '/api/v1')) {
+            $url .= '/api/v1';
+        }
+        return $url;
+    }
+
+    /**
      * Handle connection test request (server-side).
-     * 
+     *
      * @param WP_REST_Request $request
      * @return WP_REST_Response|WP_Error
      */
@@ -1502,13 +1619,15 @@ class Rest
         // Use provided values from request, or fall back to saved settings
         $api_base_url = $request->get_param('api_base_url');
         $api_key = $request->get_param('api_key');
-        
+
         // If not provided in request, use saved settings
         if (empty($api_base_url)) {
             $settings = get_option('encypher_provenance_settings', []);
             $api_base_url = isset($settings['api_base_url']) ? $settings['api_base_url'] : '';
             $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
         }
+
+        $api_base_url = self::normalize_api_base_url($api_base_url);
 
         if (empty($api_base_url)) {
             return new WP_Error(
@@ -1518,42 +1637,12 @@ class Rest
             );
         }
 
-        // Test health endpoint (at root, not under /api/v1)
-        // Remove /api/v1 suffix if present to get base URL
-        $base_url = preg_replace('#/api/v1/?$#', '', rtrim($api_base_url, '/'));
-        $health_url = $base_url . '/health';
-        
-        $health_response = wp_remote_get($health_url, [
-            'timeout' => 10,
-            'headers' => $api_key ? ['Authorization' => 'Bearer ' . $api_key] : [],
-        ]);
-
-        if (is_wp_error($health_response)) {
-            return new WP_Error(
-                'connection_failed',
-                sprintf(
-                    __('Connection failed: %s', 'encypher-provenance'),
-                    $health_response->get_error_message()
-                ),
-                ['status' => 500]
-            );
+        $health = $this->probe_health($api_base_url);
+        if (is_wp_error($health)) {
+            return $health;
         }
 
-        $status_code = wp_remote_retrieve_response_code($health_response);
-        $body = wp_remote_retrieve_body($health_response);
-
-        if ($status_code !== 200) {
-            return new WP_Error(
-                'health_check_failed',
-                sprintf(
-                    __('Health check failed with status %d', 'encypher-provenance'),
-                    $status_code
-                ),
-                ['status' => $status_code]
-            );
-        }
-
-        $health_data = json_decode($body, true);
+        $health_data = $health;
 
         // Build response
         $result = [
@@ -1598,9 +1687,85 @@ class Rest
         return new WP_REST_Response($result);
     }
 
+    /**
+     * Verify credentials and persist them without a full settings-form submit.
+     * Called automatically when the user pastes an API key on the settings page.
+     */
+    public function handle_quick_connect_request(WP_REST_Request $request)
+    {
+        $api_base_url = self::normalize_api_base_url((string) $request->get_param('api_base_url'));
+        $api_key      = trim((string) $request->get_param('api_key'));
+
+        if ('' === $api_base_url || '' === $api_key) {
+            return new WP_Error(
+                'missing_params',
+                __('API URL and API key are required.', 'encypher-provenance'),
+                ['status' => 400]
+            );
+        }
+
+        $health = $this->probe_health($api_base_url);
+        if (is_wp_error($health)) {
+            return $health;
+        }
+
+        // Fetch account / tier info
+        $account  = $this->fetch_remote_account($api_base_url, $api_key);
+        $tier     = 'free';
+        $features = [];
+        $usage    = [];
+        $org      = [
+            'organization_id' => '',
+            'name'            => '',
+            'tier'            => 'free',
+        ];
+
+        if (! is_wp_error($account)) {
+            $tier     = $account['tier'] ?? 'free';
+            $features = $account['features'] ?? [];
+            $usage    = $account['usage'] ?? [];
+            $org_name = $account['organization_name'] ?? '';
+            $org_id   = $account['organization_id'] ?? '';
+            $org      = [
+                'organization_id' => $org_id,
+                'name'            => $org_name ?: ($org_id ?: __('Your organization', 'encypher-provenance')),
+                'tier'            => $tier,
+            ];
+        }
+
+        // Persist only connection-related fields; leave all other settings untouched
+        $current = get_option('encypher_provenance_settings', []);
+        if (! is_array($current)) {
+            $current = [];
+        }
+        $current['api_base_url']               = $api_base_url;
+        $current['api_key']                    = $api_key;
+        $current['tier']                       = $tier;
+        $current['organization_id']            = $org['organization_id'];
+        $current['organization_name']          = $org['name'];
+        $current['features']                   = $features;
+        $current['usage']                      = $usage;
+        $current['connection_last_status']     = 'connected';
+        $current['connection_last_checked_at'] = gmdate('c');
+
+        update_option('encypher_provenance_settings', $current);
+
+        // Bust the account transient so the next full-save fetches fresh data
+        $cache_key = 'encypher_account_' . md5(strtolower($api_base_url) . '|' . substr(hash('sha256', $api_key), 0, 16));
+        delete_site_transient($cache_key);
+
+        return new WP_REST_Response([
+            'success'      => true,
+            'status'       => 'connected',
+            'api_url'      => $api_base_url,
+            'tier'         => $tier,
+            'organization' => $org,
+        ]);
+    }
+
     private function fetch_remote_account(string $api_base_url, string $api_key)
     {
-        $base = rtrim((string) $api_base_url, '/');
+        $base = self::normalize_api_base_url($api_base_url);
         if ('' === $base || '' === trim($api_key)) {
             return new \WP_Error('invalid_configuration', __('Missing API base URL or API key.', 'encypher-provenance'));
         }

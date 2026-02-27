@@ -389,6 +389,22 @@ class Admin
 
     }
 
+    /**
+     * Normalizes an API base URL to always end with /api/v1 (no trailing slash).
+     * Accepts both https://api.encypherai.com/ and https://api.encypherai.com/api/v1.
+     */
+    private static function normalize_api_base_url(string $url): string
+    {
+        $url = rtrim(trim($url), '/');
+        if ('' === $url) {
+            return '';
+        }
+        if (! str_ends_with($url, '/api/v1')) {
+            $url .= '/api/v1';
+        }
+        return $url;
+    }
+
     public function sanitize_settings(array $settings): array
     {
         $sanitized = [];
@@ -397,7 +413,7 @@ class Admin
             $current_settings = [];
         }
         $sanitized['api_base_url'] = isset($settings['api_base_url']) ? esc_url_raw(trim($settings['api_base_url'])) : 'https://api.encypherai.com/api/v1';
-        $sanitized['api_base_url'] = rtrim($sanitized['api_base_url'], '/');
+        $sanitized['api_base_url'] = self::normalize_api_base_url($sanitized['api_base_url']);
         $sanitized['api_key'] = isset($settings['api_key']) ? sanitize_text_field($settings['api_key']) : '';
         $sanitized['auto_verify'] = isset($settings['auto_verify']) ? (bool) $settings['auto_verify'] : false;
         $valid_connection_states = ['unknown', 'connected', 'auth_required', 'disconnected'];

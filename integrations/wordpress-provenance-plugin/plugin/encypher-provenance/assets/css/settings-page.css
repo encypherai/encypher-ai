@@ -205,6 +205,27 @@
     text-decoration: underline;
 }
 
+/* API Key auto-save status */
+#encypher-api-key-status {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+#encypher-api-key-status.encypher-key-status-saving {
+    color: #72aee6;
+}
+
+#encypher-api-key-status.encypher-key-status-saved {
+    color: #00a32a;
+    font-weight: 600;
+}
+
+#encypher-api-key-status.encypher-key-status-error {
+    color: #d63638;
+}
+
 /* API Key Field */
 .api-key-field-wrapper {
     position: relative;

@@ -3,8 +3,16 @@
 
 http:
   routers:
-    # Health check is handled by Traefik's built-in /ping endpoint
-    # No need for a separate health router
+    # Health check - routes /health to enterprise-api
+    # Required by the WordPress plugin and other integrations
+    api-health:
+      rule: "PathPrefix(`/health`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 200
+      middlewares:
+        - cors
 
     # ===========================================
     # API ROUTING (path-based)
