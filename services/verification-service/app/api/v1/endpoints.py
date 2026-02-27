@@ -1,7 +1,9 @@
 """API endpoints for Verification Service v1"""
 
+import hashlib
 import re
 import time
+import unicodedata
 
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Request
 from fastapi.responses import JSONResponse, HTMLResponse
@@ -702,9 +704,17 @@ async def verify_text(
     # joins paragraphs via implode(' ', ...)).  When COSE verifies (signer_id is
     # set) but the content hash fails (is_valid=False), collapse all whitespace
     # runs to single spaces and retry before giving up.
+    #
+    # Two-step approach:
+    # 1. Call verify_metadata() on the ws-normalized text (handles most cases).
+    # 2. If that still fails (e.g. stored byte-offset exclusions land differently),
+    #    manually re-compute the content hash from the manifest's stored
+    #    c2pa.hash.data.v1 assertion.  COSE already verified, so we only need
+    #    to confirm the content hash matches.
     if not is_valid and signer_id is not None and manifest is not None:
         _ws_text = re.sub(r"\s+", " ", verify_request.text).strip()
         if _ws_text != verify_request.text:
+            # Step 1: full re-verification with ws-normalized text
             try:
                 _is_valid_ws, _signer_id_ws, _manifest_ws = UnicodeMetadata.verify_metadata(
                     text=_ws_text,
@@ -720,7 +730,48 @@ async def verify_text(
                         payload_bytes=payload_bytes,
                     )
             except Exception as _ws_exc:
-                logger.debug("verify_ws_normalized_exception", error=str(_ws_exc))
+                logger.warning("verify_ws_normalized_exception", error=str(_ws_exc))
+
+            # Step 2: manual content-hash check.
+            # COSE is already trusted (signer_id resolved above).  Compute the
+            # SHA-256 of the ws-normalized text with stored exclusions applied and
+            # compare against the hash committed in the COSE payload.
+            if not is_valid:
+                try:
+                    _assertions = manifest.get("assertions", []) if isinstance(manifest, dict) else []
+                    _ch_assertion = next(
+                        (a for a in _assertions if isinstance(a, dict) and a.get("label") == "c2pa.hash.data.v1"),
+                        None,
+                    )
+                    if _ch_assertion:
+                        _ch_data = _ch_assertion.get("data", {})
+                        _stored_hash = _ch_data.get("hash", "")
+                        _raw_excls = _ch_data.get("exclusions", [])
+                        _excls = [
+                            (e["start"], e["length"])
+                            for e in _raw_excls
+                            if isinstance(e, dict) and "start" in e and "length" in e
+                        ]
+                        if _stored_hash and _excls:
+                            _norm = unicodedata.normalize("NFC", _ws_text)
+                            _buf = bytearray(_norm.encode("utf-8"))
+                            _ok = True
+                            for _s, _l in sorted(_excls, key=lambda x: x[0], reverse=True):
+                                if _s + _l > len(_buf):
+                                    _ok = False
+                                    break
+                                del _buf[_s : _s + _l]
+                            if _ok:
+                                _actual_hash = hashlib.sha256(bytes(_buf)).hexdigest()
+                                if _actual_hash == _stored_hash:
+                                    is_valid = True
+                                    logger.info(
+                                        "verify_ws_manual_hash_success",
+                                        signer_id=signer_id,
+                                        payload_bytes=payload_bytes,
+                                    )
+                except Exception as _mh_exc:
+                    logger.warning("verify_ws_manual_hash_exception", error=str(_mh_exc))
 
     # Fallback: no exception, but no signer_id extracted.
     if not signer_id:

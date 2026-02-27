@@ -124,6 +124,76 @@ def test_verify_browser_paste_whitespace_normalization(client, monkeypatch) -> N
     assert data["signer_id"] == signer_id
 
 
+def test_verify_browser_paste_whitespace_manual_hash_path(client, monkeypatch) -> None:
+    """Manual hash path (step 2) succeeds when verify_metadata always returns invalid."""
+    private_key, public_key = generate_ed25519_key_pair()
+    signer_id = "org_manual_hash_test"
+
+    signed_text = UnicodeMetadata.embed_metadata(
+        text="Paragraph one content. With multiple sentences. Here is more text. Second paragraph content. And another sentence here.",
+        private_key=private_key,
+        signer_id=signer_id,
+        metadata_format="c2pa",
+        target=MetadataTarget.WHITESPACE,
+        add_hard_binding=True,
+    )
+
+    # Simulate browser paste with \n\n between the two "paragraphs"
+    browser_pasted = signed_text.replace(
+        "Here is more text. Second paragraph",
+        "Here is more text.\n\nSecond paragraph",
+        1,
+    )
+    assert browser_pasted != signed_text
+
+    monkeypatch.setattr(
+        verify_endpoints.httpx,
+        "AsyncClient",
+        lambda: _make_dummy_client(public_key, signer_id),
+    )
+
+    # Force step 1 (verify_metadata on _ws_text) to always fail so step 2 runs.
+    # We call the original verify_metadata once (for the primary pasted-text call)
+    # so that is_valid=False but signer_id+manifest are set, then always return
+    # (False, signer_id, {}) for subsequent calls.
+    _orig_verify = UnicodeMetadata.verify_metadata.__func__ if hasattr(UnicodeMetadata.verify_metadata, "__func__") else None
+    _call_count = {"n": 0}
+    _first_manifest = {}
+
+    def _mock_verify_metadata(text, public_key_resolver=None):
+        _call_count["n"] += 1
+        if _call_count["n"] == 1:
+            # Primary call: use real implementation to get signer_id + manifest
+            result = UnicodeMetadata.__class__.verify_metadata.__func__(UnicodeMetadata, text, public_key_resolver=public_key_resolver)  # type: ignore[attr-defined]
+            _first_manifest["data"] = result[2]
+            return result
+        # Retry calls: pretend the content hash still fails (signer_id set, is_valid=False)
+        _manifest = _first_manifest.get("data") or {}
+        return (False, signer_id, _manifest)
+
+    # The monkeypatch approach for a staticmethod needs to go via the class
+    monkeypatch.setattr(
+        verify_endpoints.UnicodeMetadata,
+        "verify_metadata",
+        staticmethod(_mock_verify_metadata),
+    )
+
+    response = client.post(
+        "/api/v1/verify",
+        json={"text": browser_pasted},
+        headers={"Authorization": "Bearer valid-api-key"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    data = payload["data"]
+    assert data["valid"] is True, (
+        f"Expected valid=True via manual hash path, got reason_code={data.get('reason_code')}"
+    )
+    assert data["reason_code"] == "OK"
+
+
 def test_verify_no_regression_non_whitespace_tamper(client, monkeypatch) -> None:
     """Content changes (not just whitespace) must still be rejected as SIGNATURE_INVALID."""
     private_key, public_key = generate_ed25519_key_pair()
