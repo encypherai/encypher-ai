@@ -1,5 +1,6 @@
 """API endpoints for Verification Service v1"""
 
+import re
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Request
@@ -694,6 +695,32 @@ async def verify_text(
                 },
             )
             return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
+
+    # Whitespace-normalization retry.
+    # Browser copy-paste of rendered HTML produces \n\n between paragraphs
+    # while the signed text was built with single spaces (WordPress extract_text
+    # joins paragraphs via implode(' ', ...)).  When COSE verifies (signer_id is
+    # set) but the content hash fails (is_valid=False), collapse all whitespace
+    # runs to single spaces and retry before giving up.
+    if not is_valid and signer_id is not None and manifest is not None:
+        _ws_text = re.sub(r"\s+", " ", verify_request.text).strip()
+        if _ws_text != verify_request.text:
+            try:
+                _is_valid_ws, _signer_id_ws, _manifest_ws = UnicodeMetadata.verify_metadata(
+                    text=_ws_text,
+                    public_key_resolver=public_key_resolver,
+                )
+                if _is_valid_ws:
+                    is_valid = _is_valid_ws
+                    signer_id = _signer_id_ws
+                    manifest = _manifest_ws
+                    logger.info(
+                        "verify_ws_normalized_success",
+                        signer_id=signer_id,
+                        payload_bytes=payload_bytes,
+                    )
+            except Exception as _ws_exc:
+                logger.debug("verify_ws_normalized_exception", error=str(_ws_exc))
 
     # Fallback: no exception, but no signer_id extracted.
     if not signer_id:

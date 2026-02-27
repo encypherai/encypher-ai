@@ -11,6 +11,7 @@ Supports C2PA trust list validation for third-party signed content.
 from __future__ import annotations
 
 import logging
+import re
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -533,6 +534,31 @@ async def execute_verification(
         signer_id = None
         manifest = {}
         exception_message = str(exc)
+
+    # Whitespace-normalization retry.
+    # Browser copy-paste of rendered HTML produces \n\n between paragraphs
+    # while the signed text was built with single spaces (WordPress extract_text
+    # joins paragraphs via implode(' ', ...)).  When COSE verifies (signer_id is
+    # set) but the content hash fails (is_valid=False), collapse all whitespace
+    # runs to single spaces and retry before giving up.
+    if not is_valid and signer_id is not None and manifest:
+        _ws_text = re.sub(r"\s+", " ", payload_text).strip()
+        if _ws_text != payload_text:
+            try:
+                _is_valid_ws, _signer_id_ws, _manifest_ws = UnicodeMetadata.verify_metadata(
+                    text=_ws_text,
+                    public_key_resolver=resolve_public_key,
+                )
+                if _is_valid_ws:
+                    is_valid = _is_valid_ws
+                    signer_id = _signer_id_ws
+                    manifest = _manifest_ws
+                    exception_message = None
+                    logger.info(
+                        "Whitespace-normalized verification succeeded: signer=%s", signer_id
+                    )
+            except Exception as _ws_exc:
+                logger.debug("Whitespace-normalized verification exception: %s", _ws_exc)
 
     # TEAM_158: Fallback to micro / ZW embedding verification
     # when C2PA finds no signer.  Micro mode embeds a signed UUID per
