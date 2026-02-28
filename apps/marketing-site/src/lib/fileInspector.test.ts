@@ -1,12 +1,16 @@
 // TEAM_152: Tests for file inspector utilities
+// TEAM_241: Added image file tests
 import {
   isTextFile,
   isPdfFile,
+  isImageFile,
   formatFileSize,
   validateFile,
   SUPPORTED_EXTENSIONS,
+  SUPPORTED_IMAGE_EXTENSIONS,
   SUPPORTED_MIME_TYPES,
   MAX_FILE_SIZE_BYTES,
+  IMAGE_MAX_SIZE_BYTES,
   SUPPORTED_FORMATS_DISPLAY,
 } from "./fileInspector";
 
@@ -32,10 +36,14 @@ describe("fileInspector", () => {
     });
 
     it("rejects files with unsupported extensions and no text MIME", () => {
-      expect(isTextFile("image.png", "image/png")).toBe(false);
       expect(isTextFile("video.mp4", "video/mp4")).toBe(false);
       expect(isTextFile("archive.zip", "application/zip")).toBe(false);
       expect(isTextFile("binary.exe", "application/octet-stream")).toBe(false);
+    });
+
+    it("returns false for image files (images are handled separately)", () => {
+      expect(isTextFile("image.png", "image/png")).toBe(false);
+      expect(isTextFile("photo.jpg", "image/jpeg")).toBe(false);
     });
 
     it("is case-insensitive for extensions", () => {
@@ -98,11 +106,11 @@ describe("fileInspector", () => {
     });
 
     it("rejects unsupported file types", () => {
-      const result = validateFile("image.png", "image/png", 1024);
+      const result = validateFile("video.mp4", "video/mp4", 1024);
       expect(result.valid).toBe(false);
       if (!result.valid) {
         expect(result.reason).toContain("Unsupported file type");
-        expect(result.reason).toContain("image.png");
+        expect(result.reason).toContain("video.mp4");
       }
     });
 
@@ -142,8 +150,12 @@ describe("fileInspector", () => {
   });
 
   describe("constants", () => {
-    it("has a reasonable max file size", () => {
+    it("has a reasonable max file size for text", () => {
       expect(MAX_FILE_SIZE_BYTES).toBe(5 * 1024 * 1024);
+    });
+
+    it("has a 10 MB max file size for images", () => {
+      expect(IMAGE_MAX_SIZE_BYTES).toBe(10 * 1024 * 1024);
     });
 
     it("includes common text extensions", () => {
@@ -153,6 +165,15 @@ describe("fileInspector", () => {
       expect(SUPPORTED_EXTENSIONS).toContain(".py");
       expect(SUPPORTED_EXTENSIONS).toContain(".js");
       expect(SUPPORTED_EXTENSIONS).toContain(".ts");
+    });
+
+    it("includes image extensions", () => {
+      expect(SUPPORTED_EXTENSIONS).toContain(".jpg");
+      expect(SUPPORTED_EXTENSIONS).toContain(".jpeg");
+      expect(SUPPORTED_EXTENSIONS).toContain(".png");
+      expect(SUPPORTED_EXTENSIONS).toContain(".webp");
+      expect(SUPPORTED_IMAGE_EXTENSIONS).toContain(".jpg");
+      expect(SUPPORTED_IMAGE_EXTENSIONS).toContain(".png");
     });
 
     it("includes PDF extension and MIME type", () => {
@@ -166,11 +187,107 @@ describe("fileInspector", () => {
       expect(SUPPORTED_MIME_TYPES).toContain("text/html");
     });
 
-    it("has a display string for supported formats including PDF", () => {
+    it("includes image MIME types", () => {
+      expect(SUPPORTED_MIME_TYPES).toContain("image/jpeg");
+      expect(SUPPORTED_MIME_TYPES).toContain("image/png");
+      expect(SUPPORTED_MIME_TYPES).toContain("image/webp");
+    });
+
+    it("has a display string for supported formats including images", () => {
+      expect(SUPPORTED_FORMATS_DISPLAY).toContain("JPEG");
+      expect(SUPPORTED_FORMATS_DISPLAY).toContain("PNG");
+      expect(SUPPORTED_FORMATS_DISPLAY).toContain("WebP");
       expect(SUPPORTED_FORMATS_DISPLAY).toContain("PDF");
       expect(SUPPORTED_FORMATS_DISPLAY).toContain("TXT");
       expect(SUPPORTED_FORMATS_DISPLAY).toContain("JSON");
       expect(SUPPORTED_FORMATS_DISPLAY).toContain("PY");
     });
+  });
+});
+
+describe("isImageFile", () => {
+  it("detects JPEG by MIME type", () => {
+    expect(isImageFile("photo.jpg", "image/jpeg")).toBe(true);
+    expect(isImageFile("photo.jpeg", "image/jpeg")).toBe(true);
+  });
+
+  it("detects PNG by MIME type", () => {
+    expect(isImageFile("image.png", "image/png")).toBe(true);
+  });
+
+  it("detects WebP by MIME type", () => {
+    expect(isImageFile("image.webp", "image/webp")).toBe(true);
+  });
+
+  it("detects JPEG by extension when MIME is generic", () => {
+    expect(isImageFile("photo.jpg", "application/octet-stream")).toBe(true);
+    expect(isImageFile("photo.jpeg", "")).toBe(true);
+  });
+
+  it("detects PNG by extension", () => {
+    expect(isImageFile("image.PNG", "")).toBe(true);
+  });
+
+  it("returns false for text files", () => {
+    expect(isImageFile("readme.txt", "text/plain")).toBe(false);
+    expect(isImageFile("data.json", "application/json")).toBe(false);
+  });
+
+  it("returns false for PDF", () => {
+    expect(isImageFile("doc.pdf", "application/pdf")).toBe(false);
+  });
+});
+
+describe("isTextFile with images excluded", () => {
+  it("returns false for image MIME types", () => {
+    expect(isTextFile("photo.jpg", "image/jpeg")).toBe(false);
+    expect(isTextFile("image.png", "image/png")).toBe(false);
+  });
+
+  it("returns false for image extensions even with generic MIME", () => {
+    expect(isTextFile("photo.jpg", "application/octet-stream")).toBe(false);
+    expect(isTextFile("image.png", "")).toBe(false);
+  });
+});
+
+describe("validateFile with images", () => {
+  it("accepts valid JPEG files", () => {
+    const result = validateFile("photo.jpg", "image/jpeg", 1024);
+    expect(result).toEqual({ valid: true });
+  });
+
+  it("accepts valid PNG files", () => {
+    const result = validateFile("image.png", "image/png", 2048);
+    expect(result).toEqual({ valid: true });
+  });
+
+  it("accepts images up to 10 MB", () => {
+    const result = validateFile("photo.jpg", "image/jpeg", IMAGE_MAX_SIZE_BYTES);
+    expect(result).toEqual({ valid: true });
+  });
+
+  it("rejects images over 10 MB", () => {
+    const result = validateFile("huge.jpg", "image/jpeg", IMAGE_MAX_SIZE_BYTES + 1);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.reason).toContain("File too large");
+    }
+  });
+
+  it("uses 5 MB limit for text files (not 10 MB)", () => {
+    // 6 MB text file should be rejected
+    const result = validateFile("big.txt", "text/plain", 6 * 1024 * 1024);
+    expect(result.valid).toBe(false);
+    // 6 MB image should be accepted
+    const imgResult = validateFile("big.jpg", "image/jpeg", 6 * 1024 * 1024);
+    expect(imgResult.valid).toBe(true);
+  });
+
+  it("rejects unsupported file types with appropriate message", () => {
+    const result = validateFile("video.mp4", "video/mp4", 1024);
+    expect(result.valid).toBe(false);
+    if (!result.valid) {
+      expect(result.reason).toContain("image");
+    }
   });
 });

@@ -104,6 +104,20 @@ http:
         - cors-api
 
     # ============================================
+    # IMAGE VERIFICATION -> Enterprise API (9000)
+    # /api/v1/verify/image uses XMP+DB lookup in enterprise-api
+    # Must be higher priority than verify-router (100)
+    # ============================================
+    verify-image-router:
+      rule: "PathPrefix(`/api/v1/verify/image`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 110
+      middlewares:
+        - cors-api
+
+    # ============================================
     # VERIFICATION -> Verification Service (8005)
     # All /api/v1/verify/* endpoints handled by verification-service
     # (including /verify/advanced which proxies to enterprise-api internally)
