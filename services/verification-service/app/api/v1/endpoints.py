@@ -826,7 +826,11 @@ async def verify_text(
     resolved_embeddings: list[EmbeddingDetail] = []
     resolved_c2pa_manifest: dict | None = None
     resolved_total_segments: int | None = None
-    if not signer_id:
+    # Run ZWC fallback when signer_id is absent OR when C2PA found a signer_id
+    # but the content hash failed (e.g. user pasted the whole article including
+    # title/badge text that is not part of the signed region).  In that case the
+    # per-sentence ZWC markers can still prove provenance without a full doc hash.
+    if not signer_id or not is_valid:
         try:
             from ...utils.zw_detect import find_zw_signatures, extract_uuid_from_signature
 
@@ -899,7 +903,9 @@ async def verify_text(
     vs256_org_id = None
     vs256_document_id = None
     vs256_uuid_str = None
-    if not signer_id:
+    # Same rationale as ZWC: allow VS256 fallback when C2PA hash failed but
+    # signer_id was extracted from COSE.
+    if not signer_id or not is_valid:
         try:
             from ...utils.vs256_detect import (
                 find_vs256_signatures,
