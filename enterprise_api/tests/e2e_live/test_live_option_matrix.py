@@ -265,21 +265,21 @@ async def test_live_sign_advanced_option_matrix(live_client, live_auth_headers, 
 
     advanced_cases = [
         (
-            "lightweight_uuid",
+            "micro_ecc_paragraph",
             {
-                "manifest_mode": "lightweight_uuid",
+                "manifest_mode": "micro",
+                "ecc": True,
                 "segmentation_level": "paragraph",
                 "segmentation_levels": ["paragraph"],
                 "embedding_strategy": "single_point",
-                "embedding_options": {"format": "plain", "method": "comment", "include_text": True},
             },
             {"segmentation_level": "paragraph", "search_scope": "organization"},
         ),
         (
-            "minimal_uuid_disable_c2pa",
+            "micro_no_c2pa",
             {
-                "manifest_mode": "minimal_uuid",
-                "disable_c2pa": True,
+                "manifest_mode": "micro",
+                "embed_c2pa": False,
                 "segmentation_level": "sentence",
                 "segmentation_levels": ["sentence"],
                 "index_for_attribution": False,
@@ -289,7 +289,7 @@ async def test_live_sign_advanced_option_matrix(live_client, live_auth_headers, 
         (
             "distributed_whitespace",
             {
-                "manifest_mode": "minimal_uuid",
+                "manifest_mode": "full",
                 "embedding_strategy": "distributed",
                 "distribution_target": "whitespace",
                 "add_dual_binding": True,
@@ -300,7 +300,7 @@ async def test_live_sign_advanced_option_matrix(live_client, live_auth_headers, 
         (
             "distributed_all_chars",
             {
-                "manifest_mode": "minimal_uuid",
+                "manifest_mode": "full",
                 "embedding_strategy": "distributed",
                 "distribution_target": "all_chars",
                 "segmentation_level": "paragraph",
@@ -309,9 +309,9 @@ async def test_live_sign_advanced_option_matrix(live_client, live_auth_headers, 
             {"segmentation_level": "paragraph", "search_scope": "organization"},
         ),
         (
-            "hybrid_redundant",
+            "micro_distributed_redundant",
             {
-                "manifest_mode": "hybrid",
+                "manifest_mode": "micro",
                 "embedding_strategy": "distributed_redundant",
                 "distribution_target": "punctuation",
                 "segmentation_level": "section",
@@ -324,7 +324,7 @@ async def test_live_sign_advanced_option_matrix(live_client, live_auth_headers, 
     for label, sign_overrides, verify_overrides in advanced_cases:
         try:
             payload = await _sign_advanced(live_client, live_auth_headers, label, sign_overrides)
-            if label == "minimal_uuid_disable_c2pa":
+            if label == "micro_no_c2pa":
                 assert (payload.get("metadata") or {}).get("instance_id") is None
                 continue
             if verify_overrides is not None:

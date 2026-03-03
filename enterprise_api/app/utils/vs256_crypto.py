@@ -28,9 +28,9 @@ Density comparison:
 """
 
 import hashlib
+import os
 import unicodedata
 from typing import Optional, Tuple
-from uuid import UUID
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -93,7 +93,8 @@ MAGIC_PREFIX = BYTE_TO_VS[239] + BYTE_TO_VS[240] + BYTE_TO_VS[241] + BYTE_TO_VS[
 MAGIC_PREFIX_LEN = 4
 
 # Signature layout constants
-PAYLOAD_BYTES = 32           # 16 UUID + 16 HMAC
+LOG_ID_BYTES = 16            # 128-bit random log reference (hyperscale-safe)
+PAYLOAD_BYTES = 32           # 16 log_id + 16 HMAC
 PAYLOAD_CHARS = 32           # 1 char per byte in base-256
 SIGNATURE_CHARS = MAGIC_PREFIX_LEN + PAYLOAD_CHARS  # 36 total
 
@@ -178,12 +179,12 @@ def decode_bytes_vs256(encoded: str) -> bytes:
 
 
 # =============================================================================
-# MINIMAL SIGNED UUID - Sentence-level provenance (base-256)
+# SIGNED MARKER - Sentence-level provenance (base-256)
 # =============================================================================
 #
 # Format (36 VS chars total):
 # - Magic prefix: 4 chars (VS240-VS243, signature marker)
-# - UUID: 16 chars (16 bytes, database reference)
+# - log_id: 16 chars (16 bytes, transparency log reference)
 # - HMAC-SHA256: 16 chars (16 bytes truncated, cryptographic proof)
 #
 # Compare to zw_embedding: 128 chars for same 32-byte payload
@@ -193,72 +194,84 @@ def decode_bytes_vs256(encoded: str) -> bytes:
 # =============================================================================
 
 
-def create_minimal_signed_uuid(
-    sentence_uuid: UUID,
+def generate_log_id() -> bytes:
+    """
+    Generate a random 16-byte log ID.
+
+    128-bit random identifier referencing a transparency log entry.
+    Birthday collision probability is ~2e-12 over 10 years at 20B msg/day
+    across the global AI ecosystem -- safe at any deployment scale.
+    """
+    return os.urandom(LOG_ID_BYTES)
+
+
+def create_signed_marker(
+    log_id: bytes,
     signing_key: bytes,
     sentence_text: str | None = None,
 ) -> str:
     """
-    Create the most compact cryptographically signed UUID using base-256 VS encoding.
+    Create a compact cryptographically signed marker using base-256 VS encoding.
 
     Format (36 VS chars total):
     - Magic prefix: 4 chars (VS240-VS243, format marker)
-    - UUID: 16 chars (database reference)
+    - log_id: 16 chars (transparency log reference)
     - HMAC-SHA256: 16 chars (cryptographic proof, 128-bit truncated)
 
     Security:
-    - 128-bit UUID uniqueness
+    - 128-bit log_id uniqueness (hyperscale-safe)
     - 128-bit HMAC security (truncated from 256-bit)
     - Signing key should be org-specific secret (derived from private key)
 
     Args:
-        sentence_uuid: UUID for this sentence (stored in DB with full metadata)
-        signing_key: 32-byte secret key for HMAC (org-specific)
+        log_id: 16-byte identifier returned by generate_log_id().
+        signing_key: 32-byte secret key for HMAC (org-specific).
         sentence_text: Optional sentence text to bind cryptographically.
-            If provided, HMAC input includes UUID + SHA256(NFC(text))[:8].
-            If omitted, legacy UUID-only signature format is produced.
+            If provided, HMAC input includes log_id + SHA256(NFC(text))[:8].
+            If omitted, log_id-only signature format is produced.
 
     Returns:
-        36 VS characters (invisible in supported platforms)
+        36 VS characters (invisible in Google Docs, PDF, browsers)
     """
+    if len(log_id) != LOG_ID_BYTES:
+        raise ValueError(f"log_id must be {LOG_ID_BYTES} bytes, got {len(log_id)}")
     if len(signing_key) < 32:
         raise ValueError("Signing key must be at least 32 bytes")
 
-    uuid_bytes = sentence_uuid.bytes  # 16 bytes
-
-    # Create HMAC-SHA256 over UUID, truncate to 16 bytes (128-bit security)
+    # Create HMAC-SHA256 over log_id, truncate to 16 bytes (128-bit security)
     h = crypto_hmac.HMAC(signing_key, hashes.SHA256(), backend=default_backend())
-    h.update(uuid_bytes)
+    h.update(log_id)
     if sentence_text is not None:
         nfc_bytes = unicodedata.normalize("NFC", sentence_text).encode("utf-8")
         h.update(hashlib.sha256(nfc_bytes).digest()[:CONTENT_COMMITMENT_BYTES])
-    hmac_full = h.finalize()
-    hmac_truncated = hmac_full[:16]  # 128-bit security
+    hmac_truncated = h.finalize()[:16]  # 128-bit security
 
-    # Encode: magic + UUID + HMAC
-    payload = uuid_bytes + hmac_truncated  # 32 bytes
+    # Encode: magic + log_id + HMAC
+    payload = log_id + hmac_truncated  # 32 bytes
     encoded_payload = encode_bytes_vs256(payload)  # 32 VS chars
 
     return MAGIC_PREFIX + encoded_payload  # 36 VS chars
 
 
-def verify_minimal_signed_uuid(
+def verify_signed_marker(
     signature: str,
     signing_key: bytes,
     sentence_text: str | None = None,
-) -> Tuple[bool, Optional[UUID]]:
+) -> Tuple[bool, Optional[bytes]]:
     """
-    Verify a VS256 minimal signed UUID (36 chars) and extract the UUID.
+    Verify a VS256 signed marker (36 chars) and extract the log_id.
+
+    Tries content-bound verification first; falls back to content-free
+    verification for backward compatibility with markers created without
+    sentence_text.
 
     Args:
-        signature: 36-character VS256 signature string
-        signing_key: 32-byte secret key for HMAC verification
+        signature: 36-character VS256 signature string.
+        signing_key: 32-byte secret key for HMAC verification.
         sentence_text: Optional sentence text used for content-bound signatures.
-            When provided, verifier first checks UUID+content commitment, then
-            falls back to legacy UUID-only verification for backward compatibility.
 
     Returns:
-        Tuple of (is_valid, uuid) where uuid is None on failure
+        (True, log_id_bytes) on success, (False, None) on any failure.
     """
     if len(signature) != SIGNATURE_CHARS:
         return False, None
@@ -274,39 +287,31 @@ def verify_minimal_signed_uuid(
         if len(payload) != PAYLOAD_BYTES:
             return False, None
 
-        # Split into UUID and HMAC
-        uuid_bytes = payload[:16]
-        hmac_received = payload[16:32]
+        # Split into log_id and HMAC
+        log_id = payload[:LOG_ID_BYTES]
+        hmac_received = payload[LOG_ID_BYTES:]
 
-        # Recompute HMAC
-        h = crypto_hmac.HMAC(signing_key, hashes.SHA256(), backend=default_backend())
-        h.update(uuid_bytes)
-        if sentence_text is not None:
-            nfc_bytes = unicodedata.normalize("NFC", sentence_text).encode("utf-8")
-            h.update(hashlib.sha256(nfc_bytes).digest()[:CONTENT_COMMITMENT_BYTES])
-        hmac_expected = h.finalize()[:16]
+        def _hmac(include_text: bool) -> bytes:
+            h = crypto_hmac.HMAC(signing_key, hashes.SHA256(), backend=default_backend())
+            h.update(log_id)
+            if include_text and sentence_text is not None:
+                nfc_bytes = unicodedata.normalize("NFC", sentence_text).encode("utf-8")
+                h.update(hashlib.sha256(nfc_bytes).digest()[:CONTENT_COMMITMENT_BYTES])
+            return h.finalize()[:16]
 
-        # Constant-time comparison (with legacy fallback when sentence_text provided)
-        if hmac_received != hmac_expected:
-            if sentence_text is None:
-                return False, None
-            legacy_h = crypto_hmac.HMAC(signing_key, hashes.SHA256(), backend=default_backend())
-            legacy_h.update(uuid_bytes)
-            legacy_hmac_expected = legacy_h.finalize()[:16]
-            if hmac_received != legacy_hmac_expected:
-                return False, None
-
-        # Extract UUID
-        sentence_uuid = UUID(bytes=uuid_bytes)
-        return True, sentence_uuid
+        if hmac_received == _hmac(include_text=True):
+            return True, log_id
+        if sentence_text is not None and hmac_received == _hmac(include_text=False):
+            return True, log_id
+        return False, None
 
     except Exception:
         return False, None
 
 
-def find_all_minimal_signed_uuids(text: str) -> list[tuple[int, int, str]]:
+def find_all_markers(text: str) -> list[tuple[int, int, str]]:
     """
-    Find all VS256 minimal signed UUIDs by detecting magic prefix + 32 VS payload.
+    Find all VS256 signed markers by detecting magic prefix + 32 VS payload.
 
     Detection strategy:
     1. Scan for the 4-char magic prefix (VS240, VS241, VS242, VS243)
@@ -341,9 +346,9 @@ def find_all_minimal_signed_uuids(text: str) -> list[tuple[int, int, str]]:
     return signatures
 
 
-def extract_minimal_signed_uuid(text: str) -> Optional[str]:
+def extract_marker(text: str) -> Optional[str]:
     """
-    Extract first VS256 minimal signed UUID from text.
+    Extract first VS256 signed marker from text.
 
     Args:
         text: Text containing VS256 signatures
@@ -351,13 +356,13 @@ def extract_minimal_signed_uuid(text: str) -> Optional[str]:
     Returns:
         The signature string (36 chars) or None
     """
-    sigs = find_all_minimal_signed_uuids(text)
+    sigs = find_all_markers(text)
     return sigs[0][2] if sigs else None
 
 
-def remove_minimal_signed_uuid(text: str) -> str:
+def remove_markers(text: str) -> str:
     """
-    Remove all VS256 minimal signed UUIDs from text.
+    Remove all VS256 signed markers from text.
 
     Args:
         text: Text with VS256 signatures
@@ -365,9 +370,8 @@ def remove_minimal_signed_uuid(text: str) -> str:
     Returns:
         Clean text with all signatures removed
     """
-    sigs = find_all_minimal_signed_uuids(text)
+    sigs = find_all_markers(text)
     result = text
-    # Remove in reverse order to maintain positions
     for start, end, _sig in reversed(sigs):
         result = result[:start] + result[end:]
     return result
@@ -469,23 +473,23 @@ def get_signature_position(text: str) -> int:
     return len(text) - trailing_count
 
 
-def create_safely_embedded_sentence(
+def create_embedded_sentence(
     sentence: str,
-    sentence_uuid: UUID,
+    log_id: bytes,
     signing_key: bytes,
 ) -> str:
     """
-    Create a sentence with VS256 minimal signed UUID embedded safely.
+    Create a sentence with VS256 signed marker embedded safely.
 
-    Combines create_minimal_signed_uuid() with safe positioning.
+    Combines create_signed_marker() with safe positioning.
 
     Args:
         sentence: Original sentence text
-        sentence_uuid: UUID for this sentence
+        log_id: 16-byte log identifier from generate_log_id()
         signing_key: HMAC signing key
 
     Returns:
         Sentence with 36-char VS256 signature embedded before terminal punctuation
     """
-    signature = create_minimal_signed_uuid(sentence_uuid, signing_key)
+    signature = create_signed_marker(log_id, signing_key, sentence_text=sentence)
     return embed_signature_safely(sentence, signature)

@@ -12,8 +12,8 @@ async def test_sign_advanced_multi_level_merkle_enforces_quota_and_returns_merkl
     async_client: AsyncClient,
     business_auth_headers: dict,
 ) -> None:
-    mock_sentence_root = SimpleNamespace(id="mrk_sentence", root_hash="root_sentence", leaf_count=2, tree_depth=1)
-    mock_paragraph_root = SimpleNamespace(id="mrk_paragraph", root_hash="root_paragraph", leaf_count=1, tree_depth=1)
+    mock_sentence_root = SimpleNamespace(id="mrk_sentence", root_hash="root_sentence", leaf_count=2, tree_depth=1, segmentation_level="sentence")
+    mock_paragraph_root = SimpleNamespace(id="mrk_paragraph", root_hash="root_paragraph", leaf_count=1, tree_depth=1, segmentation_level="paragraph")
 
     class _FakeSegmenter:
         def __init__(self, text: str, include_words: bool = False):
@@ -71,7 +71,7 @@ async def test_sign_advanced_merkle_index_opt_out_skips_merkle_quota(
     async_client: AsyncClient,
     business_auth_headers: dict,
 ) -> None:
-    mock_sentence_root = SimpleNamespace(id="mrk_sentence", root_hash="root_sentence", leaf_count=2, tree_depth=1)
+    mock_sentence_root = SimpleNamespace(id="mrk_sentence", root_hash="root_sentence", leaf_count=2, tree_depth=1, segmentation_level="sentence")
 
     class _FakeSegmenter:
         def __init__(self, text: str, include_words: bool = False):
@@ -121,7 +121,7 @@ async def test_sign_advanced_passes_processing_metadata(
     async_client: AsyncClient,
     business_auth_headers: dict,
 ) -> None:
-    mock_sentence_root = SimpleNamespace(id="mrk_sentence", root_hash="root_sentence", leaf_count=2, tree_depth=1)
+    mock_sentence_root = SimpleNamespace(id="mrk_sentence", root_hash="root_sentence", leaf_count=2, tree_depth=1, segmentation_level="sentence")
 
     class _FakeSegmenter:
         def __init__(self, text: str, include_words: bool = False):

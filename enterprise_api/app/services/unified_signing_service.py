@@ -315,6 +315,7 @@ async def _execute_advanced_signing(
         action=options.action,
         manifest_mode=options.manifest_mode,
         ecc=options.ecc,
+        legacy_safe=options.legacy_safe,
         embed_c2pa=options.embed_c2pa,
         embedding_strategy=options.embedding_strategy,
         distribution_target=options.distribution_target,

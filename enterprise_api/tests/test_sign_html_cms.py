@@ -97,12 +97,12 @@ class TestEmbedSignedTextInElement:
         """Embed signed text into a simple HTML element."""
         from app.utils.vs256_crypto import (
             VS_CHAR_SET,
-            create_minimal_signed_uuid,
+            create_signed_marker,
             derive_signing_key_from_private_key,
             embed_signature_safely,
+            generate_log_id,
         )
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-        import uuid as uuid_mod
 
         html = "<article><h1>Title</h1><p>Hello world.</p></article>"
         soup = BeautifulSoup(html, "html.parser")
@@ -118,7 +118,7 @@ class TestEmbedSignedTextInElement:
             if not line.strip():
                 signed_lines.append(line)
                 continue
-            sig = create_minimal_signed_uuid(uuid_mod.uuid4(), signing_key)
+            sig = create_signed_marker(generate_log_id(), signing_key)
             signed_lines.append(embed_signature_safely(line, sig))
         signed_text = "\n".join(signed_lines)
 
@@ -180,10 +180,10 @@ class TestEmbedSignedTextInElement:
         if not signed_path.exists():
             pytest.skip("Complex signed output not available (run script first)")
 
-        from app.utils.vs256_crypto import find_all_minimal_signed_uuids
+        from app.utils.vs256_crypto import find_all_markers
 
         signed_html = signed_path.read_text(encoding="utf-8")
-        found = find_all_minimal_signed_uuids(signed_html)
+        found = find_all_markers(signed_html)
         assert len(found) > 10, f"Expected many markers, found {len(found)}"
 
     def test_complex_html_longer_than_original(self, complex_html: str):

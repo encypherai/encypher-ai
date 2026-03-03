@@ -19,21 +19,20 @@ Test scenarios:
 6. RS error correction survives partial corruption
 """
 
-import uuid as uuid_mod
-
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from encypher.core.unicode_metadata import UnicodeMetadata
 from sqlalchemy import text
 
 from app.utils.vs256_crypto import (
-    find_all_minimal_signed_uuids as vs256_find_all,
-    verify_minimal_signed_uuid as vs256_verify,
+    find_all_markers as vs256_find_all,
+    verify_signed_marker as vs256_verify,
     derive_signing_key_from_private_key as vs256_derive_key,
+    generate_log_id,
 )
 from app.utils.vs256_rs_crypto import (
-    find_all_minimal_signed_uuids as vs256rs_find_all,
-    verify_minimal_signed_uuid as vs256rs_verify,
+    find_all_markers as vs256rs_find_all,
+    verify_signed_marker as vs256rs_verify,
     derive_signing_key_from_private_key as vs256rs_derive_key,
 )
 
@@ -54,7 +53,7 @@ class TestMicroEmbeddingUnit:
     def test_micro_creates_per_sentence_markers(self, keypair):
         """Each sentence should get a 36-char invisible marker."""
         from app.utils.vs256_crypto import (
-            create_minimal_signed_uuid,
+            create_signed_marker,
             embed_signature_safely,
             SIGNATURE_CHARS,
         )
@@ -68,8 +67,8 @@ class TestMicroEmbeddingUnit:
 
         embedded_sentences = []
         for sentence in sentences:
-            sentence_uuid = uuid_mod.uuid4()
-            sig = create_minimal_signed_uuid(sentence_uuid, signing_key)
+            sentence_uuid = generate_log_id()
+            sig = create_signed_marker(sentence_uuid, signing_key)
             assert len(sig) == SIGNATURE_CHARS  # 36 chars
             embedded = embed_signature_safely(sentence, sig)
             embedded_sentences.append(embedded)
@@ -89,26 +88,26 @@ class TestMicroEmbeddingUnit:
     def test_micro_markers_invisible_in_text(self, keypair):
         """Markers should not affect visible text content."""
         from app.utils.vs256_crypto import (
-            create_minimal_signed_uuid,
+            create_signed_marker,
             embed_signature_safely,
-            remove_minimal_signed_uuid,
+            remove_markers,
         )
 
         signing_key = vs256_derive_key(keypair)
         original = "Hello world."
-        sentence_uuid = uuid_mod.uuid4()
-        sig = create_minimal_signed_uuid(sentence_uuid, signing_key)
+        sentence_uuid = generate_log_id()
+        sig = create_signed_marker(sentence_uuid, signing_key)
         embedded = embed_signature_safely(original, sig)
 
         # Visible text should be the same after removing markers
-        cleaned = remove_minimal_signed_uuid(embedded)
+        cleaned = remove_markers(embedded)
         assert cleaned == original
 
     def test_micro_c2pa_manifest_embeds_at_document_level(self, keypair):
         """The full C2PA manifest should be extractable from the document."""
         from encypher.core.unicode_metadata import UnicodeMetadata
         from app.utils.vs256_crypto import (
-            create_minimal_signed_uuid,
+            create_signed_marker,
             embed_signature_safely,
         )
 
@@ -121,8 +120,8 @@ class TestMicroEmbeddingUnit:
         # Phase 1: embed per-sentence markers
         embedded_sentences = []
         for sentence in sentences:
-            sentence_uuid = uuid_mod.uuid4()
-            sig = create_minimal_signed_uuid(sentence_uuid, signing_key)
+            sentence_uuid = generate_log_id()
+            sig = create_signed_marker(sentence_uuid, signing_key)
             embedded_sentences.append(embed_signature_safely(sentence, sig))
 
         full_document = " ".join(embedded_sentences)
@@ -443,7 +442,7 @@ class TestMicroEccEmbeddingUnit:
     def test_micro_ecc_creates_per_sentence_markers(self, keypair):
         """Each sentence should get a 44-char RS-protected invisible marker (128-bit HMAC)."""
         from app.utils.vs256_rs_crypto import (
-            create_minimal_signed_uuid as rs_create,
+            create_signed_marker as rs_create,
             embed_signature_safely as rs_embed,
             SIGNATURE_CHARS,
         )
@@ -457,9 +456,9 @@ class TestMicroEccEmbeddingUnit:
 
         embedded_sentences = []
         for sentence in sentences:
-            sentence_uuid = uuid_mod.uuid4()
+            sentence_uuid = generate_log_id()
             sig = rs_create(sentence_uuid, signing_key)
-            assert len(sig) == SIGNATURE_CHARS  # 36 chars
+            assert len(sig) == SIGNATURE_CHARS  # 44 chars (RS mode)
             embedded = rs_embed(sentence, sig)
             embedded_sentences.append(embedded)
 
@@ -471,19 +470,19 @@ class TestMicroEccEmbeddingUnit:
 
         # Each marker should verify with RS decoding
         for _start, _end, sig_text in found:
-            is_valid, extracted_uuid = vs256rs_verify(sig_text, signing_key)
+            is_valid, extracted = vs256rs_verify(sig_text, signing_key)
             assert is_valid, "Each RS marker should verify"
-            assert extracted_uuid is not None
+            assert extracted is not None
 
     def test_micro_ecc_survives_partial_corruption(self, keypair):
         """RS markers should recover from a few corrupted invisible chars."""
         from app.utils.vs256_rs_crypto import (
-            create_minimal_signed_uuid as rs_create,
+            create_signed_marker as rs_create,
         )
         from app.utils.vs256_crypto import BYTE_TO_VS, VS_TO_BYTE
 
         signing_key = vs256rs_derive_key(keypair)
-        sentence_uuid = uuid_mod.uuid4()
+        sentence_uuid = generate_log_id()
         sig = rs_create(sentence_uuid, signing_key)
 
         # Corrupt 2 payload characters (well within RS correction limit of 4)
@@ -496,17 +495,17 @@ class TestMicroEccEmbeddingUnit:
         corrupted_sig = "".join(sig_list)
 
         # RS verification should still succeed with known erase positions
-        is_valid, extracted_uuid = vs256rs_verify(
+        is_valid, extracted = vs256rs_verify(
             corrupted_sig, signing_key, erase_positions=[6 - 4, 10 - 4]  # payload-relative
         )
         assert is_valid, "RS should recover from 2 erasures"
-        assert extracted_uuid == sentence_uuid
+        assert extracted == sentence_uuid
 
     def test_micro_ecc_manifest_embeds_at_document_level(self, keypair):
         """Full C2PA manifest should be extractable alongside RS markers."""
         from encypher.core.unicode_metadata import UnicodeMetadata
         from app.utils.vs256_rs_crypto import (
-            create_minimal_signed_uuid as rs_create,
+            create_signed_marker as rs_create,
             embed_signature_safely as rs_embed,
         )
 
@@ -518,7 +517,7 @@ class TestMicroEccEmbeddingUnit:
 
         embedded_sentences = []
         for sentence in sentences:
-            sentence_uuid = uuid_mod.uuid4()
+            sentence_uuid = generate_log_id()
             sig = rs_create(sentence_uuid, signing_key)
             embedded_sentences.append(rs_embed(sentence, sig))
 

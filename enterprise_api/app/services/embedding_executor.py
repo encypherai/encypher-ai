@@ -463,6 +463,7 @@ async def encode_document_with_embeddings(
             # === API Feature Augmentation (TEAM_044) ===
             manifest_mode=request.manifest_mode,
             ecc=request.ecc,
+            legacy_safe=request.legacy_safe,
             embed_c2pa=request.embed_c2pa,
             embedding_strategy=request.embedding_strategy,
             distribution_target=request.distribution_target,

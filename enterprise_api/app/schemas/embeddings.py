@@ -81,11 +81,15 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     # === API Feature Augmentation (TEAM_044) ===
     manifest_mode: str = Field(
         default="full",
-        description="Controls manifest detail level. Options: full, lightweight_uuid, minimal_uuid, hybrid, zw_embedding, micro. micro uses ultra-compact per-sentence markers; behaviour controlled by ecc and embed_c2pa flags. Availability depends on plan tier.",
+        description="Controls manifest detail level. Options: full or micro. micro uses ultra-compact per-sentence markers; behaviour controlled by ecc, embed_c2pa, and legacy_safe flags.",
     )
     ecc: bool = Field(
         default=True,
         description="Enable Reed-Solomon error correction for micro mode (44 chars/segment vs 36). Ignored for non-micro modes.",
+    )
+    legacy_safe: bool = Field(
+        default=False,
+        description="Use Word-safe/terminal-safe base-6 encoding for micro mode instead of VS256. ecc=False -> 100 chars/segment; ecc=True -> 112 chars/segment (RS parity). Ignored for non-micro modes.",
     )
     embed_c2pa: bool = Field(
         default=True,

@@ -97,7 +97,7 @@ async def test_local_sign_advanced_and_verify_advanced(local_client, local_auth_
             "document_id": document_id,
             "text": original_text,
             "options": {
-                "manifest_mode": "minimal_uuid",
+                "manifest_mode": "micro",
                 "segmentation_level": "sentence",
                 "embedding_strategy": "single_point",
             },

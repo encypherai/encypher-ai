@@ -8,24 +8,25 @@ and verifiable.
 from __future__ import annotations
 
 import re
-import uuid
 import unicodedata
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from app.utils.vs256_rs_crypto import (
-    create_minimal_signed_uuid as create_micro_ecc_signature,
+    create_signed_marker as create_micro_ecc_signature,
     derive_signing_key_from_private_key as derive_micro_ecc_signing_key,
     embed_signature_safely as embed_micro_ecc_safely,
-    find_all_minimal_signed_uuids as find_micro_ecc_signatures,
-    verify_minimal_signed_uuid as verify_micro_ecc_signature,
+    find_all_markers as find_micro_ecc_signatures,
+    verify_signed_marker as verify_micro_ecc_signature,
 )
-from app.utils.zw_crypto import (
-    create_minimal_signed_uuid as create_zw_signature,
-    derive_signing_key_from_private_key as derive_zw_signing_key,
-    embed_signature_safely as embed_zw_safely,
-    find_all_minimal_signed_uuids as find_zw_signatures,
-    verify_minimal_signed_uuid as verify_zw_signature,
+from app.utils.vs256_crypto import generate_log_id
+from app.utils.legacy_safe_crypto import (
+    create_marker as create_ls_signature,
+    derive_signing_key_from_private_key as derive_ls_signing_key,
+    embed_marker_safely as embed_ls_safely,
+    find_all_markers as find_ls_signatures,
+    generate_log_id as ls_generate_log_id,
+    verify_marker as verify_ls_signature,
 )
 
 
@@ -54,66 +55,67 @@ def _transform_strip_all_variation_selectors(text: str) -> str:
 
 
 def _transform_strip_format_controls(text: str) -> str:
-    # Common aggressive sanitization behavior for zero-width controls.
-    return re.sub(r"[\u200C\u200D\u034F\u180E\u200B\u2060\uFEFF]", "", text)
+    # Common aggressive sanitization behavior for zero-width controls
+    # (includes LRM/RLM used by legacy_safe/ZW6 encoding).
+    return re.sub(r"[\u200C\u200D\u034F\u180E\u200B\u200E\u200F\u2060\uFEFF]", "", text)
 
 
-def _build_embedded_texts(base_text: str) -> tuple[str, bytes, str, bytes, uuid.UUID, uuid.UUID]:
+def _build_embedded_texts(base_text: str) -> tuple[str, bytes, str, bytes, bytes, bytes]:
     private_key = Ed25519PrivateKey.generate()
 
     micro_key = derive_micro_ecc_signing_key(private_key)
-    micro_uuid = uuid.uuid4()
-    micro_sig = create_micro_ecc_signature(micro_uuid, micro_key)
+    micro_log_id = generate_log_id()  # 16 random bytes (hyperscale-safe)
+    micro_sig = create_micro_ecc_signature(micro_log_id, micro_key)
     micro_text = embed_micro_ecc_safely(base_text, micro_sig)
 
-    zw_key = derive_zw_signing_key(private_key)
-    zw_uuid = uuid.uuid4()
-    zw_sig = create_zw_signature(zw_uuid, zw_key)
-    zw_text = embed_zw_safely(base_text, zw_sig)
+    ls_key = derive_ls_signing_key(private_key)
+    ls_log_id = ls_generate_log_id()
+    ls_sig = create_ls_signature(ls_log_id, ls_key)
+    ls_text = embed_ls_safely(base_text, ls_sig)
 
-    return micro_text, micro_key, zw_text, zw_key, micro_uuid, zw_uuid
+    return micro_text, micro_key, ls_text, ls_key, micro_log_id, ls_log_id
 
 
 def test_email_identity_transform_preserves_both_embedding_types() -> None:
     base_text = "Email survivability sentence for Encypher."
-    micro_text, micro_key, zw_text, zw_key, micro_uuid, zw_uuid = _build_embedded_texts(base_text)
+    micro_text, micro_key, ls_text, ls_key, micro_log_id, ls_log_id = _build_embedded_texts(base_text)
 
     micro_processed = _transform_identity(micro_text)
-    zw_processed = _transform_identity(zw_text)
+    ls_processed = _transform_identity(ls_text)
 
     micro_sigs = find_micro_ecc_signatures(micro_processed)
-    zw_sigs = find_zw_signatures(zw_processed)
+    ls_sigs = find_ls_signatures(ls_processed)
 
     assert len(micro_sigs) == 1
-    assert len(zw_sigs) == 1
+    assert len(ls_sigs) == 1
 
-    micro_valid, micro_extracted_uuid = verify_micro_ecc_signature(micro_sigs[0][2], micro_key)
-    zw_valid, zw_extracted_uuid = verify_zw_signature(zw_sigs[0][2], zw_key)
+    micro_valid, micro_extracted = verify_micro_ecc_signature(micro_sigs[0][2], micro_key)
+    ls_valid, ls_extracted = verify_ls_signature(ls_sigs[0][2], ls_key)
 
     assert micro_valid is True
-    assert zw_valid is True
-    assert micro_extracted_uuid == micro_uuid
-    assert zw_extracted_uuid == zw_uuid
+    assert ls_valid is True
+    assert micro_extracted == micro_log_id
+    assert ls_extracted == ls_log_id
 
 
 def test_email_unicode_nfc_transform_preserves_both_embedding_types() -> None:
     base_text = "Email survivability sentence for Encypher."
-    micro_text, micro_key, zw_text, zw_key, _, _ = _build_embedded_texts(base_text)
+    micro_text, micro_key, ls_text, ls_key, _, _ = _build_embedded_texts(base_text)
 
     micro_processed = _transform_unicode_nfc(micro_text)
-    zw_processed = _transform_unicode_nfc(zw_text)
+    ls_processed = _transform_unicode_nfc(ls_text)
 
     micro_sigs = find_micro_ecc_signatures(micro_processed)
-    zw_sigs = find_zw_signatures(zw_processed)
+    ls_sigs = find_ls_signatures(ls_processed)
 
     assert len(micro_sigs) == 1
-    assert len(zw_sigs) == 1
+    assert len(ls_sigs) == 1
 
     micro_valid, _ = verify_micro_ecc_signature(micro_sigs[0][2], micro_key)
-    zw_valid, _ = verify_zw_signature(zw_sigs[0][2], zw_key)
+    ls_valid, _ = verify_ls_signature(ls_sigs[0][2], ls_key)
 
     assert micro_valid is True
-    assert zw_valid is True
+    assert ls_valid is True
 
 
 def test_email_strip_supplementary_variation_selectors_breaks_micro_ecc_markers() -> None:
@@ -137,11 +139,11 @@ def test_email_strip_all_variation_selectors_breaks_micro_ecc_markers() -> None:
     assert len(micro_sigs) == 0
 
 
-def test_email_strip_format_controls_breaks_zero_width_embedding() -> None:
+def test_email_strip_format_controls_breaks_legacy_safe_embedding() -> None:
     base_text = "Email survivability sentence for Encypher."
-    _, _, zw_text, _, _, _ = _build_embedded_texts(base_text)
+    _, _, ls_text, _, _, _ = _build_embedded_texts(base_text)
 
-    zw_processed = _transform_strip_format_controls(zw_text)
-    zw_sigs = find_zw_signatures(zw_processed)
+    ls_processed = _transform_strip_format_controls(ls_text)
+    ls_sigs = find_ls_signatures(ls_processed)
 
-    assert len(zw_sigs) == 0
+    assert len(ls_sigs) == 0

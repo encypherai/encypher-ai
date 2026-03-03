@@ -10,14 +10,14 @@ def _get_assertion_payload(assertions: list[dict], label: str) -> dict | None:
 
 
 @pytest.mark.asyncio
-async def test_sign_advanced_minimal_uuid_c2pa_conformance(async_client, auth_headers: dict) -> None:
+async def test_sign_micro_c2pa_conformance(async_client, auth_headers: dict) -> None:
     response = await async_client.post(
         "/api/v1/sign",
         headers=auth_headers,
         json={
             "text": "Sentence one. Sentence two.",
             "options": {
-                "manifest_mode": "minimal_uuid",
+                "manifest_mode": "micro",
             },
         },
     )
@@ -62,7 +62,7 @@ async def test_extract_and_verify_includes_c2pa_conformance_metadata(async_clien
         json={
             "text": "Sentence one. Sentence two.",
             "options": {
-                "manifest_mode": "minimal_uuid",
+                "manifest_mode": "micro",
             },
         },
     )

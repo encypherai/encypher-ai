@@ -136,7 +136,7 @@ async def test_sign_advanced_applies_org_default_template_assertions(
         segmentation_level="sentence",
     )
 
-    mock_merkle_root = SimpleNamespace(id="mrk_default_tpl", root_hash="root", leaf_count=1, tree_depth=1)
+    mock_merkle_root = SimpleNamespace(id="mrk_default_tpl", root_hash="root", leaf_count=1, tree_depth=1, segmentation_level="sentence")
 
     class _FakeSegmenter:
         def __init__(self, text: str, include_words: bool = False):

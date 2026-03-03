@@ -142,7 +142,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/sign/advanced` | POST | - | - | ⚠️ **REMOVED** - Returns 410 Gone, use `/sign` with options | - |
 | `/api/v1/sign/rich` | POST | ✅ | All | Sign rich article (text + embedded images) with C2PA | Key Service |
 | `/api/v1/verify` | POST | ✅ | All (features gated) | Verify signed content with optional attribution, plagiarism, and fuzzy search flags - features gated by tier | Key Service |
-| `/api/v1/verify/image` | POST | ❌ | Public | Verify a signed image. Checks JUMBF C2PA manifest; falls back to XMP instance_id DB lookup for passthrough-mode images | None |
+| `/api/v1/verify/image` | POST | ❌ | Public | Verify a signed image. Checks embedded C2PA manifest; falls back to XMP instance_id DB lookup for passthrough-mode images | None |
 | `/api/v1/verify/rich` | POST | ❌ | Public | Verify a signed rich article by document_id | None |
 | `/api/v1/lookup` | POST | ❌ | Public | Lookup sentence provenance | None |
 | `/api/v1/provenance/lookup` | POST | ❌ | Public | Lookup provenance for a document (structured) | None |
@@ -1106,11 +1106,11 @@ own CDN. Only metadata (hashes, pHash, c2pa_instance_id) is stored in the Encyph
 |-------|-----------|---------------------|------|
 | Hard binding | SHA-256 of pixel bytes (original_hash) | No | All |
 | In-file reference | XMP (ISO 16684) carrying `instance_id` in APP1/iTXt | Yes (CDN-compatible) | All |
-| C2PA JUMBF | Full cryptographic manifest embedded as JUMBF box | Yes | When cert configured |
+| C2PA manifest | Full cryptographic manifest embedded in file | Yes | When cert configured |
 | Soft binding | TrustMark neural watermark (survives JPEG recompression, moderate crop) | Yes | Enterprise only |
 | pHash fuzzy index | Perceptual hash for near-duplicate search (Hamming distance) | Near-duplicate | All |
 
-**Passthrough mode** (local dev / no signing cert configured): JUMBF embedding is
+**Passthrough mode** (local dev / no signing cert configured): C2PA manifest embedding is
 skipped. XMP provenance is still injected into each signed image so verification by
 `instance_id` works correctly. `c2pa_signed=false` in the response indicates this mode.
 `signed_hash` will differ from `original_hash` because XMP bytes are appended inside
@@ -1121,7 +1121,7 @@ the binary (JPEG: APP1 segment after SOI; PNG: iTXt chunk after IHDR).
 Readable by standard XMP tooling. WebP and TIFF are not XMP-modified; they still
 receive hard binding and pHash registration.
 
-**Free tier:** Hard binding + XMP + pHash. C2PA JUMBF requires a configured signing cert.
+**Free tier:** Hard binding + XMP + pHash. C2PA manifest signing requires a configured signing cert.
 
 **Enterprise tier:** All Free features plus TrustMark neural soft binding and
 cross-organization pHash attribution search.
@@ -1155,8 +1155,8 @@ cross-organization pHash attribution search.
 **Image verification:**
 
 - POST /api/v1/verify/image -- accepts base64 image. Two-step verification:
-  1. Extracts and validates the embedded JUMBF C2PA manifest (if present).
-  2. If no JUMBF manifest or hash miss, reads the XMP `instance_id` and looks up
+  1. Extracts and validates the embedded C2PA manifest (if present).
+  2. If no C2PA manifest or hash miss, reads the XMP `instance_id` and looks up
      the image record in the Encypher DB. Returns `valid=true` if the DB record
      is found, regardless of whether a full C2PA manifest is embedded. This allows
      passthrough-mode images and CDN-re-encoded copies to verify successfully.
@@ -1626,7 +1626,7 @@ IMAGE_MAX_SIZE_BYTES=10485760
 # Max images per /sign/rich request
 IMAGE_MAX_COUNT_PER_REQUEST=20
 
-# Passthrough mode: skip JUMBF C2PA embedding (XMP provenance still injected).
+# Passthrough mode: skip C2PA manifest embedding (XMP provenance still injected).
 # Auto-enabled when MANAGED_SIGNER_PRIVATE_KEY_PEM / MANAGED_SIGNER_CERTIFICATE_CHAIN_PEM
 # are absent. Set explicitly for local dev / CI.
 IMAGE_SIGNING_PASSTHROUGH=false

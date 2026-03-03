@@ -123,7 +123,7 @@ async def test_sign_advanced_applies_template_assertions(
     )
     await db.commit()
 
-    mock_merkle_root = SimpleNamespace(id="mrk_1", root_hash="root", leaf_count=1, tree_depth=1)
+    mock_merkle_root = SimpleNamespace(id="mrk_1", root_hash="root", leaf_count=1, tree_depth=1, segmentation_level="sentence")
 
     class _FakeSegmenter:
         def __init__(self, text: str, include_words: bool = False):
@@ -171,7 +171,7 @@ async def test_sign_advanced_applies_builtin_template_assertions(
     async_client: AsyncClient,
     business_auth_headers: dict,
 ) -> None:
-    mock_merkle_root = SimpleNamespace(id="mrk_2", root_hash="root", leaf_count=1, tree_depth=1)
+    mock_merkle_root = SimpleNamespace(id="mrk_2", root_hash="root", leaf_count=1, tree_depth=1, segmentation_level="sentence")
 
     class _FakeSegmenter:
         def __init__(self, text: str, include_words: bool = False):

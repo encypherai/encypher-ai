@@ -32,8 +32,7 @@ async def test_sign_advanced_uses_content_db_for_embedding_persistence(
                 "text": "Hello world.",
                 "options": {
                     "segmentation_level": "sentence",
-                    "manifest_mode": "minimal_uuid",
-                    "disable_c2pa": True,
+                    "manifest_mode": "micro",
                 },
             },
             headers=professional_auth_headers,

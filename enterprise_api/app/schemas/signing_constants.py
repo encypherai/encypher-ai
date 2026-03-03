@@ -11,24 +11,22 @@ encoding used by micro mode) must NOT appear in these constants.
 # --- Manifest Modes ---
 # Controls how the C2PA manifest and per-segment markers are embedded.
 #
-# TEAM_166: "micro" is now the single compact mode.  Two orthogonal boolean
-# flags control its behaviour:
-#   ecc=True        → Reed-Solomon error correction (44 chars, default)
-#   ecc=False       → plain HMAC (36 chars)
-#   embed_c2pa=True → full C2PA document manifest embedded in content (default)
-#   embed_c2pa=False→ per-sentence markers only; C2PA manifest DB-only
+# Two modes are available:
+#   full  - standard C2PA document manifest embedded at end of content
+#   micro - ultra-compact per-segment markers; behaviour controlled by flags:
+#     ecc=True        -> Reed-Solomon error correction (44 chars, default)
+#     ecc=False       -> plain HMAC (36 chars)
+#     embed_c2pa=True -> full C2PA document manifest embedded in content (default)
+#     embed_c2pa=False-> per-sentence markers only; C2PA manifest DB-only
+#     legacy_safe=True-> ZW6 base-6 encoding (Word+terminal safe, 100/112 chars)
 #
 # A C2PA-compatible manifest is ALWAYS generated for micro mode.
 # store_c2pa_manifest controls DB persistence; embed_c2pa controls in-content embedding.
 #
-# Internal implementation uses VS256 encoding — do NOT expose that detail
-# in public API surfaces (descriptions, error messages, docs).
+# Internal implementation uses VS256 encoding (default) or ZW6 (legacy_safe=True).
+# Do NOT expose internal encoding names in public API surfaces.
 MANIFEST_MODES: list[str] = [
     "full",
-    "lightweight_uuid",
-    "minimal_uuid",
-    "hybrid",
-    "zw_embedding",
     "micro",
 ]
 

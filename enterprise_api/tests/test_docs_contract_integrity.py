@@ -47,7 +47,7 @@ def test_verification_trust_model_doc_covers_primary_and_fallback_paths() -> Non
         "primary",
         "fallback",
         "micro",
-        "zw_embedding",
+        "legacy_safe",
         "reason_code",
         "untrusted_signer",
         "doc_revoked",
@@ -64,7 +64,6 @@ def test_customer_docs_no_removed_endpoint_or_old_webhook_event_refs() -> None:
         _DOC_ROOT / "API.md",
         _DOC_ROOT / "QUICKSTART.md",
         _DOC_ROOT / "STREAMING_API.md",
-        _DOC_ROOT / "ZW_EMBEDDING_MODE.md",
         _DOC_ROOT / "THREAT_MODEL.md",
         _DOC_ROOT / "PERFORMANCE_SCALE.md",
     )

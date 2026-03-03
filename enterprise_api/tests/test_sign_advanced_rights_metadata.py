@@ -12,7 +12,7 @@ async def test_sign_advanced_embeds_rights_assertion(
     async_client: AsyncClient,
     business_auth_headers: dict,
 ) -> None:
-    mock_merkle_root = SimpleNamespace(id="mrk_rights", root_hash="root", leaf_count=1, tree_depth=1)
+    mock_merkle_root = SimpleNamespace(id="mrk_rights", root_hash="root", leaf_count=1, tree_depth=1, segmentation_level="sentence")
 
     class _FakeSegmenter:
         def __init__(self, text: str, include_words: bool = False):

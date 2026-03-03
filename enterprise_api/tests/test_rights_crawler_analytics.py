@@ -32,13 +32,16 @@ def _make_crawler_row(
     rsl_cnt: int,
     ack_cnt: int,
     last_seen: datetime | None = None,
+    requester_user_agent: str | None = None,
 ):
     """Build a mock row matching the enhanced get_crawler_summary query."""
     row = MagicMock()
     row.user_agent_category = category
+    row.requester_user_agent = requester_user_agent or category
     row.total_cnt = total_cnt
     row.rsl_cnt = rsl_cnt
     row.ack_cnt = ack_cnt
+    row.bypass_cnt = 0
     row.last_seen = last_seen or _utcnow()
     return row
 
@@ -82,10 +85,10 @@ class TestEnhancedCrawlerSummary:
         svc = RightsService()
 
         crawler_rows = [
-            _make_crawler_row("ai_training", total_cnt=10, rsl_cnt=8, ack_cnt=6),
+            _make_crawler_row("ai_training", total_cnt=10, rsl_cnt=8, ack_cnt=6, requester_user_agent="GPTBot/1.0"),
         ]
         known_crawlers = [
-            _make_known_crawler("GPTBot", "ai_training", operator_org="OpenAI"),
+            _make_known_crawler("GPTBot", "ai_training", operator_org="OpenAI", user_agent_pattern="GPTBot"),
         ]
 
         call_count = 0

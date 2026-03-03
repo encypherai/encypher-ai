@@ -99,7 +99,7 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
     "manifest_modes": FeatureDefinition(
         name="manifest_modes",
         display_name="Advanced Manifest Modes",
-        description="Use lightweight_uuid, minimal_uuid, hybrid, or zw_embedding modes",
+        description="Select full or micro manifest mode",
         required_tier=TierName.FREE,
         category="signing",
     ),

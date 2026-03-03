@@ -2,7 +2,7 @@
 Tests for API Feature Augmentation (TEAM_044).
 
 Tests the new schema fields and validators for:
-- manifest_mode (full, lightweight_uuid, hybrid)
+- manifest_mode (full, micro)
 - embedding_strategy (single_point, distributed, distributed_redundant)
 - distribution_target (whitespace, punctuation, all_chars)
 - add_dual_binding
@@ -28,15 +28,10 @@ class TestManifestModeValidation:
         request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="full")
         assert request.manifest_mode == "full"
 
-    def test_manifest_mode_lightweight_uuid_valid(self):
-        """manifest_mode='lightweight_uuid' should be valid."""
-        request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="lightweight_uuid")
-        assert request.manifest_mode == "lightweight_uuid"
-
-    def test_manifest_mode_hybrid_valid(self):
-        """manifest_mode='hybrid' should be valid."""
-        request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="hybrid")
-        assert request.manifest_mode == "hybrid"
+    def test_manifest_mode_micro_valid(self):
+        """manifest_mode='micro' should be valid."""
+        request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="micro")
+        assert request.manifest_mode == "micro"
 
     def test_manifest_mode_invalid_raises_error(self):
         """Invalid manifest_mode should raise ValidationError."""
@@ -154,22 +149,22 @@ class TestCombinedFeatureOptions:
         assert request.embedding_strategy == "distributed"
         assert request.distribution_target == "whitespace"
 
-    def test_lightweight_uuid_with_dual_binding(self):
-        """Lightweight UUID with dual binding should work."""
-        request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="lightweight_uuid", add_dual_binding=True)
-        assert request.manifest_mode == "lightweight_uuid"
+    def test_micro_with_dual_binding(self):
+        """Micro mode with dual binding should work."""
+        request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="micro", add_dual_binding=True)
+        assert request.manifest_mode == "micro"
         assert request.add_dual_binding is True
 
-    def test_hybrid_with_distributed_redundant(self):
-        """Hybrid manifest with distributed redundant embedding should work."""
+    def test_micro_with_distributed_redundant(self):
+        """Micro manifest with distributed redundant embedding should work."""
         request = EncodeWithEmbeddingsRequest(
             document_id="test-doc",
             text="Test content with enough characters for distribution.",
-            manifest_mode="hybrid",
+            manifest_mode="micro",
             embedding_strategy="distributed_redundant",
             distribution_target="all_chars",
         )
-        assert request.manifest_mode == "hybrid"
+        assert request.manifest_mode == "micro"
         assert request.embedding_strategy == "distributed_redundant"
         assert request.distribution_target == "all_chars"
 
@@ -217,7 +212,7 @@ class TestEmbeddingServiceManifestModes:
 
     def test_all_manifest_modes_valid(self):
         """All manifest modes should be valid in schema."""
-        for mode in ["full", "lightweight_uuid", "minimal_uuid", "hybrid"]:
+        for mode in ["full", "micro"]:
             request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode=mode)
             assert request.manifest_mode == mode
 
@@ -237,18 +232,10 @@ class TestEmbeddingServiceManifestModes:
 class TestTierGatingRequirements:
     """Test tier gating requirements for new features."""
 
-    def test_lightweight_uuid_requires_professional(self):
-        """Lightweight UUID should be marked as Professional+ feature."""
-        # This test documents the tier requirement
-        # Actual enforcement happens in the API endpoint
-        request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="lightweight_uuid")
-        # Schema accepts it, tier gating happens at API level
-        assert request.manifest_mode == "lightweight_uuid"
-
-    def test_minimal_uuid_requires_professional(self):
-        """Minimal UUID should be marked as Professional+ feature."""
-        request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="minimal_uuid")
-        assert request.manifest_mode == "minimal_uuid"
+    def test_micro_mode_valid_for_all_tiers(self):
+        """Micro manifest mode should be valid for all tiers."""
+        request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="micro")
+        assert request.manifest_mode == "micro"
 
     def test_distributed_requires_business(self):
         """Distributed embedding should be marked as Business+ feature."""
@@ -259,11 +246,6 @@ class TestTierGatingRequirements:
         """Distributed redundant (ECC) should be marked as Enterprise feature."""
         request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", embedding_strategy="distributed_redundant")
         assert request.embedding_strategy == "distributed_redundant"
-
-    def test_hybrid_requires_enterprise(self):
-        """Hybrid manifest mode should be marked as Enterprise feature."""
-        request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="hybrid")
-        assert request.manifest_mode == "hybrid"
 
     def test_dual_binding_requires_business(self):
         """Dual binding should be marked as Business+ feature."""
@@ -352,19 +334,12 @@ class TestStreamMerkleFinalizeRequest:
         assert request.manifest_mode == "full"
         assert request.action == "c2pa.created"
 
-    def test_finalize_request_lightweight_uuid(self):
-        """Finalize with lightweight_uuid manifest mode should work."""
+    def test_finalize_request_micro(self):
+        """Finalize with micro manifest mode should work."""
         from app.schemas.streaming import StreamMerkleFinalizeRequest
 
-        request = StreamMerkleFinalizeRequest(session_id="session-123", manifest_mode="lightweight_uuid")
-        assert request.manifest_mode == "lightweight_uuid"
-
-    def test_finalize_request_minimal_uuid(self):
-        """Finalize with minimal_uuid manifest mode should work."""
-        from app.schemas.streaming import StreamMerkleFinalizeRequest
-
-        request = StreamMerkleFinalizeRequest(session_id="session-123", manifest_mode="minimal_uuid")
-        assert request.manifest_mode == "minimal_uuid"
+        request = StreamMerkleFinalizeRequest(session_id="session-123", manifest_mode="micro")
+        assert request.manifest_mode == "micro"
 
     def test_finalize_request_invalid_manifest_mode(self):
         """Invalid manifest mode should raise error."""
