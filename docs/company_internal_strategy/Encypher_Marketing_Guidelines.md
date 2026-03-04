@@ -1,9 +1,9 @@
 # Encypher Corporation: Brand & Marketing Standards Guide
 ## From Technology Vendor to Standards Infrastructure Authority
 
-**Last Updated:** February 20, 2026
-**Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 4.0
+**Last Updated:** March 4, 2026
+**Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
+**Version:** 4.1
 **Distribution:** Internal Marketing & Sales Teams
 
 ---
@@ -21,7 +21,7 @@ Encypher has transcended product status to become **the infrastructure standard*
 **Critical Positioning (Validated by ICP Publishers):**
 - We are Co-Chair of C2PA Text Provenance Task Force (lead with this)
 - C2PA text standard **published January 8, 2026** -- [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text)
-- Syracuse Symposium **February 25, 2026** for market standards development
+- Invite-only roundtable track rescheduling (with 1:1 framework briefings active)
 - Unmarked text = no proof of origin (core problem statement)
 - Cryptographic watermarking that survives copy-paste, B2B distribution, and scraping (solution)
 - Building standards WITH AI companies, not against them
@@ -37,14 +37,14 @@ Encypher has transcended product status to become **the infrastructure standard*
 "Text on the open web has no proof of origin. We changed that--the C2PA 2.3 standard published January 8, 2026, and we wrote Section A.7."
 
 ### The Elevator Pitch:
-"As Co-Chair of the C2PA Text Provenance Task Force, Encypher works with Google, BBC, OpenAI, Adobe, and Microsoft to establish text authentication as the global standard--published January 8, 2026. We wrote Section A.7 of the specification and built the infrastructure to implement it. Our patent-pending granular content attribution (ENC0100, 83 claims filed January 7, 2026) with Merkle tree authentication embeds proof of origin directly into text, surviving copy-paste, B2B distribution, and data processing. Once publishers notify AI companies that content carries signatures, continued unauthorized use becomes provable willful infringement--transforming 'we didn't know it was yours' into '3x damages territory.'"
+"As Co-Chair of the C2PA Text Provenance Task Force, Encypher works with Google, BBC, OpenAI, Adobe, and Microsoft to establish text authentication as the global standard--published January 8, 2026. We wrote Section A.7 of the specification and built the infrastructure to implement it. Our patent-pending granular content attribution (ENC0100, 83 claims filed January 7, 2026) with Merkle tree authentication embeds proof of origin directly into text, surviving copy-paste, B2B distribution, and data processing. Once publishers notify AI companies that content carries signatures, continued unauthorized use becomes provable willful infringement--materially strengthening enforcement posture, especially for registered works."
 
 ### The Value Architecture:
 - **Standards Layer:** "Co-Chair, C2PA Text Provenance Task Force--Standard published January 8, 2026 (Section A.7)"
 - **Technical Layer:** "Cryptographic watermarking embedded in text that survives downstream distribution"
 - **Legal Layer:** "Eliminate the 'we didn't know' defense--enable willful infringement proof"
 - **Economic Layer:** "Free to sign. Paid to enforce. Coalition deals 60/40, self-service 80/20"
-- **Market Layer:** "Define industry licensing frameworks at invite-only roundtable  Symposium"
+- **Market Layer:** "Define industry licensing frameworks through the invite-only roundtable track"
 
 ---
 
@@ -65,7 +65,7 @@ We provide mathematical proof in a world without proof. Text has no origin marke
 We don't just enable compliance--we transform legal positioning. Formal notice + cryptographic proof = willful infringement. "We didn't know" becomes "you ignored our notice."
 
 **5. Market Standards Leadership**
-We convene the industry. The February 25, 2026 Syracuse Symposium brings together publisher GCs and AI company leads to translate technical standards into licensing frameworks. Founding coalition members shape the terms.
+We convene the industry. The invite-only roundtable track is being rescheduled while 1:1 publisher GC and AI commercial briefings continue to translate technical standards into licensing frameworks. Founding coalition members shape the terms.
 
 **6. Foundational Protocol**
 We're infrastructure, not applications. We're the protocol layer for text provenance. We enable licensing, governance, and attribution at scale.
@@ -82,13 +82,13 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 - "Cryptographic watermarking embedded in text"
 - "Survives copy-paste, B2B distribution, and scraping"
 - "Eliminates the 'we didn't know it was yours' defense"
-- "Willful infringement after notification--3x damages territory"
+- "Willful infringement after notification can materially increase exposure for registered works"
 - "Quote integrity verification--prove AI accuracy vs. hallucination"
 - "Participate in invite-only industry roundtable defining market licensing frameworks"
 - "Co-Chair, C2PA Text Provenance Task Force--standard published January 8, 2026"
 
 **Example Message:**
-"Text on the open web has no cryptographic proof of origin. When your content flows through B2B licensees, gets scraped by aggregators, or trains AI models, the connection to your organization disappears. As Co-Chair of the C2PA Text Provenance Task Force, we're building the standard that changes this--published January 8, 2026. Our cryptographic watermarking embeds proof directly into text at sentence-level granularity. Once you notify AI companies that your content carries these signatures, continued unauthorized use becomes provable willful infringement--not 'we didn't know it was yours.' Signing is free for every publisher. Founding members get implementation fees waived and seats at our February 25th symposium to define market licensing standards."
+"Text on the open web has no cryptographic proof of origin. When your content flows through B2B licensees, gets scraped by aggregators, or trains AI models, the connection to your organization disappears. As Co-Chair of the C2PA Text Provenance Task Force, we're building the standard that changes this--published January 8, 2026. Our cryptographic watermarking embeds proof directly into text at sentence-level granularity. Once you notify AI companies that your content carries these signatures, continued unauthorized use becomes provable willful infringement--not 'we didn't know it was yours.' Signing is free for every publisher. Founding members get implementation fees waived and invite-only standards access while the roundtable track is finalized."
 
 ### For AI Labs (Kenji Persona)
 **Tone:** Collaborative, Standards-Based, Infrastructure-Focused, Value-Creating
@@ -131,14 +131,14 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 ## Messaging Pillars
 
 ### Pillar 1: Standards Leadership
-**The Message:** We're Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft. The standard published January 8, 2026. The Syracuse Symposium on February 25, 2026 convenes stakeholders to define market licensing frameworks.
+**The Message:** We're Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft. The standard published January 8, 2026. The roundtable track is defining market licensing frameworks through interim briefings and reconvened sessions.
 
 **Supporting Points:**
 - Co-Chair role with major tech leaders
 - Authored the technical specification
 - Building standards collaboratively
 - January 8, 2026 publication (hard date)
-- February 25, 2026 Syracuse Symposium for market standards
+- Invite-only roundtable track + interim executive briefings for market standards
 
 **Never Claim:**
 - We're competing with AI companies
@@ -155,13 +155,13 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 - Patent-pending technology
 
 ### Pillar 3: Willful Infringement Enablement (NEW - Validated by AP)
-**The Message:** Once publishers notify AI companies that their content carries cryptographic signatures and can be verified via our public API, continued unauthorized use transforms from "innocent infringement" to "willful infringement"--eliminating the "we didn't know it was yours" defense and enabling 3x damages.
+**The Message:** Once publishers notify AI companies that their content carries cryptographic signatures and can be verified via our public API, continued unauthorized use transforms from "innocent infringement" to "willful infringement"--eliminating the "we didn't know it was yours" defense and materially improving enforcement leverage (with statutory maximums tied to registration status).
 
 **Supporting Points:**
 - Formal notice + cryptographic proof = willful infringement
 - Public verification API anyone can check
 - Transforms "prove they used your content" into "prove they ignored your notice"
-- 3x damages territory changes settlement math
+- Registration-qualified exposure changes settlement math
 
 **The Legal Logic:**
 - Before notification: "We scraped the web, we didn't know it was yours" (innocent infringement defense)
@@ -178,12 +178,12 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 - Gives AI companies hallucination detection
 
 ### Pillar 5: Market Standards Development (NEW - Validated by AP)
-**The Message:** The C2PA technical standard published January 8, 2026. The Syracuse Symposium on February 25, 2026 convenes publisher GCs and AI company commercial leads to translate technical standards into market licensing frameworks. Founding coalition members shape the terms others will accept.
+**The Message:** The C2PA technical standard published January 8, 2026. The invite-only roundtable track (currently being rescheduled) convenes publisher GCs and AI company commercial leads to translate technical standards into market licensing frameworks. Founding coalition members shape the terms others will accept.
 
 **Supporting Points:**
 - Industry lacks standard licensing terminology (per Paul Sarkis, AP)
 - First movers define frameworks
-- 20-30 stakeholders at Syracuse
+- 20-30 stakeholder target across interim briefings and reconvened roundtable
 - Founding members get seats at the table
 
 ### Pillar 6: Collaborative Infrastructure
@@ -208,7 +208,7 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 ### ... We Say:
 - "Co-Chair, C2PA Text Provenance Task Force"
 - "Standard published January 8, 2026"
-- "Syracuse Symposium February 25, 2026 for market standards"
+- "Invite-only roundtable track for market standards"
 - "Working with Google, BBC, OpenAI, Adobe, Microsoft"
 - "Unmarked text has no proof of origin"
 - "Cryptographic watermarking embedded in text"
@@ -302,7 +302,7 @@ Our cryptographic watermarking embeds proof directly into text. Survives copy-pa
 
 Once publishers notify AI companies their content is marked, continued unauthorized use = willful infringement. No more 'we didn't know it was yours.'
 
-The founding coalition is forming now. Syracuse Symposium February 25, 2026 convenes to define market licensing standards.
+The founding coalition is forming now. The invite-only roundtable track is defining market licensing standards through interim 1:1 briefings and reconvened sessions.
 
 See the demo: encypherai.com/publisher-demo
 
@@ -315,7 +315,7 @@ See the demo: encypherai.com/publisher-demo
 
 ### Email Subject Lines:
 - Publishers: "Eliminate the 'we didn't know' defense--C2PA standard now live"
-- Publishers: "Define market licensing frameworks at invite-only industry roundtable  February 25"
+- Publishers: "Define market licensing frameworks through invite-only standards briefings"
 - AI Companies: "C2PA text provenance infrastructure--building it together"
 - Enterprises: "Text authentication standard published January 8, 2026"
 
@@ -323,7 +323,7 @@ See the demo: encypherai.com/publisher-demo
 - "How Publishers Eliminate the 'We Didn't Know' Defense"
 - "From Unmarked Content to Willful Infringement Proof"
 - "Quote Integrity Verification: Protecting Publisher Brands from AI Hallucinations"
-- "Shaping Market Standards: The Syracuse Symposium Framework"
+- "Shaping Market Standards: The Invite-Only Roundtable Framework"
 
 ---
 
@@ -339,7 +339,7 @@ See the demo: encypherai.com/publisher-demo
 "18 months and $5M to build what we've already perfected as reference implementation. We co-chair the standards task force--leverage our infrastructure. The standard published January 8, 2026."
 
 ### vs. Wait and See:
-"Standards markets converge quickly. The publisher coalition implementing marked content creates network effects. Founding members shape market licensing frameworks at the February 25th symposium. Later adopters accept terms others defined."
+"Standards markets converge quickly. The publisher coalition implementing marked content creates network effects. Founding members shape market licensing frameworks through the roundtable track. Later adopters accept terms others defined."
 
 ---
 
@@ -352,7 +352,7 @@ See the demo: encypherai.com/publisher-demo
 "OpenAI is a C2PA member. Google is implementing SynthID for text. The AI industry recognizes that text provenance infrastructure benefits everyone--publishers gain proof of origin and willful infringement leverage, AI companies gain attribution data and quote verification, enterprises gain governance capabilities. We're building this together, not in opposition."
 
 ### The Market Standards Story (NEW):
-"The technical standard published January 8, 2026. But technical standards alone don't create markets. The Syracuse Symposium on February 25, 2026 convenes 20-30 publisher GCs and AI company commercial leads to translate C2PA into practical licensing frameworks--exclusive vs. non-exclusive, perpetual vs. term-limited, training vs. grounding. Founding coalition members shape the terms. Later adopters accept them."
+"The technical standard published January 8, 2026. But technical standards alone don't create markets. The invite-only roundtable track (currently being rescheduled) convenes publisher GCs and AI company commercial leads to translate C2PA into practical licensing frameworks--exclusive vs. non-exclusive, perpetual vs. term-limited, training vs. grounding. Founding coalition members shape the terms. Later adopters accept them."
 
 ### The Network Effect:
 "Each publisher implementing marked content strengthens the ecosystem. Each AI company integrating provenance infrastructure validates the standard. Each enterprise adopting text authentication accelerates convergence. We're not creating a closed system--we're establishing the open protocol layer for text provenance."
@@ -376,12 +376,12 @@ See the demo: encypherai.com/publisher-demo
  - Ignore notification (negligent)
  - Strip signatures (willful)
 - Publisher: "We notified you. Here's proof the signatures were there and you ignored them."
-- Result: Willful infringement = 3x damages territory
+- Result: Willful infringement = materially stronger posture (especially for registered works)
 
 ### Key Phrases:
 - "Eliminate the 'we didn't know' defense"
 - "Transform innocent infringement into willful infringement"
-- "Formal notice + cryptographic proof = 3x damages territory"
+- "Formal notice + cryptographic proof = registration-qualified statutory leverage"
 - "Shift from 'prove they used your content' to 'prove they ignored your notice'"
 
 ---
@@ -411,28 +411,28 @@ See the demo: encypherai.com/publisher-demo
 "Text on the open web has no cryptographic proof of origin. We provide sentence-level, tamper-evident proof with cryptographic certainty. Serve formal notice. Eliminate the 'we didn't know' defense. Transform innocent infringement into willful infringement. The standard published January 8, 2026."
 
 ### Publishing Industry:
-"Unmarked content can't be tracked or monetized--and AI companies can claim they didn't know it was yours. Our infrastructure embeds proof of origin directly into text--survives copy-paste, B2B distribution, and scraping. Serve formal notice. Prove willful infringement. Transform unmarked assets into licensing opportunities. Participate in invite-only industry roundtable defining market licensing frameworks (February 25)."
+"Unmarked content can't be tracked or monetized--and AI companies can claim they didn't know it was yours. Our infrastructure embeds proof of origin directly into text--survives copy-paste, B2B distribution, and scraping. Serve formal notice. Prove willful infringement. Transform unmarked assets into licensing opportunities. Participate in invite-only standards briefings and the roundtable track defining market licensing frameworks."
 
 ### AI Industry:
 "Publishers are implementing cryptographic watermarking at scale. Your training pipeline needs compatible infrastructure to handle marked content properly. We're building text provenance standards WITH you through C2PA--OpenAI is a member. Plus, quote integrity verification protects your brand when models claim 'According to AP...' Standard published January 8, 2026."
 
 ### Enterprise:
-"Text authentication is becoming the enterprise standard through C2PA--published January 8, 2026. Our implementation provides compliance baseline plus performance intelligence showing which content drives results. Governance infrastructure for the AI content economy."
+"Text authentication is becoming the enterprise standard through C2PA--published January 8, 2026. Our implementation provides compliance baseline plus performance intelligence showing which content drives results. Governance infrastructure for enterprise AI operations."
 
 ---
 
 ## The "Matt Kaminsky" Voice
 
-When Matt speaks for Encypher to publishers and sales houses:
+When Matt speaks for Encypher to publishers and platform/channel partners:
 - Lead with standards authority and collaboration
 - Reference Digimarc/Via Licensing IP licensing experience
 - Emphasize transformation from unmarked to marked content
 - Speak publisher language around proof, formal notice, and willful infringement
 - Frame AI companies as infrastructure partners, not adversaries
-- Reference the Syracuse Symposium for market standards development
+- Reference the invite-only roundtable track for market standards development
 
 **Example Matt Quote:**
-"I've spent 25 years building IP licensing frameworks. This is different--we're not just creating licenses, we're establishing the technical infrastructure that makes licensing enforceable. Text has never had proof of origin before. Publishers implementing our cryptographic watermarking and serving formal notice transform their legal position entirely. 'We didn't know it was yours' becomes 'you ignored our notice'--that's willful infringement, not innocent. The founding coalition forming now will Define market licensing frameworks at invite-only industry roundtable . First movers define the terms."
+"I've spent 25 years building IP licensing frameworks. This is different--we're not just creating licenses, we're establishing the technical infrastructure that makes licensing enforceable. Text has never had proof of origin before. Publishers implementing our cryptographic watermarking and serving formal notice transform their legal position entirely. 'We didn't know it was yours' becomes 'you ignored our notice'--that's willful infringement, not innocent. The founding coalition forming now will define market licensing frameworks through invite-only standards briefings and the roundtable track. First movers define the terms."
 
 ---
 
@@ -471,9 +471,9 @@ When Erik speaks for Encypher:
 
 As Co-Chair of the C2PA Text Provenance Task Force, we're building the standard that changes this--published January 8, 2026--with Google, BBC, OpenAI, Adobe, and Microsoft. I authored the specification and we built the reference implementation.
 
-Our patent-pending cryptographic watermarking embeds proof directly into text at sentence-level granularity. It survives copy-paste, B2B distribution, and data processing. Publishers can serve formal notice that content is marked. Once notified, continued unauthorized use becomes provable willful infringement--transforming 'prove they used your content' into 'prove they ignored your notice.' That's 3x damages territory.
+Our patent-pending cryptographic watermarking embeds proof directly into text at sentence-level granularity. It survives copy-paste, B2B distribution, and data processing. Publishers can serve formal notice that content is marked. Once notified, continued unauthorized use becomes provable willful infringement--transforming 'prove they used your content' into 'prove they ignored your notice.' This materially strengthens enforcement posture, especially for registered works.
 
-The founding coalition is forming now. The Syracuse Symposium on February 25, 2026 convenes publisher GCs and AI company leads to define market licensing frameworks. First movers shape the terms."
+The founding coalition is forming now. The invite-only roundtable track is defining market licensing frameworks through interim briefings and reconvened sessions. First movers shape the terms."
 
 ---
 
@@ -503,7 +503,7 @@ The founding coalition is forming now. The Syracuse Symposium on February 25, 20
 - Encypher text provenance
 - Encypher infrastructure
 - Encypher watermarking
-- Syracuse Symposium
+- Invite-only roundtable track
 
 ---
 
@@ -562,7 +562,7 @@ Our brand reflects our reality as collaborative infrastructure builders establis
 2. **Collaborative Approach:** Building WITH Google, BBC, OpenAI, Adobe, Microsoft
 3. **Technical Reality:** Unmarked text = no proof; cryptographic watermarking = proof that survives distribution
 4. **Legal Transformation:** Formal notice + cryptographic proof = willful infringement (eliminates "we didn't know")
-5. **Market Standards:** Syracuse Symposium convenes February 25, 2026 to define licensing frameworks
+5. **Market Standards:** Invite-only roundtable track defines licensing frameworks via interim briefings + reconvened sessions
 6. **Economic Enablement:** Transform unmarked content into provably owned, licensable assets
 
 Remember the core positioning shifts:
@@ -572,7 +572,7 @@ Remember the core positioning shifts:
 - From "compliance demands" ' to "collaborative standards"
 - From "litigation weapon" ' to "licensing enablement + market standards development"
 
-The standard published January 8, 2026. The symposium convenes February 25, 2026. The collaboration is real. The infrastructure is here.
+The standard published January 8, 2026. The roundtable track is active. The collaboration is real. The infrastructure is here.
 
 **We are Encypher. We are building text provenance infrastructure WITH the industry.**
 
@@ -584,18 +584,41 @@ Visit: **encypherai.com/publisher-demo** or **encypherai.com/ai-demo**
 
 **Document Owner:** Head of Publisher Strategy
 **Review Cycle:** Monthly
-**Next Review:** Post Syracuse Symposium (February 25, 2026)
+**Next Review:** After roundtable date lock + framework brief publication
 **Approved By:** Executive Team
 **Distribution:** All customer-facing teams
 
 **Key Changes from February 2026 (v4.0):**
 1. ... Updated team: Matt Kaminsky (Head of Publisher Strategy) replaces Nate Alvord
-2. ... Added platform distribution messaging for sales house audiences
+2. ... Added platform distribution messaging for platform/channel partner audiences
 3. ... Updated pipeline references to current active conversations
 4. ... WordPress plugin and Chrome extension now in beta release
 5. ... Added January 8, 2026 C2PA publication date (hard date)
-6. ... Added February 25, 2026 Syracuse Symposium for market standards
-7. ... Added "willful infringement" legal frame (eliminates "we didn't know" defense)
-8. ... Added quote integrity verification use case (AI hallucination protection)
-9. ... Added downstream survival specificity (B2B, wire services, aggregators)
-10. ... Added market standards development messaging (validated by Paul Sarkis, AP)
+6. ... Updated market standards references for roundtable rescheduling + active interim briefings
+
+---
+
+## Editorial & Message Hygiene Addendum (March 2026)
+
+### Voice Specification for Long-Form Content
+- Use Orwell/Lewis/Economist style: clear nouns, concrete verbs, low-adjective density, evidence-first claims.
+- Close blog posts with evidence-based conclusions, not hype clinchers.
+- Prefer specifics over abstractions (who/what/where/why) in first two paragraphs.
+
+### Publisher-First Sequencing Rule
+- Lead with publisher outcomes for current traffic mix: proof of origin, licensing leverage, brand protection.
+- Then layer AI-company collaboration and standards messaging.
+- Rebalance only when traffic mix materially shifts toward AI-company personas.
+
+### Explicit Value Proposition Additions
+- Include content theft and competitor scraping alongside AI licensing in publisher-facing copy.
+- Reinforce Tier 1 web-surface detection value as immediate, current capability.
+
+### Phrases to Avoid (Required)
+- Avoid "class action"; use "collective licensing".
+- Avoid "sales house" in Aditude-specific contexts; use "platform/channel partner".
+- Avoid using "AI Content Economy" as primary hero framing in publisher-first pages.
+
+### FAQ Distinction Requirement
+- Include WordProof distinction where relevant: timestamping != provenance that travels with text.
+- Clarify Encypher's differentiator as cryptographic proof embedded in content that survives downstream distribution.

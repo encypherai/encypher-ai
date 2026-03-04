@@ -1,9 +1,9 @@
 # Encypher Corporation: Open Source Strategy
 ## C2PA Reference Implementation Proliferation
 
-**Last Updated:** February 20, 2026
-**Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 4.0
+**Last Updated:** March 4, 2026
+**Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
+**Version:** 4.1
 **Distribution:** Engineering & Strategy Leadership
 
 ---
@@ -26,7 +26,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, our open-source strategy dri
 
 **Key Dates:**
 - **January 8, 2026:** C2PA text specification published (reference implementation live)
-- **February 25, 2026:** Syracuse Symposium defines market licensing frameworks
+- **Q1 2026:** Invite-only roundtable track active via interim briefings; reconvened session in coordination
 
 ---
 
@@ -104,7 +104,7 @@ This implementation embeds cryptographic watermarking directly into text.
 Why publishers need more than basic C2PA:
 
 - Granular content attribution (patent-pending ENC0100, Claims 1-20)
-- **Willful infringement enablement** (formal notice + proof = 3x damages)
+- **Willful infringement enablement** (formal notice + proof with registration-qualified statutory leverage)
 - **Quote integrity verification** (prove AI accuracy vs. hallucination)
 - Downstream survival (B2B distribution, wire services, aggregators)
 - Formal notice infrastructure
@@ -116,7 +116,7 @@ Why publishers need more than basic C2PA:
 **Basic C2PA provides proof. Enterprise capabilities enable legal transformation.**
 
 Learn more: encypherai.com
-Syracuse Symposium (Feb 25, 2026): 
+Roundtable track (invite-only, rescheduling in progress):
 ```
 
 ---
@@ -235,7 +235,7 @@ def prepare_evidence_package(content, notification_record):
 - "Quote Integrity Verification: Why AI Companies Need Our Enterprise Features"
 - "From Basic Proof to Legal Transformation: The Enterprise Path"
 
-**Syracuse Symposium Tie-In (February 25, 2026):**
+**Roundtable Track Tie-In (Rescheduling in Progress):**
 - "Market Licensing Frameworks: What Open Source Doesn't Cover"
 - "Why Publishers Need Sentence-Level Tracking for Licensing"
 
@@ -252,7 +252,7 @@ def prepare_evidence_package(content, notification_record):
 - Direct access to standards task force
 - Conference speaking opportunities
 - Early access to commercial features
-- **Syracuse Symposium invitation for exceptional contributors**
+- **Invite-only standards briefing/roundtable access for exceptional contributors**
 
 **Goal:** Create ecosystem of advocates who understand standards--and why enterprises need more
 
@@ -292,7 +292,7 @@ def prepare_evidence_package(content, notification_record):
 "The enforcement tools are working. Now I need enterprise scale--willful infringement proof, quote integrity, downstream survival"
 
 **Stage 6: Commercial Conversion**
-"Free to sign. Paid to enforce. Coalition deals: 60/40. Self-service: 80/20. Join the founding coalition and participate in invite-only licensing framework roundtable."
+"Free to sign. Paid to enforce. Coalition deals: 60/40. Self-service: 80/20. Join the founding coalition and participate in invite-only standards briefings + roundtable track."
 
 ### Conversion Triggers:
 
@@ -309,7 +309,7 @@ def prepare_evidence_package(content, notification_record):
 - Directory-scale operations
 
 **Market Triggers:**
-- Syracuse Symposium participation desire (market standards leadership)
+- Roundtable-track participation desire (market standards leadership)
 - Competitive pressure from other publishers implementing
 - AI company partnership requirements
 
@@ -367,7 +367,7 @@ def prepare_evidence_package(content, notification_record):
 - Developers trained: 1,000+
 - Certified implementations: 100+
 - Conference talks: 20+ annually
-- Syracuse Symposium attendees from OS community: 5+
+- Roundtable-track participants from OS community: 5+
 
 ---
 
@@ -390,7 +390,7 @@ def prepare_evidence_package(content, notification_record):
 - Industry partnerships (Google, BBC, OpenAI, Adobe, Microsoft)
 - Patent-protected enterprise features
 - Legal transformation value (willful infringement) can't be replicated
-- Syracuse Symposium leadership (market standards authority)
+- Roundtable-track leadership (market standards authority)
 
 ---
 
@@ -436,11 +436,11 @@ def prepare_evidence_package(content, notification_record):
 - Partner announcements (where allowed)
 - "Why Document-Level Isn't Enough" content series
 
-### Phase 4: Syracuse Tie-In (February 2026)
+### Phase 4: Roundtable Track Tie-In (Q1 2026)
 - Developer champion program highlight
 - C2PA certification program launch
-- "Market Standards" content connecting to Symposium
-- Enterprise conversion push ahead of Syracuse
+- "Market Standards" content connecting to roundtable track
+- Enterprise conversion push ahead of reconvened session
 
 ### Phase 5: Commercial Pipeline (March 2026+)
 - Enterprise feature webinars
@@ -461,7 +461,7 @@ The formula:
 3. **Legal gap creates enterprise demand** (willful infringement needs sentence-level)
 4. **Quote integrity creates AI company demand** (hallucination protection)
 5. **Patent protection ensures monetization** (can't replicate legal transformation)
-6. **Syracuse Symposium creates urgency** (market standards leadership)
+6. **Roundtable track creates urgency** (market standards leadership)
 7. **Network effects lock in dominance** (ecosystem builds on our foundation)
 
 We're not open-sourcing a product. We're proliferating the standard we authored--while protecting the legal transformation layer that creates billions in value.
@@ -471,21 +471,21 @@ We're not open-sourcing a product. We're proliferating the standard we authored-
 Repository: github.com/encypher/c2pa-text
 Website: **encypherai.com**
 C2PA Standard Publication: **January 8, 2026**
-Syracuse Symposium: **February 25, 2026**
+Roundtable Track: **Invite-only (rescheduling in progress)**
 
 ---
 
 ## Document Control
 
-**Last Updated:** February 20, 2026
-**Status:** Post-Standard Publication, Pre-Syracuse Symposium
+**Last Updated:** March 4, 2026
+**Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
 **Distribution:** Engineering & Strategy Leadership
-**Next Review:** Post Syracuse Symposium (February 25, 2026)
+**Next Review:** After roundtable date lock + framework brief publication
 **Document Owner:** CEO / Engineering
 
-**Key Updates from February 2026 (v4.0):
+**Key Updates from February 2026 (v4.0):**
 1. ... Added January 8, 2026 C2PA publication date (hard date)
-2. ... Added February 25, 2026 Syracuse Symposium tie-in
+2. ... Updated market-standards tie-in for roundtable-track rescheduling + interim briefings
 3. ... Added "willful infringement enablement" as primary commercial hook
 4. ... Added quote integrity verification as commercial feature
 5. ... Added "legal gap" messaging to drive enterprise conversion

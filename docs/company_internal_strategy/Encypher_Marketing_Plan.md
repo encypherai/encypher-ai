@@ -1,16 +1,16 @@
 # Encypher Corporation Marketing Plan
 ## Standards-Driven Text Provenance Infrastructure
 
-**Last Updated:** February 20, 2026
-**Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 4.0
+**Last Updated:** March 4, 2026
+**Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
+**Version:** 4.1
 **Distribution:** Marketing & Sales Leadership
 
 ---
 
 ## Executive Summary
 
-Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Provenance Task Force. We're not marketing a product competing with alternatives--we're evangelizing the standard we're building collaboratively with Google, BBC, OpenAI, Adobe, and Microsoft, while showcasing exclusive enhancements only we can provide. The standard **published January 8, 2026** -- [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text). The Syracuse Symposium on **February 25, 2026** convenes publisher GCs and AI company commercial leads to define market licensing frameworks.
+Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Provenance Task Force. We're not marketing a product competing with alternatives--we're evangelizing the standard we're building collaboratively with Google, BBC, OpenAI, Adobe, and Microsoft, while showcasing exclusive enhancements only we can provide. The standard **published January 8, 2026** -- [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text). The invite-only roundtable track is being rescheduled while 1:1 publisher GC and AI commercial briefings continue to define market licensing frameworks.
 
 **Core Strategic Positioning:**
 - **What We Are:** Co-Chair of C2PA Text Provenance Task Force building infrastructure WITH industry leaders
@@ -21,7 +21,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 **Key Marketing Objectives:**
 1. Establish Encypher as C2PA text provenance infrastructure standard (January 8 publication)
 2. Build founding publisher coalition through willful infringement enablement and market standards opportunity
-3. Execute Syracuse Symposium to define industry licensing frameworks (February 25)
+3. Execute roundtable-track briefings and reconvened session to define industry licensing frameworks
 4. Engage AI companies as infrastructure partners (not adversaries)
 5. Showcase enterprise enhancements that justify value-based pricing
 
@@ -30,7 +30,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Frame problem as "unmarked text = no proof + 'we didn't know' defense viable"
 - **Willful infringement enablement** = formal notice + cryptographic proof eliminates innocent infringement defense
 - **Quote integrity verification** = prove AI accuracy vs. hallucination, protect brand
-- **Market standards development** = Syracuse Symposium February 25, 2026 defines frameworks
+- **Market standards development** = invite-only roundtable track (rescheduling + active interim briefings)
 - Engage AI companies collaboratively (building WITH, not against)
 
 ---
@@ -40,7 +40,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 ### Primary Narrative: "Building Text Provenance Standards Together"
 
 **Core Message:**
-"Text on the open web has no cryptographic proof of origin. AI companies can claim 'we didn't know it was yours' as an innocent infringement defense. As Co-Chair of the C2PA Text Provenance Task Force, we changed that--the standard published January 8, 2026. Our cryptographic watermarking survives distribution, and formal notification transforms innocent infringement into willful. The Syracuse Symposium convenes February 25, 2026 to define market licensing frameworks. Signing is free. Enforcement tools are self-service. Coalition deals: 60/40. Self-service: 80/20. Founding members shaped the terms."
+"Text on the open web has no cryptographic proof of origin. AI companies can claim 'we didn't know it was yours' as an innocent infringement defense. As Co-Chair of the C2PA Text Provenance Task Force, we changed that--the standard published January 8, 2026. Our cryptographic watermarking survives distribution, and formal notification transforms innocent infringement into willful. The invite-only roundtable track is defining market licensing frameworks through interim briefings and reconvened sessions. Signing is free. Enforcement tools are self-service. Coalition deals: 60/40. Self-service: 80/20. Founding members shape the terms."
 
 ### The Four-Layer Value Architecture
 
@@ -54,7 +54,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 "Formal notice + cryptographic proof = willful infringement. Eliminate the 'we didn't know' defense."
 
 **Layer 4: Market Standards** (Economic)
-"Syracuse Symposium convenes February 25, 2026 to define licensing frameworks. Signing is free. Enforcement tools are self-service. Coalition deals: 60/40. Self-service: 80/20. Founding members shaped the terms."
+"Invite-only roundtable track defines licensing frameworks. Signing is free. Enforcement tools are self-service. Coalition deals: 60/40. Self-service: 80/20. Founding members shape the terms."
 
 ---
 
@@ -68,13 +68,13 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 **Messaging Pillars:**
 - "C2PA text standard published January 8, 2026--we authored it"
 - "Cryptographic watermarking that survives B2B distribution"
-- "Formal notice + cryptographic proof = willful infringement (3x damages)"
+- "Formal notice + cryptographic proof = willful infringement with registration-qualified statutory leverage"
 - "Quote integrity verification--protect your brand from AI hallucinations"
-- "Syracuse Symposium February 25, 2026--defined market licensing frameworks"
-- "Founding members got implementation fees waived + Invite to closed-door industry roundtable (February 25)s + priority coalition positioning"
+- "Invite-only roundtable track defines market licensing frameworks"
+- "Founding members get implementation fees waived + invite-only standards access + priority coalition positioning"
 
 **Tactics:**
-- Platform distribution outreach (Matt leading with sales house partnerships) + direct executive outreach (Erik leading with willful infringement frame)
+- Platform distribution outreach (Matt leading with platform/channel partnerships) + direct executive outreach (Erik leading with willful infringement frame)
 - Industry publication placements (standards authority + legal transformation angle)
 - Legal conference presentations (willful infringement enablement)
 - Founding coalition benefits documentation
@@ -83,7 +83,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Willful infringement enablement demonstrations
 - Quote integrity verification demos
 - Downstream survival demonstrations (B2B, wire services, aggregators)
-- Syracuse Symposium invitation materials
+- Roundtable-track briefing materials
 - Founding member benefits package
 - Interactive demo: **encypherai.com/publisher-demo**
 
@@ -111,25 +111,25 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 
 ---
 
-### Campaign 3: "Syracuse Symposium--Market Standards" (February 25, 2026)
+### Campaign 3: "Roundtable Track--Market Standards" (Rescheduling in Progress)
 
 **Target:** Publisher GCs, AI Company Commercial Leads, Industry Stakeholders
 **Hook:** "Define how AI content licensing works. The standards are technical--the frameworks are commercial."
 
-**Pre-Symposium (January-February):**
-- Attendee recruitment (20-30 stakeholders)
-- Pre-symposium briefings with key attendees
+**Interim Motion (Now):**
+- Stakeholder recruitment and sequencing (publisher GCs, AI commercial leads, policy stakeholders)
+- 1:1 framework briefings with key participants
 - Framework discussion materials preparation
-- Media briefing for post-symposium coverage
+- Media narrative preparation for reconvened roundtable outputs
 
-**Symposium Execution (February 25):**
+**Roundtable Execution (Date TBD):**
 - Facilitated roundtable (not panel--collaborative standard-setting)
 - Licensing terminology definition
 - Willful infringement framework discussion
 - Quote integrity implementation standards
 - Coalition governance structure
 
-**Post-Symposium:**
+**Post-Roundtable:**
 - Market licensing framework publication
 - Press coverage of industry-defined standards
 - Framework adoption campaign
@@ -162,21 +162,21 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Willful infringement enablement (eliminate "we didn't know" defense)
 - Quote integrity verification (brand protection from hallucinations)
 - Downstream survival (B2B, wire services, aggregators)
-- Market standards development (Syracuse Symposium)
+- Market standards development (invite-only roundtable track)
 - Founding coalition formation
 
 **Content Calendar:**
 
-**Current Phase (February 2026):**
+**Current Phase (March 2026):**
 - "The 'We Didn't Know' Defense Ends January 8, 2026"
 - "Quote Integrity: Protecting Your Brand from AI Hallucinations"
 - "Cryptographic Watermarking That Survives B2B Distribution"
-- "Syracuse Symposium: Shape Market Licensing Standards"
+- "Roundtable Track: Shape Market Licensing Standards"
 
 **Post-Publication (January 8 '):**
 - "C2PA Text Standard is Live: What Publishers Need to Know"
-- "Willful Infringement Framework: 3x Damages After Notification"
-- "Syracuse Symposium Preview: Defining AI Licensing Terms"
+- "Willful Infringement Framework: Registration-Qualified Statutory Leverage"
+- "Roundtable Preview: Defining AI Licensing Terms"
 - "Founding Coalition Update: Network Effects in Action"
 
 **Distribution Channels:**
@@ -219,7 +219,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 
 **Tier 2 Message:** "Formal Notice + Cryptographic Proof = Willful Infringement--Eliminating the 'We Didn't Know' Defense"
 
-**Tier 3 Message:** "Syracuse Symposium February 25, 2026 Defines Market Licensing Frameworks for AI Content"
+**Tier 3 Message:** "Invite-Only Roundtable Track Defines Market Licensing Frameworks for AI Content"
 
 ### Target Publications
 
@@ -242,7 +242,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 ### Press Calendar
 
 **January 8, 2026:** Standards publication announcement
-**February 25, 2026:** Syracuse Symposium coverage
+**Roundtable Date (TBD):** Roundtable track coverage
 **Q1 2026:** AI company partnership announcements
 **Q2 2026:** Licensing revenue milestone announcements
 
@@ -258,7 +258,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Publisher industry events (founding coalition recruitment)
 
 **Post-Publication (January 8 '):**
-- **Syracuse Symposium** (February 25, 2026) - Hosted, must execute perfectly
+- **Roundtable reconvened session** (date TBD) - Hosted, must execute perfectly
 - Standards conferences - Reference implementation launch
 - Publishing innovation summits - Coalition announcements
 - Enterprise AI forums - Governance through standards
@@ -312,7 +312,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Standards authority guides (January 8 publication)
 - Willful infringement enablement
 - Quote integrity verification
-- Syracuse Symposium and market standards
+- Roundtable-track market standards development
 - Technical implementation documentation
 
 ### Paid Media
@@ -338,7 +338,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 | Status | Before Notification | After Notification |
 |--------|--------------------|--------------------|
 | Legal Defense | "We didn't know" viable | Willful infringement |
-| Damages | Standard (uncertain) | 3x damages territory |
+| Damages | Standard (uncertain) | Registration-qualified statutory leverage |
 | Discovery | Expensive, required | Cryptographic proof ready |
 | Settlement Leverage | Weak | Strong |
 ```
@@ -362,7 +362,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 **Demo Scripts:**
 - 5-minute: Standards overview + January 8 publication
 - 15-minute: Willful infringement + quote integrity demonstration
-- 30-minute: Full platform + sentence-level capabilities + Syracuse opportunity
+- 30-minute: Full platform + sentence-level capabilities + roundtable-track opportunity
 - Interactive: **encypherai.com/publisher-demo** and **/ai-demo**
 
 ---
@@ -373,14 +373,14 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Founding coalition: 10 members signed
 - Website traffic: 15K monthly to **encypherai.com**
 - Demo requests: 75 monthly (publisher focus)
-- Syracuse attendees confirmed: 15+ of 30
+- Roundtable-track participants confirmed: rolling target 20-30
 - Media mentions: 10 tier-1 (standards authority angle)
 
 ### Q1 2026 Goals (January 8 ')
 - Publisher coalition: 20 members
 - AI company partnerships: 3 infrastructure discussions
 - Revenue pipeline: $10M+ (licensing + enforcement tools + implementations)
-- Syracuse Symposium executed: February 25
+- Roundtable reconvened session executed (date TBD)
 - Market framework published: March
 - Standards recognition: Industry validated
 
@@ -388,7 +388,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Coalition growth: 5 publishers/month post-publication
 - Demo-to-pilot conversion: 50%
 - Media sentiment: 95% positive
-- Symposium attendee satisfaction: 90%+
+- Roundtable participant satisfaction: 90%+
 - Framework adoption: Industry reference
 
 ---
@@ -403,7 +403,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Digital Marketing: $10K (6%)
 
 ### Q1 2026 (January 8 ') - $400K
-- Syracuse Symposium: $100K (25%)
+- Roundtable track program: $100K (25%)
 - PR & Media Relations: $80K (20%)
 - Digital Campaigns: $80K (20%)
 - Coalition Marketing: $60K (15%)
@@ -422,10 +422,10 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 ## Risk Mitigation (Updated)
 
 ### Risk: Slow Platform Partner Adoption
-**Response:** Willful infringement frame creates urgency, Invite to closed-door industry roundtable (February 25)s create FOMO, January 8 deadline creates timeline pressure
+**Response:** Willful infringement frame creates urgency, invite-only standards briefings create FOMO, January 8 publication creates timeline pressure
 
-### Risk: Syracuse Symposium Underattended
-**Response:** AP confirmed (Paul Sarkis), NMA member recruitment, exclusive high-value positioning, limited seats messaging
+### Risk: Roundtable Scheduling Delays
+**Response:** Continue 1:1 briefings, maintain NMA recruitment, publish interim framework notes, and treat reconvened session as culmination not restart
 
 ### Risk: AI Companies Perceive as Adversarial
 **Response (CRITICAL):**
@@ -436,48 +436,48 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Position as "building WITH" not "forcing compliance"
 
 ### Risk: Post-Publication Momentum Stalls
-**Response:** Syracuse Symposium February 25 creates second wave of urgency, market framework publication extends news cycle, AI company partnerships create third wave
+**Response:** Roundtable-track briefings and reconvened session create second-wave urgency, framework publication extends news cycle, AI company partnerships create third wave
 
 ---
 
 ## Conclusion
 
-This marketing plan positions Encypher as collaborative infrastructure builders establishing text provenance standards WITH the industry--with specific timeline milestones that create urgency and credibility. The January 8, 2026 publication date and February 25, 2026 Syracuse Symposium create natural campaign beats.
+This marketing plan positions Encypher as collaborative infrastructure builders establishing text provenance standards WITH the industry--with specific timeline milestones that create urgency and credibility. The January 8, 2026 publication date and roundtable-track cadence create natural campaign beats.
 
 The formula:
 1. **Standards authority creates credibility** (C2PA co-chair + specification authorship)
 2. **January 8 publication creates urgency** (founding coalition deadline)
-3. **Willful infringement frame creates legal value** (3x damages leverage)
+3. **Willful infringement frame creates legal value** (registration-qualified statutory leverage)
 4. **Quote integrity creates brand protection** (AI hallucination defense)
-5. **Syracuse Symposium creates market leadership** (define frameworks vs. accept them)
+5. **Roundtable track creates market leadership** (define frameworks vs. accept them)
 6. **Collaboration drives AI adoption** (building WITH, not against)
 
 We're not marketing a product competing with alternatives. We're establishing the protocol layer for text provenance that enables licensing, attribution, and content economics that didn't exist before.
 
-**The standard published January 8, 2026. The symposium convenes February 25, 2026. The collaboration is real. The infrastructure is here.**
+**The standard published January 8, 2026. The roundtable track is active. The collaboration is real. The infrastructure is here.**
 
 Website: **encypherai.com**
 Demos: **encypherai.com/publisher-demo** and **encypherai.com/ai-demo**
-Symposium: ****
+Roundtable Track: Invite-only (rescheduling in progress)
 
 ---
 
 ## Document Control
 
-**Last Updated:** February 20, 2026
-**Status:** Post-Standard Publication, Pre-Syracuse Symposium
+**Last Updated:** March 4, 2026
+**Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
 **Distribution:** Marketing & Sales Leadership
-**Next Review:** Post Syracuse Symposium (February 25, 2026)
+**Next Review:** After roundtable date lock + framework brief publication
 **Document Owner:** Head of Publisher Strategy
 
-**Key Updates from February 2026 (v4.0):
+**Key Updates from February 2026 (v4.0):**
 1. ... Added January 8, 2026 C2PA publication date (hard date)
-2. ... Added February 25, 2026 Syracuse Symposium campaign
+2. ... Updated market-standards campaign for roundtable-track rescheduling + interim briefings
 3. ... Added "willful infringement" legal frame campaign
 4. ... Added quote integrity verification messaging
 5. ... Added market standards development campaign
 6. ... Updated timeline to pre/post-publication phases
-7. ... Updated budget allocation for symposium execution
+7. ... Updated budget allocation for roundtable-track execution
 8. ... Added specific media calendar dates
 9. ... Updated all CTAs with urgency messaging
 10. ... Added four-layer value architecture

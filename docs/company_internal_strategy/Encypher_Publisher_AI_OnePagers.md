@@ -1,9 +1,9 @@
 # Encypher Corporation: Infrastructure for Text Provenance
 ## One-Page Overviews for Publishers and AI Companies
 
-**Last Updated:** February 20, 2026
-**Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 4.0
+**Last Updated:** March 4, 2026
+**Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
+**Version:** 4.1
 **Distribution:** Sales & Business Development Teams
 
 ---
@@ -95,7 +95,7 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 - Your content carries cryptographic signatures at the sentence level
 - You formally notify AI companies that your content is marked
 - They can verify any content against our public API
-- **Continued use after notification = provable willful infringement (3x damages territory)**
+- **Continued use after notification = provable willful infringement with materially stronger enforcement posture (especially for registered works)**
 
 This transforms litigation from "prove they used our content" to "prove they ignored our licensing notice"--a fundamentally stronger legal position.
 
@@ -128,9 +128,9 @@ Full signing infrastructure at no cost. C2PA 2.3-compliant signing, sentence-lev
 **Why This Works:**
 Signing is free because every signed document strengthens the coalition. We don't monetize supply--we monetize the enforcement and licensing tools that the network enables. The split reflects who does the work.
 
-**Founding Coalition Benefits:**
+- **Founding Coalition Benefits:**
 - Implementation fee waived
-- Invitation to closed-door industry roundtable (February 25, 2026) defining market licensing frameworks
+- Invite-only standards briefings + priority access to reconvened roundtable
 - Priority positioning in coalition licensing negotiations
 - Collective negotiating leverage through network effects
 
@@ -138,8 +138,8 @@ Signing is free because every signed document strengthens the coalition. We don'
 
 As Paul Sarkis (VP & Associate General Counsel, Associated Press--architect of the AP-OpenAI deal) noted: *"I would really like to see [us] develop market standards... in typical licensing, you have exclusive or non-exclusive, perpetual or term limited--these things are understood. That's not the case right now in this market."*
 
-**Invite-Only Industry Roundtable (February 25, 2026):**
-We're convening 20-30 publisher general counsels and AI company commercial leads in Washington, DC to translate the C2PA technical standard (published January 8, 2026) into practical licensing frameworks. Attendance is by invitation only.
+**Invite-Only Industry Roundtable (Rescheduling in Progress):**
+We're coordinating 1:1 briefings now and reconvening a group session with publisher general counsels and AI company commercial leads to translate the C2PA technical standard (published January 8, 2026) into practical licensing frameworks. Attendance remains by invitation only.
 
 **Why First Movers Define the Terms:**
 - Publishers implementing cryptographic watermarking first will establish how content licensing works with AI companies
@@ -149,7 +149,7 @@ We're convening 20-30 publisher general counsels and AI company commercial leads
 
 **Already In Motion:**
 - C2PA text standard published January 8, 2026 ...
-- Invite-only industry roundtable confirmed February 25, 2026
+- Invite-only roundtable track active via interim briefings; group reconvening in coordination
 - Active discussions: Freestar (CEO and BD meetings completed, PubOS press release pending), AP (Paul Sarkis engaged, Syracuse interest), Taylor & Francis, Scott Cunningham/AAM (CEO follow-up scheduled), Apartment Therapy, NMA (presented Feb 12), Linklaters (Syracuse + March meeting); platform distribution pipeline: Mediavine, Playwire, Raptive, Aditude; WordPress/Automattic partnership intro in progress
 - News Media Alliance partnership discussions for preferred vendor status
 - Patent applications filed for enterprise features
@@ -194,7 +194,7 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 OpenAI is a C2PA member. Google is implementing SynthID for text provenance. The AI industry recognizes that text authentication benefits everyone--publishers gain proof of origin, AI companies gain attribution data, enterprises gain governance capabilities. We're establishing the protocol layer collaboratively.
 
 **Industry Roundtable (Invite-Only):**
-February 25, 2026 in Washington, DC. 20-30 publisher GCs and AI company commercial leads translating technical standards into market licensing frameworks. Founding coalition members are invited to help define the terms.
+Rescheduling in progress; interim 1:1 briefings are active with publisher GCs and AI commercial leads translating technical standards into market licensing frameworks. Founding coalition members are invited to help define the terms.
 
 ---
 
@@ -203,7 +203,7 @@ February 25, 2026 in Washington, DC. 20-30 publisher GCs and AI company commerci
 ### For Publishers:
 **From:** Unmarked content with no proof of origin, "we didn't know" as viable AI company defense
 **To:** Cryptographically signed assets with formal notice capability, willful infringement proof
-**Result:** Licensing infrastructure that enables revenue from AI companies + 3x damages leverage. Free to sign, paid to enforce
+**Result:** Licensing infrastructure that enables revenue from AI companies + registration-qualified statutory leverage. Free to sign, paid to enforce
 
 ### For AI Companies:
 **From:** Training on unmarked text without provenance data, hallucination liability risk
@@ -213,14 +213,14 @@ February 25, 2026 in Washington, DC. 20-30 publisher GCs and AI company commerci
 ### For the Ecosystem:
 **From:** Conflict without technical framework, undefined market standards
 **To:** Standards-based infrastructure for content licensing, industry-defined frameworks
-**Result:** Transaction layer for the AI content economy
+**Result:** Transaction layer for standards-based content licensing and provenance
 
 ---
 
 ## Frequently Asked Questions
 
 **Q: What does "willful infringement" mean for publishers?**
-A: Once you notify AI companies that your content carries cryptographic signatures and they can verify via our public API, continued unauthorized use transforms from "innocent infringement" (we didn't know) to "willful infringement" (you knew and ignored it). Willful infringement can trigger 3x damages--fundamentally changing settlement math.
+A: Once you notify AI companies that your content carries cryptographic signatures and they can verify via our public API, continued unauthorized use transforms from "innocent infringement" (we didn't know) to "willful infringement" (you knew and ignored it). For registered works, this can materially increase statutory exposure and fundamentally change settlement math.
 
 **Q: How does quote integrity verification work?**
 A: When an AI outputs "According to AP, [quote]..." our infrastructure can verify whether that exact quote exists in signed AP content. If it's accurate: verified ". If it's modified or hallucinated: flagged --. This protects publisher brands from AI hallucinations and gives AI companies a tool to verify accuracy.
@@ -238,7 +238,7 @@ A: Two tracks: Coalition deals where Encypher negotiates are 60/40 (publisher ge
 A: Publishers: 2-4 weeks for full deployment. AI Companies: 6-8 weeks for training pipeline integration. Both include professional services and ongoing support.
 
 **Q: When does the C2PA standard publish?**
-A: January 8, 2026 is the hard publication date. An invite-only industry roundtable on February 25, 2026 convenes stakeholders to translate the technical standard into market licensing frameworks.
+A: January 8, 2026 is the hard publication date. The invite-only roundtable track is active (rescheduling in progress) to translate the technical standard into market licensing frameworks.
 
 ---
 
@@ -249,7 +249,7 @@ A: January 8, 2026 is the hard publication date. An invite-only industry roundta
 2. **Review Coalition Terms:** Understand founding member benefits (implementation fee waived, roundtable invitation, priority positioning)
 3. **Pilot Implementation:** Deploy on subset of premium content
 4. **Join Coalition:** Lock in founding rate and advisory board seat -- standard published January 8, founding coalition forming now
-5. **Industry Roundtable:** February 25, 2026 (invite-only)--help define market licensing standards
+5. **Industry Roundtable Track:** invite-only (rescheduling in progress)--help define market licensing standards
 
 ### For AI Companies:
 1. **Technical Evaluation:** Review infrastructure compatibility requirements
@@ -271,7 +271,7 @@ matt.kaminsky@encypherai.com
 
 **Standards Work:** C2PA Text Provenance Task Force (Co-Chair)
 **C2PA Standard Publication:** January 8, 2026
-**Industry Roundtable:** February 25, 2026 (invite-only)
+**Industry Roundtable Track:** Invite-only (rescheduling in progress)
 
 ---
 
@@ -279,7 +279,7 @@ matt.kaminsky@encypherai.com
 
 Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and serves as Co-Chair of the task force, establishing text authentication as the global standard through collaboration with Google, BBC, OpenAI, Adobe, and Microsoft. Our patent-pending cryptographic watermarking embeds proof of origin directly into text at sentence-level granularity, enabling publishers to serve formal notice, prove willful infringement, verify quote integrity, and AI companies to gain performance intelligence. We're building the transaction layer for the AI content economy--not as a product, but as collaborative infrastructure that benefits the entire ecosystem.
 
-**The standard published January 8, 2026. The industry roundtable convenes February 25, 2026. The infrastructure is here.**
+**The standard published January 8, 2026. The roundtable track is active. The infrastructure is here.**
 
 **Leadership:** Erik Svilich - Author of C2PA text specification, Co-Chair of C2PA Text Provenance Task Force, Founder & CEO
 
@@ -287,10 +287,10 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 
 ## Document Control
 
-**Last Updated:** February 20, 2026
-**Status:** Post-Standard Publication, Pre-Syracuse Symposium
+**Last Updated:** March 4, 2026
+**Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
 **Distribution:** Sales & Business Development Teams
-**Next Review:** Post Syracuse Symposium (February 25, 2026)
+**Next Review:** After roundtable date lock + framework brief publication
 **Document Owner:** Head of Publisher Strategy
 
 **Key Updates from February 2026:**

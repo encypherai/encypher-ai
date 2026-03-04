@@ -1,9 +1,9 @@
 # Encypher Corporation Master GTM Strategy
 ## Standards-Driven Coalition Strategy for Text Provenance Infrastructure
 
-**Last Updated:** February 20, 2026
-**Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 4.0
+**Last Updated:** March 4, 2026
+**Status:** Post-Standard Publication (Syracuse Roundtable Rescheduling)
+**Version:** 4.1
 **Distribution:** Executive Team & Strategy Leadership
 
 ---
@@ -25,11 +25,11 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 - **Core Solution:** Cryptographic watermarking that survives distribution + willful infringement enablement
 - **Publisher Value:** Eliminate "we didn't know" defense, serve formal notice, enable licensing, protect brand from hallucinations
 - **AI Company Value:** Performance intelligence, quote integrity verification, provenance infrastructure
-- **Market Standards:** Syracuse Symposium convenes February 25, 2026 to define licensing frameworks
+- **Market Standards:** Invite-only licensing roundtable is being rescheduled (originally planned for February 2026) while 1:1 publisher/AI briefings continue
 
 **Critical Messaging Validated by Paul Sarkis (AP):**
 - "Eliminate the 'we didn't know it was yours' defense"
-- "Willful infringement after notification--3x damages territory"
+- "Willful infringement after notification can materially increase exposure (up to $150,000 per registered work in US statutory framework)"
 - "Quote integrity verification--prove AI accuracy vs. hallucination"
 - "Participate in invite-only industry roundtable defining market licensing frameworks"
 - Standards authority + downstream survival + brand protection
@@ -40,7 +40,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 **Current Phase:**
 1. **Standards Momentum:** Public standard creates urgency and credibility
-2. **Syracuse Symposium:** February 25, 2026 defines market licensing frameworks
+2. **Market Standards Track:** Syracuse roundtable postponed and reframed; 1:1 executive briefings continue while new date is coordinated
 3. **Scale Coalition:** 20+ publishers, AI company partnerships
 4. **Enable Infrastructure:** AI companies implement compatible provenance systems
 
@@ -85,7 +85,7 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
  - AI companies claim innocent infringement: "We scraped the open web, we didn't know it was yours"
  - No technical way to establish notification was given
  - Expensive discovery, uncertain litigation outcomes
- - **Our Solution:** Formal notice + cryptographic proof = willful infringement (3x damages)
+ - **Our Solution:** Formal notice + cryptographic proof strengthens willful infringement posture and settlement leverage (statutory maximums depend on registration status)
 
 2. **The Downstream Distribution Problem:**
  - "You can get all of AP's content without having to go to apnews.com" (Paul Sarkis)
@@ -102,7 +102,7 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
 4. **The Market Standards Problem:**
  - No industry-standard licensing terminology for AI content
  - "Exclusive or non-exclusive, perpetual or term limited--these things are understood. That's not the case right now in this market." (Paul Sarkis)
- - **Our Solution:** Syracuse Symposium February 25, 2026 defines frameworks
+ - **Our Solution:** Convene standards stakeholders through a rescheduled invite-only roundtable and interim 1:1 briefings
 
 5. **The Proof of Origin Problem:**
  - Text on open web has no cryptographic proof of origin
@@ -137,8 +137,19 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
 3. **Sentence-Level Tracking** (patent-pending--enables willful infringement proof)
 4. **Formal Notice Capability** (legal + technical foundation)
 5. **Quote Integrity Verification** (accuracy vs. hallucination proof)
-6. **Market Standards Framework** (Syracuse Symposium February 25, 2026)
+6. **Market Standards Framework** (invite-only roundtable rescheduling + active 1:1 briefings)
 7. **Licensing Infrastructure** (economic transformation enablement)
+
+### The Four-Layer Standards Stack (Cunningham Mapping)
+
+Encypher messaging should reflect a complete standards stack, not a single standard reference:
+
+1. **IAB Tech Lab CoMP** -- operational specifications for ad-tech execution.
+2. **NMA** -- commercial and contractual licensing terms.
+3. **AAM** -- quality and audit expectations for publisher compliance.
+4. **C2PA** -- cryptographic provenance/watermarking that travels with content beyond publisher boundaries.
+
+Positioning guidance: Encypher is strongest at Layer 4, where provenance travels with content through syndication, scraping, and downstream distribution.
 
 ---
 
@@ -175,13 +186,13 @@ Opening: "The C2PA text standard published January 8, 2026. As Co-Chair of the t
 
 The Problem: "Right now, AI companies can claim 'we didn't know it was yours' as an innocent infringement defense. Your content flows through B2B licensees, wire services, aggregators--and ownership becomes unprovable."
 
-The Solution: "Our cryptographic watermarking embeds proof directly into text at sentence-level granularity. It survives copy-paste, B2B distribution, and scraping. Once you notify AI companies that your content carries these signatures, continued unauthorized use becomes provable willful infringement--not 'we didn't know.' That's 3x damages territory."
+The Solution: "Our cryptographic watermarking embeds proof directly into text at sentence-level granularity. It survives copy-paste, B2B distribution, and scraping. Once you notify AI companies that your content carries these signatures, continued unauthorized use becomes provable willful infringement--not 'we didn't know.' In the U.S., that can materially change exposure for registered works."
 
 Quote Integrity: "And when AI outputs 'According to [Your Publication]...' we can verify whether that quote is accurate or a hallucination damaging your brand."
 
-Market Standards: "The Syracuse Symposium on February 25, 2026 convenes 20-30 publisher GCs and AI company leads to translate the technical standard into market licensing frameworks. Founding members shape the terms."
+Market Standards: "Our invite-only roundtable is being rescheduled; in the interim we are running 1:1 publisher GC and AI commercial briefings to translate the technical standard into market licensing frameworks. Founding members still shape the terms."
 
-Close: "Signing is free for every publisher. Founding members get implementation fees waived, Invite to closed-door industry roundtable (February 25)s, and priority positioning in coalition negotiations. The licensing model is simple: coalition deals are 60/40, self-service is 80/20. The split reflects who does the work. The standard published January 8, 2026."
+Close: "Signing is free for every publisher. Founding members get implementation fees waived, invite-only standards briefings/roundtable access, and priority positioning in coalition negotiations. The licensing model is simple: coalition deals are 60/40, self-service is 80/20. The split reflects who does the work. The standard published January 8, 2026."
 ```
 
 **Pricing Tiers (Tested):**
@@ -194,7 +205,7 @@ Close: "Signing is free for every publisher. Founding members get implementation
 
 **Founding Member Benefits:**
 - Implementation fee waived for founding members
-- Invite to closed-door industry roundtable (February 25, 2026) defining market licensing frameworks
+- Invite-only market standards briefings + priority access to rescheduled roundtable
 - Exclusive early access to patent-pending features
 - Advisory board participation
 - Network effects from coalition leverage
@@ -203,7 +214,7 @@ Close: "Signing is free for every publisher. Founding members get implementation
 - Show cryptographic watermarking surviving copy-paste and distribution
 - Demonstrate sentence-level tracking precision
 - Demo quote integrity verification (accurate vs. hallucinated)
-- Explain willful infringement enablement (formal notice ' 3x damages)
+- Explain willful infringement enablement with precise legal language (statutory maximums require registered works)
 - Model licensing revenue potential
 - Demo available at: **encypherai.com/publisher-demo**
 
@@ -228,22 +239,21 @@ Close: "Signing is free for every publisher. Founding members get implementation
 - To: "The standard is live--marked content ecosystem emerging"
 - Result: Inevitability through standards + coalition network effects
 
-### Phase 3: Syracuse Symposium & Market Standards (February 25, 2026)
+### Phase 3: Market Standards Roundtable Track (Rescheduling in Progress)
 
 **The Market Standards Campaign**
 
-**Syracuse Symposium Details:**
-- **Date:** February 25, 2026
-- **Location:** Syracuse University journalism school, Washington DC
-- **Attendees:** 20-30 publisher GCs, AI company commercial leads, selected stakeholders
-- **Format:** Facilitated roundtable (not panel--collaborative standard-setting)
-- **Output:** Market licensing framework definitions
+**Roundtable Track Details:**
+- **Status:** Original February 2026 event postponed due participant scheduling conflicts
+- **Interim Motion:** 1:1 executive briefings with publisher GCs, AI commercial leads, and policy stakeholders
+- **Format:** Invite-only collaborative standard-setting roundtable (new date in coordination)
+- **Output:** Market licensing framework definitions + bilateral consensus capture before group reconvening
 
-**Pre-Symposium (January-February):**
-- Finalize attendee list (publisher GCs, AI company leads)
-- Prepare framework discussion materials
-- Coordinate with NMA for member invitations
-- Brief founding coalition members on agenda
+**Interim (Now):**
+- Continue NMA/AAM/publisher/AI stakeholder briefings
+- Capture framework positions and points of consensus/disagreement
+- Keep founding coalition members aligned on negotiation terms and terminology
+- Prepare updated group agenda for reconvened roundtable
 
 **Symposium Agenda Framework:**
 1. Technical standard overview (what C2PA text enables)
@@ -253,8 +263,8 @@ Close: "Signing is free for every publisher. Founding members get implementation
 5. Founding coalition structure and governance
 6. Next steps and working groups
 
-**Post-Symposium:**
-- Publish market licensing framework
+**Post-Roundtable:**
+- Publish market licensing framework update
 - Press coverage of industry-defined standards
 - Accelerate AI company partnership discussions
 - Expand coalition based on established frameworks
@@ -271,13 +281,13 @@ Close: "Signing is free for every publisher. Founding members get implementation
 - **Quote Integrity Verification:** Protect brand from hallucination liability
 - **Performance Intelligence:** When integrated into your pipeline, sentence-level tracking reveals which content drives results
 - **Provenance Infrastructure:** Technical foundation for content partnerships
-- **Standards Collaboration:** Shape frameworks through Syracuse Symposium participation
+- **Standards Collaboration:** Shape frameworks through roundtable participation and interim briefings
 
 **Collaborative Positioning:**
 "This isn't about restriction or compliance demands. Publishers need proof of origin for licensing. You need provenance data for attribution and performance insights. Both sides benefit from cryptographic certainty and interoperable standards. Let's build the infrastructure together."
 
 **Pricing by Tier:**
-AI company infrastructure pricing to be determined based on coalition leverage and market standards defined at Syracuse Symposium. Focus remains on publisher coalition formation first.
+AI company infrastructure pricing to be determined based on coalition leverage and market standards outcomes from the roundtable track. Focus remains on publisher coalition formation first.
 
 ---
 
@@ -376,9 +386,9 @@ Erik handles Tier 1 publisher GC/CLO relationships directly:
 
 **Why Publishers Accept It:**
 1. 60% or 80% of revenue that doesn't exist today vs. 100% of zero
-2. Willful infringement enablement (3x damages leverage) we provide exclusively
+2. Willful infringement enablement and stronger evidentiary posture we provide exclusively
 3. Quote integrity verification protects brand value
-4. Market standards seat at Syracuse Symposium
+4. Market standards seat in the invite-only roundtable track
 5. Success-based perfect alignment--no revenue = no payment
 6. We take percentage of licensing we enable, not existing business
 7. Standards authority creates ecosystem value beyond individual deals
@@ -395,7 +405,7 @@ Erik handles Tier 1 publisher GC/CLO relationships directly:
 **Q1 2026 (January - March): Foundation Building**
 - Platform partner agreements formalized (Freestar, potentially Aditude)
 - WordPress plugin and Chrome extension in beta distribution
-- Syracuse Symposium executed (February 25)
+- Syracuse roundtable postponed; 1:1 standards briefings active
 - NMA technical partnership advancing
 - Enterprise implementations: $0 (free tier adoption phase)
 - **Total Revenue: Pre-revenue** (value is coalition supply-side building and platform distribution infrastructure)
@@ -447,12 +457,12 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 **3. Legal Transformation Moat (NEW)**
 - Willful infringement enablement (formal notice + cryptographic proof)
 - Eliminates "we didn't know" defense
-- 3x damages positioning
+- Legally precise willful infringement framing
 - Unique legal value proposition
 
 **4. Network Moat**
 - Publisher coalition implementing marked content
-- Syracuse Symposium defining market standards
+- Invite-only roundtable track defining market standards
 - AI companies need compatible infrastructure
 - Ecosystem convergence through standards
 - Network effects accelerate adoption
@@ -460,16 +470,16 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 ### Competitive Positioning (Updated)
 
 **vs. Unmarked Content Status Quo:**
-"Text on the open web has no cryptographic proof of origin. AI companies can claim 'we didn't know it was yours.' Our watermarking survives distribution, and formal notice transforms innocent infringement into willful. 3x damages changes settlement math."
+"Text on the open web has no cryptographic proof of origin. AI companies can claim 'we didn't know it was yours.' Our watermarking survives distribution, and formal notice transforms innocent infringement into willful. That changes settlement math materially, especially for registered works."
 
 **vs. Basic C2PA Implementation:**
-"Standard C2PA provides document-level authentication. Our patent-pending enhancements enable sentence-level tracking for willful infringement proof, quote integrity verification, and performance intelligence. Plus market standards leadership through Syracuse Symposium."
+"Standard C2PA provides document-level authentication. Our patent-pending enhancements enable sentence-level tracking for willful infringement proof, quote integrity verification, and performance intelligence. Plus market standards leadership through the roundtable track."
 
 **vs. DIY Implementation:**
-"18 months and $5M to build the reference implementation we've perfected as Co-Chair of C2PA task force. Standard published January 8, 2026. While you build, the publisher ecosystem converges on our infrastructure and defines market standards at Syracuse. Network effects compound."
+"18 months and $5M to build the reference implementation we've perfected as Co-Chair of C2PA task force. Standard published January 8, 2026. While you build, the publisher ecosystem converges on our infrastructure and defines market standards through the roundtable track. Network effects compound."
 
 **vs. Wait and See:**
-"Standards markets converge rapidly. Publisher coalition implementing marked content creates ecosystem pressure. Syracuse Symposium February 25, 2026 defines market licensing frameworks. Early adopters shape standards. Later adopters accept terms others defined."
+"Standards markets converge rapidly. Publisher coalition implementing marked content creates ecosystem pressure. The invite-only roundtable track is defining market licensing frameworks through interim 1:1 briefings and reconvened group sessions. Early adopters shape standards. Later adopters accept terms others defined."
 
 ---
 
@@ -477,16 +487,16 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 
 ### Campaign Calendar (February 2026 -- Current)
 
-**This Week (February 20-25):**
+**Current Week:**
 - Freestar: Tim/Kurt one-on-one Friday, press release finalization
 - WordPress/Automattic: Reply to Parie (VP BD) intro from Anthony Gonsalves
-- Syracuse Symposium final preparation and attendee confirmation
+- Roundtable-track stakeholder briefing cadence and agenda refinement
 - WordPress plugin and Chrome extension beta release
 
-**Syracuse Week (February 25):**
-- Symposium execution: publisher GCs, AI company commercial leads, policymakers
-- Post-symposium framework publication
-- Convert attendee conversations into partnership commitments
+**Roundtable Track (Interim):**
+- 1:1 briefings with publisher GCs, AI company commercial leads, and policy stakeholders
+- Interim framework note capture and synthesis
+- Convert briefing conversations into partnership commitments
 
 **March:**
 - Formalize Freestar and first platform partner agreements
@@ -506,7 +516,7 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 
 **For Publishers:**
 - "Eliminate the 'We Didn't Know It Was Yours' Defense"
-- "Transform Innocent Infringement Into Willful--3x Damages"
+- "Transform Innocent Infringement Into Willful--with Legally Precise Enforcement Leverage"
 - "Quote Integrity Verification: Protect Your Brand from AI Hallucinations"
 - "Define market licensing frameworks at invite-only industry roundtable "
 - "C2PA Standard Published January 8, 2026--Join the Coalition"
@@ -521,7 +531,7 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 **For Market:**
 - "Authors of C2PA Section A.7--Standard Published January 8, 2026"
 - "Building Text Authentication WITH Industry Leaders"
-- "Syracuse Symposium February 25, 2026: Defining Market Licensing Standards"
+- "Invite-Only Industry Roundtable: Defining Market Licensing Standards"
 - "Infrastructure for the AI Content Economy"
 
 ---
@@ -532,8 +542,8 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 **Response:**
 - Start with flagship at 25% (proof of value creation)
 - Show revenue from previously unmarked content (new money)
-- Emphasize willful infringement leverage (3x damages)
-- Offer Invite to closed-door industry roundtable (February 25) (market standards opportunity)
+- Emphasize willful infringement leverage with registration-qualified legal language
+- Offer invite-only standards briefings + roundtable access (market standards opportunity)
 - Emphasize success-based alignment (no risk)
 
 ### Risk: AI Company Perceives as Adversarial
@@ -555,17 +565,17 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 ### Risk: Slow Publisher Adoption
 **Response:**
 - Willful infringement frame creates urgency
-- Syracuse Symposium creates FOMO (shape standards vs. accept them)
+- Roundtable track creates FOMO (shape standards vs. accept them)
 - January 8 publication creates timeline
 - Network effects messaging (coalition strength)
 - Matt's sales house and publisher relationships accelerate conversations
 
-### Risk: Syracuse Symposium Underattended
+### Risk: Roundtable Scheduling Delays
 **Response:**
-- Confirm AP attendance (Paul Sarkis committed)
-- Leverage NMA for member invitations
-- Create exclusive, high-value attendee experience
-- Position as market-defining opportunity
+- Continue high-value 1:1 briefings while coordinating new group date
+- Use NMA/AAM/channel partners to maintain stakeholder momentum
+- Publish interim framework notes to keep market leadership signal active
+- Position reconvened roundtable as culmination, not restart
 
 ---
 
@@ -576,7 +586,7 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 - [x] NMA AI Licensing Working Group presentation completed (February 12)
 - [x] WordPress plugin in beta release
 - [x] Chrome extension in beta release
-- [ ] Syracuse Symposium executed (February 25)
+- [ ] Roundtable reconvened and executed (rescheduling in progress)
 - [ ] 2-3 additional platform partner conversations advancing (Mediavine, Raptive, Playwire)
 - [ ] WordPress/Automattic partnership discussion initiated
 - [ ] Scott Cunningham/AAM CEO follow-up completed
@@ -609,7 +619,7 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 - Platform distribution model validated (Freestar, sales house partnerships)
 - Technical moat protected (patent-pending sentence-level)
 - Legal transformation proven (willful infringement enablement)
-- Market standards defined (Syracuse Symposium)
+- Market standards defined (roundtable track)
 - WordPress plugin and Chrome extension in distribution
 - **$1-2M revenue target (enforcement tools + first licensing)**
 
@@ -631,22 +641,23 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 
 ## Implementation Checklist
 
-### Immediate (This Week -- February 20-25):
-- [ ] Freestar: Partnership terms for PubOS press release (Tim/Kurt Friday one-on-one)
-- [ ] WordPress/Automattic: Reply to Parie intro from Anthony Gonsalves
-- [ ] WordPress plugin beta release finalized
-- [ ] Chrome extension beta release finalized
-- [ ] Syracuse Symposium final preparation and attendee confirmation
-- [ ] Pre-symposium briefings with confirmed attendees
+### Immediate (Current Week):
+- [ ] Freestar: advance legal review to signed Marketplace Partner Agreement
+- [ ] WordPress/Automattic: follow-up on VP BD pathway and plugin distribution model
+- [x] WordPress plugin beta release active
+- [x] Chrome extension beta release active
+- [ ] Continue invite-only standards briefings while roundtable date is reset
+- [ ] Consolidate framework notes from publisher/AI stakeholder calls
 
-### Post-Syracuse (February 26 - March):
-- [ ] Convert symposium outcomes into partnership commitments
+### Near-Term (Next 2-4 Weeks):
+- [ ] Convert briefing outcomes into partnership commitments
 - [ ] Formalize Freestar partnership agreement
-- [ ] Matt: Execute Mediavine, Playwire, Raptive calls
+- [ ] Matt: Execute Mediavine, Playwire, Raptive, Snack-Media calls independently where qualified
 - [ ] Linklaters/Ieuan Jolly NYC meeting (first week of March)
 - [ ] Scott Cunningham/AAM CEO follow-up with Rich Murphy
 - [ ] Begin formal notice preparation for AI companies
 - [ ] Paul Bannister/Raptive introduction (via Heather Carver)
+- [ ] Add Waldo Capital and Cannes panel motion to investor/visibility pipeline updates
 
 ### Q2 2026 (April - June):
 - [ ] 3-5 platform partners distributing to publishers
@@ -659,7 +670,7 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 
 ## Conclusion
 
-We stand at a critical moment: standards authority established through C2PA Co-Chair role, specification authored, patent moat building around sentence-level tracking, publisher relationships activated through Matt Kaminsky's platform distribution strategy, and an ecosystem ready for text provenance infrastructure. The standard published January 8, 2026. The Syracuse Symposium convenes February 25, 2026.
+We stand at a critical moment: standards authority established through C2PA Co-Chair role, specification authored, patent moat building around sentence-level tracking, publisher relationships activated through Matt Kaminsky's platform distribution strategy, and an ecosystem ready for text provenance infrastructure. The standard published January 8, 2026. The roundtable track is active and being rescheduled with interim executive briefings.
 
 **The Updated Strategy:**
 1. **Platform partners distribute signing infrastructure** (Freestar, Mediavine, Raptive, Playwire, Aditude reach hundreds of publishers each)
@@ -670,14 +681,14 @@ We stand at a critical moment: standards authority established through C2PA Co-C
 
 **Critical Positioning Validated by AP:**
 - From "prove they used your content" ' "prove they ignored your notice"
-- From "reduce litigation risk" ' "enable 3x damages through willful infringement"
+- From "reduce litigation risk" ' "strengthen enforceability with registration-qualified willful infringement posture"
 - From "protect content" ' "protect brand from hallucinations"
 - From "accept market terms" ' "participate in invite-only licensing framework roundtable"
 - From "compliance demand" ' "collaborative infrastructure building"
 
 We're not building a company or a product. We're building the protocol layer for text provenance in the AI content economy--collaboratively with the industry, not in opposition to it.
 
-The standard published January 8, 2026. The symposium convenes February 25, 2026. The infrastructure is here.
+The standard published January 8, 2026. The roundtable track is active. The infrastructure is here.
 
 **Encypher Corporation: Building text provenance infrastructure WITH the industry.**
 
@@ -788,10 +799,10 @@ TollBit and ProRata are building revenue-sharing agreements between publishers a
 
 ## Document Control
 
-**Last Updated:** February 20, 2026
-**Status:** Post-Standard Publication, Pre-Syracuse Symposium
+**Last Updated:** March 4, 2026
+**Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
 **Distribution:** Executive Team & Strategy Leadership
-**Next Review:** Post Syracuse Symposium (February 25, 2026)
+**Next Review:** After roundtable date lock + framework brief publication
 **Document Owner:** CEO / Head of Publisher Strategy
 
 **Key Changes from February 2026 (v4.0):**
