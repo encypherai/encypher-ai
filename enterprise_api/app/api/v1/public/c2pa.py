@@ -444,6 +444,7 @@ _RESOLVE_SQL = """
            rights_resolution_url
     FROM content_references
     WHERE embedding_metadata->>'segment_uuid' = :seg_uuid
+       OR embedding_metadata->>'log_id' = REPLACE(:seg_uuid, '-', '')
     LIMIT 1
 """
 
@@ -561,6 +562,11 @@ async def bulk_resolve_segment_uuids(
     if not body.segment_uuids:
         return BulkResolveResponse(results=[], not_found=[])
 
+    # Convert UUID strings (with dashes) to hex (no dashes) for log_id lookup.
+    # New micro+ecc signing stores log_id as hex without dashes; old ZWC/VS256
+    # signing stored segment_uuid with dashes.  Support both formats.
+    log_id_hexes = [u.replace("-", "") for u in body.segment_uuids]
+
     result = await content_db.execute(
         text(
             """
@@ -569,20 +575,34 @@ async def bulk_resolve_segment_uuids(
                    embedding_metadata->'segment_location' AS segment_location,
                    (embedding_metadata->>'total_segments')::int AS total_segments,
                    embedding_metadata->>'segment_uuid' AS segment_uuid,
+                   embedding_metadata->>'log_id' AS log_id,
                    manifest_data
             FROM content_references
             WHERE embedding_metadata->>'segment_uuid' = ANY(:seg_uuids)
+               OR embedding_metadata->>'log_id' = ANY(:log_id_hexes)
             """
         ),
-        {"seg_uuids": body.segment_uuids},
+        {"seg_uuids": body.segment_uuids, "log_id_hexes": log_id_hexes},
     )
     rows = result.fetchall()
 
+    # Build lookup: input UUID string -> DB row.
+    # A row may match via segment_uuid (old) or log_id (new).
     found_uuids: Dict[str, Any] = {}
     for row in rows:
-        uuid_val = row.segment_uuid
+        uuid_val = getattr(row, "segment_uuid", None)
         if uuid_val and uuid_val not in found_uuids:
             found_uuids[uuid_val] = row
+        log_id_val = getattr(row, "log_id", None)
+        if log_id_val:
+            # Convert hex log_id back to UUID-with-dashes for lookup
+            try:
+                from uuid import UUID as _UUID
+                uuid_from_log_id = str(_UUID(hex=log_id_val))
+                if uuid_from_log_id not in found_uuids:
+                    found_uuids[uuid_from_log_id] = row
+            except (ValueError, AttributeError):
+                pass
 
     results = []
     not_found = []

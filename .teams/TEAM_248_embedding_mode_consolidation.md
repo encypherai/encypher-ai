@@ -80,9 +80,84 @@ This session implements the embedding architecture simplification decided in TEA
 - vs256_crypto.py: removed duplicate embed_signature_safely, uses legacy_safe_crypto version via import alias
 - SSOT violations fixed: LEGACY_TIER_MAP, QUOTA_FIELD_MAPPING, is_enterprise_tier(), coerce_tier_name() all now come from tier_config.py in 6 files that previously inlined copies
 
-## Final Test Results
+## Final Test Results (session 1)
 - 1563 passed, 44 skipped (after all observability + SSOT + simplification changes)
 - All ruff checks pass across all modified files
+
+## VS256 ECC Verification Fix (TEAM_248 continuation - session 2)
+
+### Root Cause Analysis: post 37 (micro+ecc+embed_c2pa) fails Chrome/paste verification
+
+1. **WS normalization works correctly**: Mathematically verified that
+   `re.sub(r"\s+", " ", chrome_text).strip() == wp_text` and hashes match.
+   The WS normalization code in endpoints.py is correct and handles Chrome/paste.
+
+2. **VS256 detection was broken for ECC format**:
+   - `vs256_detect.py` only looked for 36-char signatures (SIGNATURE_CHARS = 36)
+   - The new micro+ecc signing produces **44-char** signatures (4 magic + 40 RS payload)
+   - VS256 fallback in the verify service therefore found ZERO signatures in post 37
+   - This meant the fallback could not attribute sentences or resolve the org
+
+3. **DB resolve key mismatch**:
+   - New micro+ecc signing stores `embedding_metadata["log_id"] = log_id.hex()`
+     (16-byte hex without dashes, e.g. "a1b2c3d4e5f67890abcdef1234567890")
+   - Old ZWC signing stored `embedding_metadata["segment_uuid"]` (UUID with dashes)
+   - The resolve SQL only checked `embedding_metadata->>'segment_uuid'`
+   - Even if ECC signatures were found, their log_id couldn't be resolved from DB
+   - This is what the user called "swapping to use log seq#"
+
+### Fixes Applied
+
+**`services/verification-service/app/utils/vs256_detect.py`**:
+- Added `ECC_SIGNATURE_CHARS = 44` constant
+- Updated `find_vs256_signatures()` to detect both 36 and 44-char sigs
+  (tries 44-char ECC first at each magic prefix)
+- Updated `extract_uuid_from_vs256_signature()` to handle 44-char format:
+  RS decode 40-byte payload -> 32 data bytes, UUID = bytes[:16]
+- Updated `reassemble_signature_from_distributed()` to try 44-char ECC first
+- All changes backward-compatible with 36-char legacy signatures
+
+**`enterprise_api/app/api/v1/public/c2pa.py`**:
+- Single-resolve SQL: added `OR embedding_metadata->>'log_id' = REPLACE(:seg_uuid, '-', '')`
+- Bulk-resolve SQL: added `OR embedding_metadata->>'log_id' = ANY(:log_id_hexes)`
+  and post-processing to match log_id hex back to input UUID string
+
+**`services/verification-service/tests/test_vs256_detect.py`**:
+- Added 7 new tests in `TestECCSignatureDetection` class covering:
+  - 44-char ECC detection
+  - ECC preferred over 36-char on same magic prefix
+  - UUID extraction from 44-char ECC signature
+  - Roundtrip with find_vs256_signatures
+  - Mixed 36 and 44-char sigs in same text
+  - UUID-to-log_id-hex format conversion (critical for DB lookup)
+  - Reassembly from distributed VS chars
+
+**Test results**: 91 passed, 0 failed (verification-service), all ruff checks pass
+
+### Key Insight
+The "log seq#" the user mentioned = the `log_id` field. When micro+ecc signing
+was added, the DB key changed from `segment_uuid` to `log_id`, breaking the
+VS256 fallback path in the verification service. The primary C2PA path (COSE +
+WS normalization) was always correct but the VS256 sentence-attribution fallback
+was completely blind to the new format.
+
+### Commit Message Suggestion
+```
+fix(verification): support 44-char ECC signatures and log_id DB lookup
+
+vs256_detect.py: detect both 36-char (legacy) and 44-char (ECC) VS256
+signatures; try ECC format first at each magic prefix position; update
+UUID extraction to RS-decode 40-byte payloads for ECC format; update
+reassemble_from_distributed to prefer 44-char.
+
+enterprise_api c2pa.py: extend single and bulk resolve SQL to also match
+embedding_metadata->>'log_id' (new micro+ecc format stores hex log_id
+without dashes) in addition to segment_uuid (old ZWC/VS256 format).
+
+The new micro+ecc signing (post 37) stored log_id not segment_uuid in
+embedding_metadata, breaking VS256 sentence attribution fallback. Primary
+C2PA path (COSE + WS normalization) was always correct.
+```
 
 ## Commit Message Suggestion (comprehensive for all work this session)
 ```
