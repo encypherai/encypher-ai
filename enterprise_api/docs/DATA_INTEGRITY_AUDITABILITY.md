@@ -11,6 +11,13 @@ Data integrity ensures signed content proofs, manifests, and audit trails remain
 ### Current State
 - Audit logs stored in Postgres via `audit_logs` table.
 - Audit log API supports export and filtering.
+- The following events are written automatically by the signing and verification flows (asynchronous, best-effort):
+
+  | Event constant | Event name | Emitted by |
+  |----------------|------------|------------|
+  | `DOCUMENT_SIGNED` | `document.signed` | Single-document signing endpoint |
+  | `BATCH_SIGN_COMPLETED` | `batch.sign.started` | Batch signing endpoint on completion |
+  | `DOCUMENT_VERIFIED` | `document.verified` | Document verification endpoint |
 
 ### Target State
 - Append-only log storage and immutable archive (WORM storage or immutable S3 bucket).

@@ -11,14 +11,33 @@ Observability ensures production reliability and rapid incident response through
 ### Current State
 - Standard logging configured in `app/main.py`.
 - Request logging middleware captures status + latency.
+- All tier-enforcement rejections (proxy signing, batch limit) and quota enforcement (feature gating, quota exceeded) emit `logger.warning()` before returning 403/429 responses, enabling monitoring via log-based alerting.
 
 ### Target State
 - JSON structured logging with correlation IDs.
 - Unified log schema for sign/verify/batch operations.
 
 ### Open Gaps
-- Add correlation ID middleware and propagate to downstream services.
 - Standardize log fields across routers.
+
+### Correlation ID Propagation
+The `[req-xxxx]` correlation ID is forwarded as the `x-request-id` header on all outbound calls to key-service and auth-service, enabling end-to-end trace correlation across service boundaries.
+
+## 2.1. Distributed Tracing (OpenTelemetry)
+Distributed tracing is available via OpenTelemetry. Set `OTEL_EXPORTER_OTLP_ENDPOINT` to enable export (e.g., to Jaeger, Grafana Tempo, or Datadog). FastAPI endpoints and httpx calls are auto-instrumented. Tracing is a safe no-op when the env var is unset.
+
+Service name defaults to `enterprise-api` and can be overridden with `OTEL_SERVICE_NAME`.
+
+## 2.2. Audit Log Events
+Core signing/verification operations write audit log entries to the `audit_logs` table. The following events are emitted:
+
+| Event | Source |
+|-------|--------|
+| `document.signed` (`DOCUMENT_SIGNED`) | Single-document signing endpoint |
+| `batch.sign.started` (`BATCH_SIGN_COMPLETED`) | Batch signing completion |
+| `document.verified` (`DOCUMENT_VERIFIED`) | Document verification endpoint |
+
+These writes are performed asynchronously (best-effort, fire-and-forget via `asyncio.create_task`) and do not block the API response.
 
 ## 3. Metrics & Dashboards (PRD 4.2)
 ### Current State

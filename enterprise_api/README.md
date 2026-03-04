@@ -142,7 +142,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/sign/advanced` | POST | - | - | ⚠️ **REMOVED** - Returns 410 Gone, use `/sign` with options | - |
 | `/api/v1/sign/rich` | POST | ✅ | All | Sign rich article (text + embedded images) with C2PA | Key Service |
 | `/api/v1/verify` | POST | ✅ | All (features gated) | Verify signed content with optional attribution, plagiarism, and fuzzy search flags - features gated by tier | Key Service |
-| `/api/v1/verify/image` | POST | ❌ | Public | Verify a signed image. Checks JUMBF C2PA manifest; falls back to XMP instance_id DB lookup for passthrough-mode images | None |
+| `/api/v1/verify/image` | POST | ❌ | Public | Verify a signed image. Checks embedded C2PA manifest; falls back to XMP instance_id DB lookup for passthrough-mode images | None |
 | `/api/v1/verify/rich` | POST | ❌ | Public | Verify a signed rich article by document_id | None |
 | `/api/v1/lookup` | POST | ❌ | Public | Lookup sentence provenance | None |
 | `/api/v1/provenance/lookup` | POST | ❌ | Public | Lookup provenance for a document (structured) | None |
@@ -985,7 +985,7 @@ The legacy plagiarism endpoint now returns HTTP 410. Use the unified verificatio
 ### Invisible Signed Embeddings
 
 Embed signed references directly into content so it can be extracted and verified later. With
-`manifest_mode="minimal_uuid"`, each segment receives a UUID-only pointer while a full C2PA manifest
+`manifest_mode="micro"` (the default), each segment receives a compact marker while a full C2PA manifest
 is appended at the document end by default (set `disable_c2pa=true` to skip the document-level manifest).
 
 **Endpoint:** `POST /api/v1/sign` (with embedding options)
@@ -997,7 +997,7 @@ is appended at the document end by default (set `disable_c2pa=true` to skip the 
   "document_id": "article_001",
   "text": "Full article text...",
   "segmentation_level": "sentence",
-  "manifest_mode": "minimal_uuid",
+  "manifest_mode": "micro",
   "c2pa_manifest_url": "https://...",
   "license": {
     "type": "All Rights Reserved",
@@ -1006,31 +1006,25 @@ is appended at the document end by default (set `disable_c2pa=true` to skip the 
 }
 ```
 
-**Manifest Modes:** `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`, `vs256_embedding`, `vs256_rs_embedding`
+**Manifest Modes:** `full`, `micro` (default: `micro`)
 
-> For a comprehensive comparison of all modes with platform compatibility, PDF behavior, and security details, see [docs/architecture/EMBEDDING_MODES.md](../docs/architecture/EMBEDDING_MODES.md).
+**`micro` mode sub-variants** (controlled by `ecc` and `legacy_safe` flags):
+- `ecc=true, legacy_safe=false` (default): VS256-RS, 44-char markers with Reed-Solomon error correction
+- `ecc=false, legacy_safe=false`: VS256, 36-char markers, not Word-safe
+- `ecc=false, legacy_safe=true`: zero-width chars, 100-char markers, Word/terminal-safe
+- `ecc=true, legacy_safe=true`: zero-width chars with ECC, 112-char markers, Word-safe + error correction
 
-**`zw_embedding` Mode**
-- Uses zero-width Unicode characters (ZWNJ, ZWJ, CGJ, MVS) for invisible signatures
-- 128 chars per sentence (no magic number, contiguous sequence detection)
-- **Word-compatible**: Survives Microsoft Word copy-paste perfectly
-- Detected by scanning for 128 contiguous base-4 characters
-- No visible spaces or gaps in any text editor
-- Ideal for portable content tracking across web, Word, PDF, etc.
+**Recommended configuration by use case:**
 
-**`vs256_embedding` Mode**
-- Uses a 256-character invisible alphabet for base-256 encoding
-- **36 chars per sentence** — 3.6x more compact than ZW mode
-- Magic prefix detection (VS240–VS243) for reliable extraction
-- Works in Google Docs, PDF, browsers — **NOT Microsoft Word** (shows □ glyphs)
-- Best for maximum density when Word compatibility is not needed
+| Use case | `manifest_mode` | `ecc` | `legacy_safe` | Notes |
+|---|---|---|---|---|
+| Web / browser / PDF (default) | `micro` | `true` | `false` | VS256-RS, 44 chars/segment, best density + ECC |
+| Low-character-budget web | `micro` | `false` | `false` | VS256, 36 chars/segment, no ECC |
+| Microsoft Word / Office / copy-paste | `micro` | `true` | `true` | ZWC-RS, 112 chars/segment, survives Word round-trip |
+| Word + tight budget | `micro` | `false` | `true` | ZWC, 100 chars/segment, Word-safe, no ECC |
+| Full C2PA manifest embedded in document | `full` | n/a | n/a | Larger payload; use when the doc must be self-contained |
 
-**`vs256_rs_embedding` Mode**
-- Extends VS256 with **Reed-Solomon error correction** (8 parity symbols)
-- Same 36-char footprint as VS256 — trades HMAC length for parity bytes
-- Corrects up to 4 unknown errors or 8 known erasures per signature
-- **Recommended for PDF signing** — recovers from chars dropped by PDF text extractors
-- Same detection as VS256 (magic prefix); verification auto-distinguishes RS vs non-RS
+**Rule of thumb:** start with the default (`micro`, `ecc=true`, `legacy_safe=false`). Switch `legacy_safe=true` only when the signed content will pass through Microsoft Word or a terminal that strips variation selectors.
 
 **Response:**
 
@@ -1106,11 +1100,11 @@ own CDN. Only metadata (hashes, pHash, c2pa_instance_id) is stored in the Encyph
 |-------|-----------|---------------------|------|
 | Hard binding | SHA-256 of pixel bytes (original_hash) | No | All |
 | In-file reference | XMP (ISO 16684) carrying `instance_id` in APP1/iTXt | Yes (CDN-compatible) | All |
-| C2PA JUMBF | Full cryptographic manifest embedded as JUMBF box | Yes | When cert configured |
+| C2PA manifest | Full cryptographic manifest embedded in file | Yes | When cert configured |
 | Soft binding | TrustMark neural watermark (survives JPEG recompression, moderate crop) | Yes | Enterprise only |
 | pHash fuzzy index | Perceptual hash for near-duplicate search (Hamming distance) | Near-duplicate | All |
 
-**Passthrough mode** (local dev / no signing cert configured): JUMBF embedding is
+**Passthrough mode** (local dev / no signing cert configured): C2PA manifest embedding is
 skipped. XMP provenance is still injected into each signed image so verification by
 `instance_id` works correctly. `c2pa_signed=false` in the response indicates this mode.
 `signed_hash` will differ from `original_hash` because XMP bytes are appended inside
@@ -1121,7 +1115,7 @@ the binary (JPEG: APP1 segment after SOI; PNG: iTXt chunk after IHDR).
 Readable by standard XMP tooling. WebP and TIFF are not XMP-modified; they still
 receive hard binding and pHash registration.
 
-**Free tier:** Hard binding + XMP + pHash. C2PA JUMBF requires a configured signing cert.
+**Free tier:** Hard binding + XMP + pHash. C2PA manifest signing requires a configured signing cert.
 
 **Enterprise tier:** All Free features plus TrustMark neural soft binding and
 cross-organization pHash attribution search.
@@ -1155,8 +1149,8 @@ cross-organization pHash attribution search.
 **Image verification:**
 
 - POST /api/v1/verify/image -- accepts base64 image. Two-step verification:
-  1. Extracts and validates the embedded JUMBF C2PA manifest (if present).
-  2. If no JUMBF manifest or hash miss, reads the XMP `instance_id` and looks up
+  1. Extracts and validates the embedded C2PA manifest (if present).
+  2. If no C2PA manifest or hash miss, reads the XMP `instance_id` and looks up
      the image record in the Encypher DB. Returns `valid=true` if the DB record
      is found, regardless of whether a full C2PA manifest is embedded. This allows
      passthrough-mode images and CDN-re-encoded copies to verify successfully.
@@ -1626,7 +1620,7 @@ IMAGE_MAX_SIZE_BYTES=10485760
 # Max images per /sign/rich request
 IMAGE_MAX_COUNT_PER_REQUEST=20
 
-# Passthrough mode: skip JUMBF C2PA embedding (XMP provenance still injected).
+# Passthrough mode: skip C2PA manifest embedding (XMP provenance still injected).
 # Auto-enabled when MANAGED_SIGNER_PRIVATE_KEY_PEM / MANAGED_SIGNER_CERTIFICATE_CHAIN_PEM
 # are absent. Set explicitly for local dev / CI.
 IMAGE_SIGNING_PASSTHROUGH=false

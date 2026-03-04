@@ -20,7 +20,7 @@ async def test_sign_with_advanced_options_allowed_for_free_tier(
         json={
             "text": "Hello world. Advanced signing.",
             "options": {
-                "manifest_mode": "minimal_uuid",
+                "manifest_mode": "micro",
             },
         },
         headers=starter_auth_headers,
@@ -41,7 +41,7 @@ async def test_sign_with_advanced_options_success_free_tier(
         json={
             "text": "Hello world. Advanced signing.",
             "options": {
-                "manifest_mode": "minimal_uuid",
+                "manifest_mode": "micro",
             },
         },
         headers=professional_auth_headers,

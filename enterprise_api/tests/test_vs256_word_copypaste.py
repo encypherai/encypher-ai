@@ -26,7 +26,7 @@ Usage:
 
 import sys
 import unicodedata
-from uuid import uuid4
+from app.utils.vs256_crypto import generate_log_id
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
@@ -41,13 +41,13 @@ from app.utils.vs256_crypto import (
     VS_SUPP_END,
     MAGIC_PREFIX,
     SIGNATURE_CHARS,
-    create_minimal_signed_uuid,
-    verify_minimal_signed_uuid,
-    find_all_minimal_signed_uuids,
-    extract_minimal_signed_uuid,
+    create_signed_marker,
+    verify_signed_marker,
+    find_all_markers,
+    extract_marker,
     embed_signature_safely,
     derive_signing_key_from_private_key,
-    create_safely_embedded_sentence,
+    create_embedded_sentence,
     encode_bytes_vs256,
     decode_bytes_vs256,
 )
@@ -214,9 +214,9 @@ def create_visibility_test_document():
 
     sig_uuids = []
     for sentence in sig_sentences:
-        uid = uuid4()
+        uid = generate_log_id()
         sig_uuids.append(uid)
-        embedded = create_safely_embedded_sentence(sentence, uid, signing_key)
+        embedded = create_embedded_sentence(sentence, uid, signing_key)
         lines.append(embedded)
 
     lines.append("")
@@ -324,7 +324,7 @@ def analyze_signature_results(pasted, signing_key, sig_sentences, sig_uuids):
     print("=" * 78)
 
     # Try to find signatures in the pasted text
-    found_sigs = find_all_minimal_signed_uuids(pasted)
+    found_sigs = find_all_markers(pasted)
     print(f"\n  Signatures expected: {len(sig_sentences)}")
     print(f"  Signatures found:   {len(found_sigs)}")
 
@@ -348,7 +348,7 @@ def analyze_signature_results(pasted, signing_key, sig_sentences, sig_uuids):
 
     verified_count = 0
     for i, (start, end, sig) in enumerate(found_sigs):
-        is_valid, extracted_uuid = verify_minimal_signed_uuid(sig, signing_key)
+        is_valid, extracted_uuid = verify_signed_marker(sig, signing_key)
 
         if is_valid:
             uuid_match = extracted_uuid in sig_uuids
@@ -375,7 +375,7 @@ def analyze_signature_results(pasted, signing_key, sig_sentences, sig_uuids):
         print("  Some signatures were corrupted during Word copy/paste.")
     else:
         print("\n  [XX] NO SIGNATURES VERIFIED — VS256 IS NOT WORD-COMPATIBLE")
-        print("  This confirms the expected behavior: use zw_embedding for Word workflows.")
+        print("  This confirms the expected behavior: use legacy_safe mode for Word workflows.")
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -404,19 +404,19 @@ def run_automated_roundtrip_test():
     embedded_parts = []
     uuids = []
     for sentence in sentences:
-        uid = uuid4()
+        uid = generate_log_id()
         uuids.append(uid)
-        embedded = create_safely_embedded_sentence(sentence, uid, signing_key)
+        embedded = create_embedded_sentence(sentence, uid, signing_key)
         embedded_parts.append(embedded)
 
     document = " ".join(embedded_parts)
 
     # Verify
-    found = find_all_minimal_signed_uuids(document)
+    found = find_all_markers(document)
     assert len(found) == len(sentences), f"Expected {len(sentences)} sigs, found {len(found)}"
 
     for i, (start, end, sig) in enumerate(found):
-        is_valid, extracted_uuid = verify_minimal_signed_uuid(sig, signing_key)
+        is_valid, extracted_uuid = verify_signed_marker(sig, signing_key)
         assert is_valid, f"Signature {i + 1} failed verification"
         assert extracted_uuid == uuids[i], f"UUID mismatch for sig {i + 1}"
 
@@ -436,37 +436,13 @@ def run_automated_roundtrip_test():
     # Simulate what Word might do: strip all VS characters
     print(f"\n  Simulating Word-like VS stripping...")
     stripped_doc = "".join(ch for ch in document if ch not in VS_TO_BYTE)
-    stripped_found = find_all_minimal_signed_uuids(stripped_doc)
+    stripped_found = find_all_markers(stripped_doc)
     print(f"    Signatures after stripping: {len(stripped_found)} (expected 0)")
     assert len(stripped_found) == 0, "Should find no sigs after VS stripping"
     print(f"    [OK] Confirmed: VS stripping destroys signatures")
 
-    # Compare with ZW embedding
-    from app.utils.zw_crypto import (
-        create_safely_embedded_sentence as zw_embed,
-        derive_signing_key_from_private_key as zw_derive,
-        find_all_minimal_signed_uuids as zw_find,
-    )
-
-    zw_key = zw_derive(private_key)
-    zw_parts = []
-    zw_uuids = []
-    for sentence in sentences:
-        uid = uuid4()
-        zw_uuids.append(uid)
-        zw_embedded = zw_embed(sentence, uid, zw_key)
-        zw_parts.append(zw_embedded)
-
-    zw_document = " ".join(zw_parts)
-    zw_overhead = len(zw_document) - original_len
-    zw_found = zw_find(zw_document)
-    zw_utf8 = sum(len(sig.encode("utf-8")) for _, _, sig in zw_found)
-
-    print(f"\n  Comparison with ZW embedding (base-4, Word-compatible):")
-    print(f"    {'':>25} {'VS256':>10} {'ZW (base-4)':>12} {'Ratio':>8}")
-    print(f"    {'-' * 58}")
-    print(f"    {'Chars per signature':>25} {SIGNATURE_CHARS:>10} {128:>12} {128 / SIGNATURE_CHARS:>7.1f}x")
-    print(f"    {'Total char overhead':>25} {sig_overhead:>10} {zw_overhead:>12} {zw_overhead / sig_overhead:>7.1f}x")
+    print(f"\n  Comparison with legacy_safe encoding (base-6, Word-compatible):")
+    print(f"    {'Chars per signature':>25} VS256: {SIGNATURE_CHARS}  legacy_safe: 100")
     print(f"    {'Total UTF-8 bytes':>25} {sig_utf8:>10} {zw_utf8:>12} {zw_utf8 / sig_utf8:>7.1f}x")
     print(f"    {'Word compatible':>25} {'NO':>10} {'YES':>12}")
     print()
@@ -598,8 +574,8 @@ def main():
     else:
         print("\n  NO VS CHARACTERS SURVIVED — CONFIRMED NOT WORD-COMPATIBLE")
         print("  This confirms the expected behavior:")
-        print("    - Use vs256_embedding for Google Docs, PDF, browser (max density)")
-        print("    - Use zw_embedding for Word workflows (Word-safe)")
+        print("    - Use VS256 (micro mode) for Google Docs, PDF, browser (max density)")
+        print("    - Use legacy_safe mode for Word workflows (Word-safe)")
 
     print()
 

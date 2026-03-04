@@ -22,9 +22,7 @@ def _coerce_tier(value: Any) -> OrganizationTier:
     if isinstance(value, OrganizationTier):
         return value
     if isinstance(value, str):
-        # TEAM_145: Map legacy tier names to FREE
-        legacy_map = {"starter": "free", "professional": "free", "business": "free"}
-        mapped = legacy_map.get(value, value)
+        mapped = _tc.LEGACY_TIER_MAP.get(value, value)
         try:
             return OrganizationTier(mapped)
         except ValueError:
@@ -44,6 +42,19 @@ class QuotaType(str, Enum):
     SENTENCES_TRACKED = "sentences_tracked"
     BATCH_OPERATIONS = "batch_operations"
     C2PA_SIGNATURES = "c2pa_signatures"  # Soft limit for abuse prevention
+
+
+QUOTA_FIELD_MAPPING: Dict[QuotaType, str] = {
+    QuotaType.MERKLE_ENCODING: "merkle_encoding_calls_this_month",
+    QuotaType.MERKLE_ATTRIBUTION: "merkle_attribution_calls_this_month",
+    QuotaType.MERKLE_PLAGIARISM: "merkle_plagiarism_calls_this_month",
+    QuotaType.FUZZY_INDEX: "fuzzy_index_calls_this_month",
+    QuotaType.FUZZY_SEARCH: "fuzzy_search_calls_this_month",
+    QuotaType.API_CALLS: "api_calls_this_month",
+    QuotaType.C2PA_SIGNATURES: "documents_signed",
+    QuotaType.SENTENCES_TRACKED: "sentences_tracked_this_month",
+    QuotaType.BATCH_OPERATIONS: "batch_operations_this_month",
+}
 
 
 # TEAM_166: Derive enum-keyed dicts from the SSOT (app.core.tier_config)
@@ -249,6 +260,10 @@ class QuotaManager:
 
         # Quota = 0 means feature not available for this tier
         if quota_limit == 0:
+            logger.warning(
+                "quota_feature_not_available",
+                extra={"org_id": organization_id, "tier": tier.value, "quota_type": quota_type.value},
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
@@ -268,6 +283,10 @@ class QuotaManager:
 
         # Check if quota exceeded
         if current_usage + increment > quota_limit:
+            logger.warning(
+                "quota_exceeded",
+                extra={"org_id": organization_id, "tier": tier.value, "quota_type": quota_type.value, "current_usage": current_usage, "quota_limit": quota_limit},
+            )
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail={
@@ -309,20 +328,7 @@ class QuotaManager:
         Returns:
             Current usage count
         """
-        # Map quota types to organization fields
-        usage_fields = {
-            QuotaType.MERKLE_ENCODING: "merkle_encoding_calls_this_month",
-            QuotaType.MERKLE_ATTRIBUTION: "merkle_attribution_calls_this_month",
-            QuotaType.MERKLE_PLAGIARISM: "merkle_plagiarism_calls_this_month",
-            QuotaType.FUZZY_INDEX: "fuzzy_index_calls_this_month",
-            QuotaType.FUZZY_SEARCH: "fuzzy_search_calls_this_month",
-            QuotaType.API_CALLS: "api_calls_this_month",
-            QuotaType.C2PA_SIGNATURES: "documents_signed",
-            QuotaType.SENTENCES_TRACKED: "sentences_tracked_this_month",
-            QuotaType.BATCH_OPERATIONS: "batch_operations_this_month",
-        }
-
-        field_name = usage_fields.get(quota_type)
+        field_name = QUOTA_FIELD_MAPPING.get(quota_type)
         if not field_name:
             return 0
 
@@ -339,20 +345,7 @@ class QuotaManager:
             quota_type: Type of quota
             increment: Amount to increment
         """
-        # Map quota types to organization fields
-        usage_fields = {
-            QuotaType.MERKLE_ENCODING: "merkle_encoding_calls_this_month",
-            QuotaType.MERKLE_ATTRIBUTION: "merkle_attribution_calls_this_month",
-            QuotaType.MERKLE_PLAGIARISM: "merkle_plagiarism_calls_this_month",
-            QuotaType.FUZZY_INDEX: "fuzzy_index_calls_this_month",
-            QuotaType.FUZZY_SEARCH: "fuzzy_search_calls_this_month",
-            QuotaType.API_CALLS: "api_calls_this_month",
-            QuotaType.C2PA_SIGNATURES: "documents_signed",
-            QuotaType.SENTENCES_TRACKED: "sentences_tracked_this_month",
-            QuotaType.BATCH_OPERATIONS: "batch_operations_this_month",
-        }
-
-        field_name = usage_fields.get(quota_type)
+        field_name = QUOTA_FIELD_MAPPING.get(quota_type)
         if not field_name:
             return
 

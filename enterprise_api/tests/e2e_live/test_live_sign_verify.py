@@ -76,7 +76,7 @@ async def test_live_sign_advanced_and_verify_advanced(live_client, live_auth_hea
         json={
             "document_id": document_id,
             "text": original_text,
-            "manifest_mode": "minimal_uuid",
+            "manifest_mode": "micro",
             "segmentation_level": "sentence",
             "embedding_strategy": "single_point",
         },

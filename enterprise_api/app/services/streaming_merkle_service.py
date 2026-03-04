@@ -255,7 +255,7 @@ class StreamingMerkleService:
             db: Database session
             embedding_service: Optional EmbeddingService for manifest embedding
             embed_manifest: Whether to embed C2PA manifest
-            manifest_mode: Manifest mode (full, lightweight_uuid, hybrid)
+            manifest_mode: Manifest mode (full or micro)
             action: C2PA action type
 
         Returns:

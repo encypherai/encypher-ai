@@ -23,6 +23,8 @@ from typing import Any
 import httpx
 from dotenv import dotenv_values
 
+from app.schemas.signing_constants import MANIFEST_MODES
+
 
 logger = logging.getLogger(__name__)
 
@@ -317,7 +319,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--manifest-mode",
         default="micro",
-        choices=["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding", "micro"],
+        choices=MANIFEST_MODES,
         help="Manifest mode (default: micro)",
     )
     parser.add_argument(

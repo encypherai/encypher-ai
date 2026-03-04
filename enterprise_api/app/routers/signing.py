@@ -21,6 +21,7 @@ from app.schemas.sign_schemas import UnifiedSignRequest
 from app.services.auth_service_client import auth_service_client
 from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.unified_signing_service import execute_unified_signing
+from app.routers.audit import AuditAction, write_api_audit_log
 from app.services.webhook_dispatcher import emit_document_signed
 from app.utils.print_stego import build_payload, encode_print_fingerprint
 from app.utils.quota import QuotaManager, QuotaType
@@ -92,7 +93,7 @@ Provide **either** `text` (single document) **or** `documents` (batch), plus an 
 
 | Option | Type | Default | Values | Tier | Description |
 |--------|------|---------|--------|------|-------------|
-| `manifest_mode` | string | `"full"` | `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`, `micro` | Free | Controls how the C2PA manifest and per-segment markers are embedded. `full` = standard C2PA wrapper. `micro` = ultra-compact per-segment markers controlled by `ecc` and `embed_c2pa` flags. A C2PA manifest is always generated; `embed_c2pa` controls whether it's embedded in content; `store_c2pa_manifest` controls DB persistence. |
+| `manifest_mode` | string | `"full"` | `full`, `micro` | Free | Controls how the C2PA manifest and per-segment markers are embedded. `full` = standard C2PA wrapper. `micro` = ultra-compact per-segment markers controlled by `ecc`, `embed_c2pa`, and `legacy_safe` flags. A C2PA manifest is always generated; `embed_c2pa` controls whether it's embedded in content; `store_c2pa_manifest` controls DB persistence. |
 | `ecc` | bool | `true` | | Free | Enable Reed-Solomon error correction for micro mode (44 chars/segment vs 36). Ignored for non-micro modes. |
 | `embed_c2pa` | bool | `true` | | Free | Embed full C2PA document manifest into signed content for micro mode. When false, per-sentence markers only; C2PA manifest is still generated and stored in DB. Ignored for non-micro modes. |
 | `embedding_strategy` | string | `"single_point"` | `single_point`, `distributed`, `distributed_redundant` | `distributed_redundant` requires Enterprise | How the invisible signature is placed within each segment. `single_point` = one location. `distributed` = spread across the segment. `distributed_redundant` = distributed with ECC for resilience. |
@@ -239,6 +240,10 @@ async def sign_content(
 
     if is_proxy and proxy_publisher_org_id is not None:
         if tier not in ("strategic_partner",):
+            logger.warning(
+                "tier_violation_proxy_signing_rejected",
+                extra={"org_id": org_id, "tier": tier, "required_tier": "strategic_partner", "correlation_id": correlation_id},
+            )
             return JSONResponse(
                 status_code=status.HTTP_403_FORBIDDEN,
                 content={
@@ -280,6 +285,10 @@ async def sign_content(
     # Check batch limit
     batch_limit = get_batch_limit(tier)
     if batch_size > batch_limit:
+        logger.warning(
+            "tier_violation_batch_limit_exceeded",
+            extra={"org_id": org_id, "tier": tier, "batch_size": batch_size, "batch_limit": batch_limit, "correlation_id": correlation_id},
+        )
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
             content={
@@ -373,28 +382,54 @@ async def sign_content(
 
     increment("sign_requests")
 
-    # Emit webhook events for each document (publisher's org for proxy signing)
+    # Emit webhook events and audit log entries for each document
     if result.get("success") and result.get("data"):
         data = result["data"]
+        _audit_details = {
+            "tier": tier,
+            "manifest_mode": request.options.manifest_mode if request.options else None,
+            "document_type": request.options.document_type if request.options else None,
+        }
         if data.get("document"):
+            doc_id = data["document"]["document_id"]
             asyncio.create_task(
                 emit_document_signed(
                     organization_id=effective_org_id,
-                    document_id=data["document"]["document_id"],
+                    document_id=doc_id,
                     title=request.document_title,
                     document_type=request.options.document_type,
                 )
             )
+            asyncio.create_task(
+                write_api_audit_log(
+                    organization_id=effective_org_id,
+                    action=AuditAction.DOCUMENT_SIGNED,
+                    resource_type="document",
+                    actor_id=org_id,
+                    resource_id=doc_id,
+                    details=_audit_details,
+                )
+            )
         elif data.get("documents"):
             for doc_result in data["documents"]:
+                doc_id = doc_result["document_id"]
                 asyncio.create_task(
                     emit_document_signed(
                         organization_id=effective_org_id,
-                        document_id=doc_result["document_id"],
+                        document_id=doc_id,
                         title=doc_result.get("metadata", {}).get("title"),
                         document_type=request.options.document_type,
                     )
                 )
+            asyncio.create_task(
+                write_api_audit_log(
+                    organization_id=effective_org_id,
+                    action=AuditAction.BATCH_SIGN_COMPLETED,
+                    resource_type="batch",
+                    actor_id=org_id,
+                    details={**_audit_details, "batch_size": len(data["documents"])},
+                )
+            )
 
     # Return appropriate status code
     if result.get("success"):

@@ -147,12 +147,12 @@ class TestEmbedSignedTextInHtml:
     def test_preserves_html_tags(self):
         """Output should still contain all original HTML tags."""
         from app.utils.vs256_crypto import (
-            create_minimal_signed_uuid,
+            create_signed_marker,
             derive_signing_key_from_private_key,
             embed_signature_safely,
+            generate_log_id,
         )
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-        import uuid as uuid_mod
 
         html = "<h1>Title</h1><p>First sentence. Second sentence.</p>"
         text = extract_text_from_html(html)
@@ -166,7 +166,7 @@ class TestEmbedSignedTextInHtml:
             if not seg.strip():
                 signed_segments.append(seg)
                 continue
-            sig = create_minimal_signed_uuid(uuid_mod.uuid4(), signing_key)
+            sig = create_signed_marker(generate_log_id(), signing_key)
             signed_segments.append(embed_signature_safely(seg, sig))
         signed_text = "\n".join(signed_segments)
 
@@ -207,19 +207,19 @@ class TestEmbedSignedTextInHtml:
     def test_signed_html_longer_than_original(self):
         """When markers are present, the HTML output should be longer."""
         from app.utils.vs256_crypto import (
-            create_minimal_signed_uuid,
+            create_signed_marker,
             derive_signing_key_from_private_key,
             embed_signature_safely,
+            generate_log_id,
         )
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-        import uuid as uuid_mod
 
         html = "<p>Hello world.</p>"
         text = extract_text_from_html(html)
 
         keypair = Ed25519PrivateKey.generate()
         signing_key = derive_signing_key_from_private_key(keypair)
-        sig = create_minimal_signed_uuid(uuid_mod.uuid4(), signing_key)
+        sig = create_signed_marker(generate_log_id(), signing_key)
         signed_text = embed_signature_safely(text, sig)
 
         result = embed_signed_text_in_html(html, signed_text)
@@ -228,13 +228,13 @@ class TestEmbedSignedTextInHtml:
     def test_markers_extractable_from_signed_html(self):
         """VS256 markers should be findable in the output HTML text nodes."""
         from app.utils.vs256_crypto import (
-            create_minimal_signed_uuid,
+            create_signed_marker,
             derive_signing_key_from_private_key,
             embed_signature_safely,
-            find_all_minimal_signed_uuids,
+            find_all_markers,
+            generate_log_id,
         )
         from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-        import uuid as uuid_mod
 
         html = "<h1>Title</h1><p>Sentence one. Sentence two.</p>"
         text = extract_text_from_html(html)
@@ -249,14 +249,14 @@ class TestEmbedSignedTextInHtml:
             if not line.strip():
                 signed_lines.append(line)
                 continue
-            sig = create_minimal_signed_uuid(uuid_mod.uuid4(), signing_key)
+            sig = create_signed_marker(generate_log_id(), signing_key)
             signed_lines.append(embed_signature_safely(line, sig))
         signed_text = "\n".join(signed_lines)
 
         result_html = embed_signed_text_in_html(html, signed_text)
 
         # Extract text from the signed HTML and check markers are present
-        found = find_all_minimal_signed_uuids(result_html)
+        found = find_all_markers(result_html)
         assert len(found) >= 2, f"Expected >=2 markers in signed HTML, found {len(found)}"
 
     def test_chesschampion_roundtrip_with_existing_signed_output(self, example_html):
@@ -288,9 +288,9 @@ class TestEmbedSignedTextInHtml:
         )
 
         # Markers should be extractable from the HTML
-        from app.utils.vs256_crypto import find_all_minimal_signed_uuids
+        from app.utils.vs256_crypto import find_all_markers
 
-        found = find_all_minimal_signed_uuids(result_html)
+        found = find_all_markers(result_html)
         assert len(found) > 10, f"Expected many markers in signed HTML, found {len(found)}"
 
     def test_empty_html_passthrough(self):

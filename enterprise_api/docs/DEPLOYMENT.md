@@ -127,6 +127,8 @@ Railway automatically provisions SSL/TLS certificates via Let's Encrypt.
 | `RATE_LIMIT_PER_MINUTE` | Rate limit | `60` |
 | `MARKETING_DOMAIN` | Marketing domain | `encypher.ai` |
 | `INFRASTRUCTURE_DOMAIN` | Infrastructure domain | `encypherai.com` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP HTTP endpoint for distributed tracing (optional, disabled when unset) | _(unset)_ |
+| `OTEL_SERVICE_NAME` | Service name reported to tracing backend | `enterprise-api` |
 
 ### Generating Encryption Keys
 
@@ -244,6 +246,24 @@ curl https://api.encypherai.com/health
 #   "version": "1.0.0-preview"
 # }
 ```
+
+The `/readyz` endpoint performs deeper dependency probes and is suitable for load-balancer readiness checks:
+
+```bash
+curl https://api.encypherai.com/readyz
+
+# Expected response when all services are healthy:
+# {
+#   "status": "ready",
+#   "database": "ok",
+#   "redis": "ok",
+#   "key_service": "ok",
+#   "auth_service": "ok",
+#   "version": "1.0.0-preview"
+# }
+```
+
+`status` is `"degraded"` (not `"ready"`) if `database`, `key_service`, or `auth_service` is not `"ok"`. External services (`key_service`, `auth_service`) are probed with a 2-second timeout.
 
 ### Railway Monitoring
 

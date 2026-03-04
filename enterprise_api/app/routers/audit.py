@@ -1,5 +1,7 @@
 """Audit logging router for Business+ tier organizations."""
 
+import json
+import logging
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import List, Optional
@@ -10,10 +12,62 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.database import async_session_factory, get_db
 from app.dependencies import require_read_permission
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
+
+
+async def write_api_audit_log(
+    organization_id: str,
+    action: str,
+    resource_type: str,
+    actor_id: str,
+    actor_type: str = "api_key",
+    resource_id: Optional[str] = None,
+    details: Optional[dict] = None,
+    ip_address: Optional[str] = None,
+    user_agent: Optional[str] = None,
+) -> None:
+    """Write an audit log entry using a standalone session (best-effort, errors swallowed).
+
+    Opens its own DB session so callers can fire-and-forget via asyncio.create_task
+    without worrying about session lifecycle.
+    """
+    try:
+        async with async_session_factory() as db:
+            await db.execute(
+                text(
+                    """
+                    INSERT INTO audit_logs
+                      (id, organization_id, action, actor_id, actor_type,
+                       resource_type, resource_id, details, ip_address, user_agent)
+                    VALUES
+                      (:id, :organization_id, :action, :actor_id, :actor_type,
+                       :resource_type, :resource_id, :details, :ip_address, :user_agent)
+                    """
+                ),
+                {
+                    "id": uuid4().hex,
+                    "organization_id": organization_id,
+                    "action": action,
+                    "actor_id": actor_id,
+                    "actor_type": actor_type,
+                    "resource_type": resource_type,
+                    "resource_id": resource_id,
+                    "details": json.dumps(details) if details is not None else None,
+                    "ip_address": ip_address,
+                    "user_agent": user_agent,
+                },
+            )
+            await db.commit()
+    except Exception as exc:
+        logger.warning(
+            "audit_log_write_failed",
+            extra={"action": action, "org_id": organization_id, "error": str(exc)},
+        )
 
 
 class AuditAction(str, Enum):

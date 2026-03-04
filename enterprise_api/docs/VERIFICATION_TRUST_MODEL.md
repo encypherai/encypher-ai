@@ -24,7 +24,7 @@ High-level checks include:
 
 If primary C2PA verification does not resolve a valid signer, verification may use **fallback** marker paths:
 - `micro` marker fallback (VS256/VS256-RS)
-- `zw_embedding` fallback
+- `legacy_safe` marker fallback (ZW6 base-6, Word-compatible)
 
 For micro mode, verification uses sentence-level binding when available and legacy-compatible behavior for older markers.
 

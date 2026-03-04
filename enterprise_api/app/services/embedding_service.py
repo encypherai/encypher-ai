@@ -13,7 +13,6 @@ import logging
 import secrets
 import time
 import unicodedata
-import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, cast
@@ -33,11 +32,6 @@ except ImportError:
 from app.models.content_reference import ContentReference
 from app.utils.embedding_signature import compute_signature_hash
 from app.services.status_service import status_service
-from app.utils.zw_crypto import (
-    create_minimal_signed_uuid,
-    derive_signing_key_from_private_key,
-    embed_signature_safely,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -170,8 +164,9 @@ class EmbeddingService:
         custom_assertions: Optional[List[Dict[str, Any]]] = None,  # Custom C2PA assertions
         digital_source_type: Optional[str] = None,  # IPTC digital source type
         # === API Feature Augmentation (TEAM_044) ===
-        manifest_mode: str = "full",  # full, lightweight_uuid, minimal_uuid, hybrid, micro
+        manifest_mode: str = "full",  # full or micro
         ecc: bool = True,  # Reed-Solomon error correction for micro mode
+        legacy_safe: bool = False,  # Use Word-safe base-6 encoding for micro mode
         embed_c2pa: bool = True,  # Embed C2PA manifest in content for micro mode
         embedding_strategy: str = "single_point",  # single_point, distributed, distributed_redundant
         distribution_target: Optional[str] = None,  # whitespace, punctuation, all_chars
@@ -240,7 +235,6 @@ class EmbeddingService:
         # Build the full document - TWO PHASE APPROACH:
         # Phase 1: Join ORIGINAL segments (for C2PA wrapper with correct Merkle root hash)
         # Phase 2: Add minimal embeddings per sentence AFTER C2PA wrapper
-        per_segment_uuid_mode = manifest_mode == "minimal_uuid"
         full_document_parts = []
         segment_embeddings: list[tuple[str, Dict[str, Any]]] = []  # Store individual segment embeddings for later
 
@@ -249,17 +243,12 @@ class EmbeddingService:
             full_document_parts.append(segment)
 
             # Prepare minimal embedding data for this segment (will apply after C2PA)
-            minimal_metadata: Dict[str, Any]
-            if per_segment_uuid_mode:
-                manifest_uuid = str(uuid.uuid4())
-                minimal_metadata = {"manifest_uuid": manifest_uuid}
-            else:
-                minimal_metadata = {
-                    "leaf_hash": leaf_hash,
-                    "leaf_index": idx,
-                    "document_id": document_id,
-                    "organization_id": organization_id,
-                }
+            minimal_metadata: Dict[str, Any] = {
+                "leaf_hash": leaf_hash,
+                "leaf_index": idx,
+                "document_id": document_id,
+                "organization_id": organization_id,
+            }
             segment_embeddings.append((segment, minimal_metadata))
 
             # Create ContentReference object for database storage (enterprise feature)
@@ -280,9 +269,6 @@ class EmbeddingService:
                 embedding_metadata["merkle_segmentation_level"] = merkle_segmentation_level
             if processing_metadata:
                 embedding_metadata["processing"] = processing_metadata
-            if per_segment_uuid_mode:
-                embedding_metadata["manifest_uuid"] = minimal_metadata.get("manifest_uuid")
-                embedding_metadata["manifest_mode"] = "minimal_uuid"
 
             reference = ContentReference(
                 id=content_id,  # Use unique random ID
@@ -306,15 +292,15 @@ class EmbeddingService:
 
         # Step 2: Create minimal embeddings for each segment FIRST
         # Then add ONE C2PA wrapper at the end
-        # NOTE: Skip this for zw_embedding/micro modes (they handle embeddings in their own branches)
+        # NOTE: Skip this for micro mode (handles embeddings in its own branch)
         # TEAM_088: Skip per-segment basic embeddings for document-level signing
         # (single segment = entire document). The C2PA wrapper already covers the
         # whole document, and the basic embedding's default WHITESPACE target
         # inserts invisible characters mid-text instead of at the end.
         is_document_level = len(segments) == 1
         embedded_segments = []
-        if manifest_mode in ("zw_embedding", "micro"):
-            # For zw_embedding, use original segments (embeddings added in their own branches)
+        if manifest_mode == "micro":
+            # micro mode uses original segments (embeddings added in its own branch)
             embedded_segments = segments
         elif is_document_level:
             # Document-level: skip per-segment basic embedding; C2PA wrapper suffices
@@ -474,203 +460,78 @@ class EmbeddingService:
 
         # Handle C2PA opt-out
         if disable_c2pa:
-            if per_segment_uuid_mode:
-                logger.info(
-                    "C2PA disabled for document %s; skipping document-level manifest for minimal_uuid",
-                    document_id,
-                )
-                embedded_document = full_document
-            else:
-                # Use basic metadata format instead of C2PA
-                logger.info(f"C2PA disabled for document {document_id}, using basic metadata format")
-                try:
-                    embedded_document = UnicodeMetadata.embed_metadata(
-                        text=full_document,
-                        private_key=self.private_key,
-                        signer_id=self.signer_id,
-                        timestamp=current_timestamp,
-                        custom_metadata=document_metadata,
-                        metadata_format="basic",  # Basic format when C2PA disabled
-                        add_hard_binding=False,
-                        distribute_across_targets=use_distributed,
-                        target=target_for_embedding,
-                    )
-                    logger.info(f"Successfully added basic metadata to document {document_id}")
-                except Exception as e:
-                    logger.error(f"Failed to add basic metadata to document: {e}")
-                    raise ValueError(f"Basic metadata embedding failed: {e}")
-
-        # Handle lightweight_uuid manifest mode (Professional+ feature)
-        elif manifest_mode == "lightweight_uuid":
-            manifest_uuid = str(uuid.uuid4())
-            logger.info(f"Using lightweight UUID manifest mode for document {document_id}, uuid={manifest_uuid}")
-
-            # Store full manifest data in database for later retrieval
-            # The embedded payload only contains the UUID pointer
+            # Use basic metadata format instead of C2PA
+            logger.info(f"C2PA disabled for document {document_id}, using basic metadata format")
             try:
                 embedded_document = UnicodeMetadata.embed_metadata(
                     text=full_document,
                     private_key=self.private_key,
                     signer_id=self.signer_id,
                     timestamp=current_timestamp,
-                    custom_metadata={
-                        "manifest_uuid": manifest_uuid,
-                        "document_id": document_id,
-                        "organization_id": organization_id,
-                        "action": action,
-                    },
-                    metadata_format="manifest",
+                    custom_metadata=document_metadata,
+                    metadata_format="basic",  # Basic format when C2PA disabled
                     add_hard_binding=False,
-                    claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
-                    actions=c2pa_actions,
-                    custom_assertions=final_custom_assertions,
-                    distribute_across_targets=use_distributed,
-                    target=MetadataTarget.FILE_END,
-                )
-                # Store the full manifest data in document_metadata for database storage
-                document_metadata["manifest_uuid"] = manifest_uuid
-                document_metadata["manifest_mode"] = "lightweight_uuid"
-                logger.info(f"Successfully embedded lightweight UUID for document {document_id}")
-            except Exception as e:
-                logger.error(f"Failed to embed lightweight UUID: {e}")
-                raise ValueError(f"Lightweight UUID embedding failed: {e}")
-
-        # Handle minimal_uuid manifest mode (Professional+ feature)
-        elif manifest_mode == "minimal_uuid":
-            logger.info(
-                "Using minimal UUID manifest mode for document %s with per-segment UUID pointers",
-                document_id,
-            )
-
-            try:
-                embedded_document = UnicodeMetadata.embed_metadata(
-                    text=full_document,
-                    private_key=self.private_key,
-                    signer_id=self.signer_id,
-                    timestamp=current_timestamp,
-                    custom_metadata=document_metadata_jsonld,
-                    metadata_format=metadata_format,
-                    add_hard_binding=add_hard_binding,
-                    claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
-                    actions=c2pa_actions,
-                    ingredients=c2pa_ingredients,
-                    custom_assertions=final_custom_assertions,
                     distribute_across_targets=use_distributed,
                     target=target_for_embedding,
                 )
-                logger.info(f"Successfully added C2PA wrapper to minimal_uuid document {document_id}")
+                logger.info(f"Successfully added basic metadata to document {document_id}")
             except Exception as e:
-                logger.error(f"Failed to embed minimal UUID with C2PA wrapper: {e}")
-                raise ValueError(f"Minimal UUID embedding failed: {e}")
+                logger.error(f"Failed to add basic metadata to document: {e}")
+                raise ValueError(f"Basic metadata embedding failed: {e}")
 
-        # Handle hybrid manifest mode (Enterprise feature)
-        elif manifest_mode == "hybrid":
-            manifest_uuid = str(uuid.uuid4())
-            logger.info(f"Using hybrid manifest mode for document {document_id}")
-
-            # First, embed lightweight UUID per sentence (already done in embedded_segments)
-            # Then add full C2PA wrapper at document level
-            try:
-                embedded_document = UnicodeMetadata.embed_metadata(
-                    text=full_document,
-                    private_key=self.private_key,
-                    signer_id=self.signer_id,
-                    timestamp=current_timestamp,
-                    custom_metadata=document_metadata_jsonld,
-                    metadata_format=metadata_format,
-                    add_hard_binding=add_hard_binding,
-                    claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
-                    actions=c2pa_actions,
-                    ingredients=c2pa_ingredients,
-                    custom_assertions=final_custom_assertions,
-                    distribute_across_targets=use_distributed,
-                    target=target_for_embedding,
-                )
-                document_metadata["manifest_mode"] = "hybrid"
-                document_metadata["manifest_uuid"] = manifest_uuid
-                logger.info(f"Successfully added hybrid manifest to document {document_id}")
-            except Exception as e:
-                logger.error(f"Failed to add hybrid manifest: {e}")
-                raise ValueError(f"Hybrid manifest embedding failed: {e}")
-
-        # Handle zw_embedding manifest mode (Word-compatible, 132 chars/sentence)
-        elif manifest_mode == "zw_embedding":
-            logger.info(
-                "Using zw_embedding manifest mode for document %s with Word-compatible signatures",
-                document_id,
-            )
-
-            try:
-                # Derive HMAC signing key from org's private key
-                signing_key = derive_signing_key_from_private_key(self.private_key)
-
-                # Build document with ZW signatures per segment
-                zw_embedded_segments = []
-                for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
-                    # Generate UUID for this segment
-                    segment_uuid = uuid.uuid4()
-
-                    # Create minimal signed UUID (132 chars, Word-compatible)
-                    zw_signature = create_minimal_signed_uuid(segment_uuid, signing_key)
-
-                    # Embed signature safely (before terminal punctuation)
-                    embedded_segment = embed_signature_safely(segment, zw_signature)
-                    zw_embedded_segments.append(embedded_segment)
-
-                    # Update the reference with ZW-specific metadata
-                    if idx < len(references_to_insert):
-                        ref_any = cast(Any, references_to_insert[idx])
-                        if hasattr(ref_any, "embedding_metadata"):
-                            ref_any.embedding_metadata = ref_any.embedding_metadata or {}
-                            ref_any.embedding_metadata["manifest_mode"] = "zw_embedding"
-                            ref_any.embedding_metadata["segment_uuid"] = str(segment_uuid)
-                            ref_any.embedding_metadata["zw_signature_length"] = len(zw_signature)
-
-                # Join segments to form embedded document (no C2PA wrapper)
-                embedded_document = " ".join(zw_embedded_segments)
-                document_metadata["manifest_mode"] = "zw_embedding"
-                document_metadata["zw_encoding"] = "base4_word_safe"
-                document_metadata["signature_chars_per_segment"] = 132
-
-                logger.info(
-                    f"Successfully embedded ZW signatures for document {document_id}: "
-                    f"{len(segments)} segments, 132 chars each"
-                )
-            except Exception as e:
-                logger.error(f"Failed to embed ZW signatures: {e}")
-                raise ValueError(f"ZW embedding failed: {e}")
-
-        # TEAM_166: Unified "micro" manifest mode — flag-driven.
+        # Unified "micro" manifest mode — flag-driven.
         # Two orthogonal flags control behaviour:
-        #   ecc=True  → Reed-Solomon error correction (44 chars, default)
-        #   ecc=False → plain HMAC (36 chars)
+        #   legacy_safe=False, ecc=True  → VS256-RS  (44 chars, default; not Word-safe)
+        #   legacy_safe=False, ecc=False → VS256      (36 chars; not Word-safe)
+        #   legacy_safe=True,  ecc=False → legacy_safe base-6 (100 chars; Word-safe)
+        #   legacy_safe=True,  ecc=True  → legacy_safe_rs base-6 (112 chars; Word-safe + ECC)
         #   embed_c2pa=True  → full C2PA document manifest embedded in content (default)
         #   embed_c2pa=False → per-sentence markers only; C2PA manifest DB-only
         # A C2PA-compatible manifest is ALWAYS generated and extracted.
         # store_c2pa_manifest controls DB persistence; embed_c2pa controls in-content embedding.
         elif manifest_mode == "micro":
             use_ecc = ecc
+            use_legacy_safe = legacy_safe
             use_embed_c2pa = embed_c2pa
-            chars_per_segment = 44 if use_ecc else 36
+            if use_legacy_safe:
+                chars_per_segment = 112 if use_ecc else 100
+            else:
+                chars_per_segment = 44 if use_ecc else 36
 
             logger.info(
-                "Using micro manifest mode for document %s (ecc=%s, embed_c2pa=%s, %d chars/segment)",
-                document_id, use_ecc, use_embed_c2pa, chars_per_segment,
+                "Using micro manifest mode for document %s (ecc=%s, legacy_safe=%s, embed_c2pa=%s, %d chars/segment)",
+                document_id, use_ecc, use_legacy_safe, use_embed_c2pa, chars_per_segment,
             )
 
             try:
                 # --- Phase 1: Import the appropriate crypto module ---
-                if use_ecc:
+                if use_legacy_safe and use_ecc:
+                    from app.utils.legacy_safe_rs_crypto import (
+                        create_marker as micro_create,
+                        derive_signing_key_from_private_key as micro_derive_key,
+                        embed_marker_safely as micro_embed_safely,
+                        generate_log_id as micro_generate_log_id,
+                    )
+                elif use_legacy_safe:
+                    from app.utils.legacy_safe_crypto import (
+                        create_marker as micro_create,
+                        derive_signing_key_from_private_key as micro_derive_key,
+                        embed_marker_safely as micro_embed_safely,
+                        generate_log_id as micro_generate_log_id,
+                    )
+                elif use_ecc:
                     from app.utils.vs256_rs_crypto import (
-                        create_minimal_signed_uuid as micro_create,
+                        create_signed_marker as micro_create,
                         derive_signing_key_from_private_key as micro_derive_key,
                         embed_signature_safely as micro_embed_safely,
+                        generate_log_id as micro_generate_log_id,
                     )
                 else:
                     from app.utils.vs256_crypto import (
-                        create_minimal_signed_uuid as micro_create,
+                        create_signed_marker as micro_create,
                         derive_signing_key_from_private_key as micro_derive_key,
                         embed_signature_safely as micro_embed_safely,
+                        generate_log_id as micro_generate_log_id,
                     )
 
                 signing_key = micro_derive_key(self.private_key)
@@ -678,9 +539,9 @@ class EmbeddingService:
                 # --- Phase 2: Embed per-sentence markers ---
                 micro_embedded_segments = []
                 for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
-                    segment_uuid = uuid.uuid4()
+                    segment_log_id = micro_generate_log_id()
                     micro_signature = micro_create(
-                        segment_uuid,
+                        segment_log_id,
                         signing_key,
                         sentence_text=segment,
                     )
@@ -692,10 +553,13 @@ class EmbeddingService:
                         if hasattr(ref_any, "embedding_metadata"):
                             ref_any.embedding_metadata = ref_any.embedding_metadata or {}
                             ref_any.embedding_metadata["manifest_mode"] = "micro"
-                            ref_any.embedding_metadata["segment_uuid"] = str(segment_uuid)
+                            ref_any.embedding_metadata["log_id"] = segment_log_id.hex()
                             ref_any.embedding_metadata["micro_signature_length"] = len(micro_signature)
                             ref_any.embedding_metadata["ecc"] = use_ecc
-                            if use_ecc:
+                            ref_any.embedding_metadata["legacy_safe"] = use_legacy_safe
+                            if use_legacy_safe and use_ecc:
+                                ref_any.embedding_metadata["rs_parity_symbols"] = 4
+                            elif use_ecc:
                                 ref_any.embedding_metadata["rs_parity_symbols"] = 8
 
                 # Reconstruct full document preserving original whitespace (e.g. \n\n before
@@ -775,8 +639,14 @@ class EmbeddingService:
 
                 document_metadata["manifest_mode"] = "micro"
                 document_metadata["ecc"] = use_ecc
+                document_metadata["legacy_safe"] = use_legacy_safe
                 document_metadata["embed_c2pa"] = use_embed_c2pa
-                if use_ecc:
+                if use_legacy_safe and use_ecc:
+                    document_metadata["micro_encoding"] = "base6_legacy_safe_rs"
+                    document_metadata["rs_parity_symbols"] = 4
+                elif use_legacy_safe:
+                    document_metadata["micro_encoding"] = "base6_legacy_safe"
+                elif use_ecc:
                     document_metadata["micro_encoding"] = "base256_variation_selectors_rs"
                     document_metadata["rs_parity_symbols"] = 8
                 else:
@@ -786,9 +656,9 @@ class EmbeddingService:
 
                 logger.info(
                     "Successfully embedded micro markers for document %s: "
-                    "%d segments, %d chars each (ecc=%s, embed_c2pa=%s)",
+                    "%d segments, %d chars each (ecc=%s, legacy_safe=%s, embed_c2pa=%s)",
                     document_id, len(segments), chars_per_segment,
-                    use_ecc, use_embed_c2pa,
+                    use_ecc, use_legacy_safe, use_embed_c2pa,
                 )
             except Exception as e:
                 logger.error("Failed to embed micro markers: %s", e)

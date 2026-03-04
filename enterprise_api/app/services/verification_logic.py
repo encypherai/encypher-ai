@@ -30,10 +30,6 @@ from app.models.response_models import VerifyVerdict
 from app.services.certificate_service import ResolvedCertificate, certificate_resolver
 from app.services.status_service import status_service
 from app.utils.c2pa_trust_list import validate_certificate_chain
-from app.utils.zw_crypto import (
-    verify_minimal_signed_uuid,
-    find_all_minimal_signed_uuids,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -306,15 +302,9 @@ def _extract_and_validate_c2pa_certificate(text: str) -> C2PACertificateResult:
         return result
 
 
-def detect_zw_embeddings(text: str) -> bool:
-    """Check if text contains ZW (zero-width) embeddings using contiguous sequence detection."""
-    # Use find_all_minimal_signed_uuids which detects 128 contiguous base-4 characters
-    return len(find_all_minimal_signed_uuids(text)) > 0
-
-
 def detect_vs256_embeddings(text: str) -> bool:
     """Check if text contains VS256 embeddings using magic prefix detection."""
-    from app.utils.vs256_crypto import find_all_minimal_signed_uuids as vs256_find_all
+    from app.utils.vs256_crypto import find_all_markers as vs256_find_all
 
     return len(vs256_find_all(text)) > 0
 
@@ -326,16 +316,18 @@ _RESOLVE_UUID_SQL = """
            (embedding_metadata->>'total_segments')::int AS total_segments,
            manifest_data
     FROM content_references
-    WHERE embedding_metadata->>'segment_uuid' = :seg_uuid
+    WHERE embedding_metadata->>'log_id' = :log_id
+       OR embedding_metadata->>'segment_uuid' = :legacy_uuid
     LIMIT 1
 """
 
 
-def _extract_uuid_from_vs256_signature(signature: str) -> Optional[str]:
-    """Extract UUID from a VS256 signature without HMAC verification.
+def _extract_log_id_from_vs256_signature(signature: str) -> Optional[tuple[str, str]]:
+    """Extract log_id from a VS256 signature without HMAC verification.
 
-    Decodes the payload bytes and interprets the first 16 as a UUID.
-    This allows DB-based resolution without needing the signing key.
+    Decodes the payload bytes and interprets the first 16 bytes as a log_id.
+    Returns (hex_str, uuid_str) to support both new (log_id) and legacy
+    (segment_uuid) DB record formats.
     """
     from app.utils.vs256_crypto import (
         MAGIC_PREFIX_LEN,
@@ -351,7 +343,8 @@ def _extract_uuid_from_vs256_signature(signature: str) -> Optional[str]:
         payload = decode_bytes_vs256(signature[MAGIC_PREFIX_LEN:])
         if len(payload) != PAYLOAD_BYTES:
             return None
-        return str(_UUID(bytes=payload[:16]))
+        raw = payload[:16]
+        return raw.hex(), str(_UUID(bytes=raw))
     except Exception:
         return None
 
@@ -404,38 +397,26 @@ async def _resolve_uuids_from_db(
         owns_session = True
 
     try:
-        # Try VS256 signatures first
+        # Try VS256 signatures
         from app.utils.vs256_crypto import (
-            find_all_minimal_signed_uuids as vs256_find_all,
+            find_all_markers as vs256_find_all,
         )
         vs256_sigs = vs256_find_all(payload_text)
-        uuids: list[str] = []
+        log_ids: list[tuple[str, str]] = []  # (hex_str, legacy_uuid_str)
 
         if vs256_sigs:
             for _start, _end, sig_str in vs256_sigs:
-                uuid_str = _extract_uuid_from_vs256_signature(sig_str)
-                if uuid_str:
-                    uuids.append(uuid_str)
+                ids = _extract_log_id_from_vs256_signature(sig_str)
+                if ids:
+                    log_ids.append(ids)
 
-        # Fall back to ZW signatures
-        if not uuids:
-            zw_sigs = find_all_minimal_signed_uuids(payload_text)
-            for _start, _end, sig_str in zw_sigs:
-                try:
-                    from app.utils.zw_crypto import decode_bytes_zw, ZW_MAGIC_PREFIX_LEN, ZW_SIGNATURE_CHARS
-                    from uuid import UUID as _UUID
-                    payload = decode_bytes_zw(sig_str[ZW_MAGIC_PREFIX_LEN:])
-                    uuids.append(str(_UUID(bytes=payload[:16])))
-                except Exception:
-                    pass
-
-        if not uuids:
+        if not log_ids:
             return None
 
-        # Resolve the first UUID to get org/document info
-        first_uuid = uuids[0]
+        # Resolve the first ID to get org/document info (try new log_id then legacy UUID)
+        first_hex, first_uuid = log_ids[0]
         result = await session.execute(
-            sql_text(_RESOLVE_UUID_SQL), {"seg_uuid": first_uuid}
+            sql_text(_RESOLVE_UUID_SQL), {"log_id": first_hex, "legacy_uuid": first_uuid}
         )
         row = result.fetchone()
 
@@ -451,13 +432,13 @@ async def _resolve_uuids_from_db(
             "signer_id": row.organization_id,
             "manifest": {
                 "manifest_mode": row.manifest_mode or "micro",
-                "segment_uuid": first_uuid,
+                "log_id": first_hex,
                 "document_id": row.document_id,
-                "total_signatures": len(uuids),
+                "total_signatures": len(log_ids),
                 "total_segments": row.total_segments,
                 **({"manifest_data": manifest_data} if manifest_data else {}),
             },
-            "total_signatures": len(uuids),
+            "total_signatures": len(log_ids),
         }
     finally:
         if owns_session:
@@ -615,7 +596,7 @@ async def execute_verification(
     if not is_valid and not signer_id:
         try:
             from app.utils.vs256_crypto import (
-                find_all_minimal_signed_uuids as vs256_find_all,
+                find_all_markers as vs256_find_all,
             )
             from app.utils.crypto_utils import get_demo_private_key
 
@@ -628,28 +609,28 @@ async def execute_verification(
                 # Try VS256-RS first (error-correcting variant)
                 try:
                     from app.utils.vs256_rs_crypto import (
-                        verify_minimal_signed_uuid as vs256rs_verify,
+                        verify_signed_marker as vs256rs_verify,
                         derive_signing_key_from_private_key as vs256rs_derive_key,
                     )
                     rs_signing_key = vs256rs_derive_key(demo_key)
-                    sig_valid, sig_uuid = vs256rs_verify(
+                    sig_valid, sig_log_id = vs256rs_verify(
                         sig_str,
                         rs_signing_key,
                         sentence_text=clean_sentence,
                     )
-                    if sig_valid and sig_uuid:
+                    if sig_valid and sig_log_id:
                         from app.config import settings
                         is_valid = True
                         signer_id = settings.demo_organization_id
                         manifest = {
                             "manifest_mode": "micro",
                             "ecc": True,
-                            "segment_uuid": str(sig_uuid),
+                            "log_id": sig_log_id.hex(),
                             "micro_signatures_found": len(vs256_sigs),
                         }
                         logger.info(
-                            "micro (ecc) fallback verification succeeded: uuid=%s, sigs=%d",
-                            sig_uuid, len(vs256_sigs),
+                            "micro (ecc) fallback verification succeeded: log_id=%s, sigs=%d",
+                            sig_log_id.hex(), len(vs256_sigs),
                         )
                 except Exception:
                     pass
@@ -657,62 +638,35 @@ async def execute_verification(
                 # Fall back to plain VS256 if RS didn't match
                 if not is_valid:
                     from app.utils.vs256_crypto import (
-                        verify_minimal_signed_uuid as vs256_verify,
+                        verify_signed_marker as vs256_verify,
                         derive_signing_key_from_private_key as vs256_derive_key,
                     )
                     signing_key = vs256_derive_key(demo_key)
-                    sig_valid, sig_uuid = vs256_verify(
+                    sig_valid, sig_log_id = vs256_verify(
                         sig_str,
                         signing_key,
                         sentence_text=clean_sentence,
                     )
-                    if sig_valid and sig_uuid:
+                    if sig_valid and sig_log_id:
                         from app.config import settings
                         is_valid = True
                         signer_id = settings.demo_organization_id
                         manifest = {
                             "manifest_mode": "micro",
-                            "segment_uuid": str(sig_uuid),
+                            "log_id": sig_log_id.hex(),
                             "micro_signatures_found": len(vs256_sigs),
                         }
                         logger.info(
-                            "micro fallback verification succeeded: uuid=%s, sigs=%d",
-                            sig_uuid, len(vs256_sigs),
+                            "micro fallback verification succeeded: log_id=%s, sigs=%d",
+                            sig_log_id.hex(), len(vs256_sigs),
                         )
 
-            # Try ZW embedding fallback if no VS256 signatures found
-            if not is_valid and not vs256_sigs:
-                zw_sigs = find_all_minimal_signed_uuids(payload_text)
-                if zw_sigs:
-                    from app.utils.zw_crypto import (
-                        verify_minimal_signed_uuid as zw_verify,
-                        derive_signing_key_from_private_key as zw_derive_key,
-                    )
-                    from app.utils.crypto_utils import get_demo_private_key as get_demo_pk
-                    demo_key = get_demo_pk()
-                    signing_key = zw_derive_key(demo_key)
-                    _start, _end, sig_str = zw_sigs[0]
-                    sig_valid, sig_uuid = zw_verify(sig_str, signing_key)
-                    if sig_valid and sig_uuid:
-                        from app.config import settings
-                        is_valid = True
-                        signer_id = settings.demo_organization_id
-                        manifest = {
-                            "manifest_mode": "zw_embedding",
-                            "segment_uuid": str(sig_uuid),
-                            "zw_signatures_found": len(zw_sigs),
-                        }
-                        logger.info(
-                            "ZW fallback verification succeeded: uuid=%s, sigs=%d",
-                            sig_uuid, len(zw_sigs),
-                        )
         except Exception as e:
-            logger.debug("VS256/ZW fallback verification failed: %s", e)
+            logger.debug("VS256 fallback verification failed: %s", e)
 
     # TEAM_175: DB-based UUID resolution fallback.
     # When demo-key verification fails (e.g. content signed with an org key),
-    # extract UUIDs from VS256/ZW signatures and resolve them via the content
-    # DB — same approach the verification-service uses.
+    # extract log_ids from VS256 signatures and resolve them via the content DB.
     if not is_valid and not signer_id:
         try:
             resolved = await _resolve_uuids_from_db(

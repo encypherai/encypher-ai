@@ -1,12 +1,11 @@
 from types import SimpleNamespace
-from uuid import uuid4
 
 from app.services.verification_logic import (
     VerificationExecution,
     _extract_sentence_for_signature,
     build_verdict,
 )
-from app.utils.vs256_crypto import create_minimal_signed_uuid, embed_signature_safely
+from app.utils.vs256_crypto import create_signed_marker, embed_signature_safely, generate_log_id
 
 
 def _make_execution(*, signer_id: str | None, manifest: dict, resolved_cert=None) -> VerificationExecution:
@@ -76,7 +75,7 @@ def test_build_verdict_falls_back_to_signer_id_without_identity_metadata() -> No
 def test_extract_sentence_for_signature_returns_clean_sentence() -> None:
     signing_key = b"test_signing_key_32_bytes_long!!"
     sentence = "This is the protected sentence."
-    sig = create_minimal_signed_uuid(uuid4(), signing_key, sentence_text=sentence)
+    sig = create_signed_marker(generate_log_id(), signing_key, sentence_text=sentence)
     embedded_sentence = embed_signature_safely(sentence, sig)
     payload_text = f"Intro line. {embedded_sentence} Outro line."
 

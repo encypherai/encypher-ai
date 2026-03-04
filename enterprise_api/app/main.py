@@ -4,6 +4,7 @@ Encypher Enterprise API - Main Application
 FastAPI application for C2PA-compliant content signing and verification.
 """
 
+import asyncio
 import logging
 import sys
 import time
@@ -64,6 +65,7 @@ from app.utils.request_logging import should_log_request
 from app.dependencies import require_super_admin_dep
 
 from app.middleware.request_id_middleware import RequestIDFilter, RequestIDMiddleware
+from app.observability.tracing import setup_tracing, shutdown_tracing
 
 # Configure logging with request_id field from RequestIDMiddleware contextvars.
 # The filter MUST be on the handler, not just the logger: Python's callHandlers
@@ -183,6 +185,9 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to initialize metrics service: {e}. Running without metrics.")
 
+    # Initialize OpenTelemetry tracing (no-op when OTEL_EXPORTER_OTLP_ENDPOINT is unset)
+    setup_tracing(app)
+
     # Load C2PA trust list for BYOK certificate validation
     try:
         from app.utils.c2pa_trust_list import (
@@ -246,6 +251,8 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         logger.info("Encypher Enterprise API shutting down...")
+        # Flush OpenTelemetry spans
+        shutdown_tracing()
         # Cleanup metrics service
         try:
             await shutdown_metrics_service()
@@ -487,6 +494,7 @@ async def health_check():
 @app.get("/readyz", tags=["Health"])
 async def readiness_check():
     """Lightweight readiness probe."""
+    import httpx as _httpx
 
     db_status = "ok"
     try:
@@ -496,11 +504,31 @@ async def readiness_check():
         logger.warning("Readiness DB probe failed: %s", exc)
         db_status = "error"
     redis_status = "ok" if session_service.redis_client else "degraded"
-    status_text = "ready" if db_status == "ok" else "degraded"
+
+    async def _probe(url: str) -> str:
+        try:
+            async with _httpx.AsyncClient(timeout=2.0) as client:
+                r = await client.get(url)
+            return "ok" if r.status_code < 500 else "degraded"
+        except Exception:
+            return "degraded"
+
+    key_service_status, auth_service_status = await asyncio.gather(
+        _probe(f"{settings.key_service_url}/health"),
+        _probe(f"{settings.auth_service_url}/health"),
+    )
+
+    all_ok = all(
+        s == "ok"
+        for s in (db_status, key_service_status, auth_service_status)
+    )
+    status_text = "ready" if all_ok else "degraded"
     return {
         "status": status_text,
         "database": db_status,
         "redis": redis_status,
+        "key_service": key_service_status,
+        "auth_service": auth_service_status,
         "version": "1.0.0-preview",
     }
 

@@ -7,6 +7,7 @@ third-party verification of embedded content.
 Now supports invisible Unicode embeddings from encypher-ai package.
 """
 
+import asyncio
 import hmac
 import logging
 import re
@@ -37,6 +38,7 @@ from app.schemas.embeddings import (
     SignerIdentity,
     VerifyEmbeddingResponse,
 )
+from app.routers.audit import AuditAction, write_api_audit_log
 from app.utils.c2pa_verifier import c2pa_verifier
 from app.utils.crypto_utils import load_organization_public_key
 
@@ -340,6 +342,16 @@ async def verify_embedding(
             logger.warning("Failed to resolve signer identity for ref %s: %s", ref_id, e)
 
         logger.info(f"Successfully verified ref_id: {ref_id}")
+        asyncio.create_task(
+            write_api_audit_log(
+                organization_id=reference.organization_id,
+                action=AuditAction.DOCUMENT_VERIFIED,
+                resource_type="document",
+                actor_id=reference.organization_id,
+                actor_type="system",
+                resource_id=reference.document_id,
+            )
+        )
 
         return VerifyEmbeddingResponse(
             valid=True,

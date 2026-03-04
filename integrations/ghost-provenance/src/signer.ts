@@ -24,17 +24,37 @@ function normalizeManifestOptions(signing: Config['signing']): {
   ecc: boolean;
   embedC2pa: boolean;
 } {
-  if (signing.manifestMode === 'micro_ecc_c2pa') {
-    return { manifestMode: 'micro', ecc: true, embedC2pa: true };
+  switch (signing.manifestMode) {
+    // Current valid modes - pass through with config flags
+    case 'full':
+      return { manifestMode: 'full', ecc: signing.ecc, embedC2pa: signing.embedC2pa };
+    case 'micro':
+      return { manifestMode: 'micro', ecc: signing.ecc, embedC2pa: signing.embedC2pa };
+
+    // Removed compound modes (pre-consolidation)
+    case 'micro_ecc_c2pa':
+      return { manifestMode: 'micro', ecc: true, embedC2pa: true };
+    case 'micro_ecc':
+      return { manifestMode: 'micro', ecc: true, embedC2pa: false };
+    case 'micro_c2pa':
+      return { manifestMode: 'micro', ecc: false, embedC2pa: true };
+
+    // Removed standalone modes - map to closest micro equivalent
+    case 'lightweight_uuid':
+    case 'minimal_uuid':
+      // Compact footprint, no C2PA manifest in text
+      return { manifestMode: 'micro', ecc: true, embedC2pa: false };
+    case 'zw_embedding':
+      return { manifestMode: 'micro', ecc: true, embedC2pa: true };
+    case 'hybrid':
+      // Hybrid was the closest to full C2PA
+      return { manifestMode: 'full', ecc: signing.ecc, embedC2pa: signing.embedC2pa };
+
+    default:
+      logger.warn({ manifestMode: signing.manifestMode },
+        'Unknown manifest mode in config; falling back to micro. Update MANIFEST_MODE env var to "full" or "micro".');
+      return { manifestMode: 'micro', ecc: true, embedC2pa: true };
   }
-  if (signing.manifestMode === 'micro_ecc') {
-    return { manifestMode: 'micro', ecc: true, embedC2pa: false };
-  }
-  return {
-    manifestMode: signing.manifestMode,
-    ecc: signing.ecc,
-    embedC2pa: signing.embedC2pa,
-  };
 }
 
 export interface SignResult {

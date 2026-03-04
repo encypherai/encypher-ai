@@ -1,187 +1,155 @@
 # Embedding Modes Reference
 
-**Version 1.0 | February 2026**
+**Version 2.0 | March 2026**
 **Status:** Current — reflects production implementation
 
 ---
 
 ## Overview
 
-Encypher supports multiple invisible embedding modes for signing text content. Each mode embeds cryptographically signed UUIDs per sentence (or per document) using invisible Unicode characters. The choice of mode depends on the target platform, density requirements, and error-correction needs.
+Encypher supports two `manifest_mode` values for signing text content: `full` and `micro`.
+Both modes embed cryptographically signed provenance data using invisible Unicode characters.
 
 All modes share the same core architecture:
 - **Sentence-level Merkle tree** authentication (patent-pending ENC0100)
-- **HMAC-SHA256** cryptographic proof per sentence
-- **Database-backed** — embedded UUID references full metadata, C2PA manifest, license info
+- **HMAC-SHA256** cryptographic proof per segment
+- **Database-backed** — embedded marker references full metadata, C2PA manifest, license info
 - **Public verification** — anyone can verify signed content via API or verification page
 
 ---
 
-## Mode Comparison
+## manifest_mode: full
 
-| Mode | API Value | Chars/Sentence | Encoding | Word | Google Docs | PDF | Browsers | Error Correction |
-|------|-----------|---------------|----------|------|-------------|-----|----------|-----------------|
-| **C2PA Full** | `full` | ~500+ | C2PA manifest (VS) | ❌ | ✅ | ✅ | ✅ | — |
-| **Lightweight UUID** | `lightweight_uuid` | ~200 | C2PA manifest (VS) | ❌ | ✅ | ✅ | ✅ | — |
-| **Minimal UUID** | `minimal_uuid` | ~100 | C2PA manifest (VS) | ❌ | ✅ | ✅ | ✅ | — |
-| **VS256** | `vs256_embedding` | 36 | Base-256 Variation Selectors | ❌ | ✅ | ✅ | ✅ | ❌ |
-| **VS256+RS** | `vs256_rs_embedding` | 36 | Base-256 VS + Reed-Solomon | ❌ | ✅ | ✅ | ✅ | ✅ (4 errors / 8 erasures) |
-| **ZW** | `zw_embedding` | 128 | Base-4 Zero-Width chars | ✅ | ✅ | ✅ | ✅ | ❌ |
+C2PA 2.3 manifest embedded into the text using Variation Selector characters.
 
-### Quick Selection Guide
+- Single C2PA wrapper per document
+- Standard provenance chain support (`c2pa.created`, `c2pa.edited`)
+- Not compatible with Microsoft Word (Variation Selectors render as box glyphs in Word)
 
-- **Need Microsoft Word compatibility?** → Use **ZW** (`zw_embedding`)
-- **Need maximum density (smallest footprint)?** → Use **VS256** or **VS256+RS** (36 chars vs 128)
-- **Need error correction for lossy pipelines?** → Use **VS256+RS** (`vs256_rs_embedding`)
-- **Need full C2PA manifest embedded in text?** → Use **Minimal UUID** or **C2PA Full**
-- **Signing PDFs?** → Use **VS256+RS** (recommended) or **VS256** for best density
+**API:**
+```json
+{ "options": { "manifest_mode": "full" } }
+```
 
 ---
 
-## Mode Details
+## manifest_mode: micro
 
-### VS256 Embedding (`vs256_embedding`)
+Ultra-compact per-segment HMAC markers plus an optional C2PA document wrapper.
+Three boolean flags control the exact sub-mode:
 
-**Best for:** Maximum density signing where Word compatibility is not needed.
+| Flag | Default | Effect |
+|------|---------|--------|
+| `ecc` | `true` | Enable Reed-Solomon error correction |
+| `legacy_safe` | `false` | Use Word-safe base-6 encoding instead of VS256 |
+| `embed_c2pa` | `true` | Embed C2PA manifest into the document content |
 
-Uses all 256 Unicode Variation Selectors as a base-256 alphabet — each byte of the signature maps to exactly one invisible character.
+### Sub-modes
 
-**Alphabet:**
-- VS1–VS16 (BMP): U+FE00 – U+FE0F (byte values 0–15)
-- VS17–VS256 (Supplementary): U+E0100 – U+E01EF (byte values 16–255)
+| Sub-mode | `legacy_safe` | `ecc` | Chars/segment | Alphabet | Word-safe |
+|----------|--------------|-------|--------------|----------|-----------|
+| VS256 | false | false | 36 | 256 Variation Selectors | No |
+| VS256-RS | false | true | 44 | 256 Variation Selectors + RS(40,32) | No |
+| legacy_safe | true | false | 100 | 6 base-6 ZW chars (ZWNJ/ZWJ/CGJ/MVS/LRM/RLM) | Yes |
+| legacy_safe_rs | true | true | 112 | 6 base-6 ZW chars + RS(36,32) | Yes |
 
-**Signature layout (36 chars):**
-- Magic prefix: 4 chars (VS240–VS243, format marker)
-- UUID: 16 chars (16 bytes, database reference)
-- HMAC-SHA256: 16 chars (128-bit truncated, cryptographic proof)
+### VS256 / VS256-RS
 
-**Security:** 128-bit UUID uniqueness + 128-bit HMAC security.
+Uses all 256 Unicode Variation Selectors as a base-256 alphabet.
 
-**Platform compatibility:**
-| Platform | Status | Notes |
-|----------|--------|-------|
-| Google Docs | ✅ Renders invisibly | |
-| PDF (standard fonts) | ✅ Survives signing + extraction | TrueType, OpenType, Type1 fonts |
-| PDF (Type3 fonts) | ⚠️ Verification works, copy-paste limited | See [PDF Font Compatibility](#pdf-font-compatibility) |
-| Web browsers | ✅ Renders invisibly | |
-| Microsoft Word | ❌ Shows □ box glyphs | Use `zw_embedding` instead |
+- VS1-VS16 (BMP): U+FE00 - U+FE0F
+- VS17-VS256 (Supplementary): U+E0100 - U+E01EF
 
----
+**VS256 layout (36 chars):**
+- Log ID: 16 chars (16 bytes, database reference)
+- HMAC-SHA256/128: 16 chars (128-bit truncated)
+- Magic prefix: 4 chars (VS240-VS243, format marker)
 
-### VS256+RS Embedding (`vs256_rs_embedding`)
-
-**Best for:** PDF signing and lossy distribution pipelines where some characters may be dropped.
-
-Extends VS256 with **Reed-Solomon error correction** (GF(256), 8 parity symbols). Same 36-character footprint as plain VS256, but trades HMAC length for parity bytes.
-
-**Signature layout (36 chars):**
-- Magic prefix: 4 chars (VS240–VS243, same as VS256)
-- UUID: 16 chars (16 bytes, database reference)
+**VS256-RS layout (44 chars):**
+- Log ID: 16 chars
 - HMAC-SHA256/64: 8 chars (64-bit truncated)
-- RS parity: 8 chars (8 bytes Reed-Solomon)
+- RS parity: 8 chars (RS GF(256), 8 parity symbols)
+- Magic prefix: 4 chars
 
-**Error correction capacity:**
-- Corrects up to **4 unknown errors** (corrupted VS chars)
-- Corrects up to **8 known erasures** (missing VS chars with known positions)
-- In practice: poppler (pdftotext) drops ~2.3 VS chars on average from a contiguous block — well within the 8-erasure capacity
-
-**Security:** 128-bit UUID uniqueness + 64-bit HMAC security. 64-bit HMAC is sufficient because the primary verification path is database lookup (UUID → org), not HMAC alone.
-
-**Detection:** Same magic prefix as VS256 — detection is identical. Verification distinguishes RS vs non-RS by attempting RS decode first.
-
-**Platform compatibility:** Same as VS256 (see table above).
-
----
-
-### ZW Embedding (`zw_embedding`)
-
-**Best for:** Cross-platform content that must survive Microsoft Word copy-paste.
-
-Uses 4 zero-width Unicode characters as a base-4 alphabet. Larger footprint (128 chars vs 36) but works everywhere including Word.
-
-**Alphabet (all Word-compatible):**
-- ZWNJ (U+200C) = 0
-- ZWJ (U+200D) = 1
-- CGJ (U+034F) = 2
-- MVS (U+180E) = 3
-
-**Characters NOT used (Word-incompatible):**
-- ZWSP (U+200B) — stripped by Word during copy-paste
-- WJ (U+2060) — appears as visible space in Word
-
-**Signature layout (128 chars):**
-- UUID: 64 chars (16 bytes × 4 chars/byte)
-- HMAC-SHA256: 64 chars (16 bytes × 4 chars/byte)
-- No magic prefix — detected by scanning for 128 contiguous base-4 characters
-
-**Security:** 128-bit UUID uniqueness + 128-bit HMAC security.
+RS(40,32): corrects up to 4 unknown errors or 8 known erasures. Poppler drops ~2-3 VS chars on average from a contiguous block -- within the 8-erasure capacity.
 
 **Platform compatibility:**
-| Platform | Status | Notes |
-|----------|--------|-------|
-| Microsoft Word | ✅ Survives copy-paste | All 4 chars verified Word-safe |
-| Google Docs | ✅ Renders invisibly | |
-| PDF (standard fonts) | ✅ Survives signing + extraction | |
-| PDF (Type3 fonts) | ⚠️ Verification works, copy-paste limited | See [PDF Font Compatibility](#pdf-font-compatibility) |
-| Web browsers | ✅ Renders invisibly | |
+| Platform | VS256 / VS256-RS |
+|----------|-----------------|
+| Google Docs | Renders invisibly |
+| Web browsers | Renders invisibly |
+| PDF (TrueType/OpenType) | Survives signing + extraction |
+| PDF (Type3 fonts) | Verification works; copy-paste limited in Chrome |
+| Microsoft Word | Shows box glyphs -- use legacy_safe instead |
+
+### legacy_safe / legacy_safe_rs
+
+Uses 6 confirmed Word-safe and terminal-safe invisible characters as a base-6 alphabet:
+
+| Char | Codepoint | Digit |
+|------|-----------|-------|
+| ZWNJ | U+200C | 0 |
+| ZWJ | U+200D | 1 |
+| CGJ | U+034F | 2 |
+| MVS | U+180E | 3 |
+| LRM | U+200E | 4 |
+| RLM | U+200F | 5 |
+
+Big-number base-6 encoding: the full 32-byte (or 36-byte RS) payload is treated as one
+large integer and encoded in base-6, achieving ~99.5% Shannon efficiency.
+
+**Characters NOT used:** ZWSP (U+200B) -- stripped by Word during copy-paste.
+
+**legacy_safe layout (100 chars):**
+- Log ID: 16 bytes
+- HMAC-SHA256/128: 16 bytes
+- Total: 32 bytes -> 100 base-6 chars (ceil(256 * log2 / log6) = 100)
+
+**legacy_safe_rs layout (112 chars):**
+- Log ID: 16 bytes
+- HMAC-SHA256/128: 16 bytes
+- RS(36,32) parity: 4 bytes
+- Total: 36 bytes -> 112 base-6 chars (ceil(288 * log2 / log6) = 112)
+
+RS(36,32): corrects up to 2 unknown errors or 4 known erasures.
+
+**Detection:** A 100-char (or 112-char) run from the 6-char set that contains at least
+one LRM or RLM is treated as a legacy_safe (or legacy_safe_rs) marker. LRM/RLM are absent
+from the old base-4 alphabet, making them unambiguous discriminators.
+
+**Platform compatibility:**
+| Platform | legacy_safe / legacy_safe_rs |
+|----------|------------------------------|
+| Microsoft Word | Survives copy-paste |
+| Google Docs | Renders invisibly |
+| PDF (all font types) | Survives signing + extraction |
+| Web browsers | Renders invisibly |
+| Standard terminals | No visual artifact |
 
 ---
 
-### C2PA Manifest Modes
+## embed_c2pa flag
 
-These modes embed a full or partial C2PA 2.3 manifest (Section A.7) using Variation Selector encoding. They carry more metadata inline but have a larger per-sentence footprint.
+For `micro` mode, `embed_c2pa` controls whether the C2PA document manifest is also
+embedded into the signed content:
 
-| Mode | API Value | Description |
-|------|-----------|-------------|
-| **C2PA Full** | `full` | Complete C2PA manifest with all assertions, actions, ingredients |
-| **Lightweight UUID** | `lightweight_uuid` | UUID pointer to database-stored manifest |
-| **Minimal UUID** | `minimal_uuid` | Per-sentence signed UUID with C2PA wrapper |
-| **Hybrid** | `hybrid` | Per-sentence lightweight UUID + full C2PA document wrapper |
+- `embed_c2pa=true` (default): per-segment markers + C2PA manifest wrapper embedded
+- `embed_c2pa=false`: per-segment markers only; C2PA manifest is still generated and
+  stored in the database for API-based verification
 
-C2PA modes are **not Word-compatible** (they use Variation Selectors). They are best suited for web publishing and PDF workflows where the full provenance chain must be embedded inline.
+A C2PA manifest is always generated and always stored in the DB (controlled separately
+by `store_c2pa_manifest`). `embed_c2pa` only controls whether it appears inside the
+returned `signed_text`.
 
 ---
 
-## PDF-Specific Behavior
+## Quick Selection Guide
 
-### How PDF Signing Works
-
-When signing an existing PDF, Encypher uses a **font-switching injection** approach:
-
-1. The original PDF content streams and fonts are left **completely untouched**
-2. A custom CID font (`EncSgn`) containing only invisible glyphs is embedded in the PDF
-3. Invisible characters are injected inline via font-switch sequences:
-   ```
-   /EncSgn 12 Tf [<GID> -1] TJ /OriginalFont 12 Tf
-   ```
-4. The signed text (with VS/ZW chars in correct positions) is also stored in an `EncypherSignedText` metadata stream for reliable extraction
-
-This approach preserves visual rendering for all font types, including Type3 and custom-encoded fonts.
-
-### PDF Font Compatibility
-
-| Font Type | Visual Rendering | Copy-Paste (pdftotext) | Copy-Paste (Chrome viewer) | Verification |
-|-----------|-----------------|----------------------|---------------------------|-------------|
-| **TrueType / OpenType** | ✅ Perfect | ✅ VS/ZW chars preserved | ✅ VS/ZW chars preserved | ✅ Always works |
-| **Type1** (base-14) | ✅ Perfect | ✅ VS/ZW chars preserved | ✅ VS/ZW chars preserved | ✅ Always works |
-| **CID-keyed** | ✅ Perfect | ✅ VS/ZW chars preserved | ✅ VS/ZW chars preserved | ✅ Always works |
-| **Type3** (custom encoding) | ✅ Perfect | ✅ VS/ZW chars preserved | ⚠️ Limited — Chrome PDFium has limited Type3 text extraction | ✅ Always works |
-
-**Key points:**
-- **Visual rendering** is always preserved regardless of font type
-- **Verification always works** because it uses the `EncypherSignedText` metadata stream, not copy-paste
-- **pdftotext** (poppler) reliably extracts invisible chars from all font types
-- **Chrome's PDF viewer** (PDFium) has limited text extraction for Type3 fonts — this affects the original unsigned PDF too, not just signed ones
-
-### Recommendation for PDF Publishers
-
-For best copy-paste survivability across all PDF viewers, use **standard TrueType or OpenType fonts** (e.g., Arial, Helvetica, Times New Roman, Noto) when creating PDFs. Avoid Type3 fonts, which are sometimes generated by:
-
-- Browser "Save as PDF" / "Print to PDF" features
-- Certain LaTeX configurations
-- Some legacy PDF generators
-
-**Note:** This only affects copy-paste text extraction in Chrome's built-in PDF viewer. Verification, visual rendering, and pdftotext extraction all work correctly regardless of font type.
+- **Need Microsoft Word compatibility?** -> Use `legacy_safe=true` (micro mode)
+- **Need maximum density?** -> Use VS256-RS (micro mode, ecc=true, legacy_safe=false), 44 chars/segment
+- **Need error correction for lossy pipelines?** -> Enable `ecc=true`
+- **Need full C2PA manifest embedded in content?** -> Use `full` mode or `micro` with `embed_c2pa=true`
+- **Signing PDFs?** -> VS256-RS recommended (ecc=true, legacy_safe=false)
 
 ---
 
@@ -190,48 +158,65 @@ For best copy-paste survivability across all PDF viewers, use **standard TrueTyp
 ### Signing (Enterprise API)
 
 ```bash
+# Full mode (default, C2PA manifest in content)
 curl -X POST https://api.encypherai.com/api/v1/sign \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "document_id": "article_001",
-    "text": "Full article text...",
-    "segmentation_level": "sentence",
-    "manifest_mode": "vs256_rs_embedding"
+    "text": "Article text...",
+    "options": { "manifest_mode": "full" }
+  }'
+
+# Micro mode: VS256-RS (max density, ECC, not Word-safe)
+curl -X POST https://api.encypherai.com/api/v1/sign \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Article text...",
+    "options": {
+      "manifest_mode": "micro",
+      "ecc": true,
+      "legacy_safe": false
+    }
+  }'
+
+# Micro mode: legacy_safe-RS (Word-safe, ECC)
+curl -X POST https://api.encypherai.com/api/v1/sign \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Article text...",
+    "options": {
+      "manifest_mode": "micro",
+      "ecc": true,
+      "legacy_safe": true
+    }
   }'
 ```
 
-**Available `manifest_mode` values:**
-- `full` — C2PA full manifest
-- `lightweight_uuid` — Lightweight UUID manifest
-- `minimal_uuid` — Minimal UUID per-sentence
-- `hybrid` — Hybrid (per-sentence + document C2PA)
-- `zw_embedding` — ZW base-4 (Word-compatible, 128 chars/sentence)
-- `vs256_embedding` — VS256 base-256 (max density, 36 chars/sentence)
-- `vs256_rs_embedding` — VS256+RS (error-correcting, 36 chars/sentence)
+---
 
-### PDF Signing (xml-to-pdf tool)
+## PDF-Specific Behavior
 
-```python
-from xml_to_pdf.sign_existing import sign_existing_pdf
+When signing an existing PDF, Encypher uses a **font-switching injection** approach:
 
-result = sign_existing_pdf(
-    input_path="article.pdf",
-    output_path="article_signed.pdf",
-    mode="vs256_rs_sentence",
-    document_title="My Article",
-    api_key="your-api-key",
-)
-```
+1. The original PDF content streams and fonts are left completely untouched
+2. A custom CID font (`EncSgn`) containing only invisible glyphs is embedded in the PDF
+3. Invisible characters are injected inline via font-switch sequences
+4. The signed text is also stored in an `EncypherSignedText` metadata stream for reliable extraction
 
-**Available PDF signing modes:**
-- `c2pa_full` — C2PA full manifest
-- `lightweight` — Lightweight UUID manifest
-- `minimal` — Minimal UUID per-sentence
-- `zw_sentence` — ZW embedding (sentence-level)
-- `zw_document` — ZW embedding (document-level)
-- `vs256_sentence` — VS256 embedding (sentence-level)
-- `vs256_rs_sentence` — VS256+RS embedding (sentence-level, recommended for PDF)
+This approach preserves visual rendering for all font types, including Type3 and custom-encoded fonts.
+
+### PDF Font Compatibility
+
+| Font Type | Visual Rendering | Copy-Paste (pdftotext) | Verification |
+|-----------|-----------------|----------------------|-------------|
+| TrueType / OpenType | Perfect | VS/ZW chars preserved | Always works |
+| Type1 (base-14) | Perfect | VS/ZW chars preserved | Always works |
+| CID-keyed | Perfect | VS/ZW chars preserved | Always works |
+| Type3 (custom encoding) | Perfect | VS/ZW chars preserved | Always works |
+
+Verification always works because it uses the `EncypherSignedText` metadata stream, not copy-paste.
 
 ---
 
@@ -239,23 +224,26 @@ result = sign_existing_pdf(
 
 For a 1,000-word article (~50 sentences):
 
-| Mode | Chars Added | Approximate Bytes | Overhead |
-|------|------------|-------------------|----------|
-| VS256 / VS256+RS | 1,800 | 7.2 KB (UTF-8, 4 bytes/char) | ~1.4% |
-| ZW | 6,400 | 12.8 KB (UTF-8, 2–3 bytes/char) | ~2.5% |
-| Minimal UUID (C2PA) | ~5,000 | ~10 KB | ~2.0% |
-| C2PA Full | ~25,000 | ~50 KB | ~10% |
+| Sub-mode | Chars added | Overhead |
+|----------|------------|---------|
+| VS256 (ecc=false, legacy_safe=false) | 1,800 | ~0.5% |
+| VS256-RS (ecc=true, legacy_safe=false) | 2,200 | ~0.6% |
+| legacy_safe (ecc=false, legacy_safe=true) | 5,000 | ~1.5% |
+| legacy_safe_rs (ecc=true, legacy_safe=true) | 5,600 | ~1.7% |
+| full (C2PA manifest) | ~25,000 | ~7-10% |
 
 ---
 
 ## Verification
 
-All modes are verified through the same endpoint. The verification service auto-detects the embedding format:
+All modes are verified through the same endpoint. The verification service auto-detects
+the embedding format in priority order:
 
-1. **VS256-RS** — tried first (error-correcting, highest priority)
-2. **VS256** — tried if RS decode fails
-3. **ZW** — tried if no VS256 signatures found
-4. **C2PA manifest** — tried for full/lightweight/minimal/hybrid modes
+1. **legacy_safe_rs** (112-char base-6, LRM/RLM, RS decode) -- tried first
+2. **legacy_safe** (100-char base-6, LRM/RLM) -- tried if RS decode fails
+3. **VS256-RS** (magic prefix + RS decode) -- tried next
+4. **VS256** (magic prefix, no RS) -- tried if RS decode fails
+5. **C2PA manifest** -- tried for full mode
 
 ```bash
 curl -X POST https://api.encypherai.com/api/v1/verify \
@@ -263,34 +251,38 @@ curl -X POST https://api.encypherai.com/api/v1/verify \
   -d '{"text": "Text with invisible embeddings..."}'
 ```
 
-For PDF verification, the service extracts text from the `EncypherSignedText` metadata stream (preferred) or falls back to content stream extraction.
+---
+
+## Email Survivability
+
+No single invisible encoding is universally robust through every email pipeline:
+
+| Transform | VS256 / VS256-RS | legacy_safe / legacy_safe_rs |
+|-----------|-----------------|------------------------------|
+| Unicode NFC normalization | Survives | Survives |
+| Strip supplementary VS (VS17-VS256) | Breaks | Survives |
+| Strip all variation selectors | Breaks | Survives |
+| Strip format-control zero-widths | Survives | Breaks |
+
+**Recommended strategy:** Use `legacy_safe=true` for email workflows; use VS256-RS for
+web/PDF workflows.
 
 ---
 
 ## Security Summary
 
-| Property | VS256 | VS256+RS | ZW | C2PA Modes |
-|----------|-------|----------|-----|-----------|
-| UUID bits | 128 | 128 | 128 | 128 |
-| HMAC bits | 128 | 64 | 128 | 256 (Ed25519) |
-| Error correction | ❌ | ✅ (RS GF(256)) | ❌ | ❌ |
-| Tamper detection | ✅ | ✅ | ✅ | ✅ |
-| Signing key | HMAC (org-specific) | HMAC (org-specific) | HMAC (org-specific) | Ed25519 private key |
+| Sub-mode | Log ID bits | HMAC bits | Error correction |
+|----------|------------|-----------|-----------------|
+| VS256 | 128 | 128 | None |
+| VS256-RS | 128 | 64 | RS(40,32): 4 errors / 8 erasures |
+| legacy_safe | 128 | 128 | None |
+| legacy_safe_rs | 128 | 128 | RS(36,32): 2 errors / 4 erasures |
+| full (C2PA) | 128 | 256 (Ed25519) | None |
+
+VS256-RS uses 64-bit HMAC because primary verification is database lookup (log ID -> org),
+not HMAC-alone brute force. legacy_safe_rs retains full 128-bit HMAC because the base-6
+encoding has headroom for 4 RS parity bytes at no HMAC cost.
 
 ---
 
-## Tier Availability
-
-| Mode | Free | Professional | Enterprise |
-|------|------|-------------|-----------|
-| C2PA Full | ✅ | ✅ | ✅ |
-| Lightweight UUID | ❌ | ✅ | ✅ |
-| Minimal UUID | ❌ | ✅ | ✅ |
-| Hybrid | ❌ | ❌ | ✅ |
-| ZW Embedding | ❌ | ✅ | ✅ |
-| VS256 Embedding | ❌ | ✅ | ✅ |
-| VS256+RS Embedding | ❌ | ✅ | ✅ |
-
----
-
-*Last updated: February 2026 — TEAM_158*
+*Last updated: March 2026 -- TEAM_248*

@@ -12,6 +12,7 @@ from typing import Dict
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.tier_config import is_enterprise_tier
 from app.database import get_db
 from app.dependencies import get_current_organization
 from app.schemas.multi_source import (
@@ -46,7 +47,7 @@ async def multi_source_lookup(
 
     # TEAM_145: Multi-source lookup available to all tiers; authority ranking requires Enterprise
     tier = organization.get("tier", "free").lower()
-    is_enterprise = tier in {"enterprise", "strategic_partner", "demo"}
+    is_enterprise = is_enterprise_tier(tier)
 
     # Authority ranking requires Enterprise
     if request.include_authority_score and not is_enterprise:

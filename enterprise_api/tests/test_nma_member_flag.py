@@ -56,7 +56,7 @@ async def test_regular_free_can_access_advanced_options(async_client: AsyncClien
             "text": "This is a test document from a regular free user.",
             "options": {
                 "segmentation_level": "sentence",
-                "manifest_mode": "minimal_uuid",
+                "manifest_mode": "micro",
             },
         },
         headers={"Authorization": "Bearer starter-api-key-for-testing"},
