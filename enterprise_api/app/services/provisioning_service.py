@@ -29,6 +29,7 @@ from app.utils.crypto_utils import (
     load_organization_public_key,
 )
 from app.config import settings
+from app.core.tier_config import LEGACY_TIER_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -136,9 +137,7 @@ class ProvisioningService:
                 domain = email.split("@")[1]
                 organization_name = domain.split(".")[0].title()
 
-            # TEAM_145: Map tier string to enum (only free/enterprise/strategic_partner)
-            legacy_map = {"starter": "free", "professional": "free", "business": "free"}
-            mapped_tier = legacy_map.get(tier.lower(), tier.lower())
+            mapped_tier = LEGACY_TIER_MAP.get(tier.lower(), tier.lower())
             tier_map = {
                 "free": OrganizationTier.FREE,
                 "enterprise": OrganizationTier.ENTERPRISE,

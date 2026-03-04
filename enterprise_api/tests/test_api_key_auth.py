@@ -246,7 +246,11 @@ class TestAuthenticateAPIKey:
         assert result["can_verify"] is True
         assert result["can_lookup"] is True
 
-        client.post.assert_awaited_once_with("/api/v1/keys/validate", json={"key": "ency_test_12345678901234567890"})
+        client.post.assert_awaited_once_with(
+            "/api/v1/keys/validate",
+            json={"key": "ency_test_12345678901234567890"},
+            headers={"x-request-id": "-"},
+        )
 
     @pytest.mark.asyncio
     @patch("app.middleware.api_key_auth.get_key_service_client")

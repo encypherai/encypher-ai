@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.core.tier_config import coerce_tier_name, get_tier_limits
 from app.database import get_db
+from app.middleware.request_id_middleware import request_id_ctx
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +141,11 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
     # Try key-service validation first (supports both org and user keys)
     try:
         client = get_key_service_client()
-        response = await client.post("/api/v1/keys/validate", json={"key": api_key})
+        response = await client.post(
+            "/api/v1/keys/validate",
+            json={"key": api_key},
+            headers={"x-request-id": request_id_ctx.get()},
+        )
 
         if response.status_code == 200:
             data = response.json()

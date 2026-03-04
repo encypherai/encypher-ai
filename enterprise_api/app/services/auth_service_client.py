@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, cast
 import httpx
 
 from app.config import settings
+from app.middleware.request_id_middleware import request_id_ctx
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class AuthServiceClient:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     f"{self.base_url}/api/v1/organizations/internal/{organization_id}/context",
-                    headers={"X-Internal-Token": token},
+                    headers={"X-Internal-Token": token, "x-request-id": request_id_ctx.get()},
                     timeout=5.0,
                 )
         except httpx.RequestError as exc:
@@ -63,7 +64,7 @@ class AuthServiceClient:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     f"{self.base_url}/api/v1/auth/internal/users/create",
-                    headers={"X-Internal-Token": token},
+                    headers={"X-Internal-Token": token, "x-request-id": request_id_ctx.get()},
                     json={"email": email, "name": name, "password": password},
                 )
         except httpx.RequestError as exc:
@@ -98,7 +99,7 @@ class AuthServiceClient:
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     f"{self.base_url}/api/v1/organizations/internal/bulk-provision",
-                    headers={"X-Internal-Token": token},
+                    headers={"X-Internal-Token": token, "x-request-id": request_id_ctx.get()},
                     json={
                         "publishers": publishers,
                         "partner_org_id": partner_org_id,

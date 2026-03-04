@@ -104,8 +104,9 @@ Starter tier supports up to 1 custom assertion per request.
 - `document_title` (string, optional): Document title (max 500 chars)
 - `document_url` (string, optional): Original document URL (max 1000 chars)
 - `options.segmentation_level` (string): `document|sentence|paragraph|section|word`
-- `options.manifest_mode` (string): `full|lightweight_uuid|minimal_uuid|hybrid|zw_embedding|micro`
-- `options.ecc` (bool): micro mode RS error correction (44-char markers when true, 36 when false)
+- `options.manifest_mode` (string): `full|micro` (default: `micro`)
+- `options.ecc` (bool): micro mode Reed-Solomon error correction; default `true` (44-char markers when true, 36 when false)
+- `options.legacy_safe` (bool): micro mode Word/terminal-safe variant using zero-width chars; default `false` (100 chars when true without ECC, 112 with ECC)
 - `options.embed_c2pa` (bool): for micro mode, controls whether C2PA wrapper is embedded in content
 - `options.store_c2pa_manifest` (bool): controls DB persistence of generated manifest
 
@@ -212,7 +213,7 @@ Verify C2PA manifest in signed content.
 
 **Verification semantics (current):**
 - Primary validation is C2PA signature/manifest verification.
-- If no signer is resolved, verifier falls back to embedded marker modes (`micro`, `zw_embedding`).
+- If no signer is resolved, verifier falls back to embedded marker extraction (`micro` mode).
 - Micro verification includes sentence-bound integrity checks where available and preserves backward compatibility for legacy markers.
 - `reason_code` is the canonical machine field for status interpretation (`OK`, `SIGNATURE_INVALID`, `UNTRUSTED_SIGNER`, `CERT_NOT_FOUND`, `DOC_REVOKED`, etc.).
 

@@ -19,10 +19,10 @@ Compatibility:
 - Google Docs: Renders invisibly ✅
 - PDF (from GDocs): Preserves invisibility ✅
 - Web browsers: Renders invisibly ✅
-- Microsoft Word: Shows □ box glyphs ❌ — use zw_embedding instead
+- Microsoft Word: Shows box glyphs - use legacy_safe instead
 
 Density comparison:
-- zw_embedding (base-4):      128 chars per signature, Word-compatible
+- legacy_safe (base-6):       100 chars per signature, Word-compatible
 - vs256_embedding (base-256):  36 chars per signature, NOT Word-compatible
 - Improvement: 3.6x fewer characters
 """
@@ -36,6 +36,11 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac as crypto_hmac
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+from app.utils.legacy_safe_crypto import (
+    TRAILING_PUNCTUATION,
+    embed_marker_safely as embed_signature_safely,
+)
 
 
 # =============================================================================
@@ -187,8 +192,8 @@ def decode_bytes_vs256(encoded: str) -> bytes:
 # - log_id: 16 chars (16 bytes, transparency log reference)
 # - HMAC-SHA256: 16 chars (16 bytes truncated, cryptographic proof)
 #
-# Compare to zw_embedding: 128 chars for same 32-byte payload
-# Improvement: 3.6x fewer characters (36 vs 128)
+# Compare to legacy_safe: 100 chars for 32-byte LOG_ID payload
+# Improvement: 2.8x fewer characters (36 vs 100)
 #
 # Detection: Magic prefix + 32 contiguous VS chars
 # =============================================================================
@@ -386,8 +391,8 @@ def derive_signing_key_from_private_key(private_key: Ed25519PrivateKey) -> bytes
     """
     Derive a 32-byte HMAC signing key from an Ed25519 private key.
 
-    Uses the same derivation as zw_crypto.py to ensure key compatibility.
-    The same org key works for both zw_embedding and vs256_embedding modes.
+    Uses the same derivation as legacy_safe_crypto.py to ensure key compatibility.
+    The same org key works for both legacy_safe and vs256_embedding modes.
 
     Args:
         private_key: Ed25519 private key
@@ -407,49 +412,6 @@ def derive_signing_key_from_private_key(private_key: Ed25519PrivateKey) -> bytes
 TERMINAL_PUNCTUATION = ".!?"
 
 # Extended punctuation (includes quotes that often follow terminal punctuation)
-TRAILING_PUNCTUATION = ".!?\"')]}»\u201d"
-
-
-def embed_signature_safely(text: str, signature: str) -> str:
-    """
-    Embed VS256 signature before terminal punctuation to reduce accidental deletion.
-
-    In editors, users typically delete from the end. By placing the invisible
-    signature BEFORE the final punctuation, accidental deletion is less likely.
-
-    Examples:
-        "Hello world." → "Hello world[SIG]."
-        "What time is it?" → "What time is it[SIG]?"
-        "Wow!" → "Wow[SIG]!"
-        "No punctuation" → "No punctuation[SIG]"
-
-    Args:
-        text: Original text (sentence)
-        signature: VS256 signature to embed
-
-    Returns:
-        Text with signature embedded before terminal punctuation
-    """
-    if not text:
-        return signature
-
-    # Find how many trailing punctuation characters there are
-    trailing_count = 0
-    for char in reversed(text):
-        if char in TRAILING_PUNCTUATION:
-            trailing_count += 1
-        else:
-            break
-
-    if trailing_count > 0:
-        # Insert signature before trailing punctuation
-        insert_pos = len(text) - trailing_count
-        return text[:insert_pos] + signature + text[insert_pos:]
-    else:
-        # No terminal punctuation, append at end
-        return text + signature
-
-
 def get_signature_position(text: str) -> int:
     """
     Get the recommended position for embedding a VS256 signature.

@@ -12,8 +12,10 @@ from fastapi import HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.tier_config import LEGACY_TIER_MAP
 from app.models.organization import Organization, OrganizationTier
 from app.utils.quota import (
+    QUOTA_FIELD_MAPPING,
     TIER_FEATURES,
     TIER_QUOTAS,
     TIER_RATE_LIMITS,
@@ -28,9 +30,7 @@ def _coerce_tier(value: Any) -> OrganizationTier:
     if isinstance(value, OrganizationTier):
         return value
     if isinstance(value, str):
-        # TEAM_145: Map legacy tier names to FREE
-        legacy_map = {"starter": "free", "professional": "free", "business": "free"}
-        mapped = legacy_map.get(value, value)
+        mapped = LEGACY_TIER_MAP.get(value, value)
         try:
             return OrganizationTier(mapped)
         except ValueError:
@@ -309,19 +309,7 @@ class TierService:
     @staticmethod
     def _get_current_usage(org: Organization, quota_type: QuotaType) -> int:
         """Get current usage for a quota type."""
-        usage_fields = {
-            QuotaType.MERKLE_ENCODING: "merkle_encoding_calls_this_month",
-            QuotaType.MERKLE_ATTRIBUTION: "merkle_attribution_calls_this_month",
-            QuotaType.MERKLE_PLAGIARISM: "merkle_plagiarism_calls_this_month",
-            QuotaType.FUZZY_INDEX: "fuzzy_index_calls_this_month",
-            QuotaType.FUZZY_SEARCH: "fuzzy_search_calls_this_month",
-            QuotaType.API_CALLS: "api_calls_this_month",
-            QuotaType.SENTENCES_TRACKED: "sentences_tracked_this_month",
-            QuotaType.BATCH_OPERATIONS: "batch_operations_this_month",
-            QuotaType.C2PA_SIGNATURES: "documents_signed",
-        }
-
-        field_name = usage_fields.get(quota_type)
+        field_name = QUOTA_FIELD_MAPPING.get(quota_type)
         if not field_name:
             return 0
 

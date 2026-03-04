@@ -1,14 +1,9 @@
 """
 Embedding utilities for injecting signed references into content.
 
-Note: HTMLEmbedder was removed as embeddings are now invisible using
-Unicode variation selectors from encypher-ai. No HTML manipulation needed.
+Invisible Unicode embeddings are handled by the crypto modules in app/utils/:
+  vs256_crypto.py        -- base-256 VS encoding (Google Docs, browsers)
+  vs256_rs_crypto.py     -- VS256 + Reed-Solomon ECC
+  legacy_safe_crypto.py  -- base-6 ZWC encoding (Word-safe)
+  legacy_safe_rs_crypto.py -- base-6 + Reed-Solomon ECC
 """
-
-from app.utils.embeddings.markdown_embedder import MarkdownEmbedder
-from app.utils.embeddings.text_embedder import TextEmbedder
-
-__all__ = [
-    "MarkdownEmbedder",
-    "TextEmbedder",
-]

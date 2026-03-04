@@ -10,6 +10,7 @@ from enum import Enum
 from typing import Any, Dict, List
 
 from app.core.pricing_constants import DEFAULT_COALITION_REV_SHARE
+from app.core.tier_config import coerce_tier_name
 
 
 class BillingCycle(str, Enum):
@@ -127,9 +128,7 @@ PRICING_TIERS: Dict[str, PricingTier] = {
 
 def get_tier(tier_id: str) -> PricingTier:
     """Get a pricing tier by ID"""
-    # TEAM_145: Map legacy tier names
-    legacy_map = {"starter": "free", "professional": "free", "business": "free"}
-    tier_id = legacy_map.get(tier_id, tier_id)
+    tier_id = coerce_tier_name(tier_id)
     return PRICING_TIERS.get(tier_id, PRICING_TIERS["free"])
 
 

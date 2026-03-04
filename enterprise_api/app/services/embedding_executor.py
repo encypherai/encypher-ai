@@ -30,6 +30,7 @@ from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.status_service import status_service
 from app.services.merkle_service import MerkleService
 from app.utils.crypto_utils import load_organization_private_key
+from app.core.tier_config import is_enterprise_tier
 from app.utils.quota import QuotaManager, QuotaType
 from app.utils.segmentation import build_processing_metadata
 
@@ -113,7 +114,7 @@ async def encode_document_with_embeddings(
         # === TEAM_145: Tier Gating (consolidated to free/enterprise/strategic_partner) ===
         # Free tier now has access to most features. Only enterprise-only features are gated.
         tier = organization.get("tier", "free").lower()
-        is_enterprise = tier in {"enterprise", "strategic_partner", "demo"}
+        is_enterprise = is_enterprise_tier(tier)
 
         # Dual binding requires Enterprise
         if request.add_dual_binding and not is_enterprise:
@@ -380,7 +381,6 @@ async def encode_document_with_embeddings(
 
             index_for_attribution = request.index_for_attribution
             if index_for_attribution is None:
-                from app.core.tier_config import is_enterprise_tier
                 index_for_attribution = is_enterprise_tier(organization.get("tier", "free"))
 
             if index_for_attribution:

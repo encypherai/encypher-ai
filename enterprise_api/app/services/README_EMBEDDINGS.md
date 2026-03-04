@@ -34,7 +34,7 @@ The unified `/sign` endpoint supports advanced features via the `options` parame
   "text": "Your content...",
   "options": {
     "segmentation_level": "sentence",
-    "manifest_mode": "minimal_uuid",
+    "manifest_mode": "micro",
     "index_for_attribution": true
   }
 }
@@ -128,7 +128,7 @@ The `encypher-ai` package handles the low-level embedding using the C2PA Text Ma
   "document_id": "article_001",
   "options": {
     "segmentation_level": "sentence",
-    "manifest_mode": "minimal_uuid"
+    "manifest_mode": "micro"
   },
   "rights": {
     "license_type": "All Rights Reserved",
