@@ -154,6 +154,57 @@ describe('Signer embedding plan flow', () => {
     expect(updatedHtml).toContain(c2paMagicMarker());
   });
 
+  async function signWithMode(legacyMode: string, gc: GhostClient, ec: EncypherClient, ms: MetadataStore): Promise<Record<string, unknown>> {
+    const cfg = makeConfig();
+    cfg.signing.manifestMode = legacyMode;
+    const s = new Signer(cfg, gc, ec, ms);
+    const post = makePost();
+    (gc.readPost as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce(post)
+      .mockResolvedValueOnce(post);
+    (ec.sign as ReturnType<typeof vi.fn>).mockResolvedValue({
+      success: true,
+      data: { document: { document_id: 'doc_1', instance_id: 'inst_1', total_segments: 1,
+        signed_text: `Hello ${c2paMagicMarker()}world.` } },
+    });
+    await s.signPost('post_123', 'post');
+    return (ec.sign as ReturnType<typeof vi.fn>).mock.calls[0][0];
+  }
+
+  it('normalizes lightweight_uuid -> micro (no C2PA)', async () => {
+    const payload = await signWithMode('lightweight_uuid', ghostClient, encypherClient, metadataStore);
+    expect(payload.options.manifest_mode).toBe('micro');
+    expect(payload.options.embed_c2pa).toBe(false);
+  });
+
+  it('normalizes minimal_uuid -> micro (no C2PA)', async () => {
+    const payload = await signWithMode('minimal_uuid', ghostClient, encypherClient, metadataStore);
+    expect(payload.options.manifest_mode).toBe('micro');
+    expect(payload.options.embed_c2pa).toBe(false);
+  });
+
+  it('normalizes zw_embedding -> micro', async () => {
+    const payload = await signWithMode('zw_embedding', ghostClient, encypherClient, metadataStore);
+    expect(payload.options.manifest_mode).toBe('micro');
+  });
+
+  it('normalizes micro_c2pa -> micro (ecc=false, embed_c2pa=true)', async () => {
+    const payload = await signWithMode('micro_c2pa', ghostClient, encypherClient, metadataStore);
+    expect(payload.options.manifest_mode).toBe('micro');
+    expect(payload.options.ecc).toBe(false);
+    expect(payload.options.embed_c2pa).toBe(true);
+  });
+
+  it('normalizes hybrid -> full', async () => {
+    const payload = await signWithMode('hybrid', ghostClient, encypherClient, metadataStore);
+    expect(payload.options.manifest_mode).toBe('full');
+  });
+
+  it('normalizes unknown legacy mode -> micro (safe default)', async () => {
+    const payload = await signWithMode('unknown_garbage', ghostClient, encypherClient, metadataStore);
+    expect(payload.options.manifest_mode).toBe('micro');
+  });
+
   it('normalizes legacy micro_ecc_c2pa manifest mode to canonical micro options', async () => {
     signer = new Signer(
       makeConfig({
