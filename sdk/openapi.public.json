@@ -12371,7 +12371,7 @@
           "manifest_mode": {
             "type": "string",
             "title": "Manifest Mode",
-            "description": "Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid",
+            "description": "Manifest mode: full or micro",
             "default": "full"
           },
           "action": {

@@ -10481,7 +10481,7 @@
             "type": "string",
             "title": "Manifest Mode",
             "description": "C2PA manifest mode for signing",
-            "default": "micro_ecc_c2pa"
+            "default": "micro"
           },
           "segmentation_level": {
             "type": "string",
@@ -12694,7 +12694,7 @@
           "manifest_mode": {
             "type": "string",
             "title": "Manifest Mode",
-            "description": "Manifest mode: full (free), lightweight_uuid, minimal_uuid, hybrid, zw_embedding, micro, micro_ecc, micro_c2pa, micro_ecc_c2pa (Professional+)",
+            "description": "Manifest mode: full (standard C2PA manifest) or micro (compact invisible markers). Use ecc, embed_c2pa, and legacy_safe boolean flags to configure micro sub-modes.",
             "default": "full"
           },
           "embedding_strategy": {
@@ -13125,7 +13125,7 @@
           "manifest_mode": {
             "type": "string",
             "title": "Manifest Mode",
-            "description": "Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid",
+            "description": "Manifest mode: full or micro",
             "default": "full"
           },
           "action": {

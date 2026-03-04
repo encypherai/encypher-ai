@@ -9,9 +9,8 @@
 Lightweight signing example demonstrating copy-paste survival.
 
 This script uses the most minimal embedding configuration:
-- lightweight_uuid manifest mode (smallest metadata footprint)
+- micro manifest mode with C2PA disabled (smallest metadata footprint)
 - single_point embedding strategy (non-distributed)
-- C2PA disabled (basic metadata only)
 - Sentence-level segmentation (optimal for copy-paste survival)
 
 Usage:
@@ -72,7 +71,7 @@ P.S. Paste this into encypherai.com/tools/verify to see the embedded signature. 
 def sign_document(base_url: str, api_key: str, text: str, document_id: str) -> dict:
     """Sign document with lightweight embeddings."""
     response = requests.post(
-        f"{base_url}/api/v1/sign/advanced",
+        f"{base_url}/api/v1/sign",
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -80,13 +79,15 @@ def sign_document(base_url: str, api_key: str, text: str, document_id: str) -> d
         json={
             "document_id": document_id,
             "text": text,
-            "segmentation_level": "document",
-            "manifest_mode": "minimal_uuid",
-            "embedding_strategy": "single_point",
-            "disable_c2pa": True,
-            "embedding_options": {
-                "format": "plain",
-                "include_text": True,
+            "options": {
+                "segmentation_level": "document",
+                "manifest_mode": "micro",
+                "embedding_strategy": "single_point",
+                "disable_c2pa": True,
+                "embedding_options": {
+                    "format": "plain",
+                    "include_text": True,
+                },
             },
         },
         timeout=30,
@@ -117,7 +118,7 @@ def main():
 
     print(f"Signing document: {document_id}")
     print(f"Text length: {len(text)} chars")
-    print(f"Configuration: lightweight_uuid + single_point + no C2PA\n")
+    print(f"Configuration: micro + single_point + no C2PA\n")
 
     try:
         result = sign_document(args.base_url, args.api_key, text, document_id)

@@ -69,8 +69,8 @@ npm test
 
 ## Recommended default for email
 
-- Start with `micro_ecc_c2pa` for compact payload + RS recovery in moderate corruption paths.
-- Add fallback routing to `zw_embedding` for environments known to strip supplementary variation selectors.
+- Start with `micro` (ecc=true, embed_c2pa=true) for compact payload + RS recovery in moderate corruption paths.
+- Use `legacy_safe=true` flag for environments known to strip supplementary variation selectors (ZWNJ/ZWJ base-6 encoding).
 - Capture processor-specific telemetry before hard-coding one universal default.
 
 ## Positioning Notes (for product/marketing consistency)

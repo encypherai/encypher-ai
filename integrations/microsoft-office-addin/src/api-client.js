@@ -44,7 +44,7 @@
       document_title: title || undefined,
       options: {
         segmentation_level: 'sentence',
-        manifest_mode: 'micro_ecc_c2pa',
+        manifest_mode: 'micro',
         document_type: 'article',
         return_embedding_plan: true,
       },

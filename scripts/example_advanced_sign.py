@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Example script demonstrating the Enterprise API advanced signing endpoint.
+Example script demonstrating the Enterprise API signing endpoint.
 
-This script shows how to use the /api/v1/sign/advanced endpoint with:
-- Lightweight UUID manifest mode (minimal metadata footprint)
-- C2PA disabled (basic metadata only, no C2PA manifest)
+This script shows how to use the /api/v1/sign endpoint with:
+- micro manifest mode (compact invisible embedding, ecc + c2pa by default)
+- full manifest mode (standard C2PA)
 - All configurable options exposed as CLI arguments
 
 Usage:
-    # Basic usage with defaults (lightweight_uuid mode, C2PA disabled)
+    # Basic usage with defaults (micro mode)
     python scripts/example_advanced_sign.py --api-key YOUR_API_KEY
 
     # With custom text
@@ -17,22 +17,21 @@ Usage:
     # Full customization
     python scripts/example_advanced_sign.py \
         --api-key YOUR_API_KEY \
-        --base-url https://api.encypher.ai \
-        --manifest-mode lightweight_uuid \
+        --base-url https://api.encypherai.com \
+        --manifest-mode micro \
         --segmentation-level sentence \
         --embedding-strategy distributed \
         --distribution-target whitespace \
-        --disable-c2pa \
         --add-dual-binding
 
 Requirements:
     pip install requests
 
 Tier Requirements:
-    - lightweight_uuid / minimal_uuid: Professional tier or higher
-    - hybrid manifest mode: Enterprise tier
+    - micro / full: Free tier and higher
     - distributed_redundant strategy: Enterprise tier
     - add_dual_binding: Enterprise tier
+    - disable_c2pa: Enterprise tier
 """
 
 import argparse
@@ -55,15 +54,15 @@ proof generation for any subset of the content.
 This technology helps publishers protect their content and establish provenance."""
 
 
-def create_advanced_sign_request(
+def create_sign_request(
     document_id: str,
     text: str,
     segmentation_level: str = "sentence",
     segmentation_levels: Optional[list] = None,
-    manifest_mode: str = "lightweight_uuid",
+    manifest_mode: str = "micro",
     embedding_strategy: str = "single_point",
     distribution_target: Optional[str] = None,
-    disable_c2pa: bool = True,
+    disable_c2pa: bool = False,
     add_dual_binding: bool = False,
     action: str = "c2pa.created",
     previous_instance_id: Optional[str] = None,
@@ -72,68 +71,74 @@ def create_advanced_sign_request(
     index_for_attribution: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """
-    Create request payload for the advanced signing endpoint.
+    Create request payload for the signing endpoint.
 
     Args:
         document_id: Unique identifier for the document
         text: Full document text to encode
         segmentation_level: Level of text segmentation (document, word, sentence, paragraph, section)
         segmentation_levels: Optional list of Merkle segmentation levels to build
-        manifest_mode: Manifest detail level (full, lightweight_uuid, minimal_uuid, hybrid)
+        manifest_mode: Manifest mode - 'full' (standard C2PA) or 'micro' (compact invisible)
         embedding_strategy: Embedding placement strategy (single_point, distributed, distributed_redundant)
         distribution_target: Target chars for distributed embedding (whitespace, punctuation, all_chars)
-        disable_c2pa: If True, only basic metadata is embedded (no C2PA manifest)
+        disable_c2pa: If True, only basic metadata is embedded (Enterprise tier)
         add_dual_binding: Enable additional integrity binding (Enterprise tier)
         action: C2PA action type (c2pa.created or c2pa.edited)
         previous_instance_id: Previous manifest instance_id (required if action=c2pa.edited)
         metadata: Optional document metadata (title, author, etc.)
         digital_source_type: IPTC digital source type URI
-        index_for_attribution: Whether to enforce Merkle indexing quotas
+        index_for_attribution: Whether to index segments for attribution queries
 
     Returns:
         Request payload dictionary
     """
-    request = {
-        "document_id": document_id,
-        "text": text,
+    options: Dict[str, Any] = {
         "segmentation_level": segmentation_level,
         "manifest_mode": manifest_mode,
         "embedding_strategy": embedding_strategy,
-        "disable_c2pa": disable_c2pa,
-        "add_dual_binding": add_dual_binding,
         "action": action,
         "embedding_options": {
             "format": "plain",
-            "method": "data-attribute",
+            "method": "invisible",
             "include_text": True,
         },
     }
 
-    # Add optional fields if provided
+    if disable_c2pa:
+        options["disable_c2pa"] = True
+    if add_dual_binding:
+        options["add_dual_binding"] = True
     if segmentation_levels:
-        request["segmentation_levels"] = segmentation_levels
+        options["segmentation_levels"] = segmentation_levels
     if distribution_target:
-        request["distribution_target"] = distribution_target
+        options["distribution_target"] = distribution_target
     if previous_instance_id:
-        request["previous_instance_id"] = previous_instance_id
+        options["previous_instance_id"] = previous_instance_id
+    if digital_source_type:
+        options["digital_source_type"] = digital_source_type
+    if index_for_attribution is not None:
+        options["index_for_attribution"] = index_for_attribution
+
+    request: Dict[str, Any] = {
+        "document_id": document_id,
+        "text": text,
+        "options": options,
+    }
+
     if metadata:
         request["metadata"] = metadata
-    if digital_source_type:
-        request["digital_source_type"] = digital_source_type
-    if index_for_attribution is not None:
-        request["index_for_attribution"] = index_for_attribution
 
     return request
 
 
-def call_advanced_sign(
+def call_sign(
     base_url: str,
     api_key: str,
     request_payload: Dict[str, Any],
     timeout: int = 30,
 ) -> Dict[str, Any]:
     """
-    Call the advanced signing endpoint.
+    Call the signing endpoint.
 
     Args:
         base_url: API base URL
@@ -144,7 +149,7 @@ def call_advanced_sign(
     Returns:
         API response as dictionary
     """
-    url = f"{base_url}/api/v1/sign/advanced"
+    url = f"{base_url}/api/v1/sign"
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -229,19 +234,19 @@ def print_response_summary(response: Dict[str, Any]) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Example script for Enterprise API advanced signing endpoint",
+        description="Example script for Enterprise API signing endpoint",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Basic usage with lightweight UUID and C2PA disabled
+  # Basic usage with micro mode (compact invisible embedding)
   python scripts/example_advanced_sign.py --api-key YOUR_KEY
 
   # Use full C2PA manifest
-  python scripts/example_advanced_sign.py --api-key YOUR_KEY --manifest-mode full --enable-c2pa
+  python scripts/example_advanced_sign.py --api-key YOUR_KEY --manifest-mode full
 
-  # Enterprise tier: hybrid mode with distributed redundant embedding
+  # Enterprise tier: distributed redundant embedding with dual binding
   python scripts/example_advanced_sign.py --api-key YOUR_KEY \\
-      --manifest-mode hybrid \\
+      --manifest-mode micro \\
       --embedding-strategy distributed_redundant \\
       --distribution-target all_chars \\
       --add-dual-binding
@@ -299,13 +304,13 @@ Examples:
         help="Multiple segmentation levels for Merkle indexing",
     )
 
-    # Manifest mode (tier-gated)
+    # Manifest mode
     parser.add_argument(
         "--manifest-mode",
-        choices=["full", "lightweight_uuid", "minimal_uuid", "hybrid"],
-        default="lightweight_uuid",
-        help="Manifest detail level (default: lightweight_uuid). "
-        "lightweight_uuid/minimal_uuid require Professional+, hybrid requires Enterprise",
+        choices=["full", "micro"],
+        default="micro",
+        help="Manifest mode: 'micro' = compact invisible embedding (default), "
+        "'full' = standard C2PA manifest",
     )
 
     # Embedding strategy (tier-gated)
@@ -428,7 +433,7 @@ Examples:
         index_for_attribution = False
 
     # Create request payload
-    request_payload = create_advanced_sign_request(
+    request_payload = create_sign_request(
         document_id=document_id,
         text=text,
         segmentation_level=args.segmentation_level,
@@ -447,7 +452,7 @@ Examples:
 
     if not args.quiet:
         print("=" * 60)
-        print("ENTERPRISE API - ADVANCED SIGN")
+        print("ENTERPRISE API - SIGN")
         print("=" * 60)
         print(f"\nEndpoint: {args.base_url}/api/v1/sign/advanced")
         print(f"Document ID: {document_id}")
@@ -465,7 +470,7 @@ Examples:
         if not args.quiet:
             print("\nSending request...")
 
-        response = call_advanced_sign(
+        response = call_sign(
             base_url=args.base_url,
             api_key=args.api_key,
             request_payload=request_payload,
