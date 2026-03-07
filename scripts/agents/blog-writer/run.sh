@@ -482,9 +482,15 @@ EOF
 
 log "PR: $PR_URL"
 
-# Signal the workflow notify step when human review is required
-if [ "$APPROVED" = false ] && [ -n "${GITHUB_OUTPUT:-}" ]; then
-  echo "draft_pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
+if [ "$APPROVED" = true ]; then
+  # Auto-merge once CI checks pass — no human touchpoint needed
+  gh pr merge "$PR_URL" --squash --auto
+  log "Auto-merge enabled: will squash-merge when checks pass."
+else
+  # Signal the workflow notify step to email the reviewer
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then
+    echo "draft_pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
+  fi
 fi
 
 log "Done."
