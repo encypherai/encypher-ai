@@ -221,3 +221,8 @@ apps/dashboard/middleware.ts
 # Blog writer agent temp files
 .blog-research-temp.md
 generate-image-temp.mjs
+blog-header-temp.html
+
+# Dashboard build/test artifacts
+apps/dashboard/storybook-static/
+apps/dashboard/test-results/

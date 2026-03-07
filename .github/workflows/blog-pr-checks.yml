@@ -1,0 +1,71 @@
+name: Blog PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/marketing-site/src/content/blog/**'
+
+jobs:
+  validate-post:
+    name: Validate blog post
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find new blog post
+        id: find
+        run: |
+          git fetch origin main --quiet
+          POST=$(git diff --diff-filter=A --name-only origin/main...HEAD \
+            -- 'apps/marketing-site/src/content/blog/' | head -1)
+          echo "post=$POST" >> "$GITHUB_OUTPUT"
+          if [ -z "$POST" ]; then
+            echo "No new blog post found (edit to existing post — skipping validation)."
+          else
+            echo "New post: $POST"
+          fi
+
+      - name: Validate post
+        if: steps.find.outputs.post != ''
+        run: bash scripts/agents/blog-writer/validate-post.sh "${{ steps.find.outputs.post }}"
+
+  squash-reminder:
+    name: Squash merge reminder
+    runs-on: ubuntu-latest
+    # Only needs to run on blog/auto-* branches (the automated pipeline)
+    if: startsWith(github.head_ref, 'blog/auto-')
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = '<!-- blog-squash-reminder -->';
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            // Only post once — skip if the reminder is already there
+            if (comments.some(c => c.body.includes(marker))) return;
+
+            const title = context.payload.pull_request.title;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: [
+                marker,
+                '**Merge this PR with Squash** to keep `main` history clean.',
+                '',
+                'The PR title is pre-set as the squash commit subject:',
+                '```',
+                title,
+                '```',
+                'The excerpt in the PR description is the suggested commit body.',
+              ].join('\n'),
+            });
