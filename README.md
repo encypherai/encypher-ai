@@ -8,13 +8,13 @@
 [![C2PA 2.2](https://img.shields.io/badge/C2PA-2.2-blue)](https://c2pa.org/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 
-[Overview](#-overview) • [Repository Structure](#-repository-structure) • [Getting Started](#-getting-started) • [Documentation](#-documentation)
+[Overview](#overview) | [Repository Structure](#repository-structure) | [Getting Started](#getting-started) | [Documentation](#documentation)
 
 </div>
 
 ---
 
-## 🎯 Overview
+## Overview
 
 Encypher is dedicated to establishing trust and verifiable provenance for AI-generated content. This repository houses the **proprietary source code** for Encypher's commercial software offerings, built upon our open-source `encypher-ai` core library.
 
@@ -33,18 +33,18 @@ All commercial tools in this repository leverage the open-source core as a depen
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 This monorepo is organized by product tier and functionality:
 
-### 🔧 Command-Line Tools
+### Command-Line Tools
 
 | Directory | Tool | Tier | Description |
 |-----------|------|------|-------------|
 | [`audit_log_cli/`](./audit_log_cli/) | **Audit Log & Report Generator** | Free | Scan text assets, validate metadata, generate compliance reports (CSV) |
 | [`policy_validator_cli/`](./policy_validator_cli/) | **Policy Validation Tool** | Free | Define and enforce custom metadata policies with JSON schemas |
 
-### 🌐 Web Applications
+### Web Applications
 
 | Directory | Application | Domain | Description |
 |-----------|-------------|--------|-------------|
@@ -52,30 +52,30 @@ This monorepo is organized by product tier and functionality:
 | [`apps/dashboard/`](./apps/dashboard/) | **User Dashboard** | `dashboard.encypherai.com` | API key management, usage tracking, analytics (Next.js) |
 | [`dashboard_app/`](./dashboard_app/) | **Compliance Dashboard** | Internal/Enterprise | Full-stack compliance dashboard with directory signing (FastAPI + Next.js) |
 
-### 🚀 APIs & SDKs (Enterprise Tier)
+### APIs & SDKs (Enterprise Tier)
 
 | Directory | Product | License Tier | Description |
 |-----------|---------|--------------|-------------|
 | [`enterprise_api/`](./enterprise_api/) | **Enterprise API** | Enterprise | Production C2PA API with Merkle trees, source attribution, plagiarism detection. [API Docs](https://api.encypherai.com/docs) |
 | [`sdk/`](./sdk/) | **Enterprise SDKs** | Enterprise | Auto-generated SDKs (Python/TypeScript/Go/Rust) always in sync with API. MIT licensed. |
-| [`archive/enterprise_sdk_deprecated/`](./archive/enterprise_sdk_deprecated/) | ~~Enterprise SDK~~ | ⚠️ Deprecated | Archived hand-crafted SDK. See [DEPRECATED.md](./archive/enterprise_sdk_deprecated/DEPRECATED.md) |
+| [`archive/enterprise_sdk_deprecated/`](./archive/enterprise_sdk_deprecated/) | ~~Enterprise SDK~~ | Deprecated | Archived hand-crafted SDK. See [DEPRECATED.md](./archive/enterprise_sdk_deprecated/DEPRECATED.md) |
 
-### 🔧 Microservices Architecture
+### Microservices Architecture
 
-**Migration Status:** ✅ 100% Complete (8/8 services) | [View Progress](./docs/architecture/MICROSERVICES_PROGRESS.md)
+**Migration Status:** 100% Complete (8/8 services) | [View Progress](./docs/architecture/MICROSERVICES_PROGRESS.md)
 
 All microservices are production-ready with full FastAPI implementations, Docker support, and comprehensive documentation.
 
 | Directory | Service | Port | Status | Description |
 |-----------|---------|------|--------|-------------|
-| [`services/auth-service/`](./services/auth-service/) | **Auth Service** | 8001 | ✅ Complete | JWT authentication, OAuth (Google/GitHub), session management, token refresh |
-| [`services/user-service/`](./services/user-service/) | **User Service** | 8002 | ✅ Complete | User profiles, team management, preferences, organization management |
-| [`services/key-service/`](./services/key-service/) | **Key Service** | 8003 | ✅ Complete | API key generation, rotation, permissions, usage tracking, verification |
-| [`services/encoding-service/`](./services/encoding-service/) | **Encoding Service** | 8004 | ✅ Complete | Document signing, metadata embedding, C2PA manifests, cryptographic operations |
-| [`services/verification-service/`](./services/verification-service/) | **Verification Service** | 8005 | ✅ Complete | Signature verification, document validation, tampering detection, authenticity checks |
-| [`services/analytics-service/`](./services/analytics-service/) | **Analytics Service** | 8006 | ✅ Complete | Usage statistics, performance metrics, activity tracking, reporting |
-| [`services/billing-service/`](./services/billing-service/) | **Billing Service** | 8007 | ✅ Complete | Subscription management, payment processing, invoicing, billing statistics |
-| [`services/notification-service/`](./services/notification-service/) | **Notification Service** | 8008 | ✅ Complete | Email notifications, SMS alerts, webhook delivery, notification history |
+| [`services/auth-service/`](./services/auth-service/) | **Auth Service** | 8001 | Complete | JWT authentication, OAuth (Google/GitHub), session management, token refresh |
+| [`services/user-service/`](./services/user-service/) | **User Service** | 8002 | Complete | User profiles, team management, preferences, organization management |
+| [`services/key-service/`](./services/key-service/) | **Key Service** | 8003 | Complete | API key generation, rotation, permissions, usage tracking, verification |
+| [`services/encoding-service/`](./services/encoding-service/) | **Encoding Service** | 8004 | Complete | Document signing, metadata embedding, C2PA manifests, cryptographic operations |
+| [`services/verification-service/`](./services/verification-service/) | **Verification Service** | 8005 | Complete | Signature verification, document validation, tampering detection, authenticity checks |
+| [`services/analytics-service/`](./services/analytics-service/) | **Analytics Service** | 8006 | Complete | Usage statistics, performance metrics, activity tracking, reporting |
+| [`services/billing-service/`](./services/billing-service/) | **Billing Service** | 8007 | Complete | Subscription management, payment processing, invoicing, billing statistics |
+| [`services/notification-service/`](./services/notification-service/) | **Notification Service** | 8008 | Complete | Email notifications, SMS alerts, webhook delivery, notification history |
 
 **Quick Start:**
 ```bash
@@ -106,41 +106,41 @@ cd services/user-service && uv run python -m app.main
 
 ---
 
-## 🏛️ Architecture Decision: Microservices vs Enterprise API
+## Architecture Decision: Microservices vs Enterprise API
 
 ### Why Two Separate Systems?
 
 We maintain **two distinct architectures** for different use cases and customer tiers:
 
-#### 🔧 **Microservices** (Core Platform)
+#### **Microservices** (Core Platform)
 **Purpose:** Foundation services for all tiers (Free and Enterprise)
 
 **Features Included:**
-- ✅ **Basic Document Signing** - Ed25519 signatures with C2PA manifests
-- ✅ **Standard Verification** - Signature validation and tampering detection
-- ✅ **Authentication & Authorization** - JWT, OAuth, session management
-- ✅ **API Key Management** - Generation, rotation, permissions
-- ✅ **User & Team Management** - Profiles, organizations, preferences
-- ✅ **Usage Analytics** - Metrics, statistics, reporting
-- ✅ **Billing & Subscriptions** - Payment processing, invoicing
-- ✅ **Notifications** - Email, SMS, webhooks
+- **Basic Document Signing** - Ed25519 signatures with C2PA manifests
+- **Standard Verification** - Signature validation and tampering detection
+- **Authentication & Authorization** - JWT, OAuth, session management
+- **API Key Management** - Generation, rotation, permissions
+- **User & Team Management** - Profiles, organizations, preferences
+- **Usage Analytics** - Metrics, statistics, reporting
+- **Billing & Subscriptions** - Payment processing, invoicing
+- **Notifications** - Email, SMS, webhooks
 
 **Best For:**
 - Standard content authentication
 - High-volume basic signing operations
 - Multi-tenant SaaS platform
 
-#### 🚀 **Enterprise API** (Advanced Features)
+#### **Enterprise API** (Advanced Features)
 **Purpose:** Premium enterprise-only capabilities
 
 **Features Included:**
-- 🔒 **Merkle Tree Encoding** - Hierarchical content authentication
-- 🔒 **Minimal Signed Embeddings** - Invisible Unicode-based content authentication with public verification
-- 🔒 **Source Attribution** - Track content origins and modifications
-- 🔒 **Plagiarism Detection** - Advanced content similarity analysis
-- 🔒 **Batch Operations** - High-volume processing with queuing
-- 🔒 **Advanced Analytics** - Deep insights and forensic analysis
-- 🔒 **Custom Integrations** - Framework wrappers and CI/CD tools
+- **Merkle Tree Encoding** - Hierarchical content authentication
+- **Minimal Signed Embeddings** - Invisible Unicode-based content authentication with public verification
+- **Source Attribution** - Track content origins and modifications
+- **Plagiarism Detection** - Advanced content similarity analysis
+- **Batch Operations** - High-volume processing with queuing
+- **Advanced Analytics** - Deep insights and forensic analysis
+- **Custom Integrations** - Framework wrappers and CI/CD tools
 
 **Best For:**
 - Enterprise customers with complex requirements
@@ -148,7 +148,7 @@ We maintain **two distinct architectures** for different use cases and customer 
 - Legal and compliance use cases
 - High-security applications
 
-### 🎯 Architectural Benefits
+### Architectural Benefits
 
 | Benefit | Description |
 |---------|-------------|
@@ -158,25 +158,18 @@ We maintain **two distinct architectures** for different use cases and customer 
 | **Simplicity** | Core services stay lean and fast |
 | **Flexibility** | Deploy services independently based on needs |
 
-### 🔄 Integration Pattern
+### Integration Pattern
 
 ```
-┌─────────────────┐
-│  Client Apps    │
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    │         │
-┌───▼──┐  ┌──▼────────┐
-│ Core │  │ Enterprise│
-│ μSvcs│  │    API    │
-└──────┘  └───────────┘
-    │          │
-    └────┬─────┘
-         │
-    ┌────▼────┐
-    │ Storage │
-    └─────────┘
+Client Apps
+    |
+    +-------------------+
+    |                   |
+Core Services     Enterprise API
+    |                   |
+    +---------+---------+
+              |
+           Storage
 ```
 
 **Customers choose based on their tier:**
@@ -185,20 +178,20 @@ We maintain **two distinct architectures** for different use cases and customer 
 
 ---
 
-### 🔌 Integrations
+### Integrations
 
 | Directory | Integration | Description |
 |-----------|-------------|-------------|
 | [`integrations/wordpress-provenance-plugin/`](./integrations/wordpress-provenance-plugin/) | **WordPress Plugin** | Gutenberg & Classic editor integration with Enterprise API |
 
-### 📦 Shared Libraries & Packages
+### Shared Libraries & Packages
 
 | Directory | Package | Description |
 |-----------|---------|-------------|
 | [`shared_commercial_libs/`](./shared_commercial_libs/) | **Commercial Shared Library** | Internal Python library with high-level APIs for all commercial tools |
 | [`packages/design-system/`](./packages/design-system/) | **Design System** | Unified React/TypeScript component library for all web properties |
 
-### 📚 Supporting Directories
+### Supporting Directories
 
 | Directory | Purpose |
 |-----------|---------|
@@ -209,42 +202,42 @@ We maintain **two distinct architectures** for different use cases and customer 
 
 ---
 
-## 🏗️ Product Tiers & Licensing
+## Product Tiers & Licensing
 
 > **SSOT:** Pricing is defined in [`packages/pricing-config/`](./packages/pricing-config/) and the feature matrix in [`FEATURE_MATRIX.md`](./FEATURE_MATRIX.md). All other docs should reference these, never define their own tier lists.
 
 Encypher has two core tiers plus optional add-ons and bundles.
 
 ### Free Tier ($0/month)
-**Target:** Individual bloggers, small-to-mid publishers, indie media, researchers, WordPress owners
+**Target:** Individual bloggers, small-to-mid publishers, indie media, WordPress owners
 
-- ✅ C2PA 2.3-compliant document signing (1,000 docs/month, $0.02/doc overage)
-- ✅ Sentence-level Merkle tree authentication
-- ✅ Invisible Unicode embeddings (survive copy-paste)
-- ✅ Public verification pages and API (unlimited)
-- ✅ WordPress plugin, CLI tools, browser extension, Ghost integration
-- ✅ REST API with Python SDK
-- ✅ Dashboard: analytics, API keys, playground, integrations
-- ✅ Auto-enrolled in Encypher Coalition (60/40 rev share)
+- C2PA 2.3-compliant document signing (1,000 docs/month, $0.02/doc overage)
+- Sentence-level Merkle tree authentication
+- Invisible Unicode embeddings (survive copy-paste)
+- Public verification pages and API (unlimited)
+- WordPress plugin, CLI tools, browser extension, Ghost integration
+- REST API with Python SDK
+- Dashboard: analytics, API keys, playground, integrations
+- Auto-enrolled in Encypher Coalition (60/40 rev share)
 
 ### Enterprise Tier (Custom pricing)
 **Target:** Large publishers, media companies, enterprise content teams
 
-- ✅ Everything in Free, unlimited
-- ✅ Streaming LLM signing (WebSocket/SSE)
-- ✅ Custom C2PA assertions and schema registry
-- ✅ Batch operations, document revocation, robust fingerprinting
-- ✅ Multi-source attribution, plagiarism detection
-- ✅ Team management with RBAC, audit logs, webhooks
-- ✅ SSO (SAML, OAuth), organization switcher
-- ✅ All add-ons included (BYOK, white-label, custom signing identity)
-- ✅ Dedicated SLA (99.9% uptime), priority support, named account manager
+- Everything in Free, unlimited
+- Streaming LLM signing (WebSocket/SSE)
+- Custom C2PA assertions and schema registry
+- Batch operations, document revocation, robust fingerprinting
+- Multi-source attribution, plagiarism detection
+- Team management with RBAC, audit logs, webhooks
+- SSO (SAML, OAuth), organization switcher
+- All add-ons included (BYOK, white-label, custom signing identity)
+- Dedicated SLA (99.9% uptime), priority support, named account manager
 
 See [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) for the complete feature-by-feature breakdown, add-ons, bundles, and dashboard gating details.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -354,7 +347,7 @@ pnpm dev
 
 ---
 
-## 📖 Documentation
+## Documentation
 
 ### Single Sources of Truth (SSOT)
 
@@ -363,7 +356,7 @@ pnpm dev
 | **Pricing tiers & limits** | [`packages/pricing-config/src/`](./packages/pricing-config/src/) | Code-level definitions of Free, Enterprise, Add-ons, Bundles |
 | **Feature matrix** | [`FEATURE_MATRIX.md`](./FEATURE_MATRIX.md) | Human-readable feature-by-feature breakdown by tier |
 | **Pricing strategy & GTM** | [`docs/pricing/PRICING_STRATEGY.md`](./docs/pricing/PRICING_STRATEGY.md) | Coalition economics, revenue projections, competitive positioning |
-| **Dashboard feature gating** | `apps/dashboard/src/` — `userTier` from session JWT | `enterpriseOnly` flag in nav, per-page tier checks |
+| **Dashboard feature gating** | `apps/dashboard/src/` - `userTier` from session JWT | `enterpriseOnly` flag in nav, per-page tier checks |
 | **API error codes** | [`docs/api/ERROR_CODES.md`](./docs/api/ERROR_CODES.md) | Canonical error codes and descriptions |
 | **Microservices architecture** | [`services/README.md`](./services/README.md) | Service ports, dependencies, architecture |
 
@@ -392,7 +385,7 @@ All other docs should **reference** these SSOTs, never duplicate or redefine tie
 
 - **[Audit Log CLI](./audit_log_cli/README.md)** - Scanning files, generating reports, trusted signers
 - **[Policy Validator CLI](./policy_validator_cli/README.md)** - Policy schemas, validation rules, examples
-- **[WordPress Plugin](./integrations/wordpress-assurance-plugin/README.md)** - Installation, configuration, Docker setup
+- **[WordPress Plugin](./integrations/wordpress-provenance-plugin/README.md)** - Installation, configuration, Docker setup
 - **[Shared Library](./shared_commercial_libs/README.md)** - High-level API, utilities, testing
 
 ### Architecture & Planning
@@ -404,7 +397,7 @@ All other docs should **reference** these SSOTs, never duplicate or redefine tie
 
 ---
 
-## 🛠️ Development Workflow
+## Development Workflow
 
 ### Package Management (Python)
 
@@ -459,7 +452,7 @@ npm run format
 
 ---
 
-## 🔒 Security & Compliance
+## Security & Compliance
 
 - **C2PA 2.2 Compliant**: Industry-standard content authenticity
 - **Cryptographic Signatures**: Ed25519 with tamper detection
@@ -470,7 +463,7 @@ npm run format
 
 ---
 
-## 🤝 Contributing (Internal)
+## Contributing (Internal)
 
 ### Development Guidelines
 
@@ -495,9 +488,9 @@ uv run black --check .
 
 ---
 
-## 📊 Repository Statistics
+## Repository Statistics
 
-### Microservices Migration Complete! 🎉
+### Microservices Migration Complete
 
 - **8 Production-Ready Microservices** - All services fully implemented
 - **50+ API Endpoints** - Comprehensive REST APIs
@@ -515,7 +508,7 @@ uv run python scripts/repo_stats.py
 
 ---
 
-## 🆘 Support
+## Support
 
 - **Internal Team**: Slack #encypher-dev
 - **Enterprise Customers**: enterprise@encypherai.com
@@ -524,7 +517,7 @@ uv run python scripts/repo_stats.py
 
 ---
 
-## 📄 License
+## License
 
 **Proprietary** - All rights reserved. See [LICENSE](./LICENSE) for details.
 
@@ -532,7 +525,7 @@ This software is confidential and proprietary to Encypher. Unauthorized copying,
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Built with:
 - [C2PA](https://c2pa.org/) - Content authenticity standards
@@ -546,8 +539,8 @@ Built with:
 
 <div align="center">
 
-**Made with ❤️ by the Encypher Team**
+**Made by the Encypher Team**
 
-[Website](https://encypherai.com) • [Dashboard](https://dashboard.encypherai.com) • [API Docs](https://docs.encypherai.com)
+[Website](https://encypherai.com) | [Dashboard](https://dashboard.encypherai.com) | [API Docs](https://docs.encypherai.com)
 
 </div>
