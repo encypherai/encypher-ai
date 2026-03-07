@@ -59,3 +59,78 @@
 `- build ChatWorkspace UI with conversation sidebar and active thread panel`
 `- wire page entrypoint and app metadata for Windsurf Chat Hub branding`
 `- validate with unit/component tests, eslint, and puppeteer desktop/mobile flows`
+
+---
+
+## Hook Integration Iteration (Real Windsurf Bridge)
+- Added server-side Windsurf hook adapter in `windsurf-chat-hub/app/lib/windsurf-hooks.ts`.
+- Added API route `windsurf-chat-hub/app/api/windsurf/search/route.ts` to execute live bridge-backed search queries.
+- Wired chat composer to call `/api/windsurf/search` and render normalized hook responses or graceful fallback errors.
+- Added and passed tests first for hook parser normalization and hook-backed UI behavior:
+  - `windsurf-chat-hub/app/lib/windsurf-hooks.test.ts`
+  - `windsurf-chat-hub/app/components/chat-workspace.test.tsx`
+- Updated `windsurf-chat-hub/README.md` with bridge prerequisites, API contract, and verification flow.
+
+## Verification (Latest)
+- ✅ `npm test` (10 passing)
+- ✅ `npm run lint`
+- ✅ Puppeteer desktop/mobile verification on live dev server
+- ✅ Manual simulated typing/submit event verified hook-driven assistant response
+
+## Comprehensive Commit Message Suggestion (Latest)
+`feat(chat-hub): integrate live windsurf bridge hook search into chat UI with tested server route`
+
+`- add server hook adapter for bridge execution and connect-envelope tolerant parsing`
+`- add POST /api/windsurf/search route with validation and structured error handling`
+`- wire chat composer to real hook endpoint and show graceful unavailable fallback`
+`- add regression tests for hook parser, empty-output normalization, and UI hook flow`
+`- document prerequisites and local verification steps for Windsurf bridge integration`
+
+---
+
+## UX Expansion: Model Selection + Credit Costing
+- Added model catalog SSOT (`windsurf-chat-hub/app/lib/models.ts`) with provider labels and per-1k input/output credit rates.
+- Extended chat state model to persist `modelId` and cumulative `creditsUsed` per thread.
+- Added store helpers for model switching and credit accumulation:
+  - `setChatModel`
+  - `addCreditsToChat`
+- Upgraded chat workspace UX:
+  - New-chat model picker in sidebar.
+  - Active-chat model selector in header.
+  - Live estimated send cost for current draft and selected model.
+  - Running credits-used display per chat.
+- Hook send payload now includes selected `modelId` for future backend routing.
+
+## Verification (Model + Cost UX)
+- ✅ `npm test` (11 passing)
+- ✅ `npm run lint`
+- ✅ Puppeteer desktop verification (new chat with GPT-4.1 Mini, send message, credits increment)
+- ✅ Puppeteer mobile verification (layout and controls visible/usable)
+
+## Comprehensive Commit Message Suggestion (Model + Cost UX)
+`feat(chat-hub): add model-aware chat creation and per-message credit cost UX`
+
+`- add model catalog and credit estimation helpers as SSOT`
+`- extend chat store with modelId + creditsUsed and supporting update functions`
+`- add new-chat model picker and active-chat model selector in workspace UI`
+`- show live estimated send cost and running credits used in chat header/composer`
+`- send selected modelId with windsurf search requests for backend hook routing`
+`- add and pass tests for model assignment, credit accumulation, and UI expectations`
+
+---
+
+## Visual Refresh + Live Session Trial
+- Switched app defaults to Tokyo-style dark mode palette in `windsurf-chat-hub/app/globals.css`.
+- Restyled chat workspace surface/components for dark-first UX while preserving functionality in `windsurf-chat-hub/app/components/chat-workspace.tsx`.
+- Verified model/cost controls remain visible and usable in dark theme on desktop/mobile.
+- Created a new chat session (`Session 2`) and submitted a codebase analysis prompt through the live hook flow.
+- Observed assistant response from hook pipeline: `Windsurf hook completed but returned no structured results.`
+
+## Comprehensive Commit Message Suggestion (Dark Tokyo + Session Trial)
+`feat(chat-hub): set tokyo-style dark mode default and verify live new-session analysis flow`
+
+`- set dark-first global theme tokens and typography`
+`- redesign chat workspace UI to tokyo-inspired dark visual language`
+`- keep model selection and credit-cost UX intact in new palette`
+`- validate with tests/lint and puppeteer desktop/mobile screenshots`
+`- run live new-session analysis prompt and capture current hook response behavior`

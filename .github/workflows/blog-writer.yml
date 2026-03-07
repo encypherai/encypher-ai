@@ -1,8 +1,8 @@
 name: Automated Blog Writer
 
-# Schedule disabled - runs locally via cron on the dev machine.
-# Manual trigger still available for one-off posts or emergency use.
 on:
+  schedule:
+    - cron: '0 14 * * 2'  # Every Tuesday 9:00 AM EST (14:00 UTC)
   workflow_dispatch:
     inputs:
       topic_hint:
