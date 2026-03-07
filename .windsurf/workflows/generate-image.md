@@ -7,6 +7,8 @@ description: Generate brand-compliant images using Gemini 3 Pro Image API. Suppo
 - Node.js 20.6+ (`node --version` — currently v22 ✓)
 - Get a key at https://aistudio.google.com/apikey
 
+> **RULE: Generate the header image BEFORE committing blog post content.** The blog post frontmatter `image` field must point to an existing file at commit time. Never commit a blog post whose image file does not exist.
+
 ---
 
 ## How to invoke this skill
@@ -133,7 +135,7 @@ const body = JSON.stringify({
 
 const options = {
   hostname: 'generativelanguage.googleapis.com',
-  path: '/v1beta/models/gemini-3-pro-image-preview:generateContent',
+  path: '/v1beta/models/gemini-3.1-flash-image-preview:generateContent',
   method: 'POST',
   headers: {
     'x-goog-api-key': apiKey,
@@ -289,7 +291,7 @@ Keep scenes **simple and readable**: 3-5 elements max, no overlapping labels, ge
 ---
 
 ## Notes
-- **Model:** `gemini-3-pro-image-preview` — 1K/2K/4K, `image_size` must use uppercase K
+- **Model:** `gemini-3.1-flash-image-preview` — 1K/2K/4K, `image_size` must use uppercase K
 - **Text rendering:** The model renders title/subtitle text directly. Instructions specify font, color, size, and position explicitly. Always verify text legibility in the output.
 - **No logos:** Explicitly forbidden in system prompt and layout instructions. Never ask the model to render Encypher, C2PA, or any other logo.
 - **Encypher mark:** The brand mark is a circular badge with organic/wavy outer border + checkmark. Available as clean SVGs at `apps/marketing-site/public/encypher-mark.svg` (navy), `encypher-mark-white.svg`, `encypher-mark-teal.svg`, `encypher-mark-azure.svg`. Use these SVGs in UI/web contexts. For AI-generated images, describe the shape as instructed in the system prompt above.

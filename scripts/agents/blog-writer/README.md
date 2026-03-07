@@ -4,11 +4,15 @@ A Claude agent that runs weekly to research and draft a new blog post, then open
 
 ## How It Works
 
-1. Agent checks `TOPICS.md` for the highest-priority uncovered topic
-2. Uses WebSearch to find current statistics, sources, and news hooks
-3. Writes a 1,400-2,200 word post matching the blog's format and voice
-4. Commits the markdown file and opens a **draft PR** for review
-5. A human reviews and merges when satisfied - the post goes live on the next deploy
+> **The full publication sequence is in `.windsurf/workflows/blog-publish.md` — follow it for every post without exception.**
+
+1. **Research** — agent gathers sources, stats, and news hooks
+2. **First Draft** — agent writes post, opens draft PR
+3. **Review & Approval** — human reviews and approves (no publishing without this)
+4. **Generate Header Image** — after approval, before any commit
+5. **Sign Content** — sign markdown with live Encypher API key
+6. **Commit & Push** — image + signed post committed together
+7. **Merge PR** — deploy
 
 ## Timing
 
@@ -65,15 +69,16 @@ tail -f /var/log/encypher-blog-writer.log
 ## Workflow
 
 ```
-Cron fires (Tuesday 9am EST)
-  -> run.sh pulls main, creates branch blog/auto-YYYY-MM-DD
-  -> Launches claude agent with AGENT_PROMPT.md
-  -> Agent researches topic, writes post, commits to branch
-  -> run.sh pushes branch and opens draft PR
-  -> Human reviewer gets notified
-  -> Reviewer merges PR when satisfied
-  -> Next deploy publishes the post
+1. Research        cron fires -> agent researches topic, commits research output
+2. First Draft     agent writes post, commits to blog/auto-YYYY-MM-DD, opens draft PR
+3. Review/Approval human reviews draft PR — NO publishing without explicit approval
+4. Header Image    generate image AFTER approval — file must exist before commit
+5. Sign Content    sign markdown with live Encypher API (ENYCPHER_API_KEY in .env.skills)
+6. Commit & Push   image + signed post committed together, branch pushed
+7. Merge PR        mark ready, merge, deploy
 ```
+
+See `.windsurf/workflows/blog-publish.md` for the full checklist and commands.
 
 ## Files
 
