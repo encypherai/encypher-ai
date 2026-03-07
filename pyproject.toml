@@ -17,7 +17,7 @@ dependencies = [
     "wikiextractor>=3.0.6",
     "pywin32>=310 ; sys_platform == 'win32'",
     "comtypes>=1.4.11 ; sys_platform == 'win32'",
-    "pypdf>=6.6.0",
+    "pypdf>=6.7.5",
     "reedsolo>=1.7.0",
 ]
 
