@@ -7,7 +7,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
 import httpx
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Literal, Optional
 
 from ...db.session import get_db
 from ...models.schemas import (
@@ -68,6 +68,11 @@ class SuperAdminPromoteRequest(BaseModel):
     """Request to promote a user to super admin"""
 
     email: EmailStr
+
+
+class NewsletterSubscriberStatusUpdateRequest(BaseModel):
+    status: Literal["active", "unsubscribed", "invalid"]
+    reason: str | None = None
 
 
 # TEAM_006: Super admin check helper
@@ -712,13 +717,13 @@ async def refresh_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    new_access_token, user = result
+    new_access_token, new_refresh_token, user = result
 
     return {
         "success": True,
         "data": {
             "access_token": new_access_token,
-            "refresh_token": request.refresh_token,
+            "refresh_token": new_refresh_token,
             "token_type": "bearer",
             "user": UserResponse.model_validate(user).model_dump(),
         },
@@ -1256,6 +1261,95 @@ async def list_newsletter_subscribers(
             page_size=page_size,
             active_only=active_only,
         )
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Newsletter service unavailable",
+        ) from exc
+
+    return {
+        "success": True,
+        "data": result,
+        "error": None,
+    }
+
+
+@router.post("/admin/newsletter-subscribers/{subscriber_id}/status", response_model=None)
+async def update_newsletter_subscriber_status(
+    subscriber_id: int,
+    payload: NewsletterSubscriberStatusUpdateRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    verified = AuthService.verify_access_token(token)
+    if not verified:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    require_super_admin(db, verified["sub"])
+
+    try:
+        result = await AdminService.update_newsletter_subscriber_status(
+            subscriber_id=subscriber_id,
+            status_value=payload.status,
+            reason=payload.reason,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Newsletter service unavailable",
+        ) from exc
+
+    return {
+        "success": True,
+        "data": result,
+        "error": None,
+    }
+
+
+@router.delete("/admin/newsletter-subscribers/{subscriber_id}", response_model=None)
+async def delete_newsletter_subscriber(
+    subscriber_id: int,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    verified = AuthService.verify_access_token(token)
+    if not verified:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    require_super_admin(db, verified["sub"])
+
+    try:
+        result = await AdminService.delete_newsletter_subscriber(subscriber_id=subscriber_id)
     except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

@@ -82,7 +82,7 @@ SMTP Host: {settings.SMTP_HOST}
     if success:
         logger.info(f"Startup test email sent to {settings.ADMIN_EMAIL}")
     else:
-        logger.error(f"Failed to send startup test email to {settings.ADMIN_EMAIL}")
+        logger.warning(f"Failed to send startup test email to {settings.ADMIN_EMAIL}")
 
     return success
 

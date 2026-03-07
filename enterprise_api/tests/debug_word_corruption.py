@@ -21,14 +21,14 @@ def analyze_text(text, label):
     zwnj_count = text.count('\u200C')
     zwj_count = text.count('\u200D')
     
-    print(f"Zero-width characters:")
+    print("Zero-width characters:")
     print(f"  ZWSP (U+200B): {zwsp_count}")
     print(f"  ZWNJ (U+200C): {zwnj_count}")
     print(f"  ZWJ  (U+200D): {zwj_count}")
     print(f"  Total ZW:      {zwsp_count + zwnj_count + zwj_count}")
     
     # Show first 100 chars with code points
-    print(f"\nFirst 100 characters (with code points):")
+    print("\nFirst 100 characters (with code points):")
     for i, char in enumerate(text[:100]):
         cp = ord(char)
         if cp == 0x200B:
@@ -124,7 +124,7 @@ def main():
         print("  3. Use redundant embedding (multiple signatures)")
         print("  4. Accept that Word is not compatible")
     elif corr_zw < orig_zw:
-        print(f"\n⚠️  ISSUE: Word partially stripped ZW characters")
+        print("\n⚠️  ISSUE: Word partially stripped ZW characters")
         print(f"   Lost {orig_zw - corr_zw} out of {orig_zw} ZW chars")
         print("\nThis suggests selective stripping or encoding issues.")
     else:

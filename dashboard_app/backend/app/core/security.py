@@ -5,7 +5,7 @@ Security utilities for authentication and authorization.
 from datetime import datetime, timedelta
 from typing import Any, Optional, Union
 
-from jose import jwt
+import jwt
 from passlib.context import CryptContext
 
 from app.core.config import settings

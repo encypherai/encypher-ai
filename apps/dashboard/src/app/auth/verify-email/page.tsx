@@ -60,7 +60,7 @@ function VerifyEmailContent() {
       }
 
       // Verification successful - we have tokens for auto-login
-      const { access_token, user } = data.data;
+      const { access_token, refresh_token, user } = data.data;
       setUserEmail(user?.email || '');
       
       // Auto-login the user
@@ -72,6 +72,7 @@ function VerifyEmailContent() {
         email: user.email,
         // Pass the access token as the password - our authorize function will detect this
         password: `__TOKEN__${access_token}`,
+        refreshToken: refresh_token,
         callbackUrl: '/',
       });
 

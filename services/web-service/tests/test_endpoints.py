@@ -231,3 +231,58 @@ def test_newsletter_subscribers_internal_returns_rows(client: TestClient, monkey
     assert payload["success"] is True
     assert payload["data"]["total"] >= 1
     assert payload["data"]["subscribers"][0]["email"] == "subscriber@example.com"
+    assert payload["data"]["subscribers"][0]["status"] == "active"
+
+
+def test_newsletter_subscriber_status_update_internal(client: TestClient, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("app.api.v1.endpoints.newsletter.settings.INTERNAL_SERVICE_TOKEN", "internal-secret")
+
+    subscribe_response = client.post(
+        "/api/v1/newsletter/subscribe",
+        json={"email": "invalid@example.com", "source": "blog"},
+    )
+    assert subscribe_response.status_code == 200
+
+    rows_response = client.get(
+        "/api/v1/newsletter/subscribers",
+        headers={"X-Internal-Token": "internal-secret"},
+    )
+    subscriber_id = rows_response.json()["data"]["subscribers"][0]["id"]
+
+    response = client.post(
+        f"/api/v1/newsletter/subscribers/{subscriber_id}/status",
+        json={"status": "invalid", "reason": "Mailbox rejected by provider"},
+        headers={"X-Internal-Token": "internal-secret"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["status"] == "invalid"
+    assert payload["data"]["active"] is False
+
+
+def test_newsletter_subscriber_delete_internal(client: TestClient, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr("app.api.v1.endpoints.newsletter.settings.INTERNAL_SERVICE_TOKEN", "internal-secret")
+
+    subscribe_response = client.post(
+        "/api/v1/newsletter/subscribe",
+        json={"email": "delete-me@example.com", "source": "blog"},
+    )
+    assert subscribe_response.status_code == 200
+
+    rows_response = client.get(
+        "/api/v1/newsletter/subscribers",
+        headers={"X-Internal-Token": "internal-secret"},
+    )
+    subscriber_id = rows_response.json()["data"]["subscribers"][0]["id"]
+
+    response = client.delete(
+        f"/api/v1/newsletter/subscribers/{subscriber_id}",
+        headers={"X-Internal-Token": "internal-secret"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["deleted"] is True

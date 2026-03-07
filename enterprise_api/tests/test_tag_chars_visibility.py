@@ -262,7 +262,7 @@ def analyze_results(original, pasted, test_set, controls):
         for r in partial:
             print(f"       - {r['code']} ({r['codepoint']}) {r['name']} - {r['past']}/{r['orig']}")
 
-    print(f"\n  CONTROL CHARACTERS:")
+    print("\n  CONTROL CHARACTERS:")
     for r in ctrl_results:
         print(f"       [{r['symbol']}] {r['code']} ({r['codepoint']}) - {r['status']}")
 
@@ -273,35 +273,35 @@ def analyze_results(original, pasted, test_set, controls):
 
     if len(preserved) >= 2:
         print(f"\n  {len(preserved)} tag characters preserved!")
-        print(f"\n  Encoding options if tag chars are Word-compatible:")
+        print("\n  Encoding options if tag chars are Word-compatible:")
         print(f"    - Base-{len(preserved)}: {len(preserved)} tag chars")
         print(f"    - Combined with current base-4: base-{4 + len(preserved)} possible")
 
         if len(preserved) >= 95:
-            print(f"\n  BASE-95 ENCODING POSSIBLE!")
-            print(f"    - 95 tag chars (U+E0020 to U+E007E)")
-            print(f"    - ceil(log95(256)) = 2 chars per byte")
-            print(f"    - That's 50% fewer chars than base-4 (4 chars/byte)")
-            print(f"    - 32-byte UUID+HMAC = 64 chars (vs 128 with base-4)")
-            print(f"    BUT: Each char is 4 UTF-8 bytes vs 2-3 for current set")
-            print(f"    Net byte overhead: 64 * 4 = 256 bytes vs 128 * 3 = 384 bytes")
-            print(f"    => Tag chars would be ~33% SMALLER in bytes too!")
+            print("\n  BASE-95 ENCODING POSSIBLE!")
+            print("    - 95 tag chars (U+E0020 to U+E007E)")
+            print("    - ceil(log95(256)) = 2 chars per byte")
+            print("    - That's 50% fewer chars than base-4 (4 chars/byte)")
+            print("    - 32-byte UUID+HMAC = 64 chars (vs 128 with base-4)")
+            print("    BUT: Each char is 4 UTF-8 bytes vs 2-3 for current set")
+            print("    Net byte overhead: 64 * 4 = 256 bytes vs 128 * 3 = 384 bytes")
+            print("    => Tag chars would be ~33% SMALLER in bytes too!")
         elif len(preserved) >= 16:
-            print(f"\n  BASE-16 (HEX) ENCODING POSSIBLE!")
+            print("\n  BASE-16 (HEX) ENCODING POSSIBLE!")
             print(f"    - {len(preserved)} tag chars available, need 16 for hex")
-            print(f"    - 2 chars per byte (each char = one hex nibble)")
-            print(f"    - 32-byte UUID+HMAC = 64 chars")
-            print(f"    - 50% fewer chars than current base-4")
+            print("    - 2 chars per byte (each char = one hex nibble)")
+            print("    - 32-byte UUID+HMAC = 64 chars")
+            print("    - 50% fewer chars than current base-4")
         elif len(preserved) >= 4:
-            print(f"\n  Could replace current base-4 with tag-char base-4:")
-            print(f"    - Same density (4 chars/byte)")
-            print(f"    - But tag chars are 4 UTF-8 bytes each (vs 2-3)")
-            print(f"    - Net: more bytes per signature")
-            print(f"    => Not beneficial unless combined with current set")
+            print("\n  Could replace current base-4 with tag-char base-4:")
+            print("    - Same density (4 chars/byte)")
+            print("    - But tag chars are 4 UTF-8 bytes each (vs 2-3)")
+            print("    - Net: more bytes per signature")
+            print("    => Not beneficial unless combined with current set")
 
     else:
         print(f"\n  Only {len(preserved)} tag characters preserved.")
-        print(f"  Tag characters are NOT viable for Word-compatible encoding.")
+        print("  Tag characters are NOT viable for Word-compatible encoding.")
 
     # Comparison table
     print("\n" + "=" * 78)
@@ -356,7 +356,7 @@ def run_encoding_roundtrip_test():
                 print(f"  MISMATCH: {byte_val} encoded then decoded as {decoded}")
 
     if errors == 0:
-        print(f"  [OK] All 256 byte values roundtrip correctly with tag base-4")
+        print("  [OK] All 256 byte values roundtrip correctly with tag base-4")
     else:
         print(f"  [XX] {errors} roundtrip failures")
 
@@ -377,24 +377,24 @@ def run_encoding_roundtrip_test():
             errors_95 += 1
 
     if errors_95 == 0:
-        print(f"  [OK] All 256 byte values roundtrip correctly with tag base-95")
-        print(f"       2 chars per byte (vs 4 for base-4) = 50% fewer chars")
-        print(f"       32-byte payload = 64 tag chars = 256 UTF-8 bytes")
+        print("  [OK] All 256 byte values roundtrip correctly with tag base-95")
+        print("       2 chars per byte (vs 4 for base-4) = 50% fewer chars")
+        print("       32-byte payload = 64 tag chars = 256 UTF-8 bytes")
     else:
         print(f"  [XX] {errors_95} roundtrip failures with base-95")
 
     # UTF-8/UTF-16 size analysis
     sample_char = chr(0xE0041)  # TAG LATIN CAPITAL LETTER A
-    print(f"\n  Size analysis for tag char U+E0041:")
+    print("\n  Size analysis for tag char U+E0041:")
     print(f"    UTF-8:  {len(sample_char.encode('utf-8'))} bytes")
     print(f"    UTF-16: {len(sample_char.encode('utf-16-le'))} bytes (surrogate pair)")
 
     current_sample = "\u200C"  # ZWNJ
-    print(f"\n  Size analysis for current ZWNJ U+200C:")
+    print("\n  Size analysis for current ZWNJ U+200C:")
     print(f"    UTF-8:  {len(current_sample.encode('utf-8'))} bytes")
     print(f"    UTF-16: {len(current_sample.encode('utf-16-le'))} bytes")
 
-    print(f"\n  Net byte comparison for 32-byte UUID+HMAC payload:")
+    print("\n  Net byte comparison for 32-byte UUID+HMAC payload:")
     base4_chars = 128
     base4_bytes_utf8 = base4_chars * 3  # average ~3 bytes per current char
     base95_chars = 64

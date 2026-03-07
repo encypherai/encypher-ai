@@ -39,4 +39,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8003}/health || exit 1
 
 # Run migrations then start the application
-CMD ["sh", "-c", "echo 'Running database migrations...' && alembic upgrade head && echo 'Starting key-service...' && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8003}"]
+CMD ["sh", "-c", "echo 'Starting key-service...' && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8003}"]

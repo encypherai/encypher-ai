@@ -10,8 +10,38 @@ const API_BASE =
 // Backend access token lifetime (8 hours), refresh 5 min before expiry
 const ACCESS_TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
 const REFRESH_BUFFER_MS = 5 * 60 * 1000;
+const SESSION_VERIFICATION_INTERVAL_MS = 10 * 60 * 1000;
 
-async function refreshBackendToken(refreshToken: string): Promise<{ accessToken: string; accessTokenExpires: number } | null> {
+type BackendUser = {
+  id?: string;
+  email?: string;
+  name?: string;
+  role?: string;
+  account_type?: string;
+  permission?: string;
+  tier?: string;
+  subscription_tier?: string;
+  plan?: string;
+};
+
+type RefreshedBackendSession = {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpires: number;
+  user?: BackendUser;
+};
+
+function mapBackendUser(user: BackendUser | undefined) {
+  return {
+    id: user?.id ? String(user.id) : undefined,
+    email: user?.email,
+    name: user?.name,
+    role: user?.role ?? user?.account_type ?? user?.permission ?? 'member',
+    tier: user?.tier ?? user?.subscription_tier ?? user?.plan ?? 'free',
+  };
+}
+
+async function refreshBackendToken(refreshToken: string): Promise<RefreshedBackendSession | null> {
   try {
     const res = await fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
@@ -26,12 +56,40 @@ async function refreshBackendToken(refreshToken: string): Promise<{ accessToken:
     if (data.success && data.data?.access_token) {
       return {
         accessToken: data.data.access_token,
+        refreshToken: data.data.refresh_token,
         accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
+        user: data.data.user,
       };
     }
     return null;
   } catch (err) {
     console.error('[NextAuth] Token refresh error:', err);
+    return null;
+  }
+}
+
+async function verifyBackendAccessToken(accessToken: string): Promise<BackendUser | null> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!res.ok) {
+      return null;
+    }
+
+    const data = await res.json();
+    if (data.success && data.data) {
+      return data.data as BackendUser;
+    }
+
+    return null;
+  } catch (error) {
+    console.warn('[NextAuth] Backend session verify failed:', error);
     return null;
   }
 }
@@ -44,6 +102,7 @@ const handler = NextAuth({
       credentials: {
         email: { label: "Email", type: "email", placeholder: "you@example.com" },
         password: { label: "Password", type: "password" },
+        refreshToken: { label: "Refresh Token", type: "text" },
         mfaCode: { label: "MFA Code", type: "text" },
         mfaToken: { label: "MFA Token", type: "text" },
         turnstileToken: { label: "Turnstile Token", type: "text" },
@@ -79,8 +138,10 @@ const handler = NextAuth({
                   email: user.email,
                   name: user.name,
                   accessToken: accessToken,
-                  role: user.role ?? 'member',
-                  tier: user.tier ?? 'free',
+                  refreshToken: credentials.refreshToken,
+                  accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
+                  role: user.role ?? user.account_type ?? user.permission ?? 'member',
+                  tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
                 } as any;
               }
             }
@@ -232,6 +293,8 @@ const handler = NextAuth({
         if (user.refreshToken) token.refreshToken = user.refreshToken as string;
         // @ts-expect-error - extending user type
         if (user.accessTokenExpires) token.accessTokenExpires = user.accessTokenExpires as number;
+        token.backendVerifiedAt = Date.now();
+        if (user.name) token.name = user.name as string;
         // @ts-expect-error - extending user type
         if (user.role) token.role = user.role as string;
         // @ts-expect-error - extending user type
@@ -254,10 +317,15 @@ const handler = NextAuth({
             if (exchangeRes.ok) {
               const exchangeData = await exchangeRes.json();
               if (exchangeData.success && exchangeData.data?.access_token) {
+                const mappedUser = mapBackendUser(exchangeData.data.user);
                 token.accessToken = exchangeData.data.access_token;
-                // OAuth tokens don't come with a refresh token from our backend yet
-                // Set expiry based on standard access token lifetime
+                token.refreshToken = exchangeData.data.refresh_token;
                 token.accessTokenExpires = Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS;
+                token.id = mappedUser.id ?? token.id;
+                token.email = mappedUser.email ?? token.email;
+                token.name = mappedUser.name ?? token.name;
+                token.role = mappedUser.role;
+                token.tier = mappedUser.tier;
                 console.log('[NextAuth] OAuth token exchange successful');
               }
             } else {
@@ -272,6 +340,54 @@ const handler = NextAuth({
 
       // Access token still valid - return as-is
       if (token.accessTokenExpires && Date.now() < (token.accessTokenExpires as number)) {
+        const shouldReverify =
+          token.accessToken &&
+          (!token.backendVerifiedAt || Date.now() - (token.backendVerifiedAt as number) >= SESSION_VERIFICATION_INTERVAL_MS);
+
+        if (!shouldReverify) {
+          return token;
+        }
+
+        const verifiedUser = await verifyBackendAccessToken(token.accessToken as string);
+        if (verifiedUser) {
+          const mappedUser = mapBackendUser(verifiedUser);
+          return {
+            ...token,
+            id: mappedUser.id ?? token.id,
+            email: mappedUser.email ?? token.email,
+            name: mappedUser.name ?? token.name,
+            role: mappedUser.role ?? token.role,
+            tier: mappedUser.tier ?? token.tier,
+            backendVerifiedAt: Date.now(),
+            error: undefined,
+          };
+        }
+
+        if (token.refreshToken) {
+          console.warn('[NextAuth] Backend session verify failed, attempting refresh fallback');
+          const refreshed = await refreshBackendToken(token.refreshToken as string);
+          if (refreshed) {
+            const mappedUser = mapBackendUser(refreshed.user);
+            return {
+              ...token,
+              accessToken: refreshed.accessToken,
+              refreshToken: refreshed.refreshToken,
+              accessTokenExpires: refreshed.accessTokenExpires,
+              id: mappedUser.id ?? token.id,
+              email: mappedUser.email ?? token.email,
+              name: mappedUser.name ?? token.name,
+              role: mappedUser.role ?? token.role,
+              tier: mappedUser.tier ?? token.tier,
+              backendVerifiedAt: Date.now(),
+              error: undefined,
+            };
+          }
+
+          return { ...token, error: 'RefreshAccessTokenError' };
+        }
+
+        return { ...token, error: 'RefreshAccessTokenError' };
+
         return token;
       }
 
@@ -281,10 +397,18 @@ const handler = NextAuth({
         const refreshed = await refreshBackendToken(token.refreshToken as string);
         if (refreshed) {
           console.log('[NextAuth] Silent token refresh successful');
+          const mappedUser = mapBackendUser(refreshed.user);
           return {
             ...token,
             accessToken: refreshed.accessToken,
+            refreshToken: refreshed.refreshToken,
             accessTokenExpires: refreshed.accessTokenExpires,
+            backendVerifiedAt: Date.now(),
+            id: mappedUser.id ?? token.id,
+            email: mappedUser.email ?? token.email,
+            name: mappedUser.name ?? token.name,
+            role: mappedUser.role ?? token.role,
+            tier: mappedUser.tier ?? token.tier,
             error: undefined,
           };
         }
@@ -292,23 +416,41 @@ const handler = NextAuth({
         return { ...token, error: 'RefreshAccessTokenError' };
       }
 
-      // No refresh token available (OAuth logins, legacy sessions without refresh token)
-      // The access token may still be valid on the backend (8h TTL) even without recorded expiry.
-      // Return as-is so existing sessions keep working without disruption.
+      // Legacy sessions without refresh tokens are allowed to continue until they naturally expire.
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
+        session.user.name = token.name as string | undefined;
         // expose accessToken in session for API calls if needed
         (session.user as Record<string, unknown>).accessToken = token.accessToken as string | undefined;
+        (session.user as Record<string, unknown>).refreshToken = token.refreshToken as string | undefined;
         (session.user as Record<string, unknown>).role = token.role as string | undefined;
         (session.user as Record<string, unknown>).tier = token.tier as string | undefined;
         // propagate any token error (e.g. 'RefreshAccessTokenError') so the client can react
         (session.user as Record<string, unknown>).error = token.error as string | undefined;
       }
       return session;
+    },
+  },
+  events: {
+    async signOut(message) {
+      const refreshToken = 'token' in message ? message.token?.refreshToken : undefined;
+      if (!refreshToken) {
+        return;
+      }
+
+      try {
+        await fetch(`${API_BASE}/auth/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+      } catch (error) {
+        console.warn('[NextAuth] Failed to revoke backend refresh token during sign-out:', error);
+      }
     },
   },
   session: {

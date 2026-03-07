@@ -5,7 +5,6 @@ the human-readable publisher identity from c2pa.metadata assertions, and that
 the verify endpoint surfaces it as publisher_name / signer_name in the verdict.
 """
 
-import pytest
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import UnicodeMetadata
 
@@ -202,7 +201,7 @@ def test_verify_endpoint_returns_publisher_name_from_manifest(client, monkeypatc
     response = client.post(
         "/api/v1/verify",
         json={"text": signed_text},
-        headers={"Authorization": f"Bearer test-key"},
+        headers={"Authorization": "Bearer test-key"},
     )
     assert response.status_code == 200
     payload = response.json()

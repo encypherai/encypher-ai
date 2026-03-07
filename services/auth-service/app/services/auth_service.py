@@ -235,8 +235,8 @@ class AuthService:
         return db_token
 
     @staticmethod
-    def refresh_access_token(db: Session, refresh_token: str) -> Optional[Tuple[str, User]]:
-        """Refresh an access token using a refresh token"""
+    def refresh_access_token(db: Session, refresh_token: str) -> Optional[Tuple[str, str, User]]:
+        """Refresh session tokens using a refresh token."""
         # Verify the refresh token
         payload = verify_token(refresh_token, token_type="refresh")  # noqa: S106
         if not payload:
@@ -264,14 +264,22 @@ class AuthService:
         if not user or not user.is_active:
             return None
 
-        # Create new access token
-        token_data = {
-            "sub": user.id,
-            "email": user.email,
-        }
-        new_access_token = create_access_token(token_data)
+        new_access_token, new_refresh_token = AuthService.create_tokens(user)
 
-        return new_access_token, user
+        db_token.revoked = True
+        db_token.revoked_at = datetime.utcnow()
+
+        rotated_token = RefreshToken(
+            user_id=user.id,
+            token=new_refresh_token,
+            expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+            user_agent=db_token.user_agent,
+            ip_address=db_token.ip_address,
+        )
+        db.add(rotated_token)
+        db.commit()
+
+        return new_access_token, new_refresh_token, user
 
     @staticmethod
     def revoke_refresh_token(db: Session, token: str) -> bool:

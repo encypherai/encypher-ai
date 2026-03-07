@@ -151,6 +151,48 @@ class TestAdminNewsletterSubscribers:
         assert body["data"]["total"] == 1
         assert body["data"]["subscribers"][0]["email"] == "subscriber@example.com"
 
+    def test_update_newsletter_subscriber_status_success(self, client):
+        payload = {
+            "id": 1,
+            "email": "subscriber@example.com",
+            "active": False,
+            "status": "invalid",
+            "status_reason": "Mailbox rejected by provider",
+        }
+        with (
+            patch("app.api.v1.endpoints.AuthService.verify_access_token", return_value={"sub": "user_admin"}),
+            patch("app.api.v1.endpoints.verify_super_admin", return_value=True),
+            patch("app.api.v1.endpoints.AdminService.update_newsletter_subscriber_status", new=AsyncMock(return_value=payload)),
+        ):
+            response = client.post(
+                "/api/v1/auth/admin/newsletter-subscribers/1/status",
+                headers={"Authorization": "Bearer test-token"},
+                json={"status": "invalid", "reason": "Mailbox rejected by provider"},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        body = response.json()
+        assert body["success"] is True
+        assert body["data"]["status"] == "invalid"
+        assert body["data"]["active"] is False
+
+    def test_delete_newsletter_subscriber_success(self, client):
+        payload = {"deleted": True, "id": 1}
+        with (
+            patch("app.api.v1.endpoints.AuthService.verify_access_token", return_value={"sub": "user_admin"}),
+            patch("app.api.v1.endpoints.verify_super_admin", return_value=True),
+            patch("app.api.v1.endpoints.AdminService.delete_newsletter_subscriber", new=AsyncMock(return_value=payload)),
+        ):
+            response = client.delete(
+                "/api/v1/auth/admin/newsletter-subscribers/1",
+                headers={"Authorization": "Bearer test-token"},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        body = response.json()
+        assert body["success"] is True
+        assert body["data"]["deleted"] is True
+
 
 class TestAdminTierUpdates:
     def test_update_tier_requires_super_admin(self, client):

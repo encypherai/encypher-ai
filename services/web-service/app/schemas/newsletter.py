@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr
 
 
@@ -8,6 +10,11 @@ class NewsletterSubscribeRequest(BaseModel):
 
 class NewsletterUnsubscribeRequest(BaseModel):
     token: str
+
+
+class NewsletterSubscriberStatusUpdateRequest(BaseModel):
+    status: Literal["active", "unsubscribed", "invalid"]
+    reason: str | None = None
 
 
 class NewsletterBroadcastRequest(BaseModel):

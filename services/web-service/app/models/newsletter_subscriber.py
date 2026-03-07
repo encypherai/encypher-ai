@@ -15,6 +15,8 @@ class NewsletterSubscriber(Base):
     subscribed_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     unsubscribe_token = Column(String(64), unique=True, nullable=False)
     active = Column(Boolean, nullable=False, default=True, index=True)
+    status = Column(String(32), nullable=False, default="active", index=True)
+    status_reason = Column(Text)
     source = Column(String(100))
     ip_address = Column(String(45))
     user_agent = Column(Text)

@@ -2,9 +2,19 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+function buildSignInRedirect(req: NextRequest, reason?: string) {
+  const { pathname, search } = req.nextUrl;
+  const signInUrl = new URL('/login', req.url);
+  signInUrl.searchParams.set('callbackUrl', pathname + search);
+  if (reason) {
+    signInUrl.searchParams.set('reason', reason);
+  }
+  return NextResponse.redirect(signInUrl);
+}
+
 // Enforce authentication on all routes except public ones
 export async function middleware(req: NextRequest) {
-  const { pathname, search } = req.nextUrl;
+  const { pathname } = req.nextUrl;
 
   // Allow public paths, health checks, static assets, and Next.js internals
   if (
@@ -34,9 +44,19 @@ export async function middleware(req: NextRequest) {
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET, cookieName });
   if (!token) {
-    const signInUrl = new URL('/login', req.url);
-    signInUrl.searchParams.set('callbackUrl', pathname + search);
-    return NextResponse.redirect(signInUrl);
+    return buildSignInRedirect(req);
+  }
+
+  if (token.error === 'RefreshAccessTokenError') {
+    return buildSignInRedirect(req, 'session_expired');
+  }
+
+  if (
+    typeof token.accessTokenExpires === 'number' &&
+    Date.now() >= token.accessTokenExpires &&
+    !token.refreshToken
+  ) {
+    return buildSignInRedirect(req, 'session_expired');
   }
 
   const res = NextResponse.next();

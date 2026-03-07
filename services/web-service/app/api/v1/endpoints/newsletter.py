@@ -2,8 +2,7 @@ import logging
 import secrets
 from math import ceil
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
-from fastapi import Header, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.api import deps
@@ -12,6 +11,7 @@ from app.models.newsletter_subscriber import NewsletterSubscriber
 from app.schemas.newsletter import (
     NewsletterBroadcastRequest,
     NewsletterSubscribeRequest,
+    NewsletterSubscriberStatusUpdateRequest,
     NewsletterUnsubscribeRequest,
 )
 from app.services.email import send_newsletter_broadcast, send_newsletter_welcome
@@ -26,6 +26,10 @@ def _require_internal_token(internal_token: str | None) -> None:
         return
     if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+
+def _status_to_active(status_value: str) -> bool:
+    return status_value == "active"
 
 
 @router.post("/subscribe")
@@ -66,6 +70,8 @@ def unsubscribe(
     subscriber = db.query(NewsletterSubscriber).filter(NewsletterSubscriber.unsubscribe_token == payload.token).first()
     if subscriber:
         subscriber.active = False
+        subscriber.status = "unsubscribed"
+        subscriber.status_reason = None
         db.commit()
 
     return {"success": True}
@@ -101,6 +107,57 @@ def broadcast(
     return {"success": True, "recipient_count": len(subscribers)}
 
 
+@router.post("/subscribers/{subscriber_id}/status")
+def update_subscriber_status(
+    subscriber_id: int,
+    *,
+    payload: NewsletterSubscriberStatusUpdateRequest,
+    db: Session = Depends(deps.get_db),
+    internal_token: str | None = Header(None, alias="X-Internal-Token"),
+):
+    _require_internal_token(internal_token)
+
+    subscriber = db.query(NewsletterSubscriber).filter(NewsletterSubscriber.id == subscriber_id).first()
+    if not subscriber:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscriber not found")
+
+    subscriber.status = payload.status
+    subscriber.status_reason = payload.reason
+    subscriber.active = _status_to_active(payload.status)
+    db.commit()
+
+    return {
+        "success": True,
+        "data": {
+            "id": subscriber.id,
+            "email": subscriber.email,
+            "active": subscriber.active,
+            "status": subscriber.status,
+            "status_reason": subscriber.status_reason,
+        },
+        "error": None,
+    }
+
+
+@router.delete("/subscribers/{subscriber_id}")
+def delete_subscriber(
+    subscriber_id: int,
+    *,
+    db: Session = Depends(deps.get_db),
+    internal_token: str | None = Header(None, alias="X-Internal-Token"),
+):
+    _require_internal_token(internal_token)
+
+    subscriber = db.query(NewsletterSubscriber).filter(NewsletterSubscriber.id == subscriber_id).first()
+    if not subscriber:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscriber not found")
+
+    db.delete(subscriber)
+    db.commit()
+
+    return {"success": True, "data": {"deleted": True, "id": subscriber_id}, "error": None}
+
+
 @router.get("/subscribers")
 def list_subscribers(
     *,
@@ -134,6 +191,8 @@ def list_subscribers(
                     "id": subscriber.id,
                     "email": subscriber.email,
                     "active": subscriber.active,
+                    "status": subscriber.status,
+                    "status_reason": subscriber.status_reason,
                     "source": subscriber.source,
                     "subscribed_at": subscriber.subscribed_at.isoformat() if subscriber.subscribed_at else None,
                 }

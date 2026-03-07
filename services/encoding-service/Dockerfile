@@ -14,4 +14,4 @@ USER appuser
 EXPOSE 8004
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8004}/health || exit 1
-CMD ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8004}"]
+CMD ["sh", "-c", "echo 'Starting encoding-service...' && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8004}"]

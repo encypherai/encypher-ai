@@ -344,7 +344,6 @@ class TestTrustMarkServiceUnit:
 
     def test_load_model_sets_unavailable_when_import_fails(self) -> None:
         """load_model() must not raise; it must log and set _available=False."""
-        import sys
         # trustmark is not installed in CI, so load_model() should handle gracefully.
         # We verify _available stays False after the call.
         from app.services.trustmark_service import TrustMarkService

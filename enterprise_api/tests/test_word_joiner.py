@@ -125,12 +125,12 @@ def main():
         past_zwj = pasted.count(ZWJ)
         past_wj = pasted.count(WJ)
         
-        print(f"\nOriginal counts:")
+        print("\nOriginal counts:")
         print(f"  ZWNJ: {orig_zwnj}")
         print(f"  ZWJ:  {orig_zwj}")
         print(f"  WJ:   {orig_wj}")
         
-        print(f"\nAfter Word:")
+        print("\nAfter Word:")
         print(f"  ZWNJ: {past_zwnj} ({'+' if past_zwnj >= orig_zwnj else ''}{past_zwnj - orig_zwnj})")
         print(f"  ZWJ:  {past_zwj} ({'+' if past_zwj >= orig_zwj else ''}{past_zwj - orig_zwj})")
         print(f"  WJ:   {past_wj} ({'+' if past_wj >= orig_wj else ''}{past_wj - orig_wj})")

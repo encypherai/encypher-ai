@@ -81,7 +81,8 @@ The service will be available at `http://localhost:8001`
 **POST /api/v1/auth/verify-email**
 - Verify user's email address
 - Body: `{ "token": "verification-token-from-email" }`
-- Returns: User object (sends welcome email on success)
+- Returns: `{ "access_token": "...", "refresh_token": "...", "token_type": "bearer", "user": { ... } }`
+- Automatically issues a backend session for post-verification auto-login
 
 **POST /api/v1/auth/resend-verification**
 - Resend verification email
@@ -95,9 +96,16 @@ The service will be available at `http://localhost:8001`
 - Error 403 if email not verified
 
 **POST /api/v1/auth/refresh**
-- Refresh access token
+- Refresh access token and rotate the refresh token
 - Body: `{ "refresh_token": "..." }`
-- Returns: New access token
+- Returns: `{ "access_token": "...", "refresh_token": "...", "token_type": "bearer", "user": { ... } }`
+- The previously used refresh token is revoked when refresh succeeds
+
+**POST /api/v1/auth/oauth/exchange**
+- Exchange a Google or GitHub provider token for internal Encypher session tokens
+- Body: `{ "provider": "google" | "github", "id_token"?: "...", "access_token"?: "..." }`
+- Returns: `{ "access_token": "...", "refresh_token": "...", "token_type": "bearer", "user": { ... } }`
+- OAuth logins participate in the same refresh-token lifecycle as password and MFA logins
 
 **POST /api/v1/auth/logout**
 - Revoke tokens
@@ -110,6 +118,13 @@ The service will be available at `http://localhost:8001`
 - Verify access token (used by other services)
 - Header: `Authorization: Bearer <token>`
 - Returns: User object
+
+### Session Lifecycle
+
+- Access tokens are short-lived and validated server-side by protected endpoints
+- Refresh tokens are stored in the database and revoked on logout or rotation
+- Successful refresh rotates the refresh token and returns canonical user metadata
+- Credential, MFA, OAuth, passkey, and verify-email auto-login flows all issue backend refresh tokens
 
 ### SAML SSO (Enterprise)
 

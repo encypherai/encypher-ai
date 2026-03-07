@@ -300,17 +300,17 @@ def analyze_vs_results(original, pasted, vs_test_set, controls):
     stripped_bmp = [r for r in vs_results if r["status"] == "STRIPPED" and r["is_bmp"]]
     stripped_supp = [r for r in vs_results if r["status"] == "STRIPPED" and not r["is_bmp"]]
 
-    print(f"\n  BMP VS (VS1-VS16, U+FE00-FE0F):")
+    print("\n  BMP VS (VS1-VS16, U+FE00-FE0F):")
     bmp_tested = [r for r in vs_results if r["is_bmp"]]
     print(f"    Preserved: {len(preserved_bmp)}/{len(bmp_tested)}")
     print(f"    Stripped:  {len(stripped_bmp)}/{len(bmp_tested)}")
 
-    print(f"\n  Supplementary VS (VS17-VS256, U+E0100-E01EF):")
+    print("\n  Supplementary VS (VS17-VS256, U+E0100-E01EF):")
     supp_tested = [r for r in vs_results if not r["is_bmp"]]
     print(f"    Preserved: {len(preserved_supp)}/{len(supp_tested)}")
     print(f"    Stripped:  {len(stripped_supp)}/{len(supp_tested)}")
 
-    print(f"\n  Control Characters:")
+    print("\n  Control Characters:")
     for r in ctrl_results:
         print(f"    [{r['symbol']}] {r['label']} ({r['codepoint']}) - {r['status']}")
 
@@ -354,7 +354,7 @@ def analyze_signature_results(pasted, signing_key, sig_sentences, sig_uuids):
             uuid_match = extracted_uuid in sig_uuids
             print(f"\n  Signature {i + 1}: [{('OK' if uuid_match else '!!')}]")
             print(f"    Position: chars {start}-{end}")
-            print(f"    HMAC: VALID")
+            print("    HMAC: VALID")
             print(f"    UUID: {extracted_uuid}")
             print(f"    UUID match: {'YES' if uuid_match else 'NO (unknown UUID)'}")
             if uuid_match:
@@ -362,7 +362,7 @@ def analyze_signature_results(pasted, signing_key, sig_sentences, sig_uuids):
         else:
             print(f"\n  Signature {i + 1}: [XX]")
             print(f"    Position: chars {start}-{end}")
-            print(f"    HMAC: INVALID (signature corrupted)")
+            print("    HMAC: INVALID (signature corrupted)")
 
     print(f"\n  RESULT: {verified_count}/{len(sig_sentences)} signatures verified")
 
@@ -424,9 +424,10 @@ def run_automated_roundtrip_test():
     original_len = sum(len(s) for s in sentences) + len(sentences) - 1
     sig_overhead = len(document) - original_len
     sig_utf8 = sum(len(sig.encode("utf-8")) for _, _, sig in found)
+    zw_utf8 = len(sentences) * 100
 
     print(f"  [OK] All {len(sentences)} signatures created, embedded, and verified")
-    print(f"\n  Size stats:")
+    print("\n  Size stats:")
     print(f"    Original text:     {original_len} chars")
     print(f"    With signatures:   {len(document)} chars")
     print(f"    Signature overhead: {sig_overhead} chars ({SIGNATURE_CHARS} per sentence)")
@@ -434,14 +435,14 @@ def run_automated_roundtrip_test():
     print(f"    Overhead ratio:    {sig_overhead / original_len * 100:.1f}%")
 
     # Simulate what Word might do: strip all VS characters
-    print(f"\n  Simulating Word-like VS stripping...")
+    print("\n  Simulating Word-like VS stripping...")
     stripped_doc = "".join(ch for ch in document if ch not in VS_TO_BYTE)
     stripped_found = find_all_markers(stripped_doc)
     print(f"    Signatures after stripping: {len(stripped_found)} (expected 0)")
     assert len(stripped_found) == 0, "Should find no sigs after VS stripping"
-    print(f"    [OK] Confirmed: VS stripping destroys signatures")
+    print("    [OK] Confirmed: VS stripping destroys signatures")
 
-    print(f"\n  Comparison with legacy_safe encoding (base-6, Word-compatible):")
+    print("\n  Comparison with legacy_safe encoding (base-6, Word-compatible):")
     print(f"    {'Chars per signature':>25} VS256: {SIGNATURE_CHARS}  legacy_safe: 100")
     print(f"    {'Total UTF-8 bytes':>25} {sig_utf8:>10} {zw_utf8:>12} {zw_utf8 / sig_utf8:>7.1f}x")
     print(f"    {'Word compatible':>25} {'NO':>10} {'YES':>12}")

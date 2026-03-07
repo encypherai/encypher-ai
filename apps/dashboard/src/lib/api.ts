@@ -299,6 +299,8 @@ interface AdminNewsletterSubscriber {
   id: number;
   email: string;
   active: boolean;
+  status: 'active' | 'unsubscribed' | 'invalid';
+  status_reason?: string | null;
   source?: string | null;
   subscribed_at?: string | null;
 }
@@ -722,6 +724,31 @@ const apiClient = {
       accessToken
     );
     return response.data;
+  },
+
+  async updateAdminNewsletterSubscriberStatus(
+    accessToken: string,
+    subscriberId: number,
+    status: 'active' | 'unsubscribed' | 'invalid',
+    reason?: string
+  ): Promise<AdminNewsletterSubscriber> {
+    const response = await fetchWithAuth<{ success: boolean; data: AdminNewsletterSubscriber }>(
+      `${AUTH_SERVICE_URL}/auth/admin/newsletter-subscribers/${subscriberId}/status`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ status, reason }),
+      }
+    );
+    return response.data;
+  },
+
+  async deleteAdminNewsletterSubscriber(accessToken: string, subscriberId: number): Promise<void> {
+    await fetchWithAuth<{ success: boolean; data: { deleted: boolean; id: number } }>(
+      `${AUTH_SERVICE_URL}/auth/admin/newsletter-subscribers/${subscriberId}`,
+      accessToken,
+      { method: 'DELETE' }
+    );
   },
 
   /**

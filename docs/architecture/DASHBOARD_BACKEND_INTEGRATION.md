@@ -158,7 +158,50 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 
 ---
 
-## 📊 **New Pages Overview**
+## � **Current Session Architecture**
+
+### **Backend is the session authority**
+
+The dashboard uses NextAuth as an encrypted cookie/session envelope, but auth-service is the canonical authority for session validity.
+
+- `POST /auth/login`, `POST /auth/login/mfa/complete`, `POST /auth/oauth/exchange`, `POST /auth/passkeys/authenticate/complete`, and `POST /auth/verify-email` all issue backend `access_token` + `refresh_token`
+- `POST /auth/refresh` rotates the refresh token and returns canonical user metadata
+- `POST /auth/logout` revokes either a specific refresh token or all refresh tokens for the authenticated user
+- `POST /auth/verify` is used for periodic backend session verification while the access token is still valid
+
+### **Dashboard session behavior**
+
+- NextAuth stores backend-issued `accessToken`, `refreshToken`, `accessTokenExpires`, `role`, `tier`, and `name`
+- The dashboard refreshes sessions silently before access token expiry
+- Still-valid access tokens are re-verified with auth-service on the normal session polling/window-focus cycle
+- If backend verification fails, the dashboard attempts refresh once before forcing logout
+- Middleware immediately redirects sessions already marked with `RefreshAccessTokenError`
+
+### **OAuth and token-bootstrap persistence**
+
+OAuth sessions now persist exactly like credential sessions:
+
+- Google/GitHub provider tokens are exchanged for internal backend access + refresh tokens
+- Email verification auto-login passes the backend refresh token into NextAuth
+- Passkey login also passes the backend refresh token into NextAuth
+
+This removes the old access-token-only gap that previously made OAuth and token-bootstrap sessions weaker than credential logins.
+
+### **Logout behavior**
+
+- Client-side `signOut` clears the NextAuth session cookie
+- NextAuth `signOut` events also revoke the backend refresh token via auth-service
+- This prevents silent session continuation after the user explicitly signs out
+
+### **Local development note**
+
+The dashboard dev container now clears `/app/.next` on startup and no longer persists a dedicated `.next` volume in `docker-compose.full-stack.yml`.
+
+This avoids stale `routes-manifest.json` corruption across restarts and keeps local Next.js dev startup deterministic.
+
+---
+
+## �📊 **New Pages Overview**
 
 ### **1. Analytics Page (`/analytics`)**
 

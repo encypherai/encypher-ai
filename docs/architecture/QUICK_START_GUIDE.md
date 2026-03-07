@@ -156,7 +156,8 @@ Once services are running, visit:
 |--------|----------|-------------|
 | POST | `/api/v1/auth/signup` | Create account |
 | POST | `/api/v1/auth/login` | Login |
-| POST | `/api/v1/auth/refresh` | Refresh token |
+| POST | `/api/v1/auth/refresh` | Refresh access token and rotate refresh token |
+| POST | `/api/v1/auth/oauth/exchange` | Exchange Google/GitHub provider tokens for internal session tokens |
 | POST | `/api/v1/auth/logout` | Logout |
 | POST | `/api/v1/auth/verify` | Verify token |
 | GET | `/health` | Health check |
@@ -222,6 +223,21 @@ netstat -an | grep 8003
 docker-compose -f docker-compose.dev.yml logs auth-service
 docker-compose -f docker-compose.dev.yml logs key-service
 ```
+
+### **Dashboard returns `ENOENT ... /app/.next/routes-manifest.json`**
+
+The dashboard dev container should start from a clean `.next` state. If you still see the error after pulling changes, recreate the dashboard service so it uses the updated dev startup command.
+
+```bash
+docker compose -f docker-compose.full-stack.yml up -d --build --force-recreate dashboard
+docker compose -f docker-compose.full-stack.yml logs --tail=100 dashboard
+```
+
+Expected recovery signals:
+
+- `/app/.next/routes-manifest.json` exists inside the container
+- `GET /login?... 200` appears in dashboard logs instead of `500`
+- the dashboard container command starts by clearing `/app/.next`
 
 ### **Database connection errors**
 

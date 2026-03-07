@@ -1,30 +1,30 @@
 """API endpoints for Billing Service v1"""
 
+import httpx
 import logging
-
-logger = logging.getLogger(__name__)
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Header
-from sqlalchemy.orm import Session
-from typing import List, Optional
 from pydantic import BaseModel, Field
-import httpx
+from sqlalchemy.orm import Session
 
+from ...core.config import settings
 from ...db.session import get_db
 from ...models.schemas import (
+    BillingStats,
+    InvoiceResponse,
+    MessageResponse,
+    PlanInfo,
+    TierName,
     SubscriptionCreate,
     SubscriptionResponse,
-    InvoiceResponse,
-    BillingStats,
-    MessageResponse,
-    TierName,
     UpgradeRequest,
     UpgradeResponse,
-    PlanInfo,
 )
 from ...services.billing_service import BillingService
 from ...services.stripe_service import StripeService, get_stripe_price_id
-from ...core.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -128,7 +128,7 @@ async def create_subscription(
             subscription_data=subscription_data,
         )
         return _build_subscription_response(subscription)
-    except ValueError as e:
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Request validation failed",
@@ -208,7 +208,7 @@ async def create_trial_subscription_internal(
             tier=payload.tier.value,
             trial_months=payload.trial_months,
         )
-    except ValueError as e:
+    except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
     return InternalTrialResponse(success=True, data=_build_subscription_response(subscription))
@@ -277,7 +277,7 @@ async def create_checkout_session(
             session_id=session.id,
         )
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create checkout session")
 
 
@@ -315,7 +315,7 @@ async def get_billing_portal(
 
         return PortalResponse(portal_url=session.url)
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create billing portal session")
 
 

@@ -361,3 +361,54 @@ class AdminService:
             return body
         except httpx.HTTPError as exc:
             raise RuntimeError("Failed to fetch newsletter subscribers") from exc
+
+    @staticmethod
+    async def update_newsletter_subscriber_status(
+        subscriber_id: int,
+        status_value: str,
+        reason: str | None = None,
+    ) -> Dict[str, Any]:
+        headers = {}
+        if settings.INTERNAL_SERVICE_TOKEN:
+            headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
+
+        url = f"{settings.WEB_SERVICE_URL}/api/v1/newsletter/subscribers/{subscriber_id}/status"
+
+        try:
+            response = await call_service_with_breaker(
+                service_name="web-service",
+                url=url,
+                method="POST",
+                json={"status": status_value, "reason": reason},
+                headers=headers,
+                timeout=15.0,
+            )
+            body = response.json()
+            if isinstance(body, dict) and "data" in body:
+                return body["data"]
+            return body
+        except httpx.HTTPError as exc:
+            raise RuntimeError("Failed to update newsletter subscriber") from exc
+
+    @staticmethod
+    async def delete_newsletter_subscriber(subscriber_id: int) -> Dict[str, Any]:
+        headers = {}
+        if settings.INTERNAL_SERVICE_TOKEN:
+            headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
+
+        url = f"{settings.WEB_SERVICE_URL}/api/v1/newsletter/subscribers/{subscriber_id}"
+
+        try:
+            response = await call_service_with_breaker(
+                service_name="web-service",
+                url=url,
+                method="DELETE",
+                headers=headers,
+                timeout=15.0,
+            )
+            body = response.json()
+            if isinstance(body, dict) and "data" in body:
+                return body["data"]
+            return body
+        except httpx.HTTPError as exc:
+            raise RuntimeError("Failed to delete newsletter subscriber") from exc

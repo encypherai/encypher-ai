@@ -19,4 +19,4 @@ conn.commit()
 cur.close()
 conn.close()
 
-print(f"Password reset to 'Password123!' with pre-hashing")
+print("Password reset to 'Password123!' with pre-hashing")

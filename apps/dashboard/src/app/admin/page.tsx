@@ -106,6 +106,18 @@ const normalizeAdminStats = (payload: any): AdminStats => ({
   totalApiCalls: payload?.data?.total_api_calls ?? payload?.total_api_calls ?? undefined,
 });
 
+const getNewsletterStatusVariant = (status: AdminNewsletterSubscriber['status']) => {
+  if (status === 'active') return 'success';
+  if (status === 'invalid') return 'error';
+  return 'default';
+};
+
+const getNewsletterStatusLabel = (status: AdminNewsletterSubscriber['status']) => {
+  if (status === 'active') return 'Active';
+  if (status === 'invalid') return 'Invalid';
+  return 'Unsubscribed';
+};
+
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
@@ -153,6 +165,35 @@ export default function AdminPage() {
       return normalizeAdminStats(response);
     },
     enabled: Boolean(accessToken) && isSuperAdmin,
+  });
+
+  const updateNewsletterSubscriberMutation = useMutation({
+    mutationFn: async ({ subscriberId, status, reason }: { subscriberId: number; status: AdminNewsletterSubscriber['status']; reason?: string }) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.updateAdminNewsletterSubscriberStatus(accessToken, subscriberId, status, reason);
+    },
+    onSuccess: (_, variables) => {
+      const message = variables.status === 'invalid'
+        ? 'Subscriber marked invalid.'
+        : variables.status === 'active'
+          ? 'Subscriber reactivated.'
+          : 'Subscriber updated.';
+      toast.success(message);
+      queryClient.invalidateQueries({ queryKey: ['admin-newsletter-subscribers'] });
+    },
+    onError: (err: any) => toast.error(err?.message || 'Failed to update newsletter subscriber.'),
+  });
+
+  const deleteNewsletterSubscriberMutation = useMutation({
+    mutationFn: async (subscriberId: number) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      await apiClient.deleteAdminNewsletterSubscriber(accessToken, subscriberId);
+    },
+    onSuccess: () => {
+      toast.success('Subscriber deleted.');
+      queryClient.invalidateQueries({ queryKey: ['admin-newsletter-subscribers'] });
+    },
+    onError: (err: any) => toast.error(err?.message || 'Failed to delete subscriber.'),
   });
 
   const newsletterQuery = useQuery({
@@ -1152,19 +1193,20 @@ export default function AdminPage() {
                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Source</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subscribed At</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                   {newsletterQuery.isLoading && (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center">
+                      <td colSpan={5} className="px-6 py-12 text-center">
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-ncs mx-auto"></div>
                       </td>
                     </tr>
                   )}
                   {!newsletterQuery.isLoading && newsletterRows.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                      <td colSpan={5} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                         No newsletter subscribers found.
                       </td>
                     </tr>
@@ -1173,9 +1215,14 @@ export default function AdminPage() {
                     <tr key={subscriber.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors">
                       <td className="px-6 py-4 text-sm text-slate-900 dark:text-white">{subscriber.email}</td>
                       <td className="px-6 py-4">
-                        <Badge variant={subscriber.active ? 'success' : 'default'}>
-                          {subscriber.active ? 'Active' : 'Inactive'}
-                        </Badge>
+                        <div className="space-y-1">
+                          <Badge variant={getNewsletterStatusVariant(subscriber.status)}>
+                            {getNewsletterStatusLabel(subscriber.status)}
+                          </Badge>
+                          {subscriber.status_reason && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs break-words">{subscriber.status_reason}</p>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">{subscriber.source || '—'}</td>
                       <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
@@ -1188,6 +1235,51 @@ export default function AdminPage() {
                               minute: '2-digit',
                             })
                           : '—'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          {subscriber.status !== 'invalid' && (
+                            <button
+                              onClick={() => {
+                                const reason = window.prompt('Optional reason for marking this subscriber invalid:', subscriber.status_reason || '');
+                                if (reason === null) return;
+                                updateNewsletterSubscriberMutation.mutate({
+                                  subscriberId: subscriber.id,
+                                  status: 'invalid',
+                                  reason: reason.trim() || undefined,
+                                });
+                              }}
+                              disabled={updateNewsletterSubscriberMutation.isPending || deleteNewsletterSubscriberMutation.isPending}
+                              className="px-3 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 rounded-md hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50"
+                            >
+                              Mark invalid
+                            </button>
+                          )}
+                          {subscriber.status !== 'active' && (
+                            <button
+                              onClick={() => {
+                                updateNewsletterSubscriberMutation.mutate({
+                                  subscriberId: subscriber.id,
+                                  status: 'active',
+                                });
+                              }}
+                              disabled={updateNewsletterSubscriberMutation.isPending || deleteNewsletterSubscriberMutation.isPending}
+                              className="px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 rounded-md hover:bg-emerald-50 dark:hover:bg-emerald-900/20 disabled:opacity-50"
+                            >
+                              Reactivate
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              if (!window.confirm(`Delete newsletter subscriber ${subscriber.email}? This cannot be undone.`)) return;
+                              deleteNewsletterSubscriberMutation.mutate(subscriber.id);
+                            }}
+                            disabled={updateNewsletterSubscriberMutation.isPending || deleteNewsletterSubscriberMutation.isPending}
+                            className="px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

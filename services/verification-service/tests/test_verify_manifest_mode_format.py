@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import json as _json
 from uuid import uuid4
 
 from app.api.v1 import endpoints as verify_endpoints

@@ -69,7 +69,8 @@ def hash_password(pw: str) -> str:
     """Hash password the same way the auth service does:
     SHA-256(password) -> base64 -> bcrypt
     """
-    import hashlib, base64
+    import hashlib
+    import base64
     sha256_hash = hashlib.sha256(pw.encode("utf-8")).digest()
     prehashed = base64.b64encode(sha256_hash)
     return bcrypt.hashpw(prehashed, bcrypt.gensalt(12)).decode()
@@ -185,7 +186,7 @@ def seed_auth(cur):
         """,
         (member_id, ORG_ID, actual_user_id, days_ago(90), days_ago(90), days_ago(90)),
     )
-    print(f"  [auth] org membership upserted")
+    print("  [auth] org membership upserted")
 
 
 # ---------------------------------------------------------------------------
@@ -315,7 +316,7 @@ def seed_content(cur):
             days_ago(85),
         ),
     )
-    print(f"  [content] publisher_rights_profile upserted")
+    print("  [content] publisher_rights_profile upserted")
 
     # Content detection events -- 843 events over 90 days
     _seed_detection_events(cur)
@@ -440,7 +441,7 @@ def _seed_coalition_earnings(cur):
 
     entries = [
         {
-            "id": f"earn_times_openai_q4",
+            "id": "earn_times_openai_q4",
             "deal_id": "deal_openai_coalition_q4_2025",
             "deal_name": "OpenAI Coalition License Q4 2025",
             "ai_company": "OpenAI",
@@ -454,7 +455,7 @@ def _seed_coalition_earnings(cur):
             "status": "confirmed",
         },
         {
-            "id": f"earn_times_anthropic_q1",
+            "id": "earn_times_anthropic_q1",
             "deal_id": "deal_anthropic_coalition_q1_2026",
             "deal_name": "Anthropic Coalition License Q1 2026",
             "ai_company": "Anthropic",
@@ -669,7 +670,7 @@ def main():
 
     print()
     print("Done. Demo account ready:")
-    print(f"  URL:      http://localhost:3000/auth/signin")
+    print("  URL:      http://localhost:3000/auth/signin")
     print(f"  Email:    {ORG_EMAIL}")
     print(f"  Password: {USER_PASSWORD}")
     print(f"  Org ID:   {ORG_ID}")
@@ -678,7 +679,7 @@ def main():
     print("Analytics summary:")
     print(f"  Documents signed:   {TOTAL_DOCS_SIGNED:,}")
     print(f"  External verifications: {TOTAL_VERIFICATIONS:,}  (> 500 threshold -- Notice Ready)")
-    print(f"  Coalition earnings: $1,240 confirmed + $890 pending")
+    print("  Coalition earnings: $1,240 confirmed + $890 pending")
 
 
 if __name__ == "__main__":

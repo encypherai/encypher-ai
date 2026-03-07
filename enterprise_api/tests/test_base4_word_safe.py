@@ -123,7 +123,7 @@ def main():
     
     # Character breakdown
     zwsp_char = '\u200B'
-    print(f"\nCharacter counts:")
+    print("\nCharacter counts:")
     print(f"  ZWNJ (U+200C): {signature.count(ZWNJ)}")
     print(f"  ZWJ  (U+200D): {signature.count(ZWJ)}")
     print(f"  CGJ  (U+034F): {signature.count(CGJ)}")
@@ -162,7 +162,7 @@ def main():
             print("❌ Signature was modified or stripped")
         
         # Check character counts
-        print(f"\nCharacter preservation:")
+        print("\nCharacter preservation:")
         chars_ok = True
         for char, name in [(ZWNJ, "ZWNJ"), (ZWJ, "ZWJ"), (CGJ, "CGJ"), (MVS, "MVS")]:
             orig = signed_sentence.count(char)
@@ -190,7 +190,7 @@ def main():
         if signature in pasted and chars_ok:
             print("✅ BASE-4 WORD-SAFE ENCODING: FULLY COMPATIBLE")
             print(f"   Signature size: {len(signature)} chars")
-            print(f"   33% smaller than base-3, Word-compatible!")
+            print("   33% smaller than base-3, Word-compatible!")
         elif chars_ok:
             print("⚠️  Characters preserved but signature modified")
         else:

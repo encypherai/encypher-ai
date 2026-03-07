@@ -107,12 +107,12 @@ def run_test(test_num: int, base: int, chars: list, char_names: str):
         count = signed_sentence.count(char)
         char_counts[char] = count
     
-    print(f"\nCharacter counts in signature:")
+    print("\nCharacter counts in signature:")
     for i, char in enumerate(chars):
         name = char_names.split(', ')[i] if ', ' in char_names else f"Char{i}"
         print(f"  {name}: {char_counts[char]}")
     
-    print(f"\nCOPY THE TEXT BELOW:")
+    print("\nCOPY THE TEXT BELOW:")
     print("-" * 70)
     print(signed_sentence)
     print("-" * 70)
@@ -133,7 +133,7 @@ def analyze_result(original: str, pasted: str, signature: str, chars: list, base
         print("❌ Signature was modified or stripped")
     
     # Check character counts
-    print(f"\nCharacter preservation:")
+    print("\nCharacter preservation:")
     all_preserved = True
     for char in chars:
         orig_count = original.count(char)
@@ -179,14 +179,14 @@ def main():
     for i, (base, chars, names) in enumerate(tests, 1):
         signed_sentence, signature, char_list = run_test(i, base, chars, names)
         
-        print(f"\nPaste into Word, copy back, then paste here and press ENTER:")
+        print("\nPaste into Word, copy back, then paste here and press ENTER:")
         print("-" * 70)
         
         try:
             pasted = input()
             analyze_result(signed_sentence, pasted, signature, char_list, base)
             
-            print(f"\nPress ENTER to continue to next test (or Ctrl+C to quit)...")
+            print("\nPress ENTER to continue to next test (or Ctrl+C to quit)...")
             input()
             
         except (KeyboardInterrupt, EOFError):

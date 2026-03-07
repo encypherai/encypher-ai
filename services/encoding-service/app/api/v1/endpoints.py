@@ -118,7 +118,7 @@ async def sign_document(
             created_at=db_document.created_at,
         )
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to sign document",
@@ -161,7 +161,7 @@ async def embed_metadata(
             created_at=db_document.created_at,
         )
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to embed metadata",

@@ -122,6 +122,7 @@ function LoginPageContent() {
 
       const authData = await apiClient.completePasskeyAuthentication(email, buildPasskeyAssertionPayload(credential));
       const accessToken = (authData as any)?.access_token as string | undefined;
+      const refreshToken = (authData as any)?.refresh_token as string | undefined;
       if (!accessToken) {
         throw new Error('Passkey authentication did not return a session token.');
       }
@@ -129,6 +130,7 @@ function LoginPageContent() {
       const result = await signIn('credentials', {
         email,
         password: `__TOKEN__${accessToken}`,
+        refreshToken,
         redirect: false,
         callbackUrl,
       });
