@@ -9,7 +9,7 @@ on:
 jobs:
   send-newsletter:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -37,6 +37,28 @@ jobs:
       - name: Install dependencies
         if: steps.find-post.outputs.new_file != ''
         run: npm install gray-matter
+
+      - name: Wait for post to go live
+        if: steps.find-post.outputs.new_file != ''
+        env:
+          NEW_FILE: ${{ steps.find-post.outputs.new_file }}
+        run: |
+          RAW_SLUG=$(basename "$NEW_FILE" .md)
+          SLUG=$(echo "$RAW_SLUG" | tr '[:upper:]' '[:lower:]' | sed 's/[[:space:]]/-/g')
+          POST_URL="https://encypherai.com/blog/${SLUG}"
+          echo "Waiting for $POST_URL to go live..."
+          MAX_ATTEMPTS=20
+          ATTEMPT=0
+          until curl -sf -o /dev/null "$POST_URL"; do
+            ATTEMPT=$((ATTEMPT + 1))
+            if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+              echo "Post not live after $((MAX_ATTEMPTS * 30))s — sending newsletter anyway."
+              break
+            fi
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: not live yet, retrying in 30s..."
+            sleep 30
+          done
+          echo "Post is live (or timeout reached). Proceeding with broadcast."
 
       - name: Parse frontmatter and broadcast
         if: steps.find-post.outputs.new_file != ''
