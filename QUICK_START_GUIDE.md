@@ -1,4 +1,4 @@
-# 🚀 Encypher Commercial - Quick Start Guide
+# Encypher Commercial - Quick Start Guide
 
 **Welcome to the Encypher Commercial Suite!**
 
@@ -6,20 +6,20 @@ This guide will get you up and running in **15 minutes**.
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before you begin, ensure you have:
 
-- ✅ **Python 3.9+** installed
-- ✅ **Node.js 24+ LTS** installed (for web apps)
-- ✅ **UV** package manager ([install guide](https://github.com/astral-sh/uv))
-- ✅ **Git** for version control
-- ✅ **PostgreSQL** (for services/API)
-- ✅ **Code editor** (VS Code recommended)
+- [ ] **Python 3.9+** installed
+- [ ] **Node.js 24+ LTS** installed (for web apps)
+- [ ] **UV** package manager ([install guide](https://github.com/astral-sh/uv))
+- [ ] **Git** for version control
+- [ ] **PostgreSQL** (for services/API)
+- [ ] **Code editor** (VS Code recommended)
 
 ---
 
-## 🐧 Linux/macOS Full-Stack Dev (Recommended)
+## Linux/macOS Full-Stack Dev (Recommended)
 
 ```bash
 # From repo root
@@ -37,27 +37,27 @@ Before you begin, ensure you have:
 
 ---
 
-## 🎯 Choose Your Path
+## Choose Your Path
 
-### 🔧 Path 1: CLI Tools (Easiest)
+### Path 1: CLI Tools (Easiest)
 **Time**: 5 minutes  
 **Best for**: Testing, auditing, policy validation
 
-### 🌐 Path 2: Web Applications
+### Path 2: Web Applications
 **Time**: 10 minutes  
 **Best for**: Frontend development, dashboards
 
-### 🚀 Path 3: Enterprise API
+### Path 3: Enterprise API
 **Time**: 15 minutes  
 **Best for**: Backend development, API integration
 
-### 🔧 Path 4: Microservices
+### Path 4: Microservices
 **Time**: 20 minutes  
 **Best for**: Full-stack development, architecture
 
 ---
 
-## 🔧 Path 1: CLI Tools (5 minutes)
+## Path 1: CLI Tools (5 minutes)
 
 ### Option A: Audit Log CLI
 
@@ -78,7 +78,7 @@ uv run python app/main.py generate-report \
 cat report.csv
 ```
 
-**✅ Success!** You've scanned a file and generated a report.
+**Success:** You've scanned a file and generated a report.
 
 **Next Steps:**
 - Read [audit_log_cli/README.md](./audit_log_cli/README.md)
@@ -104,7 +104,7 @@ uv run python -m policy_validator_cli.app.main validate-metadata \
 cat validation_report.csv
 ```
 
-**✅ Success!** You've validated files against a policy.
+**Success:** You've validated files against a policy.
 
 **Next Steps:**
 - Read [policy_validator_cli/README.md](./policy_validator_cli/README.md)
@@ -112,7 +112,7 @@ cat validation_report.csv
 
 ---
 
-## 🌐 Path 2: Web Applications (10 minutes)
+## Path 2: Web Applications (10 minutes)
 
 ### Option A: Marketing Site
 
@@ -130,7 +130,7 @@ npm run dev
 # Visit: http://localhost:3000
 ```
 
-**✅ Success!** Marketing site is running.
+**Success:** Marketing site is running.
 
 **Next Steps:**
 - Read [apps/marketing-site/README.md](./apps/marketing-site/README.md)
@@ -152,7 +152,7 @@ npm run dev
 # Visit: http://localhost:3001
 ```
 
-**✅ Success!** Dashboard is running.
+**Success:** Dashboard is running.
 
 **Next Steps:**
 - Read [apps/dashboard/README.md](./apps/dashboard/README.md)
@@ -160,7 +160,7 @@ npm run dev
 
 ---
 
-## 🚀 Path 3: Enterprise API (15 minutes)
+## Path 3: Enterprise API (15 minutes)
 
 ```bash
 # 1. Navigate to the API
@@ -184,7 +184,7 @@ uv run uvicorn app.main:app --reload --port 9000
 # Production docs (once deployed): https://api.encypherai.com/docs
 ```
 
-**✅ Success!** Enterprise API is running with Swagger docs.
+**Success:** Enterprise API is running with Swagger docs.
 
 **Next Steps:**
 - Read [enterprise_api/README.md](./enterprise_api/README.md)
@@ -206,43 +206,27 @@ curl http://localhost:9000/health
 ### Verify Provenance with the SDK CLI
 
 ```bash
-# 1. Jump into the SDK package
-cd ../enterprise_sdk
+# 1. Jump into the generated Python SDK package
+cd sdk/python
 uv sync
 
 # 2. Export an API key (or use ENCYPHER_API_KEY env var)
 export ENCYPHER_API_KEY="encypher_live_..."
 
-# 3. Verify an embedded snippet
-uv run encypher verify-sentence --file ../examples/signed_snippet.txt
+# 3. Run a quick Python SDK verification example
+uv run python - <<'PY'
+import os
+from encypher.client import EncypherClient
 
-# 4. Inspect a Merkle tree + proof
-uv run encypher merkle-tree root_123
-uv run encypher merkle-proof root_123 --leaf-index 5
-
-# 5. Stream signing progress from the API
-uv run encypher stream-sign --file ../examples/live_article.txt --document-title "Town Hall"
-
-# 6. Encode invisibly at sentence-level (Python REPL)
-python - <<'PY'
-from encypher_enterprise import EncypherClient
-client = EncypherClient(api_key="encypher_live_...")
-
-response = client.sign_with_embeddings(
-    text="Breaking news paragraph. Second sentence.",
-    document_id="article_demo_01",
-    segmentation_level="sentence",
-    metadata={"title": "Breaking News", "author": "Jane Reporter"},
-)
-
-print("Merkle root:", response.merkle_tree.root_hash)
-print("Embedded preview:", response.embedded_content[:120])
+client = EncypherClient(api_key=os.environ["ENCYPHER_API_KEY"])
+result = client.verify(text="Signed text goes here")
+print(result)
 PY
 ```
 
 ---
 
-## 🔧 Path 4: Microservices (20 minutes)
+## Path 4: Microservices (20 minutes)
 
 ### Start All Services with Docker Compose
 
@@ -260,7 +244,7 @@ docker-compose -f docker-compose.dev.yml up --build
 # - Redis: localhost:6379
 ```
 
-**✅ Success!** All services are running.
+**Success:** All services are running.
 
 ### Test Auth Service
 
@@ -285,11 +269,11 @@ curl -X POST http://localhost:8001/api/v1/auth/signup \
 
 ---
 
-## 📚 Essential Documentation
+## Essential Documentation
 
 ### Must Read (15 minutes)
 1. [README.md](./README.md) - Repository overview **(5 min)**
-2. [AUDIT_COMPLETE.md](./AUDIT_COMPLETE.md) - Quick summary **(3 min)**
+2. [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) - Feature and tier reference **(3 min)**
 3. [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) - Navigation guide **(7 min)**
 
 ### For Your Component (10 minutes)
@@ -297,67 +281,13 @@ curl -X POST http://localhost:8001/api/v1/auth/signup \
 2. Component's `agents.md` - Development constraints **(5 min)**
 
 ### Deep Dive (30+ minutes)
-1. [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md) - Complete audit **(15 min)**
-2. [services/README.md](./services/README.md) - Architecture **(10 min)**
-3. [enterprise_api/README.md](./enterprise_api/README.md) - API reference **(15 min)**
+1. [services/README.md](./services/README.md) - Architecture **(15 min)**
+2. [enterprise_api/README.md](./enterprise_api/README.md) - API reference **(10 min)**
+3. [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) - Product and tier overview **(15 min)**
 
 ---
 
-## 🛠️ Development Workflow
-
-### Daily Workflow
-
-```bash
-# 1. Pull latest changes
-git pull origin main
-
-# 2. Navigate to your component
-cd <component-directory>
-
-# 3. Sync dependencies (Python)
-uv sync
-
-# OR install dependencies (Node.js)
-npm install
-
-# 4. Run tests
-uv run pytest  # Python
-npm test       # Node.js
-
-# 5. Start development
-uv run uvicorn app.main:app --reload  # API
-npm run dev                            # Web app
-
-# 6. Make changes and commit
-git add .
-git commit -m "feat: add new feature"
-git push origin feature-branch
-```
-
-### Package Management (Python)
-
-**ALWAYS use UV:**
-
-```bash
-# Add dependency
-uv add package-name
-
-# Add dev dependency
-uv add --dev pytest
-
-# Remove dependency
-uv remove package-name
-
-# Sync environment
-uv sync
-
-# NEVER edit pyproject.toml directly
-# NEVER use pip commands
-```
-
----
-
-## 🧪 Testing
+## Testing
 
 ### Python Projects
 
@@ -387,7 +317,7 @@ npm test -- ComponentName
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -430,11 +360,11 @@ npm install
 
 ---
 
-## 📞 Getting Help
+## Getting Help
 
 ### Documentation
 - **Quick Reference**: [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)
-- **Audit Report**: [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md)
+- **Archive Index**: [docs/archive/README.md](./docs/archive/README.md)
 - **Component Guides**: Check component's `agents.md`
 
 ### Known Issues
@@ -448,7 +378,7 @@ npm install
 
 ---
 
-## 🎓 Learning Resources
+## Learning Resources
 
 ### Video Tutorials (Coming Soon)
 - Setting up development environment
@@ -458,7 +388,7 @@ npm install
 
 ### Code Examples
 - [examples/](./examples/) - Usage examples
-- [enterprise_sdk/examples/](./enterprise_sdk/examples/) - SDK examples
+- [sdk/README.md](./sdk/README.md) - SDK generation and package overview
 - Component test files - Testing patterns
 
 ### Architecture Diagrams
@@ -467,7 +397,7 @@ npm install
 
 ---
 
-## ✅ Checklist: First Day Setup
+## Checklist: First Day Setup
 
 ### Environment Setup
 - [ ] Install Python 3.9+
@@ -495,7 +425,7 @@ npm install
 
 ---
 
-## 🚀 Next Steps
+## Next Steps
 
 ### Week 1: Explore
 - [ ] Try all CLI tools
@@ -517,45 +447,45 @@ npm install
 
 ---
 
-## 🎯 Success Criteria
+## Success Criteria
 
 You're ready to contribute when you can:
 
-- ✅ Run any component locally
-- ✅ Understand the architecture
-- ✅ Run and write tests
-- ✅ Follow development workflows
-- ✅ Use UV for package management
-- ✅ Navigate documentation easily
+- Run any component locally
+- Understand the architecture
+- Run and write tests
+- Follow development workflows
+- Use UV for package management
+- Navigate documentation easily
 
 ---
 
-## 📊 Component Status Overview
+## Component Status Overview
 
 | Component | Status | Time to Setup | Difficulty |
 |-----------|--------|---------------|------------|
-| audit_log_cli | ✅ Functional | 5 min | Easy |
-| policy_validator_cli | ✅ Ready | 5 min | Easy |
-| apps/marketing-site | ✅ Active | 10 min | Medium |
-| apps/dashboard | ✅ Active | 10 min | Medium |
-| dashboard_app | ✅ Ready | 15 min | Medium |
-| enterprise_api | ✅ Production | 15 min | Hard |
-| enterprise_sdk | ✅ Production | 5 min | Medium |
-| services/auth-service | ✅ Active | 20 min | Hard |
-| shared_commercial_libs | ✅ Ready | 5 min | Easy |
-| packages/design-system | ✅ Ready | 10 min | Medium |
+| audit_log_cli | Functional | 5 min | Easy |
+| policy_validator_cli | Ready | 5 min | Easy |
+| apps/marketing-site | Active | 10 min | Medium |
+| apps/dashboard | Active | 10 min | Medium |
+| dashboard_app | Ready | 15 min | Medium |
+| enterprise_api | Production | 15 min | Hard |
+| sdk | Generated | 5 min | Medium |
+| services/auth-service | Active | 20 min | Hard |
+| shared_commercial_libs | Ready | 5 min | Easy |
+| packages/design-system | Ready | 10 min | Medium |
 
 ---
 
-## 🎉 You're All Set!
+## You're All Set!
 
 You now have:
-- ✅ Development environment set up
-- ✅ Component running locally
-- ✅ Documentation at your fingertips
-- ✅ Understanding of workflows
+- Development environment set up
+- Component running locally
+- Documentation at your fingertips
+- Understanding of workflows
 
-**Happy Coding! 🚀**
+**Happy Coding! **
 
 ---
 
@@ -563,4 +493,4 @@ You now have:
 
 **Issues?** See component's `agents.md` for troubleshooting.
 
-**Ready to contribute?** Read [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md) for guidelines.
+**Ready to contribute?** Start with [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) and your component's `README.md`.

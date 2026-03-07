@@ -532,6 +532,6 @@ print(f"Error rate: {stats.error_rate:.2f}%")
 
 **Made with ❤️ by the Encypher Team**
 
-[SDK](../enterprise_sdk/README.md) • [API](../enterprise_api/README.md) • [PRD](SDK_FEATURES_PRD.md)
+[SDK](../../sdk/README.md) • [API](../../enterprise_api/README.md) • [PRD](SDK_FEATURES_PRD.md)
 
 </div>

@@ -66,7 +66,7 @@ encypher stats
 
 ## Links
 
-- Repository: `enterprise_sdk` directory inside the `encypherai-commercial` monorepo
-- SDK README: `enterprise_sdk/README.md`
+- Repository: `sdk/` directory inside the `encypherai-commercial` monorepo
+- SDK README: `sdk/README.md`
 - API Reference: `enterprise_api/docs/API.md`
-- Integration examples: `enterprise_sdk/examples/`
+- Integration examples: generated language SDKs under `sdk/python/`, `sdk/typescript/`, `sdk/go/`, and `sdk/rust/`

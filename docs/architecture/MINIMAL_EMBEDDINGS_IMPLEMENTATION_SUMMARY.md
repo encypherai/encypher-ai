@@ -284,7 +284,7 @@ uv run pytest tests/test_embedding_service.py --cov=app.services.embedding_servi
 ## Documentation
 
 ### Primary Documents
-1. **PRD:** `PRDs/CURRENT/PRD_MINIMAL_EMBEDDINGS.md`
+1. **PRD:** `PRDs/ARCHIVE/PRD_MINIMAL_EMBEDDINGS.md`
    - Product requirements and user stories
    - Implementation plan (6 weeks)
    - Success criteria and metrics
@@ -300,7 +300,7 @@ uv run pytest tests/test_embedding_service.py --cov=app.services.embedding_servi
    - API documentation
    - Troubleshooting guide
 
-4. **Progress:** `PRDs/CURRENT/MINIMAL_EMBEDDINGS_PROGRESS.md`
+4. **Progress:** `PRDs/ARCHIVE/MINIMAL_EMBEDDINGS_PROGRESS.md`
    - Implementation status
    - Test coverage
    - TODOs and blockers

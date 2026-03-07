@@ -1,6 +1,6 @@
 # Product Requirements Documents (PRDs)
 
-**Last Updated:** November 27, 2025
+**Last Updated:** March 7, 2026
 
 This folder contains Product Requirements Documents for Encypher Commercial.
 
@@ -8,31 +8,36 @@ This folder contains Product Requirements Documents for Encypher Commercial.
 
 ```
 PRDs/
-├── README.md           # This file
-├── CURRENT/            # Active PRDs being worked on
-├── ARCHIVE/            # Completed PRDs (historical reference)
-└── *.md                # Active PRDs at root level
+|- README.md           # This file
+|- CURRENT/            # Active PRDs being worked on
+|- ARCHIVE/            # Completed PRDs (historical reference)
+`- *.md                # Legacy root-level PRDs retained for reference and transition
 ```
 
-## Active PRDs
+## Active Work
 
-| PRD | Status | Description |
-|-----|--------|-------------|
-| `email_verification_system.md` | ✅ Implemented | Email verification flow |
-| `enterprise_api_launch_audit.md` | 🔄 In Progress | Launch readiness audit |
-| `enterprise_sdk_production_readiness.md` | ✅ Complete | SDK production checklist |
-| `test_fixes_v1_launch.md` | ✅ Complete | Test fixes for v1 |
-| `unified_auth_architecture.md` | ✅ Implemented | Auth architecture design |
+Active PRDs live in [`CURRENT/`](./CURRENT/). That directory is the only maintained source of truth for in-progress work.
 
-### CURRENT/ Folder
+Root-level PRD files still exist for historical continuity and transition work, but they should not be treated as the canonical inventory of active initiatives.
 
-| PRD | Status | Description |
-|-----|--------|-------------|
-| `PRD_JavaScript_SDK.md` | 📋 Pending | JavaScript/TypeScript SDK |
+### How to find current work
+
+- Review [`CURRENT/`](./CURRENT/) for actively maintained PRDs.
+- Use the status inside each PRD as the authoritative state.
+- Treat root-level PRDs as legacy or exceptional unless they are explicitly referenced by current work.
+
+### Root-level legacy PRDs
+
+Examples of root-level PRDs currently retained in this folder include:
+
+- `dashboard_enhancements.md`
+- `railway_database_migration_fix.md`
+- `team_management_feature.md`
+- `ux_ui_design_system_audit.md`
 
 ## Archived PRDs
 
-Completed PRDs are moved to `ARCHIVE/` for historical reference. These include:
+Completed PRDs are moved to [`ARCHIVE/`](./ARCHIVE/) for historical reference. These include:
 
 - Phase 1 implementation guides
 - Production hardening plans
@@ -57,15 +62,15 @@ When creating a new PRD, include:
 - Mark tasks with `- [ ]` (pending) or `- [x]` (complete)
 - **Tasks require test verification to be marked complete:**
   ```markdown
-  - [x] 2.1.3 Add login form — ✅ pytest ✅ puppeteer
-  - [ ] 2.1.4 Add validation — (cannot mark complete without tests)
-  ```
+- [x] 2.1.3 Add login form - pytest passed, puppeteer passed
+- [ ] 2.1.4 Add validation - cannot mark complete without tests
+```
 - Update status section when completing major milestones
 - Move to ARCHIVE when fully complete
 
 ## Single Source of Truth
 
 PRDs in `CURRENT/` are the **only** source of truth for active work.
-- No separate `plan.md` — all planning lives in PRDs
+- No separate `plan.md` - all planning lives in PRDs
 - Team files (`.teams/TEAM_XXX_*.md`) reference PRD tasks, don't duplicate them
 - One PRD per feature/initiative

@@ -1,12 +1,12 @@
-# 📚 Encypher Commercial - Documentation Index
+# Encypher Commercial - Documentation Index
 
 **Last Updated**: February 13, 2026  
 **Repository**: encypherai-commercial  
-**Documentation Status**: ✅ Complete & Current
+**Documentation Status**: Complete and Current
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### New to the Repository?
 1. **Start Here**: [README.md](./README.md) - Repository overview, product tiers, getting started
@@ -18,9 +18,9 @@ Use this index to jump directly to the documentation you need.
 
 ---
 
-## 📖 Documentation by Category
+## Documentation by Category
 
-### 🏠 Root Documentation
+### Root Documentation
 
 | Document | Purpose | Audience |
 |----------|---------|----------|
@@ -35,17 +35,17 @@ Use this index to jump directly to the documentation you need.
 
 ---
 
-### 🔧 CLI Tools
+### CLI Tools
 
 #### Audit Log CLI
 | Document | Purpose |
 |----------|---------|
 | [audit_log_cli/README.md](./audit_log_cli/README.md) | Setup, usage, API reference |
 | [audit_log_cli/agents.md](./audit_log_cli/agents.md) | **Development guide, known issues, constraints** |
-| [audit_log_cli/pyproject.toml](./audit_log_cli/pyproject.toml) | Dependencies (⚠️ has duplicates - see agents.md) |
+| [audit_log_cli/pyproject.toml](./audit_log_cli/pyproject.toml) | Dependencies (has duplicates - see agents.md) |
 
 **Key Features**: Scan files, validate metadata, generate CSV reports, trusted signers  
-**Status**: ✅ Functional (⚠️ needs refactoring - see agents.md)  
+**Status**: Functional (needs refactoring - see agents.md)  
 **Tier**: Free
 
 #### Policy Validator CLI
@@ -56,12 +56,12 @@ Use this index to jump directly to the documentation you need.
 | [policy_validator_cli/sample.policy.json](./policy_validator_cli/sample.policy.json) | Example policy file |
 
 **Key Features**: Policy validation, JSON schemas, compliance checking  
-**Status**: ✅ Production Ready  
+**Status**: Production Ready  
 **Tier**: Free
 
 ---
 
-### 🌐 Web Applications
+### Web Applications
 
 #### Marketing Site
 | Document | Purpose |
@@ -70,7 +70,7 @@ Use this index to jump directly to the documentation you need.
 
 **Domain**: `encypherai.com`  
 **Tech**: Next.js, React, Tailwind CSS  
-**Status**: ✅ Active
+**Status**: Active
 
 #### Dashboard
 | Document | Purpose |
@@ -81,7 +81,7 @@ Use this index to jump directly to the documentation you need.
 **Domain**: `dashboard.encypherai.com`  
 **Tech**: Next.js, React, Tailwind CSS  
 **Features**: API key management, usage tracking, team management, webhooks, notifications, command palette, dark mode, CSV export  
-**Status**: ✅ Active (Enhanced November 2025)
+**Status**: Active (Enhanced November 2025)
 
 #### Compliance Dashboard
 | Document | Purpose |
@@ -92,12 +92,12 @@ Use this index to jump directly to the documentation you need.
 
 **Purpose**: Enterprise compliance, directory signing, verification  
 **Tech**: FastAPI + Next.js  
-**Status**: ✅ Production Ready  
+**Status**: Production Ready  
 **Tier**: Enterprise
 
 ---
 
-### 🚀 Enterprise Products
+### Enterprise Products
 
 #### Enterprise API
 | Document | Purpose |
@@ -124,7 +124,7 @@ Use this index to jump directly to the documentation you need.
 | [docs/perf/batch-sign.md](./docs/perf/batch-sign.md) | Batch throughput benchmark results |
 
 **Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection  
-**Status**: ✅ Production Ready  
+**Status**: Production Ready  
 **Tier**: Enterprise  
 **Port**: 9000
 
@@ -136,15 +136,16 @@ Use this index to jump directly to the documentation you need.
 | [sdk/typescript/](./sdk/typescript/) | TypeScript SDK (auto-generated from OpenAPI) |
 | [sdk/go/](./sdk/go/) | Go SDK (auto-generated from OpenAPI) |
 | [sdk/rust/](./sdk/rust/) | Rust SDK (auto-generated from OpenAPI) |
+| [archive/enterprise_sdk_deprecated/DEPRECATED.md](./archive/enterprise_sdk_deprecated/DEPRECATED.md) | Deprecation notice for the archived hand-crafted SDK |
 
 **Key Features**: Auto-generated from API spec, always in sync, MIT licensed  
-**Status**: ✅ Generated (not yet published to registries)  
+**Status**: Generated (not yet published to registries)  
 **Tier**: Enterprise  
 **API Docs**: [api.encypherai.com/docs](https://api.encypherai.com/docs)
 
 ---
 
-### 🔧 Microservices
+### Microservices
 
 #### Services Overview
 | Document | Purpose |
@@ -153,53 +154,38 @@ Use this index to jump directly to the documentation you need.
 | [services/ENV_VARS_MAPPING.md](./services/ENV_VARS_MAPPING.md) | Environment variables mapping |
 | [docker-compose.microservices.yml](./docker-compose.microservices.yml) | Full microservices stack |
 
-**Architecture**: 9 services with database-per-service  
-**Status**: ✅ Production Ready (Nov 2025)
+**Architecture**: 8 core services plus the Enterprise API  
+**Status**: Active
 
-#### Auth Service
+#### Active Services
 | Document | Purpose |
 |----------|---------|
-| [services/auth-service/README.md](./services/auth-service/README.md) | Setup, API endpoints, RBAC |
-| [services/auth-service/agents.md](./services/auth-service/agents.md) | **Development guide** (650+ lines) |
-| [PRDs/team_management_feature.md](./PRDs/team_management_feature.md) | Team management feature PRD |
+| [services/web-service/](./services/web-service/) | Marketing forms, demo requests, analytics |
+| [services/user-service/](./services/user-service/) | User profiles, teams, preferences, organization management |
+| [services/key-service/](./services/key-service/) | API key management and organization-scoped credentials |
+| [services/encoding-service/](./services/encoding-service/) | Signing and metadata embedding workflows |
+| [services/verification-service/](./services/verification-service/) | Verification and tamper-detection workflows |
+| [services/analytics-service/](./services/analytics-service/) | Usage metrics and reporting |
+| [services/billing-service/](./services/billing-service/) | Billing, subscriptions, and Stripe integration |
+| [services/notification-service/](./services/notification-service/) | Email and notification delivery |
 
-**Features**: JWT auth, OAuth (Google/GitHub), session management, **Team Management**, RBAC  
-**Status**: ✅ Active (Team Management added Nov 2025)  
-**Port**: 8001
-
-#### Key Service
-| Document | Purpose |
-|----------|---------|
-| [services/key-service/](./services/key-service/) | Key management service |
-
-**Features**: Cryptographic key management, rotation  
-**Status**: 🚧 Partial Implementation  
-**Port**: 8004
-
-#### Planned Services
-- **user-service** (Port 8002) - User profiles
-- **key-service** (Port 8003) - API key management
-- **encoding-service** (Port 8004) - C2PA encoding
-- **verification-service** (Port 8005) - Content verification
-- **analytics-service** (Port 8006) - Usage analytics
-- **billing-service** (Port 8007) - Subscriptions
-- **notification-service** (Port 8008) - Notifications
+**See also**: [README.md](./README.md#-microservices-architecture) and [services/README.md](./services/README.md) for the current service inventory and ports.
 
 ---
 
-### 🔌 Integrations
+### Integrations
 
 #### WordPress Plugin
 | Document | Purpose |
 |----------|---------|
-| [integrations/wordpress-assurance-plugin/README.md](./integrations/wordpress-assurance-plugin/README.md) | Installation, configuration, Docker setup |
+| [integrations/wordpress-provenance-plugin/README.md](./integrations/wordpress-provenance-plugin/README.md) | Installation, configuration, Docker setup |
 
 **Features**: Gutenberg & Classic editor integration, Enterprise API calls  
-**Status**: ✅ Production Ready
+**Status**: Production Ready
 
 ---
 
-### 📦 Shared Libraries
+### Shared Libraries
 
 #### Commercial Shared Library
 | Document | Purpose |
@@ -208,7 +194,7 @@ Use this index to jump directly to the documentation you need.
 | [shared_commercial_libs/agents.md](./shared_commercial_libs/agents.md) | **Development guide** (580 lines) |
 
 **Purpose**: Shared Python library for all commercial tools  
-**Status**: ✅ Production Ready  
+**Status**: Production Ready  
 **Used By**: audit_log_cli, dashboard_app
 
 #### Design System
@@ -218,18 +204,18 @@ Use this index to jump directly to the documentation you need.
 | [packages/design-system/IMPLEMENTATION_GUIDE.md](./packages/design-system/IMPLEMENTATION_GUIDE.md) | Implementation guide |
 
 **Purpose**: Unified React/TypeScript components for all web properties  
-**Status**: ✅ Production Ready  
+**Status**: Production Ready  
 **Used By**: All web applications
 
 ---
 
-### 📚 Architecture & Planning
+### Architecture & Planning
 
 #### Architecture Documentation
 | Document | Purpose |
 |----------|---------|
 | [docs/architecture/BACKEND_ARCHITECTURE.md](./docs/architecture/BACKEND_ARCHITECTURE.md) | Backend system design |
-| [docs/architecture/EMBEDDING_MODES.md](./docs/architecture/EMBEDDING_MODES.md) | **Comprehensive reference for all embedding modes** — VS256, VS256+RS, ZW, C2PA — with platform compatibility, PDF behavior, security, and API usage |
+| [docs/architecture/EMBEDDING_MODES.md](./docs/architecture/EMBEDDING_MODES.md) | **Comprehensive reference for all embedding modes** - VS256, VS256+RS, ZW, C2PA - with platform compatibility, PDF behavior, security, and API usage |
 | [docs/architecture/MINIMAL_UUID_EMBEDDING_FLOW.html](./docs/architecture/MINIMAL_UUID_EMBEDDING_FLOW.html) | HTML diagram of minimal_uuid signing + verification flow |
 | [docs/architecture/EMBEDDING_ICON_DEMO.html](./docs/architecture/EMBEDDING_ICON_DEMO.html) | Interactive article demo with embedding icons + payload details |
 | [docs/architecture/SUBDOMAIN_STRATEGY.md](./docs/architecture/SUBDOMAIN_STRATEGY.md) | Domain strategy |
@@ -259,7 +245,7 @@ Use this index to jump directly to the documentation you need.
 
 ---
 
-### 🧪 Examples & Scripts
+### Examples & Scripts
 
 #### Examples
 | Document | Purpose |
@@ -276,14 +262,14 @@ Use this index to jump directly to the documentation you need.
 
 ---
 
-## 🎯 Documentation by Role
+## Documentation by Role
 
 ### For New Developers
 **Start Here:**
 1. [README.md](./README.md) - Repository overview
-2. [AUDIT_COMPLETE.md](./AUDIT_COMPLETE.md) - Quick summary
-3. Component's `agents.md` - Development constraints
-4. Component's `README.md` - Usage instructions
+2. [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) - Documentation map
+3. Explore directory structure
+4. Set up development environment
 
 **Essential Reading:**
 - [services/README.md](./services/README.md) - Microservices architecture
@@ -311,7 +297,7 @@ Use this index to jump directly to the documentation you need.
 ### For Product Managers
 **Essential:**
 - [README.md](./README.md) - Product tiers, features
-- [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md) - Audit findings
+- [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) - Feature and tier reference
 - [PRDs/CURRENT/](./PRDs/CURRENT/) - Product requirements
 - Component READMEs - Feature capabilities
 
@@ -323,7 +309,7 @@ Use this index to jump directly to the documentation you need.
 
 ---
 
-## 🔍 Finding Documentation
+## Finding Documentation
 
 ### By Technology
 
@@ -354,7 +340,7 @@ Use this index to jump directly to the documentation you need.
 #### Content Signing
 - [enterprise_api/](./enterprise_api/) - C2PA signing
 - **[Enterprise SDKs](./sdk/README.md)** - Auto-generated SDKs (Python/TypeScript/Go/Rust)
-- [integrations/wordpress-assurance-plugin/](./integrations/wordpress-assurance-plugin/) - WordPress
+- [integrations/wordpress-provenance-plugin/](./integrations/wordpress-provenance-plugin/) - WordPress
 
 #### Verification
 - [audit_log_cli/](./audit_log_cli/) - CLI verification
@@ -369,46 +355,29 @@ Use this index to jump directly to the documentation you need.
 
 ---
 
-## 📊 Documentation Quality
+## Documentation Quality
 
 ### Excellent Documentation (9-10/10)
-- ✅ enterprise_api - 653-line README + agents.md
-- ✅ sdk/ - Auto-generated SDKs (Python/TypeScript/Go/Rust)
-- ✅ packages/design-system - 395-line component guide
-- ✅ services/README.md - Complete architecture
+- [enterprise_api/](./enterprise_api/) - 653-line README + agents.md
+- [sdk/](./sdk/) - Auto-generated SDKs (Python/TypeScript/Go/Rust)
+- [packages/design-system/](./packages/design-system/) - 395-line component guide
+- [services/README.md](./services/README.md) - Complete architecture
 
 ### Good Documentation (7-8/10)
-- ✅ audit_log_cli - Good README, agents.md with issues
-- ✅ policy_validator_cli - Clean, well-documented
-- ✅ dashboard_app - Comprehensive setup guide
-- ✅ shared_commercial_libs - High-level API guide
-- ✅ services/auth-service - Complete service guide
+- [audit_log_cli/](./audit_log_cli/) - Good README, agents.md with issues
+- [policy_validator_cli/](./policy_validator_cli/) - Clean, well-documented
+- [dashboard_app/](./dashboard_app/) - Comprehensive setup guide
+- [shared_commercial_libs/](./shared_commercial_libs/) - High-level API guide
+- [services/auth-service/](./services/auth-service/) - Complete service guide
 
 ### Adequate Documentation (6-7/10)
-- ✅ apps/marketing-site - Basic but sufficient
-- ✅ apps/dashboard - Basic but sufficient
-- ✅ integrations/wordpress-assurance-plugin - Good setup guide
+- [apps/marketing-site/](./apps/marketing-site/) - Basic but sufficient
+- [apps/dashboard/](./apps/dashboard/) - Basic but sufficient
+- [integrations/wordpress-provenance-plugin/](./integrations/wordpress-provenance-plugin/) - Good setup guide
 
 ---
 
-## 🚨 Known Issues
-
-### Critical (Fix Immediately)
-1. **audit_log_cli/pyproject.toml** - Duplicate dependencies
-   - See: [audit_log_cli/agents.md](./audit_log_cli/agents.md)
-
-2. **audit_log_cli/app/main.py** - Duplicate imports
-   - See: [audit_log_cli/agents.md](./audit_log_cli/agents.md)
-
-3. **audit_log_cli/app/main.py** - Incomplete function definition
-   - See: [audit_log_cli/agents.md](./audit_log_cli/agents.md)
-
-### No Other Critical Issues
-All other components are production-ready.
-
----
-
-## 🔄 Documentation Maintenance
+## Documentation Maintenance
 
 ### When to Update Documentation
 
@@ -428,16 +397,16 @@ All other components are production-ready.
 ### Documentation Review Schedule
 - **Weekly**: Check for outdated information
 - **Monthly**: Review all READMEs
-- **Quarterly**: Full audit (like this one)
+- **Quarterly**: Full documentation review
 - **After Major Changes**: Immediate update
 
 ---
 
-## 📞 Getting Help
+## Getting Help
 
 ### Documentation Issues
 - Check component's `agents.md` for known issues
-- Review `DOCUMENTATION_AUDIT.md` for findings
+- Check [docs/archive/README.md](./docs/archive/README.md) for historical documentation
 - File issue in repository
 
 ### Development Questions
@@ -452,11 +421,11 @@ All other components are production-ready.
 
 ---
 
-## 🎓 Learning Path
+## Learning Path
 
 ### Week 1: Repository Basics
 1. Read [README.md](./README.md)
-2. Read [AUDIT_COMPLETE.md](./AUDIT_COMPLETE.md)
+2. Read [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)
 3. Explore directory structure
 4. Set up development environment
 
@@ -488,21 +457,20 @@ All other components are production-ready.
 
 ---
 
-## 📈 Documentation Statistics
+## Documentation Statistics
 
-- **Total Documentation Files**: 50+
-- **New Files Created (This Audit)**: 9
-- **Total Lines of Documentation**: 10,000+
-- **Components Documented**: 15
-- **Coverage**: 100% of active components
+- **Historical documents**: See [docs/archive/README.md](./docs/archive/README.md)
+- **Active PRDs**: See [PRDs/CURRENT/](./PRDs/CURRENT/)
+- **Archived PRDs**: See [PRDs/ARCHIVE/](./PRDs/ARCHIVE/)
+- **Primary sources of truth**: [README.md](./README.md), [FEATURE_MATRIX.md](./FEATURE_MATRIX.md), and component READMEs
 
 ---
 
-## ✨ Quick Links
+## Quick Links
 
 ### Most Important Documents
 1. [README.md](./README.md) - Start here
-2. [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md) - Audit report
+2. [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) - Feature and tier SSOT
 3. [services/README.md](./services/README.md) - Architecture
 4. [enterprise_api/README.md](./enterprise_api/README.md) - API reference
 
@@ -518,4 +486,3 @@ All other components are production-ready.
 **Last Updated**: February 13, 2026  
 **Maintained By**: Development Team  
 **Next Review**: May 13, 2026 (or after major changes)
-\n### Observability Docs\n\n| Document | Purpose |\n|----------|---------|\n| [docs/observability/ALERTS.md](./docs/observability/ALERTS.md) | Alert thresholds, runbooks |\n

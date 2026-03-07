@@ -265,7 +265,7 @@ final_document = UnicodeMetadata.embed_metadata(
 **Date**: October 31, 2025  
 **Files Modified**:
 - `enterprise_api/app/services/embedding_service.py` - Fixed to create ONE wrapper
-- `integrations/wordpress-assurance-plugin/plugin/encypher-provenance/includes/class-encypher-provenance-rest.php` - Restored strict compliance check
+- `integrations/wordpress-provenance-plugin/plugin/encypher-provenance/includes/class-encypher-provenance-rest.php` - Restored strict compliance check
 
 **Key Changes**:
 1. Removed per-sentence `embed_metadata()` calls

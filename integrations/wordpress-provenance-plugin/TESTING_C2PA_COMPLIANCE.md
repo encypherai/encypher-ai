@@ -13,11 +13,11 @@
 ### Critical Issue
 - **Before**: Created multiple `C2PATextManifestWrapper` objects (one per sentence)
 - **After**: Creates ONE `C2PATextManifestWrapper` for entire document
-- **Result**: ✅ Fully compliant with C2PA Manifests_Text.adoc specification
+- **Result**: Fully compliant with C2PA Manifests_Text.adoc specification
 
 ### Files Modified
 1. `enterprise_api/app/services/embedding_service.py` - Fixed to create single wrapper
-2. `integrations/wordpress-assurance-plugin/plugin/encypher-provenance/includes/class-encypher-provenance-rest.php` - Restored strict compliance check
+2. `integrations/wordpress-provenance-plugin/plugin/encypher-provenance/includes/class-encypher-provenance-rest.php` - Restored strict compliance check
 
 ---
 

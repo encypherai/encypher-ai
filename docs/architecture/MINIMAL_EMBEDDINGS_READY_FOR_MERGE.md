@@ -302,8 +302,8 @@ curl "http://localhost:8000/api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ"
 - **Scrapy Middleware:** `examples/scrapy_encypher_middleware.py`
 
 ### For Product
-- **PRD:** `PRDs/CURRENT/PRD_MINIMAL_EMBEDDINGS.md`
-- **Progress Tracker:** `PRDs/CURRENT/MINIMAL_EMBEDDINGS_PROGRESS.md`
+- **PRD:** `PRDs/ARCHIVE/PRD_MINIMAL_EMBEDDINGS.md`
+- **Progress Tracker:** `PRDs/ARCHIVE/MINIMAL_EMBEDDINGS_PROGRESS.md`
 
 ---
 

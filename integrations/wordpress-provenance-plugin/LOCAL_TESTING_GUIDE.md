@@ -159,7 +159,7 @@ Expected: JSON response with `embedded_content`, `merkle_tree`, and `statistics`
 Navigate to the WordPress plugin directory:
 
 ```powershell
-cd c:\Users\eriks\encypherai-commercial\integrations\wordpress-assurance-plugin
+cd c:\Users\eriks\encypherai-commercial\integrations\wordpress-provenance-plugin
 ```
 
 Create `docker-compose.yml`:
@@ -742,7 +742,7 @@ curl http://localhost:8085/wp-json/encypher-provenance/v1/status?post_id=1 `
 
 **WordPress (Docker):**
 ```powershell
-cd c:\Users\eriks\encypherai-commercial\integrations\wordpress-assurance-plugin
+cd c:\Users\eriks\encypherai-commercial\integrations\wordpress-provenance-plugin
 docker-compose down
 ```
 
@@ -796,7 +796,7 @@ if ($apiHealth.status -eq "healthy") {
 
 # Start WordPress
 Write-Host "`n2. Starting WordPress..." -ForegroundColor Yellow
-cd c:\Users\eriks\encypherai-commercial\integrations\wordpress-assurance-plugin
+cd c:\Users\eriks\encypherai-commercial\integrations\wordpress-provenance-plugin
 docker-compose up -d
 
 # Wait for WordPress to start
