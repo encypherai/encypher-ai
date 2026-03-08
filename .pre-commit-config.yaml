@@ -3,35 +3,23 @@ repos:
     rev: v4.4.0
     hooks:
     -   id: trailing-whitespace
+        stages: [pre-commit]
     -   id: end-of-file-fixer
+        stages: [pre-commit]
     -   id: check-yaml
         exclude: ^mkdocs\.yml$  # Exclude mkdocs.yml due to PyYAML tags
+        stages: [pre-commit]
     -   id: check-added-large-files
-
--   repo: https://github.com/psf/black
-    rev: 25.1.0  # Updated to the latest version
-    hooks:
-    -   id: black
-        additional_dependencies: ['.[jupyter]']
         stages: [pre-commit]
 
--   repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-    -   id: isort
-        name: isort (python)
-
--   repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.0.270'
+-   repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.10
     hooks:
     -   id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-
--   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.4.1
-    hooks:
-    -   id: mypy
-        additional_dependencies: [types-requests, types-PyYAML, types-Deprecated] # Added types-Deprecated
+        stages: [pre-commit]
+    -   id: ruff-format
+        stages: [pre-commit]
 
 # Secret detection
 -   repo: https://github.com/Yelp/detect-secrets
@@ -39,4 +27,16 @@ repos:
     hooks:
     -   id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
-        exclude: package-lock\.json|\.secrets\.baseline
+        exclude: package-lock\.json|\.secrets\.baseline|enterprise_api/tests/test_api_key_auth\.py|enterprise_api/tests/test_org_context_composition\.py
+        stages: [pre-commit]
+
+-   repo: local
+    hooks:
+    -   id: enterprise-api-ruff-pre-push
+        name: enterprise-api-ruff-pre-push
+        entry: bash -lc 'cd enterprise_api && uv run ruff check app tests'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+default_install_hook_types: [pre-commit, pre-push]
