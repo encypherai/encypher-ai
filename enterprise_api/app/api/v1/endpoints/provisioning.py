@@ -5,6 +5,7 @@ Allows external services (SDK, WordPress, CLI) to automatically
 create organizations and obtain API keys.
 """
 
+import hmac
 import logging
 import time
 from datetime import datetime, timedelta, timezone
@@ -35,18 +36,15 @@ router = APIRouter(prefix="/provisioning", tags=["Provisioning"])
 
 
 def _require_provisioning_token(x_provisioning_token: str | None) -> None:
-    if not settings.is_production:
-        return
-
     expected = (settings.provisioning_token or "").strip()
     if not expected:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Provisioning is not configured for production",
+            detail="Provisioning is not configured",
         )
 
     token = (x_provisioning_token or "").strip()
-    if token != expected:
+    if not hmac.compare_digest(token, expected):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid provisioning token",
@@ -62,9 +60,11 @@ def _require_internal_token(
 ) -> None:
     expected = (settings.internal_service_token or "").strip()
     if not expected:
-        logger.warning("internal_service_token_missing")
-        return
-    if not internal_token or internal_token.strip() != expected:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Internal token not configured",
+        )
+    if not internal_token or not hmac.compare_digest(internal_token.strip(), expected):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
     if internal_service != "enterprise_api":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal service")

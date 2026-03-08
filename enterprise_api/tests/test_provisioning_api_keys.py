@@ -9,6 +9,7 @@ from sqlalchemy import text
 async def test_provisioning_create_and_list_api_keys(async_client, db) -> None:
     response = await async_client.post(
         "/api/v1/provisioning/api-keys",
+        headers={"X-Provisioning-Token": "test-provisioning-token"},
         json={
             "organization_id": "org_demo",
             "name": "Provisioned Key",
@@ -48,6 +49,7 @@ async def test_provisioning_create_and_list_api_keys(async_client, db) -> None:
 
     list_response = await async_client.get(
         "/api/v1/provisioning/api-keys",
+        headers={"X-Provisioning-Token": "test-provisioning-token"},
         params={"organization_id": "org_demo"},
     )
 
@@ -61,6 +63,7 @@ async def test_provisioning_create_and_list_api_keys(async_client, db) -> None:
 async def test_provisioning_revoke_api_key(async_client, db) -> None:
     response = await async_client.post(
         "/api/v1/provisioning/api-keys",
+        headers={"X-Provisioning-Token": "test-provisioning-token"},
         json={
             "organization_id": "org_demo",
             "name": "Provisioned Revoke Key",
@@ -75,6 +78,7 @@ async def test_provisioning_revoke_api_key(async_client, db) -> None:
     revoke_response = await async_client.request(
         "DELETE",
         f"/api/v1/provisioning/api-keys/{key_id}",
+        headers={"X-Provisioning-Token": "test-provisioning-token"},
         json={"organization_id": "org_demo", "reason": "compromised"},
     )
 

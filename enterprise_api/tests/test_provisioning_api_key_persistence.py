@@ -10,6 +10,7 @@ async def test_auto_provision_persists_api_key_and_org(async_client, db) -> None
     email = "provisioning-key-test@example.com"
     response = await async_client.post(
         "/api/v1/provisioning/auto-provision",
+        headers={"X-Provisioning-Token": "test-provisioning-token"},
         json={
             "email": email,
             "organization_name": "Provisioning Key Test",

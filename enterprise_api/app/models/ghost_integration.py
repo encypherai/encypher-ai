@@ -7,7 +7,7 @@ for the hosted Ghost webhook endpoint.
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, LargeBinary, String
 from sqlalchemy.sql import func
 
 from app.database import Base
@@ -34,7 +34,8 @@ class GhostIntegration(Base):
 
     # Ghost connection
     ghost_url = Column(String(1000), nullable=False)
-    ghost_admin_api_key = Column(String(500), nullable=False)
+    # AES-GCM encrypted with key_encryption_key; use crypto_utils.{encrypt,decrypt}_sensitive_value
+    ghost_admin_api_key_encrypted = Column(LargeBinary(600), nullable=False)
 
     # Webhook authentication — opaque token (ghwh_...) scoped to this integration
     # Only the SHA-256 hash is stored; the plaintext token is returned once on creation.

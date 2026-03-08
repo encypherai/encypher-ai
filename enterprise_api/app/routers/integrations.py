@@ -39,6 +39,7 @@ from app.schemas.integration_schemas import (
     GhostTokenRegenerateResponse,
     GhostWebhookPayload,
 )
+from app.utils.crypto_utils import decrypt_sensitive_value, encrypt_sensitive_value
 from app.services.ghost_integration import (
     GhostAdminClient,
     clear_in_flight,
@@ -132,18 +133,20 @@ async def _get_org_context_for_integration(org_id: str) -> dict:
     if settings.compose_org_context_via_auth_service:
         org_data = await auth_service_client.get_organization_context(org_id)
         if org_data:
-            return _normalize_org_context({
-                "organization_id": org_id,
-                "organization_name": org_data.get("name"),
-                "tier": org_data.get("tier", "free"),
-                "features": org_data.get("features", {}),
-                "permissions": ["sign", "verify"],
-                "monthly_api_limit": org_data.get("monthly_api_limit"),
-                "monthly_api_usage": org_data.get("monthly_api_usage"),
-                "coalition_member": org_data.get("coalition_member", True),
-                "coalition_rev_share": org_data.get("coalition_rev_share", DEFAULT_COALITION_PUBLISHER_PERCENT),
-                "certificate_pem": org_data.get("certificate_pem"),
-            })
+            return _normalize_org_context(
+                {
+                    "organization_id": org_id,
+                    "organization_name": org_data.get("name"),
+                    "tier": org_data.get("tier", "free"),
+                    "features": org_data.get("features", {}),
+                    "permissions": ["sign", "verify"],
+                    "monthly_api_limit": org_data.get("monthly_api_limit"),
+                    "monthly_api_usage": org_data.get("monthly_api_usage"),
+                    "coalition_member": org_data.get("coalition_member", True),
+                    "coalition_rev_share": org_data.get("coalition_rev_share", DEFAULT_COALITION_PUBLISHER_PERCENT),
+                    "certificate_pem": org_data.get("certificate_pem"),
+                }
+            )
 
     # Fall back: check demo keys for matching org_id
     for _key, ctx in DEMO_KEYS.items():
@@ -184,7 +187,7 @@ def _build_response(
         id=integration.id,
         organization_id=integration.organization_id,
         ghost_url=integration.ghost_url,
-        ghost_admin_api_key_masked=_mask_key(integration.ghost_admin_api_key),
+        ghost_admin_api_key_masked=_mask_key(decrypt_sensitive_value(bytes(integration.ghost_admin_api_key_encrypted))),
         auto_sign_on_publish=integration.auto_sign_on_publish,
         auto_sign_on_update=integration.auto_sign_on_update,
         manifest_mode=integration.manifest_mode,
@@ -228,15 +231,13 @@ async def create_ghost_integration(
     org_id = organization["organization_id"]
 
     # Check if integration already exists
-    result = await db.execute(
-        select(GhostIntegration).where(GhostIntegration.organization_id == org_id)
-    )
+    result = await db.execute(select(GhostIntegration).where(GhostIntegration.organization_id == org_id))
     existing = result.scalar_one_or_none()
 
     if existing:
         # Update config but keep existing token
         existing.ghost_url = body.ghost_url
-        existing.ghost_admin_api_key = body.ghost_admin_api_key
+        existing.ghost_admin_api_key_encrypted = encrypt_sensitive_value(body.ghost_admin_api_key)
         existing.auto_sign_on_publish = body.auto_sign_on_publish
         existing.auto_sign_on_update = body.auto_sign_on_update
         existing.manifest_mode = body.manifest_mode
@@ -256,7 +257,7 @@ async def create_ghost_integration(
         id=f"gi_{uuid.uuid4().hex[:16]}",
         organization_id=org_id,
         ghost_url=body.ghost_url,
-        ghost_admin_api_key=body.ghost_admin_api_key,
+        ghost_admin_api_key_encrypted=encrypt_sensitive_value(body.ghost_admin_api_key),
         webhook_token_hash=_hash_token(plaintext_token),
         auto_sign_on_publish=body.auto_sign_on_publish,
         auto_sign_on_update=body.auto_sign_on_update,
@@ -302,9 +303,7 @@ async def delete_ghost_integration(
     db: AsyncSession = Depends(get_db),
 ):
     org_id = organization["organization_id"]
-    result = await db.execute(
-        select(GhostIntegration).where(GhostIntegration.organization_id == org_id)
-    )
+    result = await db.execute(select(GhostIntegration).where(GhostIntegration.organization_id == org_id))
     integration = result.scalar_one_or_none()
     if integration:
         integration.is_active = False
@@ -320,10 +319,7 @@ async def delete_ghost_integration(
 @router.post(
     "/integrations/ghost/regenerate-token",
     summary="Regenerate webhook token",
-    description=(
-        "Invalidate the current webhook token and generate a new one. "
-        "You must update the webhook URL in Ghost after regenerating."
-    ),
+    description=("Invalidate the current webhook token and generate a new one. " "You must update the webhook URL in Ghost after regenerating."),
     response_model=GhostTokenRegenerateResponse,
     tags=["Integrations"],
 )
@@ -441,13 +437,14 @@ async def ghost_webhook(
 
     # Update last_webhook_at
     from datetime import datetime, timezone
+
     integration.last_webhook_at = datetime.now(timezone.utc)
     await db.commit()
 
     # Capture config values before the request scope closes
     org_id = integration.organization_id
     ghost_url = integration.ghost_url
-    ghost_admin_api_key = integration.ghost_admin_api_key
+    ghost_admin_api_key = decrypt_sensitive_value(bytes(integration.ghost_admin_api_key_encrypted))
     manifest_mode = integration.manifest_mode
     segmentation_level = integration.segmentation_level
     ecc = integration.ecc
@@ -481,13 +478,17 @@ async def ghost_webhook(
                 if result.get("success"):
                     logger.info(
                         "Ghost %s %s signed via webhook (doc=%s, segments=%d)",
-                        resource_type, post_id,
-                        result.get("document_id"), result.get("total_segments", 0),
+                        resource_type,
+                        post_id,
+                        result.get("document_id"),
+                        result.get("total_segments", 0),
                     )
                 else:
                     logger.error(
                         "Ghost %s %s signing failed via webhook: %s",
-                        resource_type, post_id, result.get("error"),
+                        resource_type,
+                        post_id,
+                        result.get("error"),
                     )
         except Exception as e:
             logger.error("Ghost webhook signing error for %s %s: %s", resource_type, post_id, e, exc_info=True)
@@ -537,7 +538,7 @@ async def manual_sign_ghost_post(
     try:
         ghost_client = GhostAdminClient(
             ghost_url=integration.ghost_url,
-            admin_api_key=integration.ghost_admin_api_key,
+            admin_api_key=decrypt_sensitive_value(bytes(integration.ghost_admin_api_key_encrypted)),
         )
 
         result = await sign_ghost_post(

@@ -21,6 +21,21 @@ if (isProduction) {
   }
 }
 
+// Strip <script> tags, on* event handlers, and javascript: URLs from HTML.
+// This is a targeted defence against XSS payloads embedded in blog markdown
+// while preserving all legitimate content (iframes, embeds, formatting).
+function sanitizeBlogHtml(html: string): string {
+  return html
+    // Remove <script> blocks and their content
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    // Remove standalone <script> open/close tags that slipped through
+    .replace(/<\/?script\b[^>]*>/gi, '')
+    // Remove on* event handler attributes (onclick, onmouseover, onerror, etc.)
+    .replace(/\s+on[a-z][a-z0-9]*\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    // Remove javascript: URLs in href/src/action attributes
+    .replace(/(href|src|action)\s*=\s*(?:"javascript:[^"]*"|'javascript:[^']*')/gi, '');
+}
+
 export async function renderBlogMarkdown(content: string): Promise<string> {
   const [{ remark }, { default: html }, { default: remarkGfm }] = await Promise.all([
     import('remark'),
@@ -35,22 +50,22 @@ export async function renderBlogMarkdown(content: string): Promise<string> {
     .use(html, { sanitize: false })
     .process(contentWithYouTubeEmbeds);
 
-  return processedContent.toString();
+  return sanitizeBlogHtml(processedContent.toString());
 }
 
 // Function to process YouTube links into embeds
 function processYouTubeLinks(content: string): string {
   // Match YouTube links in various formats
   const youtubeRegex = /\[([^\]]+)\]\((https:\/\/(?:www\.)?youtube\.com\/(?:watch\?v=|embed\/)([a-zA-Z0-9_-]+)(?:&[^)]+)?)\)/g;
-  
+
   return content.replace(youtubeRegex, (match, text, url, videoId) => {
     return `
 <div class="aspect-video relative my-8">
-  <iframe 
-    src="https://www.youtube.com/embed/${videoId}" 
-    title="${text}" 
+  <iframe
+    src="https://www.youtube.com/embed/${videoId}"
+    title="${text}"
     class="absolute top-0 left-0 w-full h-full rounded-lg"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     allowfullscreen
   ></iframe>
 </div>
@@ -91,15 +106,15 @@ export function ensureBlogDirectoryExists() {
 export function getAllPosts(): BlogPost[] {
   try {
     ensureBlogDirectoryExists();
-    
+
     // Get file names under /posts
     const fileNames = fs.readdirSync(postsDirectory);
-    
+
     if (fileNames.length === 0) {
       console.warn('No blog post files found in directory:', postsDirectory);
       return [];
     }
-    
+
     const allPostsData = fileNames
       .filter(fileName => fileName.endsWith('.md'))
       .map((fileName) => {
@@ -113,7 +128,7 @@ export function getAllPosts(): BlogPost[] {
 
         // Use gray-matter to parse the post metadata section
         const matterResult = matter(fileContents);
-        
+
         // Format the date if it exists
         let formattedDate = '';
         if (matterResult.data.date) {
@@ -127,7 +142,7 @@ export function getAllPosts(): BlogPost[] {
         }
 
         // Use excerpt from frontmatter or generate from content
-        const excerpt = matterResult.data.excerpt || 
+        const excerpt = matterResult.data.excerpt ||
           matterResult.content.trim().split('\n')[0].substring(0, 160) + '...';
 
         return {
@@ -143,7 +158,7 @@ export function getAllPosts(): BlogPost[] {
           tags: matterResult.data.tags || [],
         };
       });
-      
+
     // Sort posts by date
     return allPostsData.sort((a, b) => {
       if (a.date < b.date) {
@@ -162,7 +177,7 @@ export function getAllPosts(): BlogPost[] {
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
   try {
     ensureBlogDirectoryExists();
-    
+
     // Find the file that matches the slug
     const fileNames = fs.readdirSync(postsDirectory);
     const fileName = fileNames.find(file => {
@@ -180,7 +195,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
 
     // Use gray-matter to parse the post metadata section
     const matterResult = matter(fileContents);
-    
+
     // Format the date if it exists
     let formattedDate = '';
     if (matterResult.data.date) {
@@ -196,7 +211,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
     const contentHtml = await renderBlogMarkdown(matterResult.content);
 
     // Use excerpt from frontmatter or generate from content
-    const excerpt = matterResult.data.excerpt || 
+    const excerpt = matterResult.data.excerpt ||
       matterResult.content.trim().split('\n')[0].substring(0, 160) + '...';
 
     // Combine the data with the id and contentHtml
@@ -227,7 +242,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
 export function getAllPostSlugs(): { params: { slug: string } }[] {
   try {
     ensureBlogDirectoryExists();
-    
+
     const fileNames = fs.readdirSync(postsDirectory);
     return fileNames
       .filter(fileName => fileName.endsWith('.md'))
@@ -251,7 +266,7 @@ export function getAllTags(): { tag: string; count: number }[] {
   try {
     const posts = getAllPosts();
     const tagCounts: Record<string, number> = {};
-    
+
     // Count occurrences of each tag
     posts.forEach(post => {
       if (post.tags && Array.isArray(post.tags)) {
@@ -260,13 +275,13 @@ export function getAllTags(): { tag: string; count: number }[] {
         });
       }
     });
-    
+
     // Convert to array of objects with tag and count
     const tags = Object.keys(tagCounts).map(tag => ({
       tag,
       count: tagCounts[tag]
     }));
-    
+
     // Sort by count (most popular first)
     return tags.sort((a, b) => b.count - a.count);
   } catch (error) {
@@ -279,9 +294,9 @@ export function getAllTags(): { tag: string; count: number }[] {
 export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
   try {
     const allPosts = getAllPosts();
-    return allPosts.filter(post => 
-      post.tags && 
-      Array.isArray(post.tags) && 
+    return allPosts.filter(post =>
+      post.tags &&
+      Array.isArray(post.tags) &&
       post.tags.some(t => t.toLowerCase() === tag.toLowerCase())
     );
   } catch (error) {

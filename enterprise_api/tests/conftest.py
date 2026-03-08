@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 os.environ.setdefault("KEY_ENCRYPTION_KEY", "0" * 64)
 os.environ.setdefault("ENCRYPTION_NONCE", "0" * 24)
+os.environ.setdefault("PROVISIONING_TOKEN", "test-provisioning-token")
 # Activate passthrough mode for all tests: skip JUMBF embedding (no CA cert in test env).
 # EXIF strip, hashing, pHash, composite manifest, and DB writes still run normally.
 os.environ.setdefault("IMAGE_SIGNING_PASSTHROUGH", "true")
