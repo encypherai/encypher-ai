@@ -12,14 +12,9 @@ from __future__ import annotations
 
 from typing import Any, Dict, Set
 
-from app.core.pricing_constants import (
-    COALITION_ENCYPHER_SHARE,
-    COALITION_PUBLISHER_SHARE,
-    DEFAULT_COALITION_REV_SHARE,
-    LICENSING_REV_SHARE as _LICENSING_REV_SHARE,
-    SELF_SERVICE_ENCYPHER_SHARE,
-    SELF_SERVICE_PUBLISHER_SHARE,
-)
+from app.core.pricing_constants import COALITION_ENCYPHER_SHARE, COALITION_PUBLISHER_SHARE, DEFAULT_COALITION_REV_SHARE
+from app.core.pricing_constants import LICENSING_REV_SHARE as _LICENSING_REV_SHARE
+from app.core.pricing_constants import SELF_SERVICE_ENCYPHER_SHARE, SELF_SERVICE_PUBLISHER_SHARE
 
 # ---------------------------------------------------------------------------
 # Tier names
@@ -45,12 +40,12 @@ def coerce_tier_name(tier: str) -> str:
 
 TIER_HIERARCHY: Dict[str, int] = {
     "free": 0,
-    "starter": 0,       # legacy alias
+    "starter": 0,  # legacy alias
     "professional": 0,  # legacy alias
-    "business": 0,      # legacy alias
+    "business": 0,  # legacy alias
     "enterprise": 1,
     "strategic_partner": 2,
-    "demo": 2,           # demo has full access
+    "demo": 2,  # demo has full access
 }
 
 
@@ -86,8 +81,8 @@ FREE_FEATURES: Dict[str, Any] = {
     "advanced_analytics": False,
     "max_team_members": 1,
     # image enterprise features
-    "image_fuzzy_search": False,     # pHash cross-org search (Enterprise only)
-    "trustmark_watermark": False,    # TrustMark neural watermark (Enterprise only)
+    "image_fuzzy_search": False,  # pHash cross-org search (Enterprise only)
+    "trustmark_watermark": False,  # TrustMark neural watermark (Enterprise only)
 }
 
 ENTERPRISE_FEATURES: Dict[str, Any] = {
@@ -109,8 +104,8 @@ ENTERPRISE_FEATURES: Dict[str, Any] = {
     # image signing (all tiers)
     "image_signing": True,
     # image enterprise features
-    "image_fuzzy_search": True,     # pHash cross-org search
-    "trustmark_watermark": True,    # TrustMark neural watermark
+    "image_fuzzy_search": True,  # pHash cross-org search
+    "trustmark_watermark": True,  # TrustMark neural watermark
 }
 
 # Strategic partners get the same features as enterprise
@@ -168,12 +163,12 @@ def get_tier_limits(tier: str) -> Dict[str, int]:
 
 TIER_RATE_LIMITS_PER_SECOND: Dict[str, int] = {
     "free": 10,
-    "starter": 10,       # legacy alias
+    "starter": 10,  # legacy alias
     "professional": 10,  # legacy alias
-    "business": 10,      # legacy alias
-    "enterprise": -1,
-    "strategic_partner": -1,
-    "demo": -1,
+    "business": 10,  # legacy alias
+    "enterprise": 200,
+    "strategic_partner": 500,
+    "demo": 120,
 }
 
 
@@ -226,9 +221,9 @@ def get_team_member_limit(tier: str) -> int:
 
 BATCH_LIMITS: Dict[str, int] = {
     "free": 10,
-    "starter": 10,       # legacy alias
+    "starter": 10,  # legacy alias
     "professional": 10,  # legacy alias
-    "business": 10,      # legacy alias
+    "business": 10,  # legacy alias
     "enterprise": 100,
     "strategic_partner": 100,
     "demo": 100,
@@ -263,9 +258,9 @@ def get_batch_worker_limit(tier: str) -> int:
 
 TIER_KEY_LIMITS: Dict[str, int] = {
     "free": 2,
-    "starter": 2,       # legacy alias
+    "starter": 2,  # legacy alias
     "professional": 2,  # legacy alias
-    "business": 2,      # legacy alias
+    "business": 2,  # legacy alias
     "enterprise": -1,
     "strategic_partner": -1,
 }

@@ -4,8 +4,12 @@ Uses the FastAPI TestClient (via httpx ASGITransport) with the real app.
 Database is overridden with a fake async session to avoid requiring a live
 PostgreSQL instance for these lightweight integration checks.
 """
+
 import base64
+import copy
+import hashlib
 import io
+import json
 import os
 import sys
 import uuid
@@ -22,21 +26,22 @@ os.environ.setdefault("KEY_ENCRYPTION_KEY", "0" * 64)
 os.environ.setdefault("ENCRYPTION_NONCE", "0" * 24)
 os.environ.setdefault(
     "CORE_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:15432/encypher_content",
+    "postgresql+asyncpg:///encypher_test_content",
 )
 os.environ.setdefault(
     "CONTENT_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:15432/encypher_content",
+    "postgresql+asyncpg:///encypher_test_content",
 )
 os.environ.setdefault("DATABASE_URL", os.environ["CORE_DATABASE_URL"])
 
 import pytest
+from app.config import settings
+from app.database import get_content_db, get_db
+from app.main import app
+from app.middleware.public_rate_limiter import public_rate_limiter
 from httpx import ASGITransport, AsyncClient
 from PIL import Image
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.database import get_content_db, get_db
-from app.main import app
 
 
 def _make_jpeg_b64(width: int = 10, height: int = 10) -> str:
@@ -113,6 +118,10 @@ async def test_verify_image_unsigned_jpeg_returns_200_valid_false() -> None:
     data = response.json()
     assert data["success"] is True
     assert data["valid"] is False
+    assert data["cryptographically_verified"] is False
+    assert data["db_matched"] is False
+    assert data["historically_signed_by_us"] is False
+    assert data["overall_status"] == "invalid"
     assert data["c2pa_manifest"] is None
     assert data["correlation_id"] is not None
     assert data["verified_at"] is not None
@@ -161,21 +170,109 @@ async def test_verify_image_no_db_record_image_id_is_null() -> None:
     assert data["phash"] is None
 
 
+@pytest.mark.asyncio
+async def test_verify_image_payload_over_limit_returns_413(monkeypatch) -> None:
+    """Image payloads above the configured size ceiling are rejected."""
+    jpeg_b64 = _make_jpeg_b64()
+    monkeypatch.setattr(settings, "image_max_size_bytes", 1)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/verify/image",
+            json={"image_data": jpeg_b64, "mime_type": "image/jpeg"},
+        )
+    assert response.status_code == 413
+
+
+@pytest.mark.asyncio
+async def test_verify_image_anonymous_rate_limited() -> None:
+    """Anonymous verify/image requests are throttled by the public rate limiter."""
+    original_limits = copy.deepcopy(public_rate_limiter.ENDPOINT_LIMITS)
+    try:
+        public_rate_limiter.ENDPOINT_LIMITS["verify_image"] = {
+            "requests_per_hour": 1,
+            "window_seconds": 60,
+        }
+        public_rate_limiter.reset_ip("127.0.0.1")
+        jpeg_b64 = _make_jpeg_b64()
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            first = await client.post(
+                "/api/v1/verify/image",
+                json={"image_data": jpeg_b64, "mime_type": "image/jpeg"},
+            )
+            second = await client.post(
+                "/api/v1/verify/image",
+                json={"image_data": jpeg_b64, "mime_type": "image/jpeg"},
+            )
+
+        assert first.status_code == 200
+        assert second.status_code == 429
+    finally:
+        public_rate_limiter.ENDPOINT_LIMITS = original_limits
+        public_rate_limiter.reset_ip("127.0.0.1")
+
+
+@pytest.mark.asyncio
+async def test_verify_image_minimal_response_hides_metadata(monkeypatch) -> None:
+    """Minimal-response mode hides public image metadata while preserving the verdict."""
+    jpeg_b64 = _make_jpeg_b64()
+    monkeypatch.setattr(settings, "public_verify_minimal_response", True)
+
+    fake_result = MagicMock()
+    fake_result.valid = True
+    fake_result.manifest_data = {"manifest": "data"}
+    fake_result.error = None
+    monkeypatch.setattr("app.api.v1.image_verify.verify_image_c2pa", lambda *_args, **_kwargs: fake_result)
+
+    async def _image_db_override():
+        session = MagicMock(spec=AsyncSession)
+        row = MagicMock()
+        row.image_id = "img_123"
+        row.document_id = "doc_123"
+        row.phash = int("deadbeefdeadbeef", 16)
+        first_result = MagicMock()
+        first_result.scalar_one_or_none.return_value = row
+        session.execute = AsyncMock(return_value=first_result)
+        yield session
+
+    app.dependency_overrides[get_content_db] = _image_db_override
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/verify/image",
+            json={"image_data": jpeg_b64, "mime_type": "image/jpeg"},
+        )
+
+    data = response.json()
+    assert response.status_code == 200
+    assert data["valid"] is True
+    assert data["c2pa_manifest"] is None
+    assert data["image_id"] is None
+    assert data["document_id"] is None
+    assert data["phash"] is None
+    assert data["hash"] is not None
+
+
 # ---------------------------------------------------------------------------
 # POST /api/v1/verify/rich tests
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_verify_rich_unknown_document_id_returns_404() -> None:
-    """Unknown document_id returns HTTP 404."""
+async def test_verify_rich_unknown_document_id_returns_generic_invalid_response() -> None:
+    """Unknown document_id returns a generic invalid verification response."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
             "/api/v1/verify/rich",
             json={"document_id": "doc_doesnotexist"},
         )
-    assert response.status_code == 404
+    assert response.status_code == 200
+    body = response.json()
+    assert body["valid"] is False
+    assert body["overall_status"] == "invalid"
+    assert body["error"] == "Unable to verify requested article"
 
 
 @pytest.mark.asyncio
@@ -191,8 +288,8 @@ async def test_verify_rich_missing_document_id_returns_422() -> None:
 
 
 @pytest.mark.asyncio
-async def test_verify_rich_404_error_message_contains_document_id() -> None:
-    """The 404 response error message references the document_id."""
+async def test_verify_rich_unknown_document_id_error_does_not_echo_identifier() -> None:
+    """Unknown rich verification responses do not echo the identifier in the error message."""
     doc_id = "doc_xyz_notfound_9999"
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -200,8 +297,84 @@ async def test_verify_rich_404_error_message_contains_document_id() -> None:
             "/api/v1/verify/rich",
             json={"document_id": doc_id},
         )
-    assert response.status_code == 404
+    assert response.status_code == 200
     body = response.json()
-    # Error detail must reference the missing document_id
-    detail_str = str(body)
-    assert doc_id in detail_str
+    assert body["error"] == "Unable to verify requested article"
+    assert doc_id not in body["error"]
+
+
+@pytest.mark.asyncio
+async def test_verify_rich_minimal_response_hides_metadata(monkeypatch) -> None:
+    """Minimal-response mode hides signer and image metadata on public rich verification."""
+    monkeypatch.setattr(settings, "public_verify_minimal_response", True)
+
+    manifest_data = {"title": "signed article"}
+    manifest_json = json.dumps(manifest_data, sort_keys=True, separators=(",", ":"))
+
+    composite_row = MagicMock()
+    composite_row.document_id = "doc_rich_123"
+    composite_row.manifest_data = manifest_data
+    composite_row.manifest_hash = "sha256:" + hashlib.sha256(manifest_json.encode()).hexdigest()
+    composite_row.organization_id = "org_demo"
+
+    image_row = MagicMock()
+    image_row.image_id = "img_123"
+    image_row.filename = "photo.jpg"
+    image_row.signed_hash = "sha256:abc"
+    image_row.c2pa_instance_id = "urn:uuid:test"
+
+    async def _rich_db_override():
+        session = MagicMock(spec=AsyncSession)
+        composite_result = MagicMock()
+        composite_result.scalar_one_or_none.return_value = composite_row
+        images_result = MagicMock()
+        scalars_mock = MagicMock()
+        scalars_mock.all.return_value = [image_row]
+        images_result.scalars.return_value = scalars_mock
+        session.execute = AsyncMock(side_effect=[composite_result, images_result])
+        yield session
+
+    app.dependency_overrides[get_content_db] = _rich_db_override
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/verify/rich",
+            json={"document_id": "doc_rich_123"},
+        )
+
+    data = response.json()
+    assert response.status_code == 200
+    assert data["valid"] is True
+    assert data["signer_identity"] is None
+    assert len(data["image_verifications"]) == 1
+    assert data["image_verifications"][0]["image_id"] is None
+    assert data["image_verifications"][0]["filename"] is None
+    assert data["image_verifications"][0]["c2pa_instance_id"] is None
+
+
+@pytest.mark.asyncio
+async def test_verify_rich_anonymous_rate_limited() -> None:
+    """Anonymous verify/rich requests are throttled by the public rate limiter."""
+    original_limits = copy.deepcopy(public_rate_limiter.ENDPOINT_LIMITS)
+    try:
+        public_rate_limiter.ENDPOINT_LIMITS["verify_rich"] = {
+            "requests_per_hour": 1,
+            "window_seconds": 60,
+        }
+        public_rate_limiter.reset_ip("127.0.0.1")
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            first = await client.post(
+                "/api/v1/verify/rich",
+                json={"document_id": "doc_doesnotexist"},
+            )
+            second = await client.post(
+                "/api/v1/verify/rich",
+                json={"document_id": "doc_doesnotexist"},
+            )
+
+        assert first.status_code == 200
+        assert second.status_code == 429
+    finally:
+        public_rate_limiter.ENDPOINT_LIMITS = original_limits
+        public_rate_limiter.reset_ip("127.0.0.1")

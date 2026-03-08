@@ -5,12 +5,9 @@ TEAM_002: Tests for rate limit headers and tier-based limits.
 """
 
 import time
+from types import SimpleNamespace
 
-from app.middleware.api_rate_limiter import (
-    TIER_RATE_LIMITS_PER_SECOND,
-    ApiRateLimiter,
-    RateLimitResult,
-)
+from app.middleware.api_rate_limiter import TIER_RATE_LIMITS_PER_SECOND, ApiRateLimiter, RateLimitResult
 
 
 class TestTierRateLimits:
@@ -22,8 +19,8 @@ class TestTierRateLimits:
         assert TIER_RATE_LIMITS_PER_SECOND["starter"] == 10  # legacy alias
         assert TIER_RATE_LIMITS_PER_SECOND["professional"] == 10  # legacy alias
         assert TIER_RATE_LIMITS_PER_SECOND["business"] == 10  # legacy alias
-        assert TIER_RATE_LIMITS_PER_SECOND["enterprise"] == -1  # Unlimited
-        assert TIER_RATE_LIMITS_PER_SECOND["strategic_partner"] == -1  # Unlimited
+        assert TIER_RATE_LIMITS_PER_SECOND["enterprise"] == 200
+        assert TIER_RATE_LIMITS_PER_SECOND["strategic_partner"] == 500
 
     def test_get_tier_limit_per_minute(self):
         """TEAM_166: Test conversion from per-second to per-minute limits."""
@@ -33,8 +30,8 @@ class TestTierRateLimits:
         assert limiter.get_tier_limit_per_minute("starter") == 600  # legacy alias
         assert limiter.get_tier_limit_per_minute("professional") == 600  # legacy alias
         assert limiter.get_tier_limit_per_minute("business") == 600  # legacy alias
-        assert limiter.get_tier_limit_per_minute("enterprise") == -1  # Unlimited
-        assert limiter.get_tier_limit_per_minute("strategic_partner") == -1  # Unlimited
+        assert limiter.get_tier_limit_per_minute("enterprise") == 12000
+        assert limiter.get_tier_limit_per_minute("strategic_partner") == 30000
 
     def test_get_tier_limit_case_insensitive(self):
         """Test tier names are case-insensitive."""
@@ -95,20 +92,20 @@ class TestRateLimitCheck:
         assert remaining == 0
         assert limit == 5
 
-    def test_check_unlimited_tier(self):
-        """Enterprise tier should have unlimited requests."""
+    def test_check_high_tier_uses_finite_ceiling(self):
+        """Enterprise tier should have a large but finite request ceiling."""
         limiter = ApiRateLimiter()
 
-        # Make many requests
-        for _ in range(1000):
-            allowed, retry_after, remaining, limit = limiter.check(
-                organization_id="org_enterprise",
-                scope="sign",
-                tier="enterprise",
-            )
-            assert allowed is True
-            assert limit == -1
-            assert remaining == -1
+        allowed, retry_after, remaining, limit = limiter.check(
+            organization_id="org_enterprise",
+            scope="sign",
+            tier="enterprise",
+        )
+
+        assert allowed is True
+        assert retry_after is None
+        assert limit == 12000
+        assert remaining == 11999
 
     def test_check_scopes_are_independent(self):
         """Different scopes should have independent limits."""
@@ -234,8 +231,8 @@ class TestRateLimitHeaders:
         assert "Retry-After" in headers
         assert int(headers["Retry-After"]) > 0
 
-    def test_get_headers_unlimited_tier_no_headers(self):
-        """Unlimited tiers should not include rate limit headers."""
+    def test_get_headers_high_tier_includes_headers(self):
+        """Finite high-tier limits should still emit standard rate limit headers."""
         limiter = ApiRateLimiter()
 
         result = limiter.check_with_reset(
@@ -246,6 +243,76 @@ class TestRateLimitHeaders:
 
         headers = limiter.get_headers(result)
 
-        # Unlimited tier should have empty headers
-        assert "X-RateLimit-Limit" not in headers
-        assert "X-RateLimit-Remaining" not in headers
+        assert headers["X-RateLimit-Limit"] == "12000"
+        assert int(headers["X-RateLimit-Remaining"]) >= 0
+        assert "X-RateLimit-Reset" in headers
+
+
+class TestRequestLimitDimensions:
+    def test_check_request_limits_returns_api_key_dimension_when_key_bucket_is_exhausted(self):
+        limiter = ApiRateLimiter()
+        fixture_prefix = "fixture-token"
+        request = SimpleNamespace(
+            client=SimpleNamespace(host="198.51.100.10"),
+            headers={},
+        )
+
+        limiter.check_with_reset(
+            organization_id="org_test",
+            scope="sign",
+            per_minute=2,
+            identity_type="api_key",
+            identity_value="ency_test_key",
+        )
+
+        result, limited_dimension = limiter.check_request_limits(
+            request=request,
+            organization_id="org_test",
+            scope="sign",
+            per_minute=2,
+            api_key_prefix=fixture_prefix,
+        )
+
+        assert result.allowed is False
+        assert limited_dimension == "api_key"
+
+    def test_check_request_limits_returns_ip_dimension_when_ip_bucket_is_exhausted(self):
+        limiter = ApiRateLimiter()
+        fixture_prefix = "fixture-token"
+        request = SimpleNamespace(
+            client=SimpleNamespace(host="198.51.100.11"),
+            headers={},
+        )
+
+        limiter.check_with_reset(
+            organization_id="org_test",
+            scope="sign",
+            per_minute=4,
+            identity_type="ip",
+            identity_value="198.51.100.11",
+        )
+
+        result, limited_dimension = limiter.check_request_limits(
+            request=request,
+            organization_id="org_test",
+            scope="sign",
+            per_minute=4,
+            api_key_prefix=fixture_prefix,
+        )
+
+        assert result.allowed is False
+        assert limited_dimension == "ip"
+
+    def test_resolve_client_ip_prefers_forwarded_ip_for_trusted_proxy(self):
+        limiter = ApiRateLimiter()
+        request = SimpleNamespace(
+            client=SimpleNamespace(host="10.0.0.5"),
+            headers={"X-Forwarded-For": "203.0.113.20, 10.0.0.5"},
+        )
+
+        original_trusted = limiter.resolve_client_ip.__globals__["settings"].trusted_proxy_ips
+        limiter.resolve_client_ip.__globals__["settings"].trusted_proxy_ips = "10.0.0.5"
+        try:
+            assert limiter.resolve_client_ip(request) == "203.0.113.20"
+        finally:
+            limiter.resolve_client_ip.__globals__["settings"].trusted_proxy_ips = original_trusted

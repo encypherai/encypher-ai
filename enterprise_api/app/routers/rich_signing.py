@@ -4,13 +4,10 @@ Signs rich articles (text + embedded images) as a single atomic provenance unit
 using the C2PA standard. Each image gets a standalone JUMBF-embedded C2PA manifest,
 and the article-level manifest binds text + images via an ingredient list.
 """
+
 import asyncio
 import logging
 import uuid
-
-from fastapi import APIRouter, Depends, Request, Response, status
-from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_content_db, get_db
 from app.dependencies import require_sign_permission
@@ -21,6 +18,9 @@ from app.schemas.rich_sign_schemas import RichArticleSignRequest
 from app.services.rich_signing_service import execute_rich_signing
 from app.services.webhook_dispatcher import emit_document_signed
 from app.utils.quota import QuotaManager, QuotaType
+from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -77,18 +77,17 @@ async def sign_rich_content(
     composite manifest, and returns base64-encoded signed images plus the composite
     manifest summary.
     """
-    correlation_id = (
-        getattr(http_request.state, "request_id", None)
-        or f"req-{uuid.uuid4().hex[:12]}"
-    )
+    correlation_id = getattr(http_request.state, "request_id", None) or f"req-{uuid.uuid4().hex[:12]}"
     tier = (organization.get("tier") or "free").lower().replace("-", "_")
     org_id = organization["organization_id"]
 
     # Rate limiting
-    rate_result = api_rate_limiter.check_with_reset(
+    rate_result, limited_dimension = api_rate_limiter.check_request_limits(
+        request=http_request,
         organization_id=org_id,
         scope="sign",
         tier=tier,
+        api_key_prefix=getattr(http_request.state, "api_key_prefix", None),
     )
     for header, value in api_rate_limiter.get_headers(rate_result).items():
         response.headers[header] = value
@@ -105,7 +104,11 @@ async def sign_rich_content(
                     "hint": f"Rate limit is {rate_result.limit} requests per minute for {tier} tier",
                 },
                 "correlation_id": correlation_id,
-                "meta": {"tier": tier, "rate_limit_remaining": 0},
+                "meta": {
+                    "tier": tier,
+                    "rate_limit_remaining": 0,
+                    "rate_limit_dimension": limited_dimension,
+                },
             },
             headers=api_rate_limiter.get_headers(rate_result),
         )

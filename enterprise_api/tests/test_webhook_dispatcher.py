@@ -1,6 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from app.services.webhook_dispatcher import WebhookDispatcher
 
 
@@ -26,13 +26,16 @@ async def test_webhook_dispatcher_rejects_untrusted_url() -> None:
 
     db = AsyncMock()
 
-    with patch("app.services.webhook_dispatcher.validate_https_public_url", side_effect=ValueError("untrusted")):
+    with patch(
+        "app.services.webhook_dispatcher.validate_https_public_url",
+        side_effect=ValueError("untrusted"),
+    ):
         ok = await dispatcher._attempt_delivery(
             db=db,
             delivery_id="del_test",
             webhook_id="wh_test",
             url="https://127.0.0.1/webhook",
-            secret_hash=None,
+            secret=None,
             payload_json="{}",
             event_type="document.signed",
         )
@@ -40,3 +43,14 @@ async def test_webhook_dispatcher_rejects_untrusted_url() -> None:
     assert ok is False
     dispatcher.get_client.assert_not_called()
     dispatcher._record_failure.assert_called_once()
+
+
+def test_build_headers_adds_signature_when_secret_present() -> None:
+    dispatcher = WebhookDispatcher()
+
+    headers = dispatcher.build_headers("document.signed", "del_test", '{"ok":true}', "webhook-test-token")
+
+    assert headers["X-Encypher-Event"] == "document.signed"
+    assert headers["X-Encypher-Delivery"] == "del_test"
+    assert headers["X-Encypher-Timestamp"]
+    assert headers["X-Encypher-Signature"].startswith("sha256=")

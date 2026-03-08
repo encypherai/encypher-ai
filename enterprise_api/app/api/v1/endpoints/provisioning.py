@@ -7,11 +7,7 @@ create organizations and obtain API keys.
 
 import logging
 import time
-from datetime import datetime
-
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
+from datetime import datetime, timedelta, timezone
 
 from app.config import settings
 from app.database import get_db
@@ -29,6 +25,9 @@ from app.schemas.provisioning import (
     UserAccountResponse,
 )
 from app.services.provisioning_service import ProvisioningService
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +53,34 @@ def _require_provisioning_token(x_provisioning_token: str | None) -> None:
         )
 
 
-def _require_internal_token(internal_token: str | None) -> None:
+def _require_internal_token(
+    internal_token: str | None,
+    *,
+    internal_service: str | None = None,
+    internal_audience: str | None = None,
+    internal_timestamp: str | None = None,
+) -> None:
     expected = (settings.internal_service_token or "").strip()
     if not expected:
         logger.warning("internal_service_token_missing")
         return
     if not internal_token or internal_token.strip() != expected:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+    if internal_service != "enterprise_api":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal service")
+    if internal_audience != "enterprise_api.provisioning.ensure_certificate":
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal audience")
+    if not internal_timestamp or not internal_timestamp.strip():
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal timestamp")
+    try:
+        parsed_timestamp = datetime.fromisoformat(internal_timestamp)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal timestamp")
+    if parsed_timestamp.tzinfo is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal timestamp")
+    now = datetime.now(timezone.utc)
+    if abs(now - parsed_timestamp.astimezone(timezone.utc)) > timedelta(minutes=5):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Expired internal timestamp")
 
 
 # ============================================================================
@@ -75,28 +95,28 @@ def _require_internal_token(internal_token: str | None) -> None:
     summary="Auto-provision Organization and API Key",
     description="""
     Automatically provision an organization, user account, and API key.
-    
+
     This endpoint is designed for external services to automatically create
     accounts without manual intervention:
-    
+
     **Use Cases:**
     - SDK initialization (auto-create account on first use)
     - WordPress plugin activation (auto-provision on install)
     - CLI tool setup (auto-create account on login)
     - Mobile app onboarding (auto-provision on signup)
-    
+
     **What Gets Created:**
     1. Organization (with specified tier)
     2. User account (associated with email)
     3. API key (for authentication)
-    
+
     **Idempotent:** If organization already exists for email, returns existing
     organization with a new API key.
-    
+
     **Rate Limits:**
     - 10 requests per minute per IP
     - 100 requests per hour per email
-    
+
     **Security:**
     - Requires valid provisioning token (for production)
     - Validates email format
@@ -144,7 +164,11 @@ async def auto_provision(
         )
 
         # Get tier enum
-        tier_map = {"free": OrganizationTier.FREE, "enterprise": OrganizationTier.ENTERPRISE, "strategic_partner": OrganizationTier.STRATEGIC_PARTNER}
+        tier_map = {
+            "free": OrganizationTier.FREE,
+            "enterprise": OrganizationTier.ENTERPRISE,
+            "strategic_partner": OrganizationTier.STRATEGIC_PARTNER,
+        }
         tier_enum = tier_map.get(request.tier or "free", OrganizationTier.FREE)
 
         # Build response
@@ -181,7 +205,10 @@ async def auto_provision(
         raise
     except Exception as e:
         logger.error(f"Error auto-provisioning: {e}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to provision organization")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to provision organization",
+        )
 
 
 # ============================================================================
@@ -215,7 +242,10 @@ async def create_api_key(
     """
     _require_provisioning_token(x_provisioning_token)
 
-    org_row = await db.execute(text("SELECT id, tier FROM organizations WHERE id = :org_id"), {"org_id": request.organization_id})
+    org_row = await db.execute(
+        text("SELECT id, tier FROM organizations WHERE id = :org_id"),
+        {"org_id": request.organization_id},
+    )
     org = org_row.fetchone()
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
@@ -238,7 +268,12 @@ async def create_api_key(
     )
 
 
-@router.get("/api-keys", response_model=APIKeyListResponse, summary="List API Keys", description="List all API keys for an organization")
+@router.get(
+    "/api-keys",
+    response_model=APIKeyListResponse,
+    summary="List API Keys",
+    description="List all API keys for an organization",
+)
 async def list_api_keys(
     organization_id: str = Query(..., description="Organization identifier"),
     db: AsyncSession = Depends(get_db),
@@ -265,7 +300,12 @@ async def list_api_keys(
     return APIKeyListResponse(keys=keys, total=len(keys))
 
 
-@router.delete("/api-keys/{key_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Revoke API Key", description="Revoke an API key")
+@router.delete(
+    "/api-keys/{key_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Revoke API Key",
+    description="Revoke an API key",
+)
 async def revoke_api_key(
     key_id: str,
     request: APIKeyRevokeRequest,
@@ -333,7 +373,13 @@ async def create_user_account(
     # If no organization provided, create one
     if not request.organization_id:
         org, _, _ = await ProvisioningService.auto_provision(
-            db=db, email=request.email, organization_name=None, source="api", source_metadata=None, tier="free", auto_activate=True
+            db=db,
+            email=request.email,
+            organization_name=None,
+            source="api",
+            source_metadata=None,
+            tier="free",
+            auto_activate=True,
         )
         organization_id = org.organization_id
     else:
@@ -367,8 +413,16 @@ async def ensure_certificate_internal(
     request: InternalEnsureCertificateRequest,
     db: AsyncSession = Depends(get_db),
     internal_token: str | None = Header(None, alias="X-Internal-Token"),
+    internal_service: str | None = Header(None, alias="X-Internal-Service"),
+    internal_audience: str | None = Header(None, alias="X-Internal-Audience"),
+    internal_timestamp: str | None = Header(None, alias="X-Internal-Timestamp"),
 ) -> InternalEnsureCertificateResponse:
-    _require_internal_token(internal_token)
+    _require_internal_token(
+        internal_token,
+        internal_service=internal_service,
+        internal_audience=internal_audience,
+        internal_timestamp=internal_timestamp,
+    )
 
     org_row = await db.execute(
         text("SELECT name FROM organizations WHERE id = :org_id"),
@@ -404,7 +458,11 @@ async def ensure_certificate_internal(
 # ============================================================================
 
 
-@router.get("/health", summary="Provisioning Service Health", description="Check if provisioning service is available")
+@router.get(
+    "/health",
+    summary="Provisioning Service Health",
+    description="Check if provisioning service is available",
+)
 async def provisioning_health():
     """
     Health check for provisioning service.

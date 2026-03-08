@@ -15,14 +15,15 @@ Headers returned:
 - Retry-After: Seconds until rate limit resets (on 429 only)
 """
 
+import ipaddress
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import Deque, Dict, Optional, Tuple
 
 from app.config import settings
-
 from app.core.tier_config import TIER_RATE_LIMITS_PER_SECOND  # SSOT
+from fastapi import Request
 
 
 @dataclass
@@ -42,6 +43,12 @@ class ApiRateLimiter:
 
     Supports tier-aware rate limiting with proper HTTP headers.
     """
+
+    DIMENSION_LIMIT_FACTORS = {
+        "organization": 1.0,
+        "api_key": 0.5,
+        "ip": 0.25,
+    }
 
     def __init__(self, default_per_minute: int = 60):
         self.default_per_minute = default_per_minute
@@ -68,6 +75,41 @@ class ApiRateLimiter:
 
         return per_second * 60  # Convert to per minute
 
+    def get_dimension_limit_per_minute(self, base_limit: int, identity_type: str) -> int:
+        if base_limit == -1:
+            return -1
+
+        factor = self.DIMENSION_LIMIT_FACTORS.get(identity_type, 1.0)
+        return max(1, int(base_limit * factor))
+
+    @staticmethod
+    def _parse_forwarded_ip(raw_value: Optional[str]) -> Optional[str]:
+        if not raw_value:
+            return None
+
+        candidate = raw_value.split(",")[0].strip()
+        if not candidate:
+            return None
+
+        try:
+            ipaddress.ip_address(candidate)
+        except ValueError:
+            return None
+        return candidate
+
+    def resolve_client_ip(self, request: Request) -> str:
+        client_host = request.client.host if request.client else "unknown"
+        if client_host in settings.trusted_proxy_ips_set:
+            forwarded_ip = self._parse_forwarded_ip(request.headers.get("X-Forwarded-For"))
+            if forwarded_ip:
+                return forwarded_ip
+
+            real_ip = self._parse_forwarded_ip(request.headers.get("X-Real-IP"))
+            if real_ip:
+                return real_ip
+
+        return client_host
+
     def check(
         self,
         *,
@@ -75,6 +117,8 @@ class ApiRateLimiter:
         scope: str,
         tier: Optional[str] = None,
         per_minute: Optional[int] = None,
+        identity_type: str = "organization",
+        identity_value: Optional[str] = None,
     ) -> Tuple[bool, Optional[int], int, int]:
         """
         Check if request is within rate limits.
@@ -96,11 +140,14 @@ class ApiRateLimiter:
         else:
             limit = self.default_per_minute
 
+        limit = self.get_dimension_limit_per_minute(limit, identity_type)
+
         # Unlimited tier
         if limit == -1:
             return True, None, -1, -1
 
-        key = (organization_id, scope)
+        limiter_identity = identity_value or organization_id
+        key = (f"{identity_type}:{limiter_identity}", scope)
         now = time.time()
         window_start = now - 60
         dq = self._requests[key]
@@ -124,6 +171,8 @@ class ApiRateLimiter:
         scope: str,
         tier: Optional[str] = None,
         per_minute: Optional[int] = None,
+        identity_type: str = "organization",
+        identity_value: Optional[str] = None,
     ) -> RateLimitResult:
         """
         Check rate limit and return full result with reset timestamp.
@@ -142,6 +191,8 @@ class ApiRateLimiter:
             scope=scope,
             tier=tier,
             per_minute=per_minute,
+            identity_type=identity_type,
+            identity_value=identity_value,
         )
 
         # Calculate reset timestamp (end of current 60-second window)
@@ -155,6 +206,52 @@ class ApiRateLimiter:
             limit=limit,
             reset_at=reset_at,
         )
+
+    def check_request_limits(
+        self,
+        *,
+        request: Request,
+        organization_id: str,
+        scope: str,
+        tier: Optional[str] = None,
+        per_minute: Optional[int] = None,
+        api_key_prefix: Optional[str] = None,
+    ) -> Tuple[RateLimitResult, str]:
+        primary_result: Optional[RateLimitResult] = None
+        dimensions = [
+            ("organization", organization_id),
+            ("api_key", api_key_prefix),
+            ("ip", self.resolve_client_ip(request)),
+        ]
+
+        for identity_type, identity_value in dimensions:
+            if not identity_value:
+                continue
+
+            result = self.check_with_reset(
+                organization_id=organization_id,
+                scope=scope,
+                tier=tier,
+                per_minute=per_minute,
+                identity_type=identity_type,
+                identity_value=identity_value,
+            )
+
+            if identity_type == "organization":
+                primary_result = result
+
+            if not result.allowed:
+                return result, identity_type
+
+        if primary_result is None:
+            primary_result = self.check_with_reset(
+                organization_id=organization_id,
+                scope=scope,
+                tier=tier,
+                per_minute=per_minute,
+            )
+
+        return primary_result, "organization"
 
     def get_headers(self, result: RateLimitResult) -> Dict[str, str]:
         """

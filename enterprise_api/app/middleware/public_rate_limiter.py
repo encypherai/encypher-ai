@@ -10,12 +10,13 @@ For production, consider upgrading to Redis-based rate limiting.
 import ipaddress
 import logging
 import time
+import uuid
 from collections import defaultdict
 from typing import Any, Dict, Optional, Set, Tuple
 
-from fastapi import HTTPException, Request, status
-
 from app.config import settings
+from app.services.session_service import session_service
+from fastapi import HTTPException, Request, status
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,8 @@ class PublicAPIRateLimiter:
     ENDPOINT_LIMITS = {
         "verify_single": {"requests_per_hour": 1000, "window_seconds": 3600},
         "verify_batch": {"requests_per_hour": 100, "window_seconds": 3600},
+        "verify_image": {"requests_per_hour": 120, "window_seconds": 3600},
+        "verify_rich": {"requests_per_hour": 240, "window_seconds": 3600},
         "c2pa_validate_manifest": {"requests_per_hour": 10, "window_seconds": 60},
         "c2pa_create_manifest": {"requests_per_hour": 10, "window_seconds": 60},
         "trust_anchor_lookup": {"requests_per_hour": 100, "window_seconds": 60},
@@ -50,8 +53,82 @@ class PublicAPIRateLimiter:
         self.violations: Dict[str, int] = defaultdict(int)
 
         self.trusted_proxy_ips: Set[str] = set(trusted_proxy_ips or set())
+        self.redis_prefix = "encypher:public-rate-limit:"
 
         logger.info("PublicAPIRateLimiter initialized")
+
+    def _redis_key(self, client_ip: str, endpoint_type: str) -> str:
+        return f"{self.redis_prefix}{endpoint_type}:{client_ip}"
+
+    async def _check_rate_limit_redis(self, request: Request, endpoint_type: str) -> Tuple[bool, Optional[str], Optional[int], Dict[str, str]]:
+        client_ip = self._get_client_ip(request)
+        limits = self.ENDPOINT_LIMITS.get(endpoint_type, self.ENDPOINT_LIMITS["default"])
+        max_requests = limits["requests_per_hour"]
+        window_seconds = limits["window_seconds"]
+        redis_client = session_service.redis_client
+
+        if not settings.public_rate_limit_use_redis or redis_client is None:
+            allowed, error_msg, retry_after = self.check_rate_limit(request, endpoint_type)
+            headers = self.get_rate_limit_headers(request, endpoint_type)
+            return allowed, error_msg, retry_after, headers
+
+        key = self._redis_key(client_ip, endpoint_type)
+        now = time.time()
+        member = f"{now}:{uuid.uuid4().hex}"
+        response = await redis_client.eval(
+            """
+            local key = KEYS[1]
+            local now = tonumber(ARGV[1])
+            local window = tonumber(ARGV[2])
+            local limit = tonumber(ARGV[3])
+            local member = ARGV[4]
+            redis.call('ZREMRANGEBYSCORE', key, '-inf', now - window)
+            local count = redis.call('ZCARD', key)
+            local oldest = redis.call('ZRANGE', key, 0, 0, 'WITHSCORES')
+            if count >= limit then
+                local retry_after = window
+                local reset_at = math.ceil(now + window)
+                if oldest[2] ~= nil then
+                    retry_after = math.max(1, math.ceil((tonumber(oldest[2]) + window) - now))
+                    reset_at = math.ceil(tonumber(oldest[2]) + window)
+                end
+                return {0, retry_after, 0, limit, reset_at}
+            end
+            redis.call('ZADD', key, now, member)
+            redis.call('EXPIRE', key, math.max(1, math.ceil(window)))
+            local remaining = math.max(0, limit - count - 1)
+            oldest = redis.call('ZRANGE', key, 0, 0, 'WITHSCORES')
+            local reset_at = math.ceil(now + window)
+            if oldest[2] ~= nil then
+                reset_at = math.ceil(tonumber(oldest[2]) + window)
+            end
+            return {1, -1, remaining, limit, reset_at}
+            """,
+            1,
+            key,
+            now,
+            window_seconds,
+            max_requests,
+            member,
+        )
+
+        allowed = bool(int(response[0]))
+        retry_after = None if int(response[1]) < 0 else int(response[1])
+        headers = {
+            "X-RateLimit-Limit": str(int(response[3])),
+            "X-RateLimit-Remaining": str(max(0, int(response[2]))),
+            "X-RateLimit-Reset": str(int(response[4])),
+        }
+        if allowed:
+            return True, None, None, headers
+
+        self.violations[client_ip] += 1
+        logger.warning(
+            f"Rate limit exceeded for IP {client_ip} on {endpoint_type}: "
+            f"{max_requests}/{max_requests} in {window_seconds}s "
+            f"(violations: {self.violations[client_ip]})"
+        )
+        return False, f"Rate limit exceeded: {max_requests} requests per hour", retry_after, headers
 
     def _cleanup_old_entries(self, entries: list, window_seconds: int) -> list:
         """
@@ -202,8 +279,7 @@ class PublicAPIRateLimiter:
         Raises:
             HTTPException: If rate limit exceeded
         """
-        allowed, error_msg, retry_after = self.check_rate_limit(request, endpoint_type)
-        headers = self.get_rate_limit_headers(request, endpoint_type)
+        allowed, error_msg, retry_after, headers = await self._check_rate_limit_redis(request, endpoint_type)
 
         if not allowed:
             if retry_after:

@@ -2,10 +2,12 @@
 Cryptographic utilities for key management and encryption.
 """
 
-import os
 import logging
+import os
 from typing import Optional, cast
 
+from app.config import settings
+from app.utils.aws_signer import AWSSigner
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -15,15 +17,14 @@ from encypher.core.signing import SigningKey
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
-from app.utils.aws_signer import AWSSigner
-
 logger = logging.getLogger(__name__)
 
 _DEMO_PRIVATE_KEY: Optional[ed25519.Ed25519PrivateKey] = None
 
 _ENCRYPTED_KEY_PREFIX = b"EPK1"
 _ENCRYPTED_KEY_NONCE_LEN = 12
+_ENCRYPTED_SECRET_PREFIX = b"EPS1"
+_ENCRYPTED_SECRET_NONCE_LEN = 12
 
 
 def load_managed_signing_private_key() -> SigningKey:
@@ -68,7 +69,8 @@ async def load_organization_private_key(organization_id: str, db: AsyncSession) 
     # Fetch potentially needed columns: encrypted key and KMS key ID
     try:
         result = await db.execute(
-            text("SELECT private_key_encrypted, kms_key_id, kms_region FROM organizations WHERE id = :org_id"), {"org_id": organization_id}
+            text("SELECT private_key_encrypted, kms_key_id, kms_region FROM organizations WHERE id = :org_id"),
+            {"org_id": organization_id},
         )
         row = result.fetchone()
     except Exception as e:
@@ -207,7 +209,9 @@ def encrypt_private_key(private_key: ed25519.Ed25519PrivateKey) -> bytes:
     """
     # Serialize private key to bytes
     private_bytes = private_key.private_bytes(
-        encoding=serialization.Encoding.Raw, format=serialization.PrivateFormat.Raw, encryption_algorithm=serialization.NoEncryption()
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PrivateFormat.Raw,
+        encryption_algorithm=serialization.NoEncryption(),
     )
 
     # Encrypt using AES-GCM
@@ -216,6 +220,15 @@ def encrypt_private_key(private_key: ed25519.Ed25519PrivateKey) -> bytes:
     encrypted = aesgcm.encrypt(nonce, private_bytes, None)
 
     return _ENCRYPTED_KEY_PREFIX + nonce + encrypted
+
+
+def encrypt_sensitive_value(value: str) -> bytes:
+    """Encrypt a short UTF-8 secret for secure storage."""
+    plaintext = value.encode("utf-8")
+    aesgcm = AESGCM(settings.key_encryption_key_bytes)
+    nonce = os.urandom(_ENCRYPTED_SECRET_NONCE_LEN)
+    ciphertext = aesgcm.encrypt(nonce, plaintext, None)
+    return _ENCRYPTED_SECRET_PREFIX + nonce + ciphertext
 
 
 def decrypt_private_key(encrypted_key: bytes) -> ed25519.Ed25519PrivateKey:
@@ -234,9 +247,7 @@ def decrypt_private_key(encrypted_key: bytes) -> ed25519.Ed25519PrivateKey:
     try:
         aesgcm = AESGCM(settings.key_encryption_key_bytes)
 
-        if encrypted_key.startswith(_ENCRYPTED_KEY_PREFIX) and len(encrypted_key) > (
-            len(_ENCRYPTED_KEY_PREFIX) + _ENCRYPTED_KEY_NONCE_LEN
-        ):
+        if encrypted_key.startswith(_ENCRYPTED_KEY_PREFIX) and len(encrypted_key) > (len(_ENCRYPTED_KEY_PREFIX) + _ENCRYPTED_KEY_NONCE_LEN):
             offset = len(_ENCRYPTED_KEY_PREFIX)
             nonce = encrypted_key[offset : offset + _ENCRYPTED_KEY_NONCE_LEN]
             ciphertext = encrypted_key[offset + _ENCRYPTED_KEY_NONCE_LEN :]
@@ -247,6 +258,22 @@ def decrypt_private_key(encrypted_key: bytes) -> ed25519.Ed25519PrivateKey:
         return ed25519.Ed25519PrivateKey.from_private_bytes(private_key_bytes)
     except Exception as e:
         raise ValueError(f"Failed to decrypt private key: {str(e)}")
+
+
+def decrypt_sensitive_value(encrypted_value: bytes) -> str:
+    """Decrypt a short UTF-8 secret from encrypted storage."""
+    try:
+        if not encrypted_value.startswith(_ENCRYPTED_SECRET_PREFIX):
+            raise ValueError("Encrypted secret has invalid prefix")
+
+        offset = len(_ENCRYPTED_SECRET_PREFIX)
+        nonce = encrypted_value[offset : offset + _ENCRYPTED_SECRET_NONCE_LEN]
+        ciphertext = encrypted_value[offset + _ENCRYPTED_SECRET_NONCE_LEN :]
+        aesgcm = AESGCM(settings.key_encryption_key_bytes)
+        plaintext = aesgcm.decrypt(nonce, ciphertext, None)
+        return plaintext.decode("utf-8")
+    except Exception as e:
+        raise ValueError(f"Failed to decrypt sensitive value: {str(e)}")
 
 
 def extract_public_key_from_certificate(cert_pem: str) -> ed25519.Ed25519PublicKey:

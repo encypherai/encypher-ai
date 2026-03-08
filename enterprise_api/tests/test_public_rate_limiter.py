@@ -6,9 +6,38 @@ import time
 from unittest.mock import Mock
 
 import pytest
+from app.config import settings
+from app.middleware.public_rate_limiter import PublicAPIRateLimiter
+from app.services.session_service import session_service
 from fastapi import HTTPException, Request
 
-from app.middleware.public_rate_limiter import PublicAPIRateLimiter
+
+class _FakeRedis:
+    def __init__(self) -> None:
+        self.sorted_sets: dict[str, dict[str, float]] = {}
+
+    async def eval(self, script: str, *args):
+        if len(args) != 6:
+            raise AssertionError(f"Unexpected eval args: {args}")
+
+        _, key, now, window, limit, member = args
+        bucket = self.sorted_sets.setdefault(key, {})
+        cutoff = float(now) - float(window)
+        bucket = {entry: score for entry, score in bucket.items() if score > cutoff}
+        self.sorted_sets[key] = bucket
+
+        count = len(bucket)
+        if count >= int(limit):
+            oldest_score = min(bucket.values()) if bucket else float(now)
+            retry_after = max(1, int((oldest_score + float(window)) - float(now) + 0.999999))
+            reset_at = int(oldest_score + float(window) + 0.999999)
+            return [0, retry_after, 0, int(limit), reset_at]
+
+        bucket[str(member)] = float(now)
+        oldest_score = min(bucket.values()) if bucket else float(now)
+        remaining = max(0, int(limit) - len(bucket))
+        reset_at = int(oldest_score + float(window) + 0.999999)
+        return [1, -1, remaining, int(limit), reset_at]
 
 
 class TestPublicAPIRateLimiter:
@@ -266,6 +295,30 @@ class TestPublicAPIRateLimiter:
 
         assert exc_info.value.status_code == 429
         assert "Rate limit exceeded" in exc_info.value.detail
+
+    @pytest.mark.asyncio
+    async def test_middleware_callable_uses_redis_shared_limits(self, monkeypatch: pytest.MonkeyPatch):
+        limiter = PublicAPIRateLimiter()
+        limiter.ENDPOINT_LIMITS["test"] = {"requests_per_hour": 1, "window_seconds": 10}
+
+        request = Mock(spec=Request)
+        request.headers = {}
+        request.client = Mock()
+        request.client.host = "192.168.1.1"
+
+        fake_redis = _FakeRedis()
+        monkeypatch.setattr(settings, "public_rate_limit_use_redis", True)
+        monkeypatch.setattr(session_service, "redis_client", fake_redis)
+
+        headers = await limiter(request, "test")
+        assert headers["X-RateLimit-Limit"] == "1"
+        assert headers["X-RateLimit-Remaining"] == "0"
+
+        with pytest.raises(HTTPException) as exc_info:
+            await limiter(request, "test")
+
+        assert exc_info.value.status_code == 429
+        assert exc_info.value.headers["Retry-After"]
 
 
 if __name__ == "__main__":

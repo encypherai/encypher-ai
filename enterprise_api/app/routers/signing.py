@@ -8,23 +8,22 @@ import asyncio
 import logging
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.database import get_content_db, get_db
 from app.dependencies import get_current_organization_dep, require_sign_permission
 from app.middleware.api_rate_limiter import api_rate_limiter
 from app.observability.metrics import increment
+from app.routers.audit import AuditAction, write_api_audit_log
 from app.schemas.api_response import ErrorCode, get_batch_limit
 from app.schemas.sign_schemas import UnifiedSignRequest
 from app.services.auth_service_client import auth_service_client
 from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.unified_signing_service import execute_unified_signing
-from app.routers.audit import AuditAction, write_api_audit_log
 from app.services.webhook_dispatcher import emit_document_signed
 from app.utils.print_stego import build_payload, encode_print_fingerprint
 from app.utils.quota import QuotaManager, QuotaType
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +223,7 @@ async def sign_content(
 ):
     """
     Unified sign endpoint with tier-gated options.
-    
+
     This endpoint consolidates /sign and /sign/advanced into a single endpoint.
     Features are automatically gated based on the organization's tier.
     """
@@ -242,7 +241,12 @@ async def sign_content(
         if tier not in ("strategic_partner",):
             logger.warning(
                 "tier_violation_proxy_signing_rejected",
-                extra={"org_id": org_id, "tier": tier, "required_tier": "strategic_partner", "correlation_id": correlation_id},
+                extra={
+                    "org_id": org_id,
+                    "tier": tier,
+                    "required_tier": "strategic_partner",
+                    "correlation_id": correlation_id,
+                },
             )
             return JSONResponse(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -257,9 +261,7 @@ async def sign_content(
                     "meta": {"tier": tier},
                 },
             )
-        publisher_ctx = await auth_service_client.get_organization_context(
-            proxy_publisher_org_id
-        )
+        publisher_ctx = await auth_service_client.get_organization_context(proxy_publisher_org_id)
         if publisher_ctx is None:
             return JSONResponse(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -287,7 +289,13 @@ async def sign_content(
     if batch_size > batch_limit:
         logger.warning(
             "tier_violation_batch_limit_exceeded",
-            extra={"org_id": org_id, "tier": tier, "batch_size": batch_size, "batch_limit": batch_limit, "correlation_id": correlation_id},
+            extra={
+                "org_id": org_id,
+                "tier": tier,
+                "batch_size": batch_size,
+                "batch_limit": batch_limit,
+                "correlation_id": correlation_id,
+            },
         )
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -305,10 +313,12 @@ async def sign_content(
         )
 
     # Rate limiting (uses effective_org_id: publisher's for proxy, partner's for direct)
-    rate_result = api_rate_limiter.check_with_reset(
+    rate_result, limited_dimension = api_rate_limiter.check_request_limits(
+        request=http_request,
         organization_id=effective_org_id,
         scope="sign",
         tier=tier,
+        api_key_prefix=getattr(http_request.state, "api_key_prefix", None),
     )
 
     for header, value in api_rate_limiter.get_headers(rate_result).items():
@@ -326,7 +336,11 @@ async def sign_content(
                     "hint": f"Rate limit is {rate_result.limit} requests per minute for {tier} tier",
                 },
                 "correlation_id": correlation_id,
-                "meta": {"tier": tier, "rate_limit_remaining": 0},
+                "meta": {
+                    "tier": tier,
+                    "rate_limit_remaining": 0,
+                    "rate_limit_dimension": limited_dimension,
+                },
             },
             headers=api_rate_limiter.get_headers(rate_result),
         )
@@ -342,7 +356,7 @@ async def sign_content(
         quota_type=QuotaType.C2PA_SIGNATURES,
         increment=batch_size,
     )
-    
+
     # Execute unified signing
     result = await execute_unified_signing(
         request=request,
@@ -351,7 +365,7 @@ async def sign_content(
         content_db=content_db,
         correlation_id=correlation_id,
     )
-    
+
     # Post-sign: attach rights snapshot when use_rights_profile=True
     # For proxy signing, use publisher's org for rights profile lookup
     if result.get("success") and request.options.use_rights_profile:
@@ -482,15 +496,13 @@ async def _attach_rights_snapshot(
     Operates in-place on `result["data"]`. Errors are swallowed so they never
     break a successful sign response.
     """
-    from sqlalchemy import update
     from app.config import settings
     from app.models.content_reference import ContentReference
     from app.services.rights_service import rights_service
+    from sqlalchemy import update
 
     try:
-        profile = await rights_service.get_current_profile(
-            db=core_db, organization_id=org_id
-        )
+        profile = await rights_service.get_current_profile(db=core_db, organization_id=org_id)
         if profile is None:
             return
 
@@ -580,7 +592,7 @@ Migration example:
 async def sign_advanced():
     """REMOVED: Use /sign with options instead."""
     logger.warning("Removed endpoint /sign/advanced called. Use /sign with options instead.")
-    
+
     return JSONResponse(
         status_code=status.HTTP_410_GONE,
         content={

@@ -13,14 +13,14 @@ from typing import Dict, Optional
 from urllib.parse import urlparse, urlunparse
 
 import httpx
-from fastapi import Depends, Header, HTTPException, status
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.config import settings
 from app.core.tier_config import coerce_tier_name, get_tier_limits
 from app.database import get_db
+from app.dependencies import _normalize_permissions
 from app.middleware.request_id_middleware import request_id_ctx
+from fastapi import Depends, Header, HTTPException, status
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -116,12 +116,20 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
     """
     if not api_key:
         logger.warning("API request attempted without API key")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key required", headers={"WWW-Authenticate": "Bearer"})
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     # Demo key bypass for local testing
     if settings.demo_api_key and api_key == settings.demo_api_key:
         if settings.is_production and not settings.is_demo_key_allowlisted(api_key):
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key", headers={"WWW-Authenticate": "Bearer"})
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid API key",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         logger.info("Request authenticated with demo key")
         return {
             "api_key": api_key,
@@ -154,7 +162,7 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
                 logger.info(f"Request authenticated via key-service for org {key_data.get('organization_id')}")
 
                 # Map key-service response to our expected format
-                permissions = key_data.get("permissions", [])
+                permissions = _normalize_permissions(key_data.get("permissions", []))
                 tier = key_data.get("tier", "free")
                 monthly_quota = _effective_monthly_quota(tier, key_data.get("monthly_api_limit"))
                 return {
@@ -165,18 +173,23 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
                     "tier": tier,
                     "can_sign": "sign" in permissions or key_data.get("is_demo", False),
                     "can_verify": "verify" in permissions or key_data.get("is_demo", False),
-                    "can_lookup": "read" in permissions or key_data.get("is_demo", False),
+                    "can_lookup": "lookup" in permissions or key_data.get("is_demo", False),
                     "monthly_quota": monthly_quota,
                     "api_calls_this_month": key_data.get("monthly_api_usage", 0),
                     "is_demo": key_data.get("is_demo", False),
-                    "private_key_encrypted": settings.demo_private_key_bytes or b"" if key_data.get("is_demo") else b"",
+                    "private_key_encrypted": (settings.demo_private_key_bytes or b"" if key_data.get("is_demo") else b""),
                     "features": key_data.get("features", {}),
                     "coalition_member": key_data.get("coalition_member", True),
                     "coalition_rev_share": key_data.get("coalition_rev_share", 65),
+                    "permissions": permissions,
                 }
         elif response.status_code == 401:
             logger.warning("Authentication failed via key-service: Invalid API key")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key", headers={"WWW-Authenticate": "Bearer"})
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid API key",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         else:
             if api_key.startswith("ency_"):
                 logger.warning(
@@ -233,17 +246,29 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
 
         if not row:
             logger.warning("Authentication failed: Invalid API key (not found in key-service or local DB)")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key", headers={"WWW-Authenticate": "Bearer"})
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid API key",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         # Check if revoked
         if row.revoked_at is not None or row.is_active is False:
             logger.warning(f"Authentication failed: Revoked API key for org {row.organization_id}")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key has been revoked", headers={"WWW-Authenticate": "Bearer"})
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="API key has been revoked",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         # Check if expired
         if row.expires_at and row.expires_at < datetime.utcnow():
             logger.warning(f"Authentication failed: Expired API key for org {row.organization_id}")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key has expired", headers={"WWW-Authenticate": "Bearer"})
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="API key has expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         monthly_quota = _effective_monthly_quota(row.tier, row.monthly_api_limit)
 
@@ -251,7 +276,8 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
         if monthly_quota != -1 and row.monthly_api_usage >= monthly_quota:
             logger.warning(f"Authentication failed: Quota exceeded for org {row.organization_id}")
             raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Monthly API quota exceeded. Please upgrade your plan or wait until next month."
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Monthly API quota exceeded. Please upgrade your plan or wait until next month.",
             )
 
         # Update last_used_at timestamp and increment API call count
@@ -263,15 +289,18 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
                 WHERE id = :organization_id;
                 """
             ),
-            {"api_key_id": row.api_key_id, "last_used_at": datetime.utcnow(), "organization_id": row.organization_id},
+            {
+                "api_key_id": row.api_key_id,
+                "last_used_at": datetime.utcnow(),
+                "organization_id": row.organization_id,
+            },
         )
         await db.commit()
 
         scopes = row.scopes or []
         if isinstance(scopes, str):
             scopes = json.loads(scopes)
-        if "admin" in scopes:
-            scopes = list({*scopes, "sign", "verify", "lookup", "read"})
+        scopes = _normalize_permissions(scopes)
 
         logger.info(f"Request authenticated via local DB for org {row.organization_id}")
 
@@ -284,7 +313,7 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
             "tier": row.tier,
             "can_sign": "sign" in scopes,
             "can_verify": "verify" in scopes,
-            "can_lookup": "lookup" in scopes or "read" in scopes,
+            "can_lookup": "lookup" in scopes,
             "monthly_quota": monthly_quota,
             "api_calls_this_month": row.monthly_api_usage + 1,
             "is_demo": False,
@@ -292,6 +321,7 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
             "features": row.features if isinstance(row.features, dict) else {},
             "coalition_member": row.coalition_member,
             "coalition_rev_share": row.coalition_rev_share,
+            "permissions": scopes,
         }
 
     except HTTPException:
@@ -301,7 +331,9 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Authentication error")
 
 
-async def require_verification_permission(organization: Dict = Depends(authenticate_api_key)) -> Dict:
+async def require_verification_permission(
+    organization: Dict = Depends(authenticate_api_key),
+) -> Dict:
     """
     Verify organization has permission to verify content.
 
@@ -316,7 +348,10 @@ async def require_verification_permission(organization: Dict = Depends(authentic
     """
     # Check verify permission
     if not organization["can_verify"]:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="API key does not have permission to verify content")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="API key does not have permission to verify content",
+        )
 
     return organization
 

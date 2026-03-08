@@ -14,16 +14,13 @@ import re
 from datetime import datetime
 from typing import Any, Dict, Optional, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from pydantic import BaseModel, Field
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.config import settings
 from app.database import get_content_db, get_db
 from app.middleware.api_key_auth import authenticate_api_key, get_api_key_from_header
 from app.middleware.public_rate_limiter import public_rate_limiter
 from app.models.content_reference import ContentReference
 from app.models.merkle import MerkleRoot
+from app.routers.audit import AuditAction, write_api_audit_log
 from app.schemas.embeddings import (
     BatchVerifyRequest,
     BatchVerifyResponse,
@@ -38,9 +35,12 @@ from app.schemas.embeddings import (
     SignerIdentity,
     VerifyEmbeddingResponse,
 )
-from app.routers.audit import AuditAction, write_api_audit_log
 from app.utils.c2pa_verifier import c2pa_verifier
 from app.utils.crypto_utils import load_organization_public_key
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,36 @@ def _signature_matches(signature_hash: Optional[str], provided: str) -> bool:
         return False
 
     return hmac.compare_digest(full_hash[: len(provided_lower)], provided_lower)
+
+
+def _apply_public_verify_minimal_response(
+    response: VerifyEmbeddingResponse,
+) -> VerifyEmbeddingResponse:
+    if not settings.public_verify_minimal_response or not response.valid:
+        return response
+
+    minimal_c2pa = None
+    if response.c2pa is not None:
+        minimal_c2pa = response.c2pa.model_copy(
+            update={
+                "manifest_url": None,
+                "manifest_hash": None,
+                "validation_details": None,
+                "manifest_data": None,
+            }
+        )
+
+    return response.model_copy(
+        update={
+            "content": None,
+            "document": None,
+            "merkle_proof": None,
+            "c2pa": minimal_c2pa,
+            "signer_identity": None,
+            "licensing": None,
+            "verification_url": None,
+        }
+    )
 
 
 # ============================================================================
@@ -100,25 +130,25 @@ class ExtractAndVerifyResponse(BaseModel):
     summary="Verify Embedding (Public - No Auth Required)",
     description="""
     Verify a minimal signed embedding and retrieve associated metadata.
-    
+
     **This endpoint is PUBLIC and does NOT require authentication.**
-    
+
     Third parties can use this endpoint to:
     - Verify authenticity of content with embedded markers
     - Retrieve document metadata (title, author, organization)
     - Access C2PA manifest information
     - View licensing terms
     - Get Merkle proof for cryptographic verification
-    
+
     **Rate Limiting:**
     - 1000 requests/hour per IP address
     - CAPTCHA required after repeated failures
-    
+
     **Privacy:**
     - Does not return DB-stored text
     - Full text content is NOT exposed
     - Internal document IDs are mapped to public IDs
-    
+
     **Example Usage:**
     ```
     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ
@@ -177,7 +207,10 @@ async def verify_embedding(
 
         # Validate ref_id format
         if len(ref_id) != 8:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ref_id format (must be 8 hex characters)")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid ref_id format (must be 8 hex characters)",
+            )
 
         # Validate signature format
         if not SIGNATURE_PATTERN.fullmatch(signature):
@@ -190,7 +223,10 @@ async def verify_embedding(
         try:
             ref_id_int = int(ref_id, 16)
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ref_id format (must be hex)")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid ref_id format (must be hex)",
+            )
 
         result = await content_db.execute(select(ContentReference).where(ContentReference.id == ref_id_int))
         reference = result.scalar_one_or_none()
@@ -242,7 +278,11 @@ async def verify_embedding(
         )
 
         # Merkle proof info
-        merkle_proof_info = MerkleProofInfo(root_hash=merkle_root.root_hash, verified=True, proof_url=f"/api/v1/public/proof/{ref_id}")
+        merkle_proof_info = MerkleProofInfo(
+            root_hash=merkle_root.root_hash,
+            verified=True,
+            proof_url=f"/api/v1/public/proof/{ref_id}",
+        )
 
         # C2PA info (if available) - Now with actual verification!
         c2pa_info = None
@@ -262,7 +302,9 @@ async def verify_embedding(
             # Verify the C2PA manifest (async)
             c2pa_result = await c2pa_verifier.verify_manifest_url(manifest_url)
 
-            validation_type = "cryptographic" if c2pa_result.signatures and all(sig.verified for sig in c2pa_result.signatures) else "non_cryptographic"
+            validation_type = (
+                "cryptographic" if c2pa_result.signatures and all(sig.verified for sig in c2pa_result.signatures) else "non_cryptographic"
+            )
             c2pa_info = C2PAInfo(
                 manifest_url=manifest_url,
                 manifest_hash=reference.c2pa_manifest_hash or c2pa_result.manifest_hash,
@@ -315,6 +357,7 @@ async def verify_embedding(
                 if cert_pem:
                     try:
                         from cryptography.x509 import load_pem_x509_certificate
+
                         cert_obj = load_pem_x509_certificate(cert_pem.encode())
                         issuer_rdn = cert_obj.issuer.rfc4514_string()
                         subject_rdn = cert_obj.subject.rfc4514_string()
@@ -353,7 +396,7 @@ async def verify_embedding(
             )
         )
 
-        return VerifyEmbeddingResponse(
+        response_payload = VerifyEmbeddingResponse(
             valid=True,
             ref_id=ref_id,
             verified_at=datetime.utcnow(),
@@ -365,6 +408,7 @@ async def verify_embedding(
             licensing=licensing_info,
             verification_url=reference.to_verification_url(),
         )
+        return _apply_public_verify_minimal_response(response_payload)
 
     except HTTPException:
         raise
@@ -384,14 +428,14 @@ async def verify_embedding(
     summary="Batch Verify Embeddings (Public - No Auth Required)",
     description="""
     Verify multiple embeddings in a single request.
-    
+
     **This endpoint is PUBLIC and does NOT require authentication.**
-    
+
     Useful for:
     - Verifying all embeddings on a page at once
     - Bulk verification by web scrapers
     - Browser extensions checking multiple paragraphs
-    
+
     **Rate Limiting:**
     - 100 requests/hour per IP address
     - Maximum 50 embeddings per request
@@ -455,7 +499,10 @@ async def batch_verify_embeddings(
 
         # Validate batch size
         if len(batch_request.references) > 50:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum 50 embeddings per batch request")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Maximum 50 embeddings per batch request",
+            )
 
         logger.info(f"Batch verification request for {len(batch_request.references)} embeddings")
 
@@ -492,7 +539,13 @@ async def batch_verify_embeddings(
                     results.append(BatchVerifyResult(ref_id=ref_req.ref_id, valid=True, document_id=reference.document_id))
                     valid_count += 1
                 else:
-                    results.append(BatchVerifyResult(ref_id=ref_req.ref_id, valid=False, error="Invalid signature or reference not found"))
+                    results.append(
+                        BatchVerifyResult(
+                            ref_id=ref_req.ref_id,
+                            valid=False,
+                            error="Invalid signature or reference not found",
+                        )
+                    )
                     invalid_count += 1
 
             except Exception as e:
@@ -502,13 +555,21 @@ async def batch_verify_embeddings(
 
         logger.info(f"Batch verification complete: {valid_count} valid, {invalid_count} invalid")
 
-        return BatchVerifyResponse(results=results, total=len(batch_request.references), valid_count=valid_count, invalid_count=invalid_count)
+        return BatchVerifyResponse(
+            results=results,
+            total=len(batch_request.references),
+            valid_count=valid_count,
+            invalid_count=invalid_count,
+        )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error in batch verification: {e}", exc_info=True)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to process batch verification")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to process batch verification",
+        )
 
 
 # ============================================================================
@@ -526,7 +587,7 @@ async def batch_verify_embeddings(
     summary="DEPRECATED - Use POST /api/v1/verify instead",
     description="""
     **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**
-    
+
     Please use `POST /api/v1/verify` instead, which provides:
     - Full C2PA trust chain validation
     - Document info, licensing, and C2PA details (all free)
@@ -543,14 +604,14 @@ async def extract_and_verify_embedding(
 ):
     """
     DEPRECATED: Use POST /api/v1/verify instead.
-    
+
     This endpoint is deprecated. Please migrate to the unified /api/v1/verify
     endpoint which provides full C2PA compliance and a richer response format.
     """
     from fastapi.responses import JSONResponse
-    
+
     logger.warning("Deprecated endpoint /public/extract-and-verify called. Use /api/v1/verify instead.")
-    
+
     return JSONResponse(
         status_code=status.HTTP_410_GONE,
         content={

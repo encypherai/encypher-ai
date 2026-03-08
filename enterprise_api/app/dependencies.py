@@ -13,15 +13,22 @@ import logging
 from typing import Dict, Optional
 
 import httpx
-from fastapi import BackgroundTasks, Depends, HTTPException, Request, Security, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
 from app.config import settings
 from app.services.auth_service_client import auth_service_client
 from app.services.key_service_client import key_service_client
+from fastapi import BackgroundTasks, Depends, HTTPException, Request, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
+
+
+def _unauthorized_http_exception(detail: str = "Invalid API key") -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 def _build_api_key_prefix(raw_key: str) -> str:
@@ -30,6 +37,29 @@ def _build_api_key_prefix(raw_key: str) -> str:
     if not trimmed:
         return ""
     return trimmed[:12]
+
+
+def _normalize_permissions(raw_permissions: object) -> list[str]:
+    if not isinstance(raw_permissions, list):
+        raw_permissions = ["sign", "verify", "lookup"]
+
+    normalized: set[str] = set()
+    for permission in raw_permissions:
+        if not isinstance(permission, str):
+            continue
+
+        token = permission.strip().lower().replace("-", "_")
+        if not token:
+            continue
+        if token == "admin":
+            normalized.update({"admin", "sign", "verify", "lookup", "read"})
+            continue
+        if token in {"lookup", "read"}:
+            normalized.update({"lookup", "read"})
+            continue
+        normalized.add(token)
+
+    return sorted(normalized)
 
 
 async def _get_org_context_from_jwt_access_token(token: str) -> Optional[Dict]:
@@ -84,6 +114,65 @@ async def _get_org_context_from_jwt_access_token(token: str) -> Optional[Dict]:
             "anonymous_publisher": org_data.get("anonymous_publisher", False),
         }
     )
+
+
+def _build_composed_org_context(key_context: Dict, org_data: Dict) -> Dict:
+    return {
+        "api_key_id": key_context.get("key_id"),
+        "organization_id": key_context.get("organization_id"),
+        "organization_name": org_data.get("name"),
+        "tier": key_context.get("tier", "free"),
+        "features": org_data.get("features", {}),
+        "permissions": key_context.get("permissions", []),
+        "monthly_api_limit": org_data.get("monthly_api_limit"),
+        "monthly_api_usage": org_data.get("monthly_api_usage"),
+        "coalition_member": org_data.get("coalition_member", True),
+        "coalition_rev_share": org_data.get("coalition_rev_share", DEFAULT_COALITION_PUBLISHER_PERCENT),
+        "certificate_pem": org_data.get("certificate_pem"),
+        "user_id": key_context.get("user_id"),
+        "account_type": org_data.get("account_type"),
+        "display_name": org_data.get("display_name"),
+        "anonymous_publisher": org_data.get("anonymous_publisher", False),
+    }
+
+
+async def _resolve_org_context_via_composed_auth_service(api_key: str) -> Optional[Dict]:
+    if not settings.compose_org_context_via_auth_service:
+        return None
+
+    key_context = await key_service_client.validate_key_minimal(api_key)
+    if not key_context or not key_context.get("organization_id"):
+        return None
+
+    org_data = await auth_service_client.get_organization_context(str(key_context["organization_id"]))
+    if not org_data:
+        return None
+
+    return _build_composed_org_context(key_context, org_data)
+
+
+def _resolve_demo_org_context(api_key: str) -> Optional[Dict]:
+    is_demo_candidate = api_key in DEMO_KEYS or (settings.demo_api_key and api_key == settings.demo_api_key)
+    if settings.is_production and is_demo_candidate and not settings.is_demo_key_allowlisted(api_key):
+        raise _unauthorized_http_exception()
+
+    if api_key in DEMO_KEYS:
+        logger.debug(f"Using demo key: {api_key[:20]}...")
+        return _normalize_org_context(DEMO_KEYS[api_key].copy())
+
+    if settings.demo_api_key and api_key == settings.demo_api_key:
+        logger.debug("Using legacy demo key from settings")
+        return _normalize_org_context(DEMO_KEYS.get("demo-api-key-for-testing", {}).copy())
+
+    return None
+
+
+def _set_request_auth_state(request: Request, org_context: Dict, api_key: str) -> None:
+    request.state.organization_id = org_context.get("organization_id")
+    request.state.user_id = org_context.get("user_id") or org_context.get("api_key_owner_id")
+    request.state.api_key_id = org_context.get("api_key_id")
+    request.state.api_key_prefix = _build_api_key_prefix(api_key)
+    request.state.tier = org_context.get("tier")
 
 
 async def get_current_organization_dep(
@@ -244,80 +333,25 @@ async def get_current_organization(
         - usage limits
     """
     if credentials is None or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API key required",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise _unauthorized_http_exception("API key required")
 
     api_key = credentials.credentials
-    org_context = None
-
-    if settings.compose_org_context_via_auth_service:
-        key_context = await key_service_client.validate_key_minimal(api_key)
-        if key_context and key_context.get("organization_id"):
-            org_data = await auth_service_client.get_organization_context(str(key_context["organization_id"]))
-            if org_data:
-                org_context = {
-                    "api_key_id": key_context.get("key_id"),
-                    "organization_id": key_context.get("organization_id"),
-                    "organization_name": org_data.get("name"),
-                    "tier": key_context.get("tier", "free"),
-                    "features": org_data.get("features", {}),
-                    "permissions": key_context.get("permissions", []),
-                    "monthly_api_limit": org_data.get("monthly_api_limit"),
-                    "monthly_api_usage": org_data.get("monthly_api_usage"),
-                    "coalition_member": org_data.get("coalition_member", True),
-                    "coalition_rev_share": org_data.get("coalition_rev_share", DEFAULT_COALITION_PUBLISHER_PERCENT),
-                    "certificate_pem": org_data.get("certificate_pem"),
-                    "user_id": key_context.get("user_id"),
-                    # TEAM_191: Publisher identity for attribution
-                    "account_type": org_data.get("account_type"),
-                    "display_name": org_data.get("display_name"),
-                    "anonymous_publisher": org_data.get("anonymous_publisher", False),
-                }
+    org_context = await _resolve_org_context_via_composed_auth_service(api_key)
 
     if org_context is None:
-        # 1. Try Key Service first (production path)
         org_context = await key_service_client.validate_key(api_key)
 
     if org_context is None:
-        # 1b. Fallback for dashboard bearer JWTs (non-API-key auth)
         org_context = await _get_org_context_from_jwt_access_token(api_key)
 
-    if org_context:
-        # Normalize the response to ensure consistent structure
+    if org_context is not None:
         org_context = _normalize_org_context(org_context)
     else:
-        is_demo_candidate = api_key in DEMO_KEYS or (settings.demo_api_key and api_key == settings.demo_api_key)
-        if settings.is_production and is_demo_candidate and not settings.is_demo_key_allowlisted(api_key):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid API key",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        if api_key in DEMO_KEYS:
-            # 2. Fall back to demo keys (development/testing)
-            logger.debug(f"Using demo key: {api_key[:20]}...")
-            org_context = _normalize_org_context(DEMO_KEYS[api_key].copy())
-        elif settings.demo_api_key and api_key == settings.demo_api_key:
-            # 3. Legacy demo key support (from settings)
-            logger.debug("Using legacy demo key from settings")
-            org_context = _normalize_org_context(DEMO_KEYS.get("demo-api-key-for-testing", {}).copy())
-        else:
-            # 4. Invalid key
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid API key",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        org_context = _resolve_demo_org_context(api_key)
+        if org_context is None:
+            raise _unauthorized_http_exception()
 
-    # Set request.state for metrics middleware
-    request.state.organization_id = org_context.get("organization_id")
-    request.state.user_id = org_context.get("user_id") or org_context.get("api_key_owner_id")
-    request.state.api_key_id = org_context.get("api_key_id")
-    request.state.api_key_prefix = _build_api_key_prefix(api_key)
-    request.state.tier = org_context.get("tier")
+    _set_request_auth_state(request, org_context, api_key)
 
     return org_context
 
@@ -330,9 +364,7 @@ def _normalize_org_context(org_context: Dict) -> Dict:
         features = {}
 
     # Ensure permissions is a list
-    permissions = org_context.get("permissions", [])
-    if not isinstance(permissions, list):
-        permissions = ["sign", "verify", "lookup"]
+    permissions = _normalize_permissions(org_context.get("permissions", []))
 
     # Map permissions to can_* for backward compatibility
     result = {
@@ -366,10 +398,7 @@ def _normalize_org_context(org_context: Dict) -> Dict:
         "anonymous_publisher": org_context.get("anonymous_publisher", False),
     }
     # TEAM_191: Build publisher identity + attribution strings
-    from app.utils.publisher_attribution import (
-        build_publisher_attribution_from_org_context,
-        build_publisher_identity_base_from_org_context,
-    )
+    from app.utils.publisher_attribution import build_publisher_attribution_from_org_context, build_publisher_identity_base_from_org_context
 
     result["publisher_identity_base"] = build_publisher_identity_base_from_org_context(result)
     result["publisher_attribution"] = build_publisher_attribution_from_org_context(result)
@@ -379,106 +408,39 @@ def _normalize_org_context(org_context: Dict) -> Dict:
 async def require_sign_permission(
     organization: Dict = Depends(get_current_organization),
 ) -> Dict:
-    """
-    Require that the organization has sign permission.
-
-    Args:
-        organization: Organization details from get_current_organization
-
-    Returns:
-        Organization details
-
-    Raises:
-        HTTPException: If organization doesn't have sign permission
-    """
-    if not organization["can_sign"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your API key does not have permission to sign content",
-        )
-    return organization
+    return await _require_permission_flag(organization, "can_sign", "Your API key does not have permission to sign content")
 
 
 async def require_embedding_permission(
     organization: Dict = Depends(get_current_organization),
 ) -> Dict:
-    features = organization.get("features", {})
-    is_super_admin = isinstance(features, dict) and features.get("is_super_admin", False)
-
-    # TEAM_145: All tiers (free/enterprise/strategic_partner) have embedding access
-    tier = (organization.get("tier") or "free").lower().replace("-", "_")
-
-    if not organization.get("can_sign"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your API key does not have permission to sign content",
-        )
-
-    return organization
+    return await _require_permission_flag(organization, "can_sign", "Your API key does not have permission to sign content")
 
 
 async def require_verify_permission(
     organization: Dict = Depends(get_current_organization),
 ) -> Dict:
-    """
-    Require that the organization has verify permission.
-
-    Args:
-        organization: Organization details from get_current_organization
-
-    Returns:
-        Organization details
-
-    Raises:
-        HTTPException: If organization doesn't have verify permission
-    """
-    if not organization["can_verify"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your API key does not have permission to verify content",
-        )
-    return organization
+    return await _require_permission_flag(organization, "can_verify", "Your API key does not have permission to verify content")
 
 
 async def require_lookup_permission(
     organization: Dict = Depends(get_current_organization),
 ) -> Dict:
-    """
-    Require that the organization has lookup permission.
-
-    Args:
-        organization: Organization details from get_current_organization
-
-    Returns:
-        Organization details
-
-    Raises:
-        HTTPException: If organization doesn't have lookup permission
-    """
-    if not organization["can_lookup"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your API key does not have permission to lookup sentences",
-        )
-    return organization
+    return await _require_permission_flag(organization, "can_lookup", "Your API key does not have permission to lookup sentences")
 
 
 async def require_read_permission(
     organization: Dict = Depends(get_current_organization),
 ) -> Dict:
-    """
-    Require that the organization has read permission (basic authenticated access).
+    return organization
 
-    This is a general-purpose dependency for endpoints that only require
-    authentication without specific feature permissions.
 
-    Args:
-        organization: Organization details from get_current_organization
-
-    Returns:
-        Organization details (authenticated)
-    """
-    # Basic authentication is sufficient - organization is already validated
+async def _require_permission_flag(organization: Dict, permission_flag: str, error_detail: str) -> Dict:
+    if not organization.get(permission_flag):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=error_detail,
+        )
     return organization
 
 
@@ -507,11 +469,7 @@ async def require_super_admin_dep(
     credentials: HTTPAuthorizationCredentials | None = Security(security),
 ) -> Dict:
     if credentials is None or not credentials.credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API key required",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise _unauthorized_http_exception("API key required")
 
     try:
         organization = await get_current_organization_dep(

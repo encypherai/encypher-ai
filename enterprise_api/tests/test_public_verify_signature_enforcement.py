@@ -3,12 +3,12 @@
 import uuid
 
 import pytest
+from app.config import settings
+from app.models.content_reference import ContentReference
+from app.models.merkle import MerkleRoot
 from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.content_reference import ContentReference
-from app.models.merkle import MerkleRoot
 
 
 @pytest.mark.asyncio
@@ -83,7 +83,7 @@ async def test_public_verify_accepts_matching_signature_prefix(async_client: Asy
         organization_id="org_demo",
         document_id="doc_signature_match",
         text_preview="hello",
-        signature_hash="abc12345deadbeef",
+        signature_hash="abc1234500000000",
     )
 
     db.add(merkle_root)
@@ -97,6 +97,56 @@ async def test_public_verify_accepts_matching_signature_prefix(async_client: Asy
     assert payload["valid"] is True
     assert payload["document"]["document_id"] == "doc_signature_match"
     assert payload["content"]["text_preview"] is None
+
+
+@pytest.mark.asyncio
+async def test_public_verify_minimal_response_hides_metadata(async_client: AsyncClient, db: AsyncSession, monkeypatch) -> None:
+    monkeypatch.setattr(settings, "public_verify_minimal_response", True)
+
+    merkle_root_id = uuid.uuid4()
+    merkle_root = MerkleRoot(
+        id=merkle_root_id,
+        organization_id="org_demo",
+        document_id="doc_signature_minimal",
+        root_hash="0" * 64,
+        algorithm="sha256",
+        leaf_count=1,
+        tree_depth=0,
+        segmentation_level="sentence",
+        doc_metadata={"title": "Hidden Title", "author": "Hidden Author"},
+    )
+
+    ref_id_int = uuid.uuid4().int & 0xFFFFFFFF
+    ref_id_hex = f"{ref_id_int:08x}"
+
+    await db.execute(text("DELETE FROM content_references WHERE id = :id"), {"id": ref_id_int})
+
+    reference = ContentReference(
+        id=ref_id_int,
+        merkle_root_id=merkle_root_id,
+        leaf_hash="9" * 64,
+        leaf_index=0,
+        organization_id="org_demo",
+        document_id="doc_signature_minimal",
+        text_preview="hello",
+        signature_hash="1234567800000000",
+    )
+
+    db.add(merkle_root)
+    db.add(reference)
+    await db.commit()
+
+    response = await async_client.get(f"/api/v1/public/verify/{ref_id_hex}?signature=12345678")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["valid"] is True
+    assert payload["content"] is None
+    assert payload["document"] is None
+    assert payload["merkle_proof"] is None
+    assert payload["signer_identity"] is None
+    assert payload["licensing"] is None
+    assert payload["verification_url"] is None
 
 
 @pytest.mark.asyncio
@@ -117,7 +167,10 @@ async def test_public_verify_batch_enforces_signature_match(async_client: AsyncC
     ref_id_valid = uuid.uuid4().int & 0xFFFFFFFF
     ref_id_invalid = uuid.uuid4().int & 0xFFFFFFFF
 
-    await db.execute(text("DELETE FROM content_references WHERE id IN (:valid_id, :invalid_id)"), {"valid_id": ref_id_valid, "invalid_id": ref_id_invalid})
+    await db.execute(
+        text("DELETE FROM content_references WHERE id IN (:valid_id, :invalid_id)"),
+        {"valid_id": ref_id_valid, "invalid_id": ref_id_invalid},
+    )
 
     valid_reference = ContentReference(
         id=ref_id_valid,

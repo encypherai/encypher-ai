@@ -4,22 +4,47 @@ Tests for C2PA manifest verification utility.
 
 from __future__ import annotations
 
-import socket
+import asyncio
 import base64
+import socket
+import time
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from app.config import settings
+from app.services.session_service import session_service
+from app.utils.c2pa_verifier import C2PAAssertion, C2PAVerificationResult, C2PAVerifier, verify_c2pa_manifest
 from cryptography.hazmat.primitives import serialization
-
-from app.utils.c2pa_verifier import (
-    C2PAAssertion,
-    C2PAVerificationResult,
-    C2PAVerifier,
-    verify_c2pa_manifest,
-)
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.payloads import serialize_c2pa_payload_to_cbor
 from encypher.core.signing import sign_c2pa_cose
+
+
+class _FakeRedis:
+    def __init__(self) -> None:
+        self.sorted_sets: dict[str, dict[str, int]] = {}
+
+    async def eval(self, script: str, *args):
+        if len(args) == 6:
+            _, key, now_ms, lease_ms, limit, token = args
+            bucket = self.sorted_sets.setdefault(str(key), {})
+            now_ms = int(now_ms)
+            lease_ms = int(lease_ms)
+            limit = int(limit)
+            bucket = {entry: expiry for entry, expiry in bucket.items() if expiry > now_ms}
+            self.sorted_sets[str(key)] = bucket
+            if len(bucket) >= limit:
+                return 0
+            bucket[str(token)] = now_ms + lease_ms
+            return 1
+
+        if len(args) == 3:
+            _, key, token = args
+            bucket = self.sorted_sets.setdefault(str(key), {})
+            bucket.pop(str(token), None)
+            return 1
+
+        raise AssertionError(f"Unexpected eval args: {args}")
 
 
 class TestC2PAVerificationResult:
@@ -210,8 +235,9 @@ class TestC2PAVerifier:
     @pytest.mark.asyncio
     async def test_verify_manifest_url_success(self):
         """Test verifying manifest from URL."""
-        import httpx
         from contextlib import asynccontextmanager
+
+        import httpx
 
         verifier = C2PAVerifier()
         payload = b'{"claim_generator": "Test Generator 1.0", "assertions": []}'
@@ -245,8 +271,9 @@ class TestC2PAVerifier:
     @pytest.mark.asyncio
     async def test_verify_manifest_url_http_error(self):
         """Test verifying manifest with HTTP error."""
-        import httpx
         from contextlib import asynccontextmanager
+
+        import httpx
 
         verifier = C2PAVerifier()
 
@@ -264,6 +291,171 @@ class TestC2PAVerifier:
         assert result.valid is False
         assert len(result.errors) > 0
         assert "connection error" in result.errors[0].lower()
+
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_returns_busy_when_concurrency_slot_unavailable(self, monkeypatch):
+        verifier = C2PAVerifier()
+        monkeypatch.setattr("app.utils.c2pa_verifier.settings.remote_manifest_verify_acquire_timeout_seconds", 0.01)
+        verifier._verification_semaphore = asyncio.Semaphore(1)
+
+        await verifier._verification_semaphore.acquire()
+        try:
+            with patch("app.utils.c2pa_verifier.socket.getaddrinfo") as mock_getaddrinfo:
+                mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+                result = await verifier.verify_manifest_url("https://example.com/manifest.json")
+        finally:
+            verifier._verification_semaphore.release()
+
+        assert result.valid is False
+        assert result.errors == ["Manifest verification busy; retry later"]
+
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_releases_concurrency_slot_after_fetch(self):
+        from contextlib import asynccontextmanager
+
+        import httpx
+
+        verifier = C2PAVerifier()
+        payload = b'{"claim_generator": "Test Generator 1.0", "assertions": []}'
+
+        async def _aiter_bytes(chunk_size=8192):
+            yield payload
+
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_response.aiter_bytes = _aiter_bytes
+
+        @asynccontextmanager
+        async def mock_stream(*args, **kwargs):
+            yield mock_response
+
+        @asynccontextmanager
+        async def mock_client_cm(*args, **kwargs):
+            client = Mock()
+            client.stream = mock_stream
+            yield client
+
+        initial_value = verifier._verification_semaphore._value
+        with patch.object(httpx, "AsyncClient", mock_client_cm):
+            with patch("app.utils.c2pa_verifier.socket.getaddrinfo") as mock_getaddrinfo:
+                mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+                result = await verifier.verify_manifest_url("https://example.com/manifest.json")
+
+        assert result.valid is True
+        assert verifier._verification_semaphore._value == initial_value
+
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_uses_cached_result(self):
+        verifier = C2PAVerifier()
+        cached_result = C2PAVerificationResult(valid=True, manifest_url="https://example.com/manifest.json", manifest_hash="cached")
+        verifier._cache_result("https://example.com/manifest.json", cached_result)
+
+        with patch("app.utils.c2pa_verifier.socket.getaddrinfo") as mock_getaddrinfo:
+            mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+            result = await verifier.verify_manifest_url("https://example.com/manifest.json")
+
+        assert result.valid is True
+        assert result.manifest_hash == "cached"
+
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_returns_busy_when_host_slot_unavailable(self, monkeypatch):
+        verifier = C2PAVerifier()
+        monkeypatch.setattr("app.utils.c2pa_verifier.settings.remote_manifest_verify_acquire_timeout_seconds", 0.01)
+        verifier._host_semaphores["example.com"] = asyncio.Semaphore(1)
+
+        await verifier._host_semaphores["example.com"].acquire()
+        try:
+            with patch("app.utils.c2pa_verifier.socket.getaddrinfo") as mock_getaddrinfo:
+                mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+                result = await verifier.verify_manifest_url("https://example.com/manifest.json")
+        finally:
+            verifier._host_semaphores["example.com"].release()
+
+        assert result.valid is False
+        assert result.errors == ["Manifest verification busy; retry later"]
+
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_opens_host_circuit_after_failures(self, monkeypatch):
+        from contextlib import asynccontextmanager
+
+        import httpx
+
+        verifier = C2PAVerifier()
+        monkeypatch.setattr("app.utils.c2pa_verifier.settings.remote_manifest_verify_host_failure_threshold", 1)
+        monkeypatch.setattr("app.utils.c2pa_verifier.settings.remote_manifest_verify_negative_cache_ttl_seconds", 0)
+
+        @asynccontextmanager
+        async def mock_client_cm(*args, **kwargs):
+            client = Mock()
+            client.stream.side_effect = httpx.RequestError("Connection error")
+            yield client
+
+        with patch.object(httpx, "AsyncClient", mock_client_cm):
+            with patch("app.utils.c2pa_verifier.socket.getaddrinfo") as mock_getaddrinfo:
+                mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+                first = await verifier.verify_manifest_url("https://example.com/manifest.json")
+                second = await verifier.verify_manifest_url("https://example.com/manifest.json")
+
+        assert first.valid is False
+        assert any("connection error" in err.lower() for err in first.errors)
+        assert second.valid is False
+        assert second.errors == ["Manifest host temporarily unavailable"]
+
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_returns_busy_when_distributed_slot_unavailable(self, monkeypatch):
+        verifier = C2PAVerifier()
+        fake_redis = _FakeRedis()
+        monkeypatch.setattr(settings, "remote_manifest_verify_distributed_limit_use_redis", True)
+        monkeypatch.setattr(settings, "remote_manifest_verify_concurrency_limit", 1)
+        monkeypatch.setattr(session_service, "redis_client", fake_redis)
+
+        fake_redis.sorted_sets[verifier._distributed_limit_key("global")] = {"lease-1": int(time.time() * 1000) + 60_000}
+
+        with patch("app.utils.c2pa_verifier.socket.getaddrinfo") as mock_getaddrinfo:
+            mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+            result = await verifier.verify_manifest_url("https://example.com/manifest.json")
+
+        assert result.valid is False
+        assert result.errors == ["Manifest verification busy; retry later"]
+
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_releases_distributed_leases_after_fetch(self, monkeypatch):
+        from contextlib import asynccontextmanager
+
+        import httpx
+
+        verifier = C2PAVerifier()
+        fake_redis = _FakeRedis()
+        monkeypatch.setattr(settings, "remote_manifest_verify_distributed_limit_use_redis", True)
+        monkeypatch.setattr(session_service, "redis_client", fake_redis)
+
+        payload = b'{"claim_generator": "Test Generator 1.0", "assertions": []}'
+
+        async def _aiter_bytes(chunk_size=8192):
+            yield payload
+
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_response.aiter_bytes = _aiter_bytes
+
+        @asynccontextmanager
+        async def mock_stream(*args, **kwargs):
+            yield mock_response
+
+        @asynccontextmanager
+        async def mock_client_cm(*args, **kwargs):
+            client = Mock()
+            client.stream = mock_stream
+            yield client
+
+        with patch.object(httpx, "AsyncClient", mock_client_cm):
+            with patch("app.utils.c2pa_verifier.socket.getaddrinfo") as mock_getaddrinfo:
+                mock_getaddrinfo.return_value = [(socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))]
+                result = await verifier.verify_manifest_url("https://example.com/manifest.json")
+
+        assert result.valid is True
+        assert fake_redis.sorted_sets[verifier._distributed_limit_key("global")] == {}
+        assert fake_redis.sorted_sets[verifier._distributed_limit_key("host:example.com")] == {}
 
     @pytest.mark.asyncio
     async def test_convenience_function(self):

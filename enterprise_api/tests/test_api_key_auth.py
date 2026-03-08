@@ -7,17 +7,10 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
 import pytest
-from fastapi import HTTPException
-
 from app.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
-
-from app.middleware.api_key_auth import (
-    _normalize_service_base_url,
-    authenticate_api_key,
-    get_api_key_from_header,
-    require_verification_permission,
-)
 from app.dependencies import require_embedding_permission
+from app.middleware.api_key_auth import _normalize_service_base_url, authenticate_api_key, get_api_key_from_header, require_verification_permission
+from fastapi import HTTPException
 
 
 class TestGetAPIKeyFromHeader:
@@ -209,6 +202,38 @@ class TestAuthenticateAPIKey:
         assert result["is_demo"] is False
 
     @pytest.mark.asyncio
+    @patch("app.middleware.api_key_auth.settings")
+    async def test_valid_api_key_with_read_scope_grants_lookup(self, mock_settings):
+        mock_settings.demo_api_key = None
+
+        db = AsyncMock()
+
+        mock_row = Mock()
+        mock_row.api_key_id = "key_123"
+        mock_row.organization_id = "org_123"
+        mock_row.organization_name = "Test Org"
+        mock_row.tier = "enterprise"
+        mock_row.revoked_at = None
+        mock_row.is_active = True
+        mock_row.expires_at = None
+        mock_row.scopes = ["read"]
+        mock_row.monthly_api_limit = 10000
+        mock_row.monthly_api_usage = 100
+        mock_row.private_key_encrypted = b"encrypted_key"
+        mock_row.features = {}
+        mock_row.coalition_member = True
+        mock_row.coalition_rev_share = DEFAULT_COALITION_PUBLISHER_PERCENT
+
+        mock_result = Mock()
+        mock_result.fetchone = Mock(return_value=mock_row)
+        db.execute = AsyncMock(return_value=mock_result)
+
+        result = await authenticate_api_key(api_key="valid_key", db=db)
+
+        assert result["can_lookup"] is True
+        assert result["permissions"] == ["lookup", "read"]
+
+    @pytest.mark.asyncio
     @patch("app.middleware.api_key_auth.get_key_service_client")
     @patch("app.middleware.api_key_auth.settings")
     async def test_key_service_valid_key(self, mock_settings, mock_get_client):
@@ -238,13 +263,15 @@ class TestAuthenticateAPIKey:
         mock_get_client.return_value = client
 
         db = AsyncMock()
-        result = await authenticate_api_key(api_key="ency_test_12345678901234567890", db=db)
+        fixture_api_key = "fixture-token-1234567890"
+        result = await authenticate_api_key(api_key=fixture_api_key, db=db)
 
         assert result["organization_id"] == "org_ks_123"
         assert result["monthly_quota"] == 1000
         assert result["can_sign"] is True
         assert result["can_verify"] is True
         assert result["can_lookup"] is True
+        assert result["permissions"] == ["lookup", "read", "sign", "verify"]
 
         client.post.assert_awaited_once_with(
             "/api/v1/keys/validate",

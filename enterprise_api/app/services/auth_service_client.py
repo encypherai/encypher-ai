@@ -1,10 +1,10 @@
 """Client for communicating with the Auth Service (internal endpoints)."""
 
 import logging
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, cast
 
 import httpx
-
 from app.config import settings
 from app.middleware.request_id_middleware import request_id_ctx
 
@@ -14,6 +14,19 @@ logger = logging.getLogger(__name__)
 class AuthServiceClient:
     def __init__(self) -> None:
         self.base_url = settings.auth_service_url
+
+    @staticmethod
+    def _build_internal_headers(*, audience: str) -> Dict[str, str]:
+        token = (getattr(settings, "internal_service_token", None) or "").strip()
+        headers = {
+            "x-request-id": request_id_ctx.get(),
+            "X-Internal-Service": "enterprise_api",
+            "X-Internal-Audience": audience,
+            "X-Internal-Timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        if token:
+            headers["X-Internal-Token"] = token
+        return headers
 
     async def get_organization_context(self, organization_id: str) -> Optional[Dict[str, Any]]:
         token = (getattr(settings, "internal_service_token", None) or "").strip()
@@ -25,7 +38,7 @@ class AuthServiceClient:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     f"{self.base_url}/api/v1/organizations/internal/{organization_id}/context",
-                    headers={"X-Internal-Token": token, "x-request-id": request_id_ctx.get()},
+                    headers=self._build_internal_headers(audience="auth_service.organization_context"),
                     timeout=5.0,
                 )
         except httpx.RequestError as exc:
@@ -60,11 +73,13 @@ class AuthServiceClient:
         the message to detect duplicate-email conflicts).
         """
         token = (getattr(settings, "internal_service_token", None) or "").strip()
+        if not token:
+            raise RuntimeError("internal_service_token_missing")
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     f"{self.base_url}/api/v1/auth/internal/users/create",
-                    headers={"X-Internal-Token": token, "x-request-id": request_id_ctx.get()},
+                    headers=self._build_internal_headers(audience="auth_service.user_create"),
                     json={"email": email, "name": name, "password": password},
                 )
         except httpx.RequestError as exc:
@@ -72,9 +87,7 @@ class AuthServiceClient:
             raise RuntimeError(f"create_user_internal request failed: {exc}") from exc
 
         if response.status_code != 200:
-            raise RuntimeError(
-                f"create_user_internal failed: {response.status_code} {response.text}"
-            )
+            raise RuntimeError(f"create_user_internal failed: {response.status_code} {response.text}")
 
         payload = response.json()
         if not (isinstance(payload, dict) and payload.get("success") and isinstance(payload.get("data"), dict)):
@@ -95,11 +108,13 @@ class AuthServiceClient:
         partner-branded claim email after rights profiles are set up.
         """
         token = (getattr(settings, "internal_service_token", None) or "").strip()
+        if not token:
+            raise RuntimeError("internal_service_token_missing")
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
                     f"{self.base_url}/api/v1/organizations/internal/bulk-provision",
-                    headers={"X-Internal-Token": token, "x-request-id": request_id_ctx.get()},
+                    headers=self._build_internal_headers(audience="auth_service.bulk_provision"),
                     json={
                         "publishers": publishers,
                         "partner_org_id": partner_org_id,
@@ -111,9 +126,7 @@ class AuthServiceClient:
             logger.warning("bulk_provision_request_failed error=%s", str(exc))
             raise
         if response.status_code != 200:
-            raise RuntimeError(
-                f"bulk-provision failed: {response.status_code} {response.text}"
-            )
+            raise RuntimeError(f"bulk-provision failed: {response.status_code} {response.text}")
         return cast(Dict[str, Any], response.json())
 
 

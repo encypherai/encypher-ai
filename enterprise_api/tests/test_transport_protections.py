@@ -1,9 +1,8 @@
 import pytest
-from httpx import AsyncClient
-
 from app.config import settings
 from app.main import build_cors_settings, build_trusted_hosts
 from app.middleware.security_headers import DEFAULT_CSP, DOCS_CSP, build_security_headers
+from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
@@ -44,6 +43,38 @@ async def test_public_docs_disabled_by_default(async_client: AsyncClient, monkey
 
     response = await async_client.get("/docs/openapi.json")
     assert response.status_code == 404
+
+    response = await async_client.get("/docs/assets/design-system.css")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_metrics_endpoint_disabled_by_default(async_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "enable_public_metrics_endpoint", False)
+
+    response = await async_client.get("/metrics")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_health_endpoint_hides_operational_details_by_default(async_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "expose_health_details", False)
+
+    response = await async_client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy"}
+
+
+@pytest.mark.asyncio
+async def test_health_endpoint_can_expose_details_when_enabled(async_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "expose_health_details", True)
+
+    response = await async_client.get("/health")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "healthy"
+    assert "environment" in payload
+    assert "version" in payload
 
 
 def test_cors_production_settings_do_not_include_localhost(monkeypatch: pytest.MonkeyPatch) -> None:

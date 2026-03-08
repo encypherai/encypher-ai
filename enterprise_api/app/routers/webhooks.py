@@ -6,20 +6,22 @@ Provides endpoints for registering, listing, and managing webhooks.
 
 import hashlib
 import hmac
-import httpx
 import logging
 import secrets
 from datetime import datetime, timezone
 from typing import List, Optional
 
+import httpx
+from app.database import get_db
+from app.dependencies import get_current_organization
+from app.services.webhook_dispatcher import webhook_dispatcher
+from app.utils.crypto_utils import decrypt_sensitive_value, encrypt_sensitive_value
+from app.utils.outbound_url import validate_https_public_url
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import text
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.database import get_db
-from app.dependencies import get_current_organization
-from app.utils.outbound_url import validate_https_public_url
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 logger = logging.getLogger(__name__)
@@ -201,15 +203,17 @@ async def list_webhooks(
     org_id = organization.get("organization_id")
 
     result = await db.execute(
-        text("""
-            SELECT 
+        text(
+            """
+            SELECT
                 id, url, events, is_active, is_verified,
                 created_at, last_triggered_at,
                 success_count, failure_count
             FROM webhooks
             WHERE organization_id = :org_id
             ORDER BY created_at DESC
-        """),
+        """
+        ),
         {"org_id": org_id},
     )
     rows = result.fetchall()
@@ -225,7 +229,7 @@ async def list_webhooks(
                 is_active=row.is_active,
                 is_verified=row.is_verified,
                 created_at=row.created_at.isoformat() if row.created_at else "",
-                last_triggered_at=row.last_triggered_at.isoformat() if row.last_triggered_at else None,
+                last_triggered_at=(row.last_triggered_at.isoformat() if row.last_triggered_at else None),
                 success_count=row.success_count or 0,
                 failure_count=row.failure_count or 0,
             ).model_dump()
@@ -274,7 +278,10 @@ async def create_webhook(
     if current_count >= 10:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={"code": "WEBHOOK_LIMIT_REACHED", "message": "Maximum 10 webhooks per organization"},
+            detail={
+                "code": "WEBHOOK_LIMIT_REACHED",
+                "message": "Maximum 10 webhooks per organization",
+            },
         )
 
     # Generate webhook ID
@@ -282,27 +289,49 @@ async def create_webhook(
 
     # Hash secret if provided
     secret_hash = hash_secret(request.secret) if request.secret else None
+    secret_encrypted = encrypt_sensitive_value(request.secret) if request.secret else None
 
     # Insert webhook
-    await db.execute(
-        text("""
-            INSERT INTO webhooks (
-                id, organization_id, url, events, secret_hash,
-                is_active, is_verified, success_count, failure_count, created_at
-            ) VALUES (
-                :id, :org_id, :url, :events, :secret_hash,
-                true, false, 0, 0, :created_at
-            )
-        """),
-        {
-            "id": webhook_id,
-            "org_id": org_id,
-            "url": request.url,
-            "events": events,
-            "secret_hash": secret_hash,
-            "created_at": datetime.now(timezone.utc),
-        },
-    )
+    params = {
+        "id": webhook_id,
+        "org_id": org_id,
+        "url": request.url,
+        "events": events,
+        "secret_hash": secret_hash,
+        "secret_encrypted": secret_encrypted,
+        "created_at": datetime.now(timezone.utc),
+    }
+    try:
+        await db.execute(
+            text(
+                """
+                INSERT INTO webhooks (
+                    id, organization_id, url, events, secret_hash, secret_encrypted,
+                    is_active, is_verified, success_count, failure_count, created_at
+                ) VALUES (
+                    :id, :org_id, :url, :events, :secret_hash, :secret_encrypted,
+                    true, false, 0, 0, :created_at
+                )
+            """
+            ),
+            params,
+        )
+    except ProgrammingError:
+        await db.rollback()
+        await db.execute(
+            text(
+                """
+                INSERT INTO webhooks (
+                    id, organization_id, url, events, secret_hash,
+                    is_active, is_verified, success_count, failure_count, created_at
+                ) VALUES (
+                    :id, :org_id, :url, :events, :secret_hash,
+                    true, false, 0, 0, :created_at
+                )
+            """
+            ),
+            {key: value for key, value in params.items() if key != "secret_encrypted"},
+        )
     await db.commit()
 
     logger.info(f"Created webhook {webhook_id} for organization {org_id}")
@@ -330,14 +359,16 @@ async def get_webhook(
     org_id = organization.get("organization_id")
 
     result = await db.execute(
-        text("""
-            SELECT 
+        text(
+            """
+            SELECT
                 id, url, events, is_active, is_verified,
                 created_at, last_triggered_at,
                 success_count, failure_count
             FROM webhooks
             WHERE id = :webhook_id AND organization_id = :org_id
-        """),
+        """
+        ),
         {"webhook_id": webhook_id, "org_id": org_id},
     )
     row = result.fetchone()
@@ -367,7 +398,7 @@ async def get_webhook(
                 is_active=row.is_active,
                 is_verified=row.is_verified,
                 created_at=row.created_at.isoformat() if row.created_at else "",
-                last_triggered_at=row.last_triggered_at.isoformat() if row.last_triggered_at else None,
+                last_triggered_at=(row.last_triggered_at.isoformat() if row.last_triggered_at else None),
                 success_count=row.success_count or 0,
                 failure_count=row.failure_count or 0,
             ).model_dump()
@@ -504,10 +535,17 @@ async def test_webhook(
     org_id = organization.get("organization_id")
 
     # Get webhook
-    result = await db.execute(
-        text("SELECT id, url, secret_hash FROM webhooks WHERE id = :webhook_id AND organization_id = :org_id"),
-        {"webhook_id": webhook_id, "org_id": org_id},
-    )
+    try:
+        result = await db.execute(
+            text("SELECT id, url, secret_hash, secret_encrypted FROM webhooks WHERE id = :webhook_id AND organization_id = :org_id"),
+            {"webhook_id": webhook_id, "org_id": org_id},
+        )
+    except ProgrammingError:
+        await db.rollback()
+        result = await db.execute(
+            text("SELECT id, url, secret_hash FROM webhooks WHERE id = :webhook_id AND organization_id = :org_id"),
+            {"webhook_id": webhook_id, "org_id": org_id},
+        )
     row = result.fetchone()
 
     if not row:
@@ -536,20 +574,29 @@ async def test_webhook(
             "message": "This is a test webhook delivery from Encypher",
         },
     }
+    payload_json = json.dumps(test_payload)
+    secret = None
+    secret_encrypted = getattr(row, "secret_encrypted", None)
+    if secret_encrypted:
+        try:
+            secret = decrypt_sensitive_value(bytes(secret_encrypted))
+        except ValueError as exc:
+            logger.warning("webhook_secret_decrypt_failed", extra={"webhook_id": webhook_id, "error": str(exc)})
 
     # Send test request
     try:
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
-            headers = {
-                "Content-Type": "application/json",
-                "User-Agent": "Encypher-Webhook/1.0",
-                "X-Encypher-Event": "test",
-                "X-Encypher-Delivery": f"test_{secrets.token_hex(8)}",
-            }
+            delivery_id = f"test_{secrets.token_hex(8)}"
+            headers = webhook_dispatcher.build_headers(
+                event_type="test",
+                delivery_id=delivery_id,
+                payload_json=payload_json,
+                secret=secret,
+            )
 
             response = await client.post(
                 row.url,
-                json=test_payload,
+                content=payload_json,
                 headers=headers,
             )
 
@@ -570,7 +617,7 @@ async def test_webhook(
                     "success": success,
                     "status_code": response.status_code,
                     "response_time_ms": int(response.elapsed.total_seconds() * 1000),
-                    "message": "Webhook test successful" if success else f"Webhook returned {response.status_code}",
+                    "message": ("Webhook test successful" if success else f"Webhook returned {response.status_code}"),
                 }
             )
 
@@ -628,8 +675,9 @@ async def get_webhook_deliveries(
 
     # Get deliveries
     result = await db.execute(
-        text("""
-            SELECT 
+        text(
+            """
+            SELECT
                 id, event_type, status, attempts,
                 response_status_code, response_time_ms, error_message,
                 created_at, delivered_at
@@ -637,7 +685,8 @@ async def get_webhook_deliveries(
             WHERE webhook_id = :webhook_id
             ORDER BY created_at DESC
             LIMIT :limit OFFSET :offset
-        """),
+        """
+        ),
         {"webhook_id": webhook_id, "limit": page_size, "offset": offset},
     )
     rows = result.fetchall()

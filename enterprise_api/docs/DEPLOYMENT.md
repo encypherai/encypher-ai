@@ -17,6 +17,8 @@ This guide covers deploying the Encypher Enterprise API to Railway (recommended)
 
 Railway provides managed PostgreSQL and automatic SSL/TLS certificates.
 
+For the current security-hardening phase, Railway is also the supported control plane for shared abuse controls via managed Redis. Keep the service pinned to a single replica until higher-scale load validation is complete.
+
 ### Prerequisites
 
 - Railway account (https://railway.app)
@@ -48,6 +50,13 @@ railway add postgresql
 railway variables
 ```
 
+Add Redis in the same project so public rate limiting and expensive remote verification budgets are shared across restarts and future replicas.
+
+```bash
+# Add Redis service
+railway add redis
+```
+
 ### Step 3: Set Environment Variables
 
 ```bash
@@ -64,6 +73,14 @@ railway variables set API_BASE_URL=https://api.encypherai.com
 railway variables set ENVIRONMENT=preview
 railway variables set MARKETING_DOMAIN=encypher.ai
 railway variables set INFRASTRUCTURE_DOMAIN=encypherai.com
+railway variables set REDIS_URL=${{Redis.REDIS_URL}}
+railway variables set PUBLIC_RATE_LIMIT_USE_REDIS=true
+railway variables set REMOTE_MANIFEST_VERIFY_DISTRIBUTED_LIMIT_USE_REDIS=true
+railway variables set REMOTE_MANIFEST_VERIFY_DISTRIBUTED_LEASE_SECONDS=30
+railway variables set ENABLE_PUBLIC_API_DOCS=false
+railway variables set ENABLE_PUBLIC_METRICS_ENDPOINT=false
+railway variables set EXPOSE_HEALTH_DETAILS=false
+railway variables set EXPOSE_READINESS_DETAILS=false
 ```
 
 ### Step 4: Initialize Database
@@ -122,11 +139,19 @@ Railway automatically provisions SSL/TLS certificates via Let's Encrypt.
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ENVIRONMENT` | Environment mode | `development` |
+| `REDIS_URL` | Shared Redis used for sessions, distributed public rate limiting, and distributed remote verification budgets | `redis://localhost:6379/0` |
 | `SSL_COM_API_URL` | SSL.com API endpoint | `https://api.ssl.com/v1` |
 | `API_BASE_URL` | Public API URL | `https://api.encypherai.com` |
 | `RATE_LIMIT_PER_MINUTE` | Rate limit | `60` |
 | `MARKETING_DOMAIN` | Marketing domain | `encypher.ai` |
 | `INFRASTRUCTURE_DOMAIN` | Infrastructure domain | `encypherai.com` |
+| `PUBLIC_RATE_LIMIT_USE_REDIS` | Enable Redis-backed shared public rate limiting | `true` |
+| `REMOTE_MANIFEST_VERIFY_DISTRIBUTED_LIMIT_USE_REDIS` | Enable Redis-backed shared remote manifest verification concurrency limits | `true` |
+| `REMOTE_MANIFEST_VERIFY_DISTRIBUTED_LEASE_SECONDS` | Lease duration for shared remote verification slots | `30` |
+| `ENABLE_PUBLIC_API_DOCS` | Expose `/docs` and `/docs/openapi.json` publicly | `false` |
+| `ENABLE_PUBLIC_METRICS_ENDPOINT` | Expose `/metrics` publicly | `false` |
+| `EXPOSE_HEALTH_DETAILS` | Return environment/version detail from `/health` | `false` |
+| `EXPOSE_READINESS_DETAILS` | Return dependency detail from `/readyz` | `false` |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP HTTP endpoint for distributed tracing (optional, disabled when unset) | _(unset)_ |
 | `OTEL_SERVICE_NAME` | Service name reported to tracing backend | `enterprise-api` |
 
@@ -219,6 +244,23 @@ railway logs -s <service-name>
 # Filter logs
 railway logs | grep ERROR
 ```
+
+### Security-Safe Railway Defaults
+
+- Keep `numReplicas=1` until distributed fairness and load validation are completed.
+- Keep `ENABLE_PUBLIC_METRICS_ENDPOINT=false` and rely on OTLP export or Railway log drains instead of a public scrape endpoint.
+- Keep `ENABLE_PUBLIC_API_DOCS=false` in production unless there is a specific external-docs requirement.
+- Keep `EXPOSE_HEALTH_DETAILS=false` and `EXPOSE_READINESS_DETAILS=false` so probes do not leak operational metadata publicly.
+- Keep Redis-backed shared limits enabled so restarts do not reset public-abuse budgets and remote verification concurrency budgets.
+
+### Deferred Higher-Scale Work
+
+The following items remain intentionally deferred until higher-scale infrastructure and budget are available:
+
+- multi-replica load and abuse validation
+- edge/CDN or WAF-backed public rate limiting
+- geographically distributed attack simulation
+- protected external metrics scraping infrastructure
 
 ### Application Logs
 

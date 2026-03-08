@@ -17,6 +17,7 @@ or simply:
   uv run pytest tests/e2e_local/test_rich_sign_passthrough.py -v
   (passthrough auto-activates when no cert env vars are set)
 """
+
 import base64
 import secrets
 from io import BytesIO
@@ -25,7 +26,6 @@ from typing import Any, Dict
 import pytest
 from httpx import AsyncClient
 from PIL import Image
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -96,7 +96,7 @@ class TestSignImagePassthrough:
             image_id="img_test",
             custom_assertions=[],
             rights_data={},
-            signer_private_key_pem="",   # empty -> passthrough
+            signer_private_key_pem="",  # empty -> passthrough
             signer_cert_chain_pem="",
         )
         assert result.c2pa_signed is False
@@ -140,16 +140,28 @@ class TestSignImagePassthrough:
         jpeg_blue = make_jpeg(color=(0, 0, 255))
 
         r1 = await sign_image(
-            image_data=jpeg_red, mime_type="image/jpeg", title="red.jpg",
-            org_id="org_test", document_id="doc_001", image_id="img_r",
-            custom_assertions=[], rights_data={},
-            signer_private_key_pem="", signer_cert_chain_pem="",
+            image_data=jpeg_red,
+            mime_type="image/jpeg",
+            title="red.jpg",
+            org_id="org_test",
+            document_id="doc_001",
+            image_id="img_r",
+            custom_assertions=[],
+            rights_data={},
+            signer_private_key_pem="",
+            signer_cert_chain_pem="",
         )
         r2 = await sign_image(
-            image_data=jpeg_blue, mime_type="image/jpeg", title="blue.jpg",
-            org_id="org_test", document_id="doc_001", image_id="img_b",
-            custom_assertions=[], rights_data={},
-            signer_private_key_pem="", signer_cert_chain_pem="",
+            image_data=jpeg_blue,
+            mime_type="image/jpeg",
+            title="blue.jpg",
+            org_id="org_test",
+            document_id="doc_001",
+            image_id="img_b",
+            custom_assertions=[],
+            rights_data={},
+            signer_private_key_pem="",
+            signer_cert_chain_pem="",
         )
         assert r1.original_hash != r2.original_hash
 
@@ -187,13 +199,17 @@ async def test_sign_rich_passthrough_single_image(
     """POST /sign/rich with 1 JPEG in passthrough mode -> 201, c2pa_signed=False."""
     doc_id = unique_doc_id("pt-single")
     req = rich_request(
-        images=[{"data": b64(make_jpeg()), "filename": "photo.jpg",
-                 "mime_type": "image/jpeg", "position": 0}],
+        images=[
+            {
+                "data": b64(make_jpeg()),
+                "filename": "photo.jpg",
+                "mime_type": "image/jpeg",
+                "position": 0,
+            }
+        ],
         document_id=doc_id,
     )
-    resp = await async_client.post(
-        "/api/v1/sign/rich", json=req, headers=enterprise_auth_headers
-    )
+    resp = await async_client.post("/api/v1/sign/rich", json=req, headers=enterprise_auth_headers)
     assert resp.status_code == 201, resp.text
     data = resp.json()
     assert data["success"] is True
@@ -221,16 +237,22 @@ async def test_sign_rich_passthrough_two_images(
     """POST /sign/rich with 2 images -> composite manifest has 2 ingredients."""
     req = rich_request(
         images=[
-            {"data": b64(make_jpeg(color=(255, 0, 0))), "filename": "red.jpg",
-             "mime_type": "image/jpeg", "position": 0},
-            {"data": b64(make_png(color=(0, 0, 255))), "filename": "blue.png",
-             "mime_type": "image/png", "position": 1},
+            {
+                "data": b64(make_jpeg(color=(255, 0, 0))),
+                "filename": "red.jpg",
+                "mime_type": "image/jpeg",
+                "position": 0,
+            },
+            {
+                "data": b64(make_png(color=(0, 0, 255))),
+                "filename": "blue.png",
+                "mime_type": "image/png",
+                "position": 1,
+            },
         ],
         document_id=unique_doc_id("pt-two"),
     )
-    resp = await async_client.post(
-        "/api/v1/sign/rich", json=req, headers=enterprise_auth_headers
-    )
+    resp = await async_client.post("/api/v1/sign/rich", json=req, headers=enterprise_auth_headers)
     assert resp.status_code == 201, resp.text
     body = resp.json()["data"]
 
@@ -250,16 +272,18 @@ async def test_sign_rich_then_verify_rich(
     doc_id = unique_doc_id("pt-roundtrip")
     req = rich_request(
         images=[
-            {"data": b64(make_jpeg()), "filename": "main.jpg",
-             "mime_type": "image/jpeg", "position": 0},
+            {
+                "data": b64(make_jpeg()),
+                "filename": "main.jpg",
+                "mime_type": "image/jpeg",
+                "position": 0,
+            },
         ],
         document_id=doc_id,
     )
 
     # Sign
-    sign_resp = await async_client.post(
-        "/api/v1/sign/rich", json=req, headers=enterprise_auth_headers
-    )
+    sign_resp = await async_client.post("/api/v1/sign/rich", json=req, headers=enterprise_auth_headers)
     assert sign_resp.status_code == 201, sign_resp.text
     sign_data = sign_resp.json()["data"]
     assert sign_data["composite_manifest"]["ingredient_count"] == 1
@@ -275,7 +299,12 @@ async def test_sign_rich_then_verify_rich(
     assert vdata["document_id"] == doc_id
     assert vdata["valid"] is True
     assert vdata["composite_manifest_valid"] is True
+    assert vdata["cryptographically_verified"] is False
+    assert vdata["all_ingredients_verified"] is False
+    assert vdata["overall_status"] == "partially_verified"
     assert len(vdata["image_verifications"]) == 1
+    assert vdata["image_verifications"][0]["valid"] is False
+    assert vdata["image_verifications"][0]["historically_signed_by_us"] is True
 
 
 @pytest.mark.asyncio
@@ -292,15 +321,17 @@ async def test_sign_rich_then_verify_image(
     jpeg_bytes = make_jpeg(color=(50, 100, 150))
     req = rich_request(
         images=[
-            {"data": b64(jpeg_bytes), "filename": "snap.jpg",
-             "mime_type": "image/jpeg", "position": 0},
+            {
+                "data": b64(jpeg_bytes),
+                "filename": "snap.jpg",
+                "mime_type": "image/jpeg",
+                "position": 0,
+            },
         ],
         document_id=unique_doc_id("pt-verifyimg"),
     )
 
-    sign_resp = await async_client.post(
-        "/api/v1/sign/rich", json=req, headers=enterprise_auth_headers
-    )
+    sign_resp = await async_client.post("/api/v1/sign/rich", json=req, headers=enterprise_auth_headers)
     assert sign_resp.status_code == 201, sign_resp.text
     returned_b64 = sign_resp.json()["data"]["images"][0]["signed_image_b64"]
 
@@ -310,8 +341,10 @@ async def test_sign_rich_then_verify_image(
     )
     assert verify_resp.status_code == 200, verify_resp.text
     vdata = verify_resp.json()
-    # XMP embedded -> DB lookup by instance_id confirms provenance -> valid=True
-    assert vdata["valid"] is True
+    assert vdata["valid"] is False
+    assert vdata["db_matched"] is True
+    assert vdata["historically_signed_by_us"] is True
+    assert vdata["overall_status"] == "historically_signed_record"
 
 
 @pytest.mark.asyncio
@@ -322,18 +355,20 @@ async def test_sign_rich_passthrough_duplicate_document_id_returns_422(
     """Signing the same document_id twice should fail (unique constraint)."""
     doc_id = unique_doc_id("pt-dup")
     req = rich_request(
-        images=[{"data": b64(make_jpeg()), "filename": "img.jpg",
-                 "mime_type": "image/jpeg", "position": 0}],
+        images=[
+            {
+                "data": b64(make_jpeg()),
+                "filename": "img.jpg",
+                "mime_type": "image/jpeg",
+                "position": 0,
+            }
+        ],
         document_id=doc_id,
     )
-    r1 = await async_client.post(
-        "/api/v1/sign/rich", json=req, headers=enterprise_auth_headers
-    )
+    r1 = await async_client.post("/api/v1/sign/rich", json=req, headers=enterprise_auth_headers)
     assert r1.status_code == 201, r1.text
 
-    r2 = await async_client.post(
-        "/api/v1/sign/rich", json=req, headers=enterprise_auth_headers
-    )
+    r2 = await async_client.post("/api/v1/sign/rich", json=req, headers=enterprise_auth_headers)
     # Second attempt should fail with a DB constraint or 422
     assert r2.status_code in (422, 409, 500)
 
@@ -345,13 +380,17 @@ async def test_sign_rich_passthrough_phash_in_db(
 ):
     """pHash must be non-null in the returned image result."""
     req = rich_request(
-        images=[{"data": b64(make_jpeg()), "filename": "hashcheck.jpg",
-                 "mime_type": "image/jpeg", "position": 0}],
+        images=[
+            {
+                "data": b64(make_jpeg()),
+                "filename": "hashcheck.jpg",
+                "mime_type": "image/jpeg",
+                "position": 0,
+            }
+        ],
         document_id=unique_doc_id("pt-phash"),
     )
-    resp = await async_client.post(
-        "/api/v1/sign/rich", json=req, headers=enterprise_auth_headers
-    )
+    resp = await async_client.post("/api/v1/sign/rich", json=req, headers=enterprise_auth_headers)
     assert resp.status_code == 201, resp.text
     img = resp.json()["data"]["images"][0]
     assert img["phash"] is not None
@@ -366,13 +405,17 @@ async def test_sign_rich_passthrough_exif_stripped(
     """Returned image bytes are EXIF-stripped (hash changes from raw input)."""
     jpeg = make_jpeg(color=(10, 20, 30))
     req = rich_request(
-        images=[{"data": b64(jpeg), "filename": "exiftest.jpg",
-                 "mime_type": "image/jpeg", "position": 0}],
+        images=[
+            {
+                "data": b64(jpeg),
+                "filename": "exiftest.jpg",
+                "mime_type": "image/jpeg",
+                "position": 0,
+            }
+        ],
         document_id=unique_doc_id("pt-exif"),
     )
-    resp = await async_client.post(
-        "/api/v1/sign/rich", json=req, headers=enterprise_auth_headers
-    )
+    resp = await async_client.post("/api/v1/sign/rich", json=req, headers=enterprise_auth_headers)
     assert resp.status_code == 201, resp.text
     returned_bytes = base64.b64decode(resp.json()["data"]["images"][0]["signed_image_b64"])
     # Must still be a valid JPEG
@@ -447,13 +490,17 @@ async def test_sign_rich_passthrough_attribution_lookup(
     """After signing, pHash attribution lookup finds the image within the same org."""
     jpeg = make_jpeg(color=(123, 45, 67))
     req = rich_request(
-        images=[{"data": b64(jpeg), "filename": "attrtest.jpg",
-                 "mime_type": "image/jpeg", "position": 0}],
+        images=[
+            {
+                "data": b64(jpeg),
+                "filename": "attrtest.jpg",
+                "mime_type": "image/jpeg",
+                "position": 0,
+            }
+        ],
         document_id=unique_doc_id("pt-attr"),
     )
-    sign_resp = await async_client.post(
-        "/api/v1/sign/rich", json=req, headers=enterprise_auth_headers
-    )
+    sign_resp = await async_client.post("/api/v1/sign/rich", json=req, headers=enterprise_auth_headers)
     assert sign_resp.status_code == 201, sign_resp.text
 
     # The returned image is EXIF-stripped; use its hash for attribution

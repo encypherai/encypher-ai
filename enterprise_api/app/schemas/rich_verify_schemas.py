@@ -1,4 +1,5 @@
 """Pydantic schemas for rich article and image verification."""
+
 from typing import List, Optional
 
 from pydantic import BaseModel
@@ -23,6 +24,9 @@ class ImageVerificationResult(BaseModel):
     c2pa_instance_id: Optional[str] = None
     signer: Optional[str] = None
     signed_at: Optional[str] = None
+    cryptographically_verified: Optional[bool] = None
+    historically_signed_by_us: Optional[bool] = None
+    overall_status: Optional[str] = None
     error: Optional[str] = None
 
 
@@ -50,6 +54,9 @@ class RichVerifyResponse(BaseModel):
     image_verifications: List[ImageVerificationResult] = []
     composite_manifest_valid: bool
     all_ingredients_verified: bool
+    cryptographically_verified: Optional[bool] = None
+    historically_signed_by_us: Optional[bool] = None
+    overall_status: Optional[str] = None
     signer_identity: Optional[SignerIdentity] = None
     error: Optional[str] = None
     correlation_id: str
@@ -64,5 +71,9 @@ class ImageVerifyResponse(BaseModel):
     document_id: Optional[str] = None
     hash: Optional[str] = None
     phash: Optional[str] = None
+    cryptographically_verified: Optional[bool] = None
+    db_matched: Optional[bool] = None
+    historically_signed_by_us: Optional[bool] = None
+    overall_status: Optional[str] = None
     error: Optional[str] = None
     correlation_id: str

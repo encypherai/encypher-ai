@@ -1,14 +1,13 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
+from app.config import settings
+from app.services.provisioning_service import ProvisioningService
+from app.utils.crypto_utils import encrypt_private_key, serialize_public_key
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from sqlalchemy import text
-
-from app.services.provisioning_service import ProvisioningService
-from app.utils.crypto_utils import encrypt_private_key, serialize_public_key
-from app.config import settings
 
 
 class _DummyResponse:
@@ -118,15 +117,12 @@ async def test_ensure_organization_certificate_uses_signing_key(db, monkeypatch)
     cert_public_key = cert.public_key()
 
     assert isinstance(cert_public_key, ed25519.Ed25519PublicKey)
-    assert (
-        cert_public_key.public_bytes(
-            encoding=serialization.Encoding.Raw,
-            format=serialization.PublicFormat.Raw,
-        )
-        == public_key.public_bytes(
-            encoding=serialization.Encoding.Raw,
-            format=serialization.PublicFormat.Raw,
-        )
+    assert cert_public_key.public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw,
+    ) == public_key.public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw,
     )
 
     patch_calls = [request for request in dummy_client.requests if request[0] == "patch"]
@@ -135,6 +131,9 @@ async def test_ensure_organization_certificate_uses_signing_key(db, monkeypatch)
     assert patch_url.endswith(f"/api/v1/organizations/internal/{organization_id}/certificate")
     assert "certificate_pem" in patch_json
     assert patch_headers["X-Internal-Token"] == "internal-token"
+    assert patch_headers["X-Internal-Service"] == "enterprise_api"
+    assert patch_headers["X-Internal-Audience"] == "enterprise_api.provisioning.ensure_certificate"
+    assert patch_headers["X-Internal-Timestamp"]
 
 
 @pytest.mark.asyncio
@@ -257,10 +256,33 @@ async def test_internal_ensure_certificate_endpoint_returns_success(async_client
     response = await async_client.post(
         "/api/v1/provisioning/internal/ensure-certificate",
         json={"organization_id": "org_demo", "organization_name": "Demo Org"},
-        headers={"X-Internal-Token": "internal-token"},
+        headers={
+            "X-Internal-Token": "internal-token",
+            "X-Internal-Service": "enterprise_api",
+            "X-Internal-Audience": "enterprise_api.provisioning.ensure_certificate",
+            "X-Internal-Timestamp": datetime.now(timezone.utc).isoformat(),
+        },
     )
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["success"] is True
     assert payload["data"]["organization_id"] == "org_demo"
+
+
+@pytest.mark.asyncio
+async def test_internal_ensure_certificate_endpoint_rejects_stale_timestamp(async_client, monkeypatch) -> None:
+    monkeypatch.setattr(settings, "internal_service_token", "internal-token")
+
+    response = await async_client.post(
+        "/api/v1/provisioning/internal/ensure-certificate",
+        json={"organization_id": "org_demo", "organization_name": "Demo Org"},
+        headers={
+            "X-Internal-Token": "internal-token",
+            "X-Internal-Service": "enterprise_api",
+            "X-Internal-Audience": "enterprise_api.provisioning.ensure_certificate",
+            "X-Internal-Timestamp": (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat(),
+        },
+    )
+
+    assert response.status_code == 401

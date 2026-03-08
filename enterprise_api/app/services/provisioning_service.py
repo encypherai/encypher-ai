@@ -13,23 +13,18 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
 import httpx
-from cryptography.hazmat.primitives.asymmetric import ed25519
-from cryptography.hazmat.primitives import serialization
+from app.config import settings
+from app.core.tier_config import LEGACY_TIER_MAP
+from app.models.organization import Organization, OrganizationCertificateStatus, OrganizationTier
+from app.utils.crypto_utils import extract_public_key_from_certificate, load_organization_private_key, load_organization_public_key
+from app.utils.feature_flags import TIER_FEATURES
+from app.utils.quota import TIER_QUOTAS, QuotaType
 from cryptography import x509
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.x509.oid import NameOID
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.organization import Organization, OrganizationTier, OrganizationCertificateStatus
-from app.utils.feature_flags import TIER_FEATURES
-from app.utils.quota import TIER_QUOTAS, QuotaType
-from app.utils.crypto_utils import (
-    extract_public_key_from_certificate,
-    load_organization_private_key,
-    load_organization_public_key,
-)
-from app.config import settings
-from app.core.tier_config import LEGACY_TIER_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -287,15 +282,15 @@ class ProvisioningService:
     ) -> bool:
         """
         Ensure organization has a signing certificate.
-        
+
         If the organization doesn't have a certificate, auto-provision a self-signed
         Ed25519 certificate via auth-service.
-        
+
         Args:
             organization_id: Organization identifier
             organization_name: Organization name for certificate CN
             authorization: Optional auth header to pass to auth-service
-            
+
         Returns:
             True if certificate exists or was created, False on failure
         """
@@ -306,6 +301,9 @@ class ProvisioningService:
 
             if settings.internal_service_token:
                 headers["X-Internal-Token"] = settings.internal_service_token
+                headers["X-Internal-Service"] = "enterprise_api"
+                headers["X-Internal-Audience"] = "enterprise_api.provisioning.ensure_certificate"
+                headers["X-Internal-Timestamp"] = datetime.now(timezone.utc).isoformat()
 
             try:
                 signing_key = await load_organization_private_key(organization_id, db)
@@ -318,7 +316,10 @@ class ProvisioningService:
                     await load_organization_public_key(organization_id, db)
                 except ValueError as exc:
                     logger.warning("Unable to load public key for %s: %s", organization_id, exc)
-                logger.warning("Signing key type not supported for certificate provisioning: %s", organization_id)
+                logger.warning(
+                    "Signing key type not supported for certificate provisioning: %s",
+                    organization_id,
+                )
                 return False
 
             public_key = signing_key.public_key()
@@ -354,7 +355,10 @@ class ProvisioningService:
                             else:
                                 expiry = expiry.astimezone(timezone.utc)
                         if not expiry or expiry > now:
-                            logger.debug("Organization %s already has a matching certificate", organization_id)
+                            logger.debug(
+                                "Organization %s already has a matching certificate",
+                                organization_id,
+                            )
                             return True
                 except Exception as exc:
                     logger.warning("Failed to parse existing certificate for %s: %s", organization_id, exc)
@@ -448,7 +452,7 @@ class ProvisioningService:
         )
         org_row = org_result.fetchone()
         org_name = org_row.name if org_row else organization_id
-        
+
         # Auto-provision certificate if needed
         await ProvisioningService._ensure_organization_certificate(
             db=db,
@@ -456,7 +460,7 @@ class ProvisioningService:
             organization_name=org_name,
             authorization=authorization,
         )
-        
+
         api_key = ProvisioningService.generate_api_key()
         key_hash = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
         key_prefix = api_key[:12]

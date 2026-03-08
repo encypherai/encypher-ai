@@ -2,15 +2,14 @@
 
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.database import get_db
 from app.dependencies import require_sign_permission, require_verify_permission
 from app.middleware.api_rate_limiter import api_rate_limiter
 from app.schemas.batch import BatchResponseEnvelope, BatchSignRequest, BatchVerifyRequest
 from app.services.batch_service import batch_service
 from app.utils.quota import QuotaManager, QuotaType
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/v1", tags=["Batch"])
 
@@ -41,10 +40,12 @@ async def batch_sign(
     correlation_id = _correlation_id(request)
     tier = organization.get("tier", "free")
 
-    result = api_rate_limiter.check_with_reset(
+    result, limited_dimension = api_rate_limiter.check_request_limits(
+        request=request,
         organization_id=organization["organization_id"],
         scope="batch_sign",
         tier=tier,
+        api_key_prefix=getattr(request.state, "api_key_prefix", None),
     )
 
     # Add rate limit headers to response
@@ -58,6 +59,7 @@ async def batch_sign(
                 "code": "E_RATE_BATCH_SIGN",
                 "message": "Batch signing rate limit exceeded",
                 "hint": f"Rate limit is {result.limit} requests per minute for {tier} tier",
+                "rate_limit_dimension": limited_dimension,
             },
             headers=api_rate_limiter.get_headers(result),
         )
@@ -117,10 +119,12 @@ async def batch_verify(
     correlation_id = _correlation_id(request)
     tier = organization.get("tier", "free")
 
-    result = api_rate_limiter.check_with_reset(
+    result, limited_dimension = api_rate_limiter.check_request_limits(
+        request=request,
         organization_id=organization["organization_id"],
         scope="batch_verify",
         tier=tier,
+        api_key_prefix=getattr(request.state, "api_key_prefix", None),
     )
 
     # Add rate limit headers to response
@@ -134,6 +138,7 @@ async def batch_verify(
                 "code": "E_RATE_BATCH_VERIFY",
                 "message": "Batch verification rate limit exceeded",
                 "hint": f"Rate limit is {result.limit} requests per minute for {tier} tier",
+                "rate_limit_dimension": limited_dimension,
             },
             headers=api_rate_limiter.get_headers(result),
         )

@@ -10,11 +10,11 @@ import logging
 from datetime import datetime
 from typing import Dict, Optional
 
-from fastapi import WebSocket, WebSocketException, status
-from sqlalchemy import text
-
 from app.config import settings
 from app.database import async_session_factory
+from app.dependencies import _normalize_permissions
+from fastapi import WebSocket, WebSocketException, status
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,10 @@ async def authenticate_websocket(websocket: WebSocket, api_key: Optional[str] = 
             # Check streaming permission (Professional+ tier)
             if row.tier not in ("professional", "business", "enterprise", "demo"):
                 logger.warning(f"WebSocket authentication failed: Insufficient tier for org {row.organization_id}")
-                raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason="Streaming requires Professional or Enterprise tier")
+                raise WebSocketException(
+                    code=status.WS_1008_POLICY_VIOLATION,
+                    reason="Streaming requires Professional or Enterprise tier",
+                )
 
             # Update last_used_at timestamp
             await db.execute(
@@ -120,8 +123,7 @@ async def authenticate_websocket(websocket: WebSocket, api_key: Optional[str] = 
             scopes = row.scopes or []
             if isinstance(scopes, str):
                 scopes = json.loads(scopes)
-            if "admin" in scopes:
-                scopes = list({*scopes, "sign", "verify", "lookup", "read"})
+            scopes = _normalize_permissions(scopes)
 
             logger.info(f"WebSocket authenticated for org {row.organization_id}")
 
@@ -134,7 +136,7 @@ async def authenticate_websocket(websocket: WebSocket, api_key: Optional[str] = 
                 "tier": row.tier,
                 "can_sign": "sign" in scopes,
                 "can_verify": "verify" in scopes,
-                "can_lookup": "lookup" in scopes or "read" in scopes,
+                "can_lookup": "lookup" in scopes,
                 "monthly_quota": row.monthly_api_limit,
                 "api_calls_this_month": row.monthly_api_usage,
                 "is_demo": False,
@@ -164,10 +166,16 @@ async def require_streaming_permission(organization: Dict) -> Dict:
     """
     # Check tier
     if organization["tier"] not in ("professional", "enterprise", "demo"):
-        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason="Streaming requires Professional or Enterprise tier")
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION,
+            reason="Streaming requires Professional or Enterprise tier",
+        )
 
     # Check sign permission
     if not organization["can_sign"]:
-        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason="API key does not have permission to sign content")
+        raise WebSocketException(
+            code=status.WS_1008_POLICY_VIOLATION,
+            reason="API key does not have permission to sign content",
+        )
 
     return organization

@@ -8,11 +8,10 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
+from app.database import Base
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, LargeBinary, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.sql import func
-
-from app.database import Base
 
 
 class WebhookEvent(str, Enum):
@@ -56,6 +55,7 @@ class Webhook(Base):
     url = Column(String(2048), nullable=False)
     events = Column(ARRAY(String), nullable=False, default=[])
     secret_hash = Column(String(128), nullable=True)  # Hashed shared secret for HMAC
+    secret_encrypted = Column(LargeBinary, nullable=True)
 
     # Status
     is_active = Column(Boolean, nullable=False, default=True)

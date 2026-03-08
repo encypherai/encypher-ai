@@ -3,6 +3,7 @@
 Tests Pydantic schema validation, field defaults, and required field enforcement.
 No database or network calls.
 """
+
 import os
 import sys
 from pathlib import Path
@@ -16,17 +17,15 @@ os.environ.setdefault("KEY_ENCRYPTION_KEY", "0" * 64)
 os.environ.setdefault("ENCRYPTION_NONCE", "0" * 24)
 os.environ.setdefault(
     "CORE_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:15432/encypher_content",
+    "postgresql+asyncpg:///encypher_test_content",
 )
 os.environ.setdefault(
     "CONTENT_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:15432/encypher_content",
+    "postgresql+asyncpg:///encypher_test_content",
 )
 os.environ.setdefault("DATABASE_URL", os.environ["CORE_DATABASE_URL"])
 
 import pytest
-from pydantic import ValidationError
-
 from app.schemas.rich_verify_schemas import (
     ImageVerificationResult,
     ImageVerifyRequest,
@@ -36,6 +35,7 @@ from app.schemas.rich_verify_schemas import (
     SignerIdentity,
     TextVerificationResult,
 )
+from pydantic import ValidationError
 
 
 class TestRichVerifyRequest:
@@ -98,6 +98,9 @@ class TestImageVerificationResult:
         assert result.c2pa_instance_id is None
         assert result.signer is None
         assert result.signed_at is None
+        assert result.cryptographically_verified is None
+        assert result.historically_signed_by_us is None
+        assert result.overall_status is None
         assert result.error is None
 
     def test_with_all_fields(self) -> None:
@@ -112,12 +115,18 @@ class TestImageVerificationResult:
             c2pa_instance_id="urn:uuid:1234",
             signer="Encypher Test Publisher",
             signed_at="2026-02-26T00:00:00Z",
+            cryptographically_verified=True,
+            historically_signed_by_us=True,
+            overall_status="cryptographically_valid",
             error=None,
         )
         assert result.image_id == "img_deadbeef"
         assert result.filename == "photo.jpg"
         assert result.trustmark_valid is True
         assert result.c2pa_instance_id == "urn:uuid:1234"
+        assert result.cryptographically_verified is True
+        assert result.historically_signed_by_us is True
+        assert result.overall_status == "cryptographically_valid"
 
     def test_valid_false_with_error(self) -> None:
         """A failed verification carries an error message."""
@@ -184,6 +193,9 @@ class TestRichVerifyResponse:
             document_id="doc_abc123",
             composite_manifest_valid=True,
             all_ingredients_verified=True,
+            cryptographically_verified=True,
+            historically_signed_by_us=True,
+            overall_status="cryptographically_valid",
             correlation_id="corr-1234",
         )
         assert resp.success is True
@@ -191,6 +203,9 @@ class TestRichVerifyResponse:
         assert resp.document_id == "doc_abc123"
         assert resp.content_type == "rich_article"
         assert resp.image_verifications == []
+        assert resp.cryptographically_verified is True
+        assert resp.historically_signed_by_us is True
+        assert resp.overall_status == "cryptographically_valid"
 
     def test_missing_required_fields_raises(self) -> None:
         """Missing required fields raise ValidationError."""
@@ -206,6 +221,10 @@ class TestImageVerifyResponse:
         resp = ImageVerifyResponse(
             valid=False,
             verified_at="2026-02-26T00:00:00+00:00",
+            cryptographically_verified=False,
+            db_matched=False,
+            historically_signed_by_us=False,
+            overall_status="invalid",
             correlation_id="corr-5678",
         )
         assert resp.success is True
@@ -214,6 +233,10 @@ class TestImageVerifyResponse:
         assert resp.image_id is None
         assert resp.hash is None
         assert resp.phash is None
+        assert resp.cryptographically_verified is False
+        assert resp.db_matched is False
+        assert resp.historically_signed_by_us is False
+        assert resp.overall_status == "invalid"
         assert resp.error is None
 
     def test_missing_required_fields_raises(self) -> None:

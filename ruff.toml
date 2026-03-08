@@ -49,7 +49,6 @@ ignore = [
     "UP006", # use-pep585-annotation - keep compatibility with older Python
     "UP007", # use-pep604-annotation - keep compatibility with older Python
     "UP035", # deprecated-import - keep compatibility with older Python
-    "UP045", # use-pep604-annotation-optional - keep compatibility with older Python
 ]
 
 # Per-file ignores

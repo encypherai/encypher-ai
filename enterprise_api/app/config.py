@@ -3,9 +3,9 @@ Configuration module for Encypher Enterprise API.
 Uses Pydantic Settings for environment variable management.
 """
 
-from functools import lru_cache
 import ipaddress
 import re
+from functools import lru_cache
 from typing import ClassVar, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -55,6 +55,20 @@ class Settings(BaseSettings):
 
     # API docs exposure
     enable_public_api_docs: bool = False
+    enable_public_metrics_endpoint: bool = False
+    expose_health_details: bool = False
+    expose_readiness_details: bool = False
+    public_verify_minimal_response: bool = False
+    public_rate_limit_use_redis: bool = True
+    remote_manifest_verify_concurrency_limit: int = 8
+    remote_manifest_verify_per_host_concurrency_limit: int = 2
+    remote_manifest_verify_acquire_timeout_seconds: float = 0.25
+    remote_manifest_verify_distributed_limit_use_redis: bool = True
+    remote_manifest_verify_distributed_lease_seconds: int = 30
+    remote_manifest_verify_cache_ttl_seconds: int = 300
+    remote_manifest_verify_negative_cache_ttl_seconds: int = 60
+    remote_manifest_verify_host_failure_threshold: int = 3
+    remote_manifest_verify_circuit_open_seconds: int = 60
 
     # Service URLs
     coalition_service_url: str = "http://localhost:8009"
@@ -95,10 +109,10 @@ class Settings(BaseSettings):
     trusted_proxy_ips: str = ""
 
     # Image signing configuration
-    image_max_size_bytes: int = 10_485_760          # 10 MB per image
+    image_max_size_bytes: int = 10_485_760  # 10 MB per image
     image_max_count_per_request: int = 20
-    image_response_format: str = "base64"            # always base64 for now
-    image_service_url: str = ""                      # TrustMark microservice URL (empty = disabled)
+    image_response_format: str = "base64"  # always base64 for now
+    image_service_url: str = ""  # TrustMark microservice URL (empty = disabled)
     # When True: skip JUMBF embedding (no cert required). Returns original image bytes
     # unchanged. All metadata (hash, pHash, composite manifest, DB rows) is still written.
     # Use for local dev/CI where no CA-signed cert is available.

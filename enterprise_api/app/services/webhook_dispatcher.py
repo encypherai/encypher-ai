@@ -14,11 +14,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 import httpx
+from app.database import async_session_factory
+from app.utils.crypto_utils import decrypt_sensitive_value
+from app.utils.outbound_url import validate_https_public_url
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.database import async_session_factory
-from app.utils.outbound_url import validate_https_public_url
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +68,29 @@ class WebhookDispatcher:
         """
         return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
 
+    def build_headers(
+        self,
+        *,
+        event_type: str,
+        delivery_id: str,
+        payload_json: str,
+        secret: Optional[str] = None,
+    ) -> Dict[str, str]:
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "Encypher-Webhook/1.0",
+            "X-Encypher-Event": event_type,
+            "X-Encypher-Delivery": delivery_id,
+        }
+
+        if secret:
+            timestamp = datetime.now(timezone.utc).isoformat()
+            signature = self.generate_signature(f"{timestamp}.{payload_json}", secret)
+            headers["X-Encypher-Timestamp"] = timestamp
+            headers["X-Encypher-Signature"] = f"sha256={signature}"
+
+        return headers
+
     async def dispatch_event(
         self,
         event_type: str,
@@ -91,13 +114,15 @@ class WebhookDispatcher:
         try:
             # Get active webhooks for this event
             result = await db.execute(
-                text("""
-                    SELECT id, url, secret_hash, events
+                text(
+                    """
+                    SELECT id, url, secret_hash, secret_encrypted, events
                     FROM webhooks
                     WHERE organization_id = :org_id
                     AND is_active = true
                     AND :event_type = ANY(events)
-                """),
+                """
+                ),
                 {"org_id": organization_id, "event_type": event_type},
             )
             webhooks = result.fetchall()
@@ -121,12 +146,21 @@ class WebhookDispatcher:
             # Dispatch to each webhook
             tasks = []
             for webhook in webhooks:
+                secret = None
+                if webhook.secret_encrypted:
+                    try:
+                        secret = decrypt_sensitive_value(bytes(webhook.secret_encrypted))
+                    except ValueError as exc:
+                        logger.warning(
+                            "webhook_secret_decrypt_failed",
+                            extra={"webhook_id": webhook.id, "error": str(exc)},
+                        )
                 tasks.append(
                     self._deliver_webhook(
                         db=db,
                         webhook_id=webhook.id,
                         url=webhook.url,
-                        secret_hash=webhook.secret_hash,
+                        secret=secret,
                         event_type=event_type,
                         event_id=event_id,
                         payload=payload,
@@ -148,7 +182,7 @@ class WebhookDispatcher:
         db: AsyncSession,
         webhook_id: str,
         url: str,
-        secret_hash: Optional[str],
+        secret: Optional[str],
         event_type: str,
         event_id: str,
         payload: Dict[str, Any],
@@ -175,7 +209,8 @@ class WebhookDispatcher:
 
         # Create delivery record
         await db.execute(
-            text("""
+            text(
+                """
                 INSERT INTO webhook_deliveries (
                     id, webhook_id, organization_id, event_type, event_id,
                     payload, status, attempts, max_attempts, created_at
@@ -183,7 +218,8 @@ class WebhookDispatcher:
                     :id, :webhook_id, :org_id, :event_type, :event_id,
                     :payload, 'pending', 0, :max_attempts, :created_at
                 )
-            """),
+            """
+            ),
             {
                 "id": delivery_id,
                 "webhook_id": webhook_id,
@@ -203,7 +239,7 @@ class WebhookDispatcher:
             delivery_id=delivery_id,
             webhook_id=webhook_id,
             url=url,
-            secret_hash=secret_hash,
+            secret=secret,
             payload_json=payload_json,
             event_type=event_type,
         )
@@ -216,7 +252,7 @@ class WebhookDispatcher:
         delivery_id: str,
         webhook_id: str,
         url: str,
-        secret_hash: Optional[str],
+        secret: Optional[str],
         payload_json: str,
         event_type: str,
     ) -> bool:
@@ -243,21 +279,12 @@ class WebhookDispatcher:
 
         client = await self.get_client()
 
-        # Build headers
-        headers = {
-            "Content-Type": "application/json",
-            "User-Agent": "Encypher-Webhook/1.0",
-            "X-Encypher-Event": event_type,
-            "X-Encypher-Delivery": delivery_id,
-        }
-
-        # Add signature if secret is configured
-        # Note: We can't verify the original secret, but we can sign with a known value
-        # In production, you'd store the secret securely and retrieve it
-        if secret_hash:
-            # For now, we'll skip signature since we only have the hash
-            # In a real implementation, you'd store the secret encrypted
-            pass
+        headers = self.build_headers(
+            event_type=event_type,
+            delivery_id=delivery_id,
+            payload_json=payload_json,
+            secret=secret,
+        )
 
         try:
             start_time = datetime.now(timezone.utc)
@@ -268,9 +295,10 @@ class WebhookDispatcher:
 
             # Update delivery record
             await db.execute(
-                text("""
+                text(
+                    """
                     UPDATE webhook_deliveries
-                    SET 
+                    SET
                         status = :status,
                         attempts = attempts + 1,
                         response_status_code = :status_code,
@@ -278,7 +306,8 @@ class WebhookDispatcher:
                         response_time_ms = :response_time,
                         delivered_at = CASE WHEN :success THEN :now ELSE delivered_at END
                     WHERE id = :delivery_id
-                """),
+                """
+                ),
                 {
                     "delivery_id": delivery_id,
                     "status": "success" if success else "failed",
@@ -293,27 +322,31 @@ class WebhookDispatcher:
             # Update webhook stats
             if success:
                 await db.execute(
-                    text("""
+                    text(
+                        """
                         UPDATE webhooks
-                        SET 
+                        SET
                             success_count = success_count + 1,
                             last_triggered_at = :now,
                             last_success_at = :now
                         WHERE id = :webhook_id
-                    """),
+                    """
+                    ),
                     {"webhook_id": webhook_id, "now": datetime.now(timezone.utc)},
                 )
             else:
                 await db.execute(
-                    text("""
+                    text(
+                        """
                         UPDATE webhooks
-                        SET 
+                        SET
                             failure_count = failure_count + 1,
                             last_triggered_at = :now,
                             last_failure_at = :now,
                             last_failure_reason = :reason
                         WHERE id = :webhook_id
-                    """),
+                    """
+                    ),
                     {
                         "webhook_id": webhook_id,
                         "now": datetime.now(timezone.utc),
@@ -349,27 +382,31 @@ class WebhookDispatcher:
     ) -> None:
         """Record a delivery failure."""
         await db.execute(
-            text("""
+            text(
+                """
                 UPDATE webhook_deliveries
-                SET 
+                SET
                     status = 'failed',
                     attempts = attempts + 1,
                     error_message = :error
                 WHERE id = :delivery_id
-            """),
+            """
+            ),
             {"delivery_id": delivery_id, "error": error_message},
         )
 
         await db.execute(
-            text("""
+            text(
+                """
                 UPDATE webhooks
-                SET 
+                SET
                     failure_count = failure_count + 1,
                     last_triggered_at = :now,
                     last_failure_at = :now,
                     last_failure_reason = :reason
                 WHERE id = :webhook_id
-            """),
+            """
+            ),
             {
                 "webhook_id": webhook_id,
                 "now": datetime.now(timezone.utc),
