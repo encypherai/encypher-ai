@@ -90,7 +90,7 @@ def _build_invitation_email(
         html_lines.append(f"<p>Invited by: {safe_inviter_email}</p>")
     if safe_message:
         html_lines.append(f"<p>Message: {safe_message}</p>")
-    html_lines.append(f"<p><a href=\"{invitation_url}\">Accept invitation</a></p>")
+    html_lines.append(f'<p><a href="{invitation_url}">Accept invitation</a></p>')
     if expires_at:
         html_lines.append(f"<p>Expires at: {expires_at.isoformat()} UTC</p>")
     html_content = "\n".join(html_lines)
@@ -195,14 +195,14 @@ async def _send_domain_claim_email(
         f"on behalf of <strong>{organization_name}</strong>.</p>"
         "<p>To verify ownership, add the following TXT record to your DNS provider "
         f"under the <strong>{domain}</strong> zone:</p>"
-        f"<pre style=\"background:#f4f4f4;padding:12px;border-radius:4px;font-family:monospace\">"
+        f'<pre style="background:#f4f4f4;padding:12px;border-radius:4px;font-family:monospace">'
         f"{dns_record}</pre>"
         "<p>Once the record is live (propagation may take a few minutes), open your "
         f"dashboard settings and click <strong>Verify DNS</strong>:</p>"
-        f"<p><a href=\"{settings_url}\">Go to Settings</a></p>"
-        "<hr style=\"margin:24px 0;border:none;border-top:1px solid #eee\">"
-        f"<p style=\"font-size:12px;color:#888\">If you did not request this, you can ignore "
-        f"this email. <a href=\"{audit_url}\">Confirm this request</a> (optional audit trail).</p>"
+        f'<p><a href="{settings_url}">Go to Settings</a></p>'
+        '<hr style="margin:24px 0;border:none;border-top:1px solid #eee">'
+        f'<p style="font-size:12px;color:#888">If you did not request this, you can ignore '
+        f'this email. <a href="{audit_url}">Confirm this request</a> (optional audit trail).</p>'
     )
     plain_content = (
         f"Set up DNS verification for {domain}\n\n"
@@ -281,6 +281,9 @@ class OrganizationResponse(BaseModel):
     email: str
     account_type: Optional[str] = None
     display_name: Optional[str] = None
+    dashboard_layout: Optional[str] = None
+    publisher_platform: Optional[str] = None
+    publisher_platform_custom: Optional[str] = None
     signing_identity_mode: Optional[str] = None
     signing_identity_custom_label: Optional[str] = None
     anonymous_publisher: bool = False
@@ -1095,9 +1098,7 @@ async def create_invitation(
         org = org_service.get_organization(org_id)
         organization_name = invitation.organization_name or (org.name if org else "")
         if inviter and organization_name:
-            recipient_name = " ".join(
-                part for part in [invitation.first_name, invitation.last_name] if part
-            ).strip()
+            recipient_name = " ".join(part for part in [invitation.first_name, invitation.last_name] if part).strip()
             await _send_invitation_email(
                 authorization=request.headers.get("Authorization", ""),
                 recipient_email=invitation.email,
@@ -1180,9 +1181,7 @@ async def resend_invitation(
         org = org_service.get_organization(org_id)
         organization_name = invitation.organization_name or (org.name if org else "")
         if inviter and organization_name:
-            recipient_name = " ".join(
-                part for part in [invitation.first_name, invitation.last_name] if part
-            ).strip()
+            recipient_name = " ".join(part for part in [invitation.first_name, invitation.last_name] if part).strip()
             await _send_invitation_email(
                 authorization=request.headers.get("Authorization", ""),
                 recipient_email=invitation.email,
@@ -1381,7 +1380,11 @@ async def create_audit_log(
 
 class PublisherSettingsUpdate(BaseModel):
     """Request to update publisher identity settings"""
+
     display_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    dashboard_layout: Optional[str] = Field(None, min_length=1, max_length=32)
+    publisher_platform: Optional[str] = Field(None, min_length=1, max_length=64)
+    publisher_platform_custom: Optional[str] = Field(None, min_length=1, max_length=255)
     signing_identity_mode: Optional[str] = Field(None, min_length=1, max_length=64)
     anonymous_publisher: Optional[bool] = None
 
@@ -1408,6 +1411,32 @@ async def update_publisher_settings(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
     changes = {}
+    requested_layout = payload.dashboard_layout.strip().lower() if payload.dashboard_layout is not None else None
+    requested_platform = payload.publisher_platform.strip().lower() if payload.publisher_platform is not None else None
+    requested_platform_custom = payload.publisher_platform_custom.strip() if payload.publisher_platform_custom is not None else None
+
+    if requested_layout is not None and requested_layout not in {"publisher", "enterprise"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid dashboard layout")
+
+    if requested_platform is not None and requested_platform not in {"wordpress", "ghost", "substack", "medium", "custom"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid publisher platform")
+
+    resolved_layout = requested_layout or org.dashboard_layout or "publisher"
+    resolved_platform = requested_platform if requested_platform is not None else org.publisher_platform
+    resolved_platform_custom = requested_platform_custom if payload.publisher_platform_custom is not None else org.publisher_platform_custom
+    updating_layout_preferences = any(
+        value is not None for value in (payload.dashboard_layout, payload.publisher_platform, payload.publisher_platform_custom)
+    )
+
+    if updating_layout_preferences and resolved_layout == "publisher":
+        if not resolved_platform:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Publisher platform is required for publisher layout")
+        if resolved_platform == "custom" and not resolved_platform_custom:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Custom publisher platform is required when platform is custom")
+    elif updating_layout_preferences:
+        resolved_platform = None
+        resolved_platform_custom = None
+
     if payload.signing_identity_mode is not None:
         requested_mode = payload.signing_identity_mode.strip().lower()
         if requested_mode not in ALLOWED_SIGNING_IDENTITY_MODES:
@@ -1468,6 +1497,26 @@ async def update_publisher_settings(
             org.name = org.display_name
         changes["display_name"] = org.display_name
 
+    if requested_layout is not None:
+        org.dashboard_layout = requested_layout
+        changes["dashboard_layout"] = org.dashboard_layout
+
+    if resolved_layout == "publisher":
+        if requested_platform is not None:
+            org.publisher_platform = requested_platform
+            changes["publisher_platform"] = org.publisher_platform
+        if requested_platform is not None and requested_platform != "custom":
+            org.publisher_platform_custom = None
+            changes["publisher_platform_custom"] = None
+        elif payload.publisher_platform_custom is not None or org.publisher_platform == "custom":
+            org.publisher_platform_custom = resolved_platform_custom
+            changes["publisher_platform_custom"] = org.publisher_platform_custom
+    elif requested_layout is not None or payload.publisher_platform is not None or payload.publisher_platform_custom is not None:
+        org.publisher_platform = None
+        org.publisher_platform_custom = None
+        changes["publisher_platform"] = None
+        changes["publisher_platform_custom"] = None
+
     if payload.anonymous_publisher is not None:
         org.anonymous_publisher = payload.anonymous_publisher
         changes["anonymous_publisher"] = org.anonymous_publisher
@@ -1488,6 +1537,9 @@ async def update_publisher_settings(
         "data": {
             "display_name": org.display_name,
             "account_type": org.account_type,
+            "dashboard_layout": org.dashboard_layout,
+            "publisher_platform": org.publisher_platform,
+            "publisher_platform_custom": org.publisher_platform_custom,
             "signing_identity_mode": org.signing_identity_mode,
             "signing_identity_custom_label": org.signing_identity_custom_label,
             "custom_signing_identity_enabled": bool((org.add_ons or {}).get("custom-signing-identity"))

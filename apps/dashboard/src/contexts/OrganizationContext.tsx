@@ -10,6 +10,9 @@ interface Organization {
   email: string;
   account_type?: 'individual' | 'organization' | null;
   display_name?: string | null;
+  dashboard_layout?: 'publisher' | 'enterprise' | null;
+  publisher_platform?: 'wordpress' | 'ghost' | 'substack' | 'medium' | 'custom' | null;
+  publisher_platform_custom?: string | null;
   signing_identity_mode?: 'organization_name' | 'organization_and_author' | 'custom' | null;
   signing_identity_custom_label?: string | null;
   anonymous_publisher?: boolean;
@@ -72,7 +75,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       // Set active org from localStorage or use first org
       const savedOrgId = localStorage.getItem('activeOrganizationId');
       const savedOrg = orgs.find((org: Organization) => org.id === savedOrgId);
-      
+
       if (savedOrg) {
         setActiveOrgState(savedOrg);
       } else if (orgs.length > 0) {

@@ -87,7 +87,23 @@ Use it to track status, ownership, next actions, and strategic significance acro
 
 ---
 
-## 6) Immediate Action Queue (Next 2 Weeks)
+## 6) Encypher Attest Pipeline
+
+> **Status note:** Attest is a defined second product line (see `Encypher_Attest_Strategy.md`)
+> but has no named prospects or active pipeline tracked here yet. This section should be
+> populated as Attest conversations open. Current priority is publisher coalition motion;
+> Attest outreach should begin in Q2 2026 once the publisher motion has at least one signed
+> deal providing credibility for regulated-enterprise conversations.
+
+| Organization | Vertical | Key Contacts | Current Status | Health | Owner | Next Action |
+|---|---|---|---|---|---|---|
+| TBD -- Legal vertical | Legal | TBD | No active conversations yet | -- | Erik | Identify 2-3 target law firms or legal tech adjacents via standards network connections |
+| TBD -- Financial services | FinServ | TBD | No active conversations yet | -- | Erik | Build intro path through Linklaters relationship or AAM financial-publisher adjacents |
+| TBD -- Healthcare | Healthcare | TBD | No active conversations yet | -- | TBD | Assess after publisher coalition motion has one signed deal |
+
+---
+
+## 7) Immediate Action Queue (Next 2 Weeks)
 
 1. Close Freestar legal path and set launch timeline.
 2. Continue roundtable-track briefings and framework synthesis notes.
@@ -99,4 +115,5 @@ Use it to track status, ownership, next actions, and strategic significance acro
 
 ## Change Log
 
+- **2026-03-08:** Added Attest pipeline section (Section 6); renumbered Immediate Action Queue to Section 7; added SSOT pointer notes.
 - **2026-03-04:** Initial tracker created from Q1 2026 strategic review synthesis.

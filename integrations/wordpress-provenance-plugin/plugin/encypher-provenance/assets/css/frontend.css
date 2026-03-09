@@ -1,6 +1,6 @@
 /**
  * Frontend C2PA badge styles for Encypher WordPress plugin.
- * 
+ *
  * Uses Encypher brand colors:
  * - Deep Navy: #1B2F50
  * - Azure Blue: #2A87C4
@@ -64,6 +64,18 @@
     width: 48px;
     height: 48px;
     display: block;
+}
+
+.encypher-c2pa-badge-wrapper {
+    width: 100%;
+}
+
+.encypher-c2pa-badge-top {
+    margin: 0 0 24px;
+}
+
+.encypher-c2pa-badge-bottom {
+    margin: 40px 0 60px;
 }
 
 /* Floating badge positioning */

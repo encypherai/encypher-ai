@@ -12,10 +12,12 @@ const LOGO_COLOR = '/assets/encypher_full_logo_color.svg';
 const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
 
 const getApiBase = () => {
-  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
-    return `${window.location.origin}/api/v1`;
-  }
-  return process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1';
+  return (
+    process.env.NEXT_PUBLIC_API_URL ||
+    (process.env.NODE_ENV === 'development'
+      ? 'http://localhost:8000/api/v1'
+      : 'https://api.encypherai.com/api/v1')
+  );
 };
 
 const NAME_URL_REGEX = /(https?:\/\/|www\.)/i;

@@ -354,8 +354,32 @@ class HtmlParser
             return $signed;
         }
 
-        $signed_chars = $this->mb_str_split_safe($signed);
-        $signed_len = count($signed_chars);
+        // For large texts, use memory-efficient string access instead of array splitting.
+        // PHP arrays have ~80 bytes overhead per element, so a 60k char string becomes ~5MB.
+        // Threshold of 50k chars balances memory vs CPU tradeoff.
+        $signed_len = mb_strlen($signed, 'UTF-8');
+        $use_string_access = ($signed_len > 50000);
+
+        if ($use_string_access) {
+            // Memory-efficient path: access characters via mb_substr on demand
+            $signed_chars = null;
+            $get_char = function (int $i) use ($signed): ?string {
+                return $this->mb_char_at($signed, $i);
+            };
+            $get_slice = function (int $start, int $len) use ($signed): string {
+                return $this->mb_substring($signed, $start, $len);
+            };
+        } else {
+            // Fast path for smaller texts: use character array
+            $signed_chars = $this->mb_str_split_safe($signed);
+            $signed_len = count($signed_chars);
+            $get_char = function (int $i) use ($signed_chars, $signed_len): ?string {
+                return ($i >= 0 && $i < $signed_len) ? $signed_chars[$i] : null;
+            };
+            $get_slice = function (int $start, int $len) use ($signed_chars): string {
+                return implode('', array_slice($signed_chars, $start, $len));
+            };
+        }
         $cursor = 0;
 
         $replacements = [];
@@ -364,16 +388,24 @@ class HtmlParser
         foreach ($fragments as $frag_idx => [$offset, $length, $raw_text]) {
             // Normalize fragment: decode HTML entities, collapse whitespace (Unicode-aware)
             $decoded = html_entity_decode($raw_text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $decoded = wp_check_invalid_utf8($decoded, true);
+            if (! is_string($decoded) || '' === $decoded) {
+                continue;
+            }
             $normalized = preg_replace('/\s+/u', ' ', trim($decoded, " \t\n\r\0\x0B\xC2\xA0"));
-            if ('' === $normalized) {
+            if (! is_string($normalized) || '' === $normalized) {
                 continue;
             }
 
             // Collect inter-fragment VS chars and whitespace gap
             $gap_vs = '';
-            while ($cursor < $signed_len && $this->is_vs_or_whitespace($signed_chars[$cursor])) {
-                if ($this->is_vs_char($signed_chars[$cursor])) {
-                    $gap_vs .= $signed_chars[$cursor];
+            while ($cursor < $signed_len) {
+                $ch = $get_char($cursor);
+                if ($ch === null || !$this->is_vs_or_whitespace($ch)) {
+                    break;
+                }
+                if ($this->is_vs_char($ch)) {
+                    $gap_vs .= $ch;
                 }
                 $cursor++;
             }
@@ -386,7 +418,10 @@ class HtmlParser
             $norm_len = count($norm_chars);
 
             while ($si < $signed_len && $ti < $norm_len) {
-                $ch = $signed_chars[$si];
+                $ch = $get_char($si);
+                if ($ch === null) {
+                    break;
+                }
                 if ($this->is_vs_char($ch)) {
                     $si++;
                     continue;
@@ -416,12 +451,16 @@ class HtmlParser
             }
 
             // Consume trailing VS chars after the matched text
-            while ($si < $signed_len && $this->is_vs_char($signed_chars[$si])) {
+            while ($si < $signed_len) {
+                $ch = $get_char($si);
+                if ($ch === null || !$this->is_vs_char($ch)) {
+                    break;
+                }
                 $si++;
             }
 
             // Extract the signed chunk (visible text + embedded VS markers)
-            $signed_chunk = implode('', array_slice($signed_chars, $match_start, $si - $match_start));
+            $signed_chunk = $get_slice($match_start, $si - $match_start);
             $cursor = $si;
 
             // Preserve original leading whitespace from the raw HTML text.
@@ -441,8 +480,12 @@ class HtmlParser
         // Append any remaining VS chars (tail of C2PA manifest) to the last replacement
         $remaining_vs = '';
         while ($cursor < $signed_len) {
-            if ($this->is_vs_char($signed_chars[$cursor])) {
-                $remaining_vs .= $signed_chars[$cursor];
+            $ch = $get_char($cursor);
+            if ($ch === null) {
+                break;
+            }
+            if ($this->is_vs_char($ch)) {
+                $remaining_vs .= $ch;
             }
             $cursor++;
         }
@@ -495,6 +538,10 @@ class HtmlParser
 
         foreach ($fragments as [$offset, $length, $raw_text]) {
             $decoded = html_entity_decode($raw_text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $decoded = wp_check_invalid_utf8($decoded, true);
+            if (! is_string($decoded) || '' === $decoded) {
+                continue;
+            }
             // Collapse whitespace but preserve VS chars
             $chars = $this->mb_str_split_safe($decoded);
             $result_chars = [];
@@ -644,6 +691,10 @@ class HtmlParser
     /**
      * Split a string into an array of multibyte characters.
      *
+     * For large strings (>50k chars), this can consume significant memory.
+     * Consider using mb_char_at() for on-demand access when processing
+     * very large texts.
+     *
      * @param string $str Input string
      * @return array Array of single characters
      */
@@ -654,5 +705,38 @@ class HtmlParser
         }
         $result = preg_split('//u', $str, -1, PREG_SPLIT_NO_EMPTY);
         return is_array($result) ? $result : [];
+    }
+
+    /**
+     * Get a single multibyte character at a given index.
+     *
+     * Memory-efficient alternative to mb_str_split for large strings.
+     * Uses mb_substr which has O(n) complexity but constant memory.
+     *
+     * @param string $str Input string
+     * @param int $index Character index (0-based)
+     * @return string|null Single character or null if out of bounds
+     */
+    public function mb_char_at(string $str, int $index): ?string
+    {
+        if ($index < 0) {
+            return null;
+        }
+        $char = mb_substr($str, $index, 1, 'UTF-8');
+        return ($char === '' || $char === false) ? null : $char;
+    }
+
+    /**
+     * Get substring using multibyte-safe extraction.
+     *
+     * @param string $str Input string
+     * @param int $start Start index
+     * @param int $length Number of characters
+     * @return string Substring
+     */
+    public function mb_substring(string $str, int $start, int $length): string
+    {
+        $result = mb_substr($str, $start, $length, 'UTF-8');
+        return ($result === false) ? '' : $result;
     }
 }

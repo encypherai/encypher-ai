@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     STRIPE_PRICE_PROFESSIONAL_ANNUAL: str = ""
     STRIPE_PRICE_BUSINESS_MONTHLY: str = ""
     STRIPE_PRICE_BUSINESS_ANNUAL: str = ""
+    STRIPE_PRICE_BULK_ARCHIVE_BACKFILL: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -77,7 +78,7 @@ class Settings(BaseSettings):
         """Validate Stripe configuration at startup."""
         if not self.STRIPE_API_KEY:
             raise ValueError("STRIPE_API_KEY is required")
-        
+
         # Validate price IDs are set (except in test environments)
         if self.ENVIRONMENT == "production":
             required_prices = [
@@ -85,8 +86,9 @@ class Settings(BaseSettings):
                 ("STRIPE_PRICE_PROFESSIONAL_ANNUAL", self.STRIPE_PRICE_PROFESSIONAL_ANNUAL),
                 ("STRIPE_PRICE_BUSINESS_MONTHLY", self.STRIPE_PRICE_BUSINESS_MONTHLY),
                 ("STRIPE_PRICE_BUSINESS_ANNUAL", self.STRIPE_PRICE_BUSINESS_ANNUAL),
+                ("STRIPE_PRICE_BULK_ARCHIVE_BACKFILL", self.STRIPE_PRICE_BULK_ARCHIVE_BACKFILL),
             ]
-            
+
             missing = [name for name, value in required_prices if not value]
             if missing:
                 raise ValueError(f"Missing Stripe price IDs in production: {', '.join(missing)}")

@@ -183,6 +183,12 @@ class Organization(Base):
     # TEAM_191: Publisher identity — individual creator vs organization
     account_type = Column(String(32), nullable=True)  # "individual" or "organization"; NULL = not yet set
     display_name = Column(String(255), nullable=True)  # Human-readable publisher name for signed content
+    dashboard_layout = Column(String(32), nullable=False, default="publisher")
+    workflow_category = Column(String(64), nullable=True)
+    publisher_platform = Column(String(64), nullable=True)
+    publisher_platform_custom = Column(String(255), nullable=True)
+    publisher_platform_language = Column(String(64), nullable=True)
+    publisher_platform_other = Column(String(255), nullable=True)
     signing_identity_mode = Column(String(64), nullable=False, default="organization_name")
     signing_identity_custom_label = Column(String(255), nullable=True)
     anonymous_publisher = Column(Boolean, default=False, nullable=False)  # If true, show org ID instead of name on verification

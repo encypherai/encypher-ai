@@ -82,6 +82,7 @@ let debugAutoRefreshInterval = null;
 const tabs = document.querySelectorAll('.popup__tab');
 
 const DEFAULT_SIGN_SETTINGS = {
+  defaultDocumentType: 'article',
   defaultDocType: 'article',
   defaultEmbeddingTechnique: 'micro',
   defaultSegmentationLevel: 'sentence',
@@ -127,7 +128,7 @@ function enforceSignMethodByTier(info) {
 async function loadSignDefaults() {
   try {
     const settings = await chrome.storage.sync.get(DEFAULT_SIGN_SETTINGS);
-    if (signDocTypeEl) signDocTypeEl.value = settings.defaultDocType || 'article';
+    if (signDocTypeEl) signDocTypeEl.value = settings.defaultDocumentType || settings.defaultDocType || 'article';
     if (signEmbeddingTechniqueEl) {
       signEmbeddingTechniqueEl.value = normalizeEmbeddingTechnique(settings.defaultEmbeddingTechnique || 'micro');
     }
@@ -233,7 +234,7 @@ async function locateEmbeddingOnPage(detectionId) {
  */
 function renderDetails(details) {
   detailsListEl.innerHTML = '';
-  
+
   if (!details || details.length === 0) {
     return;
   }
@@ -241,7 +242,7 @@ function renderDetails(details) {
   for (const detail of details) {
     const item = document.createElement('div');
     item.className = 'popup__detail-item';
-    
+
     const iconClass = detail.revoked ? 'revoked' : (detail.valid ? 'verified' : 'invalid');
     const statusLabel = detail.revoked ? 'Revoked' : (detail.valid ? 'Verified' : 'Invalid');
     const markerLabel = markerTypeLabel(detail.markerType);
@@ -258,7 +259,7 @@ function renderDetails(details) {
       : (detail.valid
         ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
         : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>');
-    
+
     item.innerHTML = `
       <div class="popup__detail-icon popup__detail-icon--${iconClass}">${iconSymbol}</div>
       <div class="popup__detail-info">
@@ -278,7 +279,7 @@ function renderDetails(details) {
         locateEmbeddingOnPage(detail.detectionId);
       });
     }
-    
+
     detailsListEl.appendChild(item);
   }
 }
@@ -289,7 +290,7 @@ function renderDetails(details) {
 async function loadTabState() {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    
+
     if (!tab || !tab.id) {
       showState('error');
       errorMessageEl.textContent = 'Unable to access current tab.';
@@ -315,7 +316,7 @@ async function loadTabState() {
     } else {
       showState('found');
       updateCounts(state);
-      
+
       // If we have cached details, render them
       if (state.details) {
         renderDetails(state.details);
@@ -333,10 +334,10 @@ async function loadTabState() {
  */
 async function rescanPage() {
   showState('loading');
-  
+
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    
+
     if (!tab || !tab.id) {
       showState('error');
       errorMessageEl.textContent = 'Unable to access current tab.';
@@ -345,7 +346,7 @@ async function rescanPage() {
 
     // Send rescan message to content script
     await chrome.tabs.sendMessage(tab.id, { type: 'RESCAN' });
-    
+
     // Wait a moment for verification to complete
     setTimeout(loadTabState, 1000);
   } catch (error) {
@@ -363,7 +364,7 @@ function switchTab(tabName) {
   tabs.forEach(tab => {
     tab.classList.toggle('popup__tab--active', tab.dataset.tab === tabName);
   });
-  
+
   // Hide all tab content first
   loadingEl.hidden = true;
   noContentEl.hidden = true;
@@ -371,13 +372,13 @@ function switchTab(tabName) {
   errorEl.hidden = true;
   signTabEl.hidden = true;
   debugTabEl.hidden = true;
-  
+
   // Stop debug auto-refresh when leaving debug tab
   if (debugAutoRefreshInterval) {
     clearInterval(debugAutoRefreshInterval);
     debugAutoRefreshInterval = null;
   }
-  
+
   // Show/hide content
   if (tabName === 'verify') {
     loadTabState();
@@ -400,7 +401,7 @@ async function checkApiKeyAndShowSignState() {
     const result = await chrome.storage.local.get({ apiKey: '' });
     const syncState = await chrome.storage.sync.get({ extensionSetupStatus: 'not_started' });
     await loadSignDefaults();
-    
+
     if (result.apiKey) {
       showSignState('ready');
       // Fetch account info to get tier
@@ -428,7 +429,7 @@ async function fetchAccountInfo(apiKey) {
       type: 'GET_ACCOUNT_INFO',
       apiKey: apiKey
     });
-    
+
     if (response && response.success) {
       accountInfo = response.data;
       updateTierDisplay(accountInfo);
@@ -451,15 +452,15 @@ function updateSignIdentity(info) {
  */
 function updateTierDisplay(info) {
   if (!tierBadgeEl) return;
-  
+
   const tier = (info?.tier || 'free').toLowerCase();
   const isEnterprise = ['enterprise', 'business'].includes(tier);
-  
+
   tierBadgeEl.className = `popup__tier-badge popup__tier-badge--${isEnterprise ? 'enterprise' : 'free'}`;
   tierBadgeEl.innerHTML = `
     <span class="popup__tier-name">${isEnterprise ? 'Enterprise' : 'Free Tier'}</span>
   `;
-  
+
   // Enable enterprise features
   if (signMerkleEl) {
     signMerkleEl.disabled = !isEnterprise;
@@ -468,13 +469,13 @@ function updateTierDisplay(info) {
     signAttributionEl.disabled = !isEnterprise;
   }
   enforceSignMethodByTier(info);
-  
+
   // Hide upgrade prompt for enterprise users
   if (enterpriseFeaturesEl && isEnterprise) {
     enterpriseFeaturesEl.querySelector('.popup__enterprise-link')?.remove();
     enterpriseFeaturesEl.querySelector('.popup__enterprise-badge').textContent = 'ENABLED';
   }
-  
+
   // Update usage meter
   updateUsageMeter(info);
 }
@@ -484,22 +485,22 @@ function updateTierDisplay(info) {
  */
 function updateUsageMeter(info) {
   if (!usageMeterEl) return;
-  
+
   const usage = info?.usage?.signings_this_month || 0;
   const limit = info?.usage?.monthly_limit || FREE_TIER_LIMIT;
   const tier = (info?.tier || 'free').toLowerCase();
   const isEnterprise = ['enterprise', 'business'].includes(tier);
-  
+
   // Hide meter for enterprise (unlimited)
   if (isEnterprise) {
     usageMeterEl.hidden = true;
     return;
   }
-  
+
   usageMeterEl.hidden = false;
   const pct = Math.min((usage / limit) * 100, 100);
   const remaining = Math.max(limit - usage, 0);
-  
+
   if (usageFillEl) {
     usageFillEl.style.width = `${pct}%`;
     usageFillEl.className = 'popup__usage-fill';
@@ -509,7 +510,7 @@ function updateUsageMeter(info) {
       usageFillEl.classList.add('popup__usage-fill--warning');
     }
   }
-  
+
   if (usageTextEl) {
     usageTextEl.textContent = `${usage.toLocaleString()} / ${limit.toLocaleString()} signings this month`;
     usageTextEl.className = 'popup__usage-text';
@@ -570,13 +571,13 @@ async function signContent() {
         useAttribution
       }
     });
-    
+
     if (response && response.success) {
       signedOutputEl.value = response.signedText;
-      
+
       // Copy to clipboard
       await navigator.clipboard.writeText(response.signedText);
-      
+
       showSignState('result');
     } else {
       signErrorMessageEl.textContent = response?.error || 'Signing failed. Please try again.';
@@ -668,7 +669,7 @@ async function checkDevMode() {
     const response = await chrome.runtime.sendMessage({ type: 'GET_DEV_MODE' });
     if (response && response.devMode) {
       debugTabBtn.hidden = false;
-      
+
       // Show the current API URL in the debug panel
       const settings = await chrome.storage.sync.get({
         apiBaseUrl: 'https://api.encypherai.com',
@@ -689,12 +690,12 @@ async function loadDebugLogs() {
   try {
     const response = await chrome.runtime.sendMessage({ type: 'GET_DEBUG_LOGS' });
     if (!response || !response.logs) return;
-    
+
     const logs = response.logs;
     const filtered = currentDebugFilter === 'all'
       ? logs
       : logs.filter(l => l.level === currentDebugFilter);
-    
+
     renderDebugLogs(filtered);
     debugCountEl.textContent = `${filtered.length} of ${logs.length} entries`;
   } catch (e) {
@@ -710,14 +711,14 @@ function renderDebugLogs(logs) {
     debugLogsEl.innerHTML = '<div class="debug-panel__empty">No logs yet. Interact with the extension to generate logs.</div>';
     return;
   }
-  
+
   const wasScrolledToBottom = debugLogsEl.scrollTop + debugLogsEl.clientHeight >= debugLogsEl.scrollHeight - 20;
-  
+
   debugLogsEl.innerHTML = logs.map(log => {
     const time = new Date(log.timestamp).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const dataAttr = log.data ? ` data-json="${escapeAttr(JSON.stringify(log.data, null, 2))}"` : '';
     const dataLink = log.data ? ' <span class="debug-log__data" data-action="toggle-log-data">+data</span>' : '';
-    
+
     return `<div class="debug-log">
       <span class="debug-log__time">${time}</span>
       <span class="debug-log__level debug-log__level--${log.level}">${log.level}</span>
@@ -725,7 +726,7 @@ function renderDebugLogs(logs) {
       <span class="debug-log__msg">${escapeHtmlDebug(log.message)}${dataLink}</span>
     </div>${log.data ? `<div class="debug-log__data-expanded" hidden${dataAttr}></div>` : ''}`;
   }).join('');
-  
+
   // Auto-scroll to bottom if user was already at bottom
   if (wasScrolledToBottom) {
     debugLogsEl.scrollTop = debugLogsEl.scrollHeight;

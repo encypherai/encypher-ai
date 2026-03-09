@@ -6,6 +6,11 @@
 **Version:** 4.1
 **Distribution:** Internal Marketing & Sales Teams
 
+> **Messaging SSOT:** Core positioning, messaging pillars, and competitive framing are
+> owned by `Encypher_GTM_Strategy.md`. This document governs brand voice, tone, visual
+> standards, and channel-specific application of that messaging. When in conflict,
+> the GTM Strategy wins on substance; this document wins on style and format.
+
 ---
 
 ## Executive Summary
@@ -340,6 +345,24 @@ See the demo: encypherai.com/publisher-demo
 
 ### vs. Wait and See:
 "Standards markets converge quickly. The publisher coalition implementing marked content creates network effects. Founding members shape market licensing frameworks through the roundtable track. Later adopters accept terms others defined."
+
+### vs. Tier 1 Licensing / Access Gates (TollBit, Cloudflare, RSL):
+"TollBit and Cloudflare are Tier 1 licensing tools -- access gates that AI developers have to opt into. Valuable when AI companies cooperate, but no visibility when they don't. Our provenance is embedded in the content itself -- no AI company cooperation required. Complementary: access gates for cooperative AI companies, Encypher for enforcement against everyone else."
+
+### vs. Output Attribution (ProRata, Dappier):
+"ProRata and Dappier are also opt-in systems -- attribution only works when AI companies voluntarily integrate. No opt-in, no attribution. Our cryptographic provenance is embedded before content enters any AI system and works regardless of cooperation. One requires participation. The other works unilaterally."
+
+### vs. Big Tech Marketplaces (Microsoft PCM):
+"Microsoft is simultaneously the largest enterprise AI buyer of publisher content and the marketplace operator. We're independent infrastructure -- we don't buy content, run AI models, or compete with publishers. Our provenance works across every AI company, not locked to one marketplace."
+
+### vs. AI-Output Watermarking (SynthID):
+"SynthID marks AI output. We mark human content. Opposite problems. SynthID's statistical watermarking is academically fragile under paraphrasing. Our cryptographic embedding is deterministic."
+
+### vs. Blockchain Timestamping (WordProof):
+"Timestamping proves content existed. Provenance proves ownership wherever it appears. WordProof's proof is external and doesn't travel with the text. Ours is embedded and survives distribution."
+
+**When Prospects Mention Adjacent Players:**
+The market is forming around three layers: (1) Tier 1 licensing / access control -- TollBit, Cloudflare AI Audit, RSL -- opt-in access gates that AI developers must voluntarily participate in, (2) Content provenance -- Encypher -- works unilaterally, no AI company cooperation required, and (3) Attribution/monetization -- ProRata, Dappier, Microsoft PCM -- opt-in systems requiring AI company integration. We are the only company at Layer 2 for text, and the only layer that works without AI company cooperation. Frame adjacent players as complementary where possible. Key distinction: Layers 1 and 3 only work when AI developers opt in; Layer 2 works regardless.
 
 ---
 

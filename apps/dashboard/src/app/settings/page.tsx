@@ -18,7 +18,7 @@ import { Copy, Check } from 'lucide-react';
 import QRCode from 'qrcode';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
-import type { DomainClaimInfo } from '../../lib/api';
+import type { DashboardLayoutPreference, DomainClaimInfo, PublisherPlatform } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { useOrganization } from '../../contexts/OrganizationContext';
 
@@ -92,6 +92,14 @@ const defaultNotifications = {
 
 type SigningIdentityMode = 'organization_name' | 'organization_and_author' | 'custom';
 
+const publisherPlatformOptions: Array<{ value: PublisherPlatform; label: string }> = [
+  { value: 'wordpress', label: 'WordPress' },
+  { value: 'ghost', label: 'Ghost' },
+  { value: 'substack', label: 'Substack' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'custom', label: 'Custom CMS' },
+];
+
 const normalizeProfile = (raw: any): Profile => ({
   name: raw?.name ?? '',
   email: raw?.email ?? '',
@@ -132,6 +140,9 @@ export default function SettingsPage() {
   const [newlyCreatedClaim, setNewlyCreatedClaim] = useState<DomainClaimInfo | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [publisherDisplayName, setPublisherDisplayName] = useState('');
+  const [dashboardLayoutPreference, setDashboardLayoutPreference] = useState<DashboardLayoutPreference>('publisher');
+  const [publisherPlatform, setPublisherPlatform] = useState<PublisherPlatform>('wordpress');
+  const [publisherPlatformCustom, setPublisherPlatformCustom] = useState('');
   const [signingIdentityMode, setSigningIdentityMode] = useState<SigningIdentityMode>('organization_name');
   const [anonymousPublisher, setAnonymousPublisher] = useState(false);
   const [totpCode, setTotpCode] = useState('');
@@ -285,11 +296,23 @@ export default function SettingsPage() {
       if (!accessToken || !orgId) throw new Error('You must be signed in.');
 
       const customLabel = publisherDisplayName.trim();
+      const customPlatform = publisherPlatformCustom.trim();
       if (signingIdentityMode === 'custom' && !customLabel) {
         throw new Error('Custom signing identity label cannot be empty.');
       }
+      if (dashboardLayoutPreference === 'publisher' && publisherPlatform === 'custom' && !customPlatform) {
+        throw new Error('Custom publisher platform cannot be empty.');
+      }
 
       return apiClient.updatePublisherSettings(accessToken, orgId, {
+        dashboard_layout: dashboardLayoutPreference,
+        publisher_platform: dashboardLayoutPreference === 'publisher' ? publisherPlatform : undefined,
+        publisher_platform_custom:
+          dashboardLayoutPreference === 'publisher' && publisherPlatform === 'custom'
+            ? customPlatform
+            : dashboardLayoutPreference === 'enterprise'
+            ? ''
+            : undefined,
         ...(signingIdentityMode === 'custom' ? { display_name: customLabel } : {}),
         signing_identity_mode: signingIdentityMode,
         anonymous_publisher: anonymousPublisher,
@@ -374,6 +397,9 @@ export default function SettingsPage() {
     setPublisherDisplayName(
       activeOrganization?.signing_identity_custom_label ?? activeOrganization?.display_name ?? activeOrganization?.name ?? ''
     );
+    setDashboardLayoutPreference(activeOrganization?.dashboard_layout === 'enterprise' ? 'enterprise' : 'publisher');
+    setPublisherPlatform(activeOrganization?.publisher_platform ?? 'wordpress');
+    setPublisherPlatformCustom(activeOrganization?.publisher_platform_custom ?? '');
     setAnonymousPublisher(Boolean(activeOrganization?.anonymous_publisher));
   }, [activeOrganization]);
 
@@ -1049,11 +1075,52 @@ export default function SettingsPage() {
                         <div>
                           <h4 className="text-sm font-semibold">Publisher identity in verification</h4>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Control how your publisher name appears to readers when signed content is verified.
+                            Control your dashboard layout, publishing platform, and how your publisher name appears when signed content is verified.
                           </p>
                         </div>
 
                         <form className="space-y-4" onSubmit={handlePublisherSettingsSave}>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Dashboard layout</label>
+                            <StyledSelect
+                              value={dashboardLayoutPreference}
+                              onChange={(v) => setDashboardLayoutPreference(v as DashboardLayoutPreference)}
+                            >
+                              <option value="publisher">Publisher</option>
+                              <option value="enterprise">Enterprise</option>
+                            </StyledSelect>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Publisher emphasizes integrations and publishing workflows. Enterprise emphasizes team and operational workflows.
+                            </p>
+                          </div>
+
+                          {dashboardLayoutPreference === 'publisher' && (
+                            <>
+                              <div>
+                                <label className="block text-sm font-medium mb-2">Publishing platform</label>
+                                <StyledSelect
+                                  value={publisherPlatform}
+                                  onChange={(v) => setPublisherPlatform(v as PublisherPlatform)}
+                                >
+                                  {publisherPlatformOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                  ))}
+                                </StyledSelect>
+                              </div>
+
+                              {publisherPlatform === 'custom' && (
+                                <div>
+                                  <label className="block text-sm font-medium mb-2">Custom platform name</label>
+                                  <Input
+                                    value={publisherPlatformCustom}
+                                    onChange={(e) => setPublisherPlatformCustom(e.target.value)}
+                                    placeholder="e.g. Arc XP"
+                                  />
+                                </div>
+                              )}
+                            </>
+                          )}
+
                           <div>
                             <label className="block text-sm font-medium mb-2">Signing identity mode</label>
                             <StyledSelect
@@ -1305,4 +1372,3 @@ export default function SettingsPage() {
     </DashboardLayout>
   );
 }
-
