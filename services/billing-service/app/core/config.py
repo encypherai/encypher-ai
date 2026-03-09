@@ -74,28 +74,42 @@ class Settings(BaseSettings):
     def allowed_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
-    def validate_stripe_config(self) -> None:
-        """Validate Stripe configuration at startup."""
+    @property
+    def stripe_enabled(self) -> bool:
+        """Check if Stripe billing is fully configured."""
+        return bool(self.STRIPE_API_KEY)
+
+    def validate_stripe_config(self) -> list[str]:
+        """Validate Stripe configuration at startup. Returns list of warnings."""
+        warnings = []
+
         if not self.STRIPE_API_KEY:
-            raise ValueError("STRIPE_API_KEY is required")
+            warnings.append("STRIPE_API_KEY not set - billing disabled")
+            return warnings
 
-        # Validate price IDs are set (except in test environments)
-        if self.ENVIRONMENT == "production":
-            required_prices = [
-                ("STRIPE_PRICE_PROFESSIONAL_MONTHLY", self.STRIPE_PRICE_PROFESSIONAL_MONTHLY),
-                ("STRIPE_PRICE_PROFESSIONAL_ANNUAL", self.STRIPE_PRICE_PROFESSIONAL_ANNUAL),
-                ("STRIPE_PRICE_BUSINESS_MONTHLY", self.STRIPE_PRICE_BUSINESS_MONTHLY),
-                ("STRIPE_PRICE_BUSINESS_ANNUAL", self.STRIPE_PRICE_BUSINESS_ANNUAL),
-                ("STRIPE_PRICE_BULK_ARCHIVE_BACKFILL", self.STRIPE_PRICE_BULK_ARCHIVE_BACKFILL),
-            ]
+        # Check price IDs - warn but don't fail
+        price_checks = [
+            ("STRIPE_PRICE_PROFESSIONAL_MONTHLY", self.STRIPE_PRICE_PROFESSIONAL_MONTHLY),
+            ("STRIPE_PRICE_PROFESSIONAL_ANNUAL", self.STRIPE_PRICE_PROFESSIONAL_ANNUAL),
+            ("STRIPE_PRICE_BUSINESS_MONTHLY", self.STRIPE_PRICE_BUSINESS_MONTHLY),
+            ("STRIPE_PRICE_BUSINESS_ANNUAL", self.STRIPE_PRICE_BUSINESS_ANNUAL),
+            ("STRIPE_PRICE_BULK_ARCHIVE_BACKFILL", self.STRIPE_PRICE_BULK_ARCHIVE_BACKFILL),
+        ]
 
-            missing = [name for name, value in required_prices if not value]
-            if missing:
-                raise ValueError(f"Missing Stripe price IDs in production: {', '.join(missing)}")
+        missing = [name for name, value in price_checks if not value]
+        if missing:
+            warnings.append(f"Missing Stripe price IDs (features disabled): {', '.join(missing)}")
+
+        return warnings
 
 
 settings = Settings()
 
-# Validate Stripe config on import (fails fast if misconfigured)
-if settings.STRIPE_API_KEY:
-    settings.validate_stripe_config()
+# Log warnings for missing Stripe config but don't crash
+_stripe_warnings = settings.validate_stripe_config()
+if _stripe_warnings:
+    import logging
+
+    _logger = logging.getLogger(__name__)
+    for w in _stripe_warnings:
+        _logger.warning(w)
