@@ -6,6 +6,11 @@
 **Version:** 4.1
 **Distribution:** Sales & Solutions Teams
 
+> **Messaging SSOT:** Core positioning, value propositions, and competitive framing are
+> owned by `Encypher_GTM_Strategy.md`. This document applies that messaging to sales
+> motions, objection handling, and deal mechanics. When messaging conflicts, defer to
+> the GTM Strategy and update this document to match.
+
 ---
 
 ## Primary Positioning: Standards Authority + Legal Transformation
@@ -128,13 +133,19 @@ NOTE FOR SALES: This is the question a smart GC will ask. Do not claim $150K sta
 "Good question, and you should insist on this in the contract. We offer contractually locked revenue split terms -- your 60/40 coalition rate or 80/20 self-service rate is guaranteed for [X years] in your agreement. Our interests are aligned: we make more money when you make more money. A publisher who feels locked into unfavorable terms will leave the coalition, which weakens everyone's leverage. We have no incentive to renegotiate -- and we'll put that in writing."
 
 **"We already work with TollBit / ProRata. Why do we need this?"**
-"TollBit and ProRata are validating that AI companies should pay for content -- that's good. But the current market rate is approximately $0.001 per transaction, which means most major publishers are seeing a few thousand dollars per month at best. We're not competing with them -- we operate at a different layer entirely. They're processing individual access requests. We're building the legal infrastructure that makes AI companies pay for content at a scale that reflects its actual value: millions per publisher, not thousands. The willful infringement framework, the coalition leverage, the formal notice mechanism -- that's what turns 'a few thousand a month' into 'a real licensing revenue line.' You can use TollBit and Encypher simultaneously -- they're not exclusive."
+"Great -- those are Tier 1 licensing tools and they validate that AI companies should pay for content. But they're opt-in access gates: they only work when AI developers voluntarily participate. The current market rate through those channels is approximately $0.001 per transaction -- a few thousand dollars per month for major publishers. We operate at a different layer entirely. TollBit and ProRata monetize the cooperative AI companies. We provide the cryptographic evidence and legal infrastructure for enforcement against everyone -- including the ones who don't opt in. The willful infringement framework, the coalition leverage, the formal notice mechanism -- that's what turns 'a few thousand a month from cooperative AI companies' into 'a real licensing revenue line from all AI companies.' You should absolutely keep using TollBit alongside Encypher -- they're complementary layers."
 
 **"What if an AI company paraphrases our content rather than quoting it directly?"**
 "Paraphrased content is a harder enforcement case than verbatim copying -- that's true of any legal approach, not just ours. Our Merkle tree authentication proves at the sentence level what was ingested from your signed corpus. If an AI model ingests your signed articles and then paraphrases them, we can establish: (a) the signed content was in the training data, (b) formal notice was served, and (c) outputs reflect that training. The legal question of whether paraphrase constitutes infringement is being actively litigated across the industry and will be shaped by the outcomes of current cases. Our infrastructure ensures you have the strongest possible evidentiary position regardless of how courts ultimately rule on paraphrase. The formal notice mechanism is particularly powerful here -- even if a specific paraphrase claim is uncertain, notice + continued use creates the 'they knew' record that matters."
 
 **"Does signing affect our SEO or page load performance?"**
 "No. The Unicode variation selectors we use are invisible to search engines -- they don't affect indexability, keyword density, or any ranking signals. They're also zero-byte overhead in rendered HTML. Your readers and Google see exactly the same text. The embeddings exist at the character level in the text itself, not as metadata tags or additional HTTP payloads. We've tested extensively across major CMS platforms and CDN configurations."
+
+**"Microsoft just launched a Publisher Content Marketplace. Why not use that?"**
+"Microsoft PCM is a licensing marketplace -- publishers list content, AI builders like Copilot license it. That validates the market. But there's a structural tension: Microsoft is simultaneously the largest enterprise AI buyer of publisher content and the marketplace operator setting deal terms. That's the fox guarding the henhouse. Encypher is independent infrastructure. We don't buy content, we don't run AI models, and we don't compete with publishers for attention. Our provenance travels everywhere your content goes -- inside Microsoft's ecosystem and outside it. PCM also only covers deals brokered through Microsoft's marketplace. What about OpenAI, Anthropic, Google, Meta, and every other AI company? You need platform-independent proof of ownership, not a marketplace that only works with one buyer."
+
+**"What about the EU AI Act -- is that relevant to us?"**
+"Very. The EU AI Act enforcement deadline for AI content transparency is August 2, 2026 -- five months away. The draft Code of Practice explicitly requires machine-readable marking and watermarking of AI-generated content, with a 'multilayered approach' combining visible disclosures and invisible techniques. C2PA is the standards framework regulators are referencing. Publishers who implement C2PA-compliant provenance now are positioning their content for regulatory environments where AI companies will be required to track and attribute source material. Early movers get to define how compliance works in practice."
 
 ---
 
@@ -325,6 +336,18 @@ Expect detailed follow-up questions on implementation method, systems integratio
 
 ### vs. Wait and See
 "The standard published January 8, 2026. The invite-only roundtable track is defining market licensing frameworks through interim briefings and reconvened sessions. First movers shape the terms. Later adopters accept terms others defined. The question isn't whether to implement--it's whether to shape the standards or accept them."
+
+### vs. Tier 1 Licensing / Access Gates (TollBit, Cloudflare, RSL)
+"TollBit and Cloudflare are Tier 1 licensing tools -- access gates that AI developers have to opt into. They monetize the front door, which is valuable when AI companies cooperate. But the fundamental limitation: these only work when AI developers voluntarily participate. If they scrape around the gate or choose not to opt in, there's zero visibility. Our provenance is embedded in the content itself -- no AI company cooperation required. Use both: access gates for the cooperative AI companies, Encypher for enforcement against everyone else."
+
+### vs. Output Attribution (ProRata, Dappier)
+"ProRata and Dappier are also opt-in systems -- they estimate source contribution, but only when AI companies voluntarily integrate. If an AI company doesn't participate in ProRata's ecosystem, there's no attribution at all. Our cryptographic proof is embedded in the content before it enters any AI system. It works on any platform, with any AI company, whether they cooperate or not. One requires opt-in. The other works unilaterally."
+
+### vs. Big Tech Marketplaces (Microsoft PCM)
+"Microsoft's Publisher Content Marketplace brokers licensing deals between publishers and Copilot. But Microsoft is simultaneously the buyer and the marketplace operator -- the fox guarding the henhouse. We're independent infrastructure with interests structurally aligned to publishers. Our provenance works across every AI company, not just within one marketplace."
+
+### vs. AI-Output Watermarking (SynthID)
+"SynthID marks AI output to prove it was machine-made. We mark human content to prove ownership. Opposite problems. And SynthID's statistical watermarking is fragile under paraphrasing and editing -- our cryptographic embedding provides deterministic proof."
 
 ---
 

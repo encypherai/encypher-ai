@@ -11,6 +11,7 @@ import { MobileNav } from '../MobileNav';
 import { NotificationCenter } from '../NotificationCenter';
 import { ThemeToggleButton } from '../../contexts/ThemeContext';
 import apiClient from '../../lib/api';
+import { useOrganization } from '../../contexts/OrganizationContext';
 import { SetupWizard } from '../onboarding/SetupWizard';
 
 interface DashboardLayoutProps {
@@ -169,51 +170,94 @@ interface NavGroup {
   items: NavItem[];
 }
 
-const navGroups: NavGroup[] = [
-  {
-    label: '',
-    items: [
-      { href: '/', label: 'Overview', icon: IconOverview },
-      { href: '/playground', label: 'Playground', icon: IconPlayground },
-    ],
-  },
-  {
-    label: 'Publish',
-    items: [
-      { href: '/api-keys', label: 'API Keys', icon: IconKey },
-      { href: '/rights', label: 'Rights', icon: IconRights },
-      { href: '/integrations', label: 'Integrations', icon: IconIntegrations },
-    ],
-  },
-  {
-    label: 'Insights',
-    items: [
-      { href: '/analytics', label: 'Content Performance', icon: IconAnalytics },
-      { href: '/ai-crawlers', label: 'AI Crawlers', icon: IconAICrawlers },
-      { href: '/docs', label: 'Docs', icon: IconDocs },
-    ],
-  },
-  {
-    label: 'Enterprise',
-    items: [
-      { href: '/webhooks', label: 'Webhooks', icon: IconWebhooks, enterpriseOnly: true },
-      { href: '/team', label: 'Team', icon: IconTeam, enterpriseOnly: true },
-      { href: '/audit-logs', label: 'Audit Logs', icon: IconAuditLogs, enterpriseOnly: true },
-    ],
-  },
-  {
-    label: 'Account',
-    items: [
-      { href: '/settings', label: 'Settings', icon: IconSettings },
-      { href: '/billing', label: 'Billing', icon: IconBilling },
-    ],
-  },
-];
+const navGroupsByLayout: Record<'publisher' | 'enterprise', NavGroup[]> = {
+  publisher: [
+    {
+      label: '',
+      items: [
+        { href: '/', label: 'Overview', icon: IconOverview },
+        { href: '/integrations', label: 'Integrations', icon: IconIntegrations },
+      ],
+    },
+    {
+      label: 'Publish',
+      items: [
+        { href: '/rights', label: 'Rights', icon: IconRights },
+        { href: '/api-keys', label: 'API Keys', icon: IconKey },
+        { href: '/playground', label: 'Playground', icon: IconPlayground },
+      ],
+    },
+    {
+      label: 'Insights',
+      items: [
+        { href: '/analytics', label: 'Content Performance', icon: IconAnalytics },
+        { href: '/ai-crawlers', label: 'AI Crawlers', icon: IconAICrawlers },
+        { href: '/docs', label: 'Docs', icon: IconDocs },
+      ],
+    },
+    {
+      label: 'Enterprise',
+      items: [
+        { href: '/webhooks', label: 'Webhooks', icon: IconWebhooks, enterpriseOnly: true },
+        { href: '/team', label: 'Team', icon: IconTeam, enterpriseOnly: true },
+        { href: '/audit-logs', label: 'Audit Logs', icon: IconAuditLogs, enterpriseOnly: true },
+      ],
+    },
+    {
+      label: 'Account',
+      items: [
+        { href: '/settings', label: 'Settings', icon: IconSettings },
+        { href: '/billing', label: 'Billing', icon: IconBilling },
+      ],
+    },
+  ],
+  enterprise: [
+    {
+      label: '',
+      items: [
+        { href: '/', label: 'Overview', icon: IconOverview },
+        { href: '/playground', label: 'Playground', icon: IconPlayground },
+      ],
+    },
+    {
+      label: 'Publish',
+      items: [
+        { href: '/api-keys', label: 'API Keys', icon: IconKey },
+        { href: '/rights', label: 'Rights', icon: IconRights },
+        { href: '/integrations', label: 'Integrations', icon: IconIntegrations },
+      ],
+    },
+    {
+      label: 'Insights',
+      items: [
+        { href: '/analytics', label: 'Content Performance', icon: IconAnalytics },
+        { href: '/ai-crawlers', label: 'AI Crawlers', icon: IconAICrawlers },
+        { href: '/docs', label: 'Docs', icon: IconDocs },
+      ],
+    },
+    {
+      label: 'Enterprise',
+      items: [
+        { href: '/webhooks', label: 'Webhooks', icon: IconWebhooks, enterpriseOnly: true },
+        { href: '/team', label: 'Team', icon: IconTeam, enterpriseOnly: true },
+        { href: '/audit-logs', label: 'Audit Logs', icon: IconAuditLogs, enterpriseOnly: true },
+      ],
+    },
+    {
+      label: 'Account',
+      items: [
+        { href: '/settings', label: 'Settings', icon: IconSettings },
+        { href: '/billing', label: 'Billing', icon: IconBilling },
+      ],
+    },
+  ],
+};
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
+  const { activeOrganization } = useOrganization();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const userTier = (session?.user as any)?.tier || 'free';
   const sessionError = (session?.user as any)?.error as string | undefined;
@@ -272,9 +316,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }, [setupStatus?.setup_completed]);
 
   const showSetupWizard = setupWizardLatchedOpen || (!setupLoading && setupStatus?.setup_completed === false);
+  const dashboardLayoutPreference =
+    activeOrganization?.dashboard_layout === 'enterprise' || setupStatus?.dashboard_layout === 'enterprise'
+      ? 'enterprise'
+      : 'publisher';
 
   // Filter groups: hide enterprise group for free users, remove empty groups
-  const visibleGroups = navGroups
+  const visibleGroups = navGroupsByLayout[dashboardLayoutPreference]
     .map(group => ({
       ...group,
       items: group.items.filter(item => !item.enterpriseOnly || isEnterprise || isAdmin),

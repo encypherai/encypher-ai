@@ -287,14 +287,16 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 **Company Type:** Fortune 500 companies deploying AI at scale
 
-**About David:** David needs C2PA compliance for EU AI Act and wants competitive advantages from performance intelligence. The January 8, 2026 standard publication creates planning urgency.
+**About David:** David needs C2PA compliance for EU AI Act and wants competitive advantages from performance intelligence. The January 8, 2026 standard publication creates planning urgency. **The EU AI Act enforcement deadline for AI content transparency is August 2, 2026** -- five months away. The draft Code of Practice explicitly requires machine-readable marking and watermarking, with a multilayered approach (visible + invisible). This creates a hard regulatory deadline that accelerates David's buying timeline.
 
-**Strategic Importance:** Drives enterprise adoption beyond publishers/AI companies
+**Strategic Importance:** Drives enterprise adoption beyond publishers/AI companies. EU AI Act compliance deadline (August 2026) creates near-term urgency independent of publisher coalition timeline.
 
 **Key Messaging:**
+- "EU AI Act enforcement: August 2, 2026 -- C2PA is the standards framework regulators are referencing"
 - "C2PA text authentication standard published January 8, 2026"
 - "Compliance baseline with performance intelligence upside"
 - "Sentence-level tracking for governance and attribution"
+- "Implement ahead of regulatory requirements, not in reaction to them"
 
 ---
 
@@ -333,6 +335,15 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 **vs. Wait and See:**
 "First movers define how market licensing frameworks work. The invite-only roundtable track is establishing the terms through interim briefings and reconvened sessions. Later adopters accept standards others defined."
+
+**vs. Tier 1 Licensing / Access Gates (TollBit, Cloudflare):**
+"TollBit and Cloudflare are Tier 1 licensing tools -- access gates that AI developers have to opt into. Valuable for monetizing the cooperative AI companies. But the fundamental gap: these only work when AI developers voluntarily participate. We embed proof in the content itself -- no AI company cooperation required. Use both: access gates for revenue from cooperative AI companies, Encypher for enforcement against everyone else."
+
+**vs. ProRata / Output Attribution:**
+"ProRata is another opt-in system -- AI companies must voluntarily integrate for attribution to work. No opt-in, no attribution. We embed cryptographic proof before content enters any AI system. Our provenance works regardless of whether the AI company cooperates. One requires participation. The other works unilaterally."
+
+**vs. Microsoft Publisher Content Marketplace:**
+"Microsoft is simultaneously the largest enterprise AI buyer of publisher content and the marketplace operator. The fox guarding the henhouse. We're independent -- we don't buy content, we don't run AI models, and we succeed only when publishers generate licensing revenue. Our provenance works across every AI company, not just within one marketplace."
 
 ### For Kenji (AI Companies):
 
@@ -445,6 +456,14 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 - 10 enterprise customers (governance)
 - Industry standard recognition
 - $75M ARR run rate
+
+> **Note on scale-phase figures:** These numbers represent the high-case aspirational
+> scenario, not an operating plan commitment. They assume landmark deals close in Q1-Q2,
+> AI company licensing conversations activate in Q3, and the platform partner network
+> distributes to hundreds of publishers at scale. Internal planning and hiring decisions
+> should use a conservative scenario: first licensing revenue in Q3-Q4 2026, gated on at
+> least one signed platform partner agreement and a completed formal notice campaign.
+> Treat these figures as directional targets, not forecasts to plan burn against.
 
 ---
 

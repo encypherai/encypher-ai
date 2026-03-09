@@ -9,7 +9,7 @@ if (! defined('ABSPATH')) {
 
 /**
  * Handles bulk marking operations for WordPress archives.
- * 
+ *
  * Provides admin interface and AJAX endpoints for marking
  * existing posts in batches with progress tracking.
  */
@@ -50,11 +50,19 @@ class Bulk
             return;
         }
 
+        $settings = get_option('encypher_provenance_settings', []);
+        $tier = isset($settings['tier']) ? (string) $settings['tier'] : 'free';
+        $pricing = $this->get_archive_pricing($tier);
+        $bulk_script_path = ENCYPHER_PROVENANCE_PLUGIN_DIR . 'assets/js/bulk-mark.js';
+        $bulk_style_path = ENCYPHER_PROVENANCE_PLUGIN_DIR . 'assets/css/bulk-mark.css';
+        $bulk_script_version = file_exists($bulk_script_path) ? (string) filemtime($bulk_script_path) : ENCYPHER_PROVENANCE_VERSION;
+        $bulk_style_version = file_exists($bulk_style_path) ? (string) filemtime($bulk_style_path) : ENCYPHER_PROVENANCE_VERSION;
+
         wp_enqueue_script(
             'encypher-bulk-mark',
             ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/js/bulk-mark.js',
             ['jquery'],
-            ENCYPHER_PROVENANCE_VERSION,
+            $bulk_script_version,
             true
         );
 
@@ -66,6 +74,9 @@ class Bulk
                 'nonce' => wp_create_nonce('encypher_bulk_mark'),
                 'restUrl' => esc_url_raw(rest_url('encypher-provenance/v1/')),
                 'restNonce' => wp_create_nonce('wp_rest'),
+                'tier' => $tier,
+                'pricing' => $pricing,
+                'billingUrlBase' => 'https://dashboard.encypherai.com/billing',
             ]
         );
 
@@ -73,7 +84,7 @@ class Bulk
             'encypher-bulk-mark-css',
             ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/css/bulk-mark.css',
             [],
-            ENCYPHER_PROVENANCE_VERSION
+            $bulk_style_version
         );
     }
 
@@ -92,8 +103,11 @@ class Bulk
             isset($settings['usage']) && is_array($settings['usage']) ? $settings['usage'] : [],
             $tier
         );
+        $pricing = $this->get_archive_pricing($tier);
+        $api_calls = isset($usage['api_calls']) && is_array($usage['api_calls']) ? $usage['api_calls'] : [];
+        $remaining = isset($api_calls['remaining']) ? (int) $api_calls['remaining'] : 0;
         $post_types = get_post_types(['public' => true], 'objects');
-        
+
         ?>
         <div class="wrap encypher-bulk-mark-page">
             <h1 class="encypher-page-title">
@@ -107,9 +121,9 @@ class Bulk
                 <span class="encypher-title-divider" aria-hidden="true">|</span>
                 <span><?php esc_html_e('Bulk Sign', 'encypher-provenance'); ?></span>
             </h1>
-            
+
             <div class="encypher-bulk-intro">
-                <p><?php esc_html_e('Programmatically mark existing WordPress content with C2PA-compliant invisible embeddings.', 'encypher-provenance'); ?></p>
+                <p><?php esc_html_e('Protect your existing archive in one run. Estimate the size of your backlog, review the one-time archive price, then bulk sign everything that should carry provenance.', 'encypher-provenance'); ?></p>
             </div>
 
             <?php $this->render_usage_progress_bar($usage); ?>
@@ -117,16 +131,23 @@ class Bulk
             <?php if ('free' === $tier): ?>
             <div class="notice notice-info">
                 <p>
-                    <strong><?php esc_html_e('Free Tier Limit:', 'encypher-provenance'); ?></strong>
-                    <?php esc_html_e('You can mark up to 10 documents per bulk operation.', 'encypher-provenance'); ?>
-                    <a href="https://encypherai.com/enterprise" target="_blank"><?php esc_html_e('Upgrade to Enterprise for higher limits', 'encypher-provenance'); ?></a>
+                    <strong><?php esc_html_e('Free plan:', 'encypher-provenance'); ?></strong>
+                    <?php esc_html_e('Publishing workflows include 1,000 sign requests/month.', 'encypher-provenance'); ?>
+                    <?php esc_html_e('Archive backfill is available as a one-time add-on at $0.01/document.', 'encypher-provenance'); ?>
+                </p>
+            </div>
+            <?php else: ?>
+            <div class="notice notice-success">
+                <p>
+                    <strong><?php esc_html_e('Enterprise plan:', 'encypher-provenance'); ?></strong>
+                    <?php esc_html_e('Archive backfill is included with your plan. Estimate the scope below and start bulk signing when ready.', 'encypher-provenance'); ?>
                 </p>
             </div>
             <?php endif; ?>
 
             <div class="encypher-bulk-form">
-                <h2><?php esc_html_e('Select Content to Mark', 'encypher-provenance'); ?></h2>
-                
+                <h2><?php esc_html_e('Select Archive Content to Protect', 'encypher-provenance'); ?></h2>
+
                 <table class="form-table">
                     <tr>
                         <th scope="row"><?php esc_html_e('Post Types', 'encypher-provenance'); ?></th>
@@ -137,8 +158,8 @@ class Bulk
                                 $total = isset($count->publish) ? $count->publish : 0;
                                 ?>
                                 <label>
-                                    <input type="checkbox" 
-                                           name="post_types[]" 
+                                    <input type="checkbox"
+                                           name="post_types[]"
                                            value="<?php echo esc_attr($post_type->name); ?>"
                                            data-count="<?php echo esc_attr($total); ?>"
                                            <?php checked(in_array($post_type->name, ['post', 'page'], true)); ?>>
@@ -148,7 +169,7 @@ class Bulk
                             <?php endforeach; ?>
                         </td>
                     </tr>
-                    
+
                     <tr>
                         <th scope="row"><?php esc_html_e('Date Range', 'encypher-provenance'); ?></th>
                         <td>
@@ -160,7 +181,7 @@ class Bulk
                                 <option value="last_year"><?php esc_html_e('Last Year', 'encypher-provenance'); ?></option>
                                 <option value="custom"><?php esc_html_e('Custom Range', 'encypher-provenance'); ?></option>
                             </select>
-                            
+
                             <div id="encypher-custom-date-range" style="display:none; margin-top:10px;">
                                 <label>
                                     <?php esc_html_e('From:', 'encypher-provenance'); ?>
@@ -173,7 +194,7 @@ class Bulk
                             </div>
                         </td>
                     </tr>
-                    
+
                     <tr>
                         <th scope="row"><?php esc_html_e('Status Filter', 'encypher-provenance'); ?></th>
                         <td>
@@ -189,7 +210,7 @@ class Bulk
                             </label>
                         </td>
                     </tr>
-                    
+
                     <tr>
                         <th scope="row"><?php esc_html_e('Batch Size', 'encypher-provenance'); ?></th>
                         <td>
@@ -205,10 +226,33 @@ class Bulk
                         <strong><?php esc_html_e('Total posts to mark:', 'encypher-provenance'); ?></strong>
                         <span id="encypher-total-count">0</span>
                     </p>
+                    <p>
+                        <strong><?php esc_html_e('Estimated archive backfill total:', 'encypher-provenance'); ?></strong>
+                        <span id="encypher-archive-estimate"><?php echo esc_html('$0.00'); ?></span>
+                    </p>
                     <?php if ('free' === $tier): ?>
-                    <p class="encypher-tier-limit">
-                        <strong><?php esc_html_e('Free tier limit:', 'encypher-provenance'); ?></strong>
-                        <?php esc_html_e('10 documents', 'encypher-provenance'); ?>
+                    <p class="encypher-tier-limit encypher-free-plan-note">
+                        <strong><?php esc_html_e('Free publishing quota remaining this month:', 'encypher-provenance'); ?></strong>
+                        <span id="encypher-free-remaining"><?php echo esc_html(number_format_i18n(max(0, $remaining))); ?></span>
+                        <?php esc_html_e('sign requests', 'encypher-provenance'); ?>
+                    </p>
+                    <p class="description"><?php esc_html_e('Archive backfill is billed separately as a one-time operation. Your monthly publishing quota continues to apply to new content.', 'encypher-provenance'); ?></p>
+                    <p class="encypher-archive-actions">
+                        <a
+                            href="<?php echo esc_url($this->build_archive_billing_url(0)); ?>"
+                            id="encypher-buy-archive-backfill"
+                            class="button button-secondary button-large"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <?php esc_html_e('Buy Archive Backfill', 'encypher-provenance'); ?>
+                        </a>
+                        <span class="description"><?php esc_html_e('Opens billing with this archive estimate pre-filled.', 'encypher-provenance'); ?></span>
+                    </p>
+                    <?php else: ?>
+                    <p class="encypher-plan-included">
+                        <strong><?php esc_html_e('Archive backfill:', 'encypher-provenance'); ?></strong>
+                        <?php esc_html_e('Included with your plan.', 'encypher-provenance'); ?>
                     </p>
                     <?php endif; ?>
                 </div>
@@ -222,27 +266,27 @@ class Bulk
 
             <div class="encypher-bulk-progress" style="display:none;">
                 <h2><?php esc_html_e('Bulk Marking Progress', 'encypher-provenance'); ?></h2>
-                
+
                 <div class="encypher-progress-bar">
                     <div class="encypher-progress-fill" style="width:0%"></div>
                 </div>
-                
+
                 <p class="encypher-progress-text">
                     <span id="encypher-progress-percentage">0%</span>
                     (<span id="encypher-progress-current">0</span> / <span id="encypher-progress-total">0</span>)
                 </p>
-                
+
                 <p class="encypher-progress-status">
                     <strong><?php esc_html_e('Status:', 'encypher-provenance'); ?></strong>
                     <span id="encypher-progress-status-text"><?php esc_html_e('Initializing...', 'encypher-provenance'); ?></span>
                 </p>
-                
+
                 <p class="encypher-progress-current-post">
                     <strong><?php esc_html_e('Current:', 'encypher-provenance'); ?></strong>
                     <span id="encypher-current-post-title">-</span>
                     <span class="description">(ID: <span id="encypher-current-post-id">-</span>)</span>
                 </p>
-                
+
                 <div class="encypher-progress-stats">
                     <p>
                         <strong><?php esc_html_e('Successful:', 'encypher-provenance'); ?></strong>
@@ -276,7 +320,7 @@ class Bulk
 
             <div class="encypher-bulk-complete" style="display:none;">
                 <h2><?php esc_html_e('Bulk Marking Complete!', 'encypher-provenance'); ?></h2>
-                
+
                 <div class="notice notice-success">
                     <p>
                         <strong><?php esc_html_e('Successfully marked:', 'encypher-provenance'); ?></strong>
@@ -377,6 +421,30 @@ class Bulk
         <?php
     }
 
+    private function get_archive_pricing(string $tier): array
+    {
+        return [
+            'archive_price_per_document' => 0.01,
+            'free_monthly_limit' => 1000,
+            'free_overage_per_document' => 0.02,
+            'archive_backfill_included' => in_array($tier, ['enterprise', 'strategic_partner'], true),
+        ];
+    }
+
+    private function build_archive_billing_url(int $quantity): string
+    {
+        $params = [
+            'addon' => 'bulk-archive-backfill',
+            'source' => 'wordpress-plugin',
+        ];
+
+        if ($quantity > 0) {
+            $params['quantity'] = $quantity;
+        }
+
+        return 'https://dashboard.encypherai.com/billing?' . http_build_query($params);
+    }
+
     /**
      * Handle AJAX request to mark a batch of posts.
      */
@@ -388,20 +456,20 @@ class Bulk
             wp_send_json_error(['message' => __('Insufficient permissions.', 'encypher-provenance')]);
         }
 
-        $post_ids = isset($_POST['post_ids']) ? array_map('intval', (array) $_POST['post_ids']) : [];
-        
-        if (empty($post_ids)) {
-            wp_send_json_error(['message' => __('No post IDs provided.', 'encypher-provenance')]);
+        // Accept post_ids as JSON string to avoid max_input_vars limit
+        $post_ids = [];
+        if (isset($_POST['post_ids_json']) && is_string($_POST['post_ids_json'])) {
+            $decoded = json_decode(stripslashes($_POST['post_ids_json']), true);
+            if (is_array($decoded)) {
+                $post_ids = array_map('intval', $decoded);
+            }
+        } elseif (isset($_POST['post_ids'])) {
+            // Fallback for legacy array format
+            $post_ids = array_map('intval', (array) $_POST['post_ids']);
         }
 
-        // Check tier limits
-        $settings = get_option('encypher_provenance_settings', []);
-        $tier = $settings['tier'] ?? 'free';
-        
-        if ('free' === $tier && count($post_ids) > 10) {
-            wp_send_json_error([
-                'message' => __('Free tier limit: 10 documents per bulk operation. Upgrade to Enterprise for higher limits.', 'encypher-provenance')
-            ]);
+        if (empty($post_ids)) {
+            wp_send_json_error(['message' => __('No post IDs provided.', 'encypher-provenance')]);
         }
 
         $results = [];
@@ -409,7 +477,7 @@ class Bulk
 
         foreach ($post_ids as $post_id) {
             $post = get_post($post_id);
-            
+
             if (! $post) {
                 $results[] = [
                     'post_id' => $post_id,
@@ -424,7 +492,17 @@ class Bulk
             $request->set_param('post_id', $post_id);
             $request->set_param('metadata', []);
 
-            $response = $rest->handle_sign_request($request);
+            try {
+                $response = $rest->handle_sign_request($request);
+            } catch (\Throwable $e) {
+                $results[] = [
+                    'post_id' => $post_id,
+                    'post_title' => $post->post_title,
+                    'success' => false,
+                    'error' => $e->getMessage()
+                ];
+                continue;
+            }
 
             if (is_wp_error($response)) {
                 $results[] = [
@@ -437,8 +515,7 @@ class Bulk
                 $results[] = [
                     'post_id' => $post_id,
                     'post_title' => $post->post_title,
-                    'success' => true,
-                    'data' => $response->get_data()
+                    'success' => true
                 ];
             }
         }

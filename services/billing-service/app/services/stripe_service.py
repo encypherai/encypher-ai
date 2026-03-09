@@ -143,6 +143,7 @@ def _upsert_subscription_record(
     finally:
         db.close()
 
+
 # Initialize Stripe
 stripe.api_key = settings.STRIPE_API_KEY
 
@@ -315,6 +316,36 @@ class StripeService:
 
         except StripeError as e:
             logger.error(f"Failed to create checkout session: {e}")
+            raise
+
+    @staticmethod
+    async def create_one_time_checkout_session(
+        customer_id: str,
+        price_id: str,
+        quantity: int,
+        success_url: str,
+        cancel_url: str,
+        metadata: Optional[Dict[str, str]] = None,
+    ) -> stripe.checkout.Session:
+        try:
+            session = stripe.checkout.Session.create(
+                customer=customer_id,
+                payment_method_types=["card"],
+                line_items=[{"price": price_id, "quantity": quantity}],
+                mode="payment",
+                success_url=success_url,
+                cancel_url=cancel_url,
+                metadata=metadata or {},
+                customer_update={"name": "auto", "address": "auto"},
+                allow_promotion_codes=True,
+                billing_address_collection="required",
+                tax_id_collection={"enabled": True},
+            )
+
+            logger.info(f"Created one-time checkout session {session.id} for customer {customer_id}")
+            return session
+        except StripeError as e:
+            logger.error(f"Failed to create one-time checkout session: {e}")
             raise
 
     @staticmethod
@@ -644,7 +675,7 @@ class StripeService:
                 stripe_subscription_id=subscription.get("id"),
                 subscription_status=subscription.get("status"),
             )
-    
+
         _upsert_subscription_record(
             user_id=user_id,
             organization_id=organization_id,

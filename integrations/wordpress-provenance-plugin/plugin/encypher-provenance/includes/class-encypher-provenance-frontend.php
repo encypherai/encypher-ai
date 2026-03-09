@@ -7,7 +7,7 @@ if (! defined('ABSPATH')) {
 
 /**
  * Handles frontend display of C2PA badges and verification links.
- * 
+ *
  * Provides optional badges on posts to indicate C2PA protection
  * and links for public verification.
  */
@@ -42,7 +42,7 @@ class Frontend
 
     /**
      * Maybe add C2PA badge to post content.
-     * 
+     *
      * @param string $content Post content
      * @return string Modified content with badge
      */
@@ -66,89 +66,83 @@ class Frontend
         // Get settings
         $settings = get_option('encypher_provenance_settings', []);
         $show_badge = isset($settings['show_badge']) ? (bool) $settings['show_badge'] : true; // Default ON
-        
+
         if (! $show_badge) {
             return $content;
         }
 
-        // Get badge position setting (default to end_of_content if not set)
-        // For now, always show at end of content (inline header option available but not in settings UI yet)
-        $badge_position = !empty($settings['badge_position']) ? $settings['badge_position'] : 'end_of_content';
-        
-        // Skip if inline_header is explicitly set (for future use)
-        if ('inline_header' === $badge_position) {
-            return $content;
-        }
-        
-        // Get badge HTML (always show at end of content by default)
+        $badge_position = ! empty($settings['badge_position']) ? $settings['badge_position'] : 'bottom-right';
         $badge_html = $this->get_badge_html($post_id, 'large');
 
-        // Always add modal to footer
-        add_action('wp_footer', function() use ($post_id) {
-            echo $this->get_modal_html($post_id);
-        });
+        $this->add_verification_modal($post_id);
 
-        // Add badge at the end of content (inline, aligned with content)
-        $badge_wrapper = '<div class="encypher-c2pa-badge-wrapper" style="margin: 40px 0 60px 0; padding: 0;">';
-        $badge_wrapper .= $badge_html;
-        $badge_wrapper .= '</div>';
-        
+        if ('bottom-right' === $badge_position) {
+            add_action('wp_footer', function () use ($badge_html) {
+                echo $this->get_badge_wrapper($badge_html, 'floating');
+            });
+
+            return $content;
+        }
+
+        $placement = 'top' === $badge_position ? 'top' : 'bottom';
+        $badge_wrapper = $this->get_badge_wrapper($badge_html, $placement);
+
+        if ('top' === $badge_position) {
+            return $badge_wrapper . $content;
+        }
+
         return $content . $badge_wrapper;
     }
 
     /**
      * Maybe add inline badge to post title.
-     * 
+     *
      * @param string $title Post title
      * @param int $post_id Post ID
      * @return string Modified title with badge
      */
     public function maybe_add_inline_badge(string $title, int $post_id): string
     {
-        // Only on singular post pages in the main query
         if (! is_singular() || ! in_the_loop() || ! is_main_query()) {
             return $title;
         }
 
-        // Check if post is marked
-        $is_marked = get_post_meta($post_id, '_encypher_marked', true);
-        if (! $is_marked) {
-            return $title;
+        return $title;
+    }
+
+    private function add_verification_modal(int $post_id): void
+    {
+        static $modal_post_ids = [];
+
+        if (isset($modal_post_ids[$post_id])) {
+            return;
         }
 
-        // Get settings
-        $settings = get_option('encypher_provenance_settings', []);
-        $show_badge = isset($settings['show_badge']) ? (bool) $settings['show_badge'] : true;
-        
-        if (! $show_badge) {
-            return $title;
+        add_action('wp_footer', function () use ($post_id) {
+            echo $this->get_modal_html($post_id);
+        });
+
+        $modal_post_ids[$post_id] = true;
+    }
+
+    private function get_badge_wrapper(string $badge_html, string $placement): string
+    {
+        $classes = 'encypher-c2pa-badge-wrapper';
+
+        if ('floating' === $placement) {
+            $classes .= ' encypher-c2pa-badge-floating';
+        } elseif ('top' === $placement) {
+            $classes .= ' encypher-c2pa-badge-top';
+        } else {
+            $classes .= ' encypher-c2pa-badge-bottom';
         }
 
-        $badge_position = isset($settings['badge_position']) ? $settings['badge_position'] : 'end_of_content';
-        
-        // Only add inline badge if that position is selected
-        if ('inline_header' !== $badge_position) {
-            return $title;
-        }
-
-        // Add modal to footer (only once)
-        static $modal_added = false;
-        if (!$modal_added) {
-            add_action('wp_footer', function() use ($post_id) {
-                echo $this->get_modal_html($post_id);
-            });
-            $modal_added = true;
-        }
-
-        // Get small badge HTML
-        $badge_html = $this->get_badge_html($post_id, 'small');
-        
-        return $title . ' ' . $badge_html;
+        return '<div class="' . esc_attr($classes) . '">' . $badge_html . '</div>';
     }
 
     /**
      * Get badge HTML for a post.
-     * 
+     *
      * @param int $post_id Post ID
      * @param string $size Badge size: 'small' or 'large'
      * @return string Badge HTML
@@ -159,7 +153,7 @@ class Frontend
         $settings = get_option('encypher_provenance_settings', []);
         $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
         $show_branding = isset($settings['show_branding']) ? (bool) $settings['show_branding'] : true;
-        
+
         // Force branding on Free tier (double check)
         if ('free' === $tier) {
             $show_branding = true;
@@ -226,7 +220,7 @@ class Frontend
                     <?php endif; ?>
                 </svg>
             <?php endif; ?>
-            
+
             <span style="color: <?php echo esc_attr($text_color); ?>;"><?php echo esc_html($status_text); ?></span>
             <?php if ($tier_pill) : ?>
                 <?php echo $tier_pill; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -241,14 +235,14 @@ class Frontend
 
     /**
      * Get modal HTML for verification display.
-     * 
+     *
      * @param int $post_id Post ID
      * @return string Modal HTML
      */
     private function get_modal_html(int $post_id): string
     {
         $logo_url = ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/images/encypher-logo.png';
-        
+
         ob_start();
         ?>
         <div id="encypher-c2pa-modal" class="encypher-c2pa-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="encypher-modal-title">
@@ -270,7 +264,7 @@ class Frontend
                 </div>
             </div>
         </div>
-        
+
         <style>
         .encypher-c2pa-badge:hover {
             background: #f5f5f5 !important;
@@ -281,27 +275,27 @@ class Frontend
             transform: scale(0.98);
         }
         </style>
-        
+
         <script>
         (function() {
             const modal = document.getElementById('encypher-c2pa-modal');
             const badges = document.querySelectorAll('.encypher-c2pa-badge');
-            
+
             if (!modal) {
                 return;
             }
-            
+
             const closeBtn = modal.querySelector('.encypher-c2pa-modal-close');
             const overlay = modal.querySelector('.encypher-c2pa-modal-overlay');
             const loading = modal.querySelector('.encypher-c2pa-modal-loading');
             const result = modal.querySelector('.encypher-c2pa-modal-result');
-            
+
             function openModal(postId) {
                 modal.style.display = 'block';
                 document.body.style.overflow = 'hidden';
                 loading.style.display = 'block';
                 result.style.display = 'none';
-                
+
                 fetch('<?php echo esc_url(rest_url('encypher-provenance/v1/verify')); ?>', {
                     method: 'POST',
                     headers: {
@@ -317,7 +311,7 @@ class Frontend
                     loading.style.display = 'none';
                     result.style.display = 'block';
                     result.innerHTML = formatVerificationData(data, postId);
-                    
+
                     // Update badge text to show "Verified" after successful verification
                     if (data.valid) {
                         const badge = document.querySelector('.encypher-c2pa-badge[data-post-id="' + postId + '"]');
@@ -337,12 +331,12 @@ class Frontend
                     result.innerHTML = '<div class="encypher-error"><?php esc_html_e('Failed to verify content. Please try again.', 'encypher-provenance'); ?></div>';
                 });
             }
-            
+
             function closeModal() {
                 modal.style.display = 'none';
                 document.body.style.overflow = '';
             }
-            
+
             function findActions(metadata) {
                 if (!metadata || !metadata.assertions) return null;
                 // Try v2 first, then v1
@@ -420,25 +414,25 @@ class Frontend
                 const topDocumentId = rawMeta.document_id || null;
                 const totalSignatures = rawMeta.total_signatures || null;
                 const totalSegments = rawMeta.total_segments || null;
-                
+
                 let html = '<div class="encypher-verification-success">';
                 html += '<div class="encypher-status-badge encypher-status-verified"><?php esc_html_e('Verified', 'encypher-provenance'); ?></div>';
-                
+
                 // Show cache status
                 if (data.cached) {
                     html += '<p class="encypher-cache-notice" style="font-size: 0.9em; color: #666; margin: 10px 0;"><em><?php esc_html_e('(Cached result - verified within last 5 minutes)', 'encypher-provenance'); ?></em></p>';
                 }
-                
+
                 // Summary section
                 html += '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">';
                 html += '<h3 style="margin: 0 0 10px 0; font-size: 14px; color: #333;"><?php esc_html_e('Verification Summary', 'encypher-provenance'); ?></h3>';
-                
+
                 // Prefer signing identity when available, then signer name/id fallback
                 const signerDisplay = data.signing_identity || data.signer_name || data.signer_id;
                 if (signerDisplay) {
                     html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Signed by:', 'encypher-provenance'); ?></strong> ' + escapeHtml(signerDisplay) + '</p>';
                 }
-                
+
                 // Extract action info from manifest (try v2 then v1)
                 // Prefer c2pa.created, fall back to c2pa.edited
                 const actions = findActions(manifest);
@@ -497,7 +491,7 @@ class Frontend
                     });
                     html += '</div>';
                 }
-                
+
                 html += '</div>';
 
                 // Provenance chain viewer (if ingredients exist)
@@ -507,7 +501,7 @@ class Frontend
                     html += '<summary style="cursor: pointer; padding: 10px; background: #28a745; color: white; border-radius: 4px; font-weight: 600;"><?php esc_html_e('View Provenance Chain', 'encypher-provenance'); ?></summary>';
                     html += '<div style="padding: 15px; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 4px 4px; background: #f8f9fa;">';
                     html += '<p style="margin-bottom: 15px; color: #666;"><?php esc_html_e('This content has been edited. View the complete edit history:', 'encypher-provenance'); ?></p>';
-                    
+
                     let chain = [];
                     let current = manifest;
                     let depth = 0;
@@ -523,7 +517,7 @@ class Frontend
                         current = current.ingredients?.[0]?.c2pa_manifest;
                         depth++;
                     }
-                    
+
                     html += '<div style="font-size: 13px;">';
                     for (let i = 0; i < chain.length; i++) {
                         const item = chain[i];
@@ -538,7 +532,7 @@ class Frontend
                     html += '</div>';
                     html += '</div></details>';
                 }
-                
+
                 // Full manifest JSON viewer (collapsed by default)
                 if (data.metadata) {
                     html += '<details style="margin: 15px 0;">';
@@ -551,7 +545,7 @@ class Frontend
                     html += '<button id="copy-manifest-btn" style="padding: 8px 16px; background: #2A87C4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500;">Copy to Clipboard</button>';
                     html += '</p>';
                     html += '</div></details>';
-                    
+
                     setTimeout(function() {
                         const copyBtn = document.getElementById('copy-manifest-btn');
                         if (copyBtn) {
@@ -569,18 +563,18 @@ class Frontend
                         }
                     }, 100);
                 }
-                
+
                 html += '</div>';
-                
+
                 return html;
             }
-            
+
             function escapeHtml(text) {
                 const div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
             }
-            
+
             // Event listeners
             badges.forEach(badge => {
                 badge.addEventListener('click', function(e) {
@@ -589,10 +583,10 @@ class Frontend
                     openModal(postId);
                 });
             });
-            
+
             closeBtn.addEventListener('click', closeModal);
             overlay.addEventListener('click', closeModal);
-            
+
             // Close on Escape key
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && modal.style.display === 'block') {

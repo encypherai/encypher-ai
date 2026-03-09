@@ -109,9 +109,7 @@ async def _enforce_turnstile_if_required(*, route: str, token: Optional[str], re
     if not settings.TURNSTILE_ENABLED:
         return
 
-    required = (route == "signup" and settings.TURNSTILE_REQUIRE_SIGNUP) or (
-        route == "login" and settings.TURNSTILE_REQUIRE_LOGIN
-    )
+    required = (route == "signup" and settings.TURNSTILE_REQUIRE_SIGNUP) or (route == "login" and settings.TURNSTILE_REQUIRE_LOGIN)
     if not required:
         return
 
@@ -243,8 +241,7 @@ async def login(
                     "error": {
                         "code": "E_MFA_SETUP_REQUIRED",
                         "message": (
-                            "Your organization requires two-factor authentication. "
-                            "Please sign in and go to Settings > Security to set up 2FA."
+                            "Your organization requires two-factor authentication. " "Please sign in and go to Settings > Security to set up 2FA."
                         ),
                     },
                 }
@@ -2172,6 +2169,9 @@ async def get_setup_status(
             "setup_completed_at": user.setup_completed_at.isoformat() if user.setup_completed_at else None,
             "account_type": org.account_type if org else None,
             "display_name": org.display_name if org else None,
+            "dashboard_layout": org.dashboard_layout if org else None,
+            "publisher_platform": org.publisher_platform if org else None,
+            "publisher_platform_custom": org.publisher_platform_custom if org else None,
         },
         "error": None,
     }
@@ -2231,6 +2231,10 @@ async def complete_setup(
     # Update organization identity
     org.account_type = request.account_type.value
     org.display_name = request.display_name
+    org.dashboard_layout = request.dashboard_layout.value
+    org.workflow_category = request.workflow_category.value
+    org.publisher_platform = request.publisher_platform
+    org.publisher_platform_custom = request.publisher_platform_custom
     # Also set the org name if it's still blank (personal orgs start with name="")
     if not org.name:
         org.name = request.display_name
@@ -2251,6 +2255,9 @@ async def complete_setup(
             "setup_completed_at": user.setup_completed_at.isoformat(),
             "account_type": org.account_type,
             "display_name": org.display_name,
+            "dashboard_layout": org.dashboard_layout,
+            "publisher_platform": org.publisher_platform,
+            "publisher_platform_custom": org.publisher_platform_custom,
         },
         "error": None,
     }

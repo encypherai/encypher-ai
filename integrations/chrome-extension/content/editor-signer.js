@@ -25,7 +25,8 @@
 const EDITOR_CONFIG = {
   minTextLength: 10,
   debounceMs: 300,
-  buttonOffset: { top: -40, right: 8 },
+  buttonGap: 12,
+  viewportMargin: 16,
 };
 
 // Track signed content to avoid re-signing
@@ -40,6 +41,16 @@ let editorButtonsEnabled = true;
 // Signing option defaults (loaded from settings)
 let defaultEmbeddingTechnique = 'micro';
 let defaultSegmentationLevel = 'sentence';
+let defaultDocumentType = 'article';
+let defaultAutoReplaceContent = true;
+let cachedAccountInfo = null;
+let accountInfoPromise = null;
+let primaryEditorId = null;
+let editorObserverStarted = false;
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
 
 function normalizeEmbeddingTechnique(value) {
   const mode = String(value || '').toLowerCase();
@@ -264,74 +275,74 @@ function detectEditorType(element) {
       element.classList.contains('WACViewPanel_EditingElement')) {
     return 'ms-word-online';
   }
-  
+
   // TinyMCE
-  if (element.classList.contains('mce-content-body') || 
+  if (element.classList.contains('mce-content-body') ||
       parent?.classList.contains('tox-edit-area') ||
       element.id?.startsWith('tinymce')) {
     return 'tinymce';
   }
-  
+
   // CKEditor
   if (element.classList.contains('ck-editor__editable') ||
       element.classList.contains('cke_editable') ||
       parent?.classList.contains('ck-editor')) {
     return 'ckeditor';
   }
-  
+
   // Quill
   if (element.classList.contains('ql-editor') ||
       parent?.classList.contains('ql-container')) {
     return 'quill';
   }
-  
+
   // ProseMirror / Tiptap
   if (element.classList.contains('ProseMirror') ||
       element.classList.contains('tiptap')) {
     return 'prosemirror';
   }
-  
+
   // Draft.js
   if (element.classList.contains('DraftEditor-root') ||
       element.classList.contains('public-DraftEditor-content') ||
       element.getAttribute('data-contents') === 'true') {
     return 'draftjs';
   }
-  
+
   // Medium Editor
   if (element.classList.contains('medium-editor-element') ||
       element.getAttribute('data-medium-editor-element') === 'true') {
     return 'medium';
   }
-  
+
   // Froala
   if (element.classList.contains('fr-element') ||
       parent?.classList.contains('fr-wrapper')) {
     return 'froala';
   }
-  
+
   // Summernote
   if (element.classList.contains('note-editable') ||
       parent?.classList.contains('note-editor')) {
     return 'summernote';
   }
-  
+
   // Generic contenteditable
   if (element.isContentEditable || element.getAttribute('contenteditable') === 'true') {
     return 'contenteditable';
   }
-  
+
   // Textarea
   if (element.tagName === 'TEXTAREA') {
     return 'textarea';
   }
-  
+
   // Input (text type)
-  if (element.tagName === 'INPUT' && 
+  if (element.tagName === 'INPUT' &&
       ['text', 'search', ''].includes(element.type)) {
     return 'input';
   }
-  
+
   return null;
 }
 
@@ -361,7 +372,7 @@ function getEditorText(element, editorType) {
 
     case 'ms-word-online':
       return element.innerText || element.textContent || '';
-    
+
     case 'tinymce':
       // Try to get TinyMCE instance
       if (typeof tinymce !== 'undefined') {
@@ -369,7 +380,7 @@ function getEditorText(element, editorType) {
         if (editor) return editor.getContent({ format: 'text' });
       }
       return element.innerText || element.textContent || '';
-    
+
     case 'ckeditor':
       // Try to get CKEditor instance
       if (typeof CKEDITOR !== 'undefined' && element.id) {
@@ -377,7 +388,7 @@ function getEditorText(element, editorType) {
         if (editor) return editor.getData();
       }
       return element.innerText || element.textContent || '';
-    
+
     case 'quill': {
       // Quill stores instance on parent
       const quillContainer = element.closest('.ql-container');
@@ -386,7 +397,7 @@ function getEditorText(element, editorType) {
       }
       return element.innerText || element.textContent || '';
     }
-    
+
     default:
       return element.innerText || element.textContent || '';
   }
@@ -416,7 +427,7 @@ function setEditorText(element, editorType, text) {
         showNotification('error', 'Could not copy to clipboard.');
       });
       return;
-    
+
     case 'tinymce':
       if (typeof tinymce !== 'undefined') {
         const editor = tinymce.get(element.id);
@@ -427,7 +438,7 @@ function setEditorText(element, editorType, text) {
       }
       element.innerText = text;
       break;
-    
+
     case 'ckeditor':
       if (typeof CKEDITOR !== 'undefined' && element.id) {
         const editor = CKEDITOR.instances[element.id];
@@ -438,7 +449,7 @@ function setEditorText(element, editorType, text) {
       }
       element.innerText = text;
       break;
-    
+
     case 'quill': {
       const quillContainer = element.closest('.ql-container');
       if (quillContainer?.__quill) {
@@ -448,25 +459,25 @@ function setEditorText(element, editorType, text) {
       element.innerText = text;
       break;
     }
-    
+
     default:
       element.innerText = text;
       // Trigger input event for frameworks
       element.dispatchEvent(new Event('input', { bubbles: true }));
   }
-}
+ }
 
 /**
  * Create the Encypher sign button
  */
 function createSignButton(editorId) {
   const button = document.createElement('button');
-  button.className = 'encypher-sign-btn';
+  button.className = 'encypher-sign-btn encypher-sign-btn--compact';
   button.id = `encypher-sign-${editorId}`;
   button.setAttribute('type', 'button');
   button.setAttribute('aria-label', 'Sign content with Encypher');
-  button.setAttribute('title', 'Sign with Encypher');
-  
+  button.setAttribute('title', 'Quick sign with Encypher · Shift-click for options');
+
   // Use the Encypher logo (defined in detector.js, which loads first in the
   // same content-script group).  Fall back to a simple shield if unavailable.
   const sharedLogoSvg = typeof globalThis?.ENCYPHER_LOGO_SVG === 'string'
@@ -480,464 +491,416 @@ function createSignButton(editorId) {
     <span class="encypher-sign-btn__icon">${logoSvg}</span>
     <span class="encypher-sign-btn__text">Sign</span>
   `;
-  
+
   return button;
 }
 
-/**
- * Position the sign button relative to editor
- */
-function positionButton(button, editor) {
-  const rect = editor.getBoundingClientRect();
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-  
-  button.style.position = 'absolute';
-  button.style.top = `${rect.top + scrollTop + EDITOR_CONFIG.buttonOffset.top}px`;
-  button.style.left = `${rect.right + scrollLeft - button.offsetWidth - EDITOR_CONFIG.buttonOffset.right}px`;
-  button.style.zIndex = '10001';
-}
+function getSiteAdapter(editor) {
+  const hostname = window.location.hostname;
 
-/**
- * Show signing modal/dropdown
- */
-function showSigningUI(editor, editorType, button) {
-  // Remove any existing UI
-  const existingUI = document.querySelector('.encypher-sign-ui');
-  if (existingUI) existingUI.remove();
-  
-  const text = getEditorText(editor, editorType);
-  if (text.trim().length < EDITOR_CONFIG.minTextLength) {
-    showNotification('error', 'Content too short to sign (minimum 10 characters)');
-    return;
-  }
-  
-  const ui = document.createElement('div');
-  ui.className = 'encypher-sign-ui';
-  const _headerLogoSvg = typeof globalThis?.ENCYPHER_LOGO_SVG === 'string'
-    ? globalThis.ENCYPHER_LOGO_SVG
-    : '';
-  ui.innerHTML = `
-    <div class="encypher-sign-ui__header">
-      <div class="encypher-sign-ui__header-brand">
-        ${_headerLogoSvg ? `<span class="encypher-sign-ui__header-logo" aria-hidden="true">${_headerLogoSvg}</span>` : ''}
-        <h3>Sign Content</h3>
-      </div>
-      <button class="encypher-sign-ui__close" aria-label="Close">&times;</button>
-    </div>
-    <div class="encypher-sign-ui__body">
-      <div class="encypher-sign-ui__preview">
-        <label>Content Preview</label>
-        <div class="encypher-sign-ui__text">${escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}</div>
-        <div class="encypher-sign-ui__meta">${text.length} characters</div>
-      </div>
-      <div class="encypher-sign-ui__options">
-        <label for="encypher-sign-title">Document Title (optional)</label>
-        <input type="text" id="encypher-sign-title" placeholder="Enter title...">
-      </div>
-      <div class="encypher-sign-ui__select-group">
-        <label for="encypher-embedding-technique">Embedding Mode</label>
-        <select id="encypher-embedding-technique" class="encypher-sign-ui__select">
-          <option value="micro">Standard (recommended)</option>
-          <option value="micro_no_embed_c2pa">Compact (no embedded C2PA)</option>
-        </select>
-      </div>
-      <div class="encypher-sign-ui__select-group">
-        <label for="encypher-segmentation-level">Embedding Frequency</label>
-        <select id="encypher-segmentation-level" class="encypher-sign-ui__select">
-          <option value="document">Entire content</option>
-          <option value="section">Per section</option>
-          <option value="paragraph">Per paragraph</option>
-          <option value="sentence">Per sentence</option>
-          <option value="word">Per word (Enterprise)</option>
-        </select>
-      </div>
-      <div class="encypher-sign-ui__options">
-        <label>
-          <input type="checkbox" id="encypher-replace-content" checked>
-          Replace content with signed version
-        </label>
-      </div>
-    </div>
-    <div class="encypher-sign-ui__footer">
-      <button class="encypher-sign-ui__btn encypher-sign-ui__btn--secondary" data-action="cancel">Cancel</button>
-      <button class="encypher-sign-ui__btn encypher-sign-ui__btn--primary" data-action="sign">
-        <span class="encypher-sign-ui__btn-text">Sign Content</span>
-        <span class="encypher-sign-ui__btn-loading">Signing...</span>
-      </button>
-    </div>
-  `;
-  
-  // Position near button
-  const buttonRect = button.getBoundingClientRect();
-  ui.style.position = 'fixed';
-  ui.style.top = `${buttonRect.bottom + 8}px`;
-  ui.style.right = `${window.innerWidth - buttonRect.right}px`;
-  
-  document.body.appendChild(ui);
-
-  // Set dropdown defaults from settings
-  const embTechSelect = ui.querySelector('#encypher-embedding-technique');
-  const segLevelSelect = ui.querySelector('#encypher-segmentation-level');
-  if (embTechSelect) embTechSelect.value = defaultEmbeddingTechnique;
-  if (segLevelSelect) segLevelSelect.value = defaultSegmentationLevel;
-
-  // Event handlers
-  ui.querySelector('.encypher-sign-ui__close').addEventListener('click', () => ui.remove());
-  ui.querySelector('[data-action="cancel"]').addEventListener('click', () => ui.remove());
-  
-  // Guard: ignore clicks that arrive in the same event-loop tick as the UI
-  // creation (the mouseup from the floating button can land on this submit
-  // button if they overlap).
-  let signReady = false;
-  requestAnimationFrame(() => { signReady = true; });
-
-  ui.querySelector('[data-action="sign"]').addEventListener('click', async (e) => {
-    if (!signReady) return;
-    const signBtn = e.currentTarget;
-    const btnText = signBtn.querySelector('.encypher-sign-ui__btn-text');
-    const btnLoading = signBtn.querySelector('.encypher-sign-ui__btn-loading');
-    const title = ui.querySelector('#encypher-sign-title').value.trim();
-    const replaceContent = ui.querySelector('#encypher-replace-content').checked;
-    const manifestMode = ui.querySelector('#encypher-embedding-technique')?.value || defaultEmbeddingTechnique;
-    const segmentationLevel = ui.querySelector('#encypher-segmentation-level')?.value || defaultSegmentationLevel;
-
-    // Show loading state
-    btnText.hidden = true;
-    btnLoading.classList.add('encypher-sign-ui__btn-loading--active');
-    signBtn.disabled = true;
-
-    try {
-      const response = await chrome.runtime.sendMessage({
-        type: 'SIGN_CONTENT',
-        text: text,
-        title: title || undefined,
-        options: { manifestMode, segmentationLevel }
-      });
-      
-      if (response && response.success) {
-        if (replaceContent) {
-          // Prefer in-place embedding plan insertion: it preserves the editor's
-          // DOM structure, placeholder text, undo history and avoids triggering
-          // character-count issues from full text replacement.
-          const applied = response.embeddingPlan
-            ? applyEmbeddingPlanToEditorInPlace(editor, editorType, response.embeddingPlan, text)
-            : false;
-          if (!applied) {
-            setEditorText(editor, editorType, response.signedText);
+  if (hostname === 'github.com') {
+    const issueCreateButton = document.querySelector('button[data-testid="create-issue-button"]');
+    const issueActionContainer = issueCreateButton?.closest('[class*="actionButtonsContainer"]');
+    const issueFooterChildren = document.querySelector('[data-testid="markdown-editor-footer"] [class*="childrenStyling"]');
+    if (editor.matches?.('textarea[aria-label="Markdown value"], textarea[placeholder="Type your description here…"]')) {
+      return {
+        key: 'github-issue',
+        tryAttach(button) {
+          if (issueActionContainer && issueCreateButton && !issueActionContainer.contains(button)) {
+            issueActionContainer.insertBefore(button, issueCreateButton);
+            return true;
           }
+          if (issueFooterChildren && !issueFooterChildren.contains(button)) {
+            issueFooterChildren.appendChild(button);
+            return true;
+          }
+          return false;
         }
-        
-        // Track as signed
-        signedContentHashes.add(hashText(response.signedText));
-        
-        // Update button state
-        button.classList.add('encypher-sign-btn--signed');
-        button.querySelector('.encypher-sign-btn__text').innerHTML = 'Signed <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>';
-        
-        showNotification('success', 'Content signed successfully!');
-        ui.remove();
-        
-        // Copy to clipboard as backup
-        try {
-          await navigator.clipboard.writeText(response.signedText);
-        } catch (e) {
-          // Clipboard access may be denied
+      };
+    }
+
+    const commentContainer = editor.closest?.('[class*="MarkdownEditor-module__container"]')
+      || editor.closest?.('[class*="js-slash-command-surface"]')
+      || document;
+    const commentTooltip = commentContainer.querySelector('span[data-testid="save-button-tooltip"]');
+    const commentButton = commentTooltip?.querySelector('button');
+    const commentFooter = commentTooltip?.closest('[data-testid="markdown-editor-footer"]')
+      || commentContainer.querySelector('[data-testid="markdown-editor-footer"]');
+    const commentChildrenArea = commentFooter?.querySelector('[class*="childrenStyling"]');
+    if (editor.matches?.('textarea[placeholder="Use Markdown to format your comment"], textarea[placeholder*="Markdown"]')) {
+      return {
+        key: 'github-comment',
+        tryAttach(button) {
+          if (commentChildrenArea && commentTooltip && !commentChildrenArea.contains(button)) {
+            commentChildrenArea.insertBefore(button, commentTooltip);
+            return true;
+          }
+          if (commentFooter && commentButton && !commentFooter.contains(button)) {
+            commentFooter.appendChild(button);
+            return true;
+          }
+          return false;
         }
-      } else {
-        showNotification('error', response?.error || 'Signing failed');
-        btnText.hidden = false;
-        btnLoading.classList.remove('encypher-sign-ui__btn-loading--active');
-        signBtn.disabled = false;
+      };
+    }
+  }
+
+  if (hostname === 'x.com' || hostname === 'twitter.com') {
+    const composeDialog = editor.closest?.('div[role="dialog"]') || document;
+    const tweetButton = composeDialog.querySelector('button[data-testid="tweetButtonInline"]');
+    const tweetButtonCluster = tweetButton?.parentElement;
+    const toolbarNav = composeDialog.querySelector('div[data-testid="toolBar"] nav');
+    if (editor.matches?.('div[data-testid^="tweetTextarea_"][role="textbox"], div[data-testid="tweetTextarea_0"]')) {
+      return {
+        key: 'x-post',
+        tryAttach(button) {
+          if (tweetButtonCluster && tweetButton && !tweetButtonCluster.contains(button)) {
+            tweetButtonCluster.insertBefore(button, tweetButton);
+            return true;
+          }
+          if (toolbarNav && !toolbarNav.contains(button)) {
+            toolbarNav.appendChild(button);
+            return true;
+          }
+          return false;
+        }
+      };
+    }
+  }
+
+  if (hostname === 'medium.com') {
+    const publishButton = document.querySelector('button.button--primary.button--filled');
+    const publishContainer = publishButton?.parentElement;
+    const metabarActions = document.querySelector('div.metabar-block.u-flex0 .u-flexCenter')
+      || document.querySelector('div.metabar-block.u-flex0');
+    if (editor.matches?.('div.postArticle-content.js-postField, div[role="textbox"].postArticle-content')) {
+      return {
+        key: 'medium-story',
+        tryAttach(button) {
+          if (publishContainer && publishButton && !publishContainer.contains(button)) {
+            publishContainer.insertBefore(button, publishButton);
+            return true;
+          }
+          if (metabarActions && !metabarActions.contains(button)) {
+            metabarActions.appendChild(button);
+            return true;
+          }
+          return false;
+        }
+      };
+    }
+  }
+
+  if (hostname === 'www.linkedin.com' || hostname === 'linkedin.com') {
+    const interopOutlet = document.getElementById('interop-outlet');
+    const shadowRoot = interopOutlet?.shadowRoot || null;
+    const root = editor?.getRootNode?.();
+
+    if (shadowRoot && root === shadowRoot) {
+      const postButton = shadowRoot.querySelector('button.share-actions__primary-action');
+      const postContainer = postButton?.parentElement;
+      const schedulePostContainer = shadowRoot.querySelector('.share-creation-state__schedule-and-post-container');
+      const messageSendButton = editor.closest?.('form[id*="msg-form"]')?.querySelector('button.msg-form__send-button')
+        || shadowRoot.querySelector('button.msg-form__send-button');
+      const messageActions = messageSendButton?.closest('.msg-form__right-actions');
+      const messageFooter = editor.closest?.('form[id*="msg-form"]')?.querySelector('footer.msg-form__footer')
+        || shadowRoot.querySelector('footer.msg-form__footer');
+
+      if (editor.matches?.('[aria-label="Text editor for creating content"][role="textbox"], div.ql-editor[role="textbox"]')) {
+        return {
+          key: 'linkedin-post',
+          tryAttach(button) {
+            if (postContainer && postButton && !postContainer.contains(button)) {
+              postContainer.insertBefore(button, postButton);
+              return true;
+            }
+            if (schedulePostContainer && !schedulePostContainer.contains(button)) {
+              schedulePostContainer.prepend(button);
+              return true;
+            }
+            return false;
+          }
+        };
       }
-    } catch (error) {
-      showNotification('error', error.message || 'Signing error');
-      btnText.hidden = false;
-      btnLoading.classList.remove('encypher-sign-ui__btn-loading--active');
-      signBtn.disabled = false;
-    }
-  });
-  
-  // Close on outside click
-  setTimeout(() => {
-    document.addEventListener('click', function closeUI(e) {
-      if (!ui.contains(e.target) && !button.contains(e.target)) {
-        ui.remove();
-        document.removeEventListener('click', closeUI);
+
+      if (editor.matches?.('div.msg-form__contenteditable[role="textbox"], [aria-label="Write a message…"][role="textbox"]')) {
+        return {
+          key: 'linkedin-message',
+          tryAttach(button) {
+            if (messageActions && messageSendButton && !messageActions.contains(button)) {
+              messageActions.insertBefore(button, messageSendButton);
+              return true;
+            }
+            if (messageFooter && !messageFooter.contains(button)) {
+              messageFooter.appendChild(button);
+              return true;
+            }
+            return false;
+          }
+        };
       }
-    });
-  }, 100);
-}
+    }
 
-/**
- * Escape HTML for safe display
- */
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-/**
- * Show notification toast
- */
-function showNotification(type, message) {
-  const notification = document.createElement('div');
-  notification.className = `encypher-notification encypher-notification--${type}`;
-  notification.setAttribute('role', 'alert');
-  
-  const icons = {
-    success: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-    error: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
-    info: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
-  };
-  
-  notification.innerHTML = `
-    <div class="encypher-notification__icon">${icons[type] || icons.info}</div>
-    <div class="encypher-notification__content">${escapeHtml(message)}</div>
-  `;
-  
-  document.body.appendChild(notification);
-  
-  // Auto-remove after 4 seconds
-  setTimeout(() => {
-    notification.style.opacity = '0';
-    setTimeout(() => notification.remove(), 300);
-  }, 4000);
-}
-
-// ── Helpers for Selection in both main document and shadow roots ──
-
-function _getSelection(editor) {
-  const root = editor.getRootNode?.() || document;
-  return root.getSelection ? root.getSelection() : window.getSelection();
-}
-
-/**
- * Get the caret's text-node context: the node, its text content as a
- * codepoint array, and the caret's codepoint offset within that node.
- * Returns null when the caret isn't inside a text node (or there's a range
- * selection instead of a collapsed caret).
- */
-function _getTextNodeCaret(editor, editorType) {
-  if (editorType === 'textarea' || editorType === 'input') {
-    if (editor.selectionStart !== editor.selectionEnd) return null;
-    const text = editor.value;
-    const utf16 = editor.selectionStart;
-    if (utf16 == null) return null;
-    const cpOffset = [...text.slice(0, utf16)].length;
-    return { node: null, text, chars: [...text], cpOffset };
+    const articleNextButton = document.querySelector('button.article-editor-nav__publish');
+    const articleNavActions = articleNextButton?.parentElement;
+    const articleToolbar = document.querySelector('div.article-editor-toolbar');
+    if (editor.matches?.('[aria-label="Article editor content"][role="textbox"], div.ProseMirror[role="textbox"]')) {
+      return {
+        key: 'linkedin-article',
+        tryAttach(button) {
+          if (articleNavActions && articleNextButton && !articleNavActions.contains(button)) {
+            articleNavActions.insertBefore(button, articleNextButton);
+            return true;
+          }
+          if (articleToolbar && !articleToolbar.contains(button)) {
+            articleToolbar.appendChild(button);
+            return true;
+          }
+          return false;
+        }
+      };
+    }
   }
 
-  const sel = _getSelection(editor);
-  if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return null;
-  const range = sel.getRangeAt(0);
-  const node = range.startContainer;
-  if (node.nodeType !== Node.TEXT_NODE) return null;
-  if (!editor.contains(node)) return null;
-  const text = node.textContent || '';
-  const cpOffset = [...text.slice(0, range.startOffset)].length;
-  return { node, text, chars: [...text], cpOffset };
-}
-
-/**
- * Place the caret at codepoint offset `cpOffset` inside `textNode`
- * (for contenteditable) or at the corresponding UTF-16 position in a textarea.
- */
-function _setCaretInTextNode(editor, editorType, textNode, text, cpOffset) {
-  const utf16 = _codepointOffsetToUtf16(text, cpOffset);
-
-  if (editorType === 'textarea' || editorType === 'input') {
-    editor.setSelectionRange(utf16, utf16);
-    return;
+  if (hostname === 'chatgpt.com' || hostname === 'chat.openai.com') {
+    const threadBottom = document.querySelector('#thread-bottom-container');
+    const sendButton = threadBottom?.querySelector('[data-testid="send-button"]');
+    const footerActions = threadBottom?.querySelector('[data-testid="composer-footer-actions"]');
+    return {
+      key: 'chatgpt',
+      tryAttach(button) {
+        const cluster = sendButton?.parentElement;
+        if (cluster && sendButton && !cluster.contains(button)) {
+          cluster.insertBefore(button, sendButton);
+          return true;
+        }
+        if (footerActions && !footerActions.contains(button)) {
+          footerActions.appendChild(button);
+          return true;
+        }
+        return false;
+      }
+    };
   }
 
-  const sel = _getSelection(editor);
-  if (!sel) return;
-  const r = document.createRange();
-  r.setStart(textNode, utf16);
-  r.collapse(true);
-  sel.removeAllRanges();
-  sel.addRange(r);
+  if (hostname === 'claude.ai') {
+    const container = document.querySelector('[data-testid="chat-input-grid-container"]');
+    const sendButton = container?.querySelector('button[aria-label="Send message"]');
+    const rightCluster = sendButton?.closest('.shrink-0.flex.items-center') || sendButton?.parentElement;
+    const leftCluster = container?.querySelector('[data-testid="model-selector-dropdown"]')?.closest('.relative.flex-1');
+    return {
+      key: 'claude',
+      tryAttach(button) {
+        if (rightCluster && sendButton && !rightCluster.contains(button)) {
+          rightCluster.insertBefore(button, sendButton);
+          return true;
+        }
+        if (leftCluster && !leftCluster.contains(button)) {
+          leftCluster.appendChild(button);
+          return true;
+        }
+        return false;
+      }
+    };
+  }
+
+  if (hostname === 'mail.google.com') {
+    const composeRegion = editor?.closest?.('[role="region"][aria-label="New Message"]');
+    const formattingToolbar = composeRegion?.querySelector('[role="toolbar"][aria-label="Formatting options"]');
+    const sendButton = composeRegion?.querySelector('[role="button"][data-tooltip*="Send"], [role="button"][aria-label*="Send"]');
+    return {
+      key: 'gmail',
+      tryAttach(button) {
+        if (formattingToolbar && isElementVisible(formattingToolbar) && !formattingToolbar.contains(button)) {
+          formattingToolbar.appendChild(button);
+          return true;
+        }
+        const sendCell = sendButton?.closest('td');
+        const sendRow = sendCell?.parentElement;
+        if (sendCell && sendRow && !sendRow.contains(button)) {
+          const hostCell = document.createElement('td');
+          hostCell.className = sendCell.className || 'gU';
+          hostCell.appendChild(button);
+          sendRow.insertBefore(hostCell, sendCell);
+          return true;
+        }
+        return false;
+      }
+    };
+  }
+
+  if (hostname === 'outlook.live.com' || hostname === 'outlook.office.com') {
+    const sendContainer = document.querySelector('[data-testid="ComposeSendButton"]');
+    const actionRow = sendContainer?.parentElement;
+    return {
+      key: 'outlook',
+      tryAttach(button) {
+        if (actionRow && sendContainer && !actionRow.contains(button)) {
+          actionRow.insertBefore(button, sendContainer);
+          return true;
+        }
+        return false;
+      }
+    };
+  }
+
+  if (hostname === 'app.slack.com') {
+    const suffix = document.querySelector('[data-qa="wysiwyg-container_suffix"]');
+    const sendButton = suffix?.querySelector('[data-qa="texty_send_button"]');
+    const sendCluster = sendButton?.parentElement || suffix;
+    const toolbarButtons = document.querySelector('[data-qa="wysiwyg-container_toolbar-buttons"] .c-texty_buttons')
+      || document.querySelector('[data-qa="wysiwyg-container_toolbar-buttons"]');
+    return {
+      key: 'slack',
+      tryAttach(button) {
+        if (sendCluster && sendButton && !sendCluster.contains(button)) {
+          sendCluster.insertBefore(button, sendButton);
+          return true;
+        }
+        if (toolbarButtons && !toolbarButtons.contains(button)) {
+          toolbarButtons.appendChild(button);
+          return true;
+        }
+        return false;
+      }
+    };
+  }
+
+  return null;
 }
 
-// ── Embedding-run aware keyboard & clipboard handlers ──
+function attachButtonToPreferredHost(button, editor) {
+  const adapter = getSiteAdapter(editor);
+  if (!adapter) return false;
 
-/**
- * Attach handlers that treat contiguous embedding-char runs as atomic:
- *   - Backspace / Delete removes the entire run in one keystroke
- *   - ArrowLeft / ArrowRight skips over the run
- *   - Mouse click / Ctrl+Arrow / Home / End: post-hoc cursor nudge
- *   - Copy / Cut extends a partial selection to include the full run
- */
-function _attachEmbeddingRunHandlers(editor, editorType) {
-  if (editorType === 'google-docs' || editorType === 'ms-word-online') return;
+  const attached = adapter.tryAttach(button);
+  if (attached) {
+    button.dataset.hosted = 'true';
+    button.dataset.hostKind = adapter.key;
+    button.classList.add('encypher-sign-btn--hosted', 'encypher-sign-btn--visible', 'encypher-sign-btn--expanded');
+    button.style.position = 'relative';
+    button.style.top = 'auto';
+    button.style.left = 'auto';
+    button.style.right = 'auto';
+    button.style.bottom = 'auto';
+    button.style.zIndex = 'auto';
+    return true;
+  }
 
-  editor.addEventListener('keydown', (e) => {
-    const isDelete = e.key === 'Backspace' || e.key === 'Delete';
-    const isArrow  = e.key === 'ArrowLeft'  || e.key === 'ArrowRight';
-    if (!isDelete && !isArrow) return;
+  button.dataset.hosted = 'false';
+  button.dataset.hostKind = 'floating';
+  button.classList.remove('encypher-sign-btn--hosted');
+  ensureButtonMountedInBody(button);
+  return false;
+}
 
-    // For modified arrow keys (Shift, Ctrl, etc.) handle via post-hoc nudge
-    if (isArrow && (e.shiftKey || e.ctrlKey || e.metaKey || e.altKey)) return;
-    // For modified delete keys let the browser handle normally (Ctrl+Backspace = delete word)
-    if (isDelete && (e.ctrlKey || e.metaKey)) return;
+function ensureButtonMountedInBody(button) {
+  if (button.parentElement !== document.body) {
+    document.body.appendChild(button);
+  }
+}
 
-    const caret = _getTextNodeCaret(editor, editorType);
-    if (!caret) return;
+function shouldPreferHostedPlacement(editor) {
+  const hostname = window.location.hostname;
+  return hostname === 'github.com'
+    || hostname === 'x.com'
+    || hostname === 'twitter.com'
+    || hostname === 'medium.com'
+    || hostname === 'chatgpt.com'
+    || hostname === 'chat.openai.com'
+    || hostname === 'claude.ai'
+    || hostname === 'www.linkedin.com'
+    || hostname === 'linkedin.com'
+    || hostname === 'mail.google.com'
+    || hostname === 'outlook.live.com'
+    || hostname === 'outlook.office.com'
+    || hostname === 'app.slack.com';
+}
 
-    const { node, text, chars, cpOffset } = caret;
+function updateButtonPresentation(button, options = {}) {
+  const signed = Boolean(options.signed);
+  const ready = Boolean(options.ready) && !signed;
+  const compact = options.surface !== 'document';
+  const buttonText = button.querySelector('.encypher-sign-btn__text');
+  if (buttonText) {
+    buttonText.textContent = signed ? 'Signed' : 'Sign';
+  }
+  button.classList.toggle('encypher-sign-btn--signed', signed);
+  button.classList.toggle('encypher-sign-btn--ready', ready);
+  button.classList.toggle('encypher-sign-btn--compact', compact);
+  button.dataset.surface = options.surface || 'generic';
+  button.setAttribute('aria-label', signed ? 'Signed content with Encypher' : (ready ? 'Quick sign content with Encypher' : 'Sign content with Encypher'));
+  button.setAttribute('title', signed ? 'Signed with Encypher · Click for details' : (ready ? 'Quick sign with Encypher · Shift-click for options' : 'Sign with Encypher · Shift-click for options'));
+}
 
-    if (isArrow) {
-      _handleArrowOverRun(e, editor, editorType, node, text, chars, cpOffset);
-    } else {
-      _handleDeleteRun(e, editor, editorType, node, text, chars, cpOffset);
+function updateEditorButtonState(info, options = {}) {
+  if (!info?.button || !info?.element?.isConnected) return;
+  const text = getEditorText(info.element, info.type) || '';
+  const trimmedLength = text.trim().length;
+  const ready = trimmedLength >= EDITOR_CONFIG.minTextLength;
+  const ui = document.querySelector('.encypher-sign-ui');
+  const keepVisible = ui?.dataset.editorId === info.editorId;
+  const active = primaryEditorId === info.editorId;
+  const visible = info.isOnlineEditor || keepVisible || options.forceVisible || active || Boolean(info.insideModal && trimmedLength > 0);
+  updateButtonPresentation(info.button, {
+    ready,
+    signed: info.button.classList.contains('encypher-sign-btn--signed'),
+    surface: info.surface
+  });
+  const hosted = info.button.dataset.hosted === 'true';
+  info.button.classList.toggle('encypher-sign-btn--visible', hosted || visible);
+  info.button.classList.toggle('encypher-sign-btn--expanded', hosted || Boolean(visible && (options.expanded || keepVisible)));
+}
+
+async function signEditorContent(options) {
+  const editor = options.editor;
+  const editorType = options.editorType;
+  const button = options.button;
+  const text = getEditorText(editor, editorType);
+  if ((text || '').trim().length < EDITOR_CONFIG.minTextLength) {
+    showNotification('error', 'Content too short to sign (minimum 10 characters)');
+    return null;
+  }
+
+  const response = await chrome.runtime.sendMessage({
+    type: 'SIGN_CONTENT',
+    text,
+    title: options.title || undefined,
+    options: {
+      manifestMode: options.manifestMode || defaultEmbeddingTechnique,
+      segmentationLevel: options.segmentationLevel || defaultSegmentationLevel,
+      documentType: options.documentType || defaultDocumentType,
     }
   });
 
-  // Post-hoc nudge: after mouse clicks, Ctrl+Arrow, Home, End, etc.
-  // If the caret lands inside an embedding run, nudge it to the nearest edge.
-  const scheduleNudge = () => requestAnimationFrame(() => _nudgeCaret(editor, editorType));
-  editor.addEventListener('mouseup', scheduleNudge);
-  editor.addEventListener('keyup', (e) => {
-    // Only nudge for navigation keys that might land inside a run
-    if (e.ctrlKey || e.metaKey || e.key === 'Home' || e.key === 'End' ||
-        ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && e.shiftKey)) {
-      scheduleNudge();
+  if (!response?.success) {
+    throw new Error(response?.error || 'Signing failed');
+  }
+
+  if (options.replaceContent) {
+    const applied = response.embeddingPlan
+      ? applyEmbeddingPlanToEditorInPlace(editor, editorType, response.embeddingPlan, text)
+      : false;
+    if (!applied) {
+      setEditorText(editor, editorType, response.signedText);
     }
+  }
+
+  signedContentHashes.add(hashText(response.signedText));
+  button.classList.add('encypher-sign-btn--signed');
+  updateButtonPresentation(button, {
+    ready: true,
+    signed: true,
+    surface: getEditorSurfaceKind(editor, editorType)
   });
 
-  editor.addEventListener('copy', _extendSelectionForEmbeddingRuns);
-  editor.addEventListener('cut', _extendSelectionForEmbeddingRuns);
-}
-
-/**
- * Arrow key: skip over an adjacent embedding run.
- */
-function _handleArrowOverRun(e, editor, editorType, textNode, text, chars, cpOffset) {
-  const goingRight = e.key === 'ArrowRight';
-
-  // Check the character we'd step into
-  const checkIdx = goingRight ? cpOffset : cpOffset - 1;
-  if (checkIdx < 0 || checkIdx >= chars.length) return;
-  if (!_isEmbeddingChar(chars[checkIdx].codePointAt(0))) return;
-
-  const run = findEmbeddingRun(text, cpOffset);
-  if (!run) return;
-
-  e.preventDefault();
-  const target = goingRight ? run.end : run.start;
-  _setCaretInTextNode(editor, editorType, textNode, text, target);
-}
-
-/**
- * Backspace / Delete: remove the entire adjacent embedding run from the
- * text node directly, preserving surrounding DOM structure.
- */
-function _handleDeleteRun(e, editor, editorType, textNode, text, chars, cpOffset) {
-  const isBackspace = e.key === 'Backspace';
-
-  // Check the character that the keystroke would delete
-  const checkIdx = isBackspace ? cpOffset - 1 : cpOffset;
-  if (checkIdx < 0 || checkIdx >= chars.length) return;
-  if (!_isEmbeddingChar(chars[checkIdx].codePointAt(0))) return;
-
-  const run = findEmbeddingRun(text, cpOffset);
-  if (!run) return;
-
-  e.preventDefault();
-
-  // Splice the run out of the text, keeping everything else intact
-  const newChars = [...chars.slice(0, run.start), ...chars.slice(run.end)];
-  const newText = newChars.join('');
-
-  if (editorType === 'textarea' || editorType === 'input') {
-    editor.value = newText;
-    const utf16 = _codepointOffsetToUtf16(newText, run.start);
-    editor.setSelectionRange(utf16, utf16);
-    editor.dispatchEvent(new Event('input', { bubbles: true }));
-  } else {
-    // Modify only this text node — preserves <p>, <br>, undo, etc.
-    textNode.textContent = newText;
-    _setCaretInTextNode(editor, editorType, textNode, newText, run.start);
-    editor.dispatchEvent(new Event('input', { bubbles: true }));
-  }
-}
-
-/**
- * Post-hoc nudge: if the caret is inside an embedding run (e.g. after a
- * mouse click or Ctrl+Arrow), move it to the nearest visible-text edge.
- */
-function _nudgeCaret(editor, editorType) {
-  const caret = _getTextNodeCaret(editor, editorType);
-  if (!caret) return;
-
-  const { node, text, chars, cpOffset } = caret;
-  if (cpOffset >= chars.length) return;
-  if (!_isEmbeddingChar(chars[cpOffset]?.codePointAt(0))) {
-    // Also check the char before the cursor
-    if (cpOffset === 0 || !_isEmbeddingChar(chars[cpOffset - 1]?.codePointAt(0))) return;
+  try {
+    await navigator.clipboard.writeText(response.signedText);
+  } catch (e) {
   }
 
-  const run = findEmbeddingRun(text, cpOffset);
-  if (!run) return;
-
-  // Move to whichever edge is closer
-  const distStart = cpOffset - run.start;
-  const distEnd   = run.end - cpOffset;
-  const target = distStart <= distEnd ? run.start : run.end;
-  if (target === cpOffset) return;
-  _setCaretInTextNode(editor, editorType, node, text, target);
-}
-
-/**
- * On copy/cut, if the selection partially overlaps an embedding run,
- * extend the clipboard data to include the full run so the signature
- * isn't split.
- */
-function _extendSelectionForEmbeddingRuns(e) {
-  const target = e.target;
-  const root = target?.getRootNode?.() || document;
-  const sel = root.getSelection ? root.getSelection() : window.getSelection();
-  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
-
-  const range = sel.getRangeAt(0);
-  const container = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
-    ? range.commonAncestorContainer
-    : range.commonAncestorContainer.parentElement;
-  if (!container) return;
-
-  const editable = container.closest?.('[contenteditable="true"]') || container;
-
-  const fullText = editable.innerText || editable.textContent || '';
-  const selectedText = sel.toString();
-  if (!selectedText) return;
-
-  const preRange = document.createRange();
-  preRange.selectNodeContents(editable);
-  preRange.setEnd(range.startContainer, range.startOffset);
-  const preText = preRange.toString();
-  const startCp = [...preText].length;
-  const endCp = startCp + [...selectedText].length;
-  const chars = [...fullText];
-
-  let newStart = startCp;
-  let newEnd = endCp;
-
-  if (newStart > 0 && newStart < chars.length && _isEmbeddingChar(chars[newStart].codePointAt(0))) {
-    const run = findEmbeddingRun(fullText, newStart);
-    if (run) newStart = run.start;
-  }
-  if (newEnd > 0 && newEnd < chars.length && _isEmbeddingChar(chars[newEnd - 1]?.codePointAt(0))) {
-    const run = findEmbeddingRun(fullText, newEnd);
-    if (run) newEnd = run.end;
-  }
-
-  if (newStart === startCp && newEnd === endCp) return;
-
-  const extendedText = chars.slice(newStart, newEnd).join('');
-  e.clipboardData.setData('text/plain', extendedText);
-  e.preventDefault();
+  activeEditors.get(editor.id)?.updateVisibility?.();
+  return response;
 }
 
 /**
@@ -946,79 +909,134 @@ function _extendSelectionForEmbeddingRuns(e) {
 function attachSignButton(editor) {
   const editorType = detectEditorType(editor);
   if (!editorType) return;
-  
+  if (shouldSkipEditor(editor, editorType)) return;
+
   // Skip if already attached
   const editorId = editor.id || `editor-${Math.random().toString(36).substr(2, 9)}`;
   if (!editor.id) editor.id = editorId;
-  
+
   if (activeEditors.has(editorId)) return;
-  
+
   // Create button
   const button = createSignButton(editorId);
   document.body.appendChild(button);
-  
-  // Position button
-  positionButton(button, editor);
-  
+  const repositionHandler = createRepositionScheduler(button, editor);
+  const surface = getEditorSurfaceKind(editor, editorType);
+  const prefersHostedPlacement = shouldPreferHostedPlacement(editor);
+  const resizeObserver = typeof ResizeObserver !== 'undefined'
+    ? new ResizeObserver(repositionHandler)
+    : null;
+  const cleanupObserver = new MutationObserver(() => {
+    if (!editor.isConnected) {
+      cleanup();
+    }
+  });
+  let cleanedUp = false;
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    button.remove();
+    activeEditors.delete(editorId);
+    cleanupObserver.disconnect();
+    resizeObserver?.disconnect();
+    window.removeEventListener('scroll', repositionHandler);
+    window.removeEventListener('resize', repositionHandler);
+    editor.removeEventListener('input', repositionHandler);
+    editor.removeEventListener('mouseenter', handleMouseEnter);
+    editor.removeEventListener('focus', handleFocus);
+    editor.removeEventListener('blur', handleBlur);
+    editor.removeEventListener('input', handleHostedInput);
+    editor.removeEventListener('input', scheduleStateUpdate);
+    button.removeEventListener('mouseenter', handleMouseEnter);
+    button.removeEventListener('focus', handleMouseEnter);
+  };
+
+  const hostedPlacementActive = prefersHostedPlacement && attachButtonToPreferredHost(button, editor);
+  if (!hostedPlacementActive) {
+    positionButton(button, editor);
+  }
+
   // Track editor
   activeEditors.set(editorId, {
+    editorId,
     element: editor,
     type: editorType,
-    button: button
+    button: button,
+    cleanup: cleanup,
+    surface,
+    prefersHostedPlacement,
+    isOnlineEditor: editorType === 'google-docs' || editorType === 'ms-word-online',
+    insideModal: Boolean(editor.closest?.('dialog, [role="dialog"], [aria-modal="true"]') || editor.getRootNode()?.host?.closest?.('dialog, [role="dialog"], [aria-modal="true"]')),
+    updateVisibility: (opts) => updateEditorButtonState(activeEditors.get(editorId), opts)
   });
 
   // Clean up button when editor is removed from the DOM (e.g. modal closed)
-  const cleanupObserver = new MutationObserver(() => {
-    if (!editor.isConnected) {
-      button.remove();
-      activeEditors.delete(editorId);
-      cleanupObserver.disconnect();
-    }
-  });
   const editorParent = editor.getRootNode() === document
     ? document.body
     : editor.getRootNode();
   cleanupObserver.observe(editorParent, { childList: true, subtree: true });
-
-  // Button click handler
-  button.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    showSigningUI(editor, editorType, button);
-  });
 
   // Atomic embedding-run handling for delete/backspace and copy/cut
   _attachEmbeddingRunHandlers(editor, editorType);
 
   // Online editors (Google Docs, MS Word Online): always-visible fixed button
   const isOnlineEditor = editorType === 'google-docs' || editorType === 'ms-word-online';
+  const handleMouseEnter = () => setPrimaryEditor(editorId);
+  const handleFocus = () => {
+    setPrimaryEditor(editorId);
+    repositionHandler();
+    activeEditors.get(editorId)?.updateVisibility?.({ forceVisible: true, expanded: true });
+  };
+  const handleBlur = () => {
+    setTimeout(() => {
+      if (!document.querySelector('.encypher-sign-ui')) {
+        activeEditors.get(editorId)?.updateVisibility?.();
+      }
+    }, 200);
+  };
+  const handleHostedInput = () => {
+    if (!attachButtonToPreferredHost(button, editor)) {
+      repositionHandler();
+    }
+  };
+  let inputTimer = null;
+  const scheduleStateUpdate = () => {
+    clearTimeout(inputTimer);
+    inputTimer = setTimeout(() => {
+      activeEditors.get(editorId)?.updateVisibility?.();
+    }, EDITOR_CONFIG.debounceMs);
+  };
 
   if (isOnlineEditor) {
     button.style.position = 'fixed';
-    button.style.bottom = '24px';
-    button.style.right = '24px';
+    button.style.bottom = `${EDITOR_CONFIG.viewportMargin}px`;
+    button.style.right = `${EDITOR_CONFIG.viewportMargin}px`;
     button.style.top = 'auto';
     button.style.left = 'auto';
-    button.classList.add('encypher-sign-btn--visible');
+    button.dataset.placement = 'floating';
+    updateButtonPresentation(button, {
+      ready: (getEditorText(editor, editorType) || '').trim().length >= EDITOR_CONFIG.minTextLength,
+      signed: button.classList.contains('encypher-sign-btn--signed'),
+      surface
+    });
+    button.classList.add('encypher-sign-btn--visible', 'encypher-sign-btn--expanded');
   } else {
     // Reposition on scroll/resize
-    const repositionHandler = () => positionButton(button, editor);
     window.addEventListener('scroll', repositionHandler, { passive: true });
     window.addEventListener('resize', repositionHandler, { passive: true });
+    editor.addEventListener('input', handleHostedInput);
+    editor.addEventListener('input', scheduleStateUpdate);
+    resizeObserver?.observe(editor);
+    if (editor.parentElement) {
+      resizeObserver?.observe(editor.parentElement);
+    }
 
     // Show/hide based on focus
-    editor.addEventListener('focus', () => {
-      button.classList.add('encypher-sign-btn--visible');
-    });
-
-    editor.addEventListener('blur', () => {
-      // Delay to allow button click
-      setTimeout(() => {
-        if (!document.querySelector('.encypher-sign-ui')) {
-          button.classList.remove('encypher-sign-btn--visible');
-        }
-      }, 200);
-    });
+    editor.addEventListener('focus', handleFocus);
+    editor.addEventListener('blur', handleBlur);
+    editor.addEventListener('mouseenter', handleMouseEnter);
+    button.addEventListener('mouseenter', handleMouseEnter);
+    button.addEventListener('focus', handleMouseEnter);
 
     // Determine if editor is already active.  For shadow-DOM editors,
     // document.activeElement returns the shadow host, so also walk
@@ -1031,23 +1049,61 @@ function attachSignButton(editor) {
 
     // Also treat the editor as active when it lives inside a dialog /
     // modal overlay (the user clearly intends to type).
-    const insideModal = editor.closest?.('dialog, [role="dialog"], [aria-modal="true"]')
-        || editor.getRootNode()?.host?.closest?.('dialog, [role="dialog"], [aria-modal="true"]');
+    const insideModal = Boolean(editor.closest?.('dialog, [role="dialog"], [aria-modal="true"]')
+        || editor.getRootNode()?.host?.closest?.('dialog, [role="dialog"], [aria-modal="true"]'));
 
     // Show button immediately when the editor is focused OR inside an
     // open modal — users can dismiss it, but it should default to
     // visible so they discover the feature.
     if (editorIsActive || insideModal) {
-      button.classList.add('encypher-sign-btn--visible');
+      setPrimaryEditor(editorId);
+      if (!attachButtonToPreferredHost(button, editor)) {
+        repositionHandler();
+      }
     }
+    updateEditorButtonState(activeEditors.get(editorId), { expanded: isOnlineEditor });
   }
-  
+
   // Check if content is already signed
   const text = getEditorText(editor, editorType);
   if (signedContentHashes.has(hashText(text))) {
-    button.classList.add('encypher-sign-btn--signed');
-    button.querySelector('.encypher-sign-btn__text').innerHTML = 'Signed <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>';
+    updateButtonPresentation(button, { ready: true, signed: true, surface });
   }
+
+  button.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setPrimaryEditor(editorId);
+    const hasModifier = e.shiftKey || e.altKey || e.metaKey || e.ctrlKey;
+    const ready = (getEditorText(editor, editorType) || '').trim().length >= EDITOR_CONFIG.minTextLength;
+    if (hasModifier || !ready || button.classList.contains('encypher-sign-btn--signed')) {
+      showSigningUI(editor, editorType, button);
+      return;
+    }
+    button.classList.add('encypher-sign-btn--busy');
+    try {
+      const result = await signEditorContent({
+        editor,
+        editorType,
+        button,
+        title: '',
+        replaceContent: defaultAutoReplaceContent,
+        manifestMode: defaultEmbeddingTechnique,
+        segmentationLevel: defaultSegmentationLevel,
+        documentType: defaultDocumentType,
+      });
+      if (result?.verificationUrl || result?.documentId) {
+        showSigningUI(editor, editorType, button);
+      } else {
+        showNotification('success', `Signed as ${getSignerLabel(cachedAccountInfo)}`);
+      }
+    } catch (error) {
+      showNotification('error', error.message || 'Signing error');
+    } finally {
+      button.classList.remove('encypher-sign-btn--busy');
+      activeEditors.get(editorId)?.updateVisibility?.();
+    }
+  });
 }
 
 /**
@@ -1056,18 +1112,20 @@ function attachSignButton(editor) {
 function scanForEditorsInRoot(root) {
   if (!root?.querySelectorAll) return;
 
+  const candidates = new Set();
+
   // Contenteditable elements
   const editables = root.querySelectorAll('[contenteditable="true"]');
-  editables.forEach(attachSignButton);
-  
+  editables.forEach((el) => candidates.add(el));
+
   // Textareas (skip very small ones like search boxes)
   const textareas = root.querySelectorAll('textarea');
   textareas.forEach(ta => {
     if (ta.rows >= 3 || ta.offsetHeight >= 80) {
-      attachSignButton(ta);
+      candidates.add(ta);
     }
   });
-  
+
   // Known editor classes
   const editorSelectors = [
     '.mce-content-body',
@@ -1082,11 +1140,13 @@ function scanForEditorsInRoot(root) {
     '.fr-element',
     '.note-editable'
   ];
-  
+
   editorSelectors.forEach(selector => {
     const editors = root.querySelectorAll(selector);
-    editors.forEach(attachSignButton);
+    editors.forEach((el) => candidates.add(el));
   });
+
+  Array.from(candidates).forEach(attachSignButton);
 }
 
 function scanShadowRootsForEditors(root = document) {
@@ -1101,37 +1161,23 @@ function scanShadowRootsForEditors(root = document) {
   });
 }
 
-function scanForEditors() {
-  if (!editorButtonsEnabled) return;
+function observeForEditors() {
+  if (editorObserverStarted || !document.body) return;
+  editorObserverStarted = true;
+  // Main document observer
+  const observer = new MutationObserver(_handleMutations);
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
 
-  // Check for online editor platforms first
-  const platform = detectOnlinePlatform();
-  if (platform) {
-    const editorInfo = getOnlineEditorElement(platform);
-    if (editorInfo) {
-      attachSignButton(editorInfo.element);
+  // Also observe any shadow roots that already exist
+  document.querySelectorAll('*').forEach((el) => {
+    if (el.shadowRoot) {
+      scanForEditorsInRoot(el.shadowRoot);
+      scanShadowRootsForEditors(el.shadowRoot);
     }
-    // On Google Docs / Word Online, don't scan for generic editors
-    // to avoid attaching buttons to unrelated contenteditable regions
-    return;
-  }
-
-  scanForEditorsInRoot(document);
-  scanShadowRootsForEditors(document);
-}
-
-/**
- * Observe DOM for dynamically added editors.
- *
- * In addition to watching the main document, we also observe inside open
- * shadow roots (e.g. LinkedIn's #interop-outlet) because a MutationObserver
- * on document.body does NOT see mutations inside shadow trees.
- */
-const _observedShadowRoots = new WeakSet();
-
-function _scheduleScan() {
-  clearTimeout(observeForEditors.timeout);
-  observeForEditors.timeout = setTimeout(scanForEditors, 500);
+  });
 }
 
 function _handleMutations(mutations) {
@@ -1180,20 +1226,92 @@ function _observeShadowRoot(shadowRoot) {
   });
 }
 
-function observeForEditors() {
-  // Main document observer
-  const observer = new MutationObserver(_handleMutations);
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+function _scheduleScan() {
+  clearTimeout(observeForEditors.timeout);
+  observeForEditors.timeout = setTimeout(scanForEditors, 500);
+}
 
-  // Also observe any shadow roots that already exist
-  document.querySelectorAll('*').forEach((el) => {
-    if (el.shadowRoot) {
-      _observeShadowRoot(el.shadowRoot);
+function getSiteKind() {
+  const hostname = window.location.hostname;
+  if (hostname === 'mail.google.com' || hostname === 'outlook.office.com' || hostname === 'outlook.live.com') {
+    return 'email';
+  }
+  if (
+    hostname === 'chat.openai.com' ||
+    hostname === 'chatgpt.com' ||
+    hostname === 'claude.ai' ||
+    hostname === 'app.slack.com' ||
+    hostname === 'discord.com'
+  ) {
+    return 'chat';
+  }
+  if (hostname === 'docs.google.com' || hostname === 'word.live.com' || hostname.endsWith('.officeapps.live.com')) {
+    return 'document';
+  }
+  return 'generic';
+}
+
+function isElementVisible(element) {
+  if (!element || !element.isConnected) return false;
+  const style = window.getComputedStyle(element);
+  if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+  const rect = element.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
+function shouldSkipEditor(element, editorType) {
+  if (!element || !editorType || !isElementVisible(element)) return true;
+  if (element.matches?.('[disabled], [readonly], [aria-hidden="true"]')) return true;
+  if (editorType === 'contenteditable') {
+    const parentEditable = element.parentElement?.closest?.('[contenteditable="true"]');
+    if (parentEditable && parentEditable !== element) return true;
+  }
+  if (editorType === 'input' && !['text', 'search', ''].includes(element.type || '')) return true;
+  const rect = element.getBoundingClientRect();
+  if (rect.width < 180 || rect.height < 28) return true;
+  return false;
+}
+
+function getEditorSurfaceKind(editor, editorType) {
+  if (editorType === 'google-docs' || editorType === 'ms-word-online') return 'document';
+  const siteKind = getSiteKind();
+  if (siteKind !== 'generic') return siteKind;
+  if (editor.closest?.('[role="toolbar"], .ql-toolbar, .tox-toolbar, .ck-toolbar')) return 'document';
+  return 'generic';
+}
+
+function getShortcutHint() {
+  return 'Alt+Shift+S';
+}
+
+function getSignerLabel(accountInfo) {
+  const info = accountInfo?.data || accountInfo || {};
+  const publisherDisplayName = info?.publisherDisplayName;
+  const organizationName = info?.organizationName;
+  const baseName = publisherDisplayName || organizationName || 'your organization';
+  return info?.anonymousPublisher ? `${baseName} (anonymous publisher)` : baseName;
+}
+
+async function getCachedAccountInfo() {
+  if (cachedAccountInfo) return cachedAccountInfo;
+  if (accountInfoPromise) return accountInfoPromise;
+  accountInfoPromise = (async () => {
+    try {
+      const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
+      if (!apiKey) return null;
+      const response = await chrome.runtime.sendMessage({
+        type: 'GET_ACCOUNT_INFO',
+        apiKey
+      });
+      cachedAccountInfo = response?.success ? response.data : null;
+      return cachedAccountInfo;
+    } catch (e) {
+      return null;
+    } finally {
+      accountInfoPromise = null;
     }
-  });
+  })();
+  return accountInfoPromise;
 }
 
 /**
@@ -1201,7 +1319,7 @@ function observeForEditors() {
  */
 function _stripEmbeddingChars(text) {
   let result = '';
-  for (const char of text) {
+  for (const char of text || '') {
     const cp = char.codePointAt(0);
     if (!_isEmbeddingChar(cp)) {
       result += char;
@@ -1217,7 +1335,7 @@ function _codepointOffsetToUtf16(text, codepointOffset) {
   if (codepointOffset <= 0) return 0;
   let utf16Offset = 0;
   let seen = 0;
-  for (const char of text) {
+  for (const char of text || '') {
     if (seen >= codepointOffset) break;
     utf16Offset += char.length;
     seen += 1;
@@ -1227,7 +1345,6 @@ function _codepointOffsetToUtf16(text, codepointOffset) {
 
 /**
  * Normalize embedding-plan operations into grouped insertion points.
- * Returns null when operations are malformed for the provided visible text.
  */
 function _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText) {
   if (!embeddingPlan || !Array.isArray(embeddingPlan.operations)) {
@@ -1254,591 +1371,140 @@ function _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText) {
     .sort((a, b) => b.cpOffset - a.cpOffset);
 }
 
-/**
- * Collect selected text-node segments covered by a range.
- */
-function _collectRangeTextSegments(range) {
-  const segments = [];
-  const SHOW_TEXT = window.NodeFilter?.SHOW_TEXT || 4;
-  const commonRoot = range.commonAncestorContainer.nodeType === Node.TEXT_NODE
-    ? range.commonAncestorContainer.parentNode || range.commonAncestorContainer
-    : range.commonAncestorContainer;
-
-  const walker = document.createTreeWalker(commonRoot, SHOW_TEXT);
-  let node = walker.nextNode();
-  while (node) {
-    try {
-      if (!range.intersectsNode(node)) {
-        node = walker.nextNode();
-        continue;
-      }
-    } catch (e) {
-      node = walker.nextNode();
-      continue;
-    }
-
-    let startOffset = 0;
-    let endOffset = (node.textContent || '').length;
-
-    if (node === range.startContainer) {
-      startOffset = range.startOffset;
-    }
-    if (node === range.endContainer) {
-      endOffset = range.endOffset;
-    }
-
-    if (endOffset > startOffset) {
-      const text = (node.textContent || '').slice(startOffset, endOffset);
-      segments.push({
-        node,
-        startOffset,
-        endOffset,
-        text,
-        codepointLength: [...text].length,
-      });
-    }
-
-    node = walker.nextNode();
+function _applyMarkersToText(text, normalizedOps) {
+  let result = text || '';
+  for (const op of normalizedOps || []) {
+    const utf16Offset = _codepointOffsetToUtf16(result, op.cpOffset);
+    result = result.slice(0, utf16Offset) + op.marker + result.slice(utf16Offset);
   }
+  return result;
+}
 
-  return segments;
+function applyEmbeddingPlanToSelectionInPlace() {
+  return false;
+}
+
+function applyEmbeddingPlanToOnlineEditorInPlace() {
+  return false;
 }
 
 /**
- * Collect all text-node segments inside an element.
- */
-function _collectElementTextSegments(element) {
-  if (!element) return [];
-  const segments = [];
-  const SHOW_TEXT = window.NodeFilter?.SHOW_TEXT || 4;
-  const walker = document.createTreeWalker(element, SHOW_TEXT);
-  let node = walker.nextNode();
-  while (node) {
-    const text = node.textContent || '';
-    if (text.length > 0) {
-      segments.push({
-        node,
-        startOffset: 0,
-        endOffset: text.length,
-        text,
-        codepointLength: [...text].length,
-      });
-    }
-    node = walker.nextNode();
-  }
-  return segments;
-}
-
-/**
- * Find a single (unique) UTF-16 occurrence for needle within haystack.
- * Returns -1 when not found or when multiple matches exist.
- */
-function _findSingleUtf16Occurrence(haystack, needle) {
-  if (!needle) return -1;
-  const first = haystack.indexOf(needle);
-  if (first === -1) return -1;
-  const second = haystack.indexOf(needle, first + 1);
-  if (second !== -1) return -1;
-  return first;
-}
-
-/**
- * Build a normalized whitespace view of text and a mapping back to original
- * codepoint offsets. Used to tolerate editor-specific NBSP/newline drift.
- */
-function _buildNormalizedWhitespaceView(text) {
-  const normalizedChars = [];
-  const normalizedToOriginalCp = [];
-  const sourceChars = [...(text || '')];
-
-  let prevWasSpace = false;
-  for (let i = 0; i < sourceChars.length; i += 1) {
-    const ch = sourceChars[i];
-    const isSpaceLike = ch === '\u00A0' || ch === '\n' || ch === '\r' || ch === '\t' || ch === ' ';
-    const out = isSpaceLike ? ' ' : ch;
-
-    if (out === ' ') {
-      if (prevWasSpace) continue;
-      prevWasSpace = true;
-    } else {
-      prevWasSpace = false;
-    }
-
-    normalizedChars.push(out);
-    normalizedToOriginalCp.push(i);
-  }
-
-  return {
-    text: normalizedChars.join(''),
-    normalizedToOriginalCp,
-  };
-}
-
-/**
- * Find a single (unique) normalized occurrence and map back to original
- * codepoint start offset. Returns null when no unique match exists.
- */
-function _findSingleNormalizedOccurrence(haystack, needle) {
-  const hayView = _buildNormalizedWhitespaceView(haystack);
-  const needleView = _buildNormalizedWhitespaceView(needle);
-
-  const hayChars = [...hayView.text];
-  const needleChars = [...needleView.text];
-  if (!needleChars.length) return null;
-  if (needleChars.length > hayChars.length) return null;
-
-  const matchStarts = [];
-  for (let i = 0; i <= hayChars.length - needleChars.length; i += 1) {
-    let ok = true;
-    for (let j = 0; j < needleChars.length; j += 1) {
-      if (hayChars[i + j] !== needleChars[j]) {
-        ok = false;
-        break;
-      }
-    }
-    if (ok) {
-      matchStarts.push(i);
-      if (matchStarts.length > 1) return null;
-    }
-  }
-
-  if (matchStarts.length !== 1) return null;
-
-  const normalizedStartCp = matchStarts[0];
-  return {
-    startCodepoint: hayView.normalizedToOriginalCp[normalizedStartCp] ?? 0,
-    lengthCodepoints: needleChars.length,
-  };
-}
-
-/**
- * Map a global codepoint offset to a concrete node/UTF-16 offset insertion point.
- */
-function _mapCodepointOffsetToNodePoint(segments, cpOffset) {
-  if (!segments.length) return null;
-  let consumed = 0;
-
-  for (const segment of segments) {
-    const nextConsumed = consumed + segment.codepointLength;
-    if (cpOffset <= nextConsumed) {
-      const localCpOffset = cpOffset - consumed;
-      const localUtf16Offset = _codepointOffsetToUtf16(segment.text, localCpOffset);
-      return {
-        node: segment.node,
-        offset: segment.startOffset + localUtf16Offset,
-      };
-    }
-    consumed = nextConsumed;
-  }
-
-  const last = segments[segments.length - 1];
-  return {
-    node: last.node,
-    offset: last.endOffset,
-  };
-}
-
-/**
- * Apply embedding-plan markers in-place to the selected contenteditable text,
- * preserving surrounding DOM structure whenever possible.
- */
-function applyEmbeddingPlanToSelectionInPlace(embeddingPlan, visibleText) {
-  const sel = window.getSelection();
-  if (!sel || sel.rangeCount === 0) return false;
-
-  const range = sel.getRangeAt(0);
-  if (range.collapsed) return false;
-
-  const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
-  if (!normalizedOps) return false;
-
-  const segments = _collectRangeTextSegments(range);
-  if (!segments.length) return false;
-
-  const rangeVisibleText = segments.map(s => s.text).join('');
-  if (rangeVisibleText !== visibleText) {
-    return false;
-  }
-
-  for (const op of normalizedOps) {
-    const point = _mapCodepointOffsetToNodePoint(segments, op.cpOffset);
-    if (!point || !point.node) {
-      return false;
-    }
-
-    const current = point.node.textContent || '';
-    point.node.textContent = current.slice(0, point.offset) + op.marker + current.slice(point.offset);
-  }
-
-  const lastSegment = segments[segments.length - 1];
-  const lastNodeText = lastSegment.node.textContent || '';
-  const trailingMarkers = normalizedOps
-    .filter(op => op.cpOffset >= [...visibleText].length)
-    .reduce((sum, op) => sum + op.marker.length, 0);
-  const caretOffset = Math.min(lastSegment.endOffset + trailingMarkers, lastNodeText.length);
-
-  const newRange = document.createRange();
-  newRange.setStart(lastSegment.node, caretOffset);
-  newRange.collapse(true);
-  sel.removeAllRanges();
-  sel.addRange(newRange);
-
-  const container = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
-    ? range.commonAncestorContainer
-    : range.commonAncestorContainer.parentElement;
-  const editRoot = container?.closest?.('[contenteditable="true"]') || container;
-  editRoot?.dispatchEvent(new Event('input', { bubbles: true }));
-
-  return true;
-}
-
-/**
- * Apply embedding-plan markers within online-editor roots when browser selection
- * ranges are non-standard (Google Docs / Office Online edge surfaces).
- */
-function applyEmbeddingPlanToOnlineEditorInPlace(embeddingPlan, visibleText, onlinePlatform) {
-  if (onlinePlatform !== 'google-docs' && onlinePlatform !== 'ms-word-online') {
-    return false;
-  }
-
-  const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
-  if (!normalizedOps) return false;
-
-  const editorInfo = getOnlineEditorElement(onlinePlatform);
-  const editorRoot = editorInfo?.element;
-  if (!editorRoot) return false;
-
-  const segments = _collectElementTextSegments(editorRoot);
-  if (!segments.length) return false;
-
-  const fullText = segments.map(segment => segment.text).join('');
-  const normalizedMatch = _findSingleNormalizedOccurrence(fullText, visibleText);
-
-  let startCpOffset;
-  if (normalizedMatch) {
-    startCpOffset = normalizedMatch.startCodepoint;
-  } else {
-    const matchUtf16 = _findSingleUtf16Occurrence(fullText, visibleText);
-    if (matchUtf16 < 0) {
-      return false;
-    }
-    startCpOffset = [...fullText.slice(0, matchUtf16)].length;
-  }
-
-  for (const op of normalizedOps) {
-    const absoluteCpOffset = startCpOffset + op.cpOffset;
-    const point = _mapCodepointOffsetToNodePoint(segments, absoluteCpOffset);
-    if (!point || !point.node) {
-      return false;
-    }
-
-    const current = point.node.textContent || '';
-    point.node.textContent = current.slice(0, point.offset) + op.marker + current.slice(point.offset);
-  }
-
-  editorRoot.dispatchEvent(new Event('input', { bubbles: true }));
-  return true;
-}
-
-/**
- * Apply embedding-plan markers directly into an editor element (contenteditable
- * or textarea) without replacing the entire text content. This preserves the
- * editor's DOM structure, placeholder text, undo history, and internal state.
- * Returns true on success, false if the plan could not be applied in-place.
+ * Apply embedding-plan markers directly into an editor element.
  */
 function applyEmbeddingPlanToEditorInPlace(editor, editorType, embeddingPlan, visibleText) {
   if (!embeddingPlan || !Array.isArray(embeddingPlan.operations) || !visibleText) {
     return false;
   }
 
-  // Textarea / input: simple string splice
-  if (editorType === 'textarea' || editorType === 'input') {
-    const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
-    if (!normalizedOps) return false;
+  const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
+  if (!normalizedOps) return false;
 
-    const chars = [...editor.value];
-    // Ops are sorted descending, so splice from end to preserve offsets
-    for (const op of normalizedOps) {
-      const utf16Offset = _codepointOffsetToUtf16(editor.value, op.cpOffset);
-      editor.value = editor.value.slice(0, utf16Offset) + op.marker + editor.value.slice(utf16Offset);
-    }
+  if (editorType === 'google-docs' || editorType === 'ms-word-online') {
+    return false;
+  }
+
+  if (editorType === 'textarea' || editorType === 'input') {
+    const signedText = _applyMarkersToText(editor.value || '', normalizedOps);
+    editor.value = signedText;
     editor.dispatchEvent(new Event('input', { bubbles: true }));
     editor.dispatchEvent(new Event('change', { bubbles: true }));
     return true;
   }
 
-  // Online editors (Google Docs, MS Word Online): use dedicated function
-  const onlinePlatform = detectOnlinePlatform();
-  if (onlinePlatform === 'google-docs' || onlinePlatform === 'ms-word-online') {
-    return applyEmbeddingPlanToOnlineEditorInPlace(embeddingPlan, visibleText, onlinePlatform);
-  }
-
-  // Contenteditable: walk text nodes and insert markers.
-  // getEditorText() uses innerText which synthesises \n for block elements
-  // (<p>, <br>, <div>) that don't exist in raw text nodes.  We must handle
-  // the offset difference between innerText codepoints and DOM text-node
-  // codepoints so the embedding plan lands in the right place.
-  const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
-  if (!normalizedOps) return false;
-
-  const segments = _collectElementTextSegments(editor);
-  if (!segments.length) return false;
-
-  const fullText = segments.map(s => s.text).join('');
-
-  // Compare with whitespace stripped — innerText adds synthetic \n for block
-  // elements that don't appear in raw text nodes.
-  const normalize = (t) => t.replace(/[\s\u00A0]+/g, ' ').trim();
-  const fullTextClean = normalize(_stripEmbeddingChars(fullText));
-  const visibleTextClean = normalize(visibleText);
-  if (fullTextClean !== visibleTextClean) {
-    return false;
-  }
-
-  const totalSegmentCp = segments.reduce((sum, s) => sum + s.codepointLength, 0);
-
-  for (const op of normalizedOps) {
-    // Clamp cpOffset: visibleText may be longer than DOM text due to
-    // synthetic newlines.  Offsets at/beyond the end of DOM text should map
-    // to the very end of the last text node.
-    const mappedCpOffset = Math.min(op.cpOffset, totalSegmentCp);
-    const point = _mapCodepointOffsetToNodePoint(segments, mappedCpOffset);
-    if (!point || !point.node) return false;
-
-    const current = point.node.textContent || '';
-    point.node.textContent = current.slice(0, point.offset) + op.marker + current.slice(point.offset);
-  }
-
-  editor.dispatchEvent(new Event('input', { bubbles: true }));
+  const currentText = getEditorText(editor, editorType);
+  const signedText = _applyMarkersToText(currentText || visibleText, normalizedOps);
+  setEditorText(editor, editorType, signedText);
   return true;
 }
 
-/**
- * Try to replace the current selection in-place within an editable element.
- * Returns true if replacement succeeded, false if not in an editable context.
- */
-function replaceSelectionInPlace(signedText) {
-  const sel = window.getSelection();
-  if (!sel || sel.rangeCount === 0) return false;
-
-  const range = sel.getRangeAt(0);
-  const container = range.commonAncestorContainer;
-  const editableEl = container.nodeType === Node.ELEMENT_NODE
-    ? container
-    : container.parentElement;
-
-  if (!editableEl) return false;
-
-  // Check if we're inside a textarea/input
-  const active = document.activeElement;
-  if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) {
-    const start = active.selectionStart;
-    const end = active.selectionEnd;
-    if (start !== undefined && end !== undefined) {
-      active.value = active.value.slice(0, start) + signedText + active.value.slice(end);
-      active.selectionStart = active.selectionEnd = start + signedText.length;
-      active.dispatchEvent(new Event('input', { bubbles: true }));
-      return true;
-    }
-  }
-
-  // Check if we're inside a contenteditable element
-  if (editableEl.isContentEditable || editableEl.closest('[contenteditable="true"]')) {
-    range.deleteContents();
-    const textNode = document.createTextNode(signedText);
-    range.insertNode(textNode);
-    // Move cursor to end of inserted text
-    sel.removeAllRanges();
-    const newRange = document.createRange();
-    newRange.setStartAfter(textNode);
-    newRange.collapse(true);
-    sel.addRange(newRange);
-    // Trigger input event
-    const editRoot = editableEl.closest('[contenteditable="true"]') || editableEl;
-    editRoot.dispatchEvent(new Event('input', { bubbles: true }));
-    return true;
-  }
-
-  return false;
-}
-
-/**
- * Handle signing of selected text.
- * Replaces selection in-place when in an editable context, otherwise copies to clipboard.
- */
 async function handleSignSelection(text) {
-  if (!text || text.trim().length < EDITOR_CONFIG.minTextLength) {
-    showNotification('error', 'Selected text is too short to sign');
+  const selectedText = String(text || '').trim();
+  if (selectedText.length < EDITOR_CONFIG.minTextLength) {
+    showNotification('error', 'Select text first (minimum 10 characters)');
     return;
   }
 
-  const cleanText = text.trim();
-  const visibleText = _stripEmbeddingChars(cleanText);
-  const visibleHash = hashText(visibleText);
-
-  showNotification('info', 'Signing selected text...');
-
-  // Check for provenance (previous embeddings on this content)
-  const provenance = await getProvenance(visibleHash);
-
   try {
-    const signOptions = {
-      manifestMode: defaultEmbeddingTechnique,
-      segmentationLevel: defaultSegmentationLevel,
-    };
-    if (provenance.length > 0) {
-      signOptions.previousEmbeddings = provenance;
-    }
     const response = await chrome.runtime.sendMessage({
       type: 'SIGN_CONTENT',
-      text: cleanText,
-      options: signOptions
+      text: selectedText,
+      options: {
+        manifestMode: defaultEmbeddingTechnique,
+        segmentationLevel: defaultSegmentationLevel,
+        documentType: defaultDocumentType,
+      }
     });
 
-    if (response && response.success) {
-      // Store old embedding bytes as provenance before replacing
-      const oldBytes = extractRunBytes(cleanText);
-      if (oldBytes.length > 0) {
-        await storeProvenance(visibleHash, oldBytes, { action: 'resign' });
-      }
-
-      // Try DOM-preserving embedding-plan insertion first when available
-      let replaced = false;
-      if (response.embeddingPlan) {
-        replaced = applyEmbeddingPlanToSelectionInPlace(response.embeddingPlan, visibleText);
-
-        const onlinePlatform = detectOnlinePlatform();
-        if (!replaced && (onlinePlatform === 'google-docs' || onlinePlatform === 'ms-word-online')) {
-          replaced = applyEmbeddingPlanToOnlineEditorInPlace(response.embeddingPlan, visibleText, onlinePlatform);
-        }
-      }
-
-      // Fallback to full signed-text replacement
-      if (!replaced) {
-        replaced = replaceSelectionInPlace(response.signedText);
-      }
-      if (replaced) {
-        signedContentHashes.add(hashText(response.signedText));
-        showNotification('success', 'Content signed and replaced!');
-      } else {
-        // Fallback: copy to clipboard
-        try {
-          await navigator.clipboard.writeText(response.signedText);
-          showNotification('success', 'Signed text copied to clipboard!');
-        } catch (e) {
-          showNotification('error', 'Could not copy to clipboard');
-        }
-      }
-    } else {
-      showNotification('error', response?.error || 'Signing failed');
+    if (!response?.success) {
+      throw new Error(response?.error || 'Signing failed');
     }
+
+    try {
+      await navigator.clipboard.writeText(response.signedText);
+    } catch (e) {
+    }
+
+    showNotification('success', `Signed selection as ${getSignerLabel(cachedAccountInfo)}`);
   } catch (error) {
     showNotification('error', error.message || 'Signing error');
   }
 }
 
-// ── Smart Backspace ──
-
-/**
- * Handle keydown events in editable elements to detect backspace/delete
- * into embedding byte runs. When detected, auto-delete the entire run
- * and store the bytes as provenance.
- */
 function handleSmartBackspace(e) {
-  if (e.key !== 'Backspace' && e.key !== 'Delete') return;
-
   const target = e.target;
-  let text, cursorPos;
+  if (!target) return;
 
-  // Textarea / input
+  const isEditable = target.tagName === 'TEXTAREA' || target.tagName === 'INPUT' || target.isContentEditable;
+  if (!isEditable || e.key !== 'Backspace') return;
+
   if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
-    text = target.value;
-    cursorPos = target.selectionStart;
-    if (target.selectionStart !== target.selectionEnd) return; // has selection, let default handle it
-  } else if (target.isContentEditable || target.closest?.('[contenteditable="true"]')) {
-    // Contenteditable: get text from the focused text node
-    const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return;
-    const node = sel.focusNode;
-    if (!node || node.nodeType !== Node.TEXT_NODE) return;
-    text = node.textContent || '';
-    cursorPos = sel.focusOffset;
-  } else {
-    return;
-  }
-
-  // Adjust cursor for Delete key (acts like backspace at cursorPos+1)
-  const effectivePos = e.key === 'Delete' ? cursorPos + 1 : cursorPos;
-
-  const run = findEmbeddingRun(text, effectivePos);
-  if (!run) return;
-
-  // Found an embedding run — prevent default and delete the whole run
-  e.preventDefault();
-
-  // Extract bytes for provenance before deleting
-  const chars = [...text];
-  const runText = chars.slice(run.start, run.end).join('');
-  const runBytes = extractRunBytes(runText);
-  const visibleText = _stripEmbeddingChars(text);
-  const visibleHash = hashText(visibleText);
-
-  // Store provenance asynchronously
-  if (runBytes.length > 0) {
-    storeProvenance(visibleHash, runBytes, { action: 'backspace' });
-  }
-
-  // Delete the run
-  if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
-    // Convert char indices to string indices for textarea
-    const prefix = chars.slice(0, run.start).join('');
-    const suffix = chars.slice(run.end).join('');
-    target.value = prefix + suffix;
-    target.selectionStart = target.selectionEnd = prefix.length;
+    const text = target.value || '';
+    const selectionStart = target.selectionStart;
+    const selectionEnd = target.selectionEnd;
+    if (selectionStart == null || selectionEnd == null || selectionStart !== selectionEnd || selectionStart === 0) return;
+    const chars = [...text];
+    const cpOffset = [...text.slice(0, selectionStart)].length;
+    const checkIdx = cpOffset - 1;
+    if (checkIdx < 0 || !_isEmbeddingChar(chars[checkIdx]?.codePointAt(0))) return;
+    const run = findEmbeddingRun(text, cpOffset);
+    if (!run) return;
+    e.preventDefault();
+    const nextText = chars.slice(0, run.start).join('') + chars.slice(run.end).join('');
+    target.value = nextText;
+    const utf16 = _codepointOffsetToUtf16(nextText, run.start);
+    target.setSelectionRange(utf16, utf16);
     target.dispatchEvent(new Event('input', { bubbles: true }));
-  } else {
-    // Contenteditable: replace the text node content
-    const sel = window.getSelection();
-    const node = sel.focusNode;
-    const prefix = chars.slice(0, run.start).join('');
-    const suffix = chars.slice(run.end).join('');
-    node.textContent = prefix + suffix;
-    // Restore cursor position
-    const newRange = document.createRange();
-    const newPos = Math.min(prefix.length, node.textContent.length);
-    newRange.setStart(node, newPos);
-    newRange.collapse(true);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-    // Trigger input
-    const editRoot = target.closest?.('[contenteditable="true"]') || target;
-    editRoot.dispatchEvent(new Event('input', { bubbles: true }));
   }
-
-  showNotification('info', 'Embedding removed');
 }
 
 /**
  * Attach smart backspace listeners to the document.
- * Uses capture phase to intercept before editor frameworks.
  */
 function initSmartBackspace() {
   document.addEventListener('keydown', handleSmartBackspace, true);
 }
 
-// ── Keyboard shortcut: Ctrl+Shift+E to sign selection ──
-
 function handleSignShortcut(e) {
-  if (e.ctrlKey && e.shiftKey && e.key === 'E') {
-    e.preventDefault();
-    const sel = window.getSelection();
-    const text = sel?.toString();
-    if (text && text.trim().length >= EDITOR_CONFIG.minTextLength) {
-      handleSignSelection(text);
-    } else {
-      showNotification('error', 'Select text first (minimum 10 characters)');
-    }
+  const shortcutPressed = e.altKey && e.shiftKey && String(e.key).toLowerCase() === 's';
+  if (!shortcutPressed) return;
+
+  e.preventDefault();
+  const sel = window.getSelection();
+  const text = sel?.toString();
+  if (text && text.trim().length >= EDITOR_CONFIG.minTextLength) {
+    handleSignSelection(text);
+    return;
   }
+
+  const editorInfo = Array.from(activeEditors.values()).find((info) => info.editorId === primaryEditorId)
+    || Array.from(activeEditors.values()).find((info) => info.element === document.activeElement || info.element.contains?.(document.activeElement));
+
+  if (editorInfo?.button) {
+    editorInfo.button.click();
+    return;
+  }
+
+  showNotification('error', 'Select text first (minimum 10 characters)');
 }
 
 function initSignShortcut() {
@@ -1851,7 +1517,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleSignSelection(message.text);
     sendResponse({ received: true });
   }
-  
+
   if (message.type === 'SCAN_EDITORS') {
     scanForEditors();
     sendResponse({ count: activeEditors.size });
@@ -1865,18 +1531,24 @@ async function _initEditorSigner() {
       showEditorButtons: true,
       defaultEmbeddingTechnique: 'micro',
       defaultSegmentationLevel: 'sentence',
+      defaultDocumentType: 'article',
+      autoReplaceContent: true,
     });
     editorButtonsEnabled = settings.showEditorButtons;
     defaultEmbeddingTechnique = normalizeEmbeddingTechnique(settings.defaultEmbeddingTechnique);
     defaultSegmentationLevel = settings.defaultSegmentationLevel;
+    defaultDocumentType = settings.defaultDocumentType || 'article';
+    defaultAutoReplaceContent = settings.autoReplaceContent !== false;
   } catch (e) {
-    // Default to enabled if storage fails
   }
+
+  getCachedAccountInfo().catch(() => null);
+
   if (editorButtonsEnabled) {
     scanForEditors();
     observeForEditors();
   }
-  // Always init smart backspace and sign shortcut (independent of editor buttons)
+
   initSmartBackspace();
   initSignShortcut();
 }
@@ -1887,9 +1559,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes.showEditorButtons) {
     editorButtonsEnabled = changes.showEditorButtons.newValue;
     if (!editorButtonsEnabled) {
-      // Remove all sign buttons
       for (const [, info] of activeEditors) {
-        info.button?.remove();
+        info.cleanup?.();
       }
       activeEditors.clear();
     } else {
@@ -1903,6 +1574,12 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes.defaultSegmentationLevel) {
     defaultSegmentationLevel = changes.defaultSegmentationLevel.newValue;
   }
+  if (changes.defaultDocumentType) {
+    defaultDocumentType = changes.defaultDocumentType.newValue || 'article';
+  }
+  if (changes.autoReplaceContent) {
+    defaultAutoReplaceContent = changes.autoReplaceContent.newValue !== false;
+  }
 });
 
 if (document.readyState === 'loading') {
@@ -1913,25 +1590,25 @@ if (document.readyState === 'loading') {
 
 // Expose for testing (attached to window so module.exports can reach them)
 window._encypherEditorSigner = {
-    detectEditorType,
-    detectOnlinePlatform,
-    getOnlineEditorElement,
-    getEditorText,
-    setEditorText,
-    hashText,
-    findEmbeddingRun,
-    extractRunBytes,
-    _isVS,
-    _isEmbeddingChar,
-    _stripEmbeddingChars,
-    applyEmbeddingPlanToSelectionInPlace,
-    applyEmbeddingPlanToOnlineEditorInPlace,
-    applyEmbeddingPlanToEditorInPlace,
-    _normalizeEmbeddingPlanOperations,
-    _codepointOffsetToUtf16,
-    VS_RANGES,
-    ZWNBSP
-  };
+  detectEditorType,
+  detectOnlinePlatform,
+  getOnlineEditorElement,
+  getEditorText,
+  setEditorText,
+  hashText,
+  findEmbeddingRun,
+  extractRunBytes,
+  _isVS,
+  _isEmbeddingChar,
+  _stripEmbeddingChars,
+  applyEmbeddingPlanToSelectionInPlace,
+  applyEmbeddingPlanToOnlineEditorInPlace,
+  applyEmbeddingPlanToEditorInPlace,
+  _normalizeEmbeddingPlanOperations,
+  _codepointOffsetToUtf16,
+  VS_RANGES,
+  ZWNBSP
+};
 
 })(); // end IIFE
 

@@ -6,6 +6,13 @@
 **Version:** 4.1
 **Distribution:** Executive Team & Strategy Leadership
 
+> **CANONICAL MESSAGING SSOT:** This document is the authoritative source for all
+> Encypher positioning, messaging pillars, value propositions, and competitive framing.
+> When messaging conflicts across documents, this document wins. All other strategy docs
+> (ICPs, Marketing Plan, Marketing Guidelines, Enterprise Sales, Publisher/AI One-Pagers)
+> should be updated to reflect changes made here first. Do not edit core messaging in
+> downstream docs without updating this document first.
+
 ---
 
 ## Executive Summary
@@ -467,6 +474,14 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 - Ecosystem convergence through standards
 - Network effects accelerate adoption
 
+### Ecosystem Integration Opportunities
+
+**RSL (Really Simple Licensing) -- Standards Complementarity:**
+RSL is an open standard (1.0 spec finalized December 2025, 50+ members including Reddit, Yahoo, Quora, Medium, BuzzFeed, USA Today, Vox Media) for machine-readable AI content licensing terms. RSL tells AI companies the rules (pricing models, usage rights). Encypher proves whether they followed the rules (cryptographic provenance + formal notice). RSL defines terms; Encypher provides enforcement evidence. The integration story: RSL terms reference Encypher provenance for enforcement. This is a natural partnership where RSL member publishers become Encypher coalition candidates.
+
+**Digimarc / Truepic -- Multi-Format C2PA:**
+Digimarc co-chairs the C2PA watermarking task force for images/video/audio. Truepic is a C2PA founding member for visual media. Encypher co-chairs the C2PA text provenance task force. Together: complete multi-format C2PA solution. Partnership narrative for enterprise buyers who need provenance across text + images + video.
+
 ### Competitive Positioning (Updated)
 
 **vs. Unmarked Content Status Quo:**
@@ -480,6 +495,31 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 
 **vs. Wait and See:**
 "Standards markets converge rapidly. Publisher coalition implementing marked content creates ecosystem pressure. The invite-only roundtable track is defining market licensing frameworks through interim 1:1 briefings and reconvened group sessions. Early adopters shape standards. Later adopters accept terms others defined."
+
+**vs. Tier 1 Licensing / Access Gates (TollBit, Cloudflare AI Audit, RSL, robots.txt):**
+"TollBit and Cloudflare are Tier 1 licensing tools -- access gates that AI developers have to opt into. They gate the front door: 'pay before you enter.' That's valuable when AI companies cooperate. But the fundamental limitation is that these only work when AI developers voluntarily participate. If an AI company scrapes around the gate, or simply chooses not to opt in, there's no further visibility. Our provenance travels with the content itself -- no AI company cooperation required. We're complementary, not competitive: use access gates for the cooperative AI companies, use Encypher provenance for enforcement against everyone else."
+
+**vs. Output-Side Attribution (ProRata, Dappier):**
+"ProRata and Dappier are also opt-in systems -- they estimate which sources contributed to an AI output, but only when AI companies voluntarily integrate with their ecosystem. That's algorithmic attribution scoring inside a closed system. If an AI company doesn't opt in, ProRata has zero visibility. Our provenance is cryptographic proof embedded in the content before it enters any AI system -- it works regardless of whether the AI company participates. One is a best guess inside a walled garden. The other is a signed receipt that works everywhere."
+
+**vs. Big Tech Content Marketplaces (Microsoft PCM):**
+"Microsoft launched its Publisher Content Marketplace to broker licensing deals between publishers and AI builders -- starting with Copilot. The fundamental tension: Microsoft is simultaneously the largest enterprise AI buyer of publisher content and the marketplace operator setting the terms. That's the fox guarding the henhouse. Encypher is independent infrastructure. We don't buy content, we don't run AI models, and we don't compete with publishers for attention. Our interests are structurally aligned with publishers because we only succeed when publishers generate licensing revenue. A platform-locked marketplace also only covers deals within that marketplace. Our provenance travels everywhere your content goes -- inside Microsoft's ecosystem and outside it."
+
+**vs. AI-Output Watermarking (Google SynthID):**
+"SynthID marks AI-generated output to prove it was machine-made. We mark human-authored content to prove it was human-made and who owns it. These solve opposite problems. More importantly, SynthID's statistical watermarking is academically demonstrated to be fragile -- paraphrasing, translation, and editing destroy the signal. Our cryptographic embedding provides deterministic proof, not a probabilistic estimate."
+
+**vs. Blockchain Timestamping (WordProof):**
+"WordProof registers a hash of your content on a blockchain, proving it existed at a point in time. But the proof is external -- it doesn't travel with the content. Once text is copied, scraped, or syndicated, there's no way to detect it using WordProof's approach. Our cryptographic watermarking is embedded in the text itself and survives downstream distribution. Timestamping proves existence. Provenance proves ownership wherever content appears."
+
+### The Three-Layer Stack (How We Fit in the Ecosystem)
+
+Publishers need all three layers for complete protection:
+
+1. **Tier 1 Licensing / Access Control (Layer 1):** TollBit, Cloudflare AI Audit, RSL, robots.txt -- opt-in access gates that AI developers must voluntarily participate in. Monetizes authorized AI access, but only from cooperative AI companies.
+2. **Content Provenance (Layer 2):** Encypher -- cryptographic proof embedded in text, survives distribution, enables formal notice and enforcement. Works unilaterally -- no AI company cooperation required.
+3. **Attribution/Monetization (Layer 3):** ProRata, Dappier, Microsoft PCM -- opt-in back-end attribution and revenue sharing. Only functions within integrated ecosystems.
+
+Encypher is the only company operating at Layer 2 for text. This is the only layer that works without AI company cooperation. Layer 1 access gates only function when AI developers choose to opt in. Layer 3 attribution only works within specific integrated ecosystems. Layer 2 provenance is the critical infrastructure that travels with content regardless of who handles it -- making the other two layers enforceable and providing evidence when they fail.
 
 ---
 
@@ -560,6 +600,15 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 - Standards authority through C2PA Co-Chair role + specification authorship
 - Patent protection on sentence-level tracking
 - Reference implementation advantage (18+ month lead)
+- No competitor combines in-text cryptographic embedding + C2PA standards authority + publisher licensing infrastructure (see Competitive Landscape doc)
+- Monitor Fraunhofer/Innamark (closest technical approach, but research-only, no product or C2PA alignment)
+
+### Tailwind: EU AI Act (August 2, 2026 Enforcement)
+The EU AI Act transparency requirements enforce in August 2026. The draft Code of Practice explicitly requires machine-readable marking and watermarking with a multilayered approach. C2PA is the standards framework regulators are referencing. This creates:
+- Hard regulatory deadline for enterprise ICP (David persona) -- compliance buying cycle accelerates
+- Additional pressure on AI companies to adopt provenance infrastructure
+- Validation of C2PA as the compliance standard, strengthening our standards authority positioning
+- Timeline alignment: EU enforcement (August 2026) coincides with our Q3-Q4 licensing activation phase
 - Network effects through publisher coalition
 
 ### Risk: Slow Publisher Adoption
@@ -784,16 +833,20 @@ ProRata is not a direct technology competitor but represents a real deal-flow ri
 
 Monitor: ProRata's funding rounds, public statements about AI company partnerships, and whether NMA or other publisher coalitions begin directing members toward ProRata-style agreements. The response if this risk materializes: lean into the fundamental technology and legal differentiation (cryptographic enforcement vs. access metering), and push the "millions vs. thousands" revenue comparison aggressively.
 
-### TollBit / ProRata: Competitive Context
+### TollBit / ProRata / Cloudflare: Competitive Context
 
-TollBit and ProRata are building revenue-sharing agreements between publishers and AI companies. They are not direct technology competitors (different layer, different mechanism) but they compete for publisher mindshare and may compete for the same deal flow with AI companies.
+TollBit, ProRata, and Cloudflare AI Crawl Control are all Tier 1 licensing tools -- opt-in access gates that AI developers must voluntarily participate in. They are not direct technology competitors (different layer, different mechanism) but they compete for publisher mindshare and may compete for the same deal flow with AI companies.
+
+**The fundamental limitation of Tier 1 licensing**: These tools only work when AI companies choose to opt in. TollBit's marketplace, ProRata's attribution ecosystem, and Cloudflare's Pay Per Crawl all depend on voluntary AI company participation. Encypher's provenance works unilaterally -- embedded proof persists whether the AI company cooperates or not.
 
 **The key data point for sales conversations**: ProRata is a 50/50 revenue split with publishers. Current payouts across the industry are approximately $0.001 per transaction -- which translates to a few thousand dollars per month at most for major publishers. Encypher is building toward licensing deals worth millions per publisher.
 
 **How to use this in sales**:
-- Never disparage TollBit or ProRata -- they're validating that AI companies can and should pay for content
-- Use the revenue gap as a proof point: "The current market rate for AI content licensing is a few thousand dollars a month for major publishers. We believe that's wrong by 2-3 orders of magnitude. The legal infrastructure we're building -- willful infringement proof, coalition leverage, formal notice -- is what closes that gap."
-- Position Encypher as building the infrastructure that makes the ENTIRE licensing market real, not just a slice of the current (tiny) market
+- Never disparage TollBit, ProRata, or Cloudflare -- they're validating that AI companies can and should pay for content
+- Frame them as "Tier 1 licensing" -- access gates that AI developers have to opt into. Valuable for monetizing the cooperative AI companies.
+- Emphasize the opt-in gap: "Those tools work great for the AI companies that choose to participate. What about the ones that don't? That's where our embedded provenance and enforcement infrastructure comes in."
+- Use the revenue gap as a proof point: "The current market rate through opt-in channels is a few thousand dollars a month for major publishers. The legal infrastructure we're building -- willful infringement proof, coalition leverage, formal notice -- is what closes that gap to millions."
+- Position Encypher as the only layer that works without AI company cooperation, making it the enforcement backbone for the entire licensing market
 
 ---
 

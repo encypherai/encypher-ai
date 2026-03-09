@@ -23,6 +23,7 @@ from ...models.schemas import (
 )
 from ...services.billing_service import BillingService
 from ...services.stripe_service import StripeService, get_stripe_price_id
+from ...services.price_cache import get_add_on_stripe_price_id
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,13 @@ class PortalResponse(BaseModel):
     """Response with billing portal URL"""
 
     portal_url: str
+
+
+class AddOnCheckoutRequest(BaseModel):
+    add_on: str
+    quantity: int = Field(ge=1, le=100000)
+    success_url: Optional[str] = None
+    cancel_url: Optional[str] = None
 
 
 class InternalTrialRequest(BaseModel):
@@ -238,7 +246,8 @@ async def create_checkout_session(
     # TEAM_145: No self-service checkout. Free tier is free, Enterprise is contact-sales.
     if request.tier in [TierName.FREE, TierName.ENTERPRISE, TierName.STRATEGIC_PARTNER]:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Cannot checkout for {request.tier.value} tier. Free tier requires no payment; Enterprise requires contacting sales."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot checkout for {request.tier.value} tier. Free tier requires no payment; Enterprise requires contacting sales.",
         )
 
     # Get Stripe price ID
@@ -279,6 +288,49 @@ async def create_checkout_session(
 
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create checkout session")
+
+
+@router.post("/checkout/add-on", response_model=CheckoutResponse)
+async def create_add_on_checkout_session(
+    request: AddOnCheckoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    add_on = request.add_on.replace("-", "_")
+    if add_on != "bulk_archive_backfill":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported add-on")
+
+    price_id = get_add_on_stripe_price_id(add_on)
+    if not price_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Price not configured for add-on")
+
+    try:
+        customer = await StripeService.get_or_create_customer(
+            email=current_user.get("email"),
+            name=current_user.get("name"),
+            organization_id=current_user.get("organization_id"),
+        )
+
+        base_url = settings.DASHBOARD_URL
+        success_url = request.success_url or f"{base_url}/billing?success=true&addon=bulk-archive-backfill"
+        cancel_url = request.cancel_url or f"{base_url}/billing?canceled=true&addon=bulk-archive-backfill"
+
+        session = await StripeService.create_one_time_checkout_session(
+            customer_id=customer.id,
+            price_id=price_id,
+            quantity=request.quantity,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "user_id": current_user.get("id") or "",
+                "organization_id": current_user.get("organization_id") or "",
+                "add_on": add_on,
+                "quantity": str(request.quantity),
+            },
+        )
+
+        return CheckoutResponse(checkout_url=session.url, session_id=session.id)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create add-on checkout session")
 
 
 @router.get("/portal", response_model=PortalResponse)
@@ -411,9 +463,7 @@ async def upgrade_subscription(
                 organization_id=current_user.get("organization_id"),
             )
             base_url = settings.DASHBOARD_URL
-            subscription_id = (
-                existing_subscription.stripe_subscription_id if existing_subscription else None
-            )
+            subscription_id = existing_subscription.stripe_subscription_id if existing_subscription else None
             portal_session = await StripeService.create_billing_portal_session(
                 customer_id=customer.id,
                 return_url=f"{base_url}/billing",
@@ -576,15 +626,18 @@ def _query_content_coalition_earnings(org_id: str) -> Optional[dict]:
     """
     try:
         from sqlalchemy import create_engine, text as sa_text
+
         # Derive encypher_content URL from the billing DB URL by swapping the DB name
         content_url = settings.DATABASE_URL.replace("/encypher_billing", "/encypher_content")
         if "/encypher_billing" not in settings.DATABASE_URL:
             # URL doesn't follow expected pattern; try to find the right content DB
             import re
+
             content_url = re.sub(r"/[^/]+$", "/encypher_content", settings.DATABASE_URL)
         engine = create_engine(content_url, pool_size=1, max_overflow=0)
         with engine.connect() as conn:
-            rows = conn.execute(sa_text("""
+            rows = conn.execute(
+                sa_text("""
                 SELECT
                     ai_company,
                     period_start,
@@ -595,7 +648,9 @@ def _query_content_coalition_earnings(org_id: str) -> Optional[dict]:
                 WHERE organization_id = :org_id
                 ORDER BY period_start DESC
                 LIMIT 50
-            """), {"org_id": org_id}).fetchall()
+            """),
+                {"org_id": org_id},
+            ).fetchall()
 
             if not rows:
                 return None

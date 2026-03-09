@@ -2,9 +2,9 @@
 
 ## Standards-Based Text Provenance Demonstration
 
-**Last Updated:** January 8, 2026
+**Last Updated:** March 4, 2026
 **Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 3.1
+**Version:** 4.1
 **Distribution:** Product & Engineering Teams
 
 ---
@@ -515,7 +515,7 @@ frontmatter\_provider \= FrontmatterMetadataProvider()
 
 - "See Formal Notice Demo" ' **encypherai.com/publisher-demo**
 - "Calculate Licensing ROI" ' Sales qualification
-- "Join Publisher Coalition" ' Nate follow-up
+- "Join Publisher Coalition" ' Matt Kaminsky follow-up
 
 **For AI Companies:**
 
@@ -578,10 +578,10 @@ The sandbox proves: **Unmarked text has no proof. C2PA provides proof. Our enhan
 
 ## Document Control
 
-**Last Updated:** October 31, 2025
-**Status:** Post-Customer Discovery Update
+**Last Updated:** March 4, 2026
+**Status:** Post-Standard Publication, Marketing Push Pending Landmark Deal
 **Distribution:** Product & Engineering Teams
-**Next Review:** January 2026
+**Next Review:** After first landmark deal announcement
 **Document Owner:** Chief Product Officer
 
 **Key Updates:**
@@ -596,4 +596,3 @@ The sandbox proves: **Unmarked text has no proof. C2PA provides proof. Our enhan
 - ... Added minimal invisible embeddings feature
 - ... Added public verification API (no auth required)
 - ... Updated technical implementation to match production API
-

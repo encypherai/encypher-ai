@@ -40,6 +40,7 @@ const DEFAULT_SETTINGS = {
   cacheTtl: 5,
   // Signing defaults
   autoReplaceContent: true,
+  defaultDocumentType: 'article',
   defaultDocType: 'article',
   defaultEmbeddingTechnique: 'micro',
   defaultSegmentationLevel: 'sentence',
@@ -60,7 +61,7 @@ function normalizeEmbeddingTechnique(value) {
 async function loadSettings() {
   try {
     const result = await chrome.storage.sync.get(DEFAULT_SETTINGS);
-    
+
     // API Key (stored locally for security)
     const localResult = await chrome.storage.local.get({ apiKey: '' });
 
@@ -72,28 +73,28 @@ async function loadSettings() {
     } else if (publisherIdentityEl) {
       publisherIdentityEl.textContent = 'Signing as: add an API key to load your publisher identity.';
     }
-    
+
     // Verification settings
     autoVerifyCheckbox.checked = result.autoVerify;
     showBadgesCheckbox.checked = result.showBadges;
-    
+
     // Advanced settings
-    const savedUrl = result.apiBaseUrl === 'custom' 
+    const savedUrl = result.apiBaseUrl === 'custom'
       ? (result.customApiUrl || DEFAULT_SETTINGS.apiBaseUrl)
       : (result.apiBaseUrl || DEFAULT_SETTINGS.apiBaseUrl);
     apiBaseUrlInput.value = savedUrl;
-    
+
     cacheTtlInput.value = result.cacheTtl;
-    
+
     // Signing settings
     if (autoReplaceContentCheckbox) autoReplaceContentCheckbox.checked = result.autoReplaceContent;
-    if (defaultDocTypeSelect) defaultDocTypeSelect.value = result.defaultDocType;
+    if (defaultDocTypeSelect) defaultDocTypeSelect.value = result.defaultDocumentType || result.defaultDocType || 'article';
     if (defaultEmbeddingTechniqueSelect) {
       defaultEmbeddingTechniqueSelect.value = normalizeEmbeddingTechnique(result.defaultEmbeddingTechnique || 'micro');
     }
     if (defaultSegmentationLevelSelect) defaultSegmentationLevelSelect.value = result.defaultSegmentationLevel || 'sentence';
     if (showEditorButtonsCheckbox) showEditorButtonsCheckbox.checked = result.showEditorButtons;
-    
+
     // Analytics settings
     if (extensionSetupStatusSelect) {
       extensionSetupStatusSelect.value = result.extensionSetupStatus || 'not_started';
@@ -211,7 +212,7 @@ async function testApiKey(apiKey) {
         'Content-Type': 'application/json'
       }
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       const accountPayload = normalizeAccountPayload(data);
@@ -247,7 +248,7 @@ toggleApiKeyBtn.addEventListener('click', () => {
 // Save API key
 saveApiKeyBtn.addEventListener('click', async () => {
   const apiKey = apiKeyInput.value.trim();
-  
+
   // Validate format
   const validation = validateApiKey(apiKey);
   if (!validation.valid) {
@@ -255,15 +256,15 @@ saveApiKeyBtn.addEventListener('click', async () => {
     apiKeyStatus.className = 'options__hint options__hint--error';
     return;
   }
-  
+
   // Show testing status
   apiKeyStatus.textContent = 'Testing API key...';
   apiKeyStatus.className = 'options__hint';
   saveApiKeyBtn.disabled = true;
-  
+
   // Test the key
   const testResult = await testApiKey(apiKey);
-  
+
   if (testResult.valid) {
     // Save to local storage (more secure than sync)
     await saveSetting('apiKey', apiKey, true);
@@ -275,7 +276,7 @@ saveApiKeyBtn.addEventListener('click', async () => {
       extensionSetupStatusSelect.value = 'completed';
       updateSetupStatusHint('completed');
     }
-    
+
     // Notify service worker
     chrome.runtime.sendMessage({ type: 'API_KEY_UPDATED', hasKey: true });
   } else {
@@ -285,27 +286,27 @@ saveApiKeyBtn.addEventListener('click', async () => {
       publisherIdentityEl.textContent = 'Signing as: add an API key to load your publisher identity.';
     }
   }
-  
+
   saveApiKeyBtn.disabled = false;
 });
 
 // Auto-verify toggle
 autoVerifyCheckbox.addEventListener('change', async () => {
   await saveSetting('autoVerify', autoVerifyCheckbox.checked);
-  chrome.runtime.sendMessage({ 
-    type: 'SETTINGS_UPDATED', 
-    setting: 'autoVerify', 
-    value: autoVerifyCheckbox.checked 
+  chrome.runtime.sendMessage({
+    type: 'SETTINGS_UPDATED',
+    setting: 'autoVerify',
+    value: autoVerifyCheckbox.checked
   });
 });
 
 // Show badges toggle
 showBadgesCheckbox.addEventListener('change', async () => {
   await saveSetting('showBadges', showBadgesCheckbox.checked);
-  chrome.runtime.sendMessage({ 
-    type: 'SETTINGS_UPDATED', 
-    setting: 'showBadges', 
-    value: showBadgesCheckbox.checked 
+  chrome.runtime.sendMessage({
+    type: 'SETTINGS_UPDATED',
+    setting: 'showBadges',
+    value: showBadgesCheckbox.checked
   });
 });
 
@@ -317,10 +318,10 @@ apiBaseUrlInput.addEventListener('blur', async () => {
   }
   const effectiveUrl = url || DEFAULT_SETTINGS.apiBaseUrl;
   await saveSetting('apiBaseUrl', effectiveUrl);
-  chrome.runtime.sendMessage({ 
-    type: 'SETTINGS_UPDATED', 
-    setting: 'apiBaseUrl', 
-    value: effectiveUrl 
+  chrome.runtime.sendMessage({
+    type: 'SETTINGS_UPDATED',
+    setting: 'apiBaseUrl',
+    value: effectiveUrl
   });
 });
 
@@ -329,10 +330,10 @@ cacheTtlInput.addEventListener('change', async () => {
   const ttl = parseInt(cacheTtlInput.value, 10);
   if (ttl >= 1 && ttl <= 60) {
     await saveSetting('cacheTtl', ttl);
-    chrome.runtime.sendMessage({ 
-      type: 'SETTINGS_UPDATED', 
-      setting: 'cacheTtl', 
-      value: ttl 
+    chrome.runtime.sendMessage({
+      type: 'SETTINGS_UPDATED',
+      setting: 'cacheTtl',
+      value: ttl
     });
   }
 });
@@ -350,19 +351,20 @@ clearCacheBtn.addEventListener('click', async () => {
 
 autoReplaceContentCheckbox?.addEventListener('change', async () => {
   await saveSetting('autoReplaceContent', autoReplaceContentCheckbox.checked);
-  chrome.runtime.sendMessage({ 
-    type: 'SETTINGS_UPDATED', 
-    setting: 'autoReplaceContent', 
-    value: autoReplaceContentCheckbox.checked 
+  chrome.runtime.sendMessage({
+    type: 'SETTINGS_UPDATED',
+    setting: 'autoReplaceContent',
+    value: autoReplaceContentCheckbox.checked
   });
 });
 
 defaultDocTypeSelect?.addEventListener('change', async () => {
+  await saveSetting('defaultDocumentType', defaultDocTypeSelect.value);
   await saveSetting('defaultDocType', defaultDocTypeSelect.value);
-  chrome.runtime.sendMessage({ 
-    type: 'SETTINGS_UPDATED', 
-    setting: 'defaultDocType', 
-    value: defaultDocTypeSelect.value 
+  chrome.runtime.sendMessage({
+    type: 'SETTINGS_UPDATED',
+    setting: 'defaultDocumentType',
+    value: defaultDocTypeSelect.value
   });
 });
 
@@ -386,10 +388,10 @@ defaultSegmentationLevelSelect?.addEventListener('change', async () => {
 
 showEditorButtonsCheckbox?.addEventListener('change', async () => {
   await saveSetting('showEditorButtons', showEditorButtonsCheckbox.checked);
-  chrome.runtime.sendMessage({ 
-    type: 'SETTINGS_UPDATED', 
-    setting: 'showEditorButtons', 
-    value: showEditorButtonsCheckbox.checked 
+  chrome.runtime.sendMessage({
+    type: 'SETTINGS_UPDATED',
+    setting: 'showEditorButtons',
+    value: showEditorButtonsCheckbox.checked
   });
 });
 

@@ -1,6 +1,6 @@
 /**
  * Dashboard API Client
- * 
+ *
  * Handles all API calls to backend microservices.
  * Uses the access token from NextAuth session for authentication.
  */
@@ -8,7 +8,7 @@
 // All API calls go through Traefik (routes to appropriate microservice based on path)
 // In production: https://api.encypherai.com/api/v1
 // In development: http://localhost:8000/api/v1
-// 
+//
 // IMPORTANT: NEXT_PUBLIC_API_URL should include /api/v1 suffix
 // e.g., http://localhost:8000/api/v1 or https://api.encypherai.com/api/v1
 const API_BASE_URL =
@@ -102,6 +102,9 @@ interface OrganizationInfo {
   email: string;
   account_type?: AccountType | null;
   display_name?: string | null;
+  dashboard_layout?: DashboardLayoutPreference | null;
+  publisher_platform?: PublisherPlatform | null;
+  publisher_platform_custom?: string | null;
   signing_identity_mode?: SigningIdentityMode | null;
   signing_identity_custom_label?: string | null;
   anonymous_publisher?: boolean;
@@ -209,6 +212,13 @@ interface UpgradeResponse {
   message: string;
   new_tier?: string;
   effective_date?: string;
+}
+
+interface AddOnCheckoutRequest {
+  add_on: string;
+  quantity: number;
+  success_url?: string;
+  cancel_url?: string;
 }
 
 interface UsageMetric {
@@ -334,17 +344,26 @@ interface OnboardingStatusResponse {
 
 // TEAM_191: Setup Wizard types
 type AccountType = 'individual' | 'organization';
+type DashboardLayoutPreference = 'publisher' | 'enterprise';
+type WorkflowCategory = 'media_publishing' | 'enterprise' | 'ai_provenance_governance';
+type PublisherPlatform = 'wordpress' | 'ghost' | 'substack' | 'medium' | 'custom';
 
 interface SetupStatusResponse {
   setup_completed: boolean;
   setup_completed_at: string | null;
   account_type: AccountType | null;
   display_name: string | null;
+  dashboard_layout: DashboardLayoutPreference | null;
+  publisher_platform: PublisherPlatform | null;
+  publisher_platform_custom: string | null;
 }
 
 interface PublisherSettings {
   display_name: string | null;
   account_type: AccountType | null;
+  dashboard_layout?: DashboardLayoutPreference | null;
+  publisher_platform?: PublisherPlatform | null;
+  publisher_platform_custom?: string | null;
   signing_identity_mode?: SigningIdentityMode | null;
   signing_identity_custom_label?: string | null;
   custom_signing_identity_enabled?: boolean;
@@ -433,7 +452,7 @@ const apiClient = {
   // ============================================
   // API Keys (key-service)
   // ============================================
-  
+
   /**
    * Get all API keys for the current user
    */
@@ -930,10 +949,10 @@ const apiClient = {
     if (tier) params.append('tier', tier);
     if (page) params.append('page', page.toString());
     if (pageSize) params.append('page_size', pageSize.toString());
-    
+
     const queryString = params.toString();
     const url = `${AUTH_SERVICE_URL}/auth/admin/users${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
       url,
       accessToken
@@ -965,10 +984,10 @@ const apiClient = {
       accessToken,
       {
         method: 'POST',
-        body: JSON.stringify({ 
-          user_id: userId, 
+        body: JSON.stringify({
+          user_id: userId,
           status: enabled ? 'active' : 'suspended',
-          reason 
+          reason
         }),
       }
     );
@@ -989,10 +1008,10 @@ const apiClient = {
     if (options?.statusCode) params.append('status_code', options.statusCode.toString());
     if (options?.page) params.append('page', options.page.toString());
     if (options?.pageSize) params.append('page_size', options.pageSize.toString());
-    
+
     const queryString = params.toString();
     const url = `${API_BASE_URL}/admin/error-logs${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
       url,
       accessToken
@@ -1044,10 +1063,10 @@ const apiClient = {
     if (options?.page) params.append('page', options.page.toString());
     if (options?.pageSize) params.append('page_size', options.pageSize.toString());
     if (options?.category) params.append('category', options.category);
-    
+
     const queryString = params.toString();
     const url = `${API_BASE_URL}/enterprise/c2pa/templates${queryString ? `?${queryString}` : ''}`;
-    
+
     return fetchWithAuth<C2PATemplateListResponse>(url, accessToken);
   },
 
@@ -1074,8 +1093,8 @@ const apiClient = {
       accessToken,
       {
         method: 'POST',
-        body: JSON.stringify({ 
-          public_key_pem: publicKeyPem, 
+        body: JSON.stringify({
+          public_key_pem: publicKeyPem,
           key_name: keyName,
           key_algorithm: keyAlgorithm || 'Ed25519'
         }),
@@ -1090,10 +1109,10 @@ const apiClient = {
   async listPublicKeys(accessToken: string, includeRevoked?: boolean): Promise<unknown> {
     const params = new URLSearchParams();
     if (includeRevoked) params.append('include_revoked', 'true');
-    
+
     const queryString = params.toString();
     const url = `${API_BASE_URL}/admin/public-keys${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
       url,
       accessToken
@@ -1107,10 +1126,10 @@ const apiClient = {
   async revokePublicKey(accessToken: string, keyId: string, reason?: string): Promise<unknown> {
     const params = new URLSearchParams();
     if (reason) params.append('reason', reason);
-    
+
     const queryString = params.toString();
     const url = `${API_BASE_URL}/admin/public-keys/${keyId}${queryString ? `?${queryString}` : ''}`;
-    
+
     return fetchWithAuth(
       url,
       accessToken,
@@ -1251,6 +1270,20 @@ const apiClient = {
     );
   },
 
+  async createAddOnCheckout(
+    accessToken: string,
+    payload: AddOnCheckoutRequest
+  ): Promise<CheckoutResponse> {
+    return fetchWithAuth<CheckoutResponse>(
+      `${BILLING_SERVICE_URL}/billing/checkout/add-on`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+
   /**
    * Get Stripe Billing Portal URL
    */
@@ -1298,7 +1331,7 @@ const apiClient = {
     const [tierPart, cyclePart] = plan.split('-');
     const tier = tierPart === 'pro' ? 'professional' : tierPart;
     const billingCycle = (cyclePart as 'monthly' | 'annual') || 'monthly';
-    
+
     return this.upgradeSubscription(accessToken, tier, billingCycle);
   },
   // ============================================
@@ -1359,17 +1392,17 @@ const apiClient = {
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
-    
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       method: 'GET',
       headers,
     });
-    
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
       throw new ApiError(error.message || 'Request failed', response.status);
     }
-    
+
     const data = await response.json();
     return { data };
   },
@@ -1381,18 +1414,18 @@ const apiClient = {
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
-    
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       method: 'POST',
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
-    
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
       throw new ApiError(error.message || 'Request failed', response.status);
     }
-    
+
     const data = await response.json();
     return { data };
   },
@@ -1404,18 +1437,18 @@ const apiClient = {
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
-    
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       method: 'PATCH',
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
-    
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
       throw new ApiError(error.message || 'Request failed', response.status);
     }
-    
+
     const data = await response.json();
     return { data };
   },
@@ -1427,17 +1460,17 @@ const apiClient = {
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
     }
-    
+
     const response = await fetch(`${API_BASE_URL}${url}`, {
       method: 'DELETE',
       headers,
     });
-    
+
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: 'Request failed' }));
       throw new ApiError(error.message || 'Request failed', response.status);
     }
-    
+
     const data = await response.json().catch(() => ({}));
     return { data };
   },
@@ -1458,11 +1491,11 @@ const apiClient = {
       },
       body: JSON.stringify({ user_ids: userIds, days }),
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to fetch usage counts');
     }
-    
+
     const data = await response.json();
     return data.usage_counts || {};
   },
@@ -1497,7 +1530,7 @@ const apiClient = {
       `${ANALYTICS_SERVICE_URL}/analytics/user/${userId}/activity?${params.toString()}`,
       accessToken
     );
-    
+
     return response;
   },
 
@@ -1561,7 +1594,14 @@ const apiClient = {
   /**
    * Complete the mandatory setup wizard with publisher identity
    */
-  async completeSetup(accessToken: string, data: { account_type: AccountType; display_name: string }): Promise<SetupStatusResponse> {
+  async completeSetup(accessToken: string, data: {
+    account_type: AccountType;
+    display_name: string;
+    workflow_category: WorkflowCategory;
+    dashboard_layout: DashboardLayoutPreference;
+    publisher_platform?: PublisherPlatform;
+    publisher_platform_custom?: string;
+  }): Promise<SetupStatusResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: SetupStatusResponse }>(
       `${AUTH_SERVICE_URL}/auth/setup/complete`,
       accessToken,
@@ -1579,7 +1619,14 @@ const apiClient = {
   async updatePublisherSettings(
     accessToken: string,
     orgId: string,
-    data: { display_name?: string; signing_identity_mode?: SigningIdentityMode; anonymous_publisher?: boolean }
+    data: {
+      display_name?: string;
+      dashboard_layout?: DashboardLayoutPreference;
+      publisher_platform?: PublisherPlatform;
+      publisher_platform_custom?: string;
+      signing_identity_mode?: SigningIdentityMode;
+      anonymous_publisher?: boolean;
+    }
   ): Promise<PublisherSettings> {
     const response = await fetchWithAuth<{ success: boolean; data: PublisherSettings }>(
       `${AUTH_SERVICE_URL}/organizations/${orgId}/publisher-settings`,
@@ -2117,15 +2164,15 @@ interface GhostTokenRegenerateResponse {
 
 export default apiClient;
 export { ApiError };
-export type { 
-  ApiKeyInfo, 
-  ApiKeyCreateResponse, 
+export type {
+  ApiKeyInfo,
+  ApiKeyCreateResponse,
   OrganizationInfo,
   OrganizationCreateResponse,
   DomainClaimInfo,
   DomainClaimResponse,
-  UsageStats, 
-  AnalyticsReport, 
+  UsageStats,
+  AnalyticsReport,
   TimeSeriesData,
   PlanInfo,
   SubscriptionInfo,
@@ -2151,6 +2198,8 @@ export type {
   OnboardingStatusResponse,
   // TEAM_191: Setup Wizard
   AccountType,
+  DashboardLayoutPreference,
+  PublisherPlatform,
   SetupStatusResponse,
   PublisherSettings,
   MfaStatusResponse,

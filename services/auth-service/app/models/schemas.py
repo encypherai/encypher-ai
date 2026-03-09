@@ -404,11 +404,28 @@ class AccountType(str, Enum):
     ORGANIZATION = "organization"
 
 
+class DashboardLayout(str, Enum):
+    PUBLISHER = "publisher"
+    ENTERPRISE = "enterprise"
+
+
+class WorkflowCategory(str, Enum):
+    MEDIA_PUBLISHING = "media_publishing"
+    ENTERPRISE = "enterprise"
+    AI_PROVENANCE_GOVERNANCE = "ai_provenance_governance"
+
+
 class SetupWizardRequest(BaseModel):
     """Request to complete the mandatory setup wizard"""
 
     account_type: AccountType = Field(..., description="Whether this is an individual creator or an organization")
     display_name: str = Field(..., min_length=1, max_length=255, description="Publisher name shown on signed content")
+    workflow_category: WorkflowCategory = Field(..., description="Primary workflow the user is onboarding for")
+    dashboard_layout: Optional[DashboardLayout] = Field(None, description="Initial dashboard layout preference")
+    publisher_platform: Optional[str] = Field(None, max_length=64, description="Primary publishing platform")
+    publisher_platform_custom: Optional[str] = Field(None, max_length=255, description="Custom publishing platform label")
+    publisher_platform_language: Optional[str] = Field(None, max_length=64, description="Primary language for a custom CMS")
+    publisher_platform_other: Optional[str] = Field(None, max_length=255, description="Freeform publishing platform input")
 
     @field_validator("display_name")
     @classmethod
@@ -418,6 +435,73 @@ class SetupWizardRequest(BaseModel):
             raise ValueError("Display name cannot be empty")
         return cleaned
 
+    @field_validator("publisher_platform")
+    @classmethod
+    def validate_publisher_platform(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        cleaned = v.strip().lower()
+        if not cleaned:
+            return None
+        if cleaned == "custom":
+            cleaned = "custom_cms"
+        if cleaned not in {"wordpress", "ghost", "substack", "medium", "custom_cms", "other"}:
+            raise ValueError("Invalid publisher platform")
+        return cleaned
+
+    @field_validator("publisher_platform_custom")
+    @classmethod
+    def validate_publisher_platform_custom(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        cleaned = sanitize_name(v)
+        return cleaned or None
+
+    @field_validator("publisher_platform_language")
+    @classmethod
+    def validate_publisher_platform_language(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        cleaned = v.strip().lower()
+        return cleaned or None
+
+    @field_validator("publisher_platform_other")
+    @classmethod
+    def validate_publisher_platform_other(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        cleaned = sanitize_name(v)
+        return cleaned or None
+
+    @model_validator(mode="after")
+    def validate_platform_fields(self):
+        derived_layout = DashboardLayout.PUBLISHER if self.workflow_category == WorkflowCategory.MEDIA_PUBLISHING else DashboardLayout.ENTERPRISE
+        self.dashboard_layout = derived_layout
+
+        if self.workflow_category == WorkflowCategory.MEDIA_PUBLISHING:
+            if not self.publisher_platform:
+                raise ValueError("Publisher platform is required for publisher layout")
+            if self.publisher_platform == "custom_cms":
+                if not self.publisher_platform_language:
+                    raise ValueError("Programming language is required when platform is custom CMS")
+                self.publisher_platform_custom = None
+                self.publisher_platform_other = None
+            elif self.publisher_platform == "other":
+                if not self.publisher_platform_other:
+                    raise ValueError("Platform details are required when platform is other")
+                self.publisher_platform_custom = None
+                self.publisher_platform_language = None
+            else:
+                self.publisher_platform_custom = None
+                self.publisher_platform_language = None
+                self.publisher_platform_other = None
+        else:
+            self.publisher_platform = None
+            self.publisher_platform_custom = None
+            self.publisher_platform_language = None
+            self.publisher_platform_other = None
+        return self
+
 
 class SetupStatusResponse(BaseModel):
     """Response with current setup wizard status"""
@@ -426,6 +510,12 @@ class SetupStatusResponse(BaseModel):
     setup_completed_at: Optional[datetime] = None
     account_type: Optional[str] = None
     display_name: Optional[str] = None
+    workflow_category: Optional[str] = None
+    dashboard_layout: Optional[str] = None
+    publisher_platform: Optional[str] = None
+    publisher_platform_custom: Optional[str] = None
+    publisher_platform_language: Optional[str] = None
+    publisher_platform_other: Optional[str] = None
 
 
 # ============================================
@@ -458,4 +548,3 @@ class PasskeyAuthenticationStartRequest(BaseModel):
 class PasskeyAuthenticationCompleteRequest(BaseModel):
     email: EmailStr
     credential: dict
-

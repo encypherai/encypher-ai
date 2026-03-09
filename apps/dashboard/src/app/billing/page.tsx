@@ -39,6 +39,11 @@ function BillingPageContent() {
   const { activeOrganization, refetch: refetchOrganization } = useOrganization();
   const searchParams = useSearchParams();
   const hasRefetchedAfterCheckout = useRef(false);
+  const requestedAddOn = searchParams.get('addon');
+  const requestedQuantity = Number(searchParams.get('quantity') || '0');
+  const archiveQuantity = Number.isFinite(requestedQuantity) && requestedQuantity > 0 ? requestedQuantity : 0;
+  const isArchiveBackfillRequested = requestedAddOn === 'bulk-archive-backfill';
+  const archiveEstimatedTotal = archiveQuantity * 0.01;
 
   // Fetch subscription, invoices, usage, and coalition data
   const billingQuery = useQuery<{
@@ -90,6 +95,23 @@ function BillingPageContent() {
     },
   });
 
+  const addOnCheckoutMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      if (!archiveQuantity) throw new Error('No archive quantity selected.');
+      return apiClient.createAddOnCheckout(accessToken, {
+        add_on: 'bulk-archive-backfill',
+        quantity: archiveQuantity,
+      });
+    },
+    onSuccess: (response) => {
+      window.location.href = response.checkout_url;
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to start archive checkout.');
+    },
+  });
+
   const subscription = billingQuery.data?.subscription;
   const invoices = billingQuery.data?.invoices || [];
   const usage = billingQuery.data?.usage;
@@ -101,8 +123,8 @@ function BillingPageContent() {
   const currentTier = ['starter', 'free', 'basic'].includes(rawTier) ? 'free' : rawTier;
   const currentTierLabel = currentTier === 'enterprise' ? 'Enterprise' : 'Free';
   // Get subscription price info
-  const currentPrice = subscription?.amount && subscription.amount > 0 
-    ? subscription.amount 
+  const currentPrice = subscription?.amount && subscription.amount > 0
+    ? subscription.amount
     : 0;
   const currentBillingCycle = subscription?.billing_cycle || 'monthly';
   const isDowngradeScheduled = Boolean(subscription?.cancel_at_period_end);
@@ -267,7 +289,7 @@ function BillingPageContent() {
                       </span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className={`h-full rounded-full transition-all ${
                           metric.percentage_used > 90 ? 'bg-red-500' :
                           metric.percentage_used > 70 ? 'bg-yellow-500' :
@@ -428,6 +450,38 @@ function BillingPageContent() {
             <p className="text-muted-foreground">Self-service enforcement tools. Add when you&apos;re ready to license.</p>
           </div>
 
+          {isArchiveBackfillRequested && archiveQuantity > 0 && (
+            <Card className="border-blue-ncs bg-blue-ncs/5">
+              <CardHeader>
+                <CardTitle>Archive Backfill Requested</CardTitle>
+                <CardDescription>
+                  Finish the one-time archive purchase started from the WordPress plugin.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Archive documents</p>
+                  <p className="text-2xl font-bold text-delft-blue dark:text-white">{archiveQuantity.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">Estimated one-time total: ${archiveEstimatedTotal.toFixed(2)}</p>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button
+                    onClick={() => addOnCheckoutMutation.mutate()}
+                    disabled={addOnCheckoutMutation.isPending || isEnterpriseTier}
+                  >
+                    {isEnterpriseTier ? 'Included in Enterprise' : addOnCheckoutMutation.isPending ? 'Opening Checkout…' : 'Buy Archive Backfill'}
+                  </Button>
+                  <a
+                    href="#addons-bundles"
+                    className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    Review Add-On Details
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Bundles */}
           <div className="grid md:grid-cols-3 gap-4">
             {BUNDLES.map((bundle) => (
@@ -471,17 +525,36 @@ function BillingPageContent() {
             <CardContent>
               <div className="grid md:grid-cols-2 gap-3">
                 {ADD_ONS.map((addOn: AddOnConfig) => (
-                  <div key={addOn.id} className={`flex justify-between items-start p-3 bg-muted/30 rounded-lg ${addOn.comingSoon ? 'opacity-80' : ''}`}>
+                  <div key={addOn.id} className={`flex justify-between items-start p-3 bg-muted/30 rounded-lg ${addOn.comingSoon ? 'opacity-80' : ''} ${isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' ? 'border border-blue-ncs bg-blue-ncs/5' : ''}`}>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-sm">{addOn.name}</p>
                         {addOn.comingSoon && <span className="text-[10px] font-medium border rounded px-1.5 py-0.5 text-muted-foreground">Coming Soon</span>}
+                        {isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' && (
+                          <span className="text-[10px] font-medium rounded px-1.5 py-0.5 bg-blue-ncs text-white">Selected from WordPress</span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">{addOn.description}</p>
+                      {isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' && archiveQuantity > 0 && (
+                        <p className="text-xs text-delft-blue mt-2">
+                          {archiveQuantity.toLocaleString()} documents selected · ${archiveEstimatedTotal.toFixed(2)} one-time
+                        </p>
+                      )}
                     </div>
-                    {!addOn.comingSoon && (
-                      <span className="text-sm font-bold text-blue-ncs ml-3 whitespace-nowrap">{formatAddOnPrice(addOn)}</span>
-                    )}
+                    <div className="ml-3 flex flex-col items-end gap-2">
+                      {!addOn.comingSoon && (
+                        <span className="text-sm font-bold text-blue-ncs whitespace-nowrap">{formatAddOnPrice(addOn)}</span>
+                      )}
+                      {isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' && (
+                        <Button
+                          size="sm"
+                          onClick={() => addOnCheckoutMutation.mutate()}
+                          disabled={addOnCheckoutMutation.isPending || isEnterpriseTier}
+                        >
+                          {isEnterpriseTier ? 'Included' : addOnCheckoutMutation.isPending ? 'Opening…' : 'Checkout'}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

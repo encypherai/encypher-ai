@@ -167,17 +167,23 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 
 **Content Calendar:**
 
-**Current Phase (March 2026):**
-- "The 'We Didn't Know' Defense Ends January 8, 2026"
+**Pre-Landmark Deal (Now -- Held for Coordinated Launch):**
+Drafted and ready to publish alongside or immediately after first landmark deal announcement:
+- "C2PA Text Standard is Live: What Publishers Need to Know"
+- "The 'We Didn't Know' Defense is Over: Willful Infringement Framework for Publishers"
 - "Quote Integrity: Protecting Your Brand from AI Hallucinations"
 - "Cryptographic Watermarking That Survives B2B Distribution"
-- "Roundtable Track: Shape Market Licensing Standards"
 
-**Post-Publication (January 8 '):**
-- "C2PA Text Standard is Live: What Publishers Need to Know"
-- "Willful Infringement Framework: Registration-Qualified Statutory Leverage"
-- "Roundtable Preview: Defining AI Licensing Terms"
+**Landmark Deal Announcement (Date TBD -- triggered by first signed deal):**
+- "[Partner] Implements C2PA Text Provenance -- Reference Implementation Now in Production"
 - "Founding Coalition Update: Network Effects in Action"
+- "Why Access Control Isn't Enough: The Three-Layer Publisher Protection Stack"
+
+**Post-Announcement Sustained Content (Q2-Q3 2026):**
+- "EU AI Act Enforcement: August 2026 -- What Publishers Need to Do Now"
+- "Microsoft PCM vs. Independent Infrastructure: Why Provenance Needs to Be Platform-Independent"
+- "Roundtable Framework: Defining AI Licensing Terms"
+- "From TollBit to Encypher: Why You Need Both Access Control and Content Provenance"
 
 **Distribution Channels:**
 - Legal industry publications (Bloomberg Law, Law360)
@@ -198,9 +204,16 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Compatible infrastructure for provenance data
 
 **Content Calendar:**
-- **January:** "C2PA Text Standard Published: Infrastructure for AI Companies"
-- **February:** "Quote Integrity Verification: Protect Your Brand from Hallucination Claims"
-- **March:** "Performance Intelligence from Sentence-Level Attribution"
+
+**Pre-Landmark Deal (Drafted, Ready for Coordinated Launch):**
+- "C2PA Text Standard Published: Infrastructure for AI Companies"
+- "Quote Integrity Verification: Protect Your Brand from Hallucination Claims"
+- "Performance Intelligence from Sentence-Level Attribution"
+
+**Post-Announcement (Q2-Q3 2026):**
+- "EU AI Act August 2026: Why AI Companies Need Provenance Infrastructure Now"
+- "Publisher Coalition Reaches [X] Members -- Compatible Infrastructure Required"
+- "Beyond SynthID: Why Cryptographic Provenance Beats Statistical Watermarking"
 
 **Distribution Channels:**
 - AI research communities (collaborative framing)
@@ -376,13 +389,18 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Roundtable-track participants confirmed: rolling target 20-30
 - Media mentions: 10 tier-1 (standards authority angle)
 
-### Q1 2026 Goals (January 8 ')
+### Q1 2026 Goals (Post-Standard Publication)
 - Publisher coalition: 20 members
 - AI company partnerships: 3 infrastructure discussions
 - Revenue pipeline: $10M+ (licensing + enforcement tools + implementations)
 - Roundtable reconvened session executed (date TBD)
 - Market framework published: March
 - Standards recognition: Industry validated
+
+> **Note:** Revenue pipeline and coalition size figures above are high-case targets.
+> First actual licensing revenue is expected Q3-Q4 2026 contingent on platform partner
+> agreements closing and the formal notice campaign completing. Marketing spend and
+> headcount should be calibrated against the conservative scenario, not these targets.
 
 ### Success Metrics
 - Coalition growth: 5 publishers/month post-publication

@@ -347,8 +347,8 @@ def prepare_evidence_package(content, notification_record):
 
 ## Success Metrics (Updated)
 
-### Adoption Metrics (Post-January 8):
-- GitHub stars: 5,000+ in 6 months
+### Adoption Metrics (Post-Landmark Deal Launch):
+- GitHub stars: 5,000+ in 6 months post-announcement
 - NPM downloads: 50,000+ monthly
 - Active contributors: 100+
 - Integration projects: 500+
@@ -415,34 +415,37 @@ def prepare_evidence_package(content, notification_record):
 
 ## Launch Sequence (Updated)
 
-### Phase 1: Post-Publication Distribution (Current)
-- Finalize repository for public launch
-- Complete documentation with enterprise upgrade path
-- Prepare blog announcement
-- Brief developer advocates
-- HackerNews launch plan ready
+### Phase 1: Repository Live, Marketing Held (Current -- March 2026)
+- `github.com/encypher/c2pa-text` is public
+- Documentation is complete with enterprise upgrade path
+- Blog and HackerNews launch materials are drafted and ready
+- **Marketing push intentionally deferred:** we will execute the full announcement
+  (blog, HackerNews, press outreach, developer amplification) alongside or immediately
+  after the first landmark deal announcement. This ensures maximum impact and gives
+  the press a concrete adoption story to lead with, not just a standards release.
+- No active promotion until landmark deal milestone is hit
 
-### Phase 2: Standards Publication (January 8, 2026)
-- GitHub repository goes public
-- Blog: "C2PA Text Standard Published--Reference Implementation Ready"
-- HackerNews launch with standards publication story
-- Press coverage coordination
-- Documentation complete with standards messaging
+### Phase 2: Landmark Deal Launch (Date TBD -- triggered by first signed deal)
+- Coordinated announcement: deal news + open source reference implementation launch
+- Blog: "C2PA Text Standard Reference Implementation -- Now in Production at [Partner]"
+- HackerNews launch with publisher adoption story as the hook
+- Press coverage: standards authority + real-world adoption combined narrative
+- Developer documentation pushed live across all channels
 
-### Phase 3: Post-Publication Momentum (January 9-31, 2026)
+### Phase 3: Post-Announcement Momentum (weeks 1-4 after launch)
 - Integration guides for major platforms
 - Python/JS/Go SDKs with C2PA compliance
-- Video tutorials emphasizing standards
-- Partner announcements (where allowed)
+- Video tutorials emphasizing standards and implementation
+- Partner announcements where deal terms allow
 - "Why Document-Level Isn't Enough" content series
 
-### Phase 4: Roundtable Track Tie-In (Q1 2026)
+### Phase 4: Roundtable Track Tie-In
 - Developer champion program highlight
 - C2PA certification program launch
 - "Market Standards" content connecting to roundtable track
 - Enterprise conversion push ahead of reconvened session
 
-### Phase 5: Commercial Pipeline (March 2026+)
+### Phase 5: Commercial Pipeline (sustained)
 - Enterprise feature webinars
 - Willful infringement enablement focus
 - Quote integrity verification demos

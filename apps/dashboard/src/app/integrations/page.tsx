@@ -8,7 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@encypher/design-s
 
 const WORDPRESS_PLUGIN_DOWNLOAD_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_PLUGIN_DOWNLOAD_URL ||
-  '/downloads/encypher-provenance-1.0.0-beta.zip';
+  '/downloads/encypher-provenance.zip';
 
 const comingSoonIntegrations = [
   {

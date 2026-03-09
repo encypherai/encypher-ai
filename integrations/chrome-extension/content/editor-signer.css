@@ -2,55 +2,73 @@
  * Encypher Verify - Editor Signer Styles
  */
 
-/* Sign Button */
-.encypher-sign-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #2A87C4 0%, #1B2F50 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease, background 0.2s ease;
-  box-shadow: 0 2px 8px rgba(42, 135, 196, 0.3);
-  z-index: 10001;
-}
+ /* Sign Button */
+ .encypher-sign-btn {
+   display: inline-flex;
+   align-items: center;
+   gap: 6px;
+   padding: 6px 12px;
+   background: linear-gradient(135deg, #2A87C4 0%, #1B2F50 100%);
+   color: white;
+   border: none;
+   border-radius: 6px;
+   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+   font-size: 13px;
+   font-weight: 500;
+   cursor: pointer;
+   opacity: 0;
+   visibility: hidden;
+   transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease, background 0.2s ease, width 0.2s ease, padding 0.2s ease;
+   box-shadow: 0 2px 8px rgba(42, 135, 196, 0.3);
+   z-index: 10001;
+   min-height: 36px;
+  }
 
-.encypher-sign-btn--visible {
-  opacity: 1;
-  visibility: visible;
-}
+ .encypher-sign-btn--compact {
+   padding: 6px 10px;
+ }
 
-.encypher-sign-btn:hover {
-  background: linear-gradient(135deg, #1B2F50 0%, #2A87C4 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(42, 135, 196, 0.4);
+ .encypher-sign-btn--compact .encypher-sign-btn__text {
+   width: 0;
+   opacity: 0;
+   overflow: hidden;
+ }
+
+ .encypher-sign-btn--expanded,
+ .encypher-sign-btn--compact:hover,
+ .encypher-sign-btn--compact:focus-visible {
+   padding-inline: 12px;
+ }
+
+ .encypher-sign-btn--expanded .encypher-sign-btn__text,
+ .encypher-sign-btn--compact:hover .encypher-sign-btn__text,
+ .encypher-sign-btn--compact:focus-visible .encypher-sign-btn__text {
+   width: auto;
+   opacity: 1;
+ }
+
+ .encypher-sign-btn--visible {
+   opacity: 1;
+   visibility: visible;
+ }
+
+ .encypher-sign-btn--ready {
+   box-shadow: 0 0 0 3px rgba(42, 135, 196, 0.16), 0 4px 12px rgba(42, 135, 196, 0.25);
+ }
+
+ .encypher-sign-btn--busy {
+   cursor: progress;
+   opacity: 0.9;
+ }
+
+ .encypher-sign-btn:hover {
+   background: linear-gradient(135deg, #1B2F50 0%, #2A87C4 100%);
+   transform: translateY(-1px);
+   box-shadow: 0 4px 12px rgba(42, 135, 196, 0.4);
 }
 
 .encypher-sign-btn:active {
   transform: translateY(0);
-}
-
-.encypher-sign-btn:focus {
-  outline: 2px solid #2A87C4;
-  outline-offset: 2px;
-}
-
-.encypher-sign-btn--signed {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.encypher-sign-btn--signed:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .encypher-sign-btn__icon {
@@ -70,6 +88,7 @@
 
 .encypher-sign-btn__text {
   white-space: nowrap;
+  transition: opacity 0.18s ease, width 0.18s ease;
 }
 
 /* Signing UI Modal */
@@ -157,6 +176,20 @@
   padding: 16px;
 }
 
+.encypher-sign-ui__identity {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.encypher-sign-ui__trust {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6B7280;
+  margin-bottom: 14px;
+}
+
 .encypher-sign-ui__preview {
   margin-bottom: 16px;
 }
@@ -188,6 +221,39 @@
   font-size: 11px;
   color: #9CA3AF;
   margin-top: 6px;
+}
+
+.encypher-sign-ui__shortcut {
+  font-size: 11px;
+  color: #6B7280;
+  margin-bottom: 10px;
+}
+
+.encypher-sign-ui__toggle {
+  appearance: none;
+  border: 1px solid #D1D5DB;
+  background: #F9FAFB;
+  color: #374151;
+  border-radius: 8px;
+  padding: 8px 10px;
+  width: 100%;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.encypher-sign-ui__toggle:hover {
+  background: #F3F4F6;
+}
+
+.encypher-sign-ui__advanced {
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  background: #FAFAFA;
 }
 
 .encypher-sign-ui__options {
@@ -329,6 +395,52 @@
   }
 }
 
+.encypher-sign-ui__success-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #047857;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  border-radius: 999px;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+}
+
+.encypher-sign-ui__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: #6B7280;
+  border-top: 1px solid #E5E7EB;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.encypher-sign-ui__meta-row strong {
+  color: #111827;
+  font-weight: 600;
+  word-break: break-all;
+  text-align: right;
+}
+
+.encypher-sign-ui__link {
+  display: inline-flex;
+  margin-top: 10px;
+  color: #1D4ED8;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.encypher-sign-ui__link:hover {
+  text-decoration: underline;
+}
+
 /* Notification Toast */
 .encypher-notification {
   position: fixed;
@@ -420,36 +532,46 @@
     background: #1F2937;
     color: #F9FAFB;
   }
-  
+
+  .encypher-sign-ui__identity {
+    color: #F9FAFB;
+  }
+
+  .encypher-sign-ui__trust,
+  .encypher-sign-ui__shortcut,
+  .encypher-sign-ui__meta {
+    color: #9CA3AF;
+  }
+
   .encypher-sign-ui__text {
     background: #374151;
     border-color: #4B5563;
     color: #F3F4F6;
   }
-  
+
+  .encypher-sign-ui__toggle {
+    background: #111827;
+    border-color: #374151;
+    color: #E5E7EB;
+  }
+
+  .encypher-sign-ui__toggle:hover {
+    background: #1F2937;
+  }
+
+  .encypher-sign-ui__advanced {
+    background: #111827;
+    border-color: #374151;
+  }
+
   .encypher-sign-ui__options label {
     color: #E5E7EB;
   }
-  
+
   .encypher-sign-ui__options input[type="text"] {
     background: #374151;
     border-color: #4B5563;
     color: #F3F4F6;
-  }
-  
-  .encypher-sign-ui__footer {
-    background: #111827;
-    border-color: #374151;
-  }
-  
-  .encypher-sign-ui__btn--secondary {
-    background: #374151;
-    color: #E5E7EB;
-    border-color: #4B5563;
-  }
-  
-  .encypher-sign-ui__btn--secondary:hover {
-    background: #4B5563;
   }
 
   .encypher-sign-ui__select-group label {
@@ -461,6 +583,25 @@
     border-color: #4B5563;
     color: #F3F4F6;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239CA3AF'/%3E%3C/svg%3E");
+  }
+
+  .encypher-sign-ui__success-badge {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #6EE7B7;
+  }
+
+  .encypher-sign-ui__meta-row {
+    border-color: #374151;
+    color: #9CA3AF;
+  }
+
+  .encypher-sign-ui__meta-row strong {
+    color: #F3F4F6;
+  }
+
+  .encypher-sign-ui__link {
+    color: #93C5FD;
   }
 }
 
@@ -476,7 +617,7 @@
     max-width: 100% !important;
     border-radius: 12px 12px 0 0;
   }
-  
+
   .encypher-notification {
     left: 16px;
     right: 16px;

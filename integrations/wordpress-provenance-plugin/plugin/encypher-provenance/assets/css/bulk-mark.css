@@ -88,8 +88,29 @@
     color: #2A87C4;
 }
 
+.encypher-bulk-summary #encypher-archive-estimate {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1B2F50;
+}
+
 .encypher-tier-limit {
     color: #d63638;
+}
+
+.encypher-free-plan-note {
+    margin-bottom: 8px;
+}
+
+.encypher-archive-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.encypher-plan-included {
+    color: #00a32a;
 }
 
 .encypher-bulk-progress {

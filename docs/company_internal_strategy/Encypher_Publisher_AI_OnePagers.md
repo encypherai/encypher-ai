@@ -6,6 +6,11 @@
 **Version:** 4.1
 **Distribution:** Sales & Business Development Teams
 
+> **Messaging SSOT:** Core positioning and value propositions are owned by
+> `Encypher_GTM_Strategy.md`. This document distills that content into audience-specific
+> one-pagers for external distribution. Keep in sync with the GTM Strategy on every
+> messaging update.
+
 ---
 
 **Our Mission:** To establish and implement the global technical standard for text authentication through collaborative infrastructure building, enabling an economy where content ownership is provable, licensing is technically feasible, and market standards are industry-defined.
@@ -239,6 +244,15 @@ A: Publishers: 2-4 weeks for full deployment. AI Companies: 6-8 weeks for traini
 
 **Q: When does the C2PA standard publish?**
 A: January 8, 2026 is the hard publication date. The invite-only roundtable track is active (rescheduling in progress) to translate the technical standard into market licensing frameworks.
+
+**Q: We already use TollBit / ProRata. Why do we need Encypher?**
+A: TollBit and ProRata are Tier 1 licensing tools -- access gates that AI developers have to opt into. TollBit monetizes authorized AI access to your site; ProRata estimates source contribution inside their own AI search product. Both are valuable, but both share a fundamental limitation: they only work when AI companies voluntarily participate. If an AI company scrapes around TollBit's gate, or doesn't integrate with ProRata, those tools have zero visibility. Encypher embeds cryptographic provenance in the content itself -- it works regardless of whether the AI company cooperates. Think of it as three layers: (1) Tier 1 licensing / access control (TollBit, Cloudflare) -- opt-in gates for cooperative AI companies, (2) content provenance (Encypher) -- works unilaterally, no cooperation required, (3) attribution/monetization (ProRata) -- opt-in systems within specific ecosystems. You need all three. We're complementary, not competitive -- and we're the only layer that works when AI companies don't opt in.
+
+**Q: What about Microsoft's Publisher Content Marketplace?**
+A: Microsoft PCM brokers licensing deals between publishers and AI builders, starting with Copilot. It validates the market. But Microsoft is simultaneously the largest enterprise AI buyer of publisher content and the marketplace operator setting the deal terms -- that's a structural conflict. Encypher is independent infrastructure. We don't buy content, we don't run AI models, and we don't compete with publishers for attention. Our provenance also works across every AI company, not just within Microsoft's marketplace. PCM and Encypher can work together -- our provenance provides the verification layer that makes marketplace deals enforceable.
+
+**Q: How does the EU AI Act affect this?**
+A: The EU AI Act enforcement deadline for AI content transparency is August 2, 2026. The draft Code of Practice explicitly requires machine-readable marking and watermarking of AI-generated content. C2PA is the standards framework regulators are referencing. Publishers implementing C2PA-compliant provenance now are ahead of regulatory requirements. This creates additional urgency for both publishers and AI companies to adopt standards-based provenance infrastructure.
 
 ---
 

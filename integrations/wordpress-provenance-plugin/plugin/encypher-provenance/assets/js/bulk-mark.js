@@ -1,11 +1,13 @@
 /**
  * Bulk marking functionality for Encypher C2PA WordPress plugin.
- * 
+ *
  * Handles batch processing of posts with progress tracking,
  * error handling, and pause/resume capabilities.
  */
 (function($) {
     'use strict';
+
+    const pricing = EncypherBulkMark.pricing || {};
 
     let bulkMarkState = {
         postIds: [],
@@ -17,7 +19,7 @@
         isPaused: false,
         isCancelled: false,
         startTime: null,
-        tier: 'free'
+        tier: EncypherBulkMark.tier || 'free'
     };
 
     /**
@@ -26,7 +28,7 @@
     function init() {
         // Update total count when selections change
         $('input[name="post_types[]"], input[name="status_filter"], select[name="date_range"]').on('change', updateTotalCount);
-        
+
         // Show/hide custom date range
         $('#encypher-date-range').on('change', function() {
             if ($(this).val() === 'custom') {
@@ -71,6 +73,7 @@
 
         if (postTypes.length === 0) {
             $('#encypher-total-count').text('0');
+            updateArchiveEstimate(0);
             return;
         }
 
@@ -89,9 +92,36 @@
                 if (response.success) {
                     $('#encypher-total-count').text(response.data.total);
                     bulkMarkState.postIds = response.data.post_ids;
+                    updateArchiveEstimate(response.data.total);
                 }
             }
         });
+    }
+
+    function updateArchiveEstimate(totalCount) {
+        const archivePricePerDocument = Number(pricing.archive_price_per_document || 0.01);
+        const estimatedTotal = archivePricePerDocument * totalCount;
+        $('#encypher-archive-estimate').text(formatCurrency(estimatedTotal));
+
+        const $billingLink = $('#encypher-buy-archive-backfill');
+        if ($billingLink.length) {
+            const url = new URL(EncypherBulkMark.billingUrlBase || 'https://dashboard.encypherai.com/billing');
+            url.searchParams.set('addon', 'bulk-archive-backfill');
+            url.searchParams.set('source', 'wordpress-plugin');
+            if (totalCount > 0) {
+                url.searchParams.set('quantity', String(totalCount));
+            }
+            $billingLink.attr('href', url.toString());
+        }
+    }
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(amount);
     }
 
     /**
@@ -101,15 +131,6 @@
         if (bulkMarkState.postIds.length === 0) {
             alert('No posts to mark. Please adjust your filters.');
             return;
-        }
-
-        // Check tier limits
-        const tier = $('body').data('tier') || 'free';
-        if (tier === 'free' && bulkMarkState.postIds.length > 10) {
-            if (!confirm('Free tier limit: 10 documents. Only the first 10 will be marked. Upgrade to Enterprise for higher limits. Continue?')) {
-                return;
-            }
-            bulkMarkState.postIds = bulkMarkState.postIds.slice(0, 10);
         }
 
         // Reset state
@@ -161,21 +182,34 @@
 
         $('#encypher-progress-status-text').text('Processing batch...');
 
-        // Process batch
+        // Process batch - send post_ids as JSON string to avoid max_input_vars limit
         $.ajax({
             url: EncypherBulkMark.ajaxUrl,
             type: 'POST',
             data: {
                 action: 'encypher_bulk_mark_batch',
                 nonce: EncypherBulkMark.nonce,
-                post_ids: batchIds
+                post_ids_json: JSON.stringify(batchIds)
             },
             success: function(response) {
                 if (response.success) {
-                    processBatchResults(response.data.results);
+                    const results = response?.data?.results;
+                    if (!Array.isArray(results)) {
+                        handleBatchError('Invalid batch response from server.');
+                        return;
+                    }
+
+                    if (results.length !== batchIds.length) {
+                        handleBatchError(
+                            'Incomplete batch response from server. Expected ' + batchIds.length + ' results but received ' + results.length + '.'
+                        );
+                        return;
+                    }
+
+                    processBatchResults(results);
                     bulkMarkState.currentIndex = batchEnd;
                     updateProgress();
-                    
+
                     // Continue to next batch
                     setTimeout(processNextBatch, 100);
                 } else {
@@ -224,7 +258,7 @@
      */
     function updateProgress() {
         const percentage = Math.round((bulkMarkState.currentIndex / bulkMarkState.postIds.length) * 100);
-        
+
         $('.encypher-progress-fill').css('width', percentage + '%');
         $('#encypher-progress-percentage').text(percentage + '%');
         $('#encypher-progress-current').text(bulkMarkState.currentIndex);
@@ -262,7 +296,7 @@
      */
     function togglePause() {
         bulkMarkState.isPaused = !bulkMarkState.isPaused;
-        
+
         if (bulkMarkState.isPaused) {
             $('#encypher-pause-bulk-mark').text('Resume');
             $('#encypher-progress-status-text').text('Paused');
@@ -291,7 +325,7 @@
         $('.encypher-bulk-complete').show();
 
         $('#encypher-final-success-count').text(bulkMarkState.successCount);
-        
+
         if (bulkMarkState.errorCount > 0) {
             $('#encypher-final-errors').show();
             $('#encypher-final-error-count').text(bulkMarkState.errorCount);
@@ -305,7 +339,7 @@
         $('.encypher-bulk-complete').hide();
         $('.encypher-bulk-form').show();
         $('.encypher-error-log').hide();
-        
+
         // Reset progress display
         $('.encypher-progress-fill').css('width', '0%');
         $('#encypher-progress-percentage').text('0%');
@@ -314,7 +348,7 @@
         $('#encypher-error-count').text('0');
         $('#encypher-error-list').empty();
         $('#encypher-view-errors').hide();
-        
+
         // Update count
         updateTotalCount();
     }
