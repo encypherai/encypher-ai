@@ -47,9 +47,19 @@ let cachedAccountInfo = null;
 let accountInfoPromise = null;
 let primaryEditorId = null;
 let editorObserverStarted = false;
+const _observedShadowRoots = new WeakSet();
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 function normalizeEmbeddingTechnique(value) {
@@ -495,6 +505,253 @@ function createSignButton(editorId) {
   return button;
 }
 
+function showNotification(type, message) {
+  const existing = document.querySelector('.encypher-notification');
+  existing?.remove();
+
+  const notification = document.createElement('div');
+  notification.className = `encypher-notification encypher-notification--${type}`;
+  notification.innerHTML = `
+    <div class="encypher-notification__icon">${type === 'success' ? '✓' : type === 'error' ? '!' : 'i'}</div>
+    <div class="encypher-notification__content">${escapeHtml(String(message || ''))}</div>
+  `;
+  document.body.appendChild(notification);
+
+  window.setTimeout(() => {
+    notification.style.opacity = '0';
+    window.setTimeout(() => notification.remove(), 300);
+  }, 3200);
+}
+
+function setPrimaryEditor(editorId) {
+  primaryEditorId = editorId;
+  for (const [, info] of activeEditors) {
+    info.updateVisibility?.();
+  }
+}
+
+function positionButton(button, editor) {
+  if (!button?.isConnected || !editor?.isConnected || button.dataset.hosted === 'true') return;
+
+  const editorRect = editor.getBoundingClientRect();
+  const margin = EDITOR_CONFIG.viewportMargin;
+  const gap = EDITOR_CONFIG.buttonGap;
+  const buttonWidth = button.offsetWidth || 110;
+  const buttonHeight = button.offsetHeight || 36;
+  let top = editorRect.top - buttonHeight - gap;
+
+  if (top < margin) {
+    top = editorRect.bottom + gap;
+  }
+
+  const maxTop = Math.max(margin, window.innerHeight - margin - buttonHeight);
+  const maxLeft = Math.max(margin, window.innerWidth - margin - buttonWidth);
+  const left = clamp(editorRect.right - buttonWidth, margin, maxLeft);
+
+  button.style.position = 'fixed';
+  button.style.top = `${clamp(top, margin, maxTop)}px`;
+  button.style.left = `${left}px`;
+  button.style.right = 'auto';
+  button.style.bottom = 'auto';
+  button.style.zIndex = '10001';
+}
+
+function createRepositionScheduler(button, editor) {
+  let frameId = null;
+
+  return function scheduleReposition() {
+    if (frameId !== null) return;
+    frameId = requestAnimationFrame(() => {
+      frameId = null;
+      if (!button.isConnected || !editor.isConnected) return;
+      positionButton(button, editor);
+    });
+  };
+}
+
+function positionSigningUI(ui, button) {
+  const buttonRect = button.getBoundingClientRect();
+  const margin = EDITOR_CONFIG.viewportMargin;
+  const gap = 8;
+  const uiRect = ui.getBoundingClientRect();
+  const maxLeft = Math.max(margin, window.innerWidth - margin - uiRect.width);
+  const maxTop = Math.max(margin, window.innerHeight - margin - uiRect.height);
+  let top = buttonRect.bottom + gap;
+
+  if (top + uiRect.height > window.innerHeight - margin) {
+    top = buttonRect.top - uiRect.height - gap;
+  }
+
+  top = clamp(top, margin, maxTop);
+  const left = clamp(buttonRect.right - uiRect.width, margin, maxLeft);
+
+  ui.style.position = 'fixed';
+  ui.style.top = `${top}px`;
+  ui.style.left = `${left}px`;
+  ui.style.right = 'auto';
+}
+
+function showSigningUI(editor, editorType, button) {
+  document.querySelector('.encypher-sign-ui')?.remove();
+
+  const editorId = button.id.replace('encypher-sign-', '');
+  const ui = document.createElement('div');
+  ui.className = 'encypher-sign-ui';
+  ui.dataset.editorId = editorId;
+
+  const text = getEditorText(editor, editorType) || '';
+  const preview = text.trim().slice(0, 240);
+  const signerLabel = getSignerLabel(cachedAccountInfo);
+
+  ui.innerHTML = `
+    <div class="encypher-sign-ui__header">
+      <div class="encypher-sign-ui__header-brand">
+        <span class="encypher-sign-ui__header-logo">${typeof globalThis?.ENCYPHER_LOGO_SVG === 'string' ? globalThis.ENCYPHER_LOGO_SVG : ''}</span>
+        <h3>Sign content</h3>
+      </div>
+      <button type="button" class="encypher-sign-ui__close" aria-label="Close">×</button>
+    </div>
+    <div class="encypher-sign-ui__body">
+      <div class="encypher-sign-ui__identity">Signing as: ${escapeHtml(signerLabel)}</div>
+      <div class="encypher-sign-ui__trust">Invisible proof of origin is embedded into your text and can be verified later.</div>
+      <div class="encypher-sign-ui__preview">
+        <label>Preview</label>
+        <div class="encypher-sign-ui__text">${escapeHtml(preview || 'No content to preview yet.')}</div>
+        <div class="encypher-sign-ui__meta">${text.trim().length} characters</div>
+      </div>
+      <div class="encypher-sign-ui__shortcut">Shortcut: ${escapeHtml(getShortcutHint())}</div>
+      <button type="button" class="encypher-sign-ui__toggle">Advanced options</button>
+      <div class="encypher-sign-ui__advanced" hidden>
+        <div class="encypher-sign-ui__select-group">
+          <label for="encypher-manifest-mode">Proof mode</label>
+          <select id="encypher-manifest-mode" class="encypher-sign-ui__select">
+            <option value="micro">Embedded</option>
+            <option value="micro_no_embed_c2pa">Compact</option>
+          </select>
+        </div>
+        <div class="encypher-sign-ui__select-group">
+          <label for="encypher-segmentation-level">Frequency</label>
+          <select id="encypher-segmentation-level" class="encypher-sign-ui__select">
+            <option value="sentence">Sentence</option>
+            <option value="paragraph">Paragraph</option>
+            <option value="document">Document</option>
+          </select>
+        </div>
+        <div class="encypher-sign-ui__select-group">
+          <label for="encypher-document-type">Document type</label>
+          <select id="encypher-document-type" class="encypher-sign-ui__select">
+            <option value="article">Article</option>
+            <option value="social">Social</option>
+            <option value="email">Email</option>
+            <option value="message">Message</option>
+          </select>
+        </div>
+        <div class="encypher-sign-ui__options">
+          <label><input type="checkbox" id="encypher-replace-content"> Replace editor content after signing</label>
+        </div>
+      </div>
+    </div>
+    <div class="encypher-sign-ui__footer">
+      <button type="button" class="encypher-sign-ui__btn encypher-sign-ui__btn--secondary">Cancel</button>
+      <button type="button" class="encypher-sign-ui__btn encypher-sign-ui__btn--primary">
+        <span class="encypher-sign-ui__btn-label">Sign now</span>
+        <span class="encypher-sign-ui__btn-loading">Signing…</span>
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(ui);
+  const advancedToggle = ui.querySelector('.encypher-sign-ui__toggle');
+  const advancedPanel = ui.querySelector('.encypher-sign-ui__advanced');
+  const closeButton = ui.querySelector('.encypher-sign-ui__close');
+  const cancelButton = ui.querySelector('.encypher-sign-ui__btn--secondary');
+  const primaryButton = ui.querySelector('.encypher-sign-ui__btn--primary');
+  const loading = ui.querySelector('.encypher-sign-ui__btn-loading');
+  const label = ui.querySelector('.encypher-sign-ui__btn-label');
+  const manifestSelect = ui.querySelector('#encypher-manifest-mode');
+  const segmentationSelect = ui.querySelector('#encypher-segmentation-level');
+  const documentTypeSelect = ui.querySelector('#encypher-document-type');
+  const replaceCheckbox = ui.querySelector('#encypher-replace-content');
+
+  manifestSelect.value = defaultEmbeddingTechnique;
+  segmentationSelect.value = defaultSegmentationLevel;
+  documentTypeSelect.value = defaultDocumentType;
+  replaceCheckbox.checked = defaultAutoReplaceContent;
+
+  const cleanup = () => {
+    document.removeEventListener('mousedown', handleOutsideClick, true);
+    window.removeEventListener('resize', reposition, { passive: true });
+    window.removeEventListener('scroll', reposition, { passive: true });
+    ui.remove();
+    activeEditors.get(editorId)?.updateVisibility?.();
+  };
+
+  const reposition = () => positionSigningUI(ui, button);
+  const handleOutsideClick = (event) => {
+    if (ui.contains(event.target) || button.contains(event.target)) return;
+    cleanup();
+  };
+
+  advancedToggle.addEventListener('click', () => {
+    const nextHidden = !advancedPanel.hidden;
+    advancedPanel.hidden = nextHidden;
+    advancedToggle.textContent = nextHidden ? 'Advanced options' : 'Hide advanced options';
+    reposition();
+  });
+
+  closeButton.addEventListener('click', cleanup);
+  cancelButton.addEventListener('click', cleanup);
+  primaryButton.addEventListener('click', async () => {
+    primaryButton.disabled = true;
+    label.style.display = 'none';
+    loading.classList.add('encypher-sign-ui__btn-loading--active');
+    try {
+      const result = await signEditorContent({
+        editor,
+        editorType,
+        button,
+        replaceContent: replaceCheckbox.checked,
+        manifestMode: manifestSelect.value,
+        segmentationLevel: segmentationSelect.value,
+        documentType: documentTypeSelect.value,
+      });
+      const verificationUrl = result?.verificationUrl;
+      const documentId = result?.documentId;
+      ui.querySelector('.encypher-sign-ui__body').innerHTML = `
+        <div class="encypher-sign-ui__success-badge">✓ Signed successfully</div>
+        <div class="encypher-sign-ui__identity">Signed as: ${escapeHtml(getSignerLabel(cachedAccountInfo))}</div>
+        <div class="encypher-sign-ui__trust">Your content now includes invisible proof of origin.</div>
+        <div class="encypher-sign-ui__meta-row"><span>Document ID</span><strong>${escapeHtml(documentId || 'Available after verification')}</strong></div>
+        ${verificationUrl ? `<a class="encypher-sign-ui__link" href="${escapeHtml(verificationUrl)}" target="_blank" rel="noreferrer">Open verification details</a>` : ''}
+      `;
+      ui.querySelector('.encypher-sign-ui__footer').innerHTML = `
+        <button type="button" class="encypher-sign-ui__btn encypher-sign-ui__btn--primary">Done</button>
+      `;
+      ui.querySelector('.encypher-sign-ui__btn--primary')?.addEventListener('click', cleanup);
+      reposition();
+    } catch (error) {
+      showNotification('error', error.message || 'Signing error');
+      primaryButton.disabled = false;
+      label.style.display = '';
+      loading.classList.remove('encypher-sign-ui__btn-loading--active');
+    }
+  });
+
+  document.addEventListener('mousedown', handleOutsideClick, true);
+  window.addEventListener('resize', reposition, { passive: true });
+  window.addEventListener('scroll', reposition, { passive: true });
+  getCachedAccountInfo().then(() => {
+    const identityEl = ui.querySelector('.encypher-sign-ui__identity');
+    if (identityEl) {
+      identityEl.textContent = `Signing as: ${getSignerLabel(cachedAccountInfo)}`;
+    }
+  });
+  reposition();
+}
+
+function _attachEmbeddingRunHandlers() {
+}
+
 function getSiteAdapter(editor) {
   const hostname = window.location.hostname;
 
@@ -897,6 +1154,7 @@ async function signEditorContent(options) {
   try {
     await navigator.clipboard.writeText(response.signedText);
   } catch (e) {
+    void e;
   }
 
   activeEditors.get(editor.id)?.updateVisibility?.();
@@ -1147,6 +1405,19 @@ function scanForEditorsInRoot(root) {
   });
 
   Array.from(candidates).forEach(attachSignButton);
+}
+
+function scanForEditors() {
+  const platform = detectOnlinePlatform();
+  if (platform) {
+    const onlineEditor = getOnlineEditorElement(platform);
+    if (onlineEditor?.element) {
+      attachSignButton(onlineEditor.element);
+    }
+  }
+
+  scanForEditorsInRoot(document);
+  scanShadowRootsForEditors(document);
 }
 
 function scanShadowRootsForEditors(root = document) {
@@ -1442,6 +1713,7 @@ async function handleSignSelection(text) {
     try {
       await navigator.clipboard.writeText(response.signedText);
     } catch (e) {
+      void e;
     }
 
     showNotification('success', `Signed selection as ${getSignerLabel(cachedAccountInfo)}`);
@@ -1540,6 +1812,7 @@ async function _initEditorSigner() {
     defaultDocumentType = settings.defaultDocumentType || 'article';
     defaultAutoReplaceContent = settings.autoReplaceContent !== false;
   } catch (e) {
+    void e;
   }
 
   getCachedAccountInfo().catch(() => null);
