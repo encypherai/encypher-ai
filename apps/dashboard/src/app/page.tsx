@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { OnboardingChecklist } from '../components/onboarding/OnboardingChecklist';
+import { OnboardingLaunchpad } from '../components/onboarding/OnboardingLaunchpad';
 import apiClient from '../lib/api';
 import { useOrganization } from '../contexts/OrganizationContext';
 
@@ -219,15 +220,55 @@ export default function DashboardPage() {
     refetchOnWindowFocus: false,
   });
 
+  const setupQuery = useQuery({
+    queryKey: ['setup-status'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('Not authenticated');
+      return apiClient.getSetupStatus(accessToken);
+    },
+    enabled: Boolean(accessToken),
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
+  });
+
   const stats = statsQuery.data;
   const apiKeys = keysQuery.data || [];
+  const setupStatus = setupQuery.data;
   const isLoadingStats = statsQuery.isLoading;
   const isLoadingKeys = keysQuery.isLoading || !orgId;
+  const hasApiKeys = apiKeys.length > 0;
 
   // Format numbers with commas
   const formatNumber = (num: number) => num?.toLocaleString() ?? '0';
 
   const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'there';
+  const workflowCategory = setupStatus?.workflow_category || (setupStatus?.dashboard_layout === 'publisher' ? 'media_publishing' : 'enterprise');
+  const heroContent = workflowCategory === 'media_publishing'
+    ? {
+        title: 'Your publisher provenance workspace',
+        description: 'Protect your content, connect your CMS, and get signed publishing live quickly.',
+        primaryHref: '/integrations',
+        primaryLabel: 'Open Integrations',
+        secondaryHref: 'https://api.encypherai.com/docs',
+        secondaryLabel: 'Publisher Docs',
+      }
+    : workflowCategory === 'ai_provenance_governance'
+      ? {
+          title: 'Your AI provenance and governance workspace',
+          description: 'Stand up attested workflows, governance controls, and verification-ready records for high-stakes AI use cases.',
+          primaryHref: '/api-keys',
+          primaryLabel: 'Generate API Key',
+          secondaryHref: 'https://api.encypherai.com/docs',
+          secondaryLabel: 'Governance Docs',
+        }
+      : {
+          title: 'Your enterprise provenance workspace',
+          description: 'Launch your implementation, validate your first workflow, and scale trusted content operations with confidence.',
+          primaryHref: '/api-keys',
+          primaryLabel: 'New API Key',
+          secondaryHref: 'https://api.encypherai.com/docs',
+          secondaryLabel: 'API Docs',
+        };
   const formatDateUtc = (value: string, options: Intl.DateTimeFormatOptions) =>
     new Date(value).toLocaleDateString('en-US', { ...options, timeZone: 'UTC' });
 
@@ -240,7 +281,7 @@ export default function DashboardPage() {
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-columbia-blue rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2" />
         </div>
-        
+
         <div className="relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
@@ -248,26 +289,36 @@ export default function DashboardPage() {
                 {greeting}, {userName}
               </h1>
               <p className="text-columbia-blue text-lg">
-                Your provenance infrastructure at a glance.
+                {heroContent.title}
+              </p>
+              <p className="text-columbia-blue/80 text-sm mt-2 max-w-2xl">
+                {heroContent.description}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Link href="/api-keys">
+              <Link href={heroContent.primaryHref}>
                 <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-delft-blue font-medium rounded-lg hover:bg-columbia-blue transition-colors">
                   <IconPlus />
-                  New API Key
+                  {heroContent.primaryLabel}
                 </button>
               </Link>
-              <a href="https://api.encypherai.com/docs" target="_blank" rel="noopener noreferrer">
+              <a href={heroContent.secondaryHref} target="_blank" rel="noopener noreferrer">
                 <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors border border-white/20">
                   <IconBook />
-                  API Docs
+                  {heroContent.secondaryLabel}
                 </button>
               </a>
             </div>
           </div>
         </div>
       </div>
+
+      <OnboardingLaunchpad
+        className="mb-8"
+        hasApiKeys={hasApiKeys}
+        documentsSigned={stats?.total_documents_signed || 0}
+        verifications={stats?.total_verifications || 0}
+      />
 
       {/* Stats Overview - Enhanced Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
@@ -378,7 +429,7 @@ export default function DashboardPage() {
                 </Link>
               </div>
             </div>
-            
+
             <div className="p-6">
               {isLoadingKeys ? (
                 <ApiKeysSkeleton />
@@ -403,8 +454,8 @@ export default function DashboardPage() {
               ) : (
                 <div className="space-y-3">
                   {apiKeys.slice(0, 3).map((key) => (
-                    <Link 
-                      key={key.id} 
+                    <Link
+                      key={key.id}
                       href="/api-keys"
                       className="group flex items-center gap-4 p-4 rounded-xl border border-border hover:border-blue-ncs/30 hover:bg-gradient-to-r hover:from-columbia-blue/5 hover:to-transparent transition-all cursor-pointer"
                     >
@@ -415,8 +466,8 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-delft-blue dark:text-white truncate">{key.name}</h3>
                           <span className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
-                            key.is_revoked 
-                              ? 'bg-red-100 text-red-700' 
+                            key.is_revoked
+                              ? 'bg-red-100 text-red-700'
                               : 'bg-green-100 text-green-700'
                           }`}>
                             {key.is_revoked ? 'Revoked' : 'Active'}
@@ -514,4 +565,3 @@ export default function DashboardPage() {
     </DashboardLayout>
   );
 }
-

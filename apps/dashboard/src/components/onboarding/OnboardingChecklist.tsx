@@ -51,6 +51,17 @@ export function OnboardingChecklist({ className = '' }: OnboardingChecklistProps
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const queryClient = useQueryClient();
 
+  const setupQuery = useQuery({
+    queryKey: ['setup-status'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('Not authenticated');
+      return apiClient.getSetupStatus(accessToken);
+    },
+    enabled: Boolean(accessToken),
+    refetchOnWindowFocus: false,
+    staleTime: 60_000,
+  });
+
   const statusQuery = useQuery({
     queryKey: ['onboarding-status'],
     queryFn: async () => {
@@ -69,7 +80,12 @@ export function OnboardingChecklist({ className = '' }: OnboardingChecklistProps
       return apiClient.completeOnboardingStep(accessToken, stepId);
     },
     onSuccess: () => {
+      toast.success('Step marked complete.');
+      queryClient.invalidateQueries({ queryKey: ['setup-status'] });
       queryClient.invalidateQueries({ queryKey: ['onboarding-status'] });
+    },
+    onError: () => {
+      toast.error('Failed to update progress.');
     },
   });
 
@@ -95,10 +111,20 @@ export function OnboardingChecklist({ className = '' }: OnboardingChecklistProps
   const progressPercent = data.total_count > 0
     ? Math.round((data.completed_count / data.total_count) * 100)
     : 0;
+  const workflow = setupQuery.data?.workflow_category || (setupQuery.data?.dashboard_layout === 'publisher' ? 'media_publishing' : 'enterprise');
+  const checklistTitle = workflow === 'media_publishing'
+    ? 'Publisher rollout'
+    : workflow === 'ai_provenance_governance'
+      ? 'AI governance rollout'
+      : 'Enterprise rollout';
+  const checklistDescription = workflow === 'media_publishing'
+    ? 'Follow the fastest path to integrate your publishing workflow and prove content authenticity.'
+    : workflow === 'ai_provenance_governance'
+      ? 'Progress from governance setup to attested, verification-ready AI workflows.'
+      : 'Move from initial credentials to validated implementation and rollout readiness.';
 
   return (
     <div className={`bg-white dark:bg-slate-800 rounded-xl border border-border overflow-hidden ${className}`}>
-      {/* Header */}
       <div className="p-5 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-gradient-to-br from-blue-ncs to-delft-blue rounded-lg flex items-center justify-center text-white">
@@ -107,8 +133,11 @@ export function OnboardingChecklist({ className = '' }: OnboardingChecklistProps
             </svg>
           </div>
           <div>
-            <h3 className="font-bold text-delft-blue dark:text-white text-sm">Getting Started</h3>
-            <p className="text-xs text-muted-foreground">
+            <h3 className="font-bold text-delft-blue dark:text-white text-sm">{checklistTitle}</h3>
+            <p className="text-xs text-muted-foreground leading-5 max-w-[240px]">
+              {checklistDescription}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
               {data.completed_count} of {data.total_count} complete
             </p>
           </div>
@@ -123,7 +152,6 @@ export function OnboardingChecklist({ className = '' }: OnboardingChecklistProps
         </button>
       </div>
 
-      {/* Progress bar */}
       <div className="px-5 pb-4">
         <div className="h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
           <div
@@ -133,69 +161,71 @@ export function OnboardingChecklist({ className = '' }: OnboardingChecklistProps
         </div>
       </div>
 
-      {/* Steps */}
-      <div className="px-5 pb-5 space-y-1">
+      <div className="px-5 pb-5 space-y-3">
         {data.steps.map((step: OnboardingStep) => {
           const icon = stepIcons[step.step_id] || stepIcons.account_created;
           const isClickable = !step.completed && step.action_url;
 
-          const content = (
+          return (
             <div
-              className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
+              key={step.step_id}
+              className={`rounded-xl border p-3 transition-colors ${
                 step.completed
-                  ? 'opacity-60'
-                  : isClickable
-                  ? 'hover:bg-muted cursor-pointer'
-                  : ''
+                  ? 'border-green-200 bg-green-50/40 dark:border-green-900/40 dark:bg-green-900/10'
+                  : 'border-border bg-white dark:bg-slate-800'
               }`}
             >
-              {/* Completion indicator */}
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                step.completed
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
-              }`}>
-                {step.completed ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  <span className="text-xs font-medium">{icon}</span>
-                )}
-              </div>
-
-              {/* Step info */}
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-medium ${
+              <div className="flex items-start gap-3">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                   step.completed
-                    ? 'text-muted-foreground line-through'
-                    : 'text-delft-blue dark:text-white'
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
                 }`}>
-                  {step.title}
-                </p>
-                {!step.completed && (
-                  <p className="text-xs text-muted-foreground truncate">{step.description}</p>
-                )}
-              </div>
+                  {step.completed ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <span className="text-xs font-medium">{icon}</span>
+                  )}
+                </div>
 
-              {/* Arrow for actionable steps */}
-              {isClickable && (
-                <svg className="w-4 h-4 text-muted-foreground flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              )}
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${
+                    step.completed
+                      ? 'text-muted-foreground line-through'
+                      : 'text-delft-blue dark:text-white'
+                  }`}>
+                    {step.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-5">
+                    {step.description}
+                  </p>
+
+                  {!step.completed && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {isClickable && step.action_url && (
+                        <Link href={step.action_url}>
+                          <button className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-ncs text-white hover:bg-blue-ncs/90 transition-colors">
+                            Open step
+                          </button>
+                        </Link>
+                      )}
+                      {step.step_id !== 'account_created' && (
+                        <button
+                          onClick={() => completeMutation.mutate(step.step_id)}
+                          disabled={completeMutation.isPending}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border border-border text-delft-blue dark:text-white hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Mark done
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           );
-
-          if (isClickable && step.action_url) {
-            return (
-              <Link key={step.step_id} href={step.action_url}>
-                {content}
-              </Link>
-            );
-          }
-
-          return <div key={step.step_id}>{content}</div>;
         })}
       </div>
     </div>

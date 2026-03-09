@@ -346,13 +346,14 @@ interface OnboardingStatusResponse {
 type AccountType = 'individual' | 'organization';
 type DashboardLayoutPreference = 'publisher' | 'enterprise';
 type WorkflowCategory = 'media_publishing' | 'enterprise' | 'ai_provenance_governance';
-type PublisherPlatform = 'wordpress' | 'ghost' | 'substack' | 'medium' | 'custom';
+type PublisherPlatform = 'wordpress' | 'ghost' | 'substack' | 'medium' | 'custom' | 'custom_cms' | 'other';
 
 interface SetupStatusResponse {
   setup_completed: boolean;
   setup_completed_at: string | null;
   account_type: AccountType | null;
   display_name: string | null;
+  workflow_category: WorkflowCategory | null;
   dashboard_layout: DashboardLayoutPreference | null;
   publisher_platform: PublisherPlatform | null;
   publisher_platform_custom: string | null;
@@ -2199,6 +2200,7 @@ export type {
   // TEAM_191: Setup Wizard
   AccountType,
   DashboardLayoutPreference,
+  WorkflowCategory,
   PublisherPlatform,
   SetupStatusResponse,
   PublisherSettings,

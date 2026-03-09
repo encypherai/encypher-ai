@@ -120,7 +120,23 @@ function IconPrint({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
+function IconWordPress({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zM3.009 12c0-1.298.29-2.529.8-3.64l4.404 12.065A8.993 8.993 0 013.009 12zm8.991 9c-.924 0-1.813-.15-2.646-.42l2.81-8.162 2.878 7.886c.019.046.042.089.065.13A8.94 8.94 0 0112 21zm1.237-13.22c.564-.03 1.072-.09 1.072-.09.505-.06.446-.802-.059-.772 0 0-1.518.12-2.497.12-.921 0-2.468-.12-2.468-.12-.505-.03-.564.742-.059.772 0 0 .478.06.983.09l1.46 4.002-2.052 6.155-3.413-10.157c.564-.03 1.072-.09 1.072-.09.505-.06.446-.802-.06-.772 0 0-1.517.12-2.496.12-.176 0-.383-.005-.6-.013A8.977 8.977 0 0112 3.009c2.34 0 4.472.895 6.071 2.36-.039-.002-.076-.008-.116-.008-1.005 0-1.716.875-1.716 1.817 0 .843.487 1.557 1.005 2.4.39.675.843 1.54.843 2.79 0 .867-.333 1.872-.773 3.272l-1.013 3.383L12.237 7.78z" />
+    </svg>
+  );
+}
+
 const guides: GuideItem[] = [
+  {
+    title: 'WordPress Plugin Guide',
+    description: 'Step-by-step installation and configuration of the Encypher Provenance plugin for WordPress.',
+    href: '/docs/wordpress-integration',
+    icon: IconWordPress,
+    iconBg: 'bg-gradient-to-br from-[#21759b] to-[#464646]',
+    tags: ['WordPress', 'Plugin', '5 min setup'],
+  },
   {
     title: 'Publisher Integration Guide',
     description: 'Complete guide to integrating Encypher into your CMS or publishing workflow.',
