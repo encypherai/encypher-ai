@@ -94,10 +94,10 @@ The plugin offers several signing options:
 
 | Option | Description | Recommended |
 |--------|-------------|-------------|
-| **Auto-sign new posts** | Automatically sign posts when published | ✅ Yes |
-| **Auto-sign on update** | Re-sign posts when edited | ✅ Yes |
-| **Show verification badge** | Display a public authenticity badge on signed posts | ✅ Yes |
-| **Metadata format** | Keep the default C2PA provenance wrapper enabled | ✅ Yes |
+| **Auto-sign new posts** | Automatically sign posts when published | Yes |
+| **Auto-sign on update** | Re-sign posts when edited | Yes |
+| **Show verification badge** | Display a public authenticity badge on signed posts | Yes |
+| **Metadata format** | Keep the default C2PA provenance wrapper enabled | Yes |
 
 ### Recommended defaults
 
@@ -116,14 +116,14 @@ The verification badge lets readers verify your content's authenticity:
 
 ### Badge Position
 
-- **Bottom of content** - Appears after the article (default)
-- **Top of content** - Appears before the article
-- **Floating bottom-right** - Fixed position badge
+- **Bottom of post** - Appears after the article, above comments (default)
+- **Top of post** - Appears before the article
+- **Bottom-right corner (floating)** - Fixed position badge in the corner
 
-### Badge Appearance
+### Badge Visibility
 
-- **Style**: Minimal, Standard, or Detailed
-- **Theme**: Auto (matches site), Light, or Dark
+- **Show C2PA badge** - Displays the badge on all C2PA-marked posts
+- **Whitelabeling** - Uncheck to remove Encypher branding from public badges
 
 ![Badge settings](/assets/docs/wordpress/step5-badge.png)
 
@@ -140,7 +140,7 @@ Use a normal WordPress post to confirm the plugin is connected and signing corre
 
 After that first publish, your site is ready for broader rollout.
 
-![Signed post in WordPress](/assets/docs/wordpress/step4-options.png)
+![Signed post in WordPress](/assets/docs/wordpress/step6-signed-post.png)
 
 ---
 
