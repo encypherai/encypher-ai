@@ -1,4 +1,5 @@
 """Schemas for image attribution (pHash fuzzy search) endpoint."""
+
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
@@ -7,16 +8,11 @@ from pydantic import BaseModel, Field, model_validator
 class ImageAttributionRequest(BaseModel):
     image_data: Optional[str] = Field(
         None,
-        description=(
-            "Base64-encoded image bytes. Mutually exclusive with phash."
-        ),
+        description=("Base64-encoded image bytes. Mutually exclusive with phash."),
     )
     phash: Optional[str] = Field(
         None,
-        description=(
-            "Pre-computed pHash as 16-char hex string. "
-            "Mutually exclusive with image_data."
-        ),
+        description=("Pre-computed pHash as 16-char hex string. Mutually exclusive with image_data."),
     )
     threshold: int = Field(
         10,
@@ -26,10 +22,7 @@ class ImageAttributionRequest(BaseModel):
     )
     scope: Literal["org", "all"] = Field(
         "org",
-        description=(
-            "'org' = search within your organization (all tiers). "
-            "'all' = cross-organization search (Enterprise only)."
-        ),
+        description=("'org' = search within your organization (all tiers). 'all' = cross-organization search (Enterprise only)."),
     )
 
     @model_validator(mode="after")

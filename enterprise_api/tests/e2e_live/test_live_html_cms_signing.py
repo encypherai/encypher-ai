@@ -24,12 +24,7 @@ from app.utils.html_text_extractor import (
     extract_text_from_html,
 )
 
-EXAMPLE_HTML_PATH = (
-    Path(__file__).resolve().parent.parent.parent.parent
-    / "examples"
-    / "chesschampion"
-    / "example_article.html"
-)
+EXAMPLE_HTML_PATH = Path(__file__).resolve().parent.parent.parent.parent / "examples" / "chesschampion" / "example_article.html"
 
 OUTPUT_DIR = Path(__file__).resolve().parent / "output"
 
@@ -39,10 +34,7 @@ def _unique_document_id(prefix: str) -> str:
 
 
 def _assert_status(response, expected_status: int, label: str) -> None:
-    assert response.status_code == expected_status, (
-        f"{label} expected {expected_status}, got {response.status_code}. "
-        f"Body: {response.text[:2000]}"
-    )
+    assert response.status_code == expected_status, f"{label} expected {expected_status}, got {response.status_code}. Body: {response.text[:2000]}"
 
 
 @pytest.fixture(scope="module")
@@ -290,11 +282,9 @@ async def test_live_html_sign_basic(
     _assert_status(verify_response, 200, "POST /api/v1/verify (basic)")
     verify_payload = verify_response.json()
     assert verify_payload["success"] is True
-    assert verify_payload["data"]["valid"] is True, (
-        f"Basic verification failed. "
-        f"Reason: {verify_payload['data'].get('reason_code')}. "
-        f"Full: {verify_payload}"
-    )
+    assert (
+        verify_payload["data"]["valid"] is True
+    ), f"Basic verification failed. Reason: {verify_payload['data'].get('reason_code')}. Full: {verify_payload}"
 
     print(">>> Basic API verification: PASSED")
 
@@ -369,11 +359,9 @@ async def test_live_html_inplace_micro_no_ecc(
     _assert_status(verify_response, 200, "POST /api/v1/verify (micro ecc=False inplace)")
     verify_payload = verify_response.json()
     assert verify_payload["success"] is True
-    assert verify_payload["data"]["valid"] is True, (
-        f"micro (ecc=False) inplace verification failed. "
-        f"Reason: {verify_payload['data'].get('reason_code')}. "
-        f"Full: {verify_payload}"
-    )
+    assert (
+        verify_payload["data"]["valid"] is True
+    ), f"micro (ecc=False) inplace verification failed. Reason: {verify_payload['data'].get('reason_code')}. Full: {verify_payload}"
     print(">>> micro (ecc=False) inplace HTML verification: PASSED")
 
 
@@ -437,9 +425,7 @@ async def test_live_html_inplace_micro_ecc(
     _assert_status(verify_response, 200, "POST /api/v1/verify (micro ecc=True inplace)")
     verify_payload = verify_response.json()
     assert verify_payload["success"] is True
-    assert verify_payload["data"]["valid"] is True, (
-        f"micro (ecc=True) inplace verification failed. "
-        f"Reason: {verify_payload['data'].get('reason_code')}. "
-        f"Full: {verify_payload}"
-    )
+    assert (
+        verify_payload["data"]["valid"] is True
+    ), f"micro (ecc=True) inplace verification failed. Reason: {verify_payload['data'].get('reason_code')}. Full: {verify_payload}"
     print(">>> micro (ecc=True) inplace HTML verification: PASSED")

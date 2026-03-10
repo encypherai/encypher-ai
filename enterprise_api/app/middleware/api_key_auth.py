@@ -13,14 +13,15 @@ from typing import Dict, Optional
 from urllib.parse import urlparse, urlunparse
 
 import httpx
+from fastapi import Depends, Header, HTTPException, status
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.config import settings
 from app.core.tier_config import coerce_tier_name, get_tier_limits
 from app.database import get_db
 from app.dependencies import _normalize_permissions
 from app.middleware.request_id_middleware import request_id_ctx
-from fastapi import Depends, Header, HTTPException, status
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

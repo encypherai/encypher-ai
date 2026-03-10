@@ -17,8 +17,8 @@ import logging
 import time
 from datetime import datetime, timezone
 from inspect import isawaitable
-from urllib.parse import urlparse
 from typing import Any, Dict, Optional, Tuple, cast
+from urllib.parse import urlparse
 from uuid import UUID, uuid4
 
 import httpx

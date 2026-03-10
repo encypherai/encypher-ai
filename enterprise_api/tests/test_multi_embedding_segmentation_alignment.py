@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import pytest
-
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
 

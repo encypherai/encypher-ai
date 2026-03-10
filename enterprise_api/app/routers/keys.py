@@ -174,7 +174,7 @@ async def list_keys(
 
     result = await db.execute(
         text(f"""
-            SELECT 
+            SELECT
                 id, name, key_prefix, scopes,
                 created_at, last_used_at, expires_at,
                 is_active, revoked_at
@@ -247,6 +247,7 @@ async def create_key(
 
     # Check key limit based on tier
     from app.core.tier_config import TIER_KEY_LIMITS
+
     tier = organization.get("tier", "free")
     limit = TIER_KEY_LIMITS.get(tier, 2)
 
@@ -420,7 +421,7 @@ async def revoke_key(
     # Revoke
     await db.execute(
         text("""
-            UPDATE api_keys 
+            UPDATE api_keys
             SET is_active = false, revoked_at = :revoked_at
             WHERE id = :key_id AND organization_id = :org_id
         """),
@@ -457,7 +458,7 @@ async def rotate_key(
     result = await db.execute(
         text("""
             SELECT id, name, scopes, expires_at, revoked_at
-            FROM api_keys 
+            FROM api_keys
             WHERE id = :key_id AND organization_id = :org_id
         """),
         {"key_id": key_id, "org_id": org_id},
@@ -513,7 +514,7 @@ async def rotate_key(
     # Revoke old key
     await db.execute(
         text("""
-            UPDATE api_keys 
+            UPDATE api_keys
             SET is_active = false, revoked_at = :revoked_at
             WHERE id = :key_id AND organization_id = :org_id
         """),

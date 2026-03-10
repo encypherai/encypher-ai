@@ -1,0 +1,6 @@
+# Bootstrap output - contains generated API keys and access tokens for throwaway demo accounts.
+# Never commit this file.
+.wordpress-clone-summary.json
+
+# Generated seed dataset - derived from marketing site content, not source of truth.
+plugin/encypher-provenance/data/marketing-blog-posts.json

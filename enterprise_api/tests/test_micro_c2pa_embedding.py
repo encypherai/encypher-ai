@@ -25,17 +25,26 @@ from encypher.core.unicode_metadata import UnicodeMetadata
 from sqlalchemy import text
 
 from app.utils.vs256_crypto import (
-    find_all_markers as vs256_find_all,
-    verify_signed_marker as vs256_verify,
     derive_signing_key_from_private_key as vs256_derive_key,
+)
+from app.utils.vs256_crypto import (
+    find_all_markers as vs256_find_all,
+)
+from app.utils.vs256_crypto import (
     generate_log_id,
+)
+from app.utils.vs256_crypto import (
+    verify_signed_marker as vs256_verify,
+)
+from app.utils.vs256_rs_crypto import (
+    derive_signing_key_from_private_key as vs256rs_derive_key,
 )
 from app.utils.vs256_rs_crypto import (
     find_all_markers as vs256rs_find_all,
-    verify_signed_marker as vs256rs_verify,
-    derive_signing_key_from_private_key as vs256rs_derive_key,
 )
-
+from app.utils.vs256_rs_crypto import (
+    verify_signed_marker as vs256rs_verify,
+)
 
 # =============================================================================
 # Unit tests — micro mode embedding logic (no DB required)
@@ -53,9 +62,9 @@ class TestMicroEmbeddingUnit:
     def test_micro_creates_per_sentence_markers(self, keypair):
         """Each sentence should get a 36-char invisible marker."""
         from app.utils.vs256_crypto import (
+            SIGNATURE_CHARS,
             create_signed_marker,
             embed_signature_safely,
-            SIGNATURE_CHARS,
         )
 
         signing_key = vs256_derive_key(keypair)
@@ -106,6 +115,7 @@ class TestMicroEmbeddingUnit:
     def test_micro_c2pa_manifest_embeds_at_document_level(self, keypair):
         """The full C2PA manifest should be extractable from the document."""
         from encypher.core.unicode_metadata import UnicodeMetadata
+
         from app.utils.vs256_crypto import (
             create_signed_marker,
             embed_signature_safely,
@@ -149,9 +159,7 @@ class TestMicroEmbeddingUnit:
         # Should have extractable C2PA manifest
         extracted = UnicodeMetadata.extract_metadata(embedded_document)
         assert extracted is not None, "C2PA manifest should be extractable"
-        assert "instance_id" in extracted or "manifest" in extracted, (
-            "Extracted metadata should contain manifest data"
-        )
+        assert "instance_id" in extracted or "manifest" in extracted, "Extracted metadata should contain manifest data"
 
     def test_micro_segment_location_computation(self):
         """Segment location (paragraph, sentence) should be computed correctly."""
@@ -442,9 +450,13 @@ class TestMicroEccEmbeddingUnit:
     def test_micro_ecc_creates_per_sentence_markers(self, keypair):
         """Each sentence should get a 44-char RS-protected invisible marker (128-bit HMAC)."""
         from app.utils.vs256_rs_crypto import (
-            create_signed_marker as rs_create,
-            embed_signature_safely as rs_embed,
             SIGNATURE_CHARS,
+        )
+        from app.utils.vs256_rs_crypto import (
+            create_signed_marker as rs_create,
+        )
+        from app.utils.vs256_rs_crypto import (
+            embed_signature_safely as rs_embed,
         )
 
         signing_key = vs256rs_derive_key(keypair)
@@ -476,10 +488,10 @@ class TestMicroEccEmbeddingUnit:
 
     def test_micro_ecc_survives_partial_corruption(self, keypair):
         """RS markers should recover from a few corrupted invisible chars."""
+        from app.utils.vs256_crypto import BYTE_TO_VS, VS_TO_BYTE
         from app.utils.vs256_rs_crypto import (
             create_signed_marker as rs_create,
         )
-        from app.utils.vs256_crypto import BYTE_TO_VS, VS_TO_BYTE
 
         signing_key = vs256rs_derive_key(keypair)
         sentence_uuid = generate_log_id()
@@ -496,7 +508,9 @@ class TestMicroEccEmbeddingUnit:
 
         # RS verification should still succeed with known erase positions
         is_valid, extracted = vs256rs_verify(
-            corrupted_sig, signing_key, erase_positions=[6 - 4, 10 - 4]  # payload-relative
+            corrupted_sig,
+            signing_key,
+            erase_positions=[6 - 4, 10 - 4],  # payload-relative
         )
         assert is_valid, "RS should recover from 2 erasures"
         assert extracted == sentence_uuid
@@ -504,8 +518,11 @@ class TestMicroEccEmbeddingUnit:
     def test_micro_ecc_manifest_embeds_at_document_level(self, keypair):
         """Full C2PA manifest should be extractable alongside RS markers."""
         from encypher.core.unicode_metadata import UnicodeMetadata
+
         from app.utils.vs256_rs_crypto import (
             create_signed_marker as rs_create,
+        )
+        from app.utils.vs256_rs_crypto import (
             embed_signature_safely as rs_embed,
         )
 
@@ -524,6 +541,7 @@ class TestMicroEccEmbeddingUnit:
         full_document = " ".join(embedded_sentences)
 
         from datetime import datetime, timezone
+
         timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         embedded_document = UnicodeMetadata.embed_metadata(
             text=full_document,
@@ -743,10 +761,7 @@ async def test_sign_micro_hybrid_merkle_metadata_in_manifest_and_db(
 
     assertions = extracted_manifest.get("assertions", []) if isinstance(extracted_manifest, dict) else []
     merkle_assertion = next(
-        (
-            assertion for assertion in assertions
-            if isinstance(assertion, dict) and assertion.get("label") == "com.encypher.merkle.v1"
-        ),
+        (assertion for assertion in assertions if isinstance(assertion, dict) and assertion.get("label") == "com.encypher.merkle.v1"),
         None,
     )
     assert merkle_assertion is not None, "Expected Merkle assertion in embedded C2PA manifest"
@@ -797,8 +812,9 @@ class TestSignerIdentitySchema:
         assert identity.issuer == "self-signed"
 
     def test_ca_verified_identity(self):
-        from app.schemas.embeddings import SignerIdentity
         from datetime import datetime, timezone
+
+        from app.schemas.embeddings import SignerIdentity
 
         identity = SignerIdentity(
             organization_id="org_enterprise",
@@ -858,6 +874,7 @@ async def test_sign_and_verify_returns_signer_identity(
     # verification_url format: /api/v1/public/verify/{ref_id}?signature=...
     # Extract ref_id from the URL
     import re
+
     match = re.search(r"/verify/([a-f0-9]+)", verification_url)
     if not match:
         pytest.skip("Could not extract ref_id from verification_url")

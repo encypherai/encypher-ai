@@ -14,7 +14,6 @@ from __future__ import annotations
 import pytest
 from httpx import AsyncClient
 
-
 # The demo auth_headers fixture maps to org_id="org_demo"
 DEMO_ORG_ID = "org_demo"
 
@@ -27,9 +26,7 @@ DEMO_ORG_ID = "org_demo"
 @pytest.mark.asyncio
 async def test_rsl_xml_no_auth_required(async_client: AsyncClient) -> None:
     """GET /api/v1/public/rights/organization/{org_id}/rsl requires no auth (200 or 404)."""
-    resp = await async_client.get(
-        f"/api/v1/public/rights/organization/{DEMO_ORG_ID}/rsl"
-    )
+    resp = await async_client.get(f"/api/v1/public/rights/organization/{DEMO_ORG_ID}/rsl")
     assert resp.status_code in (200, 404), f"Expected 200 or 404, got {resp.status_code}"
 
 
@@ -56,15 +53,11 @@ async def test_rsl_xml_with_profile(
     assert put_resp.status_code in (200, 201), put_resp.text
 
     # Fetch RSL XML
-    resp = await async_client.get(
-        f"/api/v1/public/rights/organization/{DEMO_ORG_ID}/rsl"
-    )
+    resp = await async_client.get(f"/api/v1/public/rights/organization/{DEMO_ORG_ID}/rsl")
     assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
 
     content_type = resp.headers.get("content-type", "")
-    assert "xml" in content_type.lower() or "text/plain" in content_type.lower(), (
-        f"Expected XML content-type, got: {content_type}"
-    )
+    assert "xml" in content_type.lower() or "text/plain" in content_type.lower(), f"Expected XML content-type, got: {content_type}"
     assert "<license" in resp.text, "RSL XML should contain <license> elements"
 
 
@@ -93,18 +86,14 @@ async def test_robots_txt_returns_text(
         headers=auth_headers,
     )
 
-    resp = await async_client.get(
-        f"/api/v1/public/rights/organization/{DEMO_ORG_ID}/robots-txt"
-    )
+    resp = await async_client.get(f"/api/v1/public/rights/organization/{DEMO_ORG_ID}/robots-txt")
     assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
 
     content_type = resp.headers.get("content-type", "")
     assert "text/plain" in content_type.lower(), f"Expected text/plain, got: {content_type}"
 
     body = resp.text
-    assert any(kw in body for kw in ("User-agent", "RSL", "License")), (
-        f"robots-txt should contain User-agent, RSL, or License. Got: {body[:200]}"
-    )
+    assert any(kw in body for kw in ("User-agent", "RSL", "License")), f"robots-txt should contain User-agent, RSL, or License. Got: {body[:200]}"
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -185,9 +174,7 @@ async def test_rsl_import_invalid_xml(
     if resp.status_code == 501:
         pytest.skip("RSL import endpoint returns 501 (not implemented)")
 
-    assert resp.status_code in (400, 422, 500), (
-        f"Expected 400/422/500 for invalid XML, got {resp.status_code}: {resp.text}"
-    )
+    assert resp.status_code in (400, 422, 500), f"Expected 400/422/500 for invalid XML, got {resp.status_code}: {resp.text}"
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -216,9 +203,7 @@ async def test_olp_token_requires_org(async_client: AsyncClient) -> None:
         "/api/v1/public/rights/rsl/olp/token",
         json={"grant_type": "rsl_license", "scope": "crawl"},
     )
-    assert resp.status_code in (400, 404, 422), (
-        f"Expected 400/404/422 for missing org context, got {resp.status_code}"
-    )
+    assert resp.status_code in (400, 404, 422), f"Expected 400/404/422 for missing org context, got {resp.status_code}"
 
 
 @pytest.mark.asyncio
@@ -260,9 +245,7 @@ async def test_olp_token_with_valid_request(
     # The endpoint resolves org from target_url via publisher_url matching.
     # This may return 404 if DB matching doesn't find the org, or 200 with a token,
     # or 401/402 depending on tier permissions.
-    assert resp.status_code in (200, 401, 402, 404), (
-        f"Expected 200/401/402/404, got {resp.status_code}: {resp.text}"
-    )
+    assert resp.status_code in (200, 401, 402, 404), f"Expected 200/401/402/404, got {resp.status_code}: {resp.text}"
 
     if resp.status_code == 200:
         body = resp.json()
@@ -278,21 +261,15 @@ async def test_olp_token_with_valid_request(
 @pytest.mark.asyncio
 async def test_olp_validate_invalid_token(async_client: AsyncClient) -> None:
     """GET /api/v1/public/rights/rsl/olp/validate/bad-token -> 401 or 422 (not 500)."""
-    resp = await async_client.get(
-        "/api/v1/public/rights/rsl/olp/validate/bad-token"
-    )
+    resp = await async_client.get("/api/v1/public/rights/rsl/olp/validate/bad-token")
     assert resp.status_code != 500, f"Validate should not return 500, got: {resp.text}"
-    assert resp.status_code in (401, 404, 422), (
-        f"Expected 401/404/422 for invalid token, got {resp.status_code}"
-    )
+    assert resp.status_code in (401, 404, 422), f"Expected 401/404/422 for invalid token, got {resp.status_code}"
 
 
 @pytest.mark.asyncio
 async def test_olp_validate_endpoint_exists(async_client: AsyncClient) -> None:
     """The OLP validate endpoint responds (any non-500 status)."""
-    resp = await async_client.get(
-        "/api/v1/public/rights/rsl/olp/validate/ency_olp_test_token_123"
-    )
+    resp = await async_client.get("/api/v1/public/rights/rsl/olp/validate/ency_olp_test_token_123")
     assert resp.status_code != 500, f"Validate endpoint returned 500: {resp.text}"
     # A valid ency_olp_ prefix token should return 200
     if resp.status_code == 200:

@@ -16,13 +16,12 @@ from app.utils.c2pa_trust_list import (
     refresh_trust_list,
     refresh_tsa_trust_list,
     set_revocation_denylist,
-    set_tsa_trust_anchors_pem,
     set_trust_anchors_pem,
-    tsa_trust_list_needs_refresh,
+    set_tsa_trust_anchors_pem,
     trust_list_needs_refresh,
+    tsa_trust_list_needs_refresh,
     validate_certificate_chain,
 )
-
 
 C2PA_CLAIM_SIGNING_EKU_OID = "1.3.6.1.4.1.62558.2.1"
 

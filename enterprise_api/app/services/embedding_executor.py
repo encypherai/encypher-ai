@@ -7,15 +7,15 @@ Built on top of the free encypher-ai package with enterprise features.
 
 import logging
 import time
+import unicodedata
 from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID
-
-import unicodedata
 
 from fastapi import HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.tier_config import is_enterprise_tier
 from app.models.merkle import MerkleRoot
 from app.schemas.embeddings import (
     EmbeddingInfo,
@@ -25,12 +25,11 @@ from app.schemas.embeddings import (
     MerkleTreeLevelInfo,
 )
 from app.services.embedding_service import EmbeddingService
-from app.services.provisioning_service import ProvisioningService
-from app.services.organization_bootstrap import ensure_organization_exists
-from app.services.status_service import status_service
 from app.services.merkle_service import MerkleService
+from app.services.organization_bootstrap import ensure_organization_exists
+from app.services.provisioning_service import ProvisioningService
+from app.services.status_service import status_service
 from app.utils.crypto_utils import load_organization_private_key
-from app.core.tier_config import is_enterprise_tier
 from app.utils.quota import QuotaManager, QuotaType
 from app.utils.segmentation import build_processing_metadata
 
@@ -238,11 +237,7 @@ async def encode_document_with_embeddings(
 
             assertions_payload: List[Dict[str, Any]] = []
             if isinstance(template_data, dict):
-                assertions_payload = [
-                    assertion
-                    for assertion in (template_data.get("assertions") or [])
-                    if isinstance(assertion, dict)
-                ]
+                assertions_payload = [assertion for assertion in (template_data.get("assertions") or []) if isinstance(assertion, dict)]
             elif isinstance(template_data, list):
                 assertions_payload = [assertion for assertion in template_data if isinstance(assertion, dict)]
 

@@ -1,9 +1,10 @@
 import logging
 from uuid import uuid4
 
-from app.config import settings
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 

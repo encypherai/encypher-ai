@@ -125,15 +125,11 @@ async def test_c2pa_manifest_does_not_leak_internal_details(async_client, auth_h
     # --- publisher.identifier must use org name, not org_xxx ID ---
     publisher = metadata.get("publisher", {})
     publisher_id = publisher.get("identifier", "")
-    assert not publisher_id.startswith("org_"), (
-        f"publisher.identifier should be org name, not internal ID: {publisher_id}"
-    )
+    assert not publisher_id.startswith("org_"), f"publisher.identifier should be org name, not internal ID: {publisher_id}"
 
     # --- c2pa.created softwareAgent must not contain org ID ---
     actions_assertion = _get_assertion_payload(assertions, "c2pa.actions.v2")
     assert actions_assertion is not None
     for action in actions_assertion.get("data", {}).get("actions", []):
         agent = action.get("softwareAgent", "")
-        assert "org_" not in agent, (
-            f"softwareAgent should not contain org ID: {agent}"
-        )
+        assert "org_" not in agent, f"softwareAgent should not contain org ID: {agent}"

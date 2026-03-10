@@ -27,9 +27,7 @@ Usage:
     uv run python tests/test_tag_chars_visibility.py
 """
 
-import sys
 import unicodedata
-
 
 # ──────────────────────────────────────────────────────────────────────
 # Unicode Tag Characters (U+E0000 - U+E007F)
@@ -37,13 +35,13 @@ import unicodedata
 
 # Named tag characters
 TAG_CHARS = {
-    "TAG_LANG":   "\U000E0001",  # U+E0001 LANGUAGE TAG
-    "TAG_SPACE":  "\U000E0020",  # U+E0020 TAG SPACE
-    "TAG_EXCLAM": "\U000E0021",  # U+E0021 TAG EXCLAMATION MARK
-    "TAG_A":      "\U000E0041",  # U+E0041 TAG LATIN CAPITAL LETTER A
-    "TAG_a":      "\U000E0061",  # U+E0061 TAG LATIN SMALL LETTER A
-    "TAG_0":      "\U000E0030",  # U+E0030 TAG DIGIT ZERO
-    "TAG_CANCEL": "\U000E007F",  # U+E007F CANCEL TAG
+    "TAG_LANG": "\U000e0001",  # U+E0001 LANGUAGE TAG
+    "TAG_SPACE": "\U000e0020",  # U+E0020 TAG SPACE
+    "TAG_EXCLAM": "\U000e0021",  # U+E0021 TAG EXCLAMATION MARK
+    "TAG_A": "\U000e0041",  # U+E0041 TAG LATIN CAPITAL LETTER A
+    "TAG_a": "\U000e0061",  # U+E0061 TAG LATIN SMALL LETTER A
+    "TAG_0": "\U000e0030",  # U+E0030 TAG DIGIT ZERO
+    "TAG_CANCEL": "\U000e007f",  # U+E007F CANCEL TAG
 }
 
 # The usable range for encoding: TAG SPACE (U+E0020) through TAG TILDE (U+E007E)
@@ -59,10 +57,10 @@ ALL_TAG_CHARS = [chr(cp) for cp in range(TAG_BLOCK_START, TAG_BLOCK_END + 1)]
 
 # Current base-4 chars for comparison
 CURRENT_BASE4 = {
-    "ZWNJ": "\u200C",  # U+200C Zero-Width Non-Joiner
-    "ZWJ":  "\u200D",  # U+200D Zero-Width Joiner
-    "CGJ":  "\u034F",  # U+034F Combining Grapheme Joiner
-    "MVS":  "\u180E",  # U+180E Mongolian Vowel Separator
+    "ZWNJ": "\u200c",  # U+200C Zero-Width Non-Joiner
+    "ZWJ": "\u200d",  # U+200D Zero-Width Joiner
+    "CGJ": "\u034f",  # U+034F Combining Grapheme Joiner
+    "MVS": "\u180e",  # U+180E Mongolian Vowel Separator
 }
 
 
@@ -147,28 +145,28 @@ def create_visibility_test_document():
 
     # Test a representative subset of tag characters
     test_set = [
-        ("TAG_LANG",   "\U000E0001", "Language Tag"),
-        ("TAG_SPACE",  "\U000E0020", "Tag Space"),
-        ("TAG_EXCLAM", "\U000E0021", "Tag Exclamation Mark"),
-        ("TAG_HASH",   "\U000E0023", "Tag Number Sign"),
-        ("TAG_0",      "\U000E0030", "Tag Digit Zero"),
-        ("TAG_1",      "\U000E0031", "Tag Digit One"),
-        ("TAG_9",      "\U000E0039", "Tag Digit Nine"),
-        ("TAG_A",      "\U000E0041", "Tag Capital A"),
-        ("TAG_Z",      "\U000E005A", "Tag Capital Z"),
-        ("TAG_a",      "\U000E0061", "Tag Small a"),
-        ("TAG_z",      "\U000E007A", "Tag Small z"),
-        ("TAG_TILDE",  "\U000E007E", "Tag Tilde"),
-        ("TAG_CANCEL", "\U000E007F", "Cancel Tag"),
+        ("TAG_LANG", "\U000e0001", "Language Tag"),
+        ("TAG_SPACE", "\U000e0020", "Tag Space"),
+        ("TAG_EXCLAM", "\U000e0021", "Tag Exclamation Mark"),
+        ("TAG_HASH", "\U000e0023", "Tag Number Sign"),
+        ("TAG_0", "\U000e0030", "Tag Digit Zero"),
+        ("TAG_1", "\U000e0031", "Tag Digit One"),
+        ("TAG_9", "\U000e0039", "Tag Digit Nine"),
+        ("TAG_A", "\U000e0041", "Tag Capital A"),
+        ("TAG_Z", "\U000e005a", "Tag Capital Z"),
+        ("TAG_a", "\U000e0061", "Tag Small a"),
+        ("TAG_z", "\U000e007a", "Tag Small z"),
+        ("TAG_TILDE", "\U000e007e", "Tag Tilde"),
+        ("TAG_CANCEL", "\U000e007f", "Cancel Tag"),
     ]
 
     # Also add current base-4 chars as controls
     controls = [
-        ("ZWNJ",  "\u200C", "Zero-Width Non-Joiner (current)"),
-        ("ZWJ",   "\u200D", "Zero-Width Joiner (current)"),
-        ("CGJ",   "\u034F", "Combining Grapheme Joiner (current)"),
-        ("MVS",   "\u180E", "Mongolian Vowel Separator (current)"),
-        ("ZWSP",  "\u200B", "Zero-Width Space (known stripped by Word)"),
+        ("ZWNJ", "\u200c", "Zero-Width Non-Joiner (current)"),
+        ("ZWJ", "\u200d", "Zero-Width Joiner (current)"),
+        ("CGJ", "\u034f", "Combining Grapheme Joiner (current)"),
+        ("MVS", "\u180e", "Mongolian Vowel Separator (current)"),
+        ("ZWSP", "\u200b", "Zero-Width Space (known stripped by Word)"),
     ]
 
     lines.append("--- TAG CHARACTERS (under investigation) ---")
@@ -308,7 +306,7 @@ def analyze_results(original, pasted, test_set, controls):
     print("SIZE COMPARISON (32-byte payload: UUID + HMAC)")
     print("=" * 78)
     print(f"\n  {'Encoding':<25} {'Chars':<8} {'Bytes(UTF-8)':<14} {'Notes'}")
-    print(f"  {'-'*25} {'-'*8} {'-'*14} {'-'*30}")
+    print(f"  {'-' * 25} {'-' * 8} {'-' * 14} {'-' * 30}")
     print(f"  {'Current Base-4':<25} {'128':<8} {'~384':<14} {'ZWNJ/ZWJ/CGJ/MVS'}")
     print(f"  {'Tag Base-95':<25} {'64':<8} {'256':<14} {'If all tag chars survive'}")
     print(f"  {'Tag Base-16':<25} {'64':<8} {'256':<14} {'If 16+ tag chars survive'}")
@@ -348,7 +346,7 @@ def run_encoding_roundtrip_test():
         decoded = 0
         for i, char in enumerate(encoded):
             idx = tag_base4.index(char)
-            decoded += idx * (4 ** i)
+            decoded += idx * (4**i)
 
         if decoded != byte_val:
             errors += 1
@@ -389,7 +387,7 @@ def run_encoding_roundtrip_test():
     print(f"    UTF-8:  {len(sample_char.encode('utf-8'))} bytes")
     print(f"    UTF-16: {len(sample_char.encode('utf-16-le'))} bytes (surrogate pair)")
 
-    current_sample = "\u200C"  # ZWNJ
+    current_sample = "\u200c"  # ZWNJ
     print("\n  Size analysis for current ZWNJ U+200C:")
     print(f"    UTF-8:  {len(current_sample.encode('utf-8'))} bytes")
     print(f"    UTF-16: {len(current_sample.encode('utf-16-le'))} bytes")
@@ -416,15 +414,15 @@ def create_hybrid_encoding_test():
 
     # Hybrid: 4 current + N tag chars
     combos = [
-        ("current 4 only",       4, 4),
-        ("4 current + 4 tags",   8, 3),
+        ("current 4 only", 4, 4),
+        ("4 current + 4 tags", 8, 3),
         ("4 current + 12 tags", 16, 2),
         ("4 current + 91 tags", 95, 2),
-        ("95 tag chars only",   95, 2),
+        ("95 tag chars only", 95, 2),
     ]
 
     print(f"  {'Combo':<25} {'Base':<6} {'Chars/Byte':<12} {'32B Payload':<12} {'UTF-8 est.'}")
-    print(f"  {'-'*25} {'-'*6} {'-'*12} {'-'*12} {'-'*12}")
+    print(f"  {'-' * 25} {'-' * 6} {'-' * 12} {'-' * 12} {'-' * 12}")
 
     for name, base, chars_per_byte in combos:
         payload_chars = 32 * chars_per_byte

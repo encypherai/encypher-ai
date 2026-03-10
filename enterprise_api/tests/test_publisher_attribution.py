@@ -5,7 +5,6 @@ TEAM_191: Tests the attribution string logic for all combinations of
 individual/org, anonymous, whitelabel, and missing fields.
 """
 
-import pytest
 from app.utils.publisher_attribution import (
     build_publisher_attribution,
     build_publisher_attribution_from_org_context,

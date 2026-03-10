@@ -32,9 +32,8 @@ from __future__ import annotations
 import hashlib
 import io
 import os
-import sys
 import textwrap
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable, Optional
 
 # ---------------------------------------------------------------------------
@@ -73,7 +72,7 @@ def _pick_ttf() -> str:
 
 VS256_BMP = frozenset(chr(c) for c in range(0xFE00, 0xFE10))
 VS256_SUPP = frozenset(chr(c) for c in range(0xE0100, 0xE01F0))
-ZWC_CHARS = frozenset(["\u200C", "\u200D", "\u034F", "\u180E", "\u200E", "\u200F"])
+ZWC_CHARS = frozenset(["\u200c", "\u200d", "\u034f", "\u180e", "\u200e", "\u200f"])
 ALL_INVISIBLE = VS256_BMP | VS256_SUPP | ZWC_CHARS
 
 
@@ -456,10 +455,7 @@ def print_report(results: list[AuditResult]) -> None:
     for mode in modes_seen:
         mode_results = [r for r in results if r.mode == mode]
         print(f"--- {mode} ---")
-        print(
-            f"  {'Generator':<28} {'Markers':>10} {'Marker%':>8}  "
-            f"{'Chars Before':>13} {'Chars After':>12} {'Char%':>7}  Status"
-        )
+        print(f"  {'Generator':<28} {'Markers':>10} {'Marker%':>8}  {'Chars Before':>13} {'Chars After':>12} {'Char%':>7}  Status")
         print("  " + "-" * 90)
         for r in mode_results:
             if r.error:
@@ -538,10 +534,7 @@ def test_at_least_one_generator_preserves_zwc_markers(audit_results: list[AuditR
     if not any_full:
         best = max(zwc_results, key=lambda r: r.marker_pct) if zwc_results else None
         best_pct = best.marker_pct if best else 0.0
-        pytest.skip(
-            f"No generator achieves 100% ZWC marker survival; best is "
-            f"{best.generator if best else 'none'} @ {best_pct:.1f}%"
-        )
+        pytest.skip(f"No generator achieves 100% ZWC marker survival; best is {best.generator if best else 'none'} @ {best_pct:.1f}%")
 
 
 def test_print_full_report(audit_results: list[AuditResult], capsys) -> None:
@@ -576,13 +569,10 @@ def test_weasyprint_strips_zwc_entirely(audit_results: list[AuditResult]) -> Non
     if wp_zwc.error:
         pytest.skip(f"WeasyPrint error: {wp_zwc.error}")
     # WeasyPrint/Cairo strips ZWC entirely; reportlab preserves ~80-90% individually
-    assert wp_zwc.char_pct == 0.0, (
-        f"WeasyPrint now preserves ZWC chars ({wp_zwc.char_pct:.1f}%) -- "
-        "recheck if Cairo/Pango changed format-char handling"
-    )
-    assert rl_zwc.char_pct > 50.0, (
-        f"reportlab ZWC char survival dropped to {rl_zwc.char_pct:.1f}% -- font or version change?"
-    )
+    assert (
+        wp_zwc.char_pct == 0.0
+    ), f"WeasyPrint now preserves ZWC chars ({wp_zwc.char_pct:.1f}%) -- recheck if Cairo/Pango changed format-char handling"
+    assert rl_zwc.char_pct > 50.0, f"reportlab ZWC char survival dropped to {rl_zwc.char_pct:.1f}% -- font or version change?"
 
 
 # ---------------------------------------------------------------------------
@@ -599,14 +589,14 @@ def _inspect_pdf_bytes(pdf_bytes: bytes) -> dict[str, bool | int]:
     """
     # UTF-8 encodings of key codepoints
     targets = {
-        "ZWNJ U+200C": "\u200C".encode("utf-8"),
-        "ZWJ  U+200D": "\u200D".encode("utf-8"),
-        "CGJ  U+034F": "\u034F".encode("utf-8"),
-        "MVS  U+180E": "\u180E".encode("utf-8"),
-        "LRM  U+200E": "\u200E".encode("utf-8"),
-        "RLM  U+200F": "\u200F".encode("utf-8"),
-        "VS1  U+FE00": "\uFE00".encode("utf-8"),
-        "VS17 U+E0100": "\U000E0100".encode("utf-8"),
+        "ZWNJ U+200C": "\u200c".encode("utf-8"),
+        "ZWJ  U+200D": "\u200d".encode("utf-8"),
+        "CGJ  U+034F": "\u034f".encode("utf-8"),
+        "MVS  U+180E": "\u180e".encode("utf-8"),
+        "LRM  U+200E": "\u200e".encode("utf-8"),
+        "RLM  U+200F": "\u200f".encode("utf-8"),
+        "VS1  U+FE00": "\ufe00".encode("utf-8"),
+        "VS17 U+E0100": "\U000e0100".encode("utf-8"),
     }
     result: dict[str, bool | int] = {}
     for name, pattern in targets.items():
@@ -688,7 +678,6 @@ def _count_zwc_via_tounicode(pdf_bytes: bytes) -> int:
 
     Returns an approximate count of distinct ZWC codepoint mappings found.
     """
-    import re
 
     # Hex codepoint representations used in ToUnicode CMap
     zwc_hex = {
@@ -758,7 +747,7 @@ def run_deep_analysis() -> None:
                 pct = 100.0 * zwc_after / expected_zwc if expected_zwc else 0.0
                 cell = f"{zwc_after}/{expected_zwc} ({pct:.0f}%)"
                 row += f"  {cell:>{col_w}}"
-            except Exception as exc:
+            except Exception:
                 row += f"  {'ERR':>{col_w}}"
         print(row)
 
@@ -787,8 +776,7 @@ def run_deep_analysis() -> None:
             pdf_bytes = render_fn(embedded_text)
             b = _inspect_pdf_bytes(pdf_bytes)
             row = f"  {gen_name:<26}"
-            keys = ["ZWNJ U+200C", "ZWJ  U+200D", "CGJ  U+034F", "MVS  U+180E",
-                    "LRM  U+200E", "RLM  U+200F", "VS1  U+FE00", "VS17 U+E0100"]
+            keys = ["ZWNJ U+200C", "ZWJ  U+200D", "CGJ  U+034F", "MVS  U+180E", "LRM  U+200E", "RLM  U+200F", "VS1  U+FE00", "VS17 U+E0100"]
             for k in keys:
                 v = b.get(k, 0)
                 row += f"  {v:>5}" if isinstance(v, int) else f"  {'?':>5}"

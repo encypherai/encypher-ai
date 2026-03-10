@@ -120,8 +120,7 @@ def run_alembic_migrations(
 
     if completed.returncode != 0:
         raise DatabaseStartupError(
-            f"[{service_name}] Alembic migration failed (exit={completed.returncode}): "
-            f"{(completed.stderr or completed.stdout).strip()}"
+            f"[{service_name}] Alembic migration failed (exit={completed.returncode}): {(completed.stderr or completed.stdout).strip()}"
         )
 
     if completed.stdout.strip():
@@ -162,9 +161,7 @@ def ensure_database_ready(
     db_url = database_url or os.environ.get("CORE_DATABASE_URL") or os.environ.get("DATABASE_URL")
 
     if not db_url:
-        raise DatabaseStartupError(
-            f"[{service_name}] DATABASE_URL is not set or empty. Please configure the database URL environment variable."
-        )
+        raise DatabaseStartupError(f"[{service_name}] DATABASE_URL is not set or empty. Please configure the database URL environment variable.")
 
     logger.info(f"[{service_name}] Starting database readiness check...")
 

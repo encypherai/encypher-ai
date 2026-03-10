@@ -14,8 +14,6 @@ Covers:
 
 from __future__ import annotations
 
-import os
-import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -25,7 +23,6 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
-
 
 # ════════════════════════════════════════════════════════════════════════════════
 # Fixtures
@@ -145,15 +142,10 @@ class TestDelegatedSetupEndpoint:
             },
             headers=auth_headers,
         )
-        assert resp.status_code == 403, (
-            f"Expected 403 for non-strategic_partner tier, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 403, f"Expected 403 for non-strategic_partner tier, got {resp.status_code}: {resp.text}"
         body = resp.json()
         # The error may be in "detail" (FastAPI HTTPException) or "error.message" (unified response)
-        error_text = (
-            body.get("detail", "")
-            or body.get("error", {}).get("message", "")
-        ).lower()
+        error_text = (body.get("detail", "") or body.get("error", {}).get("message", "")).lower()
         assert "strategic_partner" in error_text
 
     @pytest.mark.asyncio
@@ -198,9 +190,7 @@ class TestDelegatedSetupEndpoint:
             },
             headers=strategic_partner_auth_headers,
         )
-        assert resp.status_code == 422, (
-            f"Expected 422 for missing publisher_organization_id, got {resp.status_code}: {resp.text}"
-        )
+        assert resp.status_code == 422, f"Expected 422 for missing publisher_organization_id, got {resp.status_code}: {resp.text}"
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -255,9 +245,7 @@ class TestDelegatedSigningUsesPublisherRights:
         assert body.get("success") is True
 
         doc = body.get("data", {}).get("document", {})
-        assert "rights_resolution_url" in doc, (
-            f"Expected rights_resolution_url in document response: {doc}"
-        )
+        assert "rights_resolution_url" in doc, f"Expected rights_resolution_url in document response: {doc}"
         # URL should reference the signed document's ID
         doc_id = doc.get("document_id", "")
         assert doc_id in doc["rights_resolution_url"]
@@ -435,9 +423,7 @@ class TestPlatformPartnerFullFlow:
         assert sign_body.get("success") is True
 
         doc = sign_body.get("data", {}).get("document", {})
-        assert "rights_resolution_url" in doc, (
-            f"Expected rights_resolution_url after delegated-setup + sign: {doc}"
-        )
+        assert "rights_resolution_url" in doc, f"Expected rights_resolution_url after delegated-setup + sign: {doc}"
         rights_url = doc["rights_resolution_url"]
         assert "public/rights/" in rights_url
 
@@ -595,11 +581,14 @@ class TestProxySigning:
                 increment=increment,
             )
 
-        with patch(
-            "app.routers.signing.auth_service_client.get_organization_context",
-            new_callable=AsyncMock,
-            return_value=publisher_ctx,
-        ), patch.object(quota_mod.QuotaManager, "check_quota", side_effect=mock_check_quota):
+        with (
+            patch(
+                "app.routers.signing.auth_service_client.get_organization_context",
+                new_callable=AsyncMock,
+                return_value=publisher_ctx,
+            ),
+            patch.object(quota_mod.QuotaManager, "check_quota", side_effect=mock_check_quota),
+        ):
             resp = await async_client.post(
                 self.ENDPOINT,
                 json={
@@ -609,9 +598,7 @@ class TestProxySigning:
                 headers=strategic_partner_auth_headers,
             )
         assert resp.status_code == 201, resp.text
-        assert _DEMO_PUBLISHER_ORG_ID in quota_calls, (
-            f"Expected quota check for publisher org, got: {quota_calls}"
-        )
+        assert _DEMO_PUBLISHER_ORG_ID in quota_calls, f"Expected quota check for publisher org, got: {quota_calls}"
 
 
 # ================================================================================
@@ -635,9 +622,7 @@ class TestBulkProvision:
             self.ENDPOINT,
             json={
                 "partner_name": "Freestar",
-                "publishers": [
-                    {"name": "Daily Tribune", "contact_email": "ed@dailytribune.example.com"}
-                ],
+                "publishers": [{"name": "Daily Tribune", "contact_email": "ed@dailytribune.example.com"}],
             },
             headers=auth_headers,
         )
@@ -669,17 +654,21 @@ class TestBulkProvision:
             },
         }
 
-        with patch(
-            "app.routers.partner.auth_service_client.bulk_provision_publishers",
-            new_callable=AsyncMock,
-            return_value=mock_auth_result,
-        ), patch(
-            "app.routers.partner.rights_service.create_or_update_profile",
-            new_callable=AsyncMock,
-            return_value=MagicMock(profile_version=1),
-        ), patch(
-            "app.routers.partner._send_partner_claim_email",
-            new_callable=AsyncMock,
+        with (
+            patch(
+                "app.routers.partner.auth_service_client.bulk_provision_publishers",
+                new_callable=AsyncMock,
+                return_value=mock_auth_result,
+            ),
+            patch(
+                "app.routers.partner.rights_service.create_or_update_profile",
+                new_callable=AsyncMock,
+                return_value=MagicMock(profile_version=1),
+            ),
+            patch(
+                "app.routers.partner._send_partner_claim_email",
+                new_callable=AsyncMock,
+            ),
         ):
             resp = await async_client.post(
                 self.ENDPOINT,
@@ -734,26 +723,27 @@ class TestBulkProvision:
             },
         }
 
-        with patch(
-            "app.routers.partner.auth_service_client.bulk_provision_publishers",
-            new_callable=AsyncMock,
-            return_value=mock_auth_result,
-        ), patch(
-            "app.routers.partner.rights_service.create_or_update_profile",
-            new_callable=AsyncMock,
-            return_value=MagicMock(profile_version=1),
-        ), patch(
-            "app.routers.partner._send_partner_claim_email",
-            new_callable=AsyncMock,
+        with (
+            patch(
+                "app.routers.partner.auth_service_client.bulk_provision_publishers",
+                new_callable=AsyncMock,
+                return_value=mock_auth_result,
+            ),
+            patch(
+                "app.routers.partner.rights_service.create_or_update_profile",
+                new_callable=AsyncMock,
+                return_value=MagicMock(profile_version=1),
+            ),
+            patch(
+                "app.routers.partner._send_partner_claim_email",
+                new_callable=AsyncMock,
+            ),
         ):
             resp = await async_client.post(
                 self.ENDPOINT,
                 json={
                     "partner_name": "Freestar",
-                    "publishers": [
-                        {"name": f"Publisher {i}", "contact_email": f"editor{i}@pub{i}.example.com"}
-                        for i in range(1, 4)
-                    ],
+                    "publishers": [{"name": f"Publisher {i}", "contact_email": f"editor{i}@pub{i}.example.com"} for i in range(1, 4)],
                 },
                 headers=strategic_partner_auth_headers,
             )
@@ -796,16 +786,20 @@ class TestBulkProvision:
             mock = MagicMock(profile_version=1)
             return mock
 
-        with patch(
-            "app.routers.partner.auth_service_client.bulk_provision_publishers",
-            new_callable=AsyncMock,
-            return_value=mock_auth_result,
-        ), patch(
-            "app.routers.partner.rights_service.create_or_update_profile",
-            side_effect=capture_create_or_update,
-        ), patch(
-            "app.routers.partner._send_partner_claim_email",
-            new_callable=AsyncMock,
+        with (
+            patch(
+                "app.routers.partner.auth_service_client.bulk_provision_publishers",
+                new_callable=AsyncMock,
+                return_value=mock_auth_result,
+            ),
+            patch(
+                "app.routers.partner.rights_service.create_or_update_profile",
+                side_effect=capture_create_or_update,
+            ),
+            patch(
+                "app.routers.partner._send_partner_claim_email",
+                new_callable=AsyncMock,
+            ),
         ):
             resp = await async_client.post(
                 self.ENDPOINT,
@@ -859,17 +853,21 @@ class TestBulkProvision:
             },
         }
 
-        with patch(
-            "app.routers.partner.auth_service_client.bulk_provision_publishers",
-            new_callable=AsyncMock,
-            return_value=mock_auth_result,
-        ), patch(
-            "app.routers.partner.rights_service.create_or_update_profile",
-            new_callable=AsyncMock,
-            return_value=MagicMock(profile_version=1),
-        ), patch(
-            "app.routers.partner._send_partner_claim_email",
-            side_effect=capture_email,
+        with (
+            patch(
+                "app.routers.partner.auth_service_client.bulk_provision_publishers",
+                new_callable=AsyncMock,
+                return_value=mock_auth_result,
+            ),
+            patch(
+                "app.routers.partner.rights_service.create_or_update_profile",
+                new_callable=AsyncMock,
+                return_value=MagicMock(profile_version=1),
+            ),
+            patch(
+                "app.routers.partner._send_partner_claim_email",
+                side_effect=capture_email,
+            ),
         ):
             resp = await async_client.post(
                 self.ENDPOINT,

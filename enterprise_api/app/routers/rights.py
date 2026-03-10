@@ -8,7 +8,6 @@ authentication as an organization member or admin.
 
 import logging
 from typing import Any, Dict, List, Optional
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,11 +28,13 @@ router = APIRouter(prefix="/rights", tags=["Rights Management"])
 
 def _get_rights_service():
     from app.services.rights_service import rights_service
+
     return rights_service
 
 
 def _get_templates():
-    from app.core.rights_templates import list_templates, get_template
+    from app.core.rights_templates import get_template, list_templates
+
     return list_templates, get_template
 
 
@@ -490,8 +491,9 @@ async def get_content_spread(
     db: AsyncSession = Depends(get_db),
     org_context: Dict = Depends(get_current_organization_dep),
 ) -> Dict[str, Any]:
-    from datetime import datetime, timezone, timedelta
-    from sqlalchemy import func, select, and_, text as sa_text
+    from datetime import datetime, timedelta, timezone
+
+    from sqlalchemy import and_, func, select
 
     org_id: str = org_context["organization_id"]
     tier: str = (org_context.get("tier") or "free").lower()
@@ -534,15 +536,11 @@ async def get_content_spread(
     domain_rows = domain_result.all()
 
     # Total unique domains
-    total_domains_result = await db.execute(
-        select(func.count(func.distinct(ContentDetectionEvent.detected_on_domain))).where(base_filter)
-    )
+    total_domains_result = await db.execute(select(func.count(func.distinct(ContentDetectionEvent.detected_on_domain))).where(base_filter))
     total_unique_domains: int = total_domains_result.scalar_one() or 0
 
     # Total detections
-    total_events_result = await db.execute(
-        select(func.count(ContentDetectionEvent.id)).where(base_filter)
-    )
+    total_events_result = await db.execute(select(func.count(ContentDetectionEvent.id)).where(base_filter))
     total_events: int = total_events_result.scalar_one() or 0
 
     # Per-document breakdown (top 50 documents by external detections)

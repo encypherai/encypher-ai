@@ -105,7 +105,7 @@ async def add_segment_to_session(
         # If this is the final segment, finalize the session
         if request.is_final:
             from app.services.embedding_service import EmbeddingService
-            from app.utils.crypto_utils import load_organization_private_key, get_demo_private_key
+            from app.utils.crypto_utils import get_demo_private_key, load_organization_private_key
 
             organization_id = organization["organization_id"]
             is_demo = organization.get("is_demo", False)
@@ -177,7 +177,7 @@ async def finalize_streaming_session(
     try:
         # Load private key for embedding
         from app.services.embedding_service import EmbeddingService
-        from app.utils.crypto_utils import load_organization_private_key, get_demo_private_key
+        from app.utils.crypto_utils import get_demo_private_key, load_organization_private_key
 
         is_demo = organization.get("is_demo", False)
 

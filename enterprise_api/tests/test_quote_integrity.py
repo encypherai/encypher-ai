@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from httpx import AsyncClient
-
 
 # ---------------------------------------------------------------------------
 # 1. Request model structure
@@ -85,9 +83,7 @@ async def test_verdict_accurate_high_similarity(async_client: AsyncClient) -> No
     mock_result_title = MagicMock()
     mock_result_title.scalar_one_or_none.return_value = {"title": "Reuters Q3 Report"}
 
-    mock_session.execute = AsyncMock(
-        side_effect=[mock_result_refs, mock_result_title]
-    )
+    mock_session.execute = AsyncMock(side_effect=[mock_result_refs, mock_result_title])
 
     async def override_content_db():
         yield mock_session
@@ -139,9 +135,7 @@ async def test_verdict_approximate_medium_similarity(
     mock_result_title = MagicMock()
     mock_result_title.scalar_one_or_none.return_value = None
 
-    mock_session.execute = AsyncMock(
-        side_effect=[mock_result_refs, mock_result_title]
-    )
+    mock_session.execute = AsyncMock(side_effect=[mock_result_refs, mock_result_title])
 
     async def override_content_db():
         yield mock_session
@@ -281,9 +275,7 @@ async def test_quote_integrity_with_org_id(async_client: AsyncClient) -> None:
     mock_result_title = MagicMock()
     mock_result_title.scalar_one_or_none.return_value = None
 
-    mock_session.execute = AsyncMock(
-        side_effect=[mock_result_refs, mock_result_title]
-    )
+    mock_session.execute = AsyncMock(side_effect=[mock_result_refs, mock_result_title])
 
     async def override_content_db():
         yield mock_session
@@ -338,9 +330,7 @@ async def test_quote_integrity_with_doc_id(async_client: AsyncClient) -> None:
     mock_result_title = MagicMock()
     mock_result_title.scalar_one_or_none.return_value = {"title": "WSJ Q2 Analysis"}
 
-    mock_session.execute = AsyncMock(
-        side_effect=[mock_result_leaves, mock_result_title]
-    )
+    mock_session.execute = AsyncMock(side_effect=[mock_result_leaves, mock_result_title])
 
     async def override_content_db():
         yield mock_session
@@ -413,9 +403,7 @@ async def test_quote_integrity_custom_threshold(async_client: AsyncClient) -> No
     mock_result_title = MagicMock()
     mock_result_title.scalar_one_or_none.return_value = None
 
-    mock_session.execute = AsyncMock(
-        side_effect=[mock_result_refs, mock_result_title]
-    )
+    mock_session.execute = AsyncMock(side_effect=[mock_result_refs, mock_result_title])
 
     async def override_content_db():
         yield mock_session

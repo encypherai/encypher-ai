@@ -10,11 +10,12 @@ import logging
 from datetime import datetime
 from typing import Dict, Optional
 
+from fastapi import WebSocket, WebSocketException, status
+from sqlalchemy import text
+
 from app.config import settings
 from app.database import async_session_factory
 from app.dependencies import _normalize_permissions
-from fastapi import WebSocket, WebSocketException, status
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 

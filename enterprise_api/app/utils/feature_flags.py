@@ -104,9 +104,7 @@ class FeatureFlagManager:
             name="Custom Rate Limits", description="Customizable rate limits", required_tier=OrganizationTier.ENTERPRISE
         ),
         # Support Features
-        Feature.PREMIUM_SUPPORT: FeatureConfig(
-            name="Premium Support", description="24/7 premium support", required_tier=OrganizationTier.ENTERPRISE
-        ),
+        Feature.PREMIUM_SUPPORT: FeatureConfig(name="Premium Support", description="24/7 premium support", required_tier=OrganizationTier.ENTERPRISE),
         Feature.SLA_GUARANTEE: FeatureConfig(name="SLA Guarantee", description="99.9% uptime SLA", required_tier=OrganizationTier.ENTERPRISE),
     }
 

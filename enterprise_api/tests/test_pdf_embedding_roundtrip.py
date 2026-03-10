@@ -23,7 +23,6 @@ from __future__ import annotations
 
 import io
 import os
-import unicodedata
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -95,16 +94,19 @@ def _extract_text_from_pdf(pdf_bytes: bytes) -> str:
 # Embedding helpers (direct crypto, no API)
 # ---------------------------------------------------------------------------
 
+
 def _make_signing_key() -> bytes:
     """Return a fixed 32-byte HMAC signing key for reproducibility."""
     import hashlib
+
     return hashlib.sha256(b"test-pdf-roundtrip-key").digest()
 
 
 def _embed_vs256(sentences: list[str], signing_key: bytes) -> str:
     """Embed VS256 (36-char) markers into each sentence."""
-    from app.utils.vs256_crypto import create_signed_marker, generate_log_id
     from app.utils.legacy_safe_crypto import embed_marker_safely
+    from app.utils.vs256_crypto import create_signed_marker, generate_log_id
+
     parts = []
     for s in sentences:
         log_id = generate_log_id()
@@ -115,8 +117,9 @@ def _embed_vs256(sentences: list[str], signing_key: bytes) -> str:
 
 def _embed_vs256_rs(sentences: list[str], signing_key: bytes) -> str:
     """Embed VS256-RS (44-char) markers into each sentence."""
-    from app.utils.vs256_rs_crypto import create_signed_marker
     from app.utils.legacy_safe_crypto import embed_marker_safely, generate_log_id
+    from app.utils.vs256_rs_crypto import create_signed_marker
+
     parts = []
     for s in sentences:
         log_id = generate_log_id()
@@ -128,6 +131,7 @@ def _embed_vs256_rs(sentences: list[str], signing_key: bytes) -> str:
 def _embed_zwc(sentences: list[str], signing_key: bytes) -> str:
     """Embed ZWC legacy_safe (100-char) markers into each sentence."""
     from app.utils.legacy_safe_crypto import create_marker, embed_marker_safely, generate_log_id
+
     parts = []
     for s in sentences:
         log_id = generate_log_id()
@@ -139,6 +143,7 @@ def _embed_zwc(sentences: list[str], signing_key: bytes) -> str:
 def _embed_zwc_rs(sentences: list[str], signing_key: bytes) -> str:
     """Embed ZWC-RS legacy_safe_rs (112-char) markers into each sentence."""
     from app.utils.legacy_safe_rs_crypto import create_marker, embed_marker_safely, generate_log_id
+
     parts = []
     for s in sentences:
         log_id = generate_log_id()
@@ -151,23 +156,28 @@ def _embed_zwc_rs(sentences: list[str], signing_key: bytes) -> str:
 # Verification helpers
 # ---------------------------------------------------------------------------
 
+
 def _count_vs256_markers(text: str) -> int:
     from app.utils.vs256_crypto import find_all_markers
+
     return len(find_all_markers(text))
 
 
 def _count_vs256_rs_markers(text: str) -> int:
     from app.utils.vs256_rs_crypto import find_all_markers
+
     return len(find_all_markers(text))
 
 
 def _count_zwc_markers(text: str) -> int:
     from app.utils.legacy_safe_crypto import find_all_markers
+
     return len(find_all_markers(text))
 
 
 def _count_zwc_rs_markers(text: str) -> int:
     from app.utils.legacy_safe_rs_crypto import find_all_markers
+
     return len(find_all_markers(text))
 
 
@@ -175,9 +185,9 @@ def _count_zwc_rs_markers(text: str) -> int:
 # Character-level survival analysis
 # ---------------------------------------------------------------------------
 
-VS256_BMP_CHARS = frozenset(chr(c) for c in range(0xFE00, 0xFE10))         # VS1-16
-VS256_SUPP_CHARS = frozenset(chr(c) for c in range(0xE0100, 0xE01F0))      # VS17-256
-ZWC_CHARS = frozenset(["\u200C", "\u200D", "\u034F", "\u180E", "\u200E", "\u200F"])
+VS256_BMP_CHARS = frozenset(chr(c) for c in range(0xFE00, 0xFE10))  # VS1-16
+VS256_SUPP_CHARS = frozenset(chr(c) for c in range(0xE0100, 0xE01F0))  # VS17-256
+ZWC_CHARS = frozenset(["\u200c", "\u200d", "\u034f", "\u180e", "\u200e", "\u200f"])
 ALL_INVISIBLE = VS256_BMP_CHARS | VS256_SUPP_CHARS | ZWC_CHARS
 
 
@@ -191,6 +201,7 @@ def _count_invisible(text: str) -> dict[str, int]:
 # ---------------------------------------------------------------------------
 # Result dataclass
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class RoundTripResult:
@@ -212,6 +223,7 @@ class RoundTripResult:
 # ---------------------------------------------------------------------------
 # Core round-trip function
 # ---------------------------------------------------------------------------
+
 
 def _run_roundtrip(
     mode: str,
@@ -248,11 +260,7 @@ def _run_roundtrip(
 
     # 5. Count surviving whole markers
     result.surviving_markers = count_fn(extracted)
-    result.survival_rate = (
-        result.surviving_markers / result.embedded_markers
-        if result.embedded_markers > 0
-        else 0.0
-    )
+    result.survival_rate = result.surviving_markers / result.embedded_markers if result.embedded_markers > 0 else 0.0
 
     return result
 
@@ -260,6 +268,7 @@ def _run_roundtrip(
 # ---------------------------------------------------------------------------
 # Pytest tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def signing_key() -> bytes:
@@ -270,14 +279,13 @@ def signing_key() -> bytes:
 def all_results(signing_key) -> list[RoundTripResult]:
     """Run all 4 modes and collect results. Cached at module scope."""
     configs = [
-        ("VS256 (36 chars)",    _embed_vs256,    _count_vs256_markers,    36),
+        ("VS256 (36 chars)", _embed_vs256, _count_vs256_markers, 36),
         ("VS256-RS (44 chars)", _embed_vs256_rs, _count_vs256_rs_markers, 44),
-        ("ZWC (100 chars)",     _embed_zwc,      _count_zwc_markers,      100),
-        ("ZWC-RS (112 chars)",  _embed_zwc_rs,   _count_zwc_rs_markers,   112),
+        ("ZWC (100 chars)", _embed_zwc, _count_zwc_markers, 100),
+        ("ZWC-RS (112 chars)", _embed_zwc_rs, _count_zwc_rs_markers, 112),
     ]
     return [
-        _run_roundtrip(mode, embed_fn, count_fn, marker_chars, ARTICLE_SENTENCES, signing_key)
-        for mode, embed_fn, count_fn, marker_chars in configs
+        _run_roundtrip(mode, embed_fn, count_fn, marker_chars, ARTICLE_SENTENCES, signing_key) for mode, embed_fn, count_fn, marker_chars in configs
     ]
 
 
@@ -310,13 +318,9 @@ def test_print_survival_report(all_results, capsys):
         "",
         "=" * 74,
         "  PDF ROUND-TRIP SURVIVAL REPORT",
-        "  Article: {} sentences, {} visible chars".format(
-            len(ARTICLE_SENTENCES), len(ARTICLE_TEXT)
-        ),
+        "  Article: {} sentences, {} visible chars".format(len(ARTICLE_SENTENCES), len(ARTICLE_TEXT)),
         "=" * 74,
-        "{:<22} {:>6} {:>9} {:>9} {:>9} {:>8}".format(
-            "Mode", "Chars", "Embedded", "Survived", "Survive%", "PDF KB"
-        ),
+        "{:<22} {:>6} {:>9} {:>9} {:>9} {:>8}".format("Mode", "Chars", "Embedded", "Survived", "Survive%", "PDF KB"),
         "-" * 74,
     ]
     for r in all_results:
@@ -343,11 +347,7 @@ def test_print_survival_report(all_results, capsys):
         after_vs_bmp = r.extracted_invisible_chars.get("vs_bmp", 0)
         after_vs_supp = r.extracted_invisible_chars.get("vs_supp", 0)
         after_zwc = r.extracted_invisible_chars.get("zwc", 0)
-        lines.append(
-            "{:<22} {:>8} {:>10} {:>8}".format(
-                r.mode, after_vs_bmp, after_vs_supp, after_zwc
-            )
-        )
+        lines.append("{:<22} {:>8} {:>10} {:>8}".format(r.mode, after_vs_bmp, after_vs_supp, after_zwc))
 
     lines += ["", "  Notes:"]
     for r in all_results:
@@ -363,6 +363,7 @@ def test_print_survival_report(all_results, capsys):
 
     # Write to file for easy inspection
     import os
+
     out_dir = os.path.join(os.path.dirname(__file__), "..", "output")
     os.makedirs(out_dir, exist_ok=True)
     report_path = os.path.join(out_dir, "pdf_roundtrip_report.txt")
@@ -389,18 +390,14 @@ def test_zwc_chars_survive_individually_vs256_stripped_completely(all_results):
     See test_print_survival_report for the full quantified output.
     """
     vs256 = next(r for r in all_results if r.mode.startswith("VS256 "))
-    zwc   = next(r for r in all_results if r.mode.startswith("ZWC "))
+    zwc = next(r for r in all_results if r.mode.startswith("ZWC "))
 
     # VS256 supplementary chars must be completely absent
-    assert vs256.extracted_invisible_chars.get("vs_supp", 0) == 0, (
-        "VS256 supplementary chars unexpectedly survived — font or extractor changed"
-    )
+    assert vs256.extracted_invisible_chars.get("vs_supp", 0) == 0, "VS256 supplementary chars unexpectedly survived — font or extractor changed"
 
     # ZWC chars must at least partially survive (individual chars, not whole markers)
     zwc_individual = zwc.extracted_invisible_chars.get("zwc", 0)
-    assert zwc_individual > 0, (
-        "ZWC chars did not survive at all — unexpected; check font coverage"
-    )
+    assert zwc_individual > 0, "ZWC chars did not survive at all — unexpected; check font coverage"
 
     # No whole markers survive via either mode under this pipeline
     assert vs256.surviving_markers == 0
@@ -414,15 +411,12 @@ def test_zwc_chars_survive_individually_vs256_stripped_completely(all_results):
 if __name__ == "__main__":
     key = _make_signing_key()
     configs = [
-        ("VS256 (36 chars)",    _embed_vs256,    _count_vs256_markers,    36),
+        ("VS256 (36 chars)", _embed_vs256, _count_vs256_markers, 36),
         ("VS256-RS (44 chars)", _embed_vs256_rs, _count_vs256_rs_markers, 44),
-        ("ZWC (100 chars)",     _embed_zwc,      _count_zwc_markers,      100),
-        ("ZWC-RS (112 chars)",  _embed_zwc_rs,   _count_zwc_rs_markers,   112),
+        ("ZWC (100 chars)", _embed_zwc, _count_zwc_markers, 100),
+        ("ZWC-RS (112 chars)", _embed_zwc_rs, _count_zwc_rs_markers, 112),
     ]
-    results = [
-        _run_roundtrip(mode, embed_fn, count_fn, marker_chars, ARTICLE_SENTENCES, key)
-        for mode, embed_fn, count_fn, marker_chars in configs
-    ]
+    results = [_run_roundtrip(mode, embed_fn, count_fn, marker_chars, ARTICLE_SENTENCES, key) for mode, embed_fn, count_fn, marker_chars in configs]
 
     print("\n" + "=" * 74)
     print("  PDF ROUND-TRIP SURVIVAL REPORT")
@@ -433,7 +427,7 @@ if __name__ == "__main__":
     for r in results:
         print(
             f"{r.mode:<22} {r.marker_chars:>6} {r.embedded_markers:>9} "
-            f"{r.surviving_markers:>9} {r.survival_rate:>7.0%} {r.pdf_size_bytes/1024:>8.1f}"
+            f"{r.surviving_markers:>9} {r.survival_rate:>7.0%} {r.pdf_size_bytes / 1024:>8.1f}"
         )
     print("-" * 74)
     print("\n  Invisible char type survival:")
@@ -442,7 +436,7 @@ if __name__ == "__main__":
     for r in results:
         print(
             f"{r.mode:<22} "
-            f"{r.extracted_invisible_chars.get('vs_bmp',0):>8} "
-            f"{r.extracted_invisible_chars.get('vs_supp',0):>10} "
-            f"{r.extracted_invisible_chars.get('zwc',0):>8}"
+            f"{r.extracted_invisible_chars.get('vs_bmp', 0):>8} "
+            f"{r.extracted_invisible_chars.get('vs_supp', 0):>10} "
+            f"{r.extracted_invisible_chars.get('zwc', 0):>8}"
         )

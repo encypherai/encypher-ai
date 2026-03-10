@@ -10,9 +10,7 @@ Covers:
 """
 
 import pytest
-import pytest_asyncio
 from httpx import AsyncClient
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Analytics Detections
@@ -104,5 +102,6 @@ async def test_zw_resolve_endpoint_works(client: AsyncClient):
 def test_detection_service_module_exists():
     """Verify that detection_service can be imported."""
     from app.services.detection_service import detection_service
+
     assert detection_service is not None
     assert callable(detection_service)

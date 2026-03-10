@@ -9,8 +9,6 @@ stamped to legacy Alembic revision id `003` can upgrade into the current
 revision graph.
 """
 
-from alembic import op
-
 # revision identifiers, used by Alembic.
 revision = "003"
 down_revision = None

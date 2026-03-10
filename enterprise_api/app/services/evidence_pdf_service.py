@@ -12,16 +12,15 @@ Returns raw bytes (application/pdf) so the router can stream directly.
 
 import io
 import logging
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
 # ── Encypher brand colours ────────────────────────────────────────────────────
-DELFT_BLUE = (0.106, 0.169, 0.306)       # #1B2B4E
-BLUE_NCS = (0.165, 0.529, 0.769)         # #2A87C4
-COLUMBIA_BLUE = (0.659, 0.835, 0.961)    # #A8D5F5
+DELFT_BLUE = (0.106, 0.169, 0.306)  # #1B2B4E
+BLUE_NCS = (0.165, 0.529, 0.769)  # #2A87C4
+COLUMBIA_BLUE = (0.659, 0.835, 0.961)  # #A8D5F5
 WHITE = (1.0, 1.0, 1.0)
 BLACK = (0.0, 0.0, 0.0)
 LIGHT_GREY = (0.93, 0.93, 0.93)
@@ -55,8 +54,6 @@ def generate_evidence_pdf(
     from reportlab.platypus import (
         BaseDocTemplate,
         Frame,
-        Image,
-        NextPageTemplate,
         PageBreak,
         PageTemplate,
         Paragraph,
@@ -258,14 +255,16 @@ def generate_evidence_pdf(
     text_table = Table(
         [[text_para]],
         colWidths=[BODY_W - 12],
-        style=TableStyle([
-            ("BOX", (0, 0), (-1, -1), 0.75, colors.HexColor("#A8D5F5")),
-            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F5FAFF")),
-            ("TOPPADDING", (0, 0), (-1, -1), 8),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-            ("LEFTPADDING", (0, 0), (-1, -1), 8),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-        ]),
+        style=TableStyle(
+            [
+                ("BOX", (0, 0), (-1, -1), 0.75, colors.HexColor("#A8D5F5")),
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F5FAFF")),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+            ]
+        ),
     )
     story.append(text_table)
     story.append(Spacer(1, 12))
@@ -320,11 +319,11 @@ def generate_evidence_pdf(
 
     if chain:
         col_widths = [
-            0.30 * inch,   # #
-            1.35 * inch,   # Event Type
-            1.55 * inch,   # Timestamp
-            1.80 * inch,   # Event Hash
-            1.80 * inch,   # Prev Hash
+            0.30 * inch,  # #
+            1.35 * inch,  # Event Type
+            1.55 * inch,  # Timestamp
+            1.80 * inch,  # Event Hash
+            1.80 * inch,  # Prev Hash
         ]
         header_row = [
             Paragraph("<b>#</b>", mono_style),
@@ -338,35 +337,41 @@ def generate_evidence_pdf(
             evt_hash = event.get("event_hash") or ""
             prev_hash = event.get("previous_hash") or ""
             ts = event.get("created_at") or event.get("timestamp") or ""
-            data_rows.append([
-                Paragraph(str(idx + 1), mono_style),
-                Paragraph(event.get("event_type", ""), mono_style),
-                Paragraph(ts, mono_style),
-                Paragraph(_truncate_hash(evt_hash), mono_style),
-                Paragraph(_truncate_hash(prev_hash), mono_style),
-            ])
+            data_rows.append(
+                [
+                    Paragraph(str(idx + 1), mono_style),
+                    Paragraph(event.get("event_type", ""), mono_style),
+                    Paragraph(ts, mono_style),
+                    Paragraph(_truncate_hash(evt_hash), mono_style),
+                    Paragraph(_truncate_hash(prev_hash), mono_style),
+                ]
+            )
 
         chain_table = Table(
             data_rows,
             colWidths=col_widths,
             repeatRows=1,
         )
-        chain_table.setStyle(TableStyle([
-            # Header
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1B2B4E")),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            # Alternating rows
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F0F6FC")]),
-            # Grid
-            ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#CBD5E1")),
-            ("BOX", (0, 0), (-1, -1), 0.75, colors.HexColor("#2A87C4")),
-            # Padding
-            ("TOPPADDING", (0, 0), (-1, -1), 4),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ("LEFTPADDING", (0, 0), (-1, -1), 4),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ]))
+        chain_table.setStyle(
+            TableStyle(
+                [
+                    # Header
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1B2B4E")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    # Alternating rows
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F0F6FC")]),
+                    # Grid
+                    ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#CBD5E1")),
+                    ("BOX", (0, 0), (-1, -1), 0.75, colors.HexColor("#2A87C4")),
+                    # Padding
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ]
+            )
+        )
         story.append(chain_table)
     else:
         story.append(Paragraph("No evidence chain events recorded.", body_style))
@@ -397,19 +402,20 @@ def _kv_table(rows: List[List[str]], body_w: float) -> Any:
         fontName="Helvetica",
     )
 
-    data = [
-        [Paragraph(r[0], label_style), Paragraph(str(r[1]) if r[1] else "-", value_style)]
-        for r in rows
-    ]
+    data = [[Paragraph(r[0], label_style), Paragraph(str(r[1]) if r[1] else "-", value_style)] for r in rows]
     t = Table(data, colWidths=[1.5 * 72, body_w - 1.5 * 72])
-    t.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("TOPPADDING", (0, 0), (-1, -1), 3),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-        ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ("LINEBELOW", (0, 0), (-1, -2), 0.3, colors.HexColor("#E2E8F0")),
-    ]))
+    t.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("LINEBELOW", (0, 0), (-1, -2), 0.3, colors.HexColor("#E2E8F0")),
+            ]
+        )
+    )
     return t
 
 

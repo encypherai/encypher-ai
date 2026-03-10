@@ -11,7 +11,6 @@ Tests the full chain:
   encode_wrapper (c2pa_text library)
 """
 
-import hashlib
 import struct
 import unicodedata
 from typing import Optional
@@ -32,7 +31,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Constants from the C2PA spec (docs/c2pa/Manifests_Text.txt)
 # ---------------------------------------------------------------------------
-ZWNBSP = "\uFEFF"  # U+FEFF Zero-Width No-Break Space
+ZWNBSP = "\ufeff"  # U+FEFF Zero-Width No-Break Space
 VS_START = 0xFE00  # U+FE00 (VS1)
 VS_END = 0xFE0F  # U+FE0F (VS16)
 VS_SUP_START = 0xE0100  # U+E0100 (VS17)
@@ -133,10 +132,9 @@ class TestC2PASpecPlacement:
         nfc = unicodedata.normalize("NFC", MARKETING_SITE_TEST_TEXT)
         first_invis = _first_invisible_index(signed)
         assert first_invis is not None
-        assert first_invis >= len(nfc), (
-            f"First invisible char at index {first_invis}, but visible text "
-            f"ends at {len(nfc)}. Wrapper must be at end of visible text."
-        )
+        assert first_invis >= len(
+            nfc
+        ), f"First invisible char at index {first_invis}, but visible text ends at {len(nfc)}. Wrapper must be at end of visible text."
 
     def test_visible_text_unchanged(self):
         """Visible text must be identical to NFC-normalized original."""
@@ -152,10 +150,7 @@ class TestC2PASpecPlacement:
         # "strategic action." ends at the very end of visible text
         nfc = unicodedata.normalize("NFC", MARKETING_SITE_TEST_TEXT)
         assert nfc.endswith("strategic action.")
-        assert first_invis == len(nfc), (
-            f"First invisible at {first_invis}, expected {len(nfc)} "
-            f"(right after 'strategic action.')"
-        )
+        assert first_invis == len(nfc), f"First invisible at {first_invis}, expected {len(nfc)} (right after 'strategic action.')"
 
 
 class TestC2PASpecZWNBSPPrefix:
@@ -165,10 +160,7 @@ class TestC2PASpecZWNBSPPrefix:
         """Rule 2: wrapper SHALL be prefixed with U+FEFF."""
         signed = _sign_text(MARKETING_SITE_TEST_TEXT)
         first_invis = _first_invisible_index(signed)
-        assert signed[first_invis] == ZWNBSP, (
-            f"First invisible char should be ZWNBSP (U+FEFF), "
-            f"got U+{ord(signed[first_invis]):04X}"
-        )
+        assert signed[first_invis] == ZWNBSP, f"First invisible char should be ZWNBSP (U+FEFF), got U+{ord(signed[first_invis]):04X}"
 
     def test_variation_selectors_follow_zwnbsp(self):
         """After ZWNBSP, all chars should be variation selectors."""
@@ -177,10 +169,9 @@ class TestC2PASpecZWNBSPPrefix:
         # Skip the ZWNBSP itself
         for i in range(first_invis + 1, len(signed)):
             cp = ord(signed[i])
-            assert _is_variation_selector(cp), (
-                f"Char at index {i} (U+{cp:04X}) is not a variation selector. "
-                f"All chars after ZWNBSP must be variation selectors."
-            )
+            assert _is_variation_selector(
+                cp
+            ), f"Char at index {i} (U+{cp:04X}) is not a variation selector. All chars after ZWNBSP must be variation selectors."
 
 
 class TestC2PASpecContiguousBlock:
@@ -194,10 +185,7 @@ class TestC2PASpecContiguousBlock:
 
         # From first invisible to end, every char must be invisible
         for i in range(first_invis, len(signed)):
-            assert _is_invisible(signed[i]), (
-                f"Non-invisible char at index {i} (U+{ord(signed[i]):04X}) "
-                f"breaks the contiguous block requirement."
-            )
+            assert _is_invisible(signed[i]), f"Non-invisible char at index {i} (U+{ord(signed[i]):04X}) breaks the contiguous block requirement."
 
     def test_no_invisible_chars_in_visible_text(self):
         """Rule 4: wrapper SHALL NOT be split across multiple locations."""
@@ -205,10 +193,9 @@ class TestC2PASpecContiguousBlock:
         nfc = unicodedata.normalize("NFC", MARKETING_SITE_TEST_TEXT)
         # Check that no invisible chars appear within the visible text portion
         for i in range(len(nfc)):
-            assert not _is_invisible(signed[i]), (
-                f"Invisible char at index {i} within visible text portion. "
-                f"Wrapper must not be split across locations."
-            )
+            assert not _is_invisible(
+                signed[i]
+            ), f"Invisible char at index {i} within visible text portion. Wrapper must not be split across locations."
 
 
 class TestC2PASpecMagicBytes:
@@ -219,39 +206,33 @@ class TestC2PASpecMagicBytes:
         signed = _sign_text(MARKETING_SITE_TEST_TEXT)
         first_invis = _first_invisible_index(signed)
         # Skip ZWNBSP, decode first 8 variation selectors to bytes
-        vs_chars = signed[first_invis + 1:]
+        vs_chars = signed[first_invis + 1 :]
         decoded_bytes = bytes(_vs_to_byte(ord(vs_chars[i])) for i in range(8))
         magic_value = struct.unpack(">Q", decoded_bytes)[0]
-        assert magic_value == MAGIC, (
-            f"Magic number mismatch: got 0x{magic_value:016X}, "
-            f"expected 0x{MAGIC:016X} ('C2PATXT\\0')"
-        )
+        assert magic_value == MAGIC, f"Magic number mismatch: got 0x{magic_value:016X}, expected 0x{MAGIC:016X} ('C2PATXT\\0')"
 
     def test_version_byte(self):
         """Byte 9 (after magic) must be version=1."""
         signed = _sign_text(MARKETING_SITE_TEST_TEXT)
         first_invis = _first_invisible_index(signed)
-        vs_chars = signed[first_invis + 1:]
+        vs_chars = signed[first_invis + 1 :]
         version_byte = _vs_to_byte(ord(vs_chars[8]))
-        assert version_byte == VERSION, (
-            f"Version mismatch: got {version_byte}, expected {VERSION}"
-        )
+        assert version_byte == VERSION, f"Version mismatch: got {version_byte}, expected {VERSION}"
 
     def test_manifest_length_field(self):
         """Bytes 9-12 (after version) encode manifestLength as uint32."""
         signed = _sign_text(MARKETING_SITE_TEST_TEXT)
         first_invis = _first_invisible_index(signed)
-        vs_chars = signed[first_invis + 1:]
+        vs_chars = signed[first_invis + 1 :]
         # magic=8 bytes, version=1 byte, manifestLength=4 bytes
         length_bytes = bytes(_vs_to_byte(ord(vs_chars[i])) for i in range(9, 13))
         manifest_length = struct.unpack(">I", length_bytes)[0]
         # Total VS chars should be: 8 (magic) + 1 (version) + 4 (length) + manifestLength
         expected_total_vs = 8 + 1 + 4 + manifest_length
         actual_vs_count = len(vs_chars)
-        assert actual_vs_count == expected_total_vs, (
-            f"VS count mismatch: {actual_vs_count} actual vs "
-            f"{expected_total_vs} expected (manifestLength={manifest_length})"
-        )
+        assert (
+            actual_vs_count == expected_total_vs
+        ), f"VS count mismatch: {actual_vs_count} actual vs {expected_total_vs} expected (manifestLength={manifest_length})"
 
 
 class TestC2PASpecEncodingAlgorithm:
@@ -285,16 +266,12 @@ class TestC2PASpecNormalization:
         signed = _sign_text(MARKETING_SITE_TEST_TEXT)
         visible = _visible_text(signed)
         # The visible text should already be NFC
-        assert visible == unicodedata.normalize("NFC", visible), (
-            "Visible text in signed output must be NFC-normalized"
-        )
+        assert visible == unicodedata.normalize("NFC", visible), "Visible text in signed output must be NFC-normalized"
 
     def test_nfc_idempotent_for_test_text(self):
         """Our test text should be unchanged by NFC normalization."""
         nfc = unicodedata.normalize("NFC", MARKETING_SITE_TEST_TEXT)
-        assert nfc == MARKETING_SITE_TEST_TEXT, (
-            "Test text should already be in NFC form"
-        )
+        assert nfc == MARKETING_SITE_TEST_TEXT, "Test text should already be in NFC form"
 
 
 class TestC2PASpecFindAndDecode:
@@ -321,9 +298,7 @@ class TestC2PASpecFindAndDecode:
         assert span is not None, "Span must be returned"
         start, end = span
         nfc_len = len(unicodedata.normalize("NFC", MARKETING_SITE_TEST_TEXT))
-        assert start >= nfc_len, (
-            f"Wrapper span starts at {start}, but visible text ends at {nfc_len}"
-        )
+        assert start >= nfc_len, f"Wrapper span starts at {start}, but visible text ends at {nfc_len}"
 
 
 class TestC2PASpecContentBinding:
@@ -393,10 +368,7 @@ class TestC2PASpecWithCustomAssertions:
         )
         nfc = unicodedata.normalize("NFC", MARKETING_SITE_TEST_TEXT)
         first_invis = _first_invisible_index(signed)
-        assert first_invis == len(nfc), (
-            f"Status assertion must not affect wrapper placement. "
-            f"First invisible at {first_invis}, expected {len(nfc)}"
-        )
+        assert first_invis == len(nfc), f"Status assertion must not affect wrapper placement. First invisible at {first_invis}, expected {len(nfc)}"
 
     def test_with_provenance_assertion(self):
         """User provenance assertion must not break placement."""

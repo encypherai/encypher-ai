@@ -75,8 +75,4 @@ class ArticleImage(Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"<ArticleImage(image_id={self.image_id!r}, "
-            f"doc={self.document_id!r}, "
-            f"pos={self.position})>"
-        )
+        return f"<ArticleImage(image_id={self.image_id!r}, doc={self.document_id!r}, pos={self.position})>"

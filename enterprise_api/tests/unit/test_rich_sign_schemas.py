@@ -1,4 +1,5 @@
 """Unit tests for rich_sign_schemas.py."""
+
 import base64
 from io import BytesIO
 

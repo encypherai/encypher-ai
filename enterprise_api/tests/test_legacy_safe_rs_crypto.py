@@ -28,13 +28,14 @@ import os
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
+from app.utils.legacy_safe_crypto import LRM, RLM
+from app.utils.legacy_safe_crypto import find_all_markers as ls_find_all_markers
 from app.utils.legacy_safe_rs_crypto import (
     CHARS_BASE6_SET,
     DATA_BYTES,
     MARKER_CHARS,
     PARITY_BYTES,
     PAYLOAD_BYTES,
-    _RS,
     _decode_base6_36,
     _encode_base6_36,
     create_embedded_sentence,
@@ -47,8 +48,6 @@ from app.utils.legacy_safe_rs_crypto import (
     remove_markers,
     verify_marker,
 )
-from app.utils.legacy_safe_crypto import LRM, RLM, find_all_markers as ls_find_all_markers
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -218,7 +217,6 @@ def test_verify_wrong_length_fails(signing_key):
 
 def test_rs_erasure_recovery_up_to_4(log_id, signing_key):
     """Up to 4 known erasures (char position known) are recovered correctly."""
-    from app.utils.legacy_safe_rs_crypto import CHARS_BASE6
     marker = create_marker(log_id, signing_key)
 
     # Corrupt positions 5, 20, 60, 100 in the 112-char marker (within RS payload)
@@ -309,8 +307,11 @@ def test_rs_finder_only_finds_rs_markers(signing_key):
     """RS finder (112-char) detects RS markers but NOT standalone 100-char ls markers."""
     from app.utils.legacy_safe_crypto import (
         create_marker as ls_create,
+    )
+    from app.utils.legacy_safe_crypto import (
         generate_log_id as ls_gen,
     )
+
     rs_marker = create_marker(generate_log_id(), signing_key)
     ls_marker = ls_create(ls_gen(), signing_key)
     rs_only_text = "Start" + rs_marker + "End"
@@ -337,8 +338,11 @@ def test_nonrs_100_char_not_detected_by_rs_finder(signing_key):
     """100-char non-ECC markers are NOT picked up by the 112-char RS detector."""
     from app.utils.legacy_safe_crypto import (
         create_marker as ls_create,
+    )
+    from app.utils.legacy_safe_crypto import (
         generate_log_id as ls_gen,
     )
+
     ls_marker = ls_create(ls_gen(), signing_key)
     text = "Prefix" + ls_marker + "Suffix"
     rs_found = find_all_markers(text)
@@ -375,12 +379,15 @@ def test_remove_markers(signing_key):
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("sentence,expected_suffix", [
-    ("Hello world.", "."),
-    ("Hello world!", "!"),
-    ("Hello world?", "?"),
-    ("No punctuation", ""),
-])
+@pytest.mark.parametrize(
+    "sentence,expected_suffix",
+    [
+        ("Hello world.", "."),
+        ("Hello world!", "!"),
+        ("Hello world?", "?"),
+        ("No punctuation", ""),
+    ],
+)
 def test_embed_before_punctuation(sentence, expected_suffix, signing_key):
     lid = generate_log_id()
     marker = create_marker(lid, signing_key)

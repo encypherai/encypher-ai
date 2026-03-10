@@ -63,7 +63,9 @@ def upgrade() -> None:
 
     # Create unique constraint on org + period
     if not _has_unique_constraint("coalition_content_stats", "uq_coalition_content_stats_org_period"):
-        op.create_unique_constraint("uq_coalition_content_stats_org_period", "coalition_content_stats", ["organization_id", "period_start", "period_end"])
+        op.create_unique_constraint(
+            "uq_coalition_content_stats_org_period", "coalition_content_stats", ["organization_id", "period_start", "period_end"]
+        )
 
     if not _has_index("coalition_content_stats", "ix_coalition_content_stats_org"):
         op.create_index("ix_coalition_content_stats_org", "coalition_content_stats", ["organization_id"])

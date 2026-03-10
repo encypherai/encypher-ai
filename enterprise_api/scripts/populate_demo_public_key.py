@@ -10,7 +10,6 @@ Supports both:
 """
 
 import asyncio
-import os
 import sys
 from pathlib import Path
 

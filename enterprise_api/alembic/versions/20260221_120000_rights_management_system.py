@@ -17,8 +17,9 @@ Adds:
 """
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers
 revision = "20260221_120000"
@@ -40,7 +41,6 @@ def upgrade() -> None:
         sa.Column("effective_date", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("updated_by", postgresql.UUID(as_uuid=True), nullable=True),
-
         # Identity
         sa.Column("publisher_name", sa.Text(), nullable=False),
         sa.Column("publisher_url", sa.Text(), nullable=True),
@@ -48,7 +48,6 @@ def upgrade() -> None:
         sa.Column("contact_url", sa.Text(), nullable=True),
         sa.Column("legal_entity", sa.Text(), nullable=True),
         sa.Column("jurisdiction", sa.Text(), nullable=False, server_default=sa.text("'US'")),
-
         # Default rights
         sa.Column(
             "default_license_type",
@@ -56,23 +55,19 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("'all_rights_reserved'"),
         ),
-
         # Tier-specific licensing terms (JSONB)
         sa.Column("bronze_tier", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'")),
         sa.Column("silver_tier", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'")),
         sa.Column("gold_tier", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'")),
-
         # Formal notice
         sa.Column("notice_status", sa.Text(), nullable=False, server_default=sa.text("'draft'")),
         sa.Column("notice_effective_date", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("notice_text", sa.Text(), nullable=True),
         sa.Column("notice_hash", sa.Text(), nullable=True),
-
         # Coalition
         sa.Column("coalition_member", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("coalition_joined_at", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("licensing_track", sa.Text(), nullable=False, server_default=sa.text("'both'")),
-
         sa.UniqueConstraint("organization_id", "profile_version", name="uq_rights_profile_org_version"),
     )
 
@@ -90,19 +85,16 @@ def upgrade() -> None:
         sa.Column("override_version", sa.Integer(), nullable=False, server_default=sa.text("1")),
         sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("updated_by", postgresql.UUID(as_uuid=True), nullable=True),
-
         # Scope
         sa.Column("override_type", sa.Text(), nullable=False, server_default=sa.text("'document'")),
         sa.Column("collection_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("content_type_filter", sa.Text(), nullable=True),
         sa.Column("date_range_start", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("date_range_end", sa.TIMESTAMP(timezone=True), nullable=True),
-
         # Tier overrides (null = use publisher default)
         sa.Column("bronze_tier_override", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("silver_tier_override", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("gold_tier_override", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-
         # Special flags
         sa.Column("do_not_license", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("premium_content", sa.Boolean(), nullable=False, server_default=sa.text("false")),
@@ -125,27 +117,22 @@ def upgrade() -> None:
         sa.Column("organization_id", sa.String(64), sa.ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False),
         sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("created_by", postgresql.UUID(as_uuid=True), nullable=True),
-
         # Target entity
         sa.Column("target_entity_name", sa.Text(), nullable=False),
         sa.Column("target_entity_domain", sa.Text(), nullable=True),
         sa.Column("target_contact_email", sa.Text(), nullable=True),
         sa.Column("target_entity_type", sa.Text(), nullable=False, server_default=sa.text("'ai_company'")),
-
         # Scope
         sa.Column("scope_type", sa.Text(), nullable=False),
         sa.Column("scope_document_ids", postgresql.ARRAY(postgresql.UUID(as_uuid=True)), nullable=True),
         sa.Column("scope_date_range_start", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("scope_date_range_end", sa.TIMESTAMP(timezone=True), nullable=True),
-
         # Notice content (immutable once delivered)
         sa.Column("notice_type", sa.Text(), nullable=False),
         sa.Column("notice_text", sa.Text(), nullable=False),
         sa.Column("notice_hash", sa.Text(), nullable=False),  # SHA-256 of notice_text
-
         # Demands
         sa.Column("demands", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-
         # Lifecycle
         sa.Column("status", sa.Text(), nullable=False, server_default=sa.text("'created'")),
         sa.Column("delivered_at", sa.TIMESTAMP(timezone=True), nullable=True),
@@ -186,19 +173,15 @@ def upgrade() -> None:
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, server_default=sa.text("gen_random_uuid()")),
         sa.Column("publisher_org_id", sa.String(64), sa.ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True),
         sa.Column("requester_org_id", sa.String(64), sa.ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True),
-
         sa.Column("tier", sa.Text(), nullable=False),  # bronze, silver, gold
         sa.Column("scope", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("proposed_terms", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("requester_info", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-
         sa.Column("status", sa.Text(), nullable=False, server_default=sa.text("'pending'")),
         sa.Column("response", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("responded_at", sa.TIMESTAMP(timezone=True), nullable=True),
-
         # If approved → creates rights_licensing_agreement
         sa.Column("agreement_id", postgresql.UUID(as_uuid=True), nullable=True),
-
         sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
     )
@@ -217,23 +200,21 @@ def upgrade() -> None:
         sa.Column("publisher_org_id", sa.String(64), sa.ForeignKey("organizations.id"), nullable=False),
         sa.Column("licensee_org_id", sa.String(64), sa.ForeignKey("organizations.id"), nullable=True),
         sa.Column("licensee_name", sa.Text(), nullable=True),  # For non-org licensees
-
         sa.Column("tier", sa.Text(), nullable=False),
         sa.Column("scope", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("terms", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-
         sa.Column("effective_date", sa.TIMESTAMP(timezone=True), nullable=False),
         sa.Column("expiry_date", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("auto_renew", sa.Boolean(), nullable=False, server_default=sa.text("false")),
-
         sa.Column("status", sa.Text(), nullable=False, server_default=sa.text("'active'")),
         sa.Column("usage_metrics", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'")),
-
         sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
     )
 
-    op.create_index("idx_rights_agreements_active", "rights_licensing_agreements", ["status", "expiry_date"], postgresql_where=sa.text("status = 'active'"))
+    op.create_index(
+        "idx_rights_agreements_active", "rights_licensing_agreements", ["status", "expiry_date"], postgresql_where=sa.text("status = 'active'")
+    )
     op.create_index("idx_rights_agreements_publisher", "rights_licensing_agreements", ["publisher_org_id"])
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -268,32 +249,26 @@ def upgrade() -> None:
         sa.Column("id", sa.BigInteger(), primary_key=True, autoincrement=True),
         sa.Column("document_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("organization_id", sa.String(64), nullable=False),
-
         # Detection source
         sa.Column("detection_source", sa.Text(), nullable=False),
         # e.g. 'chrome_extension', 'api_verification', 'rsl_olp_check',
         # 'http_header_lookup', 'rights_api_lookup', 'crawl_detected'
-
         # Location
         sa.Column("detected_on_url", sa.Text(), nullable=True),
         sa.Column("detected_on_domain", sa.Text(), nullable=True),
-
         # Requester info
         sa.Column("requester_ip", postgresql.INET(), nullable=True),
         sa.Column("requester_org_id", sa.String(64), nullable=True),
         sa.Column("requester_user_agent", sa.Text(), nullable=True),
         sa.Column("user_agent_category", sa.Text(), nullable=True),
         # e.g. 'human_browser', 'ai_crawler', 'search_crawler', 'aggregator', 'unknown'
-
         # Content info
         sa.Column("segments_found", sa.Integer(), nullable=True),
         sa.Column("integrity_status", sa.Text(), nullable=True),
         # 'intact', 'partial_tampering', 'significant_tampering', 'stripped'
-
         # Rights signals
         sa.Column("rights_served", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("rights_acknowledged", sa.Boolean(), nullable=False, server_default=sa.text("false")),
-
         sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
     )
 

@@ -1,4 +1,5 @@
 """Image C2PA verification service using c2pa-python Reader."""
+
 import hashlib
 import io
 import json
@@ -66,10 +67,7 @@ def verify_image_c2pa(image_bytes: bytes, mime_type: str) -> ImageVerificationRe
     except Exception as e:
         err_str = str(e)
         # Distinguish "no manifest" from "invalid manifest"
-        no_manifest = any(
-            phrase in err_str.lower()
-            for phrase in ("not found", "no manifest", "missing", "jumbf", "notfound")
-        )
+        no_manifest = any(phrase in err_str.lower() for phrase in ("not found", "no manifest", "missing", "jumbf", "notfound"))
         if no_manifest:
             return ImageVerificationResult(
                 valid=False,

@@ -12,23 +12,22 @@ Run:
 
 import math
 import unicodedata
-import pytest
-
 
 # ── Tag character definitions ──────────────────────────────────────────
 
 TAG_PRINTABLE_START = 0xE0020  # TAG SPACE
-TAG_PRINTABLE_END = 0xE007E    # TAG TILDE
+TAG_PRINTABLE_END = 0xE007E  # TAG TILDE
 TAG_PRINTABLE = [chr(cp) for cp in range(TAG_PRINTABLE_START, TAG_PRINTABLE_END + 1)]
 
 TAG_BLOCK_START = 0xE0000
 TAG_BLOCK_END = 0xE007F
 
 # Current production base-4 set for comparison
-CURRENT_BASE4 = ["\u200C", "\u200D", "\u034F", "\u180E"]  # ZWNJ, ZWJ, CGJ, MVS
+CURRENT_BASE4 = ["\u200c", "\u200d", "\u034f", "\u180e"]  # ZWNJ, ZWJ, CGJ, MVS
 
 
 # ── Unicode property tests ─────────────────────────────────────────────
+
 
 class TestTagCharUnicodeProperties:
     """Verify Unicode properties that matter for invisible embedding."""
@@ -41,17 +40,13 @@ class TestTagCharUnicodeProperties:
         for cp in range(TAG_PRINTABLE_START, TAG_PRINTABLE_END + 1):
             char = chr(cp)
             category = unicodedata.category(char)
-            assert category == "Cf", (
-                f"U+{cp:05X} has category {category}, expected Cf"
-            )
+            assert category == "Cf", f"U+{cp:05X} has category {category}, expected Cf"
 
     def test_current_base4_are_also_format_or_mark(self):
         """Our current chars are Cf or Mn — tag chars match this profile."""
         for char in CURRENT_BASE4:
             cat = unicodedata.category(char)
-            assert cat in ("Cf", "Mn"), (
-                f"U+{ord(char):04X} has unexpected category {cat}"
-            )
+            assert cat in ("Cf", "Mn"), f"U+{ord(char):04X} has unexpected category {cat}"
 
     def test_tag_chars_are_supplementary_plane(self):
         """Tag chars are in Plane 14 (above BMP), requiring surrogate pairs in UTF-16."""
@@ -67,9 +62,7 @@ class TestTagCharUnicodeProperties:
         """Each tag char should be a surrogate pair (4 bytes) in UTF-16."""
         for char in TAG_PRINTABLE:
             utf16_bytes = len(char.encode("utf-16-le"))
-            assert utf16_bytes == 4, (
-                f"U+{ord(char):05X}: expected 4 UTF-16 bytes (surrogate pair), got {utf16_bytes}"
-            )
+            assert utf16_bytes == 4, f"U+{ord(char):05X}: expected 4 UTF-16 bytes (surrogate pair), got {utf16_bytes}"
 
     def test_current_base4_utf8_size(self):
         """Current chars are 2-3 bytes in UTF-8 (smaller than tag chars)."""
@@ -92,6 +85,7 @@ class TestTagCharUnicodeProperties:
 
 # ── Encoding roundtrip tests ──────────────────────────────────────────
 
+
 class TestTagCharEncoding:
     """Test encoding/decoding roundtrips using tag characters."""
 
@@ -110,7 +104,7 @@ class TestTagCharEncoding:
         value = 0
         for i, char in enumerate(chars):
             idx = charset.index(char)
-            value += idx * (base ** i)
+            value += idx * (base**i)
         return value
 
     def test_base4_roundtrip_all_bytes(self):
@@ -162,6 +156,7 @@ class TestTagCharEncoding:
 
 # ── Size comparison tests ─────────────────────────────────────────────
 
+
 class TestPayloadSizeComparison:
     """Compare payload sizes between current base-4 and potential tag encodings."""
 
@@ -207,7 +202,7 @@ class TestPayloadSizeComparison:
     def test_tag_base95_is_fewer_chars_than_current(self):
         """Tag base-95 uses 50% fewer characters than current base-4."""
         current_chars = self.PAYLOAD_BYTES * 4  # 128
-        tag95_chars = self.PAYLOAD_BYTES * 2    # 64
+        tag95_chars = self.PAYLOAD_BYTES * 2  # 64
         assert tag95_chars == current_chars // 2
 
     def test_tag_base95_utf8_smaller_than_current(self):
@@ -224,6 +219,7 @@ class TestPayloadSizeComparison:
 
 # ── Character distinctness tests ──────────────────────────────────────
 
+
 class TestTagCharDistinctness:
     """Ensure tag characters are distinct and won't collide with existing chars."""
 
@@ -236,13 +232,13 @@ class TestTagCharDistinctness:
     def test_no_overlap_with_common_invisible_chars(self):
         """Tag chars must not overlap with other known invisible characters."""
         known_invisible = {
-            "\u200B",  # ZWSP
-            "\u200C",  # ZWNJ
-            "\u200D",  # ZWJ
-            "\u034F",  # CGJ
-            "\u180E",  # MVS
+            "\u200b",  # ZWSP
+            "\u200c",  # ZWNJ
+            "\u200d",  # ZWJ
+            "\u034f",  # CGJ
+            "\u180e",  # MVS
             "\u2060",  # WJ
-            "\uFEFF",  # BOM/ZWNBSP
+            "\ufeff",  # BOM/ZWNBSP
             "\u2061",  # Function Application
             "\u2062",  # Invisible Times
             "\u2063",  # Invisible Separator
@@ -264,6 +260,7 @@ class TestTagCharDistinctness:
 
 
 # ── Contiguous detection feasibility ─────────────────────────────────
+
 
 class TestContiguousDetection:
     """Test that tag char signatures can be detected via contiguous sequence."""
@@ -296,13 +293,13 @@ class TestContiguousDetection:
         assert len(runs) == 1
         start, length = runs[0]
         assert length == 32
-        extracted = text[start:start + length]
+        extracted = text[start : start + length]
         assert extracted == tag_sig
 
     def test_mixed_tag_and_current_chars_distinguishable(self):
         """Tag chars and current base-4 chars form separate contiguous runs."""
         current_sig = "".join(CURRENT_BASE4 * 8)  # 32 current chars
-        tag_sig = "".join(TAG_PRINTABLE[:32])      # 32 tag chars
+        tag_sig = "".join(TAG_PRINTABLE[:32])  # 32 tag chars
         visible = "Test sentence"
 
         text = visible + current_sig + "." + tag_sig + " More text."

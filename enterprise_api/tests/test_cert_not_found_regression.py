@@ -9,18 +9,16 @@ Verifies that:
 """
 
 import pytest
-from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from sqlalchemy import text
 
-from app.config import settings
+from app.services.certificate_service import CertificateResolver
 from app.utils.crypto_utils import (
     encrypt_private_key,
     load_organization_public_key,
     serialize_public_key,
 )
-from app.services.certificate_service import CertificateResolver
-
 
 # ---------------------------------------------------------------------------
 # load_organization_public_key fallback tests
@@ -217,6 +215,7 @@ async def test_certificate_resolver_loads_auto_provisioned_key(db) -> None:
 async def test_certificate_resolver_prefers_certificate_pem_over_auto_provisioned(db) -> None:
     """Orgs with certificate_pem should use that, not the auto-provisioned fallback."""
     from datetime import datetime, timedelta
+
     from cryptography import x509
 
     org_id = "org_resolver_cert_pem"

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 _DOC_ROOT = Path(__file__).resolve().parents[1] / "docs"
 
 
@@ -32,10 +31,7 @@ def test_merkle_assertion_contract_doc_has_required_fields() -> None:
         "version",
     ]
     missing = [token for token in required_tokens if token not in lowered]
-    assert not missing, (
-        "MERKLE_ASSERTION_SCHEMA.md is missing required contract fields:\n"
-        + "\n".join(f"- {token}" for token in missing)
-    )
+    assert not missing, "MERKLE_ASSERTION_SCHEMA.md is missing required contract fields:\n" + "\n".join(f"- {token}" for token in missing)
 
 
 def test_verification_trust_model_doc_covers_primary_and_fallback_paths() -> None:
@@ -53,10 +49,7 @@ def test_verification_trust_model_doc_covers_primary_and_fallback_paths() -> Non
         "doc_revoked",
     ]
     missing = [topic for topic in required_topics if topic not in lowered]
-    assert not missing, (
-        "VERIFICATION_TRUST_MODEL.md is missing required trust model topics:\n"
-        + "\n".join(f"- {topic}" for topic in missing)
-    )
+    assert not missing, "VERIFICATION_TRUST_MODEL.md is missing required trust model topics:\n" + "\n".join(f"- {topic}" for topic in missing)
 
 
 def test_customer_docs_no_removed_endpoint_or_old_webhook_event_refs() -> None:
@@ -81,9 +74,8 @@ def test_customer_docs_no_removed_endpoint_or_old_webhook_event_refs() -> None:
             if needle in text:
                 offending.append((path.name, needle))
 
-    assert not offending, (
-        "Stale endpoint/event references detected in customer-facing docs:\n"
-        + "\n".join(f"- {name}: {needle}" for name, needle in offending)
+    assert not offending, "Stale endpoint/event references detected in customer-facing docs:\n" + "\n".join(
+        f"- {name}: {needle}" for name, needle in offending
     )
 
 
@@ -102,7 +94,4 @@ def test_streaming_doc_covers_stream_sign_sse_contract() -> None:
     ]
 
     missing = [token for token in required_tokens if token not in lowered]
-    assert not missing, (
-        "STREAMING_API.md is missing required stream-sign SSE contract references:\n"
-        + "\n".join(f"- {token}" for token in missing)
-    )
+    assert not missing, "STREAMING_API.md is missing required stream-sign SSE contract references:\n" + "\n".join(f"- {token}" for token in missing)

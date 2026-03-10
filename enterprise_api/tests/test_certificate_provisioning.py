@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from app.config import settings
-from app.services.provisioning_service import ProvisioningService
-from app.utils.crypto_utils import encrypt_private_key, serialize_public_key
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from sqlalchemy import text
+
+from app.config import settings
+from app.services.provisioning_service import ProvisioningService
+from app.utils.crypto_utils import encrypt_private_key, serialize_public_key
 
 
 class _DummyResponse:

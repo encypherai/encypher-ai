@@ -3,8 +3,6 @@
 import inspect
 from unittest.mock import MagicMock
 
-import pytest
-
 from app.utils import db_startup
 
 

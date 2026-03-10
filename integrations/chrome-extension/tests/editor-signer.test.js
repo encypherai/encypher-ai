@@ -1,6 +1,6 @@
 /**
  * Tests for editor-signer.js
- * 
+ *
  * Run with: node --test tests/editor-signer.test.js
  */
 
@@ -89,7 +89,7 @@ describe('Editor Detection', () => {
       isContentEditable: true,
       getAttribute: (attr) => attr === 'contenteditable' ? 'true' : null
     };
-    
+
     // Simulate detectEditorType logic
     const detectEditorType = (el) => {
       if (el.isContentEditable || el.getAttribute('contenteditable') === 'true') {
@@ -98,7 +98,7 @@ describe('Editor Detection', () => {
       if (el.tagName === 'TEXTAREA') return 'textarea';
       return null;
     };
-    
+
     assert.strictEqual(detectEditorType(element), 'contenteditable');
   });
 
@@ -107,12 +107,12 @@ describe('Editor Detection', () => {
       ...mockDocument.createElement('textarea'),
       tagName: 'TEXTAREA'
     };
-    
+
     const detectEditorType = (el) => {
       if (el.tagName === 'TEXTAREA') return 'textarea';
       return null;
     };
-    
+
     assert.strictEqual(detectEditorType(element), 'textarea');
   });
 
@@ -124,14 +124,14 @@ describe('Editor Detection', () => {
       },
       id: 'tinymce-editor'
     };
-    
+
     const detectEditorType = (el) => {
       if (el.classList.contains('mce-content-body') || el.id?.startsWith('tinymce')) {
         return 'tinymce';
       }
       return null;
     };
-    
+
     assert.strictEqual(detectEditorType(element), 'tinymce');
   });
 
@@ -142,14 +142,14 @@ describe('Editor Detection', () => {
         contains: (cls) => cls === 'ql-editor'
       }
     };
-    
+
     const detectEditorType = (el) => {
       if (el.classList.contains('ql-editor')) {
         return 'quill';
       }
       return null;
     };
-    
+
     assert.strictEqual(detectEditorType(element), 'quill');
   });
 
@@ -160,14 +160,14 @@ describe('Editor Detection', () => {
         contains: (cls) => cls === 'ck-editor__editable'
       }
     };
-    
+
     const detectEditorType = (el) => {
       if (el.classList.contains('ck-editor__editable') || el.classList.contains('cke_editable')) {
         return 'ckeditor';
       }
       return null;
     };
-    
+
     assert.strictEqual(detectEditorType(element), 'ckeditor');
   });
 
@@ -178,14 +178,14 @@ describe('Editor Detection', () => {
         contains: (cls) => cls === 'ProseMirror'
       }
     };
-    
+
     const detectEditorType = (el) => {
       if (el.classList.contains('ProseMirror') || el.classList.contains('tiptap')) {
         return 'prosemirror';
       }
       return null;
     };
-    
+
     assert.strictEqual(detectEditorType(element), 'prosemirror');
   });
 });
@@ -196,12 +196,12 @@ describe('Text Extraction', () => {
       tagName: 'TEXTAREA',
       value: 'Hello, World!'
     };
-    
+
     const getEditorText = (el, type) => {
       if (type === 'textarea') return el.value || '';
       return el.innerText || el.textContent || '';
     };
-    
+
     assert.strictEqual(getEditorText(element, 'textarea'), 'Hello, World!');
   });
 
@@ -209,12 +209,12 @@ describe('Text Extraction', () => {
     const element = {
       innerText: 'Editable content here'
     };
-    
+
     const getEditorText = (el, type) => {
       if (type === 'textarea') return el.value || '';
       return el.innerText || el.textContent || '';
     };
-    
+
     assert.strictEqual(getEditorText(element, 'contenteditable'), 'Editable content here');
   });
 });
@@ -227,7 +227,7 @@ describe('Text Setting', () => {
       value: '',
       dispatchEvent: (e) => dispatchedEvents.push(e.type)
     };
-    
+
     const setEditorText = (el, type, text) => {
       if (type === 'textarea') {
         el.value = text;
@@ -235,14 +235,14 @@ describe('Text Setting', () => {
         el.dispatchEvent(new Event('change', { bubbles: true }));
       }
     };
-    
+
     // Mock Event constructor
     globalThis.Event = class Event {
       constructor(type) { this.type = type; }
     };
-    
+
     setEditorText(element, 'textarea', 'New content');
-    
+
     assert.strictEqual(element.value, 'New content');
     assert.ok(dispatchedEvents.includes('input'));
     assert.ok(dispatchedEvents.includes('change'));
@@ -260,11 +260,11 @@ describe('Hash Function', () => {
       }
       return hash.toString(16);
     };
-    
+
     const hash1 = hashText('Hello, World!');
     const hash2 = hashText('Hello, World!');
     const hash3 = hashText('Different text');
-    
+
     assert.strictEqual(hash1, hash2);
     assert.notStrictEqual(hash1, hash3);
   });
@@ -279,7 +279,7 @@ describe('Hash Function', () => {
       }
       return hash.toString(16);
     };
-    
+
     assert.strictEqual(hashText(''), '0');
   });
 });
@@ -298,7 +298,7 @@ describe('HTML Escaping', () => {
         .replace(/'/g, '&#039;');
       return div.innerHTML;
     };
-    
+
     assert.strictEqual(escapeHtml('<script>alert("xss")</script>'), '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
     assert.strictEqual(escapeHtml('Normal text'), 'Normal text');
   });
@@ -306,13 +306,14 @@ describe('HTML Escaping', () => {
 
 describe('Minimum Text Length', () => {
   it('should enforce minimum text length for signing', () => {
-    const MIN_TEXT_LENGTH = 10;
-    
+    const MIN_TEXT_LENGTH = 1;
+
     const canSign = (text) => text.trim().length >= MIN_TEXT_LENGTH;
-    
-    assert.strictEqual(canSign('Short'), false);
+
+    assert.strictEqual(canSign('Short'), true);
     assert.strictEqual(canSign('This is long enough to sign'), true);
-    assert.strictEqual(canSign('   Short   '), false);
+    assert.strictEqual(canSign('   Short   '), true);
+    assert.strictEqual(canSign('   '), false);
     assert.strictEqual(canSign('1234567890'), true);
   });
 });
@@ -806,13 +807,13 @@ describe('Selection Signing Flow', () => {
 });
 
 describe('Keyboard Shortcut', () => {
-  it('should match Ctrl+Shift+E', () => {
-    const isSignShortcut = (e) => e.ctrlKey && e.shiftKey && e.key === 'E';
+  it('should match Alt+Shift+S', () => {
+    const isSignShortcut = (e) => e.altKey && e.shiftKey && String(e.key).toLowerCase() === 's';
 
-    assert.strictEqual(isSignShortcut({ ctrlKey: true, shiftKey: true, key: 'E' }), true);
-    assert.strictEqual(isSignShortcut({ ctrlKey: true, shiftKey: false, key: 'E' }), false);
-    assert.strictEqual(isSignShortcut({ ctrlKey: false, shiftKey: true, key: 'E' }), false);
-    assert.strictEqual(isSignShortcut({ ctrlKey: true, shiftKey: true, key: 'A' }), false);
+    assert.strictEqual(isSignShortcut({ altKey: true, shiftKey: true, key: 'S' }), true);
+    assert.strictEqual(isSignShortcut({ altKey: true, shiftKey: false, key: 'S' }), false);
+    assert.strictEqual(isSignShortcut({ altKey: false, shiftKey: true, key: 'S' }), false);
+    assert.strictEqual(isSignShortcut({ altKey: true, shiftKey: true, key: 'A' }), false);
   });
 });
 

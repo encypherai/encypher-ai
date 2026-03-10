@@ -8,8 +8,8 @@ import os
 import sys
 from io import BytesIO
 from pathlib import Path
-from typing import Any, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any, Optional
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -35,7 +35,6 @@ from app.services.image_fingerprint_service import (
     hamming_distance,
     search_by_phash,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -188,9 +187,7 @@ class TestPHashSimilarity:
         h1 = compute_phash(checkerboard)
         h2 = compute_phash(gradient)
         dist = hamming_distance(h1, h2)
-        assert dist > 20, (
-            f"Expected distance > 20 for structurally different images, got {dist}"
-        )
+        assert dist > 20, f"Expected distance > 20 for structurally different images, got {dist}"
 
 
 # ---------------------------------------------------------------------------

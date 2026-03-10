@@ -6,20 +6,9 @@ from types import ModuleType
 
 import pytest
 
+SUBSCRIPTION_MIGRATION_PATH = Path(__file__).resolve().parents[1] / "alembic" / "versions" / "20251125_150600_add_organization_subscriptions.py"
 
-SUBSCRIPTION_MIGRATION_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "alembic"
-    / "versions"
-    / "20251125_150600_add_organization_subscriptions.py"
-)
-
-USAGE_MIGRATION_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "alembic"
-    / "versions"
-    / "20251125_150700_add_usage_records.py"
-)
+USAGE_MIGRATION_PATH = Path(__file__).resolve().parents[1] / "alembic" / "versions" / "20251125_150700_add_usage_records.py"
 
 
 @pytest.fixture

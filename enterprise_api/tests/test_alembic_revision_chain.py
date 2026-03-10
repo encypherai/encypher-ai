@@ -5,7 +5,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-
 VERSIONS_DIR = Path(__file__).resolve().parents[1] / "alembic" / "versions"
 
 

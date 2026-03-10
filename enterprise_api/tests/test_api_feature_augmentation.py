@@ -377,9 +377,9 @@ class TestStreamingMerkleSession:
 
     def test_session_touch_updates_activity(self):
         """Touch should update last_activity timestamp."""
-        from app.services.streaming_merkle_service import StreamingMerkleSession
-        from datetime import datetime, timezone
         import time
+
+        from app.services.streaming_merkle_service import StreamingMerkleSession
 
         session = StreamingMerkleSession(
             session_id="test-session",
@@ -399,8 +399,9 @@ class TestStreamingMerkleSession:
 
     def test_session_expiration(self):
         """Session should expire after timeout."""
-        from app.services.streaming_merkle_service import StreamingMerkleSession
         from datetime import datetime, timedelta, timezone
+
+        from app.services.streaming_merkle_service import StreamingMerkleSession
 
         session = StreamingMerkleSession(
             session_id="test-session",
@@ -545,7 +546,7 @@ class TestReedSolomonECC:
 
     def test_encode_with_ecc_function(self):
         """Test the encode_with_ecc helper function."""
-        from app.services.ecc_service import encode_with_ecc, decode_with_ecc
+        from app.services.ecc_service import decode_with_ecc, encode_with_ecc
 
         data = b"Sample text for encoding"
         encoded = encode_with_ecc(data, nsym=10)

@@ -21,8 +21,9 @@ Encypher Verify helps you see who authored text across the web and confirm proof
 - **Content Signing**: Sign your own content directly from the browser (requires API key)
 - **Signing Controls**: Choose proof mode (embedded or compact) and frequency (per sentence, per paragraph, etc.)
 - **Context Menu**: Right-click any text and select "Verify with Encypher"
-- **WYSIWYG Editor Support**: Floating sign buttons on TinyMCE, CKEditor, Quill, ProseMirror, and more
-- **Keyboard Shortcut**: Press Ctrl+Shift+E to sign selected text instantly
+- **Editor Integrations**: Sign directly inside ChatGPT, Claude, Gmail, Outlook, Slack, LinkedIn, GitHub, X/Twitter, Medium, TinyMCE, CKEditor, Quill, ProseMirror, and more
+- **Low-Friction Signing UX**: Compact sign button expands on focus, includes quick sign, advanced options, and signer identity cues
+- **Keyboard Shortcut**: Press Alt+Shift+S to sign selected text instantly
 - **Usage Tracking**: Free tier includes 1,000 signings/month with visual progress meter
 - **Privacy-First**: Only sends candidate text blocks for verification, never full pages
 - **Offline Detection**: Detects embedded proof locally before verifying
@@ -31,7 +32,7 @@ Encypher Verify helps you see who authored text across the web and confirm proof
 
 1. **For Readers**: Browse normally. When proof is present, you see verified authorship inline with signer and timestamp details.
 
-2. **For Authors**: Get an API key from dashboard.encypherai.com, configure it in settings, then use the Sign tab to add invisible cryptographic watermarks before publishing. Choose embedded proof for portability or compact proof for a smaller payload. Set your preferred signing frequency once and reuse it everywhere.
+2. **For Authors**: Get an API key from dashboard.encypherai.com, configure it in settings, then use the Sign tab or inline editor buttons to add invisible cryptographic watermarks before publishing. Choose embedded proof for portability or compact proof for a smaller payload. Set your preferred signing frequency once and reuse it everywhere.
 
 3. **For Publishers**: Add proof of origin to your editorial workflow so every update can be traced, verified, and audited.
 
@@ -151,6 +152,20 @@ https://encypherai.com/privacy
 
 ## Version History
 
+### Version 1.1.0
+
+**What’s new:**
+- Native sign-button placement for ChatGPT, Claude, Gmail, Outlook Web, Slack, LinkedIn posts/messages/articles, GitHub issues/comments, X/Twitter, and Medium
+- Upgraded inline signing UI with compact buttons, quick-sign flow, advanced options, signer identity cues, and verification follow-up links
+- Improved editor detection across hosted editors, modal composers, and open shadow-root surfaces with floating fallback when a native toolbar anchor is unavailable
+- Updated keyboard shortcut to `Alt+Shift+S`
+- Stronger embedding-plan handling to preserve DOM/editor content more reliably before falling back to full text replacement
+
+**Technical:**
+- 160 automated tests passing
+- Lint passing cleanly
+- Production build strips localhost permissions for store upload
+
 ### Version 1.0.0 (Initial Release)
 
 **Features:**
@@ -220,6 +235,6 @@ https://encypherai.com/privacy
 
 ### Iteration
 
-- [ ] Plan v1.1 features based on feedback
+- [ ] Plan v1.2 features based on feedback
 - [ ] Address any reported bugs
 - [ ] Improve based on user requests

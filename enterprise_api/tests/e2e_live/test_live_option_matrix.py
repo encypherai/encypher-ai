@@ -11,10 +11,9 @@ def _unique_document_id(prefix: str) -> str:
 
 
 def _assert_status(response, expected_status: int, label: str) -> None:
-    assert response.status_code == expected_status, (
-        f"{label} expected {expected_status}, got {response.status_code}. "
-        f"Body: {response.text}. Headers: {dict(response.headers)}"
-    )
+    assert (
+        response.status_code == expected_status
+    ), f"{label} expected {expected_status}, got {response.status_code}. Body: {response.text}. Headers: {dict(response.headers)}"
 
 
 async def _sign_basic(live_client, live_auth_headers, label: str, payload_overrides: dict) -> dict:
@@ -51,12 +50,9 @@ async def _verify_basic(live_client, live_auth_headers, signed_text: str, label:
     _assert_status(verify_response, 200, f"POST /api/v1/verify ({label})")
     payload = verify_response.json()
     assert payload["success"] is True
-    assert payload["data"]["valid"] is True, (
-        "Verification failed. "
-        f"Reason: {payload['data'].get('reason_code')}. "
-        f"Details: {payload['data'].get('details')}. "
-        f"Full Response: {payload}"
-    )
+    assert (
+        payload["data"]["valid"] is True
+    ), f"Verification failed. Reason: {payload['data'].get('reason_code')}. Details: {payload['data'].get('details')}. Full Response: {payload}"
     return payload
 
 
@@ -112,20 +108,18 @@ async def _verify_advanced(
     _assert_status(response, 200, f"POST /api/v1/verify/advanced ({label})")
     response_payload = response.json()
     assert response_payload["success"] is True
-    assert response_payload["data"]["valid"] is True, (
-        "Verification failed. "
-        f"Reason: {response_payload['data'].get('reason_code')}. "
-        f"Details: {response_payload['data'].get('details')}"
-    )
+    assert (
+        response_payload["data"]["valid"] is True
+    ), f"Verification failed. Reason: {response_payload['data'].get('reason_code')}. Details: {response_payload['data'].get('details')}"
     return response_payload
 
 
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_live_sign_option_matrix(live_client, live_auth_headers, live_api_config) -> None:
-    assert live_api_config.base_url.startswith("https://api.encypherai.com"), (
-        f"Live tests should target production api. Got {live_api_config.base_url}"
-    )
+    assert live_api_config.base_url.startswith(
+        "https://api.encypherai.com"
+    ), f"Live tests should target production api. Got {live_api_config.base_url}"
 
     timestamp = datetime.now(timezone.utc).isoformat()
     actions = [
@@ -201,9 +195,9 @@ async def test_live_sign_option_matrix(live_client, live_auth_headers, live_api_
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_live_sign_advanced_option_matrix(live_client, live_auth_headers, live_api_config) -> None:
-    assert live_api_config.base_url.startswith("https://api.encypherai.com"), (
-        f"Live tests should target production api. Got {live_api_config.base_url}"
-    )
+    assert live_api_config.base_url.startswith(
+        "https://api.encypherai.com"
+    ), f"Live tests should target production api. Got {live_api_config.base_url}"
 
     failures: list[str] = []
     baseline_payload = None
@@ -345,9 +339,9 @@ async def test_live_sign_advanced_option_matrix(live_client, live_auth_headers, 
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_live_verify_advanced_option_matrix(live_client, live_auth_headers, live_api_config) -> None:
-    assert live_api_config.base_url.startswith("https://api.encypherai.com"), (
-        f"Live tests should target production api. Got {live_api_config.base_url}"
-    )
+    assert live_api_config.base_url.startswith(
+        "https://api.encypherai.com"
+    ), f"Live tests should target production api. Got {live_api_config.base_url}"
 
     failures: list[str] = []
     signed_payload = None

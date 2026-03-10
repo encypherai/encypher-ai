@@ -46,17 +46,16 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac as crypto_hmac
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-
 # ---------------------------------------------------------------------------
 # Alphabet
 # ---------------------------------------------------------------------------
 
-ZWNJ = "\u200C"  # 0
-ZWJ  = "\u200D"  # 1
-CGJ  = "\u034F"  # 2
-MVS  = "\u180E"  # 3
-LRM  = "\u200E"  # 4  -- confirmed Word-safe, no visual artifact
-RLM  = "\u200F"  # 5  -- confirmed Word-safe, no visual artifact
+ZWNJ = "\u200c"  # 0
+ZWJ = "\u200d"  # 1
+CGJ = "\u034f"  # 2
+MVS = "\u180e"  # 3
+LRM = "\u200e"  # 4  -- confirmed Word-safe, no visual artifact
+RLM = "\u200f"  # 5  -- confirmed Word-safe, no visual artifact
 
 CHARS_BASE6: list[str] = [ZWNJ, ZWJ, CGJ, MVS, LRM, RLM]
 CHAR_TO_DIGIT: dict[str, int] = {c: i for i, c in enumerate(CHARS_BASE6)}
@@ -71,8 +70,8 @@ LRM_RLM_SET: frozenset = frozenset({LRM, RLM})
 # Payload layout
 # ---------------------------------------------------------------------------
 
-LOG_ID_BYTES  = 16  # 128-bit random log reference (hyperscale-safe)
-HMAC_BYTES    = 16  # 128-bit HMAC-SHA256
+LOG_ID_BYTES = 16  # 128-bit random log reference (hyperscale-safe)
+HMAC_BYTES = 16  # 128-bit HMAC-SHA256
 PAYLOAD_BYTES = LOG_ID_BYTES + HMAC_BYTES  # 32 bytes
 
 # ceil(256 * log(2) / log(6)) = ceil(99.03) = 100
@@ -86,6 +85,7 @@ CONTENT_COMMITMENT_BYTES = 8
 # ---------------------------------------------------------------------------
 # Big-number base-6 codec
 # ---------------------------------------------------------------------------
+
 
 def _encode_base6(data: bytes) -> str:
     """
@@ -118,6 +118,7 @@ def _decode_base6(encoded: str) -> bytes:
 # ---------------------------------------------------------------------------
 # Marker creation and verification
 # ---------------------------------------------------------------------------
+
 
 def generate_log_id() -> bytes:
     """
@@ -188,7 +189,7 @@ def verify_marker(
     except (ValueError, OverflowError):
         return False, None
 
-    log_id        = payload[:LOG_ID_BYTES]
+    log_id = payload[:LOG_ID_BYTES]
     hmac_received = payload[LOG_ID_BYTES:]
 
     def _hmac(include_text: bool) -> bytes:
@@ -209,6 +210,7 @@ def verify_marker(
 # ---------------------------------------------------------------------------
 # Detection
 # ---------------------------------------------------------------------------
+
 
 def find_all_markers(text: str) -> list[tuple[int, int, str]]:
     """
@@ -234,7 +236,7 @@ def find_all_markers(text: str) -> list[tuple[int, int, str]]:
             run_len = len(run)
             offset = 0
             while offset + MARKER_CHARS <= run_len:
-                chunk = run[offset:offset + MARKER_CHARS]
+                chunk = run[offset : offset + MARKER_CHARS]
                 if any(c in LRM_RLM_SET for c in chunk):
                     results.append((start + offset, start + offset + MARKER_CHARS, chunk))
                 offset += MARKER_CHARS
@@ -295,8 +297,7 @@ def create_embedded_sentence(
 # Key derivation
 # ---------------------------------------------------------------------------
 
+
 def derive_signing_key_from_private_key(private_key: Ed25519PrivateKey) -> bytes:
     """Derive a 32-byte HMAC signing key from an Ed25519 private key."""
-    return hashlib.sha256(
-        b"encypher-hmac-key:" + private_key.private_bytes_raw()
-    ).digest()
+    return hashlib.sha256(b"encypher-hmac-key:" + private_key.private_bytes_raw()).digest()

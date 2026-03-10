@@ -8,7 +8,6 @@ These tests verify that the deprecated endpoint returns 410.
 import pytest
 from httpx import AsyncClient
 
-
 MAX_VERIFY_BATCH_BYTES = 256 * 1024
 
 

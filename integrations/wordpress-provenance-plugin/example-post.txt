@@ -1,0 +1,7 @@
+Title: Why Content Provenance Is the Next Big Thing in Digital Publishing
+
+The web has a trust problem. Every day, readers encounter articles stripped of their original context, AI-generated text passed off as human reporting, and republished content with no trace of where it came from. For publishers who invest in original journalism and quality writing, this erosion of attribution is not just frustrating — it is an existential threat to the value of their work.
+
+Content provenance solves this by embedding a cryptographic signature directly into the text of every article at the moment of publication. The signature is invisible to readers but travels with the content wherever it goes — through syndication, copy-paste, and AI scrapers alike. Anyone who encounters the article can verify in one click that it was published by you, on this date, and that the text has not been changed since.
+
+For WordPress publishers, implementing content provenance is now as simple as installing a plugin. When you publish an article, it is automatically signed with the C2PA open standard. A verification badge appears at the bottom of the post, giving readers a transparent, verifiable record of the content's origin. In an era where trust is the scarcest resource in media, that badge is worth more than any disclaimer or editorial note.

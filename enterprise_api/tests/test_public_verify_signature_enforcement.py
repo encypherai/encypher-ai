@@ -3,12 +3,13 @@
 import uuid
 
 import pytest
-from app.config import settings
-from app.models.content_reference import ContentReference
-from app.models.merkle import MerkleRoot
 from httpx import AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.config import settings
+from app.models.content_reference import ContentReference
+from app.models.merkle import MerkleRoot
 
 
 @pytest.mark.asyncio

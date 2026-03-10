@@ -116,6 +116,4 @@ class TestStrategicPartnerInheritsEnterpriseImageFeatures:
         image_keys = {"image_signing", "image_fuzzy_search", "trustmark_watermark"}
         for key in image_keys:
             assert key in STRATEGIC_PARTNER_FEATURES, f"Missing key: {key!r}"
-            assert STRATEGIC_PARTNER_FEATURES[key] == ENTERPRISE_FEATURES[key], (
-                f"strategic_partner[{key!r}] != enterprise[{key!r}]"
-            )
+            assert STRATEGIC_PARTNER_FEATURES[key] == ENTERPRISE_FEATURES[key], f"strategic_partner[{key!r}] != enterprise[{key!r}]"

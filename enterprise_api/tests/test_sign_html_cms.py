@@ -10,7 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 
 from scripts.sign_html_cms import (
     _collect_text_nodes,
@@ -18,12 +18,7 @@ from scripts.sign_html_cms import (
     _extract_text_from_element,
 )
 
-COMPLEX_HTML_PATH = (
-    Path(__file__).resolve().parent.parent.parent
-    / "examples"
-    / "chesschampion"
-    / "example_article_complex_parsing.html"
-)
+COMPLEX_HTML_PATH = Path(__file__).resolve().parent.parent.parent / "examples" / "chesschampion" / "example_article_complex_parsing.html"
 
 
 @pytest.fixture
@@ -51,18 +46,16 @@ class TestCollectTextNodes:
         all_nodes = _collect_text_nodes(complex_soup)
         article = complex_soup.find("article")
         article_nodes = _collect_text_nodes(article)
-        assert len(article_nodes) < len(all_nodes), (
-            "Article should have fewer text nodes than the full page"
-        )
+        assert len(article_nodes) < len(all_nodes), "Article should have fewer text nodes than the full page"
 
     def test_skips_script_and_style(self, complex_soup: BeautifulSoup):
         article = complex_soup.find("article")
         nodes = _collect_text_nodes(article)
         for _, text in nodes:
             assert "charset" not in text.lower(), f"Style content leaked: {text[:60]}"
-            assert "function" not in text.lower() or "function" in text.lower() and "chess" in text.lower(), (
-                f"Script content may have leaked: {text[:60]}"
-            )
+            assert (
+                "function" not in text.lower() or "function" in text.lower() and "chess" in text.lower()
+            ), f"Script content may have leaked: {text[:60]}"
 
 
 class TestExtractTextFromElement:
@@ -95,6 +88,8 @@ class TestExtractTextFromElement:
 class TestEmbedSignedTextInElement:
     def test_simple_embed(self):
         """Embed signed text into a simple HTML element."""
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
         from app.utils.vs256_crypto import (
             VS_CHAR_SET,
             create_signed_marker,
@@ -102,7 +97,6 @@ class TestEmbedSignedTextInElement:
             embed_signature_safely,
             generate_log_id,
         )
-        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
         html = "<article><h1>Title</h1><p>Hello world.</p></article>"
         soup = BeautifulSoup(html, "html.parser")
@@ -133,12 +127,7 @@ class TestEmbedSignedTextInElement:
 
     def test_complex_html_preserves_structure(self, complex_soup: BeautifulSoup):
         """Embedding into complex HTML preserves page structure."""
-        signed_path = (
-            Path(__file__).resolve().parent
-            / "e2e_live"
-            / "output"
-            / "chesschampion_complex_micro_c2pa_signed.html"
-        )
+        signed_path = Path(__file__).resolve().parent / "e2e_live" / "output" / "chesschampion_complex_micro_c2pa_signed.html"
         if not signed_path.exists():
             pytest.skip("Complex signed output not available (run script first)")
 
@@ -171,12 +160,7 @@ class TestEmbedSignedTextInElement:
 
     def test_complex_html_has_markers(self):
         """Signed complex HTML should contain VS256 markers."""
-        signed_path = (
-            Path(__file__).resolve().parent
-            / "e2e_live"
-            / "output"
-            / "chesschampion_complex_micro_c2pa_signed.html"
-        )
+        signed_path = Path(__file__).resolve().parent / "e2e_live" / "output" / "chesschampion_complex_micro_c2pa_signed.html"
         if not signed_path.exists():
             pytest.skip("Complex signed output not available (run script first)")
 
@@ -188,16 +172,9 @@ class TestEmbedSignedTextInElement:
 
     def test_complex_html_longer_than_original(self, complex_html: str):
         """Signed HTML should be longer than original due to invisible markers."""
-        signed_path = (
-            Path(__file__).resolve().parent
-            / "e2e_live"
-            / "output"
-            / "chesschampion_complex_micro_c2pa_signed.html"
-        )
+        signed_path = Path(__file__).resolve().parent / "e2e_live" / "output" / "chesschampion_complex_micro_c2pa_signed.html"
         if not signed_path.exists():
             pytest.skip("Complex signed output not available (run script first)")
 
         signed_html = signed_path.read_text(encoding="utf-8")
-        assert len(signed_html) > len(complex_html), (
-            f"Signed ({len(signed_html)}) should be longer than original ({len(complex_html)})"
-        )
+        assert len(signed_html) > len(complex_html), f"Signed ({len(signed_html)}) should be longer than original ({len(complex_html)})"

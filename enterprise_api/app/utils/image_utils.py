@@ -3,12 +3,13 @@
 Provides: validation, EXIF extraction/stripping, pHash computation,
 SHA-256 hashing, thumbnail resizing, and XMP provenance injection/extraction.
 """
+
 import hashlib
 import logging
 import secrets
 import struct
-import zlib
 import xml.etree.ElementTree as ET
+import zlib
 from io import BytesIO
 from typing import Dict, Optional, Tuple
 
@@ -55,14 +56,9 @@ def validate_image(data: bytes, mime_type: str, max_size_bytes: int = IMAGE_MAX_
                     MIME type, or cannot be decoded by Pillow.
     """
     if len(data) > max_size_bytes:
-        raise ValueError(
-            f"Image size {len(data)} bytes exceeds maximum of {max_size_bytes} bytes"
-        )
+        raise ValueError(f"Image size {len(data)} bytes exceeds maximum of {max_size_bytes} bytes")
     if mime_type not in SUPPORTED_MIME_TYPES:
-        raise ValueError(
-            f"Unsupported MIME type: {mime_type!r}. "
-            f"Supported types: {sorted(SUPPORTED_MIME_TYPES)}"
-        )
+        raise ValueError(f"Unsupported MIME type: {mime_type!r}. Supported types: {sorted(SUPPORTED_MIME_TYPES)}")
     try:
         from PIL import Image
 
@@ -324,7 +320,7 @@ def _jpeg_extract_xmp(jpeg_bytes: bytes) -> Optional[bytes]:
         seg_len = struct.unpack(">H", jpeg_bytes[i + 2 : i + 4])[0]
         seg_data = jpeg_bytes[i + 4 : i + 2 + seg_len]
         if marker == b"\xff\xe1" and seg_data.startswith(_JPEG_XMP_HEADER):
-            return seg_data[len(_JPEG_XMP_HEADER):]
+            return seg_data[len(_JPEG_XMP_HEADER) :]
         i += 2 + seg_len
     return None
 
@@ -340,12 +336,7 @@ def _png_inject_xmp(png_bytes: bytes, xmp_data: bytes) -> bytes:
     keyword = b"XML:com.adobe.xmp\x00\x00\x00\x00\x00"
     chunk_data = keyword + xmp_data
     crc = zlib.crc32(b"iTXt" + chunk_data) & 0xFFFFFFFF
-    itxt_chunk = (
-        struct.pack(">I", len(chunk_data))
-        + b"iTXt"
-        + chunk_data
-        + struct.pack(">I", crc)
-    )
+    itxt_chunk = struct.pack(">I", len(chunk_data)) + b"iTXt" + chunk_data + struct.pack(">I", crc)
     return png_bytes[:ihdr_end] + itxt_chunk + png_bytes[ihdr_end:]
 
 
@@ -383,6 +374,6 @@ def _parse_encypher_xmp(xmp_bytes: bytes) -> Optional[dict]:
     for elem in root.iter():
         for attr_name, attr_val in elem.attrib.items():
             if attr_name.startswith(ns_prefix):
-                key = attr_name[len(ns_prefix):]
+                key = attr_name[len(ns_prefix) :]
                 result[key] = attr_val
     return result if result else None

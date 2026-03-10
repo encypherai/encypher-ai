@@ -17,12 +17,7 @@ from app.utils.html_text_extractor import (
     extract_text_from_html,
 )
 
-EXAMPLE_HTML_PATH = (
-    Path(__file__).resolve().parent.parent.parent
-    / "examples"
-    / "chesschampion"
-    / "example_article.html"
-)
+EXAMPLE_HTML_PATH = Path(__file__).resolve().parent.parent.parent / "examples" / "chesschampion" / "example_article.html"
 
 
 @pytest.fixture
@@ -36,11 +31,7 @@ def simple_html() -> str:
 
 @pytest.fixture
 def html_with_lists() -> str:
-    return (
-        "<h2>Top Items</h2>"
-        "<ol><li>First item</li><li>Second item</li><li>Third item</li></ol>"
-        "<ul><li>Bullet one</li><li>Bullet two</li></ul>"
-    )
+    return "<h2>Top Items</h2><ol><li>First item</li><li>Second item</li><li>Third item</li></ol><ul><li>Bullet one</li><li>Bullet two</li></ul>"
 
 
 @pytest.fixture
@@ -146,13 +137,14 @@ class TestEmbedSignedTextInHtml:
 
     def test_preserves_html_tags(self):
         """Output should still contain all original HTML tags."""
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
         from app.utils.vs256_crypto import (
             create_signed_marker,
             derive_signing_key_from_private_key,
             embed_signature_safely,
             generate_log_id,
         )
-        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
         html = "<h1>Title</h1><p>First sentence. Second sentence.</p>"
         text = extract_text_from_html(html)
@@ -181,15 +173,11 @@ class TestEmbedSignedTextInHtml:
 
     def test_preserves_img_tags(self):
         """img tags should remain untouched."""
-        html = (
-            "<p>Before image.</p>"
-            '<img src="photo.jpg" alt="A photo" width="600">'
-            "<p>After image.</p>"
-        )
+        html = '<p>Before image.</p><img src="photo.jpg" alt="A photo" width="600"><p>After image.</p>'
         text = extract_text_from_html(html)
         # Use text as-is (no actual signing, just test structure preservation)
         result = embed_signed_text_in_html(html, text)
-        assert "src=\"photo.jpg\"" in result
+        assert 'src="photo.jpg"' in result
         assert 'alt="A photo"' in result
         assert "Before image" in result
         assert "After image" in result
@@ -206,13 +194,14 @@ class TestEmbedSignedTextInHtml:
 
     def test_signed_html_longer_than_original(self):
         """When markers are present, the HTML output should be longer."""
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
         from app.utils.vs256_crypto import (
             create_signed_marker,
             derive_signing_key_from_private_key,
             embed_signature_safely,
             generate_log_id,
         )
-        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
         html = "<p>Hello world.</p>"
         text = extract_text_from_html(html)
@@ -227,6 +216,8 @@ class TestEmbedSignedTextInHtml:
 
     def test_markers_extractable_from_signed_html(self):
         """VS256 markers should be findable in the output HTML text nodes."""
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
         from app.utils.vs256_crypto import (
             create_signed_marker,
             derive_signing_key_from_private_key,
@@ -234,7 +225,6 @@ class TestEmbedSignedTextInHtml:
             find_all_markers,
             generate_log_id,
         )
-        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
         html = "<h1>Title</h1><p>Sentence one. Sentence two.</p>"
         text = extract_text_from_html(html)
@@ -261,9 +251,7 @@ class TestEmbedSignedTextInHtml:
 
     def test_chesschampion_roundtrip_with_existing_signed_output(self, example_html):
         """Use the already-generated micro signed text to produce signed HTML."""
-        signed_path = (
-            Path(__file__).resolve().parent / "e2e_live" / "output" / "chesschampion_micro_c2pa_signed.txt"
-        )
+        signed_path = Path(__file__).resolve().parent / "e2e_live" / "output" / "chesschampion_micro_c2pa_signed.txt"
         if not signed_path.exists():
             pytest.skip("Signed output not available (run live e2e tests first)")
 
@@ -283,9 +271,7 @@ class TestEmbedSignedTextInHtml:
         assert "Magnus Carlsen" in result_html
 
         # Signed HTML should be longer than original (has invisible markers)
-        assert len(result_html) > len(example_html), (
-            f"Signed HTML ({len(result_html)}) should be longer than original ({len(example_html)})"
-        )
+        assert len(result_html) > len(example_html), f"Signed HTML ({len(result_html)}) should be longer than original ({len(example_html)})"
 
         # Markers should be extractable from the HTML
         from app.utils.vs256_crypto import find_all_markers

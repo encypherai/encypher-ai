@@ -23,14 +23,15 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 import httpx
-from app.config import settings
-from app.services.session_service import session_service
-from app.utils.c2pa_trust_list import validate_certificate_chain
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from encypher.core.payloads import deserialize_c2pa_payload_from_cbor
 from encypher.core.signing import extract_certificates_from_cose, verify_c2pa_cose
+
+from app.config import settings
+from app.services.session_service import session_service
+from app.utils.c2pa_trust_list import validate_certificate_chain
 
 logger = logging.getLogger(__name__)
 

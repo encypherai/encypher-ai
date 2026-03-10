@@ -12,13 +12,13 @@ def test_sign_options_supports_embedding_plan_flag() -> None:
 
 def test_build_embedding_plan_returns_codepoint_operations() -> None:
     visible_text = "abc"
-    signed_text = "a\uFE00b\U000E0100c"
+    signed_text = "a\ufe00b\U000e0100c"
 
     plan = build_embedding_plan(visible_text=visible_text, signed_text=signed_text)
 
     assert plan is not None
     assert plan.index_unit == "codepoint"
     assert plan.operations[0].insert_after_index == 0
-    assert plan.operations[0].marker == "\uFE00"
+    assert plan.operations[0].marker == "\ufe00"
     assert plan.operations[1].insert_after_index == 1
-    assert plan.operations[1].marker == "\U000E0100"
+    assert plan.operations[1].marker == "\U000e0100"

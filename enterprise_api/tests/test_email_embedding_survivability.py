@@ -12,21 +12,39 @@ import unicodedata
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from app.utils.vs256_rs_crypto import (
-    create_signed_marker as create_micro_ecc_signature,
-    derive_signing_key_from_private_key as derive_micro_ecc_signing_key,
-    embed_signature_safely as embed_micro_ecc_safely,
-    find_all_markers as find_micro_ecc_signatures,
-    verify_signed_marker as verify_micro_ecc_signature,
-)
-from app.utils.vs256_crypto import generate_log_id
 from app.utils.legacy_safe_crypto import (
     create_marker as create_ls_signature,
+)
+from app.utils.legacy_safe_crypto import (
     derive_signing_key_from_private_key as derive_ls_signing_key,
+)
+from app.utils.legacy_safe_crypto import (
     embed_marker_safely as embed_ls_safely,
+)
+from app.utils.legacy_safe_crypto import (
     find_all_markers as find_ls_signatures,
+)
+from app.utils.legacy_safe_crypto import (
     generate_log_id as ls_generate_log_id,
+)
+from app.utils.legacy_safe_crypto import (
     verify_marker as verify_ls_signature,
+)
+from app.utils.vs256_crypto import generate_log_id
+from app.utils.vs256_rs_crypto import (
+    create_signed_marker as create_micro_ecc_signature,
+)
+from app.utils.vs256_rs_crypto import (
+    derive_signing_key_from_private_key as derive_micro_ecc_signing_key,
+)
+from app.utils.vs256_rs_crypto import (
+    embed_signature_safely as embed_micro_ecc_safely,
+)
+from app.utils.vs256_rs_crypto import (
+    find_all_markers as find_micro_ecc_signatures,
+)
+from app.utils.vs256_rs_crypto import (
+    verify_signed_marker as verify_micro_ecc_signature,
 )
 
 
@@ -39,19 +57,11 @@ def _transform_unicode_nfc(text: str) -> str:
 
 
 def _transform_strip_supplementary_vs(text: str) -> str:
-    return "".join(
-        ch
-        for ch in text
-        if not (0xE0100 <= ord(ch) <= 0xE01EF)
-    )
+    return "".join(ch for ch in text if not (0xE0100 <= ord(ch) <= 0xE01EF))
 
 
 def _transform_strip_all_variation_selectors(text: str) -> str:
-    return "".join(
-        ch
-        for ch in text
-        if not ((0xFE00 <= ord(ch) <= 0xFE0F) or (0xE0100 <= ord(ch) <= 0xE01EF))
-    )
+    return "".join(ch for ch in text if not ((0xFE00 <= ord(ch) <= 0xFE0F) or (0xE0100 <= ord(ch) <= 0xE01EF)))
 
 
 def _transform_strip_format_controls(text: str) -> str:

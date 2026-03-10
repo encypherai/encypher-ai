@@ -11,10 +11,9 @@ def _unique_document_id(prefix: str) -> str:
 
 def _assert_status(response, expected_status: int | tuple[int, ...], label: str) -> None:
     allowed = expected_status if isinstance(expected_status, tuple) else (expected_status,)
-    assert response.status_code in allowed, (
-        f"{label} expected one of {allowed}, got {response.status_code}. "
-        f"Body: {response.text}. Headers: {dict(response.headers)}"
-    )
+    assert (
+        response.status_code in allowed
+    ), f"{label} expected one of {allowed}, got {response.status_code}. Body: {response.text}. Headers: {dict(response.headers)}"
 
 
 def _extract_document_payload(payload: dict) -> dict:
@@ -33,10 +32,7 @@ def _extract_signed_text(payload: dict) -> str:
 
 def _assert_local_base_url(base_url: str) -> None:
     allowed_prefixes = ("http://localhost", "http://127.0.0.1", "http://0.0.0.0")
-    assert base_url.startswith(allowed_prefixes), (
-        "Local tests should target a local API base URL. "
-        f"Got {base_url}"
-    )
+    assert base_url.startswith(allowed_prefixes), f"Local tests should target a local API base URL. Got {base_url}"
 
 
 @pytest.mark.e2e
@@ -126,8 +122,6 @@ async def test_local_sign_advanced_and_verify_advanced(local_client, local_auth_
     _assert_status(verify_response, 200, "POST /api/v1/verify/advanced")
     verify_payload = verify_response.json()
     assert verify_payload["success"] is True
-    assert verify_payload["data"]["valid"] is True, (
-        "Verification failed. "
-        f"Reason: {verify_payload['data'].get('reason_code')}. "
-        f"Details: {verify_payload['data'].get('details')}"
-    )
+    assert (
+        verify_payload["data"]["valid"] is True
+    ), f"Verification failed. Reason: {verify_payload['data'].get('reason_code')}. Details: {verify_payload['data'].get('details')}"

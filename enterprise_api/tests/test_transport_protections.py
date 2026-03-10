@@ -1,8 +1,9 @@
 import pytest
+from httpx import AsyncClient
+
 from app.config import settings
 from app.main import build_cors_settings, build_trusted_hosts
 from app.middleware.security_headers import DEFAULT_CSP, DOCS_CSP, build_security_headers
-from httpx import AsyncClient
 
 
 @pytest.mark.asyncio

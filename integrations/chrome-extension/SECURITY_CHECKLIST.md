@@ -163,7 +163,7 @@ All dev dependencies are not included in the extension package.
 
 ## Testing
 
-- [x] Unit tests for core detection logic (144 tests passing)
+- [x] Unit and contract tests for detection, signing, popup, and service worker flows (160 tests passing)
 - [x] E2E tests with Puppeteer
 - [x] Manual testing on various websites
 - [x] Tested with signed and unsigned content
@@ -173,7 +173,7 @@ All dev dependencies are not included in the extension package.
 ### Before Chrome Web Store Submission
 
 - [x] Remove localhost from host_permissions (stripped by build script for production)
-- [x] Version set to 1.0.0 in manifest.json
+- [x] Version set to 1.1.0 in manifest.json
 - [x] Test on clean Chrome profile
 - [x] Verify all icons are present (16, 32, 48, 128)
 - [ ] Test on Windows, Mac, Linux (manual pre-submission step)

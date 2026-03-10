@@ -292,11 +292,7 @@ async def test_verify_advanced_localization_detects_changes(
     payload = response.json()
     assert payload["tamper_detection"]["root_match"] is False
     assert payload["tamper_localization"]["counts"]["changed"] > 0
-    previews = [
-        preview
-        for event in payload["tamper_localization"]["events"]
-        for preview in event.get("request_previews", [])
-    ]
+    previews = [preview for event in payload["tamper_localization"]["events"] for preview in event.get("request_previews", [])]
     assert any("Altered sentence" in preview for preview in previews)
 
 

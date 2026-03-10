@@ -13,18 +13,19 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
 import httpx
-from app.config import settings
-from app.core.tier_config import LEGACY_TIER_MAP
-from app.models.organization import Organization, OrganizationCertificateStatus, OrganizationTier
-from app.utils.crypto_utils import extract_public_key_from_certificate, load_organization_private_key, load_organization_public_key
-from app.utils.feature_flags import TIER_FEATURES
-from app.utils.quota import TIER_QUOTAS, QuotaType
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.x509.oid import NameOID
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.config import settings
+from app.core.tier_config import LEGACY_TIER_MAP
+from app.models.organization import Organization, OrganizationCertificateStatus, OrganizationTier
+from app.utils.crypto_utils import extract_public_key_from_certificate, load_organization_private_key, load_organization_public_key
+from app.utils.feature_flags import TIER_FEATURES
+from app.utils.quota import TIER_QUOTAS, QuotaType
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-
 # ============================================================================
 # Bronze Tier Nested Schemas
 # ============================================================================
@@ -76,9 +75,7 @@ class BronzeTier(BaseModel):
     permissions: BronzeTierPermissions = Field(default_factory=BronzeTierPermissions)
     pricing: Optional[BronzeTierPricing] = None
     attribution: BronzeTierAttribution = Field(default_factory=BronzeTierAttribution)
-    technical_requirements: BronzeTierTechnicalRequirements = Field(
-        default_factory=BronzeTierTechnicalRequirements
-    )
+    technical_requirements: BronzeTierTechnicalRequirements = Field(default_factory=BronzeTierTechnicalRequirements)
 
 
 # ============================================================================
@@ -146,9 +143,7 @@ class SilverTier(BaseModel):
     permissions: SilverTierPermissions = Field(default_factory=SilverTierPermissions)
     pricing: Optional[SilverTierPricing] = None
     attribution: SilverTierAttribution = Field(default_factory=SilverTierAttribution)
-    technical_requirements: SilverTierTechnicalRequirements = Field(
-        default_factory=SilverTierTechnicalRequirements
-    )
+    technical_requirements: SilverTierTechnicalRequirements = Field(default_factory=SilverTierTechnicalRequirements)
 
 
 # ============================================================================
@@ -222,9 +217,7 @@ class GoldTier(BaseModel):
     permissions: GoldTierPermissions = Field(default_factory=GoldTierPermissions)
     pricing: Optional[GoldTierPricing] = None
     attribution: GoldTierAttribution = Field(default_factory=GoldTierAttribution)
-    technical_requirements: GoldTierTechnicalRequirements = Field(
-        default_factory=GoldTierTechnicalRequirements
-    )
+    technical_requirements: GoldTierTechnicalRequirements = Field(default_factory=GoldTierTechnicalRequirements)
 
 
 # ============================================================================

@@ -9,6 +9,10 @@ import asyncio
 import logging
 import uuid
 
+from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_content_db, get_db
 from app.dependencies import require_sign_permission
 from app.middleware.api_rate_limiter import api_rate_limiter
@@ -18,9 +22,6 @@ from app.schemas.rich_sign_schemas import RichArticleSignRequest
 from app.services.rich_signing_service import execute_rich_signing
 from app.services.webhook_dispatcher import emit_document_signed
 from app.utils.quota import QuotaManager, QuotaType
-from fastapi import APIRouter, Depends, Request, Response, status
-from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

@@ -6,10 +6,8 @@ Combines all v1 endpoints into a single router.
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import merkle, provisioning
-from app.api.v1.endpoints import streaming_merkle, evidence, fingerprint, multi_source
-from app.api.v1.enterprise import c2pa
-from app.api.v1.enterprise import image_attribution
+from app.api.v1.endpoints import evidence, fingerprint, merkle, multi_source, provisioning, streaming_merkle
+from app.api.v1.enterprise import c2pa, image_attribution
 from app.api.v1.image_verify import router as image_verify_router
 from app.api.v1.public import c2pa as public_c2pa
 from app.api.v1.public import rights as public_rights

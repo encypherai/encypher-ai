@@ -10,6 +10,7 @@ all hash columns to VARCHAR(128) to accommodate the prefix + digest format.
 """
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers
@@ -22,47 +23,77 @@ depends_on = None
 def upgrade() -> None:
     # article_images: widen hash columns
     op.alter_column(
-        "article_images", "original_hash",
-        existing_type=sa.String(64), type_=sa.String(128), existing_nullable=False,
+        "article_images",
+        "original_hash",
+        existing_type=sa.String(64),
+        type_=sa.String(128),
+        existing_nullable=False,
     )
     op.alter_column(
-        "article_images", "signed_hash",
-        existing_type=sa.String(64), type_=sa.String(128), existing_nullable=False,
+        "article_images",
+        "signed_hash",
+        existing_type=sa.String(64),
+        type_=sa.String(128),
+        existing_nullable=False,
     )
     op.alter_column(
-        "article_images", "c2pa_manifest_hash",
-        existing_type=sa.String(64), type_=sa.String(128), existing_nullable=True,
+        "article_images",
+        "c2pa_manifest_hash",
+        existing_type=sa.String(64),
+        type_=sa.String(128),
+        existing_nullable=True,
     )
 
     # composite_manifests: widen hash columns
     op.alter_column(
-        "composite_manifests", "manifest_hash",
-        existing_type=sa.String(64), type_=sa.String(128), existing_nullable=False,
+        "composite_manifests",
+        "manifest_hash",
+        existing_type=sa.String(64),
+        type_=sa.String(128),
+        existing_nullable=False,
     )
     op.alter_column(
-        "composite_manifests", "text_merkle_root",
-        existing_type=sa.String(64), type_=sa.String(128), existing_nullable=True,
+        "composite_manifests",
+        "text_merkle_root",
+        existing_type=sa.String(64),
+        type_=sa.String(128),
+        existing_nullable=True,
     )
 
 
 def downgrade() -> None:
     op.alter_column(
-        "composite_manifests", "text_merkle_root",
-        existing_type=sa.String(128), type_=sa.String(64), existing_nullable=True,
+        "composite_manifests",
+        "text_merkle_root",
+        existing_type=sa.String(128),
+        type_=sa.String(64),
+        existing_nullable=True,
     )
     op.alter_column(
-        "composite_manifests", "manifest_hash",
-        existing_type=sa.String(128), type_=sa.String(64), existing_nullable=False,
+        "composite_manifests",
+        "manifest_hash",
+        existing_type=sa.String(128),
+        type_=sa.String(64),
+        existing_nullable=False,
     )
     op.alter_column(
-        "article_images", "c2pa_manifest_hash",
-        existing_type=sa.String(128), type_=sa.String(64), existing_nullable=True,
+        "article_images",
+        "c2pa_manifest_hash",
+        existing_type=sa.String(128),
+        type_=sa.String(64),
+        existing_nullable=True,
     )
     op.alter_column(
-        "article_images", "signed_hash",
-        existing_type=sa.String(128), type_=sa.String(64), existing_nullable=False,
+        "article_images",
+        "signed_hash",
+        existing_type=sa.String(128),
+        type_=sa.String(64),
+        existing_nullable=False,
     )
     op.alter_column(
-        "article_images", "original_hash",
-        existing_type=sa.String(128), type_=sa.String(64), existing_nullable=False,
+        "article_images",
+        "original_hash",
+        existing_type=sa.String(128),
+        type_=sa.String(64),
+        existing_nullable=False,
     )

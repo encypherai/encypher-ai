@@ -2,7 +2,6 @@
 
 import pytest
 
-
 spacy = pytest.importorskip("spacy")
 
 

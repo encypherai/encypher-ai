@@ -229,10 +229,11 @@ def _extract_and_validate_c2pa_certificate(text: str) -> C2PACertificateResult:
 
     try:
         import base64
+
         from cryptography.hazmat.primitives import serialization
-        from encypher.interop.c2pa.text_wrapper import find_and_decode
-        from encypher.interop.c2pa.jumbf import deserialize_jumbf_payload
         from encypher.core.signing import extract_certificates_from_cose
+        from encypher.interop.c2pa.jumbf import deserialize_jumbf_payload
+        from encypher.interop.c2pa.text_wrapper import find_and_decode
 
         # Extract manifest from text
         manifest_bytes, _clean_text, _span = find_and_decode(text)
@@ -329,13 +330,14 @@ def _extract_log_id_from_vs256_signature(signature: str) -> Optional[tuple[str, 
     Returns (hex_str, uuid_str) to support both new (log_id) and legacy
     (segment_uuid) DB record formats.
     """
+    from uuid import UUID as _UUID
+
     from app.utils.vs256_crypto import (
         MAGIC_PREFIX_LEN,
+        PAYLOAD_BYTES,
         SIGNATURE_CHARS,
         decode_bytes_vs256,
-        PAYLOAD_BYTES,
     )
-    from uuid import UUID as _UUID
 
     if len(signature) != SIGNATURE_CHARS:
         return None
@@ -393,6 +395,7 @@ async def _resolve_uuids_from_db(
     owns_session = False
     if session is None:
         from app.database import content_session_factory
+
         session = content_session_factory()
         owns_session = True
 
@@ -401,6 +404,7 @@ async def _resolve_uuids_from_db(
         from app.utils.vs256_crypto import (
             find_all_markers as vs256_find_all,
         )
+
         vs256_sigs = vs256_find_all(payload_text)
         log_ids: list[tuple[str, str]] = []  # (hex_str, legacy_uuid_str)
 
@@ -415,9 +419,7 @@ async def _resolve_uuids_from_db(
 
         # Resolve the first ID to get org/document info (try new log_id then legacy UUID)
         first_hex, first_uuid = log_ids[0]
-        result = await session.execute(
-            sql_text(_RESOLVE_UUID_SQL), {"log_id": first_hex, "legacy_uuid": first_uuid}
-        )
+        result = await session.execute(sql_text(_RESOLVE_UUID_SQL), {"log_id": first_hex, "legacy_uuid": first_uuid})
         row = result.fetchone()
 
         if not row or not row.organization_id:
@@ -564,11 +566,7 @@ async def execute_verification(
                         _ch_data = _ch_assertion.get("data", {})
                         _stored_hash = _ch_data.get("hash", "")
                         _raw_excls = _ch_data.get("exclusions", [])
-                        _excls = [
-                            (e["start"], e["length"])
-                            for e in _raw_excls
-                            if isinstance(e, dict) and "start" in e and "length" in e
-                        ]
+                        _excls = [(e["start"], e["length"]) for e in _raw_excls if isinstance(e, dict) and "start" in e and "length" in e]
                         if _stored_hash and _excls:
                             _norm = unicodedata.normalize("NFC", _ws_text)
                             _buf = bytearray(_norm.encode("utf-8"))
@@ -583,9 +581,7 @@ async def execute_verification(
                                 if _actual_hash == _stored_hash:
                                     is_valid = True
                                     exception_message = None
-                                    logger.info(
-                                        "Whitespace-normalized manual hash check succeeded: signer=%s", signer_id
-                                    )
+                                    logger.info("Whitespace-normalized manual hash check succeeded: signer=%s", signer_id)
                 except Exception as _mh_exc:
                     logger.warning("Whitespace-normalized manual hash exception: %s", _mh_exc)
 
@@ -595,10 +591,10 @@ async def execute_verification(
     # them.  Try ECC first (error-correcting), then plain HMAC, then ZW.
     if not is_valid and not signer_id:
         try:
+            from app.utils.crypto_utils import get_demo_private_key
             from app.utils.vs256_crypto import (
                 find_all_markers as vs256_find_all,
             )
-            from app.utils.crypto_utils import get_demo_private_key
 
             vs256_sigs = vs256_find_all(payload_text)
             if vs256_sigs:
@@ -609,9 +605,12 @@ async def execute_verification(
                 # Try VS256-RS first (error-correcting variant)
                 try:
                     from app.utils.vs256_rs_crypto import (
-                        verify_signed_marker as vs256rs_verify,
                         derive_signing_key_from_private_key as vs256rs_derive_key,
                     )
+                    from app.utils.vs256_rs_crypto import (
+                        verify_signed_marker as vs256rs_verify,
+                    )
+
                     rs_signing_key = vs256rs_derive_key(demo_key)
                     sig_valid, sig_log_id = vs256rs_verify(
                         sig_str,
@@ -620,6 +619,7 @@ async def execute_verification(
                     )
                     if sig_valid and sig_log_id:
                         from app.config import settings
+
                         is_valid = True
                         signer_id = settings.demo_organization_id
                         manifest = {
@@ -630,7 +630,8 @@ async def execute_verification(
                         }
                         logger.info(
                             "micro (ecc) fallback verification succeeded: log_id=%s, sigs=%d",
-                            sig_log_id.hex(), len(vs256_sigs),
+                            sig_log_id.hex(),
+                            len(vs256_sigs),
                         )
                 except Exception:
                     pass
@@ -638,9 +639,12 @@ async def execute_verification(
                 # Fall back to plain VS256 if RS didn't match
                 if not is_valid:
                     from app.utils.vs256_crypto import (
-                        verify_signed_marker as vs256_verify,
                         derive_signing_key_from_private_key as vs256_derive_key,
                     )
+                    from app.utils.vs256_crypto import (
+                        verify_signed_marker as vs256_verify,
+                    )
+
                     signing_key = vs256_derive_key(demo_key)
                     sig_valid, sig_log_id = vs256_verify(
                         sig_str,
@@ -649,6 +653,7 @@ async def execute_verification(
                     )
                     if sig_valid and sig_log_id:
                         from app.config import settings
+
                         is_valid = True
                         signer_id = settings.demo_organization_id
                         manifest = {
@@ -658,7 +663,8 @@ async def execute_verification(
                         }
                         logger.info(
                             "micro fallback verification succeeded: log_id=%s, sigs=%d",
-                            sig_log_id.hex(), len(vs256_sigs),
+                            sig_log_id.hex(),
+                            len(vs256_sigs),
                         )
 
         except Exception as e:

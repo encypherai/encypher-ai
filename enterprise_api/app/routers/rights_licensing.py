@@ -8,10 +8,9 @@ AI company agreements.
 
 import logging
 from typing import Any, Dict, List
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, status
-from sqlalchemy import select, desc, or_
+from sqlalchemy import desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -24,6 +23,7 @@ router = APIRouter(prefix="/rights-licensing", tags=["Rights Licensing Transacti
 
 def _svc():
     from app.services.rights_service import rights_service
+
     return rights_service
 
 
@@ -62,9 +62,10 @@ async def create_licensing_request(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="tier must be bronze, silver, or gold")
 
     try:
-        from app.models.rights import RightsLicensingRequest
-        from datetime import datetime, timezone
         import uuid as _uuid
+        from datetime import datetime, timezone
+
+        from app.models.rights import RightsLicensingRequest
 
         req = RightsLicensingRequest(
             id=_uuid.uuid4(),
@@ -175,9 +176,10 @@ async def respond_to_licensing_request(
 ) -> Dict[str, Any]:
     org_id: str = org_context["organization_id"]
 
-    from app.models.rights import RightsLicensingRequest, RightsLicensingAgreement
-    from datetime import datetime, timezone
     import uuid as _uuid
+    from datetime import datetime, timezone
+
+    from app.models.rights import RightsLicensingAgreement, RightsLicensingRequest
 
     req = await db.get(RightsLicensingRequest, _uuid.UUID(request_id))
     if not req:
@@ -294,8 +296,9 @@ async def get_agreement(
 ) -> Dict[str, Any]:
     org_id: str = org_context["organization_id"]
 
-    from app.models.rights import RightsLicensingAgreement
     import uuid as _uuid
+
+    from app.models.rights import RightsLicensingAgreement
 
     agr = await db.get(RightsLicensingAgreement, _uuid.UUID(agreement_id))
     if not agr:
@@ -320,8 +323,9 @@ async def get_agreement_usage(
 ) -> Dict[str, Any]:
     org_id: str = org_context["organization_id"]
 
-    from app.models.rights import RightsLicensingAgreement
     import uuid as _uuid
+
+    from app.models.rights import RightsLicensingAgreement
 
     agr = await db.get(RightsLicensingAgreement, _uuid.UUID(agreement_id))
     if not agr:

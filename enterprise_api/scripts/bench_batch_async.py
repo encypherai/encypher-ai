@@ -24,6 +24,7 @@ async def run_benchmark(documents: int, worker_limit: int, simulate_ms: float, l
     service: BatchService
 
     if logic_only:
+
         class BenchmarkBatchService(BatchService):
             async def _process_sign_item(
                 self,

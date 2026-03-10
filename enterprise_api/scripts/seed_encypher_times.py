@@ -16,7 +16,6 @@ Usage:
 """
 
 import random
-import sys
 import uuid
 from datetime import date, datetime, timedelta, timezone
 
@@ -59,7 +58,7 @@ TODAY = NOW.date()
 # Realistic large-publisher stats
 TOTAL_DOCS_SIGNED = 47_832
 TOTAL_API_CALLS = 52_847
-TOTAL_VERIFICATIONS = 843   # Just above 500 (Notice Ready threshold)
+TOTAL_VERIFICATIONS = 843  # Just above 500 (Notice Ready threshold)
 
 
 # ---------------------------------------------------------------------------
@@ -69,8 +68,9 @@ def hash_password(pw: str) -> str:
     """Hash password the same way the auth service does:
     SHA-256(password) -> base64 -> bcrypt
     """
-    import hashlib
     import base64
+    import hashlib
+
     sha256_hash = hashlib.sha256(pw.encode("utf-8")).digest()
     prehashed = base64.b64encode(sha256_hash)
     return bcrypt.hashpw(prehashed, bcrypt.gensalt(12)).decode()
@@ -92,15 +92,16 @@ def seed_auth(cur):
 
     # Completed onboarding checklist -- all standard steps marked done
     onboarding = {
-        "account_created":      {"completed_at": days_ago(90).isoformat()},
+        "account_created": {"completed_at": days_ago(90).isoformat()},
         "organization_created": {"completed_at": days_ago(90).isoformat()},
-        "first_document_signed":{"completed_at": days_ago(88).isoformat()},
-        "api_key_created":      {"completed_at": days_ago(87).isoformat()},
-        "rights_profile_set":   {"completed_at": days_ago(85).isoformat()},
-        "joined_coalition":     {"completed_at": days_ago(85).isoformat()},
+        "first_document_signed": {"completed_at": days_ago(88).isoformat()},
+        "api_key_created": {"completed_at": days_ago(87).isoformat()},
+        "rights_profile_set": {"completed_at": days_ago(85).isoformat()},
+        "joined_coalition": {"completed_at": days_ago(85).isoformat()},
     }
 
     import json
+
     onboarding_json = json.dumps(onboarding)
 
     # User
@@ -133,13 +134,13 @@ def seed_auth(cur):
             ORG_EMAIL,
             pw_hash,
             ORG_NAME,
-            days_ago(90),             # email_verified_at
+            days_ago(90),  # email_verified_at
             ORG_ID,
             onboarding_json,
-            days_ago(85),             # onboarding_completed_at
-            days_ago(85),             # setup_completed_at
-            days_ago(90),             # created_at
-            days_ago(90),             # updated_at
+            days_ago(85),  # onboarding_completed_at
+            days_ago(85),  # setup_completed_at
+            days_ago(90),  # created_at
+            days_ago(90),  # updated_at
         ),
     )
     row = cur.fetchone()
@@ -234,9 +235,12 @@ def seed_content(cur):
             updated_at = NOW()
         """,
         (
-            ORG_ID, ORG_NAME, ORG_SLUG, ORG_EMAIL,
+            ORG_ID,
+            ORG_NAME,
+            ORG_SLUG,
+            ORG_EMAIL,
             TOTAL_DOCS_SIGNED,
-            TOTAL_DOCS_SIGNED * 18,   # ~18 sentences per article
+            TOTAL_DOCS_SIGNED * 18,  # ~18 sentences per article
             TOTAL_API_CALLS,
             days_ago(90),
             days_ago(90),
@@ -246,6 +250,7 @@ def seed_content(cur):
 
     # API key -- new schema uses key_hash (bcrypt) + key_prefix
     import bcrypt as _bcrypt
+
     _key_hash = _bcrypt.hashpw(API_KEY.encode(), _bcrypt.gensalt(10)).decode()
     _key_prefix = API_KEY[:8]
     cur.execute(
@@ -283,6 +288,7 @@ def seed_content(cur):
     }
 
     import json
+
     cur.execute(
         """
         INSERT INTO publisher_rights_profiles (
@@ -308,9 +314,12 @@ def seed_content(cur):
             updated_by = NULL
         """,
         (
-            ORG_ID, days_ago(85),
+            ORG_ID,
+            days_ago(85),
             ORG_NAME,
-            json.dumps(bronze), json.dumps(silver), json.dumps(gold),
+            json.dumps(bronze),
+            json.dumps(silver),
+            json.dumps(gold),
             days_ago(85),
             days_ago(85),
             days_ago(85),
@@ -329,30 +338,30 @@ def _seed_detection_events(cur):
     """Insert realistic provenance check events over 90 days."""
 
     domains = [
-        ("chat.openai.com",   "ai_crawler",      "GPTBot/1.0"),
-        ("openai.com",        "ai_crawler",      "GPTBot/1.0"),
-        ("anthropic.com",     "ai_crawler",      "Claude-SearchBot/2.0"),
-        ("claude.ai",         "ai_crawler",      "ClaudeBot/1.0"),
-        ("perplexity.ai",     "ai_crawler",      "PerplexityBot/1.0"),
-        ("bard.google.com",   "ai_crawler",      "Google-Extended/1.0"),
-        ("bing.com",          "search_crawler",  "bingbot/2.0"),
-        ("you.com",           "ai_crawler",      "YouBot/1.0"),
-        ("brave.com",         "search_crawler",  "BraveSoftware/1.0"),
-        ("news.ycombinator.com","human_browser", "Mozilla/5.0"),
-        ("reddit.com",        "human_browser",   "Mozilla/5.0"),
-        ("medium.com",        "aggregator",      "Mediaplex/3.0"),
-        ("substack.com",      "human_browser",   "Mozilla/5.0"),
-        ("axios.com",         "human_browser",   "Mozilla/5.0"),
-        ("techcrunch.com",    "aggregator",      "TCrawler/2.0"),
+        ("chat.openai.com", "ai_crawler", "GPTBot/1.0"),
+        ("openai.com", "ai_crawler", "GPTBot/1.0"),
+        ("anthropic.com", "ai_crawler", "Claude-SearchBot/2.0"),
+        ("claude.ai", "ai_crawler", "ClaudeBot/1.0"),
+        ("perplexity.ai", "ai_crawler", "PerplexityBot/1.0"),
+        ("bard.google.com", "ai_crawler", "Google-Extended/1.0"),
+        ("bing.com", "search_crawler", "bingbot/2.0"),
+        ("you.com", "ai_crawler", "YouBot/1.0"),
+        ("brave.com", "search_crawler", "BraveSoftware/1.0"),
+        ("news.ycombinator.com", "human_browser", "Mozilla/5.0"),
+        ("reddit.com", "human_browser", "Mozilla/5.0"),
+        ("medium.com", "aggregator", "Mediaplex/3.0"),
+        ("substack.com", "human_browser", "Mozilla/5.0"),
+        ("axios.com", "human_browser", "Mozilla/5.0"),
+        ("techcrunch.com", "aggregator", "TCrawler/2.0"),
     ]
 
     detection_sources = [
-        "api_verification",    # 50%
+        "api_verification",  # 50%
         "api_verification",
         "api_verification",
-        "chrome_extension",    # 30%
+        "chrome_extension",  # 30%
         "chrome_extension",
-        "rsl_olp_check",       # 20%
+        "rsl_olp_check",  # 20%
     ]
 
     doc_ids = [str(uuid.uuid4()) for _ in range(50)]  # 50 sample document IDs
@@ -398,8 +407,12 @@ def _seed_detection_events(cur):
             bypassed = ua_cat == "ai_crawler" and rng.random() > 0.7
 
             event_dt = datetime(
-                event_date.year, event_date.month, event_date.day,
-                rng.randint(0, 23), rng.randint(0, 59), rng.randint(0, 59),
+                event_date.year,
+                event_date.month,
+                event_date.day,
+                rng.randint(0, 23),
+                rng.randint(0, 59),
+                rng.randint(0, 59),
                 tzinfo=timezone.utc,
             )
 
@@ -418,10 +431,18 @@ def _seed_detection_events(cur):
                 VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
-                    ORG_ID, doc_id, source, url, domain, ua_str, ua_cat,
+                    ORG_ID,
+                    doc_id,
+                    source,
+                    url,
+                    domain,
+                    ua_str,
+                    ua_cat,
                     rng.randint(1, 24),  # segments_found
                     integrity,
-                    rights_served, rights_ack, bypassed,
+                    rights_served,
+                    rights_ack,
+                    bypassed,
                     event_dt,
                 ),
             )
@@ -463,7 +484,7 @@ def _seed_coalition_earnings(cur):
             "period_end": date(2026, 3, 31),
             "gross_revenue_cents": 111_250,
             "publisher_share_percent": 80,
-            "publisher_earnings_cents": 89_000,   # $890.00
+            "publisher_earnings_cents": 89_000,  # $890.00
             "attribution_method": "verification_weighted",
             "attribution_weight": "0.0063",
             "status": "pending",
@@ -484,11 +505,19 @@ def _seed_coalition_earnings(cur):
             ON CONFLICT (id) DO NOTHING
             """,
             (
-                e["id"], ORG_ID, e["deal_id"], e["deal_name"], e["ai_company"],
-                e["period_start"], e["period_end"],
-                e["gross_revenue_cents"], e["publisher_share_percent"],
+                e["id"],
+                ORG_ID,
+                e["deal_id"],
+                e["deal_name"],
+                e["ai_company"],
+                e["period_start"],
+                e["period_end"],
+                e["gross_revenue_cents"],
+                e["publisher_share_percent"],
                 e["publisher_earnings_cents"],
-                e["attribution_method"], e["attribution_weight"], e["status"],
+                e["attribution_method"],
+                e["attribution_weight"],
+                e["status"],
             ),
         )
 
@@ -538,22 +567,28 @@ def seed_analytics(cur):
         for hour in rng.sample(range(0, 20), k=min(6, count)):
             chunk = max(1, count // 6)
             event_dt = datetime(
-                event_date.year, event_date.month, event_date.day,
-                hour, rng.randint(0, 59), tzinfo=timezone.utc,
+                event_date.year,
+                event_date.month,
+                event_date.day,
+                hour,
+                rng.randint(0, 59),
+                tzinfo=timezone.utc,
             )
-            rows.append({
-                "user_id": USER_ID,
-                "org_id": ORG_ID,
-                "metric_type": "document_signed",
-                "service_name": "enterprise-api",
-                "endpoint": "/api/v1/sign",
-                "count": chunk,
-                "response_time_ms": rng.randint(45, 180),
-                "status_code": 200,
-                "date": event_date.isoformat(),
-                "hour": hour,
-                "created_at": event_dt,
-            })
+            rows.append(
+                {
+                    "user_id": USER_ID,
+                    "org_id": ORG_ID,
+                    "metric_type": "document_signed",
+                    "service_name": "enterprise-api",
+                    "endpoint": "/api/v1/sign",
+                    "count": chunk,
+                    "response_time_ms": rng.randint(45, 180),
+                    "status_code": 200,
+                    "date": event_date.isoformat(),
+                    "hour": hour,
+                    "created_at": event_dt,
+                }
+            )
 
     # -- Verifications: 843 total, heavier in last 30 days
     verify_daily_plan = []
@@ -576,22 +611,28 @@ def seed_analytics(cur):
         for hour in rng.sample(range(0, 24), k=min(4, count)):
             chunk = max(1, count // 4)
             event_dt = datetime(
-                event_date.year, event_date.month, event_date.day,
-                hour, rng.randint(0, 59), tzinfo=timezone.utc,
+                event_date.year,
+                event_date.month,
+                event_date.day,
+                hour,
+                rng.randint(0, 59),
+                tzinfo=timezone.utc,
             )
-            rows.append({
-                "user_id": USER_ID,
-                "org_id": ORG_ID,
-                "metric_type": "document_verified",
-                "service_name": "enterprise-api",
-                "endpoint": "/api/v1/public/verify",
-                "count": chunk,
-                "response_time_ms": rng.randint(25, 100),
-                "status_code": 200,
-                "date": event_date.isoformat(),
-                "hour": hour,
-                "created_at": event_dt,
-            })
+            rows.append(
+                {
+                    "user_id": USER_ID,
+                    "org_id": ORG_ID,
+                    "metric_type": "document_verified",
+                    "service_name": "enterprise-api",
+                    "endpoint": "/api/v1/public/verify",
+                    "count": chunk,
+                    "response_time_ms": rng.randint(25, 100),
+                    "status_code": 200,
+                    "date": event_date.isoformat(),
+                    "hour": hour,
+                    "created_at": event_dt,
+                }
+            )
 
     # -- API calls: everything else (status checks, webhooks, lookups)
     for day_offset in range(90):
@@ -599,22 +640,28 @@ def seed_analytics(cur):
         count = rng.randint(80, 250) if day_offset < 30 else rng.randint(40, 120)
         for hour in [9, 12, 15, 18]:
             event_dt = datetime(
-                event_date.year, event_date.month, event_date.day,
-                hour, rng.randint(0, 59), tzinfo=timezone.utc,
+                event_date.year,
+                event_date.month,
+                event_date.day,
+                hour,
+                rng.randint(0, 59),
+                tzinfo=timezone.utc,
             )
-            rows.append({
-                "user_id": USER_ID,
-                "org_id": ORG_ID,
-                "metric_type": "api_call",
-                "service_name": "enterprise-api",
-                "endpoint": "/api/v1/",
-                "count": count // 4,
-                "response_time_ms": rng.randint(30, 150),
-                "status_code": 200,
-                "date": event_date.isoformat(),
-                "hour": hour,
-                "created_at": event_dt,
-            })
+            rows.append(
+                {
+                    "user_id": USER_ID,
+                    "org_id": ORG_ID,
+                    "metric_type": "api_call",
+                    "service_name": "enterprise-api",
+                    "endpoint": "/api/v1/",
+                    "count": count // 4,
+                    "response_time_ms": rng.randint(30, 150),
+                    "status_code": 200,
+                    "date": event_date.isoformat(),
+                    "hour": hour,
+                    "created_at": event_dt,
+                }
+            )
 
     for r in rows:
         cur.execute(
@@ -631,10 +678,17 @@ def seed_analytics(cur):
             """,
             (
                 str(uuid.uuid4()),
-                r["user_id"], r["org_id"],
-                r["metric_type"], r["service_name"], r["endpoint"],
-                r["count"], r["response_time_ms"], r["status_code"],
-                r["date"], r["hour"], r["created_at"],
+                r["user_id"],
+                r["org_id"],
+                r["metric_type"],
+                r["service_name"],
+                r["endpoint"],
+                r["count"],
+                r["response_time_ms"],
+                r["status_code"],
+                r["date"],
+                r["hour"],
+                r["created_at"],
             ),
         )
 

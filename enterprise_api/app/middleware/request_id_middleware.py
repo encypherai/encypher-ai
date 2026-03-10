@@ -25,9 +25,7 @@ from starlette.responses import Response
 logger = logging.getLogger(__name__)
 
 # Module-level ContextVar - readable from any coroutine in the same task tree.
-request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar(
-    "request_id", default="-"
-)
+request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="-")
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
@@ -42,10 +40,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        request_id = (
-            request.headers.get("x-request-id")
-            or f"req-{uuid4().hex[:12]}"
-        )
+        request_id = request.headers.get("x-request-id") or f"req-{uuid4().hex[:12]}"
         request.state.request_id = request_id
         token = request_id_ctx.set(request_id)
         try:

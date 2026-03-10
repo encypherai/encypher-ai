@@ -10,7 +10,6 @@ Once a notice is delivered, its content is cryptographically locked.
 
 import logging
 from typing import Any, Dict, List
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +24,7 @@ router = APIRouter(prefix="/notices", tags=["Formal Notices"])
 
 def _notice_service():
     from app.services.rights_service import rights_service
+
     return rights_service
 
 
@@ -323,6 +323,7 @@ async def get_evidence_package_pdf(
 
     try:
         from app.services.evidence_pdf_service import generate_evidence_pdf
+
         pdf_bytes = generate_evidence_pdf(package, org_name=org_name)
     except Exception:
         logger.exception("Failed to render PDF for notice %s", notice_id)

@@ -1,5 +1,4 @@
 from logging.config import fileConfig
-from typing import Dict, Optional
 
 from sqlalchemy import engine_from_config, pool
 

@@ -10,10 +10,11 @@ This script:
 """
 
 import asyncio
-import asyncpg
 import os
 import secrets
 from pathlib import Path
+
+import asyncpg
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 

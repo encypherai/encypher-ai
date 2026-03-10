@@ -3,12 +3,11 @@ Pydantic schemas for CMS integration endpoints (Ghost, WordPress, etc.).
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.signing_constants import MANIFEST_MODES, SEGMENTATION_LEVELS
-
 
 # =============================================================================
 # Ghost Integration CRUD

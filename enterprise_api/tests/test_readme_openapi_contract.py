@@ -11,7 +11,6 @@ from fastapi.openapi.utils import get_openapi
 
 from app.main import _filter_openapi_for_public, app
 
-
 _HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
 
 _GHOST_INTEGRATION_ENDPOINTS = {
@@ -178,7 +177,6 @@ def test_readme_documents_ghost_integration_endpoints() -> None:
     readme_endpoints = _extract_readme_endpoints(readme_text)
     missing_ghost_endpoints = sorted(_GHOST_INTEGRATION_ENDPOINTS - readme_endpoints)
 
-    assert not missing_ghost_endpoints, (
-        "README is missing Ghost integration endpoints:\n"
-        + "\n".join(f"- {method} {path}" for method, path in missing_ghost_endpoints)
+    assert not missing_ghost_endpoints, "README is missing Ghost integration endpoints:\n" + "\n".join(
+        f"- {method} {path}" for method, path in missing_ghost_endpoints
     )

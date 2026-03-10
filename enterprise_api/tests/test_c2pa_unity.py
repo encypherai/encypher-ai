@@ -33,10 +33,8 @@ def _extract_c2pa(embedded_content: str, label: str) -> dict:
 
 def _assert_c2pa_core_structure(manifest: dict, mode_label: str) -> None:
     """Assert the C2PA manifest has the core structural requirements common to all modes."""
-    assert manifest.get("@context") == "https://c2pa.org/schemas/v2.3/c2pa.jsonld", \
-        f"{mode_label}: unexpected @context"
-    assert manifest.get("claim_label") == "c2pa.claim.v2", \
-        f"{mode_label}: unexpected claim_label"
+    assert manifest.get("@context") == "https://c2pa.org/schemas/v2.3/c2pa.jsonld", f"{mode_label}: unexpected @context"
+    assert manifest.get("claim_label") == "c2pa.claim.v2", f"{mode_label}: unexpected claim_label"
 
     assertions = manifest.get("assertions")
     assert isinstance(assertions, list), f"{mode_label}: assertions is not a list"
@@ -78,10 +76,8 @@ async def test_micro_embed_c2pa_true_uses_same_c2pa_as_full(async_client, auth_h
     _assert_c2pa_core_structure(micro_manifest, "micro+embed_c2pa=True")
 
     # Both produce the same schema context and claim format
-    assert full_manifest["@context"] == micro_manifest["@context"], \
-        "full and micro @context differ"
-    assert full_manifest["claim_label"] == micro_manifest["claim_label"], \
-        "full and micro claim_label differ"
+    assert full_manifest["@context"] == micro_manifest["@context"], "full and micro @context differ"
+    assert full_manifest["claim_label"] == micro_manifest["claim_label"], "full and micro claim_label differ"
 
 
 @pytest.mark.asyncio
@@ -99,8 +95,7 @@ async def test_micro_embed_c2pa_false_no_c2pa_in_content(async_client, auth_head
 
     # No C2PA manifest should be embedded in the content
     extracted = UnicodeMetadata.extract_metadata(signed)
-    assert extracted is None, \
-        "C2PA manifest found in micro+embed_c2pa=False output (should not be embedded)"
+    assert extracted is None, "C2PA manifest found in micro+embed_c2pa=False output (should not be embedded)"
 
 
 @pytest.mark.asyncio
@@ -111,11 +106,14 @@ async def test_micro_legacy_safe_embed_c2pa_true_uses_same_c2pa(async_client, au
     response = await async_client.post(
         "/api/v1/sign",
         headers=auth_headers,
-        json={"text": text, "options": {
-            "manifest_mode": "micro",
-            "legacy_safe": True,
-            "embed_c2pa": True,
-        }},
+        json={
+            "text": text,
+            "options": {
+                "manifest_mode": "micro",
+                "legacy_safe": True,
+                "embed_c2pa": True,
+            },
+        },
     )
     assert response.status_code == 201, f"micro+legacy_safe sign failed: {response.text}"
     signed = response.json()["data"]["document"]["signed_text"]
@@ -156,20 +154,22 @@ async def test_micro_legacy_safe_document_metadata_in_response(async_client, aut
     response = await async_client.post(
         "/api/v1/sign",
         headers=auth_headers,
-        json={"text": text, "options": {
-            "manifest_mode": "micro",
-            "legacy_safe": True,
-            "ecc": False,
-            "embed_c2pa": True,
-        }},
+        json={
+            "text": text,
+            "options": {
+                "manifest_mode": "micro",
+                "legacy_safe": True,
+                "ecc": False,
+                "embed_c2pa": True,
+            },
+        },
     )
     assert response.status_code == 201, f"sign failed: {response.text}"
     payload = response.json()
     doc = payload["data"]["document"]
     # The signed text should contain the per-sentence markers
     signed = doc.get("signed_text")
-    assert signed is not None and len(signed) > len(text), \
-        "signed_text should be longer than input (contains invisible markers)"
+    assert signed is not None and len(signed) > len(text), "signed_text should be longer than input (contains invisible markers)"
 
 
 @pytest.mark.asyncio
@@ -180,17 +180,19 @@ async def test_micro_legacy_safe_rs_document_metadata_in_response(async_client, 
     response = await async_client.post(
         "/api/v1/sign",
         headers=auth_headers,
-        json={"text": text, "options": {
-            "manifest_mode": "micro",
-            "legacy_safe": True,
-            "ecc": True,
-            "embed_c2pa": True,
-        }},
+        json={
+            "text": text,
+            "options": {
+                "manifest_mode": "micro",
+                "legacy_safe": True,
+                "ecc": True,
+                "embed_c2pa": True,
+            },
+        },
     )
     assert response.status_code == 201, f"sign failed: {response.text}"
     signed = response.json()["data"]["document"]["signed_text"]
-    assert signed is not None and len(signed) > len(text), \
-        "signed_text should be longer than input (contains invisible markers)"
+    assert signed is not None and len(signed) > len(text), "signed_text should be longer than input (contains invisible markers)"
     # C2PA manifest should still be embedded
     manifest = _extract_c2pa(signed, "micro+legacy_safe_rs")
     _assert_c2pa_core_structure(manifest, "micro+legacy_safe_rs")

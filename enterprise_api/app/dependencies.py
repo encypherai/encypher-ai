@@ -13,11 +13,12 @@ import logging
 from typing import Dict, Optional
 
 import httpx
+from fastapi import BackgroundTasks, Depends, HTTPException, Request, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
 from app.config import settings
 from app.services.auth_service_client import auth_service_client
 from app.services.key_service_client import key_service_client
-from fastapi import BackgroundTasks, Depends, HTTPException, Request, Security, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)

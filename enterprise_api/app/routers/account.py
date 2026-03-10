@@ -23,11 +23,7 @@ def resolve_user_account_name(organization: Dict[str, Any]) -> str:
     """Resolve display name for user-level account contexts."""
     if not isinstance(organization, dict):
         return "Personal Account"
-    return (
-        organization.get("display_name")
-        or organization.get("organization_name")
-        or "Personal Account"
-    )
+    return organization.get("display_name") or organization.get("organization_name") or "Personal Account"
 
 
 # =============================================================================
@@ -104,13 +100,14 @@ class QuotaResponse(BaseModel):
 # =============================================================================
 
 from app.core.tier_config import (
-    TIER_FEATURES as _RAW_TIER_FEATURES,
-    TIER_LIMITS,
     coerce_tier_name as _coerce_tier_name,
+)
+from app.core.tier_config import (
     get_tier_features as _get_tier_features,
+)
+from app.core.tier_config import (
     get_tier_limits as _get_tier_limits,
 )
-
 
 # =============================================================================
 # Endpoints
@@ -154,8 +151,8 @@ async def get_account_info(
     # Query organization details
     result = await db.execute(
         text("""
-            SELECT 
-                id, name, email, tier, 
+            SELECT
+                id, name, email, tier,
                 subscription_status, created_at,
                 features
             FROM organizations

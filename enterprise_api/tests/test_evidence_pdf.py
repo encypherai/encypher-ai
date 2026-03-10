@@ -13,9 +13,9 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
 from app.database import get_db
 from app.dependencies import get_current_organization_dep
+from app.main import app
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -124,9 +124,7 @@ def raw_client():
 def test_evidence_pdf_requires_auth(raw_client):
     """No auth token -> 401 or 403 (depends on auth middleware)."""
     response = raw_client.get(f"/api/v1/notices/{NOTICE_ID}/evidence/pdf")
-    assert response.status_code in (401, 403), (
-        f"Expected 401 or 403 without auth, got {response.status_code}"
-    )
+    assert response.status_code in (401, 403), f"Expected 401 or 403 without auth, got {response.status_code}"
 
 
 def test_evidence_pdf_not_found(client):

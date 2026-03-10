@@ -26,6 +26,8 @@ os.environ.setdefault(
 os.environ.setdefault("DATABASE_URL", os.environ["CORE_DATABASE_URL"])
 
 import pytest
+from pydantic import ValidationError
+
 from app.schemas.rich_verify_schemas import (
     ImageVerificationResult,
     ImageVerifyRequest,
@@ -35,7 +37,6 @@ from app.schemas.rich_verify_schemas import (
     SignerIdentity,
     TextVerificationResult,
 )
-from pydantic import ValidationError
 
 
 class TestRichVerifyRequest:

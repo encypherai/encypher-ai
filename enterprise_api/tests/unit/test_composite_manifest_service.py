@@ -1,10 +1,8 @@
 """Unit tests for composite_manifest_service."""
+
 import hashlib
 import json
-import re
 import uuid
-
-import pytest
 
 
 def make_ingredient(
@@ -92,8 +90,6 @@ class TestBuildCompositeManifest:
 
     def test_manifest_hash_is_consistent_with_manifest_data(self):
         """manifest_hash must be sha256 of the canonicalized manifest_data JSON."""
-        import json
-        import hashlib
         from app.services.composite_manifest_service import build_composite_manifest
 
         img = make_ingredient(
@@ -127,7 +123,7 @@ class TestBuildCompositeManifest:
         )
         assert result.instance_id.startswith("urn:uuid:")
         # Extract UUID part and validate
-        uuid_part = result.instance_id[len("urn:uuid:"):]
+        uuid_part = result.instance_id[len("urn:uuid:") :]
         parsed = uuid.UUID(uuid_part)
         assert str(parsed) == uuid_part
 
@@ -143,19 +139,19 @@ class TestBuildCompositeManifest:
             images=[make_ingredient()],
         )
         assert result.manifest_hash.startswith("sha256:")
-        hash_part = result.manifest_hash[len("sha256:"):]
+        hash_part = result.manifest_hash[len("sha256:") :]
         assert len(hash_part) == 64
         assert all(c in "0123456789abcdef" for c in hash_part)
 
     def test_ingredients_sorted_by_position(self):
         from app.services.composite_manifest_service import build_composite_manifest
 
-        img0 = make_ingredient(position=0, image_id="img_00000001",
-                               filename="first.jpg",
-                               c2pa_instance_id="urn:uuid:11111111-0000-0000-0000-000000000001")
-        img1 = make_ingredient(position=1, image_id="img_00000002",
-                               filename="second.jpg",
-                               c2pa_instance_id="urn:uuid:11111111-0000-0000-0000-000000000002")
+        img0 = make_ingredient(
+            position=0, image_id="img_00000001", filename="first.jpg", c2pa_instance_id="urn:uuid:11111111-0000-0000-0000-000000000001"
+        )
+        img1 = make_ingredient(
+            position=1, image_id="img_00000002", filename="second.jpg", c2pa_instance_id="urn:uuid:11111111-0000-0000-0000-000000000002"
+        )
         # Pass in reverse order
         result = build_composite_manifest(
             document_id="doc-sort",

@@ -14,9 +14,10 @@ import uuid
 from collections import defaultdict
 from typing import Any, Dict, Optional, Set, Tuple
 
+from fastapi import HTTPException, Request, status
+
 from app.config import settings
 from app.services.session_service import session_service
-from fastapi import HTTPException, Request, status
 
 logger = logging.getLogger(__name__)
 

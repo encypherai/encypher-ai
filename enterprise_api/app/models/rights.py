@@ -16,7 +16,6 @@ from sqlalchemy.orm import relationship
 
 from app.database import Base
 
-
 # ============================================================================
 # Publisher Rights Profiles
 # ============================================================================
@@ -76,12 +75,7 @@ class PublisherRightsProfile(Base):
     licensing_track = Column(Text, nullable=False, default="both")
 
     def __repr__(self) -> str:
-        return (
-            f"<PublisherRightsProfile("
-            f"id={self.id}, "
-            f"org={self.organization_id}, "
-            f"v{self.profile_version})>"
-        )
+        return f"<PublisherRightsProfile(id={self.id}, org={self.organization_id}, v{self.profile_version})>"
 
 
 # ============================================================================
@@ -133,13 +127,7 @@ class DocumentRightsOverride(Base):
     syndication_rights = Column(JSONB, nullable=True)
 
     def __repr__(self) -> str:
-        return (
-            f"<DocumentRightsOverride("
-            f"id={self.id}, "
-            f"doc={self.document_id}, "
-            f"org={self.organization_id}, "
-            f"v{self.override_version})>"
-        )
+        return f"<DocumentRightsOverride(id={self.id}, doc={self.document_id}, org={self.organization_id}, v{self.override_version})>"
 
 
 # ============================================================================
@@ -208,12 +196,7 @@ class FormalNotice(Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"<FormalNotice("
-            f"id={self.id}, "
-            f"target={self.target_entity_name}, "
-            f"status={self.status})>"
-        )
+        return f"<FormalNotice(id={self.id}, target={self.target_entity_name}, status={self.status})>"
 
 
 # ============================================================================
@@ -245,8 +228,8 @@ class NoticeEvidenceChain(Base):
     # Event payload
     event_type = Column(Text, nullable=False)
     event_data = Column(JSONB, nullable=False, default=dict)
-    event_hash = Column(Text, nullable=False)       # SHA-256(event_data + previous_hash)
-    previous_hash = Column(Text, nullable=True)     # NULL for first event in chain
+    event_hash = Column(Text, nullable=False)  # SHA-256(event_data + previous_hash)
+    previous_hash = Column(Text, nullable=True)  # NULL for first event in chain
 
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)
 
@@ -254,12 +237,7 @@ class NoticeEvidenceChain(Base):
     notice = relationship("FormalNotice", back_populates="evidence_chain")
 
     def __repr__(self) -> str:
-        return (
-            f"<NoticeEvidenceChain("
-            f"id={self.id}, "
-            f"notice={self.notice_id}, "
-            f"event={self.event_type})>"
-        )
+        return f"<NoticeEvidenceChain(id={self.id}, notice={self.notice_id}, event={self.event_type})>"
 
 
 # ============================================================================
@@ -295,7 +273,7 @@ class RightsLicensingRequest(Base):
     )
 
     # Request details
-    tier = Column(Text, nullable=False)          # bronze | silver | gold
+    tier = Column(Text, nullable=False)  # bronze | silver | gold
     scope = Column(JSONB, nullable=False, default=dict)
     proposed_terms = Column(JSONB, nullable=False, default=dict)
     requester_info = Column(JSONB, nullable=False, default=dict)
@@ -312,12 +290,7 @@ class RightsLicensingRequest(Base):
     updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self) -> str:
-        return (
-            f"<RightsLicensingRequest("
-            f"id={self.id}, "
-            f"tier={self.tier}, "
-            f"status={self.status})>"
-        )
+        return f"<RightsLicensingRequest(id={self.id}, tier={self.tier}, status={self.status})>"
 
 
 # ============================================================================
@@ -376,12 +349,7 @@ class RightsLicensingAgreement(Base):
     updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self) -> str:
-        return (
-            f"<RightsLicensingAgreement("
-            f"id={self.id}, "
-            f"tier={self.tier}, "
-            f"status={self.status})>"
-        )
+        return f"<RightsLicensingAgreement(id={self.id}, tier={self.tier}, status={self.status})>"
 
 
 # ============================================================================
@@ -419,12 +387,7 @@ class RightsAuditLog(Base):
     ip_address = Column(INET, nullable=True)
 
     def __repr__(self) -> str:
-        return (
-            f"<RightsAuditLog("
-            f"id={self.id}, "
-            f"action={self.action}, "
-            f"resource={self.resource_type}/{self.resource_id})>"
-        )
+        return f"<RightsAuditLog(id={self.id}, action={self.action}, resource={self.resource_type}/{self.resource_id})>"
 
 
 # ============================================================================
@@ -483,12 +446,7 @@ class ContentDetectionEvent(Base):
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)
 
     def __repr__(self) -> str:
-        return (
-            f"<ContentDetectionEvent("
-            f"id={self.id}, "
-            f"source={self.detection_source}, "
-            f"domain={self.detected_on_domain})>"
-        )
+        return f"<ContentDetectionEvent(id={self.id}, source={self.detection_source}, domain={self.detected_on_domain})>"
 
 
 # ============================================================================
@@ -528,9 +486,4 @@ class KnownCrawler(Base):
     updated_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self) -> str:
-        return (
-            f"<KnownCrawler("
-            f"id={self.id}, "
-            f"name={self.crawler_name}, "
-            f"type={self.crawler_type})>"
-        )
+        return f"<KnownCrawler(id={self.id}, name={self.crawler_name}, type={self.crawler_type})>"

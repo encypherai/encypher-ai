@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import os
 import random
 
 import pytest
+
 from app.utils.vs256_crypto import (
     BYTE_TO_VS,
     LOG_ID_BYTES,
@@ -18,7 +18,6 @@ from app.utils.vs256_crypto import (
 from app.utils.vs256_rs_crypto import (
     DATA_BYTES,
     HMAC_BYTES,
-    PAYLOAD_BYTES,
     SIGNATURE_CHARS,
     create_embedded_sentence,
     create_signed_marker,
@@ -27,7 +26,6 @@ from app.utils.vs256_rs_crypto import (
     recover_from_partial_extraction,
     verify_signed_marker,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -47,6 +45,7 @@ def log_id() -> bytes:
 @pytest.fixture
 def test_keypair():
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
     private_key = Ed25519PrivateKey.generate()
     return private_key, private_key.public_key()
 
@@ -264,8 +263,7 @@ class TestPartialExtraction:
     def test_recovers_with_4_missing_payload_chars(self, signing_key, log_id):
         sig = create_signed_marker(log_id, signing_key)
         entries = [(i, ch) for i, ch in enumerate(sig)]
-        for pos in [MAGIC_PREFIX_LEN + 5, MAGIC_PREFIX_LEN + 10,
-                    MAGIC_PREFIX_LEN + 20, MAGIC_PREFIX_LEN + 28]:
+        for pos in [MAGIC_PREFIX_LEN + 5, MAGIC_PREFIX_LEN + 10, MAGIC_PREFIX_LEN + 20, MAGIC_PREFIX_LEN + 28]:
             entries[pos] = (pos, None)
         ok, extracted, _ = recover_from_partial_extraction(entries)
         assert ok
@@ -305,6 +303,7 @@ class TestKeyDerivation:
     def test_different_from_vs256_key(self, test_keypair):
         """RS key derivation uses different salt than plain vs256."""
         from app.utils.vs256_crypto import derive_signing_key_from_private_key as vs256_derive
+
         private_key, _ = test_keypair
         rs_key = derive_signing_key_from_private_key(private_key)
         plain_key = vs256_derive(private_key)

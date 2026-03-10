@@ -71,7 +71,7 @@ class Frontend
             return $content;
         }
 
-        $badge_position = ! empty($settings['badge_position']) ? $settings['badge_position'] : 'bottom-right';
+        $badge_position = ! empty($settings['badge_position']) ? $settings['badge_position'] : 'bottom';
         $badge_html = $this->get_badge_html($post_id, 'large');
 
         $this->add_verification_modal($post_id);
@@ -279,7 +279,6 @@ class Frontend
         <script>
         (function() {
             const modal = document.getElementById('encypher-c2pa-modal');
-            const badges = document.querySelectorAll('.encypher-c2pa-badge');
 
             if (!modal) {
                 return;
@@ -575,13 +574,15 @@ class Frontend
                 return div.innerHTML;
             }
 
-            // Event listeners
-            badges.forEach(badge => {
-                badge.addEventListener('click', function(e) {
+            // Event delegation: the badge wrapper is added to wp_footer AFTER
+            // the modal script, so direct querySelectorAll finds 0 elements at
+            // script parse time.  Attach to document instead.
+            document.addEventListener('click', function(e) {
+                const clickedBadge = e.target.closest('.encypher-c2pa-badge');
+                if (clickedBadge) {
                     e.preventDefault();
-                    const postId = this.getAttribute('data-post-id');
-                    openModal(postId);
-                });
+                    openModal(clickedBadge.getAttribute('data-post-id'));
+                }
             });
 
             closeBtn.addEventListener('click', closeModal);

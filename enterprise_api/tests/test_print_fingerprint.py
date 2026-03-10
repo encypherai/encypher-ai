@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -31,7 +31,6 @@ from app.utils.print_stego import (
     decode_print_fingerprint,
     encode_print_fingerprint,
 )
-
 
 # --------------------------------------------------------------------------
 # 1. Encode -> decode roundtrip
@@ -181,11 +180,10 @@ def test_encoding_uses_correct_positions() -> None:
 @pytest.mark.asyncio
 async def test_enterprise_tier_required_for_print_fingerprint() -> None:
     """enable_print_fingerprint=True on a free-tier org returns 403."""
-    from httpx import AsyncClient, ASGITransport
-    from unittest.mock import patch, AsyncMock
+    from httpx import ASGITransport, AsyncClient
 
-    from app.main import app
     from app.dependencies import get_current_organization_dep, require_sign_permission
+    from app.main import app
 
     free_org: dict[str, Any] = {
         "organization_id": "org-free",
@@ -208,6 +206,7 @@ async def test_enterprise_tier_required_for_print_fingerprint() -> None:
             patch("app.middleware.api_rate_limiter.api_rate_limiter.get_headers", return_value={}),
         ):
             from app.middleware.api_rate_limiter import RateLimitResult
+
             mock_rate.return_value = RateLimitResult(allowed=True, retry_after=None, remaining=99, limit=100, reset_at=0)
 
             transport = ASGITransport(app=app)
@@ -221,15 +220,13 @@ async def test_enterprise_tier_required_for_print_fingerprint() -> None:
                     headers={"X-API-Key": "test-key"},
                 )
 
-        assert response.status_code == 403, (
-            f"expected 403 for free tier, got {response.status_code}: {response.text}"
-        )
+        assert response.status_code == 403, f"expected 403 for free tier, got {response.status_code}: {response.text}"
         body = response.json()
         # Verify the error message mentions print fingerprint / Enterprise
         error = body.get("error", {})
         message = error.get("message", "")
-        assert "Print Leak Detection" in message or "enterprise" in message.lower() or "tier" in message.lower(), (
-            f"expected enterprise tier error, got: {message}"
-        )
+        assert (
+            "Print Leak Detection" in message or "enterprise" in message.lower() or "tier" in message.lower()
+        ), f"expected enterprise tier error, got: {message}"
     finally:
         app.dependency_overrides.clear()

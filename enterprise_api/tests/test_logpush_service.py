@@ -6,8 +6,7 @@ and full batch ingestion.
 """
 
 import json
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -16,7 +15,6 @@ from app.services.logpush_service import (
     ingest_logpush_batch,
     parse_logpush_line,
 )
-
 
 # ---------------------------------------------------------------------------
 # _parse_timestamp
@@ -221,13 +219,16 @@ async def test_ingest_unknown_bot_no_bypass():
 @pytest.mark.asyncio
 async def test_ingest_multiple_lines():
     """Multiple lines with different bots should each produce events."""
-    lines = "\n".join([
-        _make_line(ClientRequestUserAgent="GPTBot/1.0", ClientRequestURI="/article/a"),
-        _make_line(ClientRequestUserAgent="ClaudeBot/1.0", ClientRequestURI="/article/b"),
-        _make_line(ClientRequestUserAgent="Mozilla/5.0 Chrome/121", ClientRequestURI="/article/c"),
-    ])
+    lines = "\n".join(
+        [
+            _make_line(ClientRequestUserAgent="GPTBot/1.0", ClientRequestURI="/article/a"),
+            _make_line(ClientRequestUserAgent="ClaudeBot/1.0", ClientRequestURI="/article/b"),
+            _make_line(ClientRequestUserAgent="Mozilla/5.0 Chrome/121", ClientRequestURI="/article/c"),
+        ]
+    )
     # Two separate RSL check lookups needed (one per bot category)
     from unittest.mock import AsyncMock, MagicMock
+
     db = AsyncMock()
 
     rsl_types_result = MagicMock()
@@ -239,9 +240,7 @@ async def test_ingest_multiple_lines():
     rsl_count_result_2 = MagicMock()
     rsl_count_result_2.scalar_one.return_value = 0  # claudebot has no RSL check
 
-    db.execute = AsyncMock(
-        side_effect=[rsl_types_result, rsl_count_result_1, rsl_count_result_2]
-    )
+    db.execute = AsyncMock(side_effect=[rsl_types_result, rsl_count_result_1, rsl_count_result_2])
     db.add = MagicMock()
     db.flush = AsyncMock()
 

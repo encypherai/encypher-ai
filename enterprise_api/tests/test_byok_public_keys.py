@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from httpx import AsyncClient
 
-
 SAMPLE_ED25519_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
 -----END PUBLIC KEY-----"""

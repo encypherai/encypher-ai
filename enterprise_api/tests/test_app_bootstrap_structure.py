@@ -1,5 +1,7 @@
 import json
 
+from fastapi import FastAPI, HTTPException
+
 from app.bootstrap.docs import build_public_openapi as bootstrap_build_public_openapi
 from app.bootstrap.docs import register_docs_routes
 from app.bootstrap.errors import global_exception_handler, http_exception_handler, register_exception_handlers
@@ -11,7 +13,6 @@ from app.bootstrap.middleware import register_middleware
 from app.bootstrap.probes import register_probe_routes
 from app.bootstrap.routers import ROUTER_SPECS, register_application_routers
 from app.main import EncypherTrustedHostMiddleware, app, build_cors_settings, build_public_openapi, build_trusted_hosts, validate_startup_config
-from fastapi import FastAPI, HTTPException
 
 
 class _IncludeRouterRecorder:

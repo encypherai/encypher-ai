@@ -25,7 +25,6 @@ from dotenv import dotenv_values
 
 from app.schemas.signing_constants import MANIFEST_MODES
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +45,7 @@ def _get_vs_char_set() -> set[str]:
     from app.utils.vs256_crypto import VS_CHAR_SET
 
     chars = set(VS_CHAR_SET)
-    chars.add("\uFEFF")
+    chars.add("\ufeff")
     return chars
 
 
@@ -60,7 +59,7 @@ def apply_embedding_plan(visible_text: str, embedding_plan: dict[str, Any]) -> s
     for op in operations:
         idx = int(op.get("insert_after_index", -2))
         marker = str(op.get("marker", ""))
-        
+
         # Shift marker past closing punctuation, but NOT past:
         #   - \n \r \t : would cross block boundaries (\n\n before ATX headings)
         #   - * _ : these can be OPENING emphasis delimiters; shifting past them lands the
@@ -177,18 +176,10 @@ def resolve_api_config(
         or env_values.get("ENCYPHER_API_KEY")
         or os.environ.get("ENCYPHER_API_KEY")
     )
-    resolved_base_url = (
-        base_url
-        or env_values.get("ENCYPHER_BASE_URL")
-        or os.environ.get("ENCYPHER_BASE_URL")
-        or "api.encypherai.com"
-    )
+    resolved_base_url = base_url or env_values.get("ENCYPHER_BASE_URL") or os.environ.get("ENCYPHER_BASE_URL") or "api.encypherai.com"
 
     if not resolved_api_key:
-        raise ValueError(
-            "Missing API key. Set ENYCPHER_API_KEY (preferred) in .env.skills "
-            "or pass --api-key."
-        )
+        raise ValueError("Missing API key. Set ENYCPHER_API_KEY (preferred) in .env.skills or pass --api-key.")
 
     return resolved_api_key, normalize_base_url(resolved_base_url)
 
@@ -232,9 +223,7 @@ def sign_markdown_text(
     try:
         sign_response = client.post("/api/v1/sign", headers=headers, json=payload)
         if sign_response.status_code != 201:
-            raise RuntimeError(
-                f"Sign API returned {sign_response.status_code}: {sign_response.text[:500]}"
-            )
+            raise RuntimeError(f"Sign API returned {sign_response.status_code}: {sign_response.text[:500]}")
 
         sign_data = sign_response.json()
         signed_doc = sign_data.get("data", {}).get("document", {})
@@ -265,9 +254,7 @@ def sign_markdown_text(
                 post.path,
             )
         elif verify_response.status_code != 200:
-            raise RuntimeError(
-                f"Verify API returned {verify_response.status_code}: {verify_response.text[:500]}"
-            )
+            raise RuntimeError(f"Verify API returned {verify_response.status_code}: {verify_response.text[:500]}")
         else:
             verify_data = verify_response.json()
             if not verify_data.get("data", {}).get("valid", False):
@@ -357,11 +344,7 @@ def main() -> int:
     )
 
     posts = gather_posts(requested_paths)
-    posts = [
-        post
-        for post in posts
-        if _within_date_range(post, args.from_date, args.to_date)
-    ]
+    posts = [post for post in posts if _within_date_range(post, args.from_date, args.to_date)]
 
     if not posts:
         print("No blog posts found for signing.", file=sys.stderr)

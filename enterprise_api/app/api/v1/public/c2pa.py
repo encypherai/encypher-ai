@@ -8,18 +8,16 @@ All endpoints in this module are explicitly non-cryptographic.
 
 import asyncio
 import logging
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from cryptography.hazmat.primitives import serialization
-from fastapi import APIRouter, Depends, Path, Request
-from fastapi import HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database import get_db, get_content_db, core_session_factory
+from app.database import core_session_factory, get_content_db, get_db
 from app.dependencies import DEMO_KEYS, _normalize_org_context
 from app.middleware.api_key_auth import authenticate_api_key, get_api_key_from_header
 from app.middleware.public_rate_limiter import public_rate_limiter
@@ -58,6 +56,7 @@ async def _fire_detection_event(
             await session.commit()
     except Exception:
         logger.debug("Background detection event failed", exc_info=True)
+
 
 MAX_CREATE_MANIFEST_BYTES = 256 * 1024
 
@@ -349,13 +348,13 @@ async def get_trust_anchor(
     # Lookup organization metadata
     result = await db.execute(
         text("""
-            SELECT 
+            SELECT
                 id,
                 name,
                 certificate_status,
                 created_at,
                 certificate_expiry
-            FROM organizations 
+            FROM organizations
             WHERE id = :org_id
         """),
         {"org_id": signer_id},
@@ -418,12 +417,14 @@ async def get_trust_anchor(
 
 class SegmentLocationResponse(BaseModel):
     """Location of a segment within the original document."""
+
     paragraph_index: int = Field(..., description="0-indexed paragraph number")
     sentence_in_paragraph: int = Field(..., description="0-indexed sentence within the paragraph")
 
 
 class ZWResolveResponse(BaseModel):
     """Response for ZW segment UUID resolution."""
+
     segment_uuid: str
     organization_id: str
     document_id: Optional[str] = None
@@ -460,6 +461,7 @@ def _row_to_resolve_response(segment_uuid: str, row) -> ZWResolveResponse:
         )
     elif isinstance(raw_loc, str):
         import json as _json
+
         try:
             parsed = _json.loads(raw_loc)
             seg_loc = SegmentLocationResponse(
@@ -532,11 +534,13 @@ async def resolve_zw_segment_uuid(
 
 class BulkResolveRequest(BaseModel):
     """Request body for bulk UUID resolution."""
+
     segment_uuids: List[str] = Field(..., description="List of segment UUIDs to resolve", max_length=200)
 
 
 class BulkResolveResponse(BaseModel):
     """Response for bulk UUID resolution."""
+
     results: List[ZWResolveResponse] = Field(default_factory=list)
     not_found: List[str] = Field(default_factory=list)
 
@@ -598,6 +602,7 @@ async def bulk_resolve_segment_uuids(
             # Convert hex log_id back to UUID-with-dashes for lookup
             try:
                 from uuid import UUID as _UUID
+
                 uuid_from_log_id = str(_UUID(hex=log_id_val))
                 if uuid_from_log_id not in found_uuids:
                     found_uuids[uuid_from_log_id] = row

@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_current_organization_dep, require_super_admin_dep
+from app.dependencies import require_super_admin_dep
 from app.schemas.admin import (
     AdminStatsResponse,
     AdminUserListResponse,

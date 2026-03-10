@@ -6,7 +6,6 @@ Note: /sign/advanced is deprecated (returns 410). Use /sign with options instead
 
 import pytest
 from httpx import AsyncClient
-from unittest.mock import AsyncMock, patch
 
 
 @pytest.mark.asyncio

@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, cast
 
 import httpx
+
 from app.config import settings
 from app.middleware.request_id_middleware import request_id_ctx
 

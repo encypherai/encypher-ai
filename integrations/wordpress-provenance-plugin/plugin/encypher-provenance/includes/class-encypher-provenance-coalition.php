@@ -26,6 +26,7 @@ class Coalition
         add_action('wp_dashboard_setup', [$this, 'add_coalition_widget']);
         add_action('admin_menu', [$this, 'add_coalition_page']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_coalition_assets']);
+        add_action('update_option_encypher_provenance_settings', [$this, 'maybe_enroll_on_settings_save'], 10, 2);
     }
 
     /**
@@ -218,6 +219,94 @@ class Coalition
                 'active_agreements' => 0,
             ],
         ];
+    }
+
+    /**
+     * Enroll this WordPress site in the Encypher Coalition.
+     * Called when the user enables the coalition enrollment toggle.
+     *
+     * @return array{success: bool, message: string}
+     */
+    public function enroll_site(): array
+    {
+        $settings = get_option('encypher_provenance_settings', []);
+        $api_base = rtrim($settings['api_base_url'] ?? 'https://api.encypherai.com/api/v1', '/');
+        $api_key  = $settings['api_key'] ?? '';
+
+        if (empty($api_key)) {
+            return ['success' => false, 'message' => __('API key required for Coalition enrollment.', 'encypher-provenance')];
+        }
+
+        $site_url = get_home_url();
+        $site_name = get_bloginfo('name');
+
+        $body = [
+            'site_url'  => $site_url,
+            'site_name' => $site_name,
+            'source'    => 'wordpress-plugin',
+        ];
+
+        $response = wp_remote_post(
+            $api_base . '/coalition/enroll',
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $api_key,
+                    'Content-Type'  => 'application/json',
+                ],
+                'body'    => wp_json_encode($body),
+                'timeout' => 20,
+            ]
+        );
+
+        if (is_wp_error($response)) {
+            $this->debug_log('Coalition enrollment error: ' . $response->get_error_message());
+            return ['success' => false, 'message' => $response->get_error_message()];
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+        if ($status < 200 || $status >= 300) {
+            $body_str = wp_remote_retrieve_body($response);
+            $decoded  = json_decode($body_str, true);
+            $msg      = isset($decoded['message']) ? $decoded['message'] : sprintf(__('Enrollment failed (HTTP %d).', 'encypher-provenance'), $status);
+            return ['success' => false, 'message' => $msg];
+        }
+
+        update_option('encypher_coalition_enrolled', true);
+        update_option('encypher_coalition_enrolled_at', gmdate('c'));
+
+        return ['success' => true, 'message' => __('Successfully enrolled in the Encypher Coalition.', 'encypher-provenance')];
+    }
+
+    /**
+     * Trigger Coalition enrollment when the admin saves settings with the toggle enabled.
+     *
+     * @param mixed $old_value Previous option value.
+     * @param mixed $new_value New option value.
+     */
+    public function maybe_enroll_on_settings_save($old_value, $new_value): void
+    {
+        $old_enrolled = !empty($old_value['coalition_auto_enroll']);
+        $new_enrolled = !empty($new_value['coalition_auto_enroll']);
+
+        // Only trigger on rising edge (user just enabled it)
+        if (!$old_enrolled && $new_enrolled) {
+            $result = $this->enroll_site();
+            if ($result['success']) {
+                add_settings_error(
+                    'encypher_provenance_settings',
+                    'coalition_enrolled',
+                    __('Encypher Coalition enrollment successful! Your site is now a coalition member.', 'encypher-provenance'),
+                    'success'
+                );
+            } else {
+                add_settings_error(
+                    'encypher_provenance_settings',
+                    'coalition_enroll_failed',
+                    sprintf(__('Coalition enrollment failed: %s', 'encypher-provenance'), $result['message']),
+                    'error'
+                );
+            }
+        }
     }
 
 }

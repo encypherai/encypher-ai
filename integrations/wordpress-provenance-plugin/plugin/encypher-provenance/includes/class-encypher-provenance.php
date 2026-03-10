@@ -13,6 +13,9 @@ require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenanc
 require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-bulk.php';
 require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-frontend.php';
 require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-coalition.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-wordpress-ai.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-sign-ability.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-verify-ability.php';
 
 /**
  * Main plugin bootstrap class.
@@ -27,6 +30,9 @@ class Plugin
     private Bulk $bulk;
     private Frontend $frontend;
     private Coalition $coalition;
+    private WordPress_AI_Compat $wordpress_ai;
+    private Encypher_Sign_Ability $sign_ability;
+    private Encypher_Verify_Ability $verify_ability;
 
     private function __construct()
     {
@@ -36,6 +42,9 @@ class Plugin
         $this->bulk = new Bulk();
         $this->frontend = new Frontend();
         $this->coalition = new Coalition();
+        $this->wordpress_ai = new WordPress_AI_Compat();
+        $this->sign_ability = new Encypher_Sign_Ability();
+        $this->verify_ability = new Encypher_Verify_Ability();
 
         register_activation_hook(ENCYPHER_PROVENANCE_PLUGIN_FILE, [self::class, 'activate']);
         register_deactivation_hook(ENCYPHER_PROVENANCE_PLUGIN_FILE, [self::class, 'deactivate']);
@@ -67,14 +76,14 @@ class Plugin
 
         $options = get_option('encypher_provenance_settings', []);
         update_option('encypher_provenance_settings', wp_parse_args($options, $defaults));
-        
+
         // Add rewrite rules before flushing
         add_rewrite_rule(
             '^c2pa-verify/([^/]+)/?$',
             'index.php?c2pa_verify=1&instance_id=$matches[1]',
             'top'
         );
-        
+
         // Flush rewrite rules on activation
         flush_rewrite_rules();
     }
@@ -105,8 +114,16 @@ class Plugin
         $this->bulk->register_hooks();
         $this->frontend->register_hooks();
         $this->coalition->register_hooks();
+        $this->wordpress_ai->register_hooks();
+
+        // Register Abilities (delayed so WP/ai has time to init)
+        add_action('wp_abilities_api_init', [$this->sign_ability, 'register']);
+        add_action('wp_abilities_api_init', [$this->verify_ability, 'register']);
+        // Also try direct registration for plugins loaded before WP/ai
+        add_action('init', [$this->sign_ability, 'register'], 20);
+        add_action('init', [$this->verify_ability, 'register'], 20);
     }
-    
+
     public function add_rewrite_rules(): void
     {
         // Add rewrite rule for /c2pa-verify/{instance_id}
@@ -116,46 +133,46 @@ class Plugin
             'top'
         );
     }
-    
+
     public function add_query_vars($vars): array
     {
         $vars[] = 'c2pa_verify';
         $vars[] = 'instance_id';
         return $vars;
     }
-    
+
     public function handle_c2pa_verify_page(): void
     {
         // Check if this is a c2pa-verify URL by parsing the request URI
         $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-        
+
         if (preg_match('#^/c2pa-verify/([^/]+)/?$#', $request_uri, $matches)) {
             $instance_id = $matches[1];
-            
+
             // Create REST request
             $request = new \WP_REST_Request('GET', '/encypher-provenance/v1/provenance');
             $request->set_param('instance_id', $instance_id);
-            
+
             // Get the data
             $data = $this->rest->handle_provenance_request($request);
-            
+
             // Load template
             include ENCYPHER_PROVENANCE_PLUGIN_DIR . 'templates/provenance-report.php';
             exit;
         }
-        
+
         // Also try query vars method
         $c2pa_verify = get_query_var('c2pa_verify');
         $instance_id_qv = get_query_var('instance_id');
-        
+
         if ($c2pa_verify && $instance_id_qv) {
             // Create REST request
             $request = new \WP_REST_Request('GET', '/encypher-provenance/v1/provenance');
             $request->set_param('instance_id', $instance_id_qv);
-            
+
             // Get the data
             $data = $this->rest->handle_provenance_request($request);
-            
+
             // Load template
             include ENCYPHER_PROVENANCE_PLUGIN_DIR . 'templates/provenance-report.php';
             exit;

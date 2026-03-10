@@ -21,6 +21,7 @@ from typing import Any, Callable, Optional
 
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.interop.c2pa.text_wrapper import find_and_decode
+
 from app.utils.merkle.hashing import compute_leaf_hash
 
 logger = logging.getLogger(__name__)

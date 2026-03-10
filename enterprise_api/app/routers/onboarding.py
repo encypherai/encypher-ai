@@ -5,15 +5,15 @@ Onboarding router for SSL.com certificate requests and lifecycle management.
 import logging
 import uuid
 from datetime import datetime, timezone
+from typing import List, Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import text, func, and_
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List
 
-from app.database import get_db, get_content_db
+from app.database import get_content_db, get_db
 from app.dependencies import get_current_organization
 from app.utils.ssl_com_client import SSLComClient
 

@@ -37,20 +37,17 @@ from typing import Optional, Tuple
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac as crypto_hmac
-from reedsolo import RSCodec, ReedSolomonError
+from reedsolo import ReedSolomonError, RSCodec
 
 from app.utils.legacy_safe_crypto import (
+    CHAR_TO_DIGIT,
     CHARS_BASE6,
     CHARS_BASE6_SET,
-    CHAR_TO_DIGIT,
-    LRM_RLM_SET,
     LOG_ID_BYTES,
+    LRM_RLM_SET,
     ZWNJ,
-    derive_signing_key_from_private_key,
     embed_marker_safely,
-    generate_log_id,
 )
-
 
 # =============================================================================
 # RS CODEC -- 4 parity symbols over GF(256)
@@ -60,9 +57,9 @@ _RS_NSYM = 4  # parity symbols
 _RS = RSCodec(_RS_NSYM)
 
 # Layout constants
-HMAC_BYTES = 16          # HMAC-SHA256/128 (full 128-bit security)
-DATA_BYTES = LOG_ID_BYTES + HMAC_BYTES   # 32 bytes
-PARITY_BYTES = _RS_NSYM                  # 4 bytes
+HMAC_BYTES = 16  # HMAC-SHA256/128 (full 128-bit security)
+DATA_BYTES = LOG_ID_BYTES + HMAC_BYTES  # 32 bytes
+PARITY_BYTES = _RS_NSYM  # 4 bytes
 PAYLOAD_BYTES = DATA_BYTES + PARITY_BYTES  # 36 bytes
 
 # ceil(36 * 8 * log(2) / log(6)) = ceil(288 * 0.3869) = 112
@@ -76,6 +73,7 @@ CONTENT_COMMITMENT_BYTES = 8
 # =============================================================================
 # Big-number base-6 codec (36 bytes <-> 112 chars)
 # =============================================================================
+
 
 def _encode_base6_36(data: bytes) -> str:
     """Encode 36 bytes as a 112-char base-6 string."""
@@ -106,6 +104,7 @@ def _decode_base6_36(encoded: str) -> bytes:
 # =============================================================================
 # Marker creation and verification
 # =============================================================================
+
 
 def create_marker(
     log_id: bytes,
@@ -204,6 +203,7 @@ def verify_marker(
 # Detection
 # =============================================================================
 
+
 def find_all_markers(text: str) -> list[tuple[int, int, str]]:
     """
     Find all 112-char RS-protected base-6 markers in text.
@@ -228,7 +228,7 @@ def find_all_markers(text: str) -> list[tuple[int, int, str]]:
             run_len = len(run)
             offset = 0
             while offset + MARKER_CHARS <= run_len:
-                chunk = run[offset:offset + MARKER_CHARS]
+                chunk = run[offset : offset + MARKER_CHARS]
                 if any(c in LRM_RLM_SET for c in chunk):
                     results.append((start + offset, start + offset + MARKER_CHARS, chunk))
                 offset += MARKER_CHARS
@@ -255,6 +255,7 @@ def remove_markers(text: str) -> str:
 # =============================================================================
 # Safe embedding
 # =============================================================================
+
 
 def create_embedded_sentence(
     sentence: str,

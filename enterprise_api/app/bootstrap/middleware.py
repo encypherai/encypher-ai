@@ -2,15 +2,16 @@ import logging
 import time
 from typing import cast
 
-from app.config import settings
-from app.middleware.request_id_middleware import RequestIDMiddleware
-from app.middleware.security_headers import SecurityHeadersMiddleware
-from app.utils.request_logging import should_log_request
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from starlette.datastructures import Headers
 from starlette.types import ASGIApp, Receive, Scope, Send
+
+from app.config import settings
+from app.middleware.request_id_middleware import RequestIDMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.utils.request_logging import should_log_request
 
 logger = logging.getLogger(__name__)
 

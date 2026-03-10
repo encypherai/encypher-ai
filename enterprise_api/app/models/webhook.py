@@ -6,12 +6,12 @@ Stores webhook configurations for organizations to receive event notifications.
 
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
 
-from app.database import Base
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, LargeBinary, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.sql import func
+
+from app.database import Base
 
 
 class WebhookEvent(str, Enum):

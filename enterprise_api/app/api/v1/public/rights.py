@@ -12,8 +12,8 @@ import logging
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, status
-from sqlalchemy import select, text
+from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -30,6 +30,7 @@ _BASE_URL = "https://api.encypherai.com"
 
 def _rights_service():
     from app.services.rights_service import rights_service
+
     return rights_service
 
 
@@ -136,16 +137,18 @@ async def resolve_rights_from_text(
         rights = await svc.resolve_rights(db=db, document_id=doc_id, organization_id=org_id)
         profile = await svc.get_current_profile(db=db, organization_id=org_id)
 
-        results.append({
-            "document_id": doc_id,
-            "segment_uuid": seg_uuid,
-            "rights": _build_public_rights_response(
-                document_id=doc_id,
-                profile=profile,
-                rights=rights,
-                doc_record=None,
-            ),
-        })
+        results.append(
+            {
+                "document_id": doc_id,
+                "segment_uuid": seg_uuid,
+                "rights": _build_public_rights_response(
+                    document_id=doc_id,
+                    profile=profile,
+                    rights=rights,
+                    doc_record=None,
+                ),
+            }
+        )
 
     # Log detection
     if results:
@@ -356,6 +359,7 @@ async def get_rsl_xml(
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     from fastapi.responses import PlainTextResponse
+
     svc = _rights_service()
 
     profile = await svc.get_current_profile(db=db, organization_id=org_id)
@@ -393,6 +397,7 @@ async def get_robots_txt_additions(
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     from fastapi.responses import PlainTextResponse
+
     svc = _rights_service()
 
     profile = await svc.get_current_profile(db=db, organization_id=org_id)
@@ -490,17 +495,20 @@ async def rsl_olp_token(
     permissions = bronze_tier.get("permissions", {})
 
     # Log the OLP check
-    await svc.log_detection_event(db=db, event_data={
-        "document_id": None,
-        "organization_id": org_id,
-        "detection_source": "rsl_olp_check",
-        "detected_on_url": target_url,
-        "detected_on_domain": urlparse(target_url).hostname if target_url else None,
-        "requester_ip": request.client.host if request.client else None,
-        "requester_user_agent": user_agent,
-        "user_agent_category": await svc.classify_user_agent(db=db, user_agent=user_agent),
-        "rights_served": True,
-    })
+    await svc.log_detection_event(
+        db=db,
+        event_data={
+            "document_id": None,
+            "organization_id": org_id,
+            "detection_source": "rsl_olp_check",
+            "detected_on_url": target_url,
+            "detected_on_domain": urlparse(target_url).hostname if target_url else None,
+            "requester_ip": request.client.host if request.client else None,
+            "requester_user_agent": user_agent,
+            "user_agent_category": await svc.classify_user_agent(db=db, user_agent=user_agent),
+            "rights_served": True,
+        },
+    )
 
     if not permissions.get("allowed", True):
         # Access blocked
@@ -531,6 +539,7 @@ async def rsl_olp_token(
 
     # Issue token (simple JWT-like structure for now)
     import secrets
+
     token = f"ency_olp_{secrets.token_urlsafe(32)}"
     return {
         "access_token": token,
@@ -572,10 +581,16 @@ async def _resolve_document_org(db: AsyncSession, document_id: str):
     """Resolve organization_id and basic record for a document_id."""
     try:
         from app.models.content_reference import ContentReference
+
         result = await db.execute(
-            select(ContentReference.organization_id, ContentReference.document_id,
-                   ContentReference.license_type, ContentReference.rights_resolution_url,
-                   ContentReference.created_at, ContentReference.instance_id)
+            select(
+                ContentReference.organization_id,
+                ContentReference.document_id,
+                ContentReference.license_type,
+                ContentReference.rights_resolution_url,
+                ContentReference.created_at,
+                ContentReference.instance_id,
+            )
             .where(ContentReference.document_id == document_id)
             .limit(1)
         )
@@ -598,6 +613,7 @@ async def _extract_segment_uuids(text_content: str) -> List[str]:
     """Extract segment UUIDs from Unicode variation selectors in text."""
     try:
         from encypher.core.unicode_metadata import MetadataEncoder
+
         encoder = MetadataEncoder()
         metadata = encoder.extract_metadata(text_content)
         if metadata and isinstance(metadata, dict):
@@ -617,10 +633,9 @@ async def _resolve_segment_to_document(db: AsyncSession, segment_uuid: str):
     """Resolve a segment UUID to (document_id, organization_id)."""
     try:
         from app.models.content_reference import ContentReference
+
         result = await db.execute(
-            select(ContentReference.document_id, ContentReference.organization_id)
-            .where(ContentReference.instance_id == segment_uuid)
-            .limit(1)
+            select(ContentReference.document_id, ContentReference.organization_id).where(ContentReference.instance_id == segment_uuid).limit(1)
         )
         row = result.first()
         if row:
@@ -635,8 +650,10 @@ async def _resolve_org_from_url(db: AsyncSession, target_url: str) -> Optional[s
     if not target_url:
         return None
     try:
-        from app.models.rights import PublisherRightsProfile
         from sqlalchemy import desc
+
+        from app.models.rights import PublisherRightsProfile
+
         hostname = urlparse(target_url).hostname or ""
         # Try to match publisher_url against the target domain
         result = await db.execute(
@@ -665,20 +682,23 @@ async def _log_detection(
     try:
         user_agent = request.headers.get("user-agent", "")
         ua_category = await svc.classify_user_agent(db=db, user_agent=user_agent)
-        await svc.log_detection_event(db=db, event_data={
-            "document_id": document_id,
-            "organization_id": organization_id,
-            "detection_source": detection_source,
-            "detected_on_url": str(request.url),
-            "detected_on_domain": request.headers.get("referer", ""),
-            "requester_ip": request.client.host if request.client else None,
-            "requester_user_agent": user_agent,
-            "user_agent_category": ua_category,
-            "segments_found": segments_found,
-            "integrity_status": "intact",
-            "rights_served": rights_served,
-            "rights_acknowledged": False,
-        })
+        await svc.log_detection_event(
+            db=db,
+            event_data={
+                "document_id": document_id,
+                "organization_id": organization_id,
+                "detection_source": detection_source,
+                "detected_on_url": str(request.url),
+                "detected_on_domain": request.headers.get("referer", ""),
+                "requester_ip": request.client.host if request.client else None,
+                "requester_user_agent": user_agent,
+                "user_agent_category": ua_category,
+                "segments_found": segments_found,
+                "integrity_status": "intact",
+                "rights_served": rights_served,
+                "rights_acknowledged": False,
+            },
+        )
     except Exception:
         pass  # Non-blocking — never fail the primary request due to analytics
 
