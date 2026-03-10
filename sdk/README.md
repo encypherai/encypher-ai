@@ -13,6 +13,10 @@
 
 > **Note**: All SDKs share the same version number, derived from the API version in `openapi.public.json`.
 
+## D2 Workflow View
+
+- [SDK generation pipeline](../docs/diagrams/workflows/sdk-generation-pipeline.d2) — shows how FastAPI routes become OpenAPI specs and then generated language SDKs.
+
 ## Quick Start
 
 ```bash
@@ -95,7 +99,7 @@ print(result.signed_text)
 ```typescript
 import { EncypherClient } from '@encypher/sdk';
 
-const client = new EncypherClient({ apiKey: 'ency_...' });
+const client = new EncypherClient({ apiKey: '<your_encypher_credential>' });
 const result = await client.sign({ text: 'Hello, world!' });
 console.log(result.signedText);
 ```

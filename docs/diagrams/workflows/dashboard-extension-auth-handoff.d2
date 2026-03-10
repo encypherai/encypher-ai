@@ -1,0 +1,14 @@
+direction: right
+
+popup: "Extension Popup / Options"
+dashboard: "Dashboard Auth Flow"
+callback: "Dashboard Callback"
+storage: "chrome.storage"
+account: "Account Refresh"
+ready: "Signing Ready State"
+
+popup -> dashboard: "start onboarding"
+dashboard -> callback: "approve + provision"
+callback -> storage: "store API key + setup state"
+storage -> account: "refresh account info"
+account -> ready: "enable sign actions"

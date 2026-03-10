@@ -1,7 +1,15 @@
 # Encypher Dashboard
 
-**Domain:** `dashboard.encypherai.com`  
+**Domain:** `dashboard.encypherai.com`
 **Purpose:** User dashboard for API key management, usage tracking, and content authentication
+
+## D2 Views
+
+- [Dashboard system context](./docs/diagrams/dashboard-system-context.d2) — shows how sessions, org context, dashboard pages, and backend services fit together.
+- [Dashboard onboarding flow](./docs/diagrams/dashboard-onboarding-flow.d2) — shows how a new user moves from signup to first successful workflow.
+- [Publisher CMS workflow](./docs/diagrams/publisher-cms-workflow.d2) — shows the customer-facing path from API key creation to signed publishing and reader verification.
+- [Enterprise editorial review flow](./docs/diagrams/enterprise-editorial-review-flow.d2) — shows how editorial review, custom assertions, and enterprise signing connect.
+- [Webhook lifecycle](./docs/diagrams/webhook-lifecycle.d2) — shows how customer webhook events propagate into CMS updates and alerts.
 
 ## 🚀 Getting Started
 
@@ -91,5 +99,6 @@ All dashboard API calls proxy directly to the [Enterprise API](../enterprise_api
 
 ## 📚 Documentation
 
+- [Dashboard Diagrams](./docs/diagrams/README.md)
 - [Design System](../../packages/design-system/README.md)
 - [Migration Plan](../../docs/architecture/SUBDOMAIN_MIGRATION_PLAN.md)

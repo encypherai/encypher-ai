@@ -6,6 +6,11 @@ This directory contains the microservices architecture for the Encypher platform
 
 The Encypher platform uses a microservices architecture with all services running in Docker.
 
+### D2 Topology Views
+
+- [Microservices topology](../docs/diagrams/architecture/microservices-topology.d2) — maps the gateway, service inventory, databases, and cache relationships.
+- [Repo system context](../docs/diagrams/architecture/system-context.d2) — shows how services fit alongside the Enterprise API and client-facing products.
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                   Traefik API Gateway                        │

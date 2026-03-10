@@ -1,0 +1,46 @@
+direction: right
+
+clients: {
+  label: "Client Surfaces"
+  style.fill: "#E8F1FF"
+
+  dashboard: "Dashboard"
+  marketing: "Marketing Site"
+  extension: "Chrome Extension"
+  wordpress: "WordPress Plugin"
+  sdk_clients: "SDK Clients"
+}
+
+platform: {
+  label: "Platform"
+  style.fill: "#EAF7EE"
+
+  enterprise_api: "Enterprise API"
+  services: "Core Microservices"
+  shared_libs: "Shared Libraries"
+  docs: "Docs + PRDs"
+}
+
+storage: {
+  label: "State + Infrastructure"
+  style.fill: "#F3F4F6"
+
+  postgres: "PostgreSQL"
+  redis: "Redis"
+}
+
+clients.dashboard -> platform.enterprise_api: "proxy API calls"
+clients.dashboard -> platform.services: "platform workflows"
+clients.marketing -> platform.services: "forms + analytics"
+clients.extension -> platform.enterprise_api: "sign + verify + provisioning"
+clients.wordpress -> platform.enterprise_api: "sign + verify + onboarding"
+clients.sdk_clients -> platform.enterprise_api: "generated client access"
+platform.enterprise_api -> platform.services: "auth, key, billing, analytics dependencies"
+platform.enterprise_api -> storage.postgres: "content + org data"
+platform.services -> storage.postgres: "core business data"
+platform.services -> storage.redis: "cache + rate limits"
+platform.docs -> clients.dashboard: "onboarding + implementation guidance"
+platform.docs -> clients.extension: "integration docs"
+platform.docs -> clients.wordpress: "integration docs"
+platform.shared_libs -> platform.enterprise_api: "shared utilities"
+platform.shared_libs -> platform.services: "shared utilities"

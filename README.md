@@ -168,9 +168,15 @@ Client Apps
 Core Services     Enterprise API
     |                   |
     +---------+---------+
-              |
-           Storage
+             |
+          Storage
 ```
+
+### D2 Architecture Views
+
+- [Repo system context](./docs/diagrams/architecture/system-context.d2) — maps the main client surfaces, platform layers, and storage boundaries.
+- [Microservices topology](./docs/diagrams/architecture/microservices-topology.d2) — shows gateway, service, and infrastructure relationships.
+- [Enterprise vs core architecture](./docs/diagrams/architecture/enterprise-vs-core.d2) — explains how enterprise-only flows sit on top of the core platform.
 
 **Customers choose based on their tier:**
 - **Free:** Use microservices directly
@@ -391,6 +397,7 @@ All other docs should **reference** these SSOTs, never duplicate or redefine tie
 ### Architecture & Planning
 
 - **[Architecture Docs](./docs/architecture/)** - System design, backend architecture, migration plans
+- **[D2 Diagram Sources](./docs/diagrams/README.md)** - Repo-wide diagram standards, source files, and render/check workflow
 - **[Implementation Plans](./docs/implementation_plans/)** - Phase plans, progress tracking
 - **[C2PA Reference](./docs/c2pa/)** - C2PA 2.2 text manifest specification
 - **[API Specs](./docs/api_specs/)** - OpenAPI/Swagger specifications
