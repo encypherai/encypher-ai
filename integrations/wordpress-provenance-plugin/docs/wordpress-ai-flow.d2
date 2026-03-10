@@ -1,0 +1,14 @@
+direction: right
+
+wpai: "WordPress/ai Experiment"
+compat: "Compat Layer"
+ability: "encypher/sign Ability"
+sign_api: "POST /api/v1/sign"
+meta: "_encypher_wpai_experiments"
+sidebar: "AI Content Provenance Panel"
+
+wpai -> compat: "generated content filter"
+compat -> ability: "wp_do_ability('encypher/sign')"
+ability -> sign_api: "sign request"
+sign_api -> meta: "store signed experiment record"
+meta -> sidebar: "status + experiment list"

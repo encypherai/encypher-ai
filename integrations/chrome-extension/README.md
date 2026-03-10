@@ -9,6 +9,12 @@ A browser extension that helps people verify who authored text on the web and si
   - Publisher / Creator (onboarded signing)
   - validation matrix and test commands
 
+## D2 Workflow Views
+
+- [Verification flow](./docs/verification-flow.d2) — shows detector scanning, service-worker verification, cache checks, and badge state updates.
+- [Inline signing flow](./docs/inline-signing-flow.d2) — shows hosted/floating editor controls, signing UI, `POST /api/v1/sign`, and DOM-safe replacement.
+- [Dashboard auth handoff](../../docs/diagrams/workflows/dashboard-extension-auth-handoff.d2) — shows optional onboarding from popup/options through dashboard approval into local credential storage.
+
 ## Features
 
 ### Verification
@@ -22,10 +28,10 @@ A browser extension that helps people verify who authored text on the web and si
 ### Content Signing
 - **Popup Signing**: Sign text directly from the extension popup (requires API key)
 - **Optional Login Onboarding**: Set up a tracked free account from the popup to auto-provision an API key
-- **WYSIWYG Editor Integration**: Floating sign buttons on detected text editors
+- **WYSIWYG Editor Integration**: Hosted or floating sign buttons on detected text editors that open the signing UI
 - **Context Menu Signing**: Right-click to sign selected text or sign & copy to clipboard
-- **Keyboard Shortcut**: Ctrl+Shift+E to sign selected text in any editor
-- **Embedding Mode**: Choose between Standard (embedded proof of origin) and Compact (server-stored proof) signing
+- **Keyboard Shortcut**: Alt+Shift+S to sign selected text in any editor
+- **Embedding Mode**: Choose between Minimal (recommended, server-stored proof) and Embedded signing
 - **Embedding Frequency**: Control how often signatures are embedded (entire content, per section, per paragraph, per sentence, or per word)
 - **Advanced Options**: Document type, invisible embeddings, Merkle tree (Enterprise), attribution tracking (Enterprise)
 - **Tier-Aware**: Free tier (1,000 signings/month) and Enterprise (unlimited) with usage tracking
@@ -102,16 +108,16 @@ chrome-extension/
 
 ### Signing
 
-1. User enters or selects text to sign (popup, editor button, context menu, or Ctrl+Shift+E)
+1. User enters or selects text to sign (popup, editor button, context menu, or Alt+Shift+S)
 2. A modal or form collects signing options:
    - **Embedding Mode** controls the signature format sent to the API:
-     - *Standard* (`micro`): unified micro mode defaults (`ecc=true`, `embed_c2pa=true`) for error-corrected segment embeddings plus embedded C2PA provenance manifest.
-     - *Compact* (`micro` + `embed_c2pa=false`): keeps per-segment micro markers while skipping in-content C2PA embedding. Useful when content size is sensitive.
+     - *Minimal* (`micro_no_embed_c2pa`): keeps compact invisible markers while storing the full proof server-side. Recommended default for compatibility.
+     - *Embedded* (`micro`): keeps invisible markers and embeds C2PA provenance data directly into the signed text.
    - **Embedding Frequency** controls how the text is segmented for signing (`segmentation_level`):
      - *Entire content* (`document`): one signature for the whole text.
      - *Per section / paragraph / sentence / word*: progressively finer granularity. More frequent embeddings increase resilience to partial edits but add more invisible characters.
-     - Default is *Per sentence*, which balances survivability and size.
-3. Service worker sends `POST /api/v1/sign` with `manifest_mode='micro'` (or `full` for basic), plus `ecc` / `embed_c2pa` flags when needed, and `segmentation_level` in request options
+     - Default is *Entire content*, which maximizes cross-editor compatibility.
+3. Service worker sends `POST /api/v1/sign` with the selected signing options, including compact/minimal defaults and `segmentation_level` in request options
 4. Signed text is inserted back into the editor (DOM-preserving when possible) or copied to clipboard
 
 ### Badge States
@@ -166,19 +172,21 @@ npm run test:e2e
 
 ### Building for Chrome Web Store
 
-The extension uses no build step — source files are submitted directly. Create a zip of the extension directory (excluding `node_modules/`, `tests/`, and markdown files):
+Create the production package with the repo build script:
 
 ```bash
-zip -r encypher-verify.zip . -x 'node_modules/*' 'tests/*' '*.md' 'package*.json'
+npm run build
 ```
+
+This produces `dist/encypher-verify-v<version>.zip` with localhost permissions stripped from the packaged `manifest.json`.
 
 ## Configuration
 
 The extension uses these default settings:
 
 - **API Base URL**: `https://api.encypherai.com` (configurable text field in settings)
-- **Default Embedding Mode**: Standard (`micro`)
-- **Default Embedding Frequency**: Per sentence (`sentence`)
+- **Default Embedding Mode**: Minimal (`micro_no_embed_c2pa`)
+- **Default Embedding Frequency**: Entire content (`document`)
 - **Verification Cache TTL**: 1 hour (local browser cache)
 - **Request Timeout**: 10 seconds
 - **Free Tier Limit**: 1,000 signings per month

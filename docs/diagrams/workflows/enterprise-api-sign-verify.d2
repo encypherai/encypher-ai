@@ -1,0 +1,20 @@
+direction: right
+
+caller: "Caller"
+auth: "Auth / API Key"
+rate_limit: "Rate Limit + Tier Gate"
+api: "Enterprise API Router"
+signing: "Signing / Verification Logic"
+deps: "Key + Billing + Analytics Dependencies"
+storage: "Content + Provenance Storage"
+response: "Response Payload"
+
+caller -> auth: "bearer/API key"
+auth -> rate_limit: "identity + tier"
+rate_limit -> api: "allowed request"
+api -> signing: "sign or verify command"
+signing -> deps: "account context + usage checks"
+signing -> storage: "read/write provenance"
+storage -> signing: "document + manifest state"
+signing -> response: "signed_text / verification result"
+response -> caller: "JSON response"

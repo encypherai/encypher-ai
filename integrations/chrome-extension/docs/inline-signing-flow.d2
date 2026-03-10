@@ -1,0 +1,17 @@
+direction: right
+
+editor: "Detected Editor"
+button: "Inline Sign Button"
+modal: "Signing UI"
+worker: "Service Worker"
+sign_api: "POST /api/v1/sign"
+plan: "Embedding Plan / signed_text"
+dom: "DOM-safe Replacement"
+
+editor -> button: "attach hosted or floating control"
+button -> modal: "open signing UI"
+modal -> worker: "sign request + defaults"
+worker -> sign_api: "API call"
+sign_api -> plan: "signed_text or embedding_plan"
+plan -> dom: "apply in place or fallback"
+dom -> editor: "replace selected/editor text"

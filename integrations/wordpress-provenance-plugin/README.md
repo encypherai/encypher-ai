@@ -61,6 +61,12 @@ The plugin targets the production Enterprise API hosted at `https://api.encypher
 
 Both endpoints and their request/response shapes are described in detail in the [Enterprise API README](../../enterprise_api/README.md) and [C2PA Provenance Chain documentation](../../docs/c2pa/C2PA_PROVENANCE_CHAIN.md). API failures are surfaced in the editor so authors can retry or contact support.
 
+### D2 Workflow Views
+
+- [Publish flow](./docs/publish-flow.d2) — shows draft signing, API round-trip, signed post storage, publish, and frontend verification badge replay.
+- [Onboarding connect flow](./docs/onboarding-connect-flow.d2) — shows email-based WordPress site connection from settings page through dashboard approval and API-key provisioning.
+- [WordPress/ai flow](./docs/wordpress-ai-flow.d2) — shows experiment output interception, ability invocation, signing, post-meta storage, and Gutenberg sidebar status.
+
 ### C2PA Provenance Chain Features
 
 ✅ **Automatic Action Detection**: `c2pa.created` on initial publish, `c2pa.edited` on updates

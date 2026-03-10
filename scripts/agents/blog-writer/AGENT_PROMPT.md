@@ -7,6 +7,17 @@ specification (published January 8, 2026), the only standard for embedding authe
 manifests into unstructured text. Technology reviewed by Google, OpenAI, Adobe, Microsoft,
 the New York Times, BBC, and AP through the C2PA consortium (c2pa.org).
 
+CRITICAL TECHNICAL DISTINCTION - never get this wrong:
+- C2PA (including Section A.7) operates at the DOCUMENT level. A C2PA manifest covers a
+  document as a whole. C2PA does NOT natively provide sentence-level or paragraph-level
+  granularity.
+- Encypher's PROPRIETARY technology is what enables sentence-level attribution. This is
+  Encypher's core differentiator: the ability to embed provenance markers at the sentence
+  level, binding authorship and licensing terms to individual text segments.
+- This sentence-level capability is what enables stronger IP positions for rights holders,
+  sentence-level licensing, and greater provenance survivability through copy/paste.
+- Always attribute sentence-level claims to "Encypher's technology" - never to "C2PA."
+
 Today's date: CURRENT_DATE
 
 A research agent has already selected the topic, formulated the thesis, and gathered verified
@@ -315,6 +326,7 @@ Do NOT push. The runner handles push and PR.
 - [ ] No double-hyphens (--) in prose body text
 - [ ] No fabricated statistics, quotes, or citations
 - [ ] Encypher's C2PA role mentioned accurately (no patent claim counts or filing dates, no "patent-pending")
+- [ ] C2PA vs Encypher distinction correct: C2PA Section A.7 operates at the DOCUMENT level (one manifest per document). Encypher's proprietary technology is what enables SENTENCE-level granularity. Never attribute sentence-level capability to C2PA itself.
 - [ ] Legal disclaimer present immediately after opening paragraph (required if post cites court cases, copyright law, regulatory compliance, or legal liability)
 - [ ] No marketing superlatives
 - [ ] Clincher sentences used sparingly (no more than 1-2 per post; each one earns its place)

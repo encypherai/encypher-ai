@@ -1,0 +1,14 @@
+direction: right
+
+settings: "WP Settings Page"
+email: "Secure Email Link"
+dashboard: "Dashboard Approval"
+polling: "Plugin Polling"
+credential: "Stored API Credential"
+ready: "Signing Ready State"
+
+settings -> email: "request connect link"
+email -> dashboard: "open approval"
+dashboard -> polling: "connection completed"
+polling -> credential: "store provisioned credential"
+credential -> ready: "enable signing + verification"

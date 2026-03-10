@@ -27,6 +27,11 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 **Part of the Encypher Microservices Ecosystem** - This API integrates with multiple backend microservices for authentication, key management, and coalition features.
 
+### D2 Workflow Views
+
+- [Enterprise API sign/verify flow](../docs/diagrams/workflows/enterprise-api-sign-verify.d2) — shows caller authentication, tier/rate-limit checks, router handoff, dependency calls, storage, and response generation.
+- [Repo system context](../docs/diagrams/architecture/system-context.d2) — shows how the Enterprise API sits between client surfaces, microservices, and storage layers.
+
 ### Why Encypher API?
 
 - **🔒 C2PA 2.3 Compliant**: Industry-standard content authenticity
@@ -1563,7 +1568,7 @@ DASHBOARD_URL=https://dashboard.encypherai.com
 
 ```bash
 # Enterprise API Content Database (Own Database)
-DATABASE_URL=postgresql://user:pass@localhost:5432/encypher_content
+DATABASE_URL=postgresql://db_user:<db_password>@localhost:5432/encypher_content
 
 # Legacy Configuration Support
 # CORE_DATABASE_URL and CONTENT_DATABASE_URL are no longer used
@@ -1581,18 +1586,18 @@ REDIS_URL=redis://localhost:6379/0
 
 ```bash
 # SSL.com API (Optional for staging/development)
-SSL_COM_API_KEY=your_api_key
-SSL_COM_ACCOUNT_KEY=your_account_key
+SSL_COM_API_KEY=non_real_api_key
+SSL_COM_ACCOUNT_KEY=non_real_account_key
 SSL_COM_API_URL=https://api.ssl.com/v1
-SSL_COM_PRODUCT_ID=your_product_id
+SSL_COM_PRODUCT_ID=non_real_product_id
 ```
 
 #### Security Configuration
 
 ```bash
 # Encryption keys (for private key storage)
-KEY_ENCRYPTION_KEY=<hex_string>
-ENCRYPTION_NONCE=<hex_string>
+KEY_ENCRYPTION_KEY=non_real_hex_string
+ENCRYPTION_NONCE=non_real_hex_string
 ```
 
 #### CORS Configuration
@@ -1608,7 +1613,7 @@ ALLOWED_HOSTS=api.encypherai.com
 TRUSTED_PROXY_IPS=10.0.0.10,10.0.0.11
 
 # Embedding signature secret (required in production for public verification)
-EMBEDDING_SIGNATURE_SECRET=<hex_or_ascii_secret>
+EMBEDDING_SIGNATURE_SECRET=non_real_hex_or_ascii_secret
 ```
 
 #### Image Signing Configuration
@@ -1636,7 +1641,7 @@ IMAGE_SERVICE_URL=
 C2PA_TRUST_LIST_URL=https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TRUST-LIST.pem
 
 # Optional SHA-256 pin (hex) to prevent trust list tampering
-C2PA_TRUST_LIST_SHA256=<sha256_hex>
+C2PA_TRUST_LIST_SHA256=non_real_sha256_hex
 
 # Refresh interval (hours) for reloading the trust list
 C2PA_TRUST_LIST_REFRESH_HOURS=24
@@ -1645,7 +1650,7 @@ C2PA_TRUST_LIST_REFRESH_HOURS=24
 C2PA_TSA_TRUST_LIST_URL=https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TSA-TRUST-LIST.pem
 
 # Optional SHA-256 pin (hex) for TSA trust list
-C2PA_TSA_TRUST_LIST_SHA256=<sha256_hex>
+C2PA_TSA_TRUST_LIST_SHA256=non_real_sha256_hex
 
 # Refresh interval (hours) for TSA trust list
 C2PA_TSA_TRUST_LIST_REFRESH_HOURS=24
@@ -1666,9 +1671,9 @@ DEFAULT_SIGNING_MODE=organization
 
 # Encypher managed signer material (used when DEFAULT_SIGNING_MODE=managed or org signing_mode=managed)
 MANAGED_SIGNER_ID=encypher_managed
-MANAGED_SIGNER_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----..."
-MANAGED_SIGNER_CERTIFICATE_PEM="-----BEGIN CERTIFICATE-----..."
-MANAGED_SIGNER_CERTIFICATE_CHAIN_PEM="-----BEGIN CERTIFICATE-----..."
+MANAGED_SIGNER_PRIVATE_KEY_PEM="<paste_private_key_pem_here>"
+MANAGED_SIGNER_CERTIFICATE_PEM="<paste_certificate_pem_here>"
+MANAGED_SIGNER_CERTIFICATE_CHAIN_PEM="<paste_certificate_chain_pem_here>"
 ```
 
 #### Signing Modes (Managed + BYOK + Reseller)
