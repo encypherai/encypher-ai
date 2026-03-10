@@ -11,10 +11,9 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
-from app.dependencies import get_current_organization_dep
 from app.database import get_db
-
+from app.dependencies import get_current_organization_dep
+from app.main import app
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -97,6 +96,7 @@ def test_create_cdn_integration(client):
         db.execute = AsyncMock(return_value=none_result)
         db.add = MagicMock()
         db.flush = AsyncMock()
+
         # refresh sets the fields on the integration object passed to it
         async def do_refresh(obj):
             obj.id = instance.id
@@ -105,6 +105,7 @@ def test_create_cdn_integration(client):
             obj.enabled = instance.enabled
             obj.created_at = instance.created_at
             obj.updated_at = instance.updated_at
+
         db.refresh = do_refresh
         yield db
 
@@ -201,6 +202,7 @@ def test_webhook_valid_secret_empty_body_accepted():
     # Patch ingest to avoid full DB queries
     with patch("app.routers.cdn_integrations.ingest_logpush_batch") as mock_ingest:
         from app.schemas.cdn_schemas import LogpushIngestResult
+
         mock_ingest.return_value = LogpushIngestResult(
             lines_received=0,
             bots_detected=0,

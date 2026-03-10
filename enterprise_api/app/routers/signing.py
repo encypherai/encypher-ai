@@ -8,8 +8,12 @@ import asyncio
 import logging
 import uuid
 
+from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_content_db, get_db
-from app.dependencies import get_current_organization_dep, require_sign_permission
+from app.dependencies import require_sign_permission
 from app.middleware.api_rate_limiter import api_rate_limiter
 from app.observability.metrics import increment
 from app.routers.audit import AuditAction, write_api_audit_log
@@ -21,9 +25,6 @@ from app.services.unified_signing_service import execute_unified_signing
 from app.services.webhook_dispatcher import emit_document_signed
 from app.utils.print_stego import build_payload, encode_print_fingerprint
 from app.utils.quota import QuotaManager, QuotaType
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from fastapi.responses import JSONResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -496,10 +497,11 @@ async def _attach_rights_snapshot(
     Operates in-place on `result["data"]`. Errors are swallowed so they never
     break a successful sign response.
     """
+    from sqlalchemy import update
+
     from app.config import settings
     from app.models.content_reference import ContentReference
     from app.services.rights_service import rights_service
-    from sqlalchemy import update
 
     try:
         profile = await rights_service.get_current_profile(db=core_db, organization_id=org_id)

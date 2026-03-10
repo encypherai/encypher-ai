@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
 from app import dependencies
 from app.config import settings
 from app.dependencies import _normalize_org_context, get_current_organization

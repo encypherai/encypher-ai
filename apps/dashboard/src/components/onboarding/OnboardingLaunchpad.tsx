@@ -123,19 +123,20 @@ export function OnboardingLaunchpad({
 
   if (isPublisher) {
     const platformLabel = getPublisherPlatformLabel(platform, setup.publisher_platform_custom);
+    const publisherSetupHref = platform === 'wordpress' ? '/docs/wordpress-integration' : '/integrations';
     eyebrow = 'Publisher quick start';
     title = `Get ${platformLabel} publishing with proof of origin`;
     description = 'Start with the fastest path for publishers: connect your CMS, sign your first piece of content, then verify that proof travels with it.';
 
     if (!integrationStarted) {
-      primaryHref = '/integrations';
+      primaryHref = publisherSetupHref;
       primaryLabel = platform === 'wordpress' ? 'Set up the WordPress plugin' : 'Open publisher integrations';
       secondaryHref = '/docs';
       secondaryLabel = 'View publisher docs';
     } else if (documentsSigned === 0) {
       primaryHref = '/playground';
       primaryLabel = 'Sign your first document';
-      secondaryHref = '/integrations';
+      secondaryHref = publisherSetupHref;
       secondaryLabel = 'Continue CMS setup';
     } else if (verifications === 0) {
       primaryHref = '/playground';
@@ -145,7 +146,7 @@ export function OnboardingLaunchpad({
     } else {
       primaryHref = '/analytics';
       primaryLabel = 'View protected content';
-      secondaryHref = '/integrations';
+      secondaryHref = publisherSetupHref;
       secondaryLabel = 'Expand your publishing setup';
     }
 
@@ -153,7 +154,7 @@ export function OnboardingLaunchpad({
       {
         title: platform === 'wordpress' ? 'Install the WordPress plugin' : `Connect ${platformLabel}`,
         description: 'Use the guided integration path built for your publishing workflow.',
-        href: '/integrations',
+        href: publisherSetupHref,
         completed: integrationStarted,
       },
       {

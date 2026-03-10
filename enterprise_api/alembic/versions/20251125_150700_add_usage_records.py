@@ -78,8 +78,12 @@ def upgrade() -> None:
         )
 
     # Unique constraint on org + metric + period
-    if _has_columns("usage_records", {"organization_id", "metric", "period_start", "period_end"}) and not _has_unique_constraint("usage_records", "uq_usage_records_org_metric_period"):
-        op.create_unique_constraint("uq_usage_records_org_metric_period", "usage_records", ["organization_id", "metric", "period_start", "period_end"])
+    if _has_columns("usage_records", {"organization_id", "metric", "period_start", "period_end"}) and not _has_unique_constraint(
+        "usage_records", "uq_usage_records_org_metric_period"
+    ):
+        op.create_unique_constraint(
+            "uq_usage_records_org_metric_period", "usage_records", ["organization_id", "metric", "period_start", "period_end"]
+        )
 
     # Indexes
     if _has_columns("usage_records", {"organization_id"}) and not _has_index("usage_records", "ix_usage_records_org_id"):

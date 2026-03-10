@@ -6,10 +6,11 @@ import time
 from unittest.mock import Mock
 
 import pytest
+from fastapi import HTTPException, Request
+
 from app.config import settings
 from app.middleware.public_rate_limiter import PublicAPIRateLimiter
 from app.services.session_service import session_service
-from fastapi import HTTPException, Request
 
 
 class _FakeRedis:

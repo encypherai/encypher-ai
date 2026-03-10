@@ -12,13 +12,10 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import AsyncClient
-
 
 # ════════════════════════════════════════════════════════════════════════════════
 # Unit Tests — Rights Service Business Logic
@@ -127,8 +124,7 @@ class TestResolveRightsCascade:
         profile.profile_version = 1
         return profile
 
-    def _make_override(self, override_type, bronze=None, silver=None, gold=None,
-                       do_not_license=False, embargo_until=None):
+    def _make_override(self, override_type, bronze=None, silver=None, gold=None, do_not_license=False, embargo_until=None):
         ov = MagicMock()
         ov.override_type = override_type
         ov.bronze_tier_override = bronze
@@ -330,9 +326,7 @@ class TestAppendEvidence:
         # The chain entry added to the session must have previous_hash=None (genesis)
         added = db.add.call_args_list[0][0][0]
         assert added.previous_hash is None
-        expected_hash = hashlib.sha256(
-            (json.dumps(event_data, sort_keys=True) + "genesis").encode()
-        ).hexdigest()
+        expected_hash = hashlib.sha256((json.dumps(event_data, sort_keys=True) + "genesis").encode()).hexdigest()
         assert added.event_hash == expected_hash
 
     @pytest.mark.asyncio
@@ -359,9 +353,7 @@ class TestAppendEvidence:
 
         added = db.add.call_args_list[0][0][0]
         assert added.previous_hash == "abc123"
-        expected_hash = hashlib.sha256(
-            (json.dumps(event_data, sort_keys=True) + "abc123").encode()
-        ).hexdigest()
+        expected_hash = hashlib.sha256((json.dumps(event_data, sort_keys=True) + "abc123").encode()).hexdigest()
         assert added.event_hash == expected_hash
 
 
@@ -383,17 +375,26 @@ class TestRSLXmlGeneration:
         obj.legal_entity = kwargs.get("legal_entity", None)
         obj.jurisdiction = kwargs.get("jurisdiction", "US")
         obj.default_license_type = kwargs.get("default_license_type", "tiered")
-        obj.bronze_tier = kwargs.get("bronze_tier", {
-            "permissions": {"allowed": True, "crawling": True},
-            "attribution": {"required": True, "format": "Name + URL"},
-            "rate_limit": 5000,
-        })
-        obj.silver_tier = kwargs.get("silver_tier", {
-            "permissions": {"allowed": True, "rag_retrieval": True},
-        })
-        obj.gold_tier = kwargs.get("gold_tier", {
-            "permissions": {"allowed": False, "requires_license": True},
-        })
+        obj.bronze_tier = kwargs.get(
+            "bronze_tier",
+            {
+                "permissions": {"allowed": True, "crawling": True},
+                "attribution": {"required": True, "format": "Name + URL"},
+                "rate_limit": 5000,
+            },
+        )
+        obj.silver_tier = kwargs.get(
+            "silver_tier",
+            {
+                "permissions": {"allowed": True, "rag_retrieval": True},
+            },
+        )
+        obj.gold_tier = kwargs.get(
+            "gold_tier",
+            {
+                "permissions": {"allowed": False, "requires_license": True},
+            },
+        )
         obj.notice_status = kwargs.get("notice_status", None)
         return obj
 

@@ -14,6 +14,11 @@ import re
 from datetime import datetime
 from typing import Any, Dict, Optional, cast
 
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.config import settings
 from app.database import get_content_db, get_db
 from app.middleware.api_key_auth import authenticate_api_key, get_api_key_from_header
@@ -36,11 +41,6 @@ from app.schemas.embeddings import (
     VerifyEmbeddingResponse,
 )
 from app.utils.c2pa_verifier import c2pa_verifier
-from app.utils.crypto_utils import load_organization_public_key
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from pydantic import BaseModel, Field
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 

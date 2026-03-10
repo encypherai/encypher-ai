@@ -18,10 +18,10 @@
       <section class="options__section">
         <h2>API Key</h2>
         <p class="options__description">
-          Enter your Encypher API key to enable content signing. 
+          Enter your Encypher API key to enable content signing.
           <a href="https://dashboard.encypherai.com/settings/api-keys" target="_blank">Get an API key</a>
         </p>
-        
+
         <div class="options__field">
           <label for="apiKey">API Key</label>
           <div class="options__input-group">
@@ -53,7 +53,7 @@
       <!-- Verification Settings -->
       <section class="options__section">
         <h2>Verification</h2>
-        
+
         <div class="options__field options__field--checkbox">
           <input type="checkbox" id="autoVerify">
           <label for="autoVerify">
@@ -74,7 +74,7 @@
       <!-- Signing Settings -->
       <section class="options__section">
         <h2>Signing</h2>
-        
+
         <div class="options__field options__field--checkbox">
           <input type="checkbox" id="autoReplaceContent" checked>
           <label for="autoReplaceContent">
@@ -98,19 +98,19 @@
         <div class="options__field">
           <label for="defaultEmbeddingTechnique">Default Embedding Mode</label>
           <select id="defaultEmbeddingTechnique">
-            <option value="micro">Standard (recommended)</option>
-            <option value="micro_no_embed_c2pa">Compact (server-stored proof)</option>
+            <option value="micro_no_embed_c2pa">Minimal (recommended)</option>
+            <option value="micro">Embedded</option>
           </select>
-          <p class="options__hint">Standard embeds proof of origin in the text. Compact keeps invisible markers while storing full proof server-side.</p>
+          <p class="options__hint">Minimal keeps invisible markers while storing the full proof server-side. Embedded adds C2PA proof data directly into the signed text.</p>
         </div>
 
         <div class="options__field">
           <label for="defaultSegmentationLevel">Embedding Frequency</label>
           <select id="defaultSegmentationLevel">
             <option value="document">Entire content</option>
-            <option value="section">Per section</option>
             <option value="paragraph">Per paragraph</option>
             <option value="sentence">Per sentence</option>
+            <option value="section">Per section</option>
             <option value="word">Per word (Enterprise)</option>
           </select>
           <p class="options__hint">How often signatures are embedded. More frequent = more resilient to partial edits.</p>
@@ -128,7 +128,7 @@
       <!-- Advanced Settings -->
       <section class="options__section">
         <h2>Advanced</h2>
-        
+
         <div class="options__field">
           <label for="apiBaseUrl">API Base URL</label>
           <input type="url" id="apiBaseUrl" placeholder="https://api.encypherai.com" value="https://api.encypherai.com">
@@ -150,7 +150,7 @@
         <p class="options__hint">
           We only report privacy-safe signals: sanitized page URL (query/hash removed), page domain, signer metadata from the embedding, verification status, and cross-domain mismatch indicators. No personal data or user identifiers are collected.
         </p>
-        
+
         <div class="options__analytics-info" id="analyticsInfo">
           <span id="analyticsStatus">Discovery analytics always on</span>
         </div>
@@ -169,7 +169,7 @@
     </main>
 
     <footer class="options__footer">
-      <p>Encypher Verify v1.0.0</p>
+      <p>Encypher Verify v1.1.0</p>
       <p><a href="https://encypherai.com/privacy" target="_blank">Privacy Policy</a></p>
       <a href="mailto:support@encypherai.com" class="options__support-btn">Contact Support</a>
     </footer>

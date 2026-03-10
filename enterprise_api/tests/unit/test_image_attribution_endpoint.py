@@ -3,10 +3,8 @@
 Tests tier gating and basic request handling using mocked DB and auth.
 """
 
-import base64
 import os
 import sys
-from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -106,7 +104,6 @@ class TestImageAttributionEndpointTierGating:
         """scope='org' with free tier features is allowed."""
         from app.api.v1.enterprise.image_attribution import image_attribution
         from app.schemas.image_attribution_schemas import ImageAttributionRequest
-        from app.services.image_fingerprint_service import ImageAttributionMatch
 
         payload = ImageAttributionRequest(phash="a1b2c3d4e5f67890", scope="org", threshold=10)
         org = _free_org()

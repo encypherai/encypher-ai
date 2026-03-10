@@ -8,6 +8,7 @@ import difflib
 import time
 import unicodedata
 from typing import Any, Dict, List, Optional, cast
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
@@ -15,11 +16,11 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID, uuid4
 
 from app.crud import merkle as merkle_crud
 from app.database import get_content_db, get_db
 from app.dependencies import get_current_organization_dep
+from app.middleware.request_id_middleware import request_id_ctx
 from app.models.content_reference import ContentReference
 from app.models.merkle import MerkleRoot
 from app.schemas.fuzzy_fingerprint import FuzzySearchConfig
@@ -27,13 +28,11 @@ from app.services import verification_logic
 from app.services.fuzzy_fingerprint_service import fuzzy_fingerprint_service
 from app.services.merkle_service import MerkleService
 from app.utils.merkle import MerkleTree, compute_leaf_hash
-from app.middleware.request_id_middleware import request_id_ctx
 from app.utils.print_stego import decode_print_fingerprint
-from app.utils.segmentation import HierarchicalSegmenter
 from app.utils.quota import QuotaManager, QuotaType
+from app.utils.segmentation import HierarchicalSegmenter
 
 router = APIRouter()
-
 
 
 class VerifyAdvancedRequest(BaseModel):
@@ -105,7 +104,6 @@ def _build_localization_events(
         )
 
     return {"events": events, "counts": counts}
-
 
 
 @router.post(
@@ -471,18 +469,10 @@ async def verify_advanced(
 
 class QuoteIntegrityRequest(BaseModel):
     quote: str = Field(..., min_length=1, description="The exact text the AI cited")
-    attribution: str = Field(
-        ..., min_length=1, description="Claimed source e.g. 'According to Reuters...'"
-    )
-    org_id: Optional[str] = Field(
-        default=None, description="Publisher org to check (if known)"
-    )
-    doc_id: Optional[str] = Field(
-        default=None, description="Specific document (if known)"
-    )
-    fuzzy_threshold: float = Field(
-        default=0.85, ge=0.0, le=1.0, description="Similarity threshold"
-    )
+    attribution: str = Field(..., min_length=1, description="Claimed source e.g. 'According to Reuters...'")
+    org_id: Optional[str] = Field(default=None, description="Publisher org to check (if known)")
+    doc_id: Optional[str] = Field(default=None, description="Specific document (if known)")
+    fuzzy_threshold: float = Field(default=0.85, ge=0.0, le=1.0, description="Similarity threshold")
 
 
 class MatchedDocument(BaseModel):
@@ -553,9 +543,7 @@ async def verify_quote_integrity(
                 best_excerpt = subhash.text_content
                 best_doc_id = root.document_id
                 best_org_id = root.organization_id
-                best_signed_at = (
-                    root.created_at.isoformat() if root.created_at else None
-                )
+                best_signed_at = root.created_at.isoformat() if root.created_at else None
 
     elif request.org_id:
         # Search ContentReference for that org's documents
@@ -573,9 +561,7 @@ async def verify_quote_integrity(
                 best_excerpt = ref.text_content
                 best_doc_id = ref.document_id
                 best_org_id = ref.organization_id
-                best_signed_at = (
-                    ref.created_at.isoformat() if ref.created_at else None
-                )
+                best_signed_at = ref.created_at.isoformat() if ref.created_at else None
 
     else:
         # Public scope — search all ContentReference records
@@ -592,32 +578,21 @@ async def verify_quote_integrity(
                 best_excerpt = ref.text_content
                 best_doc_id = ref.document_id
                 best_org_id = ref.organization_id
-                best_signed_at = (
-                    ref.created_at.isoformat() if ref.created_at else None
-                )
+                best_signed_at = ref.created_at.isoformat() if ref.created_at else None
 
     # Determine verdict
     if best_excerpt is None:
         verdict = "unverifiable"
         confidence = "low"
-        explanation = (
-            "No signed content was found matching the attribution. "
-            "The source may not be registered or the quote cannot be verified."
-        )
+        explanation = "No signed content was found matching the attribution. The source may not be registered or the quote cannot be verified."
     elif best_score >= 0.95:
         verdict = "accurate"
         confidence = "high"
-        explanation = (
-            f"The quote closely matches signed content "
-            f"(similarity {best_score:.0%})."
-        )
+        explanation = f"The quote closely matches signed content (similarity {best_score:.0%})."
     elif best_score >= request.fuzzy_threshold:
         verdict = "approximate"
         confidence = "medium"
-        explanation = (
-            f"The quote partially matches signed content "
-            f"(similarity {best_score:.0%}). Minor differences detected."
-        )
+        explanation = f"The quote partially matches signed content (similarity {best_score:.0%}). Minor differences detected."
     else:
         verdict = "hallucinated"
         confidence = "high"
@@ -629,11 +604,7 @@ async def verify_quote_integrity(
     matched_document = None
     if best_doc_id and best_org_id:
         # Try to get title from doc_metadata
-        title_stmt = (
-            select(MerkleRoot.doc_metadata)
-            .where(MerkleRoot.document_id == best_doc_id)
-            .limit(1)
-        )
+        title_stmt = select(MerkleRoot.doc_metadata).where(MerkleRoot.document_id == best_doc_id).limit(1)
         title_result = await content_db.execute(title_stmt)
         doc_meta = title_result.scalar_one_or_none()
         if isinstance(doc_meta, dict):

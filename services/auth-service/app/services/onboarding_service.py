@@ -118,7 +118,7 @@ class OnboardingService:
                 if platform == "wordpress":
                     tailored["title"] = "Install the WordPress plugin"
                     tailored["description"] = "Connect WordPress and start signing published content quickly."
-                    tailored["action_url"] = "/integrations"
+                    tailored["action_url"] = "/docs/wordpress-integration"
                 elif platform == "ghost":
                     tailored["title"] = "Connect your Ghost site"
                     tailored["description"] = "Open the Ghost integration path and prepare your first signed post."

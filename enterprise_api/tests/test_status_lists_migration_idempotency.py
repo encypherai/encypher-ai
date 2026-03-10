@@ -6,13 +6,7 @@ from types import ModuleType
 
 import pytest
 
-
-MIGRATION_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "alembic"
-    / "versions"
-    / "20251201_110000_add_status_lists.py"
-)
+MIGRATION_PATH = Path(__file__).resolve().parents[1] / "alembic" / "versions" / "20251201_110000_add_status_lists.py"
 
 
 @pytest.fixture

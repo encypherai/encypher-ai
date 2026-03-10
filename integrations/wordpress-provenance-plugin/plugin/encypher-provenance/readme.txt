@@ -4,7 +4,7 @@ Tags: content authenticity, provenance, verification, proof of origin, authorshi
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.0-beta
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,12 +25,13 @@ In an era of rapid content reuse and misinformation, proving the authenticity of
 
 = Key Features =
 
+* **Email Connect Setup** - Start from a work email and auto-provision the plugin API key with a secure magic link
 * **Auto-Sign on Publish** - Content is automatically signed when you publish
 * **Auto-Sign on Update** - Re-signs with edit history when content changes
 * **Invisible Embeddings** - C2PA manifests are embedded using invisible Unicode characters
 * **Public Verification** - Readers can verify content authenticity with one click
 * **Gutenberg Integration** - Full sidebar panel in the block editor
-* **Verification Badge** - Optional floating badge shows content is protected
+* **Verification Badge** - Optional badge shows readers that content is signed and verifiable
 
 = C2PA Compliance =
 
@@ -65,14 +66,22 @@ Built on the same standards used by Google, BBC, OpenAI, Adobe, and Microsoft:
 
 1. Upload the `encypher-provenance` folder to `/wp-content/plugins/`
 2. Activate the plugin through the 'Plugins' menu in WordPress
-3. Go to **Encypher > Settings** to configure your API key
-4. Get your free API key at [dashboard.encypherai.com](https://dashboard.encypherai.com)
+3. Go to **Encypher > Settings**
+4. Enter your work email and click **Email me a secure connect link**
+5. Open the email from Encypher and approve the WordPress connection
+6. Return to WordPress and wait a few seconds while the plugin stores the provisioned API key automatically
+
+You can still paste an existing API key manually if you already manage Encypher credentials outside the guided connect flow.
 
 == Frequently Asked Questions ==
 
 = Do I need an API key? =
 
-Yes, you need a free API key from [dashboard.encypherai.com](https://dashboard.encypherai.com). The free tier includes unlimited document signing.
+Yes, the plugin ultimately uses an API key to call Encypher. The recommended path is the built-in email connect flow, which verifies your email and provisions the key automatically. Advanced users can still paste an existing key manually.
+
+= How does the email connect flow work? =
+
+Enter your work email on the plugin settings page, approve the secure link sent by Encypher, and keep the WordPress settings page open while it polls for completion. Once approved, the plugin stores the provisioned API key and connects the site automatically.
 
 = Are the embeddings visible? =
 
@@ -96,13 +105,28 @@ Yes, content is sent to Encypher's API for signing. The API creates cryptographi
 
 == Screenshots ==
 
-1. Settings page with API configuration
+1. Settings page with workspace connection and signing defaults
 2. Gutenberg sidebar showing signing status
 3. Frontend verification badge
 4. Verification modal with content details
 5. Analytics dashboard
 
 == Changelog ==
+
+= 1.2.0 =
+* Added WordPress/ai integration: auto-signs AI-generated content from all five WordPress/ai experiments (Title Generation, Excerpt Generation, Summarization, Review Notes, Alt Text) before it is committed to the post
+* Added WordPress Abilities API support: registers `encypher/sign` and `encypher/verify` as first-class abilities callable by any plugin via `wp_do_ability()`
+* Added "AI Content Provenance" Gutenberg sidebar panel with shield badge (green/yellow/red/grey) showing per-post AI provenance status and signed experiment list
+* Added `GET encypher-provenance/v1/wordpress-ai-status` REST endpoint powering the new sidebar panel
+* Added Coalition auto-enrollment: enabling the toggle in settings automatically enrolls the site in the Encypher Coalition via `/coalition/enroll`
+* Added WordPress/ai Integration settings section with enable toggle and Coalition auto-enroll toggle
+* AI-signed experiment records are stored in post meta (`_encypher_wpai_experiments`) for audit trail and REST lookups
+
+= 1.1.0 =
+* Added email-based secure connect flow with automatic API key provisioning
+* Added WordPress approval page flow for emailed connect links
+* Added session polling and automatic connection completion in plugin settings
+* Updated dashboard and plugin documentation for guided WordPress onboarding
 
 = 1.0.0-beta =
 * Public beta release for Encypher Provenance
@@ -111,47 +135,16 @@ Yes, content is sent to Encypher's API for signing. The API creates cryptographi
 * Unified branded full-wordmark headers across Dashboard, Content, Settings, Analytics, Account, Bulk Sign, and Coalition pages
 * Improved analytics cards/status presentation and coalition early-rollout placeholder experience
 
+== Upgrade Notice ==
+
 = 1.2.0 =
-* Migrated verify calls from deprecated POST /verify to POST /verify/advanced
-* Added per-post admin notice on auto-sign failure (dismissible, links to error log)
-* Added site-wide error log ring buffer (last 50 entries) on Analytics page
-* Added verification hits counter (30d + lifetime) on Analytics page
-* Added outbound webhook alerting on repeated failures (enterprise add-on)
-* Fixed auto-sign to respect configured post_types setting
-* Added content page pagination (50 posts/page)
-* Fixed status guidance copy: distinguishes embedded vs verified provenance
-* Removed debug console.log calls from frontend JS
-* All debug logging now gated behind WP_DEBUG
+Adds WordPress/ai integration, WordPress Abilities API support, and Coalition auto-enrollment. No breaking changes. If you use the WordPress/ai plugin, enable the new integration toggle in Encypher > Settings to auto-sign AI-generated content.
 
 = 1.1.0 =
-* Updated API endpoints to use unified /sign and /verify
-* Improved C2PA compliance validation
-* Enhanced error handling and logging
-* Updated documentation
-
-= 1.0.1 =
-* Fixed C2PA wrapper compliance (single wrapper per document)
-* Added provenance chain support for edits
-* Improved tier-based feature gating
-
-= 1.0.0 =
-* Initial release
-* C2PA-compliant text signing
-* Auto-sign on publish/update
-* Gutenberg and Classic Editor support
-* Public verification badge
-* Bulk signing tool
-
-== Upgrade Notice ==
+This release adds secure email-based connection and automatic API key provisioning for WordPress installs while preserving manual API key setup for existing workspaces.
 
 = 1.0.0-beta =
 Public beta with polished admin UX and production-ready signing/verification defaults. Hard binding is enforced by default.
-
-= 1.2.0 =
-This version migrates verification to the /verify/advanced endpoint (requires API key). All existing signed content remains valid. Error reporting and analytics improvements included.
-
-= 1.1.0 =
-This version updates API endpoints for improved compatibility. All existing signed content remains valid.
 
 == Privacy Policy ==
 

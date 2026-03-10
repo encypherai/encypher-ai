@@ -42,6 +42,7 @@ class QuotaType(str, Enum):
     SENTENCES_TRACKED = "sentences_tracked"
     BATCH_OPERATIONS = "batch_operations"
     C2PA_SIGNATURES = "c2pa_signatures"  # Soft limit for abuse prevention
+    CDN_IMAGE_REGISTRATIONS = "cdn_image_registrations"  # CDN Provenance (Enterprise only)
 
 
 QUOTA_FIELD_MAPPING: Dict[QuotaType, str] = {
@@ -54,6 +55,7 @@ QUOTA_FIELD_MAPPING: Dict[QuotaType, str] = {
     QuotaType.C2PA_SIGNATURES: "documents_signed",
     QuotaType.SENTENCES_TRACKED: "sentences_tracked_this_month",
     QuotaType.BATCH_OPERATIONS: "batch_operations_this_month",
+    QuotaType.CDN_IMAGE_REGISTRATIONS: "cdn_image_registrations_this_month",
 }
 
 
@@ -66,19 +68,14 @@ _TIER_ENUM_MAP = {
     "strategic_partner": OrganizationTier.STRATEGIC_PARTNER,
 }
 
-TIER_RATE_LIMITS: Dict[OrganizationTier, int] = {
-    _TIER_ENUM_MAP[t]: _tc.TIER_RATE_LIMITS_PER_SECOND[t]
-    for t in _TIER_ENUM_MAP
-}
+TIER_RATE_LIMITS: Dict[OrganizationTier, int] = {_TIER_ENUM_MAP[t]: _tc.TIER_RATE_LIMITS_PER_SECOND[t] for t in _TIER_ENUM_MAP}
 
 TIER_REV_SHARE: Dict[OrganizationTier, tuple] = {
-    _TIER_ENUM_MAP[t]: (rs["publisher"], rs["encypher"])
-    for t, rs in ((t, _tc.get_tier_rev_share(t)) for t in _TIER_ENUM_MAP)
+    _TIER_ENUM_MAP[t]: (rs["publisher"], rs["encypher"]) for t, rs in ((t, _tc.get_tier_rev_share(t)) for t in _TIER_ENUM_MAP)
 }
 
 TIER_FEATURES: Dict[OrganizationTier, Dict[str, bool]] = {
-    _TIER_ENUM_MAP[t]: {k: v for k, v in _tc.get_tier_features(t).items() if isinstance(v, bool)}
-    for t in _TIER_ENUM_MAP
+    _TIER_ENUM_MAP[t]: {k: v for k, v in _tc.get_tier_features(t).items() if isinstance(v, bool)} for t in _TIER_ENUM_MAP
 }
 
 
@@ -95,6 +92,7 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
         QuotaType.FUZZY_SEARCH: 0,  # Enterprise only
         QuotaType.BATCH_OPERATIONS: -1,  # Unlimited; C2PA_SIGNATURES quota is the real constraint
         QuotaType.API_CALLS: 1000,
+        QuotaType.CDN_IMAGE_REGISTRATIONS: 0,  # Enterprise only
     },
     OrganizationTier.ENTERPRISE: {
         QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
@@ -106,6 +104,7 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
         QuotaType.FUZZY_SEARCH: -1,
         QuotaType.BATCH_OPERATIONS: -1,
         QuotaType.API_CALLS: -1,
+        QuotaType.CDN_IMAGE_REGISTRATIONS: -1,  # Unlimited
     },
     OrganizationTier.STRATEGIC_PARTNER: {
         QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
@@ -117,6 +116,7 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
         QuotaType.FUZZY_SEARCH: -1,
         QuotaType.BATCH_OPERATIONS: -1,
         QuotaType.API_CALLS: -1,
+        QuotaType.CDN_IMAGE_REGISTRATIONS: -1,  # Unlimited
     },
 }
 
@@ -285,7 +285,13 @@ class QuotaManager:
         if current_usage + increment > quota_limit:
             logger.warning(
                 "quota_exceeded",
-                extra={"org_id": organization_id, "tier": tier.value, "quota_type": quota_type.value, "current_usage": current_usage, "quota_limit": quota_limit},
+                extra={
+                    "org_id": organization_id,
+                    "tier": tier.value,
+                    "quota_type": quota_type.value,
+                    "current_usage": current_usage,
+                    "quota_limit": quota_limit,
+                },
             )
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -478,6 +484,7 @@ class QuotaManager:
                 documents_signed=0,
                 sentences_tracked_this_month=0,
                 batch_operations_this_month=0,
+                cdn_image_registrations_this_month=0,
             )
         )
         await db.commit()

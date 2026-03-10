@@ -19,19 +19,71 @@ from typing import Set
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
-BLOCK_ELEMENTS = frozenset({
-    "address", "article", "aside", "blockquote", "dd", "details", "dialog",
-    "div", "dl", "dt", "fieldset", "figcaption", "figure", "footer", "form",
-    "h1", "h2", "h3", "h4", "h5", "h6", "header", "hgroup", "hr", "li",
-    "main", "nav", "ol", "p", "pre", "section", "summary", "table", "ul",
-    "tr", "td", "th", "thead", "tbody", "tfoot",
-})
+BLOCK_ELEMENTS = frozenset(
+    {
+        "address",
+        "article",
+        "aside",
+        "blockquote",
+        "dd",
+        "details",
+        "dialog",
+        "div",
+        "dl",
+        "dt",
+        "fieldset",
+        "figcaption",
+        "figure",
+        "footer",
+        "form",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "header",
+        "hgroup",
+        "hr",
+        "li",
+        "main",
+        "nav",
+        "ol",
+        "p",
+        "pre",
+        "section",
+        "summary",
+        "table",
+        "ul",
+        "tr",
+        "td",
+        "th",
+        "thead",
+        "tbody",
+        "tfoot",
+    }
+)
 
-SKIP_ELEMENTS = frozenset({
-    "img", "script", "style", "noscript", "svg", "math", "video", "audio",
-    "canvas", "iframe", "object", "embed", "source", "track", "picture",
-    "template",
-})
+SKIP_ELEMENTS = frozenset(
+    {
+        "img",
+        "script",
+        "style",
+        "noscript",
+        "svg",
+        "math",
+        "video",
+        "audio",
+        "canvas",
+        "iframe",
+        "object",
+        "embed",
+        "source",
+        "track",
+        "picture",
+        "template",
+    }
+)
 
 
 def extract_text_from_html(html: str) -> str:
@@ -133,7 +185,7 @@ def _get_vs_char_set() -> Set[str]:
     from app.utils.vs256_crypto import VS_CHAR_SET
 
     chars = set(VS_CHAR_SET)
-    chars.add("\uFEFF")
+    chars.add("\ufeff")
     return chars
 
 
@@ -200,10 +252,7 @@ def embed_signed_text_in_html(original_html: str, signed_text: str) -> str:
         # Collect inter-node VS chars (part of the C2PA manifest) instead
         # of discarding them.  These will be prepended to this text node.
         gap_vs: list[str] = []
-        while cursor < len(signed_text) and (
-            signed_text[cursor] in vs_chars
-            or signed_text[cursor] in " \t\n\r"
-        ):
+        while cursor < len(signed_text) and (signed_text[cursor] in vs_chars or signed_text[cursor] in " \t\n\r"):
             if signed_text[cursor] in vs_chars:
                 gap_vs.append(signed_text[cursor])
             cursor += 1
@@ -232,9 +281,7 @@ def embed_signed_text_in_html(original_html: str, signed_text: str) -> str:
             # previous node so they are not lost.
             if gap_vs and last_replaced_node is not None:
                 current = str(last_replaced_node)
-                last_replaced_node.replace_with(
-                    NavigableString(current + "".join(gap_vs))
-                )
+                last_replaced_node.replace_with(NavigableString(current + "".join(gap_vs)))
             continue
 
         # Consume trailing VS chars that belong to this node's signature
@@ -251,9 +298,7 @@ def embed_signed_text_in_html(original_html: str, signed_text: str) -> str:
 
         # Prepend any inter-node VS chars (C2PA manifest fragments)
         gap_prefix = "".join(gap_vs)
-        replacement = NavigableString(
-            leading_ws + gap_prefix + signed_chunk + trailing_ws
-        )
+        replacement = NavigableString(leading_ws + gap_prefix + signed_chunk + trailing_ws)
         nav_str.replace_with(replacement)
         last_replaced_node = replacement
 
@@ -266,8 +311,6 @@ def embed_signed_text_in_html(original_html: str, signed_text: str) -> str:
 
     if remaining_vs and last_replaced_node is not None:
         current = str(last_replaced_node)
-        last_replaced_node.replace_with(
-            NavigableString(current + "".join(remaining_vs))
-        )
+        last_replaced_node.replace_with(NavigableString(current + "".join(remaining_vs)))
 
     return str(soup)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-
 BUILTIN_TEMPLATES: Dict[str, Dict[str, Any]] = {
     "tmpl_builtin_all_rights_reserved_v1": {
         "id": "tmpl_builtin_all_rights_reserved_v1",

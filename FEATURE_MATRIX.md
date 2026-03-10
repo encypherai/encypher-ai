@@ -1,7 +1,7 @@
 # Encypher Feature Matrix by Tier
 
-**Last Updated**: February 13, 2026
-**Version**: 2.0
+**Last Updated**: March 10, 2026
+**Version**: 2.1
 
 This document provides a comprehensive breakdown of all Encypher features organized by subscription tier.
 
@@ -84,16 +84,49 @@ Founding Coalition members have the implementation fee waived.
 
 ---
 
+## CDN Provenance Continuity
+
+Makes C2PA provenance survive CDN image transformations (resize, reformat, recompress). When a CDN strips the embedded manifest from a transformed image, the original provenance remains verifiable via server-side pHash lookup.
+
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Image signing (`POST /cdn/images/sign`) | ❌ | ✅ |
+| Register pre-signed images for CDN tracking | ❌ | ✅ |
+| pHash fuzzy lookup (Hamming distance ≤8) | ❌ | ✅ |
+| Pre-register CDN variant transforms | ❌ | ✅ |
+| Public manifest fetch (`GET /cdn/manifests/{id}`) | ✅ (read-only) | ✅ |
+| Public image verification (`POST /cdn/verify`) — three states | ✅ | ✅ |
+| `ORIGINAL_SIGNED` — embedded manifest present and valid | ✅ | ✅ |
+| `VERIFIED_DERIVATIVE` — no embedded manifest, pHash match found | ✅ | ✅ |
+| `PROVENANCE_LOST` — transform too aggressive, no match | ✅ | ✅ |
+| `application/cbor` manifest response (C2PA 2.x standards-native) | ❌ | ✅ |
+| `GET /.well-known/c2pa/manifests/{id}` discovery alias | ✅ | ✅ |
+| Cloudflare Worker (`C2PA-Manifest-URL` header injection) | ❌ | ✅ |
+| Fastly Compute@Edge handler | ❌ | ✅ |
+| Lambda@Edge (CloudFront) handler | ❌ | ✅ |
+| Dashboard analytics (assets protected, variants verified, % recoverable) | ❌ | ✅ |
+| Logpush image attribution events | ❌ | ✅ |
+| CDN image registrations/month | 0 | Unlimited |
+
+### CDN Quota
+
+| Metric | Free | Enterprise |
+|--------|:----:|:----------:|
+| Image registrations/month | 0 | Unlimited |
+
+---
+
 ## Distribution & Integrations
 
 | Feature | Free | Enterprise |
 |---------|:----:|:----------:|
 | REST API with Python SDK | ✅ | ✅ |
 | WordPress plugin (auto-sign on publish) | ✅ | ✅ |
+| WordPress plugin — image signing on publish | ❌ | ✅ |
 | CLI tool for local signing | ✅ | ✅ |
 | GitHub Action for CI/CD | ✅ | ✅ |
 | Browser extension for verification | ✅ | ✅ |
-| Ghost CMS integration (webhook) | ✅ | ✅ |
+| Ghost CMS integration (webhook + image signing) | ✅ | ✅ |
 | Custom integrations | ❌ | ✅ |
 
 ---

@@ -8,21 +8,18 @@ import { Card, CardHeader, CardTitle, CardDescription } from '@encypher/design-s
 
 const WORDPRESS_PLUGIN_DOWNLOAD_URL =
   process.env.NEXT_PUBLIC_WORDPRESS_PLUGIN_DOWNLOAD_URL ||
-  '/downloads/encypher-provenance.zip';
+  '/downloads/encypher-provenance-1.1.0.zip';
 
-const comingSoonIntegrations = [
-  {
-    name: 'WordPress',
-    description: 'Automatic C2PA signing for WordPress posts via our plugin.',
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#21759b]" fill="currentColor">
-        <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zM3.009 12c0-1.298.29-2.529.8-3.64l4.404 12.065A8.993 8.993 0 013.009 12zm8.991 9c-.924 0-1.813-.15-2.646-.42l2.81-8.162 2.878 7.886c.019.046.042.089.065.13A8.94 8.94 0 0112 21zm1.237-13.22c.564-.03 1.072-.09 1.072-.09.505-.06.446-.802-.059-.772 0 0-1.518.12-2.497.12-.921 0-2.468-.12-2.468-.12-.505-.03-.564.742-.059.772 0 0 .478.06.983.09l1.46 4.002-2.052 6.155-3.413-10.157c.564-.03 1.072-.09 1.072-.09.505-.06.446-.802-.06-.772 0 0-1.517.12-2.496.12-.176 0-.383-.005-.6-.013A8.977 8.977 0 0112 3.009c2.34 0 4.472.895 6.071 2.36-.039-.002-.076-.008-.116-.008-1.005 0-1.716.875-1.716 1.817 0 .843.487 1.557 1.005 2.4.39.675.843 1.54.843 2.79 0 .867-.333 1.872-.773 3.272l-1.013 3.383L12.237 7.78z" />
-      </svg>
-    ),
-    status: 'Plugin available' as const,
-    setupHref: '/docs/publisher-integration',
-    downloadHref: WORDPRESS_PLUGIN_DOWNLOAD_URL,
-  },
+type IntegrationCardConfig = {
+  name: string;
+  description: string;
+  icon: JSX.Element;
+  status: 'coming_soon' | 'Plugin available';
+  setupHref?: string;
+  downloadHref?: string;
+};
+
+const comingSoonIntegrations: IntegrationCardConfig[] = [
   {
     name: 'Substack',
     description: 'Sign your Substack newsletter content with C2PA provenance.',
@@ -75,6 +72,54 @@ export default function IntegrationsPage() {
             CMS Platforms
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Card
+              variant="bordered"
+              className="relative overflow-hidden border-[#21759b]/20 bg-gradient-to-br from-[#21759b]/5 via-white to-blue-50 dark:from-[#21759b]/10 dark:via-slate-900 dark:to-slate-900"
+            >
+              <CardHeader>
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-white dark:bg-slate-800 flex items-center justify-center border border-[#21759b]/20">
+                    <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#21759b]" fill="currentColor">
+                      <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zM3.009 12c0-1.298.29-2.529.8-3.64l4.404 12.065A8.993 8.993 0 013.009 12zm8.991 9c-.924 0-1.813-.15-2.646-.42l2.81-8.162 2.878 7.886c.019.046.042.089.065.13A8.94 8.94 0 0112 21zm1.237-13.22c.564-.03 1.072-.09 1.072-.09.505-.06.446-.802-.059-.772 0 0-1.518.12-2.497.12-.921 0-2.468-.12-2.468-.12-.505-.03-.564.742-.059.772 0 0 .478.06.983.09l1.46 4.002-2.052 6.155-3.413-10.157c.564-.03 1.072-.09 1.072-.09.505-.06.446-.802-.06-.772 0 0-1.517.12-2.496.12-.176 0-.383-.005-.6-.013A8.977 8.977 0 0112 3.009c2.34 0 4.472.895 6.071 2.36-.039-.002-.076-.008-.116-.008-1.005 0-1.716.875-1.716 1.817 0 .843.487 1.557 1.005 2.4.39.675.843 1.54.843 2.79 0 .867-.333 1.872-.773 3.272l-1.013 3.383L12.237 7.78z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <CardTitle className="text-lg">WordPress</CardTitle>
+                      <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full">
+                        Guided Setup
+                      </span>
+                    </div>
+                    <CardDescription className="mt-1">
+                      Install the plugin, approve the secure email connect flow, and verify your first signed post in a single WordPress-specific setup path.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <div className="px-6 pb-6 space-y-4">
+                <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/70 p-4">
+                  <p className="text-sm font-medium text-delft-blue dark:text-white">Best for WordPress teams who want a guided path from installation to first verified post.</p>
+                  <p className="text-xs text-muted-foreground mt-1 leading-5">
+                    The guide now includes plugin download, secure email-based connection, progress tracking, credential validation, and direct jumps into plugin configuration steps.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-4">
+                  <a
+                    href="/docs/wordpress-integration"
+                    className="text-sm text-blue-ncs hover:underline font-medium"
+                  >
+                    Open guided setup &rarr;
+                  </a>
+                  <a
+                    href={WORDPRESS_PLUGIN_DOWNLOAD_URL}
+                    className="text-sm text-blue-ncs hover:underline font-medium"
+                  >
+                    Download plugin &rarr;
+                  </a>
+                </div>
+              </div>
+            </Card>
+
             {/* Ghost — fully functional */}
             <GhostIntegrationCard />
 

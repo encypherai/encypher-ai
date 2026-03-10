@@ -14,10 +14,7 @@ Public webhook (HMAC auth via x-cf-secret header):
     POST   /cdn/cloudflare/webhook/{org_id}
 """
 
-import hashlib
-import hmac
 import logging
-import secrets
 
 import bcrypt
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, Request, status
@@ -27,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_organization_dep
 from app.models.cdn_integration import CdnIntegration
-from app.schemas.cdn_schemas import CdnIntegrationCreate, CdnIntegrationResponse, LogpushIngestResult
+from app.schemas.cdn_schemas import CdnIntegrationCreate, CdnIntegrationResponse, CdnWorkerConfigResponse, LogpushIngestResult
 from app.services.logpush_service import ingest_logpush_batch
 
 logger = logging.getLogger(__name__)
@@ -192,6 +189,140 @@ async def delete_cdn_integration(
 
     await db.delete(row)
     await db.flush()
+
+
+# ---------------------------------------------------------------------------
+# Worker config generation
+# ---------------------------------------------------------------------------
+
+# Inline Cloudflare Worker template (placeholder; can be replaced with a real
+# file read from integrations/cloudflare-workers/cdn-provenance-worker.js
+# once the file exists).
+_CF_WORKER_TEMPLATE = """\
+/**
+ * Encypher CDN Provenance Worker
+ *
+ * Intercepts image responses and calls the Encypher provenance API to
+ * verify / register images transparently at the CDN edge.
+ *
+ * Configuration is injected at deploy time by the Encypher dashboard.
+ * Do NOT commit credentials to source control.
+ */
+const ENCYPHER_API_URL = "{{ENCYPHER_API_URL}}";
+const ORG_ID = "{{ORG_ID}}";
+const INTEGRATION_ID = "{{INTEGRATION_ID}}";
+
+export default {
+  async fetch(request, env, ctx) {
+    const response = await fetch(request);
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.startsWith("image/")) {
+      return response;
+    }
+    // Background provenance check — non-blocking
+    ctx.waitUntil(
+      checkProvenance(request.url, response.clone(), env)
+    );
+    return response;
+  },
+};
+
+async function checkProvenance(url, response, env) {
+  try {
+    const body = await response.arrayBuffer();
+    const formData = new FormData();
+    formData.append("file", new Blob([body]), "image");
+    formData.append("original_url", url);
+    await fetch(`${ENCYPHER_API_URL}/api/v1/cdn/images/register`, {
+      method: "POST",
+      headers: {
+        "X-Org-ID": ORG_ID,
+        "X-Integration-ID": INTEGRATION_ID,
+      },
+      body: formData,
+    });
+  } catch (_) {
+    // Best-effort only
+  }
+}
+"""
+
+_WRANGLER_TOML_TEMPLATE = """\
+name = "encypher-cdn-provenance-{{INTEGRATION_ID}}"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+ENCYPHER_API_URL = "{{ENCYPHER_API_URL}}"
+ORG_ID = "{{ORG_ID}}"
+INTEGRATION_ID = "{{INTEGRATION_ID}}"
+"""
+
+
+@router.post(
+    "/integrations/{integration_id}/generate-worker-config",
+    response_model=CdnWorkerConfigResponse,
+    status_code=200,
+    summary="Generate Cloudflare Worker config for CDN provenance",
+    description="""
+Generate a ready-to-deploy Cloudflare Worker script and wrangler.toml for the
+specified CDN integration, with API URL, org ID, and integration ID
+substituted.
+    """,
+)
+async def generate_worker_config(
+    integration_id: str = Path(..., description="CDN integration UUID"),
+    request: Request = None,
+    db: AsyncSession = Depends(get_db),
+    org_context: dict = Depends(get_current_organization_dep),
+) -> CdnWorkerConfigResponse:
+    org_id: str = org_context["organization_id"]
+
+    # Verify the integration belongs to this org
+    result = await db.execute(
+        select(CdnIntegration).where(
+            and_(
+                CdnIntegration.id == integration_id,
+                CdnIntegration.organization_id == org_id,
+            )
+        )
+    )
+    integration = result.scalar_one_or_none()
+    if integration is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="CDN integration not found.",
+        )
+
+    base_url = str(request.base_url).rstrip("/") if request else "https://api.encypherai.com"
+
+    # Attempt to load external template file; fall back to embedded template
+    import os
+
+    template_path = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "..",
+        "integrations",
+        "cloudflare-workers",
+        "cdn-provenance-worker.js",
+    )
+    worker_template = _CF_WORKER_TEMPLATE
+    if os.path.isfile(template_path):
+        try:
+            with open(template_path) as f:
+                worker_template = f.read()
+        except OSError:
+            pass  # Fall through to embedded template
+
+    def _substitute(template: str) -> str:
+        return template.replace("{{ENCYPHER_API_URL}}", base_url).replace("{{ORG_ID}}", org_id).replace("{{INTEGRATION_ID}}", str(integration.id))
+
+    return CdnWorkerConfigResponse(
+        worker_script=_substitute(worker_template),
+        wrangler_toml=_substitute(_WRANGLER_TOML_TEMPLATE),
+        integration_id=str(integration.id),
+    )
 
 
 # ---------------------------------------------------------------------------

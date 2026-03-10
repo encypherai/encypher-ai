@@ -11,10 +11,10 @@ Handles:
 import hashlib
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, Optional, cast
 from uuid import uuid4
 
-from sqlalchemy import desc, func, or_, select, text, update
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.error_log import ErrorLog
@@ -40,9 +40,7 @@ class AdminService:
             tier_query = select(Organization.tier, func.count(Organization.id).label("count")).group_by(Organization.tier)
 
             result = await db.execute(tier_query)
-            tier_counts: Dict[str, int] = {
-                str(row.tier): int(row._mapping.get("count") or 0) for row in result.fetchall()
-            }
+            tier_counts: Dict[str, int] = {str(row.tier): int(row._mapping.get("count") or 0) for row in result.fetchall()}
 
             total_users = sum(tier_counts.values())
 
@@ -227,6 +225,7 @@ class AdminService:
 
             # TEAM_166: Use SSOT tier config
             from app.core.tier_config import coerce_tier_name, get_tier_features, get_tier_limits
+
             new_tier = coerce_tier_name(new_tier)
 
             raw_features = get_tier_features(new_tier)

@@ -16,7 +16,9 @@ class SignResponse(BaseModel):
     signed_text: str = Field(..., description="Text with embedded C2PA manifest")
     total_sentences: int = Field(..., description="Number of sentences signed")
     verification_url: str = Field(..., description="URL for public verification")
-    publisher_attribution: Optional[str] = Field(None, description="Publisher identity shown on verification (e.g. 'Sarah Chen · Powered by Encypher')")
+    publisher_attribution: Optional[str] = Field(
+        None, description="Publisher identity shown on verification (e.g. 'Sarah Chen · Powered by Encypher')"
+    )
 
     model_config = {
         "json_schema_extra": {

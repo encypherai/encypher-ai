@@ -10,11 +10,12 @@ Legacy names (starter, professional, business) map to free via coerce_tier_name(
 
 from __future__ import annotations
 
-from typing import Any, Dict, Set
+from typing import Any, Dict
 
-from app.core.pricing_constants import COALITION_ENCYPHER_SHARE, COALITION_PUBLISHER_SHARE, DEFAULT_COALITION_REV_SHARE
+from app.core.pricing_constants import (
+    DEFAULT_COALITION_REV_SHARE,
+)
 from app.core.pricing_constants import LICENSING_REV_SHARE as _LICENSING_REV_SHARE
-from app.core.pricing_constants import SELF_SERVICE_ENCYPHER_SHARE, SELF_SERVICE_PUBLISHER_SHARE
 
 # ---------------------------------------------------------------------------
 # Tier names

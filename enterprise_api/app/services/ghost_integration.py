@@ -13,7 +13,6 @@ Also provides a Ghost Admin API client and HTML text extraction/embedding utilit
 """
 
 import hashlib
-import hmac
 import logging
 import re
 import time
@@ -193,21 +192,40 @@ class GhostAdminClient:
 # =============================================================================
 
 # Unicode Variation Selector ranges used by C2PA embeddings
-_VS_PATTERN = re.compile(
-    r"[\uFE00-\uFE0F\uFEFF\U000E0100-\U000E01EF]"
-)
+_VS_PATTERN = re.compile(r"[\uFE00-\uFE0F\uFEFF\U000E0100-\U000E01EF]")
 
 # Ghost Koenig card classes to skip (non-textual)
-_SKIP_CARD_CLASSES = frozenset({
-    "kg-image-card", "kg-gallery-card", "kg-video-card",
-    "kg-audio-card", "kg-embed-card", "kg-code-card", "kg-html-card",
-})
+_SKIP_CARD_CLASSES = frozenset(
+    {
+        "kg-image-card",
+        "kg-gallery-card",
+        "kg-video-card",
+        "kg-audio-card",
+        "kg-embed-card",
+        "kg-code-card",
+        "kg-html-card",
+    }
+)
 
 
-_VOID_ELEMENTS = frozenset({
-    "area", "base", "br", "col", "embed", "hr", "img", "input",
-    "link", "meta", "param", "source", "track", "wbr",
-})
+_VOID_ELEMENTS = frozenset(
+    {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
+)
 
 _TAG_SPLIT_RE = re.compile(r"(<[^>]+>)")
 _TAG_NAME_RE = re.compile(r"^</?\s*([a-zA-Z0-9:_-]+)")
@@ -389,7 +407,7 @@ def merge_badge_injection(existing_foot: Optional[str], badge_script: str) -> st
             # Find the closing </script> after the marker
             end_idx = existing_foot.find("</script>", idx)
             if end_idx >= 0:
-                existing_foot = existing_foot[:idx] + existing_foot[end_idx + len("</script>"):]
+                existing_foot = existing_foot[:idx] + existing_foot[end_idx + len("</script>") :]
             existing_foot = existing_foot.strip()
 
         if existing_foot:
@@ -457,7 +475,7 @@ async def sign_ghost_post(
 
     Returns a dict with success status and signing metadata.
     """
-    from app.schemas.sign_schemas import UnifiedSignRequest, SignOptions
+    from app.schemas.sign_schemas import SignOptions, UnifiedSignRequest
     from app.services.unified_signing_service import execute_unified_signing
 
     # 1. Read post from Ghost
@@ -495,7 +513,11 @@ async def sign_ghost_post(
 
     logger.info(
         "Signing Ghost %s %s (action=%s, text_len=%d, html_len=%d)",
-        post_type, post_id, action_type, len(extracted_text), len(clean_html),
+        post_type,
+        post_id,
+        action_type,
+        len(extracted_text),
+        len(clean_html),
     )
 
     # 6. Build signing request and call internal signing service
@@ -562,12 +584,7 @@ async def sign_ghost_post(
     # 7. Extract signed text from response
     data = sign_result.get("data", {})
     doc_data = data.get("document", {})
-    signed_text = (
-        doc_data.get("signed_text")
-        or doc_data.get("embedded_text")
-        or doc_data.get("embedded_content")
-        or ""
-    )
+    signed_text = doc_data.get("signed_text") or doc_data.get("embedded_text") or doc_data.get("embedded_content") or ""
     document_id = doc_data.get("document_id", unique_doc_id)
     instance_id = doc_data.get("instance_id", "")
     total_segments = doc_data.get("total_segments", 0)
@@ -581,16 +598,17 @@ async def sign_ghost_post(
 
     logger.info(
         "Embedded signed text into Ghost %s %s (html_len=%d → %d)",
-        post_type, post_id, len(clean_html), len(embedded_html),
+        post_type,
+        post_id,
+        len(clean_html),
+        len(embedded_html),
     )
 
     # 9. Prepare update options
     codeinjection_foot = None
     if badge_enabled:
         badge_script = generate_badge_script(document_id, instance_id)
-        codeinjection_foot = merge_badge_injection(
-            post.get("codeinjection_foot"), badge_script
-        )
+        codeinjection_foot = merge_badge_injection(post.get("codeinjection_foot"), badge_script)
 
     # Add #encypher-signed tag if not present
     existing_tags = [{"id": t.get("id"), "name": t.get("name"), "slug": t.get("slug")} for t in tags]
@@ -604,14 +622,18 @@ async def sign_ghost_post(
         if post_type == "page":
             fresh = await ghost_client.read_page(post_id)
             await ghost_client.update_page(
-                post_id, embedded_html, fresh["updated_at"],
+                post_id,
+                embedded_html,
+                fresh["updated_at"],
                 codeinjection_foot=codeinjection_foot,
                 tags=update_tags,
             )
         else:
             fresh = await ghost_client.read_post(post_id)
             await ghost_client.update_post(
-                post_id, embedded_html, fresh["updated_at"],
+                post_id,
+                embedded_html,
+                fresh["updated_at"],
                 codeinjection_foot=codeinjection_foot,
                 tags=update_tags,
             )
@@ -626,7 +648,10 @@ async def sign_ghost_post(
 
     logger.info(
         "Ghost %s %s signed successfully (doc=%s, segments=%d)",
-        post_type, post_id, document_id, total_segments,
+        post_type,
+        post_id,
+        document_id,
+        total_segments,
     )
 
     return {

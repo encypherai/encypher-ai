@@ -72,7 +72,8 @@ async def test_sign_basic_embeds_status_list_assertion() -> None:
     assert called_assertions is not None
     assert any(
         assertion.get("label") == "org.encypher.status"
-        and assertion.get("data", {}).get("statusListCredential") == "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000b04"
+        and assertion.get("data", {}).get("statusListCredential")
+        == "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000b04"
         and str(assertion.get("data", {}).get("statusListIndex")) == "12"
         for assertion in called_assertions
     )

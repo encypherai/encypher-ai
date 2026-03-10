@@ -8,6 +8,10 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.config import settings
 from app.database import get_content_db
 from app.middleware.public_rate_limiter import public_rate_limiter
@@ -23,9 +27,6 @@ from app.schemas.rich_verify_schemas import (
     TextVerificationResult,
 )
 from app.services.image_verification_service import compute_sha256, verify_image_c2pa
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -95,7 +96,7 @@ def _apply_minimal_rich_verify_response(response: RichVerifyResponse) -> RichVer
 @router.post(
     "/verify/image",
     summary="Verify a C2PA-signed image",
-    description=("Public endpoint. Accepts a base64-encoded image, extracts and " "verifies the embedded JUMBF C2PA manifest."),
+    description=("Public endpoint. Accepts a base64-encoded image, extracts and verifies the embedded JUMBF C2PA manifest."),
 )
 async def verify_image(
     payload: ImageVerifyRequest,

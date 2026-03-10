@@ -1,4 +1,4 @@
-from app.schemas.sign_schemas import SignOptions, SignedDocumentResult, UnifiedSignRequest
+from app.schemas.sign_schemas import SignedDocumentResult, SignOptions, UnifiedSignRequest
 from app.services.unified_signing_service import execute_unified_signing
 
 
@@ -18,7 +18,7 @@ def _apply_embedding_plan(visible_text: str, plan: dict) -> str:
 async def _fake_basic_sign(*, document, **kwargs):
     return SignedDocumentResult(
         document_id=document.document_id or "doc_1",
-        signed_text=f"{document.text}\uFE00",
+        signed_text=f"{document.text}\ufe00",
         verification_url="https://verify.encypherai.com/doc_1",
         total_segments=1,
         metadata=document.metadata,
@@ -28,7 +28,7 @@ async def _fake_basic_sign(*, document, **kwargs):
 async def _fake_advanced_sign(*, document, **kwargs):
     return SignedDocumentResult(
         document_id=document.document_id or "doc_1",
-        signed_text=f"{document.text}\uFE00",
+        signed_text=f"{document.text}\ufe00",
         verification_url="https://verify.encypherai.com/doc_1",
         total_segments=1,
         metadata=document.metadata,

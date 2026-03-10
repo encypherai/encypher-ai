@@ -166,9 +166,9 @@ class TestCoalitionEndpoints:
         # TEAM_173: Flat coalition rev share across all tiers (from SSOT)
         expected_shares = {
             "free": DEFAULT_COALITION_PUBLISHER_PERCENT,
-            "starter": DEFAULT_COALITION_PUBLISHER_PERCENT,       # legacy alias → free
+            "starter": DEFAULT_COALITION_PUBLISHER_PERCENT,  # legacy alias → free
             "professional": DEFAULT_COALITION_PUBLISHER_PERCENT,  # legacy alias → free
-            "business": DEFAULT_COALITION_PUBLISHER_PERCENT,      # legacy alias → free
+            "business": DEFAULT_COALITION_PUBLISHER_PERCENT,  # legacy alias → free
             "enterprise": DEFAULT_COALITION_PUBLISHER_PERCENT,
             "strategic_partner": DEFAULT_COALITION_PUBLISHER_PERCENT,
         }

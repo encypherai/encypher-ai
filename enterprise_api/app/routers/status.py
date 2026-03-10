@@ -11,6 +11,7 @@ Provides endpoints for:
 
 import logging
 from typing import Optional
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -21,8 +22,6 @@ from app.database import get_db
 from app.dependencies import get_current_organization
 from app.models.status_list import RevocationReason, StatusListEntry, StatusListMetadata
 from app.services.status_service import status_service
-
-from uuid import UUID
 
 router = APIRouter(prefix="/status", tags=["Status & Revocation"])
 logger = logging.getLogger(__name__)
@@ -248,9 +247,7 @@ async def get_status_list_by_id(
     """
     from sqlalchemy import select
 
-    result = await db.execute(
-        select(StatusListMetadata).where(StatusListMetadata.id == list_id)
-    )
+    result = await db.execute(select(StatusListMetadata).where(StatusListMetadata.id == list_id))
     metadata = result.scalar_one_or_none()
 
     if not metadata:
@@ -269,7 +266,7 @@ async def get_status_list_by_id(
         headers={
             "Cache-Control": "public, max-age=300",
             "Content-Type": "application/json",
-            "ETag": f'"{ metadata.cdn_etag}"' if metadata.cdn_etag else "",
+            "ETag": f'"{metadata.cdn_etag}"' if metadata.cdn_etag else "",
         },
     )
 
@@ -314,7 +311,7 @@ async def get_status_list_legacy(
         headers={
             "Cache-Control": "public, max-age=300",
             "Content-Type": "application/json",
-            "ETag": f'"{ metadata.cdn_etag}"' if metadata.cdn_etag else "",
+            "ETag": f'"{metadata.cdn_etag}"' if metadata.cdn_etag else "",
         },
     )
 

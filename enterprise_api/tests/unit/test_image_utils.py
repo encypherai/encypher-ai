@@ -1,9 +1,9 @@
 """Unit tests for image_utils module."""
+
 import hashlib
 from io import BytesIO
 
 import pytest
-
 from PIL import Image
 
 

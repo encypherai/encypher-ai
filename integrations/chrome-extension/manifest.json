@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Encypher Verify",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Verify who authored any text on the web. Sign your own content with invisible cryptographic watermarks that survive copy-paste.",
   "permissions": [
     "activeTab",

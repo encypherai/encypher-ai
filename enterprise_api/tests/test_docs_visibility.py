@@ -1,6 +1,6 @@
 import pytest
-from fastapi.openapi.utils import get_openapi
 from fastapi import HTTPException
+from fastapi.openapi.utils import get_openapi
 
 from app.dependencies import require_super_admin
 from app.main import app, build_public_docs_html, build_public_openapi

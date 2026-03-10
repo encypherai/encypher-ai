@@ -9,12 +9,12 @@ Orchestrates the full rich article signing pipeline:
 6. Persist CompositeManifest row
 7. Return unified RichSignResponse
 """
+
 import base64
 import logging
 import secrets
 import time
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,21 +48,12 @@ def _get_signer_credentials() -> tuple[str, str]:
         ValueError: If no signer credentials are configured.
     """
     private_key_pem = settings.managed_signer_private_key_pem
-    cert_chain_pem = (
-        settings.managed_signer_certificate_chain_pem
-        or settings.managed_signer_certificate_pem
-    )
+    cert_chain_pem = settings.managed_signer_certificate_chain_pem or settings.managed_signer_certificate_pem
 
     if not private_key_pem:
-        raise ValueError(
-            "managed_signer_private_key_pem is not configured. "
-            "Set MANAGED_SIGNER_PRIVATE_KEY_PEM environment variable."
-        )
+        raise ValueError("managed_signer_private_key_pem is not configured. Set MANAGED_SIGNER_PRIVATE_KEY_PEM environment variable.")
     if not cert_chain_pem:
-        raise ValueError(
-            "managed_signer_certificate_chain_pem is not configured. "
-            "Set MANAGED_SIGNER_CERTIFICATE_CHAIN_PEM environment variable."
-        )
+        raise ValueError("managed_signer_certificate_chain_pem is not configured. Set MANAGED_SIGNER_CERTIFICATE_CHAIN_PEM environment variable.")
 
     return private_key_pem, cert_chain_pem
 
@@ -128,9 +119,7 @@ async def execute_rich_signing(
         signer_private_key_pem, signer_cert_chain_pem = _get_signer_credentials()
     except ValueError as e:
         if settings.image_signing_passthrough:
-            logger.warning(
-                "No signer credentials configured; using passthrough mode for doc=%s", doc_id
-            )
+            logger.warning("No signer credentials configured; using passthrough mode for doc=%s", doc_id)
             signer_private_key_pem, signer_cert_chain_pem = "", ""
         else:
             logger.error("Signer credential error: %s", e)
@@ -140,7 +129,7 @@ async def execute_rich_signing(
                     "code": "E_SIGNER_NOT_CONFIGURED",
                     "message": str(e),
                     "hint": "Set MANAGED_SIGNER_PRIVATE_KEY_PEM / MANAGED_SIGNER_CERTIFICATE_CHAIN_PEM, "
-                            "or set IMAGE_SIGNING_PASSTHROUGH=true for local dev.",
+                    "or set IMAGE_SIGNING_PASSTHROUGH=true for local dev.",
                 },
             )
 

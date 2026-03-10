@@ -45,7 +45,8 @@ class UsageResetResponse(BaseModel):
     reset_at: str
 
 
-from app.core.tier_config import get_tier_limits as _get_tier_limits, coerce_tier_name as _coerce_tier
+from app.core.tier_config import coerce_tier_name as _coerce_tier
+from app.core.tier_config import get_tier_limits as _get_tier_limits
 
 
 def _calculate_metric(used: int, limit: int, name: str) -> UsageMetric:
@@ -276,7 +277,7 @@ async def reset_monthly_usage(
     await db.execute(
         text("""
             UPDATE organizations
-            SET 
+            SET
                 monthly_api_usage = 0,
                 updated_at = :updated_at
             WHERE id = :org_id

@@ -28,7 +28,6 @@ except ImportError:
 
 from app.services.embedding_service import EmbeddingService
 
-
 # Variation selector ranges per C2PA spec
 VS_START = 0xFE00
 VS_END = 0xFE0F
@@ -105,9 +104,7 @@ class TestDocumentLevelC2PAPlacement:
 
         # The visible text should be unchanged
         visible = _visible_text(embedded_document)
-        assert visible == unicodedata.normalize("NFC", text), (
-            "Visible text must match original (NFC-normalized)"
-        )
+        assert visible == unicodedata.normalize("NFC", text), "Visible text must match original (NFC-normalized)"
 
         # The first invisible character must appear AFTER all visible text
         first_invis = _find_first_invisible_index(embedded_document)
@@ -143,11 +140,7 @@ class TestDocumentLevelC2PAPlacement:
 
         # Clean text (wrapper removed) must match original
         expected = unicodedata.normalize("NFC", text)
-        assert clean_text == expected, (
-            f"Clean text after wrapper removal must match original.\n"
-            f"Expected: {expected!r}\n"
-            f"Got:      {clean_text!r}"
-        )
+        assert clean_text == expected, f"Clean text after wrapper removal must match original.\nExpected: {expected!r}\nGot:      {clean_text!r}"
 
     @pytest.mark.asyncio
     async def test_document_level_preserves_newlines(self, service, db_session):
@@ -167,9 +160,7 @@ class TestDocumentLevelC2PAPlacement:
 
         visible = _visible_text(embedded_document)
         expected = unicodedata.normalize("NFC", text)
-        assert visible == expected, (
-            "Document-level signing must preserve newlines and paragraph breaks"
-        )
+        assert visible == expected, "Document-level signing must preserve newlines and paragraph breaks"
 
     @pytest.mark.asyncio
     async def test_document_level_with_custom_assertions(self, service, db_session):
@@ -197,15 +188,11 @@ class TestDocumentLevelC2PAPlacement:
 
         visible = _visible_text(embedded_document)
         expected = unicodedata.normalize("NFC", text)
-        assert visible == expected, (
-            "Custom assertions must not cause visible text changes"
-        )
+        assert visible == expected, "Custom assertions must not cause visible text changes"
 
         first_invis = _find_first_invisible_index(embedded_document)
         visible_length = len(expected)
-        assert first_invis is not None and first_invis >= visible_length, (
-            "Custom assertions must not cause mid-text invisible character insertion"
-        )
+        assert first_invis is not None and first_invis >= visible_length, "Custom assertions must not cause mid-text invisible character insertion"
 
     @pytest.mark.asyncio
     async def test_multi_segment_still_gets_per_segment_embeddings(self, service, db_session):
@@ -226,6 +213,4 @@ class TestDocumentLevelC2PAPlacement:
 
         # Each segment's embedded_text should differ from original (has basic embedding)
         for emb in embeddings:
-            assert len(emb.embedded_text) > len(emb.text_content), (
-                f"Segment '{emb.text_content}' should have per-segment basic embedding"
-            )
+            assert len(emb.embedded_text) > len(emb.text_content), f"Segment '{emb.text_content}' should have per-segment basic embedding"

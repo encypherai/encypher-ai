@@ -60,7 +60,4 @@ class CompositeManifest(Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"<CompositeManifest(document_id={self.document_id!r}, "
-            f"ingredients={self.ingredient_count})>"
-        )
+        return f"<CompositeManifest(document_id={self.document_id!r}, ingredients={self.ingredient_count})>"

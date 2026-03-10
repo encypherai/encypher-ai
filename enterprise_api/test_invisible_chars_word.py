@@ -36,54 +36,48 @@ import unicodedata
 
 CHARS = [
     # --- Confirmed working in Word (baselines) ---
-    ("ZWNJ",    0x200C, "Zero-Width Non-Joiner",           "baseline_good"),
-    ("ZWJ",     0x200D, "Zero-Width Joiner",               "baseline_good"),
-    ("CGJ",     0x034F, "Combining Grapheme Joiner",        "baseline_good"),
-    ("MVS",     0x180E, "Mongolian Vowel Separator",        "baseline_good"),
-
+    ("ZWNJ", 0x200C, "Zero-Width Non-Joiner", "baseline_good"),
+    ("ZWJ", 0x200D, "Zero-Width Joiner", "baseline_good"),
+    ("CGJ", 0x034F, "Combining Grapheme Joiner", "baseline_good"),
+    ("MVS", 0x180E, "Mongolian Vowel Separator", "baseline_good"),
     # --- Confirmed broken in Word (baselines for comparison) ---
-    ("ZWSP",    0x200B, "Zero-Width Space [Word STRIPS]",   "baseline_bad"),
-    ("WJ",      0x2060, "Word Joiner [shows as SPACE]",     "baseline_bad"),
-
+    ("ZWSP", 0x200B, "Zero-Width Space [Word STRIPS]", "baseline_bad"),
+    ("WJ", 0x2060, "Word Joiner [shows as SPACE]", "baseline_bad"),
     # --- Directional format chars ---
-    ("LRM",     0x200E, "Left-to-Right Mark",               "candidate"),
-    ("RLM",     0x200F, "Right-to-Left Mark",               "candidate"),
-
+    ("LRM", 0x200E, "Left-to-Right Mark", "candidate"),
+    ("RLM", 0x200F, "Right-to-Left Mark", "candidate"),
     # --- Invisible math operators (U+2061-U+2064) ---
-    ("FUNC",    0x2061, "Invisible Function Application",   "candidate"),
-    ("ITIMES",  0x2062, "Invisible Times",                  "candidate"),
-    ("ISEP",    0x2063, "Invisible Separator",              "candidate"),
-    ("IPLUS",   0x2064, "Invisible Plus",                   "candidate"),
-
+    ("FUNC", 0x2061, "Invisible Function Application", "candidate"),
+    ("ITIMES", 0x2062, "Invisible Times", "candidate"),
+    ("ISEP", 0x2063, "Invisible Separator", "candidate"),
+    ("IPLUS", 0x2064, "Invisible Plus", "candidate"),
     # --- Deprecated format chars (U+206A-U+206F) ---
-    ("ISS",     0x206A, "Inhibit Symmetric Swapping [deprecated]",         "candidate"),
-    ("ASS",     0x206B, "Activate Symmetric Swapping [deprecated]",        "candidate"),
-    ("IAFS",    0x206C, "Inhibit Arabic Form Shaping [deprecated]",        "candidate"),
-    ("AAFS",    0x206D, "Activate Arabic Form Shaping [deprecated]",       "candidate"),
-    ("NADS",    0x206E, "National Digit Shapes [deprecated]",              "candidate"),
-    ("NODS",    0x206F, "Nominal Digit Shapes [deprecated]",               "candidate"),
-
+    ("ISS", 0x206A, "Inhibit Symmetric Swapping [deprecated]", "candidate"),
+    ("ASS", 0x206B, "Activate Symmetric Swapping [deprecated]", "candidate"),
+    ("IAFS", 0x206C, "Inhibit Arabic Form Shaping [deprecated]", "candidate"),
+    ("AAFS", 0x206D, "Activate Arabic Form Shaping [deprecated]", "candidate"),
+    ("NADS", 0x206E, "National Digit Shapes [deprecated]", "candidate"),
+    ("NODS", 0x206F, "Nominal Digit Shapes [deprecated]", "candidate"),
     # --- Plane 14 tag characters (U+E0020-U+E007E) ---
     # Each is a surrogate pair in UTF-16 (Word's internal encoding).
     # Sampling across the range: space, digits, letters, cancel tag.
-    ("TAG_SP",  0xE0020, "Tag Space (Plane 14)",            "candidate"),
-    ("TAG_0",   0xE0030, "Tag Digit Zero (Plane 14)",       "candidate"),
-    ("TAG_A",   0xE0041, "Tag Latin Capital A (Plane 14)",  "candidate"),
-    ("TAG_a",   0xE0061, "Tag Latin Small A (Plane 14)",    "candidate"),
-    ("TAG_z",   0xE007A, "Tag Latin Small Z (Plane 14)",    "candidate"),
-    ("TAG_END", 0xE007F, "Cancel Tag (Plane 14)",           "candidate"),
-
+    ("TAG_SP", 0xE0020, "Tag Space (Plane 14)", "candidate"),
+    ("TAG_0", 0xE0030, "Tag Digit Zero (Plane 14)", "candidate"),
+    ("TAG_A", 0xE0041, "Tag Latin Capital A (Plane 14)", "candidate"),
+    ("TAG_a", 0xE0061, "Tag Latin Small A (Plane 14)", "candidate"),
+    ("TAG_z", 0xE007A, "Tag Latin Small Z (Plane 14)", "candidate"),
+    ("TAG_END", 0xE007F, "Cancel Tag (Plane 14)", "candidate"),
     # --- Other Cf format chars sometimes overlooked ---
-    ("NADS2",   0x2028, "Line Separator [may cause line break!]",  "candidate"),
-    ("SHY",     0x00AD, "Soft Hyphen [visible at line breaks]",    "candidate"),
-    ("ZWNBSP",  0xFEFF, "Zero-Width No-Break Space / BOM",         "candidate"),
+    ("NADS2", 0x2028, "Line Separator [may cause line break!]", "candidate"),
+    ("SHY", 0x00AD, "Soft Hyphen [visible at line breaks]", "candidate"),
+    ("ZWNBSP", 0xFEFF, "Zero-Width No-Break Space / BOM", "candidate"),
 ]
 
-N = 10            # Number of invisible chars to embed per test line
-SEP = ">>"        # Visible start marker
-END = "<<"        # Visible end marker
-COL_NAME = 16     # Column width for name
-COL_CP   = 10     # Column width for code point
+N = 10  # Number of invisible chars to embed per test line
+SEP = ">>"  # Visible start marker
+END = "<<"  # Visible end marker
+COL_NAME = 16  # Column width for name
+COL_CP = 10  # Column width for code point
 
 
 def unicode_info(codepoint: int) -> str:
@@ -142,8 +136,8 @@ def generate(out=sys.stdout):
 
     sections = [
         ("baseline_good", "BASELINE: confirmed working in Word"),
-        ("baseline_bad",  "BASELINE: confirmed broken in Word (for reference)"),
-        ("candidate",     "CANDIDATES: untested in Word -- this is the research"),
+        ("baseline_bad", "BASELINE: confirmed broken in Word (for reference)"),
+        ("candidate", "CANDIDATES: untested in Word -- this is the research"),
     ]
 
     for cat_key, cat_label in sections:
@@ -202,7 +196,7 @@ def verify(path: str, out=sys.stdout, _text: str | None = None):
                 result = "NO MARKERS"
                 survived = "?"
             else:
-                inner = line[start_idx + len(SEP):end_idx]
+                inner = line[start_idx + len(SEP) : end_idx]
                 try:
                     ch = chr(codepoint)
                     count = sum(1 for c in inner if c == ch)

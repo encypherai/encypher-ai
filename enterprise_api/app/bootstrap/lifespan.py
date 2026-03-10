@@ -2,14 +2,15 @@ import logging
 import sys
 from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+from sqlalchemy import create_engine
+from sqlalchemy import text as sa_text
+
 from app.config import settings
 from app.observability.tracing import setup_tracing, shutdown_tracing
 from app.services.metrics_service import init_metrics_service, shutdown_metrics_service
 from app.services.session_service import session_service
 from app.utils.db_startup import ensure_database_ready
-from fastapi import FastAPI
-from sqlalchemy import create_engine
-from sqlalchemy import text as sa_text
 
 logger = logging.getLogger(__name__)
 

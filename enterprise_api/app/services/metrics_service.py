@@ -8,8 +8,7 @@ Metrics are consumed by the analytics-service for aggregation.
 import asyncio
 import json
 import logging
-import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, cast

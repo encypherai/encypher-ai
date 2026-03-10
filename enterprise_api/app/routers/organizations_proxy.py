@@ -57,10 +57,7 @@ async def _proxy(target_url: str, request: Request) -> Response:
             )
 
         # Forward response headers (skip hop-by-hop)
-        resp_headers = {
-            k: v for k, v in resp.headers.items()
-            if k.lower() not in ("transfer-encoding", "content-encoding", "content-length")
-        }
+        resp_headers = {k: v for k, v in resp.headers.items() if k.lower() not in ("transfer-encoding", "content-encoding", "content-length")}
 
         return Response(
             content=resp.content,

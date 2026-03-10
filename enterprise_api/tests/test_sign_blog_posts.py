@@ -36,11 +36,11 @@ def test_gather_posts_sorts_by_frontmatter_date(tmp_path: Path) -> None:
     newer = tmp_path / "newer.md"
 
     older.write_text(
-        "---\ntitle: \"Older\"\ndate: \"2025-01-01\"\n---\n\nOlder body\n",
+        '---\ntitle: "Older"\ndate: "2025-01-01"\n---\n\nOlder body\n',
         encoding="utf-8",
     )
     newer.write_text(
-        "---\ntitle: \"Newer\"\ndate: \"2026-01-01\"\n---\n\nNewer body\n",
+        '---\ntitle: "Newer"\ndate: "2026-01-01"\n---\n\nNewer body\n',
         encoding="utf-8",
     )
 
@@ -115,7 +115,7 @@ def test_sign_markdown_text_uses_micro_ecc_and_c2pa_defaults() -> None:
         date="2026-02-10",
         metadata={"title": "A", "date": "2026-02-10"},
         body="hello",
-        frontmatter="---\ntitle: \"A\"\ndate: \"2026-02-10\"\n---\n\n",
+        frontmatter='---\ntitle: "A"\ndate: "2026-02-10"\n---\n\n',
     )
 
     signed_text = sign_markdown_text(
@@ -170,7 +170,7 @@ def test_sign_markdown_text_preserves_markdown_formatting() -> None:
         date="2026-02-10",
         metadata={"title": "A", "date": "2026-02-10"},
         body="This is *test* and **test1**.\n\n- list item\n",
-        frontmatter="---\ntitle: \"A\"\ndate: \"2026-02-10\"\n---\n\n",
+        frontmatter='---\ntitle: "A"\ndate: "2026-02-10"\n---\n\n',
     )
 
     merged_text = sign_markdown_text(
@@ -217,7 +217,7 @@ def test_build_signed_markdown_preserves_frontmatter_and_replaces_body() -> None
         date="2026-02-10",
         metadata={"title": "A", "date": "2026-02-10"},
         body="original",
-        frontmatter="---\ntitle: \"A\"\ndate: \"2026-02-10\"\n---\n\n",
+        frontmatter='---\ntitle: "A"\ndate: "2026-02-10"\n---\n\n',
     )
 
     merged = build_signed_markdown(post, "signed-body")

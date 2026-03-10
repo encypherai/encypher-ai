@@ -11,13 +11,12 @@ which calls sign_image() which uses real c2pa signing. Therefore E2E tests for t
 full sign+verify flow require valid SSL.com cert chain env vars and are skipped otherwise.
 Schema/validation tests run without any mocking.
 """
+
 import base64
 from io import BytesIO
 
 import pytest
-import pytest_asyncio
 from httpx import AsyncClient
-
 
 # ============================================================
 # Test helpers
@@ -49,13 +48,15 @@ def b64(data: bytes) -> str:
 def make_article_request(n_images=1, content_format="html"):
     images = []
     for i in range(n_images):
-        images.append({
-            "data": b64(make_test_jpeg()),
-            "filename": f"photo{i + 1}.jpg",
-            "mime_type": "image/jpeg",
-            "position": i,
-            "alt_text": f"Caption {i + 1}",
-        })
+        images.append(
+            {
+                "data": b64(make_test_jpeg()),
+                "filename": f"photo{i + 1}.jpg",
+                "mime_type": "image/jpeg",
+                "position": i,
+                "alt_text": f"Caption {i + 1}",
+            }
+        )
     return {
         "content": "<h1>Test Article</h1><p>First paragraph with important news.</p>",
         "content_format": content_format,
@@ -79,15 +80,17 @@ def make_article_request(n_images=1, content_format="html"):
 
 class TestRichSignRequestValidation:
     def test_no_images_rejected(self):
-        from app.schemas.rich_sign_schemas import RichArticleSignRequest
         import pydantic
+
+        from app.schemas.rich_sign_schemas import RichArticleSignRequest
 
         with pytest.raises(pydantic.ValidationError):
             RichArticleSignRequest(content="text", images=[])
 
     def test_too_many_images_rejected(self):
-        from app.schemas.rich_sign_schemas import RichArticleSignRequest, RichContentImage
         import pydantic
+
+        from app.schemas.rich_sign_schemas import RichArticleSignRequest, RichContentImage
 
         images = []
         for i in range(21):  # 21 exceeds max of 20
@@ -103,8 +106,9 @@ class TestRichSignRequestValidation:
             RichArticleSignRequest(content="text", images=images)
 
     def test_invalid_base64_image_rejected(self):
-        from app.schemas.rich_sign_schemas import RichContentImage
         import pydantic
+
+        from app.schemas.rich_sign_schemas import RichContentImage
 
         with pytest.raises(pydantic.ValidationError):
             RichContentImage(
@@ -115,8 +119,9 @@ class TestRichSignRequestValidation:
             )
 
     def test_unsupported_mime_type_rejected(self):
-        from app.schemas.rich_sign_schemas import RichContentImage
         import pydantic
+
+        from app.schemas.rich_sign_schemas import RichContentImage
 
         with pytest.raises(pydantic.ValidationError):
             RichContentImage(
@@ -127,8 +132,9 @@ class TestRichSignRequestValidation:
             )
 
     def test_image_over_10mb_rejected(self):
-        from app.schemas.rich_sign_schemas import RichContentImage
         import pydantic
+
+        from app.schemas.rich_sign_schemas import RichContentImage
 
         # Create a 10MB+ base64 payload (using repeating bytes to exceed limit)
         big_data = b"x" * (10_485_761)
@@ -157,8 +163,9 @@ class TestRichSignRequestValidation:
 
 class TestImageVerifyRequestValidation:
     def test_requires_image_data(self):
-        from app.schemas.rich_verify_schemas import ImageVerifyRequest
         import pydantic
+
+        from app.schemas.rich_verify_schemas import ImageVerifyRequest
 
         with pytest.raises(pydantic.ValidationError):
             ImageVerifyRequest()  # missing image_data
@@ -172,8 +179,9 @@ class TestImageVerifyRequestValidation:
 
 class TestRichVerifyRequestValidation:
     def test_requires_document_id(self):
-        from app.schemas.rich_verify_schemas import RichVerifyRequest
         import pydantic
+
+        from app.schemas.rich_verify_schemas import RichVerifyRequest
 
         with pytest.raises(pydantic.ValidationError):
             RichVerifyRequest()
@@ -181,15 +189,17 @@ class TestRichVerifyRequestValidation:
 
 class TestImageAttributionRequestValidation:
     def test_requires_image_data_or_phash(self):
-        from app.schemas.image_attribution_schemas import ImageAttributionRequest
         import pydantic
+
+        from app.schemas.image_attribution_schemas import ImageAttributionRequest
 
         with pytest.raises((pydantic.ValidationError, ValueError)):
             ImageAttributionRequest(threshold=10, scope="org")
 
     def test_rejects_both_image_data_and_phash(self):
-        from app.schemas.image_attribution_schemas import ImageAttributionRequest
         import pydantic
+
+        from app.schemas.image_attribution_schemas import ImageAttributionRequest
 
         with pytest.raises((pydantic.ValidationError, ValueError)):
             ImageAttributionRequest(
@@ -206,8 +216,9 @@ class TestImageAttributionRequestValidation:
         assert req.phash == "a" * 16
 
     def test_threshold_bounds(self):
-        from app.schemas.image_attribution_schemas import ImageAttributionRequest
         import pydantic
+
+        from app.schemas.image_attribution_schemas import ImageAttributionRequest
 
         # Valid bounds
         ImageAttributionRequest(phash="a" * 16, threshold=0, scope="org")
@@ -307,9 +318,7 @@ async def test_sign_rich_invalid_mime_type_returns_422(async_client: AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_sign_rich_trustmark_blocked_for_free_tier(
-    async_client: AsyncClient, starter_auth_headers: dict
-):
+async def test_sign_rich_trustmark_blocked_for_free_tier(async_client: AsyncClient, starter_auth_headers: dict):
     req = make_article_request(n_images=1)
     req["options"]["enable_trustmark"] = True
     resp = await async_client.post(
@@ -321,9 +330,7 @@ async def test_sign_rich_trustmark_blocked_for_free_tier(
 
 
 @pytest.mark.asyncio
-async def test_attribution_scope_all_blocked_for_free_tier(
-    async_client: AsyncClient, starter_auth_headers: dict
-):
+async def test_attribution_scope_all_blocked_for_free_tier(async_client: AsyncClient, starter_auth_headers: dict):
     resp = await async_client.post(
         "/api/v1/enterprise/images/attribution",
         json={"phash": "a" * 16, "scope": "all"},
@@ -333,9 +340,7 @@ async def test_attribution_scope_all_blocked_for_free_tier(
 
 
 @pytest.mark.asyncio
-async def test_attribution_scope_org_allowed_for_free_tier(
-    async_client: AsyncClient, starter_auth_headers: dict
-):
+async def test_attribution_scope_org_allowed_for_free_tier(async_client: AsyncClient, starter_auth_headers: dict):
     resp = await async_client.post(
         "/api/v1/enterprise/images/attribution",
         json={"phash": "a" * 16, "scope": "org"},
@@ -348,9 +353,7 @@ async def test_attribution_scope_org_allowed_for_free_tier(
 
 
 @pytest.mark.asyncio
-async def test_attribution_invalid_phash_hex_returns_400(
-    async_client: AsyncClient, starter_auth_headers: dict
-):
+async def test_attribution_invalid_phash_hex_returns_400(async_client: AsyncClient, starter_auth_headers: dict):
     resp = await async_client.post(
         "/api/v1/enterprise/images/attribution",
         json={"phash": "not-valid-hex", "scope": "org"},

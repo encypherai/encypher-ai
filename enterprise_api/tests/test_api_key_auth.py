@@ -7,10 +7,11 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import httpx
 import pytest
+from fastapi import HTTPException
+
 from app.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
 from app.dependencies import require_embedding_permission
 from app.middleware.api_key_auth import _normalize_service_base_url, authenticate_api_key, get_api_key_from_header, require_verification_permission
-from fastapi import HTTPException
 
 
 class TestGetAPIKeyFromHeader:

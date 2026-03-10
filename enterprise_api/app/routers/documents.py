@@ -15,8 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_content_db, get_db
 from app.dependencies import get_current_organization
-from app.services.status_service import status_service
 from app.models.status_list import RevocationReason
+from app.services.status_service import status_service
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 logger = logging.getLogger(__name__)
@@ -150,7 +150,7 @@ async def list_documents(
     # Get documents
     result = await content_db.execute(
         text(f"""
-            SELECT 
+            SELECT
                 id AS document_id, title, document_type,
                 created_at
             FROM documents
@@ -224,7 +224,7 @@ async def get_document(
     result = await content_db.execute(
         text(
             """
-            SELECT 
+            SELECT
                 id AS document_id, title, document_type, url,
                 created_at
             FROM documents
@@ -407,7 +407,7 @@ async def delete_document(
     # Soft delete by marking as deleted
     await content_db.execute(
         text("""
-            UPDATE documents 
+            UPDATE documents
             SET deleted = true, deleted_at = :now
             WHERE id = :doc_id AND organization_id = :org_id
         """),

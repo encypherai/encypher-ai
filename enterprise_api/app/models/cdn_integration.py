@@ -8,7 +8,7 @@ Stores per-organization CDN webhook configuration for passive log ingestion
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, String, Text, TIMESTAMP
+from sqlalchemy import TIMESTAMP, Boolean, Column, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.database import Base
@@ -50,9 +50,4 @@ class CdnIntegration(Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"<CdnIntegration("
-            f"org={self.organization_id}, "
-            f"provider={self.provider}, "
-            f"enabled={self.enabled})>"
-        )
+        return f"<CdnIntegration(org={self.organization_id}, provider={self.provider}, enabled={self.enabled})>"

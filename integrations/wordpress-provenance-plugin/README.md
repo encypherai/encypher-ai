@@ -8,26 +8,49 @@ This plugin brings Encypher's C2PA signing and verification workflow into the Wo
 wordpress-provenance-plugin/
 |- README.md
 |- docker-compose.yml
+|- docs/
+|  |- wordpress-ai-integration.md   ← WordPress/ai integration guide
+|  |- experiments/
+|     |- content-provenance.md      ← Upstream PR spec for WordPress/ai
+|     |- Content_Provenance.php     ← Draft experiment class for upstream PR
 |- plugin/
    |- encypher-provenance/
       |- assets/
       |   |- css/
       |   |   |- editor.css
+      |   |   |- bulk-mark.css
+      |   |   |- settings-page.css
+      |   |   |- frontend.css
+      |   |   |- coalition-widget.css
+      |   |   |- wordpress-ai-provenance.css  ← WordPress/ai sidebar panel styles
       |   |- js/
+      |       |- editor-sidebar.js            ← Gutenberg provenance status panel
+      |       |- wordpress-ai-provenance.js   ← WordPress/ai AI content shield badge
+      |       |- bulk-mark.js
+      |       |- settings-page.js
       |       |- classic-meta-box.js
-      |       |- editor-sidebar.js
+      |       |- editor-embedding-nav.js
       |- includes/
-      |   |- class-encypher-provenance-admin.php
-      |   |- class-encypher-provenance-rest.php
-      |   |- class-encypher-provenance-verification.php
-      |   |- class-encypher-provenance.php
+      |   |- class-encypher-provenance.php              ← Main bootstrap
+      |   |- class-encypher-provenance-admin.php        ← Settings UI, editor enqueue
+      |   |- class-encypher-provenance-rest.php         ← REST endpoints
+      |   |- class-encypher-provenance-verification.php ← Verification hooks
+      |   |- class-encypher-provenance-bulk.php         ← Bulk signing
+      |   |- class-encypher-provenance-frontend.php     ← Public badge
+      |   |- class-encypher-provenance-coalition.php    ← Coalition dashboard + enrollment
+      |   |- class-encypher-provenance-html-parser.php  ← HTML→text extraction
+      |   |- class-encypher-provenance-error-log.php    ← Error log
+      |   |- class-encypher-sign-ability.php            ← WordPress Abilities API: encypher/sign
+      |   |- class-encypher-verify-ability.php          ← WordPress Abilities API: encypher/verify
+      |   |- class-encypher-provenance-wordpress-ai.php ← WordPress/ai compat layer
       |- encypher-provenance.php
 ```
 
-- `encypher-provenance.php` - plugin bootstrap and registration logic.
-- `includes/` - PHP classes that expose REST endpoints, provide settings screens, and run verification hooks.
-- `assets/js/` - Gutenberg sidebar and Classic Editor integrations for signing content.
-- `assets/css/` - shared styling for WordPress admin surfaces.
+- `encypher-provenance.php` — plugin entry point, constants, and singleton bootstrap.
+- `includes/` — PHP classes for REST endpoints, settings UI, verification, bulk signing, frontend badge, Coalition, WordPress/ai compatibility, and WordPress Abilities API registration.
+- `assets/js/` — Gutenberg sidebar, WordPress/ai AI Content Provenance panel, bulk signing UI, settings page, and Classic Editor meta box.
+- `assets/css/` — admin and frontend styles.
+- `docs/` — integration guides and upstream PR draft for the WordPress/ai experiment framework.
 
 ## Enterprise API Integration
 
@@ -40,11 +63,11 @@ Both endpoints and their request/response shapes are described in detail in the 
 
 ### C2PA Provenance Chain Features
 
-✅ **Automatic Action Detection**: `c2pa.created` on initial publish, `c2pa.edited` on updates  
-✅ **Ingredient References**: Each edit includes the previous version's complete manifest  
-✅ **Original Creation Date**: Preserved through the entire edit history  
-✅ **Provenance Chain Viewer**: Visual display of complete edit history in verification modal  
-✅ **Copy Button**: Export full JSON manifest with one click  
+✅ **Automatic Action Detection**: `c2pa.created` on initial publish, `c2pa.edited` on updates
+✅ **Ingredient References**: Each edit includes the previous version's complete manifest
+✅ **Original Creation Date**: Preserved through the entire edit history
+✅ **Provenance Chain Viewer**: Visual display of complete edit history in verification modal
+✅ **Copy Button**: Export full JSON manifest with one click
 ✅ **No Double-Signing**: Smart caching prevents unnecessary re-signing
 
 ### Advanced Features (Pro/Enterprise)
@@ -71,28 +94,65 @@ The plugin adapts its capabilities based on your Encypher workspace tier:
 *   **Pro Tier**: For professional publishers. Connect your own signing key (BYOK), enable sentence-level attribution (Merkle trees), and process large archives.
 *   **Enterprise Tier**: For large organizations. High-volume API limits, HSM-backed keys, and multi-site support.
 
-## New User Onboarding (Free API Key Flow)
+## New User Onboarding (Email Connect Flow)
 
-1. Visit `https://dashboard.encypherai.com/signup` and create a free Encypher account. The starter tier issues a sandbox key suitable for testing the plugin.
-2. Verify your email, then open **Enterprise API > API Keys** in the dashboard and click **Generate Key**. Copy the issued value (`encypher_test_...`).
-3. Optionally request production access from the dashboard if you need higher quotas or SSL.com certificates provisioned.
-4. Store the API key securely. WordPress administrators will paste it into the plugin settings in the next step.
+1. Visit `https://dashboard.encypherai.com/signup` and create an Encypher account if you do not already have one.
+2. Install and activate the WordPress plugin.
+3. Open **Encypher > Settings** in WordPress, enter your work email, and click **Email me a secure connect link**.
+4. Open the secure email from Encypher and approve the WordPress site connection in the browser.
+5. Return to WordPress and keep the settings page open for a few seconds while the plugin polls for completion and stores the provisioned API key automatically.
 
-For local development without dashboard access you can run the Enterprise API service from this repository and use the `DEMO_API_KEY` described in [`enterprise_api/.env.example`](../../../enterprise_api/.env.example).
+If your team already manages Encypher API credentials outside the guided onboarding flow, the plugin still supports manual API key entry.
 
 ## Configuration & Usage
 
 1. Copy `plugin/encypher-provenance` into a WordPress installation under `wp-content/plugins/`.
 2. Activate **Encypher Provenance** in the WordPress admin dashboard.
-3. Go to **Encypher > Settings** and set:
-   - **API Base URL:** `https://api.encypherai.com/api/v1` (or your self-hosted Enterprise API endpoint).
-   - **API Key:** paste the key generated during onboarding.
-4. In the Gutenberg editor, open the **Encypher Provenance** panel to sign your draft. The Classic Editor uses the provided meta box. Each signing request produces C2PA-compliant wrapped text that replaces the post body contents.
-5. When posts load on the public site the plugin replays `POST /api/v1/verify` and displays a badge summarising the verification result.
+3. Go to **Encypher > Settings** and either:
+   - enter your work email and use the secure email connect flow to provision the API key automatically, or
+   - paste an existing API key manually.
+4. Confirm the **API Base URL** is `https://api.encypherai.com/api/v1` (or your self-hosted Enterprise API endpoint).
+5. In the Gutenberg editor, open the **Encypher Provenance** panel to sign your draft. The Classic Editor uses the provided meta box. Each signing request produces C2PA-compliant wrapped text that replaces the post body contents.
+6. When posts load on the public site the plugin replays `POST /api/v1/verify` and displays a badge summarising the verification result.
+
+## WordPress/ai Integration
+
+The plugin integrates with the [WordPress/ai plugin](https://github.com/WordPress/ai) ("AI Experiments") — the official canonical WordPress AI framework on a path toward WordPress core.
+
+When both plugins are active and **WordPress/ai Integration** is enabled in Encypher settings, all AI-generated content is automatically signed with C2PA provenance before it's committed to a post:
+
+| WordPress/ai Experiment | Signed? |
+|---|---|
+| Title Generation | ✅ |
+| Excerpt Generation | ✅ |
+| Summarization | ✅ |
+| Review Notes | ✅ |
+| Alt Text | ✅ |
+
+### Components
+
+- **Compat layer** (`class-encypher-provenance-wordpress-ai.php`) — hooks into all 5 experiment output filters, calls `/api/v1/sign`, stores signed experiment records in post meta.
+- **WordPress Abilities API** (`class-encypher-sign-ability.php`, `class-encypher-verify-ability.php`) — registers `encypher/sign` and `encypher/verify` as first-class abilities callable by any plugin via `wp_do_ability()`.
+- **AI Content Provenance sidebar** (`assets/js/wordpress-ai-provenance.js`) — Gutenberg panel with a shield badge (green/yellow/red/grey) showing provenance status for AI-generated content in the current post.
+- **REST endpoint** `GET encypher-provenance/v1/wordpress-ai-status?post_id=N` — returns `{ status, details: { experiments } }` consumed by the sidebar panel.
+- **Coalition auto-enrollment** — when the Coalition toggle is enabled in settings, the site is automatically enrolled in the Encypher Coalition on the first save.
+
+### Setup
+
+1. Install and activate the WordPress/ai plugin.
+2. Go to **Encypher > Settings** and enable **WordPress/ai Integration**.
+3. Optionally enable **Coalition Auto-Enrollment**.
+4. AI-generated content is now auto-signed. The "AI Content Provenance" sidebar panel in the block editor shows live status.
+
+See [`docs/wordpress-ai-integration.md`](./docs/wordpress-ai-integration.md) for full details and [`docs/experiments/content-provenance.md`](./docs/experiments/content-provenance.md) for the upstream PR spec.
+
+---
 
 ## Local Docker Environment
 
 A `docker-compose.yml` is provided so you can run WordPress, MySQL, PostgreSQL, and the Enterprise API together for local testing.
+
+For the full internal local-development setup, testing credentials, and Docker workflow, use [`LOCAL_TESTING_GUIDE.md`](./LOCAL_TESTING_GUIDE.md). The steps below are a lightweight overview only.
 
 1. Build and start the stack:
    ```bash
@@ -114,10 +174,7 @@ A `docker-compose.yml` is provided so you can run WordPress, MySQL, PostgreSQL, 
    ```bash
    docker compose run --rm wp-cli plugin activate encypher-provenance
    ```
-4. Sign in at `http://localhost:8085/wp-admin`, choose **Encypher > Settings**, and configure:
-   - **API Base URL:** `http://enterprise-api:8000/api/v1`
-   - **API Key:** `demo-local-key`
-   - Enable automatic verification if desired.
+4. Sign in at `http://localhost:8085/wp-admin`, choose **Encypher > Settings**, and configure the local API endpoint described in [`LOCAL_TESTING_GUIDE.md`](./LOCAL_TESTING_GUIDE.md).
 5. Create or edit posts as usual. Signing requests now hit the containerised Enterprise API service.
 
 Stop the stack with:

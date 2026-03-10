@@ -31,7 +31,6 @@ except ImportError:
 
 from app.models.content_reference import ContentReference
 from app.utils.embedding_signature import compute_signature_hash
-from app.services.status_service import status_service
 
 logger = logging.getLogger(__name__)
 
@@ -431,8 +430,7 @@ class EmbeddingService:
                 merkle_assertion_data["segmentation_level"] = merkle_segmentation_level
 
             has_merkle_assertion = any(
-                isinstance(assertion, dict) and assertion.get("label") == "com.encypher.merkle.v1"
-                for assertion in final_custom_assertions
+                isinstance(assertion, dict) and assertion.get("label") == "com.encypher.merkle.v1" for assertion in final_custom_assertions
             )
             if not has_merkle_assertion:
                 final_custom_assertions.append(
@@ -500,7 +498,11 @@ class EmbeddingService:
 
             logger.info(
                 "Using micro manifest mode for document %s (ecc=%s, legacy_safe=%s, embed_c2pa=%s, %d chars/segment)",
-                document_id, use_ecc, use_legacy_safe, use_embed_c2pa, chars_per_segment,
+                document_id,
+                use_ecc,
+                use_legacy_safe,
+                use_embed_c2pa,
+                chars_per_segment,
             )
 
             try:
@@ -508,29 +510,53 @@ class EmbeddingService:
                 if use_legacy_safe and use_ecc:
                     from app.utils.legacy_safe_rs_crypto import (
                         create_marker as micro_create,
+                    )
+                    from app.utils.legacy_safe_rs_crypto import (
                         derive_signing_key_from_private_key as micro_derive_key,
+                    )
+                    from app.utils.legacy_safe_rs_crypto import (
                         embed_marker_safely as micro_embed_safely,
+                    )
+                    from app.utils.legacy_safe_rs_crypto import (
                         generate_log_id as micro_generate_log_id,
                     )
                 elif use_legacy_safe:
                     from app.utils.legacy_safe_crypto import (
                         create_marker as micro_create,
+                    )
+                    from app.utils.legacy_safe_crypto import (
                         derive_signing_key_from_private_key as micro_derive_key,
+                    )
+                    from app.utils.legacy_safe_crypto import (
                         embed_marker_safely as micro_embed_safely,
+                    )
+                    from app.utils.legacy_safe_crypto import (
                         generate_log_id as micro_generate_log_id,
                     )
                 elif use_ecc:
                     from app.utils.vs256_rs_crypto import (
                         create_signed_marker as micro_create,
+                    )
+                    from app.utils.vs256_rs_crypto import (
                         derive_signing_key_from_private_key as micro_derive_key,
+                    )
+                    from app.utils.vs256_rs_crypto import (
                         embed_signature_safely as micro_embed_safely,
+                    )
+                    from app.utils.vs256_rs_crypto import (
                         generate_log_id as micro_generate_log_id,
                     )
                 else:
                     from app.utils.vs256_crypto import (
                         create_signed_marker as micro_create,
+                    )
+                    from app.utils.vs256_crypto import (
                         derive_signing_key_from_private_key as micro_derive_key,
+                    )
+                    from app.utils.vs256_crypto import (
                         embed_signature_safely as micro_embed_safely,
+                    )
+                    from app.utils.vs256_crypto import (
                         generate_log_id as micro_generate_log_id,
                     )
 
@@ -566,9 +592,7 @@ class EmbeddingService:
                 # ATX headings).  When original_text is available, use it as the reference
                 # for inter-segment separators; otherwise fall back to space-joining.
                 if original_text is not None:
-                    full_document = EmbeddingService._reconstruct_with_separators(
-                        original_text, segments, micro_embedded_segments
-                    )
+                    full_document = EmbeddingService._reconstruct_with_separators(original_text, segments, micro_embedded_segments)
                 else:
                     full_document = " ".join(micro_embedded_segments)
 
@@ -630,10 +654,13 @@ class EmbeddingService:
                         ref_any.manifest_data = micro_manifest
                         if hasattr(ref_any, "embedding_metadata"):
                             ref_any.embedding_metadata = ref_any.embedding_metadata or {}
-                            location = sentence_location.get(idx, {
-                                "paragraph_index": 0,
-                                "sentence_in_paragraph": idx,
-                            })
+                            location = sentence_location.get(
+                                idx,
+                                {
+                                    "paragraph_index": 0,
+                                    "sentence_in_paragraph": idx,
+                                },
+                            )
                             ref_any.embedding_metadata["segment_location"] = location
                             ref_any.embedding_metadata["total_segments"] = len(segments)
 
@@ -655,10 +682,13 @@ class EmbeddingService:
                 document_metadata["c2pa_manifest_embedded"] = use_embed_c2pa
 
                 logger.info(
-                    "Successfully embedded micro markers for document %s: "
-                    "%d segments, %d chars each (ecc=%s, legacy_safe=%s, embed_c2pa=%s)",
-                    document_id, len(segments), chars_per_segment,
-                    use_ecc, use_legacy_safe, use_embed_c2pa,
+                    "Successfully embedded micro markers for document %s: %d segments, %d chars each (ecc=%s, legacy_safe=%s, embed_c2pa=%s)",
+                    document_id,
+                    len(segments),
+                    chars_per_segment,
+                    use_ecc,
+                    use_legacy_safe,
+                    use_embed_c2pa,
                 )
             except Exception as e:
                 logger.error("Failed to embed micro markers: %s", e)
@@ -818,9 +848,7 @@ class EmbeddingService:
             manifest_uuid = custom_metadata.get("manifest_uuid")
             if manifest_uuid:
                 result = await db.execute(
-                    select(ContentReference).where(
-                        ContentReference.embedding_metadata["manifest_uuid"].as_string() == manifest_uuid
-                    )
+                    select(ContentReference).where(ContentReference.embedding_metadata["manifest_uuid"].as_string() == manifest_uuid)
                 )
                 reference = result.scalar_one_or_none()
                 if reference:

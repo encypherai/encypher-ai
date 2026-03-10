@@ -15,15 +15,15 @@ import httpx
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.rights_templates import get_template
+from app.database import get_db
 from app.dependencies import require_sign_permission
 from app.schemas.api_response import ErrorCode
 from app.services.auth_service_client import auth_service_client
 from app.services.rights_service import rights_service
-from app.database import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -79,10 +79,10 @@ async def _send_partner_claim_email(
         f"<strong>{safe_publisher}</strong> through Encypher.</p>"
         f"<p>Every article published through {safe_partner}'s platform now carries a "
         "tamper-evident C2PA signature that protects your intellectual property rights.</p>"
-        f"<p><a href=\"{safe_claim_url}\">Claim your account and view your rights settings</a></p>"
+        f'<p><a href="{safe_claim_url}">Claim your account and view your rights settings</a></p>'
         "<p>If you don't click anything, your content is still protected.</p>"
         "<hr />"
-        "<p style=\"font-size:12px;color:#888\">Powered by Encypher. "
+        '<p style="font-size:12px;color:#888">Powered by Encypher. '
         "If you believe this email was sent in error, you may safely ignore it.</p>"
     )
 
@@ -220,11 +220,13 @@ async def bulk_provision_publishers(
         domain = prov.get("domain")
 
         if not pub_org_id:
-            failed_results.append({
-                "org_name": org_name,
-                "contact_email": contact_email,
-                "error": "No org_id returned from auth service",
-            })
+            failed_results.append(
+                {
+                    "org_name": org_name,
+                    "contact_email": contact_email,
+                    "error": "No org_id returned from auth service",
+                }
+            )
             continue
 
         # Step 2: Create rights profile for this publisher
@@ -265,13 +267,15 @@ async def bulk_provision_publishers(
             )
 
         claim_url = f"{dashboard_url}/invite/{invitation_token}" if invitation_token else None
-        provisioned_results.append({
-            "org_id": pub_org_id,
-            "org_name": org_name,
-            "claim_url": claim_url,
-            "rights_profile_version": rights_profile_version,
-            "domain": domain,
-        })
+        provisioned_results.append(
+            {
+                "org_id": pub_org_id,
+                "org_name": org_name,
+                "claim_url": claim_url,
+                "rights_profile_version": rights_profile_version,
+                "domain": domain,
+            }
+        )
 
     return JSONResponse(
         status_code=200,

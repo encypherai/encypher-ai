@@ -12,12 +12,9 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.schemas.api_response import (
-    BATCH_LIMITS,
-    FEATURE_REGISTRY,
     TierName,
     get_batch_limit,
     is_feature_available,
-    tier_at_least,
 )
 from app.schemas.signing_constants import (
     C2PA_ACTIONS,
@@ -28,14 +25,14 @@ from app.schemas.signing_constants import (
     SEGMENTATION_LEVELS,
 )
 
-
 # =============================================================================
 # Rights Metadata (reused from existing)
 # =============================================================================
 
+
 class RightsMetadata(BaseModel):
     """Rights and licensing metadata to embed in signed content."""
-    
+
     copyright_holder: Optional[str] = Field(
         default=None,
         max_length=255,
@@ -68,7 +65,7 @@ class RightsMetadata(BaseModel):
 
 class LicenseInfo(BaseModel):
     """License information for content."""
-    
+
     type: str = Field(..., description="License type (e.g., 'All Rights Reserved', 'CC-BY-4.0')")
     url: Optional[str] = Field(None, description="License URL")
     contact_email: Optional[str] = Field(None, description="Contact email for licensing")
@@ -78,9 +75,10 @@ class LicenseInfo(BaseModel):
 # Embedding Options
 # =============================================================================
 
+
 class EmbeddingOptions(BaseModel):
     """Options for embedding generation output format."""
-    
+
     format: str = Field(
         default="plain",
         description="Output format: plain, html, markdown, json",
@@ -115,10 +113,11 @@ class EmbeddingOptions(BaseModel):
 # Sign Options - Tier-Gated Features
 # =============================================================================
 
+
 class SignOptions(BaseModel):
     """
     Options for signing - features are gated by tier.
-    
+
     Tier Feature Matrix:
 
     | Feature                  | Free | Enterprise |
@@ -138,7 +137,7 @@ class SignOptions(BaseModel):
     | word segmentation        | no   | yes        |
     | batch (documents array)  | 10   | 100        |
     """
-    
+
     # === Free Tier (All) ===
     document_type: str = Field(
         default="article",
@@ -160,7 +159,7 @@ class SignOptions(BaseModel):
         default=None,
         description="IPTC digital source type URI (e.g., for AI-generated content)",
     )
-    
+
     # === Free Tier (signing + segmentation + manifest modes + rights) ===
     segmentation_level: str = Field(
         default="document",
@@ -226,7 +225,7 @@ class SignOptions(BaseModel):
         default=None,
         description="Optional list of C2PA action assertions (Free)",
     )
-    
+
     # === Enterprise ===
     add_dual_binding: bool = Field(
         default=False,
@@ -252,7 +251,7 @@ class SignOptions(BaseModel):
         default=True,
         description="Persist generated C2PA manifest in content DB for DB-backed verification. Applies to all modes that generate a manifest.",
     )
-    
+
     # === Output Options ===
     embedding_options: EmbeddingOptions = Field(
         default_factory=EmbeddingOptions,
@@ -327,9 +326,10 @@ class SignOptions(BaseModel):
 # Single Document for Batch
 # =============================================================================
 
+
 class SignDocument(BaseModel):
     """A single document in a batch sign request."""
-    
+
     text: str = Field(
         ...,
         description="Content to sign",
@@ -362,10 +362,11 @@ class SignDocument(BaseModel):
 # Unified Sign Request
 # =============================================================================
 
+
 class UnifiedSignRequest(BaseModel):
     """
     Unified sign request supporting single document or batch.
-    
+
     For single document signing:
     ```json
     {
@@ -376,7 +377,7 @@ class UnifiedSignRequest(BaseModel):
         }
     }
     ```
-    
+
     For batch signing (up to 10 documents Free, up to 100 Enterprise):
     ```json
     {
@@ -390,7 +391,7 @@ class UnifiedSignRequest(BaseModel):
     }
     ```
     """
-    
+
     # Single document fields
     text: Optional[str] = Field(
         default=None,
@@ -418,13 +419,13 @@ class UnifiedSignRequest(BaseModel):
         default=None,
         description="Optional document metadata",
     )
-    
+
     # Batch mode
     documents: Optional[List[SignDocument]] = Field(
         default=None,
         description="List of documents for batch signing (up to 10 Free, up to 100 Enterprise)",
     )
-    
+
     # Options (tier-gated)
     options: SignOptions = Field(
         default_factory=SignOptions,
@@ -435,8 +436,7 @@ class UnifiedSignRequest(BaseModel):
     publisher_org_id: Optional[str] = Field(
         default=None,
         description=(
-            "Platform partner only (strategic_partner tier): sign on behalf of this "
-            "publisher organization. Publisher's quota and rate limits apply."
+            "Platform partner only (strategic_partner tier): sign on behalf of this publisher organization. Publisher's quota and rate limits apply."
         ),
         max_length=128,
     )
@@ -446,13 +446,13 @@ class UnifiedSignRequest(BaseModel):
         """Ensure either text or documents is provided, not both."""
         has_text = self.text is not None
         has_documents = self.documents is not None and len(self.documents) > 0
-        
+
         if not has_text and not has_documents:
             raise ValueError("Either 'text' (single document) or 'documents' (batch) must be provided")
-        
+
         if has_text and has_documents:
             raise ValueError("Cannot provide both 'text' and 'documents'. Use 'text' for single document or 'documents' for batch.")
-        
+
         return self
 
     def is_batch(self) -> bool:
@@ -463,7 +463,7 @@ class UnifiedSignRequest(BaseModel):
         """Get list of documents (converts single to list if needed)."""
         if self.is_batch():
             return self.documents or []
-        
+
         # Convert single document to list
         return [
             SignDocument(
@@ -505,9 +505,10 @@ class UnifiedSignRequest(BaseModel):
 # Tier Validation Helper
 # =============================================================================
 
+
 class TierValidationResult(BaseModel):
     """Result of tier validation for sign options."""
-    
+
     valid: bool = Field(..., description="Whether all options are valid for the tier")
     features_used: List[str] = Field(default_factory=list, description="Features being used")
     features_denied: List[Dict[str, str]] = Field(
@@ -528,163 +529,187 @@ def validate_sign_options_for_tier(
 ) -> TierValidationResult:
     """
     Validate sign options against tier requirements.
-    
+
     Returns validation result with list of denied features if any.
     Sentence segmentation and all manifest modes are available on the Free tier.
     """
     features_used: List[str] = ["basic_signing"]
     features_denied: List[Dict[str, str]] = []
-    
+
     # Normalize tier
     tier_normalized = tier.lower().replace("-", "_")
-    
+
     # TEAM_166: Free tier has access to all segmentation levels except word.
     # NMA special-casing removed — free tier already has these features.
-    
+
     # Check segmentation level
     if options.segmentation_level != "document":
         if options.segmentation_level == "word":
             if not is_feature_available("word_segmentation", tier_normalized):
-                features_denied.append({
-                    "feature": "word_segmentation",
-                    "display_name": "Word-Level Segmentation",
-                    "required_tier": TierName.ENTERPRISE,
-                    "requested_value": options.segmentation_level,
-                })
+                features_denied.append(
+                    {
+                        "feature": "word_segmentation",
+                        "display_name": "Word-Level Segmentation",
+                        "required_tier": TierName.ENTERPRISE,
+                        "requested_value": options.segmentation_level,
+                    }
+                )
             else:
                 features_used.append("word_segmentation")
         else:
             feature_name = f"{options.segmentation_level}_segmentation"
             if not is_feature_available(feature_name, tier_normalized):
-                features_denied.append({
-                    "feature": feature_name,
-                    "display_name": f"{options.segmentation_level.title()}-Level Segmentation",
-                    "required_tier": TierName.FREE,
-                    "requested_value": options.segmentation_level,
-                })
+                features_denied.append(
+                    {
+                        "feature": feature_name,
+                        "display_name": f"{options.segmentation_level.title()}-Level Segmentation",
+                        "required_tier": TierName.FREE,
+                        "requested_value": options.segmentation_level,
+                    }
+                )
             else:
                 features_used.append(feature_name)
-    
+
     # Check manifest mode
     if options.manifest_mode != "full":
         if not is_feature_available("manifest_modes", tier_normalized):
-            features_denied.append({
-                "feature": "manifest_modes",
-                "display_name": "Advanced Manifest Modes",
-                "required_tier": TierName.FREE,
-                "requested_value": options.manifest_mode,
-            })
+            features_denied.append(
+                {
+                    "feature": "manifest_modes",
+                    "display_name": "Advanced Manifest Modes",
+                    "required_tier": TierName.FREE,
+                    "requested_value": options.manifest_mode,
+                }
+            )
         else:
             features_used.append("manifest_modes")
-    
+
     # Check embedding strategy
     if options.embedding_strategy != "single_point":
         if not is_feature_available("embedding_strategies", tier_normalized):
-            features_denied.append({
-                "feature": "embedding_strategies",
-                "display_name": "Advanced Embedding Strategies",
-                "required_tier": TierName.FREE,
-                "requested_value": options.embedding_strategy,
-            })
+            features_denied.append(
+                {
+                    "feature": "embedding_strategies",
+                    "display_name": "Advanced Embedding Strategies",
+                    "required_tier": TierName.FREE,
+                    "requested_value": options.embedding_strategy,
+                }
+            )
         else:
             features_used.append("embedding_strategies")
-    
+
     # Check attribution indexing
     if options.index_for_attribution:
         if not is_feature_available("attribution_indexing", tier_normalized):
-            features_denied.append({
-                "feature": "attribution_indexing",
-                "display_name": "Attribution Indexing",
-                "required_tier": TierName.FREE,
-                "requested_value": "true",
-            })
+            features_denied.append(
+                {
+                    "feature": "attribution_indexing",
+                    "display_name": "Attribution Indexing",
+                    "required_tier": TierName.FREE,
+                    "requested_value": "true",
+                }
+            )
         else:
             features_used.append("attribution_indexing")
-    
+
     # Check custom assertions
     if options.custom_assertions:
         if not is_feature_available("custom_assertions", tier_normalized):
-            features_denied.append({
-                "feature": "custom_assertions",
-                "display_name": "Custom C2PA Assertions",
-                "required_tier": TierName.FREE,
-                "requested_value": f"{len(options.custom_assertions)} assertions",
-            })
+            features_denied.append(
+                {
+                    "feature": "custom_assertions",
+                    "display_name": "Custom C2PA Assertions",
+                    "required_tier": TierName.FREE,
+                    "requested_value": f"{len(options.custom_assertions)} assertions",
+                }
+            )
         else:
             features_used.append("custom_assertions")
-    
+
     # Check template
     if options.template_id:
         if not is_feature_available("assertion_templates", tier_normalized):
-            features_denied.append({
-                "feature": "assertion_templates",
-                "display_name": "Assertion Templates",
-                "required_tier": TierName.FREE,
-                "requested_value": options.template_id,
-            })
+            features_denied.append(
+                {
+                    "feature": "assertion_templates",
+                    "display_name": "Assertion Templates",
+                    "required_tier": TierName.FREE,
+                    "requested_value": options.template_id,
+                }
+            )
         else:
             features_used.append("assertion_templates")
-    
+
     # Check rights metadata
     if options.rights:
         if not is_feature_available("rights_metadata", tier_normalized):
-            features_denied.append({
-                "feature": "rights_metadata",
-                "display_name": "Rights Metadata",
-                "required_tier": TierName.FREE,
-                "requested_value": "provided",
-            })
+            features_denied.append(
+                {
+                    "feature": "rights_metadata",
+                    "display_name": "Rights Metadata",
+                    "required_tier": TierName.FREE,
+                    "requested_value": "provided",
+                }
+            )
         else:
             features_used.append("rights_metadata")
-    
+
     # Check dual binding
     if options.add_dual_binding:
         if not is_feature_available("dual_binding", tier_normalized):
-            features_denied.append({
-                "feature": "dual_binding",
-                "display_name": "Dual Binding",
-                "required_tier": TierName.ENTERPRISE,
-                "requested_value": "true",
-            })
+            features_denied.append(
+                {
+                    "feature": "dual_binding",
+                    "display_name": "Dual Binding",
+                    "required_tier": TierName.ENTERPRISE,
+                    "requested_value": "true",
+                }
+            )
         else:
             features_used.append("dual_binding")
-    
+
     # Check fingerprinting
     if options.include_fingerprint:
         if not is_feature_available("fingerprinting", tier_normalized):
-            features_denied.append({
-                "feature": "fingerprinting",
-                "display_name": "Content Fingerprinting",
-                "required_tier": TierName.ENTERPRISE,
-                "requested_value": "true",
-            })
+            features_denied.append(
+                {
+                    "feature": "fingerprinting",
+                    "display_name": "Content Fingerprinting",
+                    "required_tier": TierName.ENTERPRISE,
+                    "requested_value": "true",
+                }
+            )
         else:
             features_used.append("fingerprinting")
 
     # Check print fingerprint (Print Leak Detection)
     if options.enable_print_fingerprint:
         if not is_feature_available("print_fingerprint", tier_normalized):
-            features_denied.append({
-                "feature": "print_fingerprint",
-                "display_name": "Print Leak Detection",
-                "required_tier": TierName.ENTERPRISE,
-                "requested_value": "true",
-            })
+            features_denied.append(
+                {
+                    "feature": "print_fingerprint",
+                    "display_name": "Print Leak Detection",
+                    "required_tier": TierName.ENTERPRISE,
+                    "requested_value": "true",
+                }
+            )
         else:
             features_used.append("print_fingerprint")
 
     # Check batch size
     batch_limit = get_batch_limit(tier_normalized)
     if batch_size > batch_limit:
-        features_denied.append({
-            "feature": "batch_signing",
-            "display_name": "Batch Signing",
-            "required_tier": TierName.ENTERPRISE,
-            "requested_value": f"{batch_size} documents (limit: {batch_limit})",
-        })
+        features_denied.append(
+            {
+                "feature": "batch_signing",
+                "display_name": "Batch Signing",
+                "required_tier": TierName.ENTERPRISE,
+                "requested_value": f"{batch_size} documents (limit: {batch_limit})",
+            }
+        )
     elif batch_size > 1:
         features_used.append("batch_signing")
-    
+
     return TierValidationResult(
         valid=len(features_denied) == 0,
         features_used=features_used,
@@ -695,6 +720,7 @@ def validate_sign_options_for_tier(
 # =============================================================================
 # Sign Response Models
 # =============================================================================
+
 
 class EmbeddingPlanOperation(BaseModel):
     """Single index-based embedding insertion operation."""
@@ -718,7 +744,7 @@ class EmbeddingPlan(BaseModel):
 
 class SignedDocumentResult(BaseModel):
     """Result for a single signed document."""
-    
+
     document_id: str = Field(..., description="Unique document identifier")
     signed_text: str = Field(..., description="Text with embedded C2PA manifest")
     verification_url: str = Field(..., description="URL for public verification")
@@ -726,7 +752,9 @@ class SignedDocumentResult(BaseModel):
     merkle_root: Optional[str] = Field(None, description="Merkle tree root hash (if segmentation enabled)")
     instance_id: Optional[str] = Field(None, description="C2PA manifest instance ID for provenance chain")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
-    publisher_attribution: Optional[str] = Field(None, description="Publisher identity shown on verification (e.g. 'Sarah Chen · Powered by Encypher')")
+    publisher_attribution: Optional[str] = Field(
+        None, description="Publisher identity shown on verification (e.g. 'Sarah Chen · Powered by Encypher')"
+    )
     embedding_plan: Optional[EmbeddingPlan] = Field(
         None,
         description="Optional index-based marker insertion plan (returned when options.return_embedding_plan=true).",
@@ -736,27 +764,27 @@ class SignedDocumentResult(BaseModel):
 class SignResponseData(BaseModel):
     """
     Data payload for sign response.
-    
+
     For single document, `document` contains the result.
     For batch, `documents` contains all results.
     """
-    
+
     # Single document result
     document: Optional[SignedDocumentResult] = Field(
         None,
         description="Signed document result (single mode)",
     )
-    
+
     # Batch results
     documents: Optional[List[SignedDocumentResult]] = Field(
         None,
         description="Signed document results (batch mode)",
     )
-    
+
     # Summary stats
     total_documents: int = Field(..., description="Total documents processed")
     total_segments: int = Field(..., description="Total segments signed across all documents")
-    
+
     # Processing info
     processing_time_ms: Optional[int] = Field(None, description="Total processing time in milliseconds")
 
@@ -765,7 +793,7 @@ class SignResponseData(BaseModel):
 # This allows existing code to continue working
 class LegacySignResponse(BaseModel):
     """Legacy sign response for backward compatibility."""
-    
+
     success: bool = Field(..., description="Whether the operation was successful")
     document_id: str = Field(..., description="Unique document identifier")
     signed_text: str = Field(..., description="Text with embedded C2PA manifest")

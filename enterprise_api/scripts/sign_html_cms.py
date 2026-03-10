@@ -117,7 +117,7 @@ def _get_vs_char_set() -> set[str]:
     from app.utils.vs256_crypto import VS_CHAR_SET
 
     chars = set(VS_CHAR_SET)
-    chars.add("\uFEFF")
+    chars.add("\ufeff")
     return chars
 
 
@@ -142,10 +142,7 @@ def _embed_signed_text_in_element(
         # Collect inter-node VS chars (part of the C2PA manifest) instead
         # of discarding them.  These will be prepended to this text node.
         gap_vs: list[str] = []
-        while cursor < len(signed_text) and (
-            signed_text[cursor] in vs_chars
-            or signed_text[cursor] in " \t\n\r"
-        ):
+        while cursor < len(signed_text) and (signed_text[cursor] in vs_chars or signed_text[cursor] in " \t\n\r"):
             if signed_text[cursor] in vs_chars:
                 gap_vs.append(signed_text[cursor])
             cursor += 1
@@ -172,9 +169,7 @@ def _embed_signed_text_in_element(
             # Attach any collected gap VS chars to the previous node
             if gap_vs and last_replaced_node is not None:
                 current = str(last_replaced_node)
-                last_replaced_node.replace_with(
-                    NavigableString(current + "".join(gap_vs))
-                )
+                last_replaced_node.replace_with(NavigableString(current + "".join(gap_vs)))
             continue
 
         # Consume trailing VS chars
@@ -191,9 +186,7 @@ def _embed_signed_text_in_element(
 
         # Prepend any inter-node VS chars (C2PA manifest fragments)
         gap_prefix = "".join(gap_vs)
-        replacement = NavigableString(
-            leading_ws + gap_prefix + signed_chunk + trailing_ws
-        )
+        replacement = NavigableString(leading_ws + gap_prefix + signed_chunk + trailing_ws)
         nav_str.replace_with(replacement)
         last_replaced_node = replacement
         matched += 1
@@ -207,9 +200,7 @@ def _embed_signed_text_in_element(
 
     if remaining_vs and last_replaced_node is not None:
         current = str(last_replaced_node)
-        last_replaced_node.replace_with(
-            NavigableString(current + "".join(remaining_vs))
-        )
+        last_replaced_node.replace_with(NavigableString(current + "".join(remaining_vs)))
 
     return matched
 
@@ -302,10 +293,7 @@ def sign_html(
             json=payload,
         )
         if sign_response.status_code != 201:
-            raise RuntimeError(
-                f"Sign API returned {sign_response.status_code}: "
-                f"{sign_response.text[:500]}"
-            )
+            raise RuntimeError(f"Sign API returned {sign_response.status_code}: {sign_response.text[:500]}")
 
         sign_data = sign_response.json()
         if not sign_data.get("success"):

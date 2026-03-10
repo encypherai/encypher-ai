@@ -19,13 +19,21 @@ Endpoints:
 
 import asyncio
 import hashlib
+import json
 import logging
+import os
 import secrets
+import smtplib
 import uuid
+from datetime import datetime, timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
+from pydantic import BaseModel, EmailStr, Field
+from sqlalchemy import bindparam, select, text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -39,7 +47,6 @@ from app.schemas.integration_schemas import (
     GhostTokenRegenerateResponse,
     GhostWebhookPayload,
 )
-from app.utils.crypto_utils import decrypt_sensitive_value, encrypt_sensitive_value
 from app.services.ghost_integration import (
     GhostAdminClient,
     clear_in_flight,
@@ -47,6 +54,9 @@ from app.services.ghost_integration import (
     set_in_flight,
     sign_ghost_post,
 )
+from app.services.provisioning_service import ProvisioningService
+from app.services.session_service import session_service
+from app.utils.crypto_utils import decrypt_sensitive_value, encrypt_sensitive_value
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +64,550 @@ router = APIRouter()
 
 WEBHOOK_TOKEN_PREFIX = "ghwh_"
 WEBHOOK_BASE_PATH = "/api/v1/integrations/ghost/webhook"
+
+
+class WordPressIntegrationStatusPayload(BaseModel):
+    install_id: str | None = Field(default=None, description="Stable install ID for a WordPress property")
+    connection_status: str = Field(..., description="Current plugin connection state")
+    site_url: str | None = Field(default=None, description="Public WordPress site URL")
+    admin_url: str | None = Field(default=None, description="WordPress admin settings URL")
+    site_name: str | None = Field(default=None, description="Human-readable WordPress site name")
+    environment: str | None = Field(default=None, description="Environment label such as production or staging")
+    network_id: str | None = Field(default=None, description="Optional multisite network identifier")
+    blog_id: int | None = Field(default=None, description="Optional WordPress blog/site ID")
+    is_multisite: bool | None = Field(default=None, description="Whether the WordPress install is part of multisite")
+    is_primary: bool | None = Field(default=None, description="Whether this install is the org's primary WordPress property")
+    organization_id: str | None = Field(default=None, description="Organization ID resolved by the plugin")
+    organization_name: str | None = Field(default=None, description="Organization name resolved by the plugin")
+    plugin_version: str | None = Field(default=None, description="Installed WordPress plugin version")
+    plugin_installed: bool | None = Field(default=None, description="Whether the plugin is installed and active")
+    connection_tested: bool | None = Field(default=None, description="Whether WordPress successfully ran the connection test")
+    last_connection_checked_at: str | None = Field(default=None, description="ISO timestamp of the last connection check")
+    last_signed_at: str | None = Field(default=None, description="ISO timestamp of the last successful signed post")
+    last_signed_post_id: int | None = Field(default=None, description="WordPress post ID for the last successful sign")
+    last_signed_post_url: str | None = Field(default=None, description="Canonical URL of the last successfully signed post")
+    signed_post_count: int | None = Field(default=None, description="Count of posts signed by the plugin")
+
+
+class WordPressIntegrationStatusResponse(BaseModel):
+    success: bool = True
+    data: dict
+
+
+class WordPressInstallRegistrationPayload(BaseModel):
+    install_id: str | None = Field(default=None, description="Stable install ID for a WordPress property")
+    site_url: str | None = Field(default=None, description="Public WordPress site URL")
+    admin_url: str | None = Field(default=None, description="WordPress admin settings URL")
+    site_name: str | None = Field(default=None, description="Human-readable WordPress site name")
+    environment: str | None = Field(default=None, description="Environment label such as production or staging")
+    network_id: str | None = Field(default=None, description="Optional multisite network identifier")
+    blog_id: int | None = Field(default=None, description="Optional WordPress blog/site ID")
+    is_multisite: bool | None = Field(default=None, description="Whether the WordPress install is part of multisite")
+    is_primary: bool | None = Field(default=None, description="Whether this install is the org's primary WordPress property")
+    plugin_version: str | None = Field(default=None, description="Installed WordPress plugin version")
+
+
+class WordPressVerificationEventPayload(BaseModel):
+    install_id: str = Field(..., description="Stable install ID for a WordPress property")
+    post_id: int | None = Field(default=None, description="WordPress post ID that was verified")
+    post_url: str | None = Field(default=None, description="Canonical post URL that was verified")
+    valid: bool = Field(default=False, description="Whether verification succeeded")
+    tampered: bool = Field(default=False, description="Whether content appeared tampered")
+    status: str | None = Field(default=None, description="Normalized verification status from the plugin")
+    verified_at: str | None = Field(default=None, description="ISO timestamp when verification ran")
+    source: str = Field(default="wordpress_plugin", description="Event source")
+
+
+class WordPressActionQueuePayload(BaseModel):
+    action_type: str = Field(..., description="Queued action to execute on the install")
+    note: str | None = Field(default=None, description="Optional reason or note shown to the install")
+
+
+class WordPressActionAckPayload(BaseModel):
+    status: str = Field(..., description="Acknowledged action status")
+    result_message: str | None = Field(default=None, description="Optional result message")
+    completed_at: str | None = Field(default=None, description="ISO timestamp when the action completed")
+
+
+class WordPressConnectStartPayload(BaseModel):
+    email: EmailStr
+    install_id: str | None = Field(default=None, description="Stable install ID for the WordPress property")
+    site_url: str | None = Field(default=None, description="Public WordPress site URL")
+    admin_url: str | None = Field(default=None, description="WordPress admin settings URL")
+    site_name: str | None = Field(default=None, description="Human-readable WordPress site name")
+    environment: str | None = Field(default=None, description="Environment label such as production or staging")
+    api_base_url: str | None = Field(default=None, description="Plugin-configured Encypher API base URL")
+
+
+class WordPressConnectPollResponse(BaseModel):
+    success: bool = True
+    data: dict
+
+
+class WordPressConnectCompletePayload(BaseModel):
+    token: str = Field(..., description="Magic-link completion token")
+
+
+def _parse_iso_datetime(value: str | None) -> str | None:
+    if not value:
+        return None
+    try:
+        normalized = value.replace("Z", "+00:00")
+        return datetime.fromisoformat(normalized).astimezone(timezone.utc).isoformat()
+    except ValueError:
+        return None
+
+
+WORDPRESS_CONNECT_SESSION_TTL_SECONDS = 15 * 60
+
+
+def _wordpress_connect_session_key(session_id: str) -> str:
+    return f"encypher:wordpress-connect:{session_id}"
+
+
+def _wordpress_connect_token_key(token: str) -> str:
+    return f"encypher:wordpress-connect-token:{token}"
+
+
+def _email_config() -> dict:
+    return {
+        "smtp_host": os.getenv("SMTP_HOST", "smtp.zoho.com"),
+        "smtp_port": int(os.getenv("SMTP_PORT", "587")),
+        "smtp_user": os.getenv("SMTP_USER", ""),
+        "smtp_pass": os.getenv("SMTP_PASS", ""),
+        "smtp_tls": os.getenv("SMTP_TLS", "true").lower() == "true",
+        "email_from": os.getenv("EMAIL_FROM", "noreply@encypherai.com"),
+        "email_from_name": os.getenv("EMAIL_FROM_NAME", "Encypher"),
+    }
+
+
+async def _store_wordpress_connect_session(session_id: str, data: dict, ttl: int = WORDPRESS_CONNECT_SESSION_TTL_SECONDS) -> None:
+    redis_client = session_service.redis_client
+    if redis_client is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="WordPress connect sessions unavailable")
+    await redis_client.setex(_wordpress_connect_session_key(session_id), ttl, json.dumps(data))
+
+
+async def _load_wordpress_connect_session(session_id: str) -> dict | None:
+    redis_client = session_service.redis_client
+    if redis_client is None:
+        return None
+    payload = await redis_client.get(_wordpress_connect_session_key(session_id))
+    if not payload:
+        return None
+    return json.loads(payload)
+
+
+async def _store_wordpress_connect_token(token: str, session_id: str, ttl: int = WORDPRESS_CONNECT_SESSION_TTL_SECONDS) -> None:
+    redis_client = session_service.redis_client
+    if redis_client is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="WordPress connect sessions unavailable")
+    await redis_client.setex(_wordpress_connect_token_key(token), ttl, session_id)
+
+
+async def _resolve_wordpress_connect_token(token: str) -> str | None:
+    redis_client = session_service.redis_client
+    if redis_client is None:
+        return None
+    session_id = await redis_client.get(_wordpress_connect_token_key(token))
+    return str(session_id) if session_id else None
+
+
+async def _send_wordpress_connect_email(email: str, token: str, site_name: str | None, site_url: str | None) -> bool:
+    dashboard_base = settings.dashboard_url.rstrip("/")
+    link = f"{dashboard_base}/wordpress/connect?token={token}"
+    site_label = site_name or site_url or "your WordPress site"
+    html_content = (
+        f"<html><body><h2>Connect {site_label} to Encypher</h2>"
+        f"<p>Click the secure link below to approve this WordPress site and provision its API key.</p>"
+        f'<p><a href="{link}">Approve WordPress connection</a></p>'
+        f"<p>If you did not request this, you can ignore this email.</p></body></html>"
+    )
+    plain_content = (
+        f"Connect {site_label} to Encypher\n\n"
+        f"Open this secure link to approve the WordPress connection:\n{link}\n\n"
+        "If you did not request this, you can ignore this email."
+    )
+    config = _email_config()
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Approve your WordPress connection - Encypher"
+        msg["From"] = f"{config['email_from_name']} <{config['email_from']}>"
+        msg["To"] = email
+        msg.attach(MIMEText(plain_content, "plain"))
+        msg.attach(MIMEText(html_content, "html"))
+
+        with smtplib.SMTP(config["smtp_host"], config["smtp_port"]) as server:
+            if config["smtp_tls"]:
+                server.starttls()
+            if config["smtp_user"] and config["smtp_pass"]:
+                server.login(config["smtp_user"], config["smtp_pass"])
+            server.sendmail(config["email_from"], [email], msg.as_string())
+        return True
+    except Exception as exc:
+        logger.error("wordpress_connect_email_failed", extra={"email": email, "error": str(exc)})
+        return False
+
+
+async def _create_wordpress_connect_session(payload: WordPressConnectStartPayload) -> dict:
+    session_id = f"wpcs_{uuid.uuid4().hex[:24]}"
+    approve_token = secrets.token_urlsafe(32)
+    session_data = {
+        "session_id": session_id,
+        "status": "pending_email_verification",
+        "email": str(payload.email),
+        "install_id": _resolve_install_id(payload.install_id),
+        "site_url": payload.site_url,
+        "admin_url": payload.admin_url,
+        "site_name": payload.site_name,
+        "environment": payload.environment,
+        "api_base_url": payload.api_base_url,
+        "organization_id": None,
+        "organization_name": None,
+        "api_key": None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "completed_at": None,
+    }
+    await _store_wordpress_connect_session(session_id, session_data)
+    await _store_wordpress_connect_token(approve_token, session_id)
+    email_sent = await _send_wordpress_connect_email(str(payload.email), approve_token, payload.site_name, payload.site_url)
+    return {
+        "session_id": session_id,
+        "status": session_data["status"],
+        "email": session_data["email"],
+        "email_sent": email_sent,
+        "install_id": session_data["install_id"],
+    }
+
+
+async def _complete_wordpress_connect_session(token: str, db: AsyncSession) -> dict:
+    session_id = await _resolve_wordpress_connect_token(token)
+    if not session_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="WordPress connect session not found")
+    session_data = await _load_wordpress_connect_session(session_id)
+    if not session_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="WordPress connect session expired")
+    if session_data.get("status") == "completed":
+        return session_data
+
+    org, api_key, _user_id = await ProvisioningService.auto_provision(
+        db=db,
+        email=session_data["email"],
+        organization_name=session_data.get("site_name") or None,
+        source="wordpress_magic_link",
+        source_metadata={
+            "install_id": session_data.get("install_id"),
+            "site_url": session_data.get("site_url"),
+            "admin_url": session_data.get("admin_url"),
+            "environment": session_data.get("environment"),
+        },
+        tier="free",
+        auto_activate=True,
+    )
+
+    session_data.update(
+        {
+            "status": "completed",
+            "organization_id": org.organization_id,
+            "organization_name": org.name,
+            "api_key": api_key,
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+    await _store_wordpress_connect_session(session_id, session_data)
+    return session_data
+
+
+async def _poll_wordpress_connect_session(session_id: str) -> dict:
+    session_data = await _load_wordpress_connect_session(session_id)
+    if not session_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="WordPress connect session not found")
+    return {
+        "session_id": session_data.get("session_id"),
+        "status": session_data.get("status"),
+        "email": session_data.get("email"),
+        "install_id": session_data.get("install_id"),
+        "organization_id": session_data.get("organization_id"),
+        "organization_name": session_data.get("organization_name"),
+        "api_key": session_data.get("api_key") if session_data.get("status") == "completed" else None,
+        "api_base_url": session_data.get("api_base_url") or settings.api_base_url.rstrip("/"),
+        "completed_at": session_data.get("completed_at"),
+    }
+
+
+def _normalize_wordpress_store(raw: dict | None) -> dict:
+    store = raw if isinstance(raw, dict) else {}
+    installs = store.get("installs") if isinstance(store.get("installs"), list) else []
+    recent_events = store.get("recent_events") if isinstance(store.get("recent_events"), list) else []
+    remote_actions = store.get("remote_actions") if isinstance(store.get("remote_actions"), list) else []
+    return {
+        "version": 2,
+        "installs": [item for item in installs if isinstance(item, dict)],
+        "recent_events": [item for item in recent_events if isinstance(item, dict)],
+        "remote_actions": [item for item in remote_actions if isinstance(item, dict)],
+    }
+
+
+def _resolve_install_id(install_id: str | None) -> str:
+    if install_id and install_id.strip():
+        return install_id.strip()
+    return f"wpi_{uuid.uuid4().hex[:16]}"
+
+
+def _trim_wordpress_store(store: dict) -> dict:
+    store["recent_events"] = store["recent_events"][-100:]
+    store["remote_actions"] = store["remote_actions"][-100:]
+    return store
+
+
+def _select_primary_install(installs: list[dict]) -> dict | None:
+    if not installs:
+        return None
+    primary = next((install for install in installs if install.get("is_primary")), None)
+    if primary is not None:
+        return primary
+    return max(installs, key=lambda install: install.get("updated_at") or install.get("created_at") or "")
+
+
+def _build_wordpress_summary(store: dict) -> dict:
+    installs = store.get("installs", [])
+    primary = _select_primary_install(installs)
+    queued_actions = [action for action in store.get("remote_actions", []) if action.get("status") == "queued"]
+    summary = {
+        "version": store.get("version", 2),
+        "install_count": len(installs),
+        "installs": installs,
+        "recent_events": store.get("recent_events", []),
+        "remote_actions": store.get("remote_actions", []),
+        "queued_action_count": len(queued_actions),
+    }
+    if primary is not None:
+        summary.update(
+            {
+                "install_id": primary.get("install_id"),
+                "connection_status": primary.get("connection_status"),
+                "site_url": primary.get("site_url"),
+                "admin_url": primary.get("admin_url"),
+                "site_name": primary.get("site_name"),
+                "environment": primary.get("environment"),
+                "organization_id": primary.get("organization_id"),
+                "organization_name": primary.get("organization_name"),
+                "plugin_version": primary.get("plugin_version"),
+                "plugin_installed": primary.get("plugin_installed"),
+                "connection_tested": primary.get("connection_tested"),
+                "last_connection_checked_at": primary.get("last_connection_checked_at"),
+                "last_signed_at": primary.get("last_signed_at"),
+                "last_signed_post_id": primary.get("last_signed_post_id"),
+                "last_signed_post_url": primary.get("last_signed_post_url"),
+                "signed_post_count": primary.get("signed_post_count"),
+                "last_verified_at": primary.get("last_verified_at"),
+                "verified_post_count": primary.get("verified_post_count"),
+                "last_verification_status": primary.get("last_verification_status"),
+                "updated_at": primary.get("updated_at"),
+            }
+        )
+    return summary
+
+
+async def _get_org_add_ons(org_id: str, db: AsyncSession) -> dict:
+    result = await db.execute(
+        text("SELECT add_ons FROM organizations WHERE id = :org_id"),
+        {"org_id": org_id},
+    )
+    row = result.fetchone()
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    return row.add_ons if isinstance(row.add_ons, dict) else {}
+
+
+async def _write_org_add_ons(org_id: str, db: AsyncSession, add_ons: dict) -> None:
+    statement = text("UPDATE organizations SET add_ons = :add_ons WHERE id = :org_id").bindparams(
+        bindparam("add_ons", type_=JSONB),
+    )
+    await db.execute(
+        statement,
+        {"org_id": org_id, "add_ons": add_ons},
+    )
+    await db.commit()
+
+
+async def _get_wordpress_store(org_id: str, db: AsyncSession) -> dict:
+    add_ons = await _get_org_add_ons(org_id, db)
+    return _normalize_wordpress_store(add_ons.get("wordpress") if isinstance(add_ons.get("wordpress"), dict) else {})
+
+
+async def _save_wordpress_store(org_id: str, db: AsyncSession, store: dict) -> dict:
+    add_ons = await _get_org_add_ons(org_id, db)
+    updated_add_ons = dict(add_ons)
+    updated_add_ons["wordpress"] = _trim_wordpress_store(store)
+    await _write_org_add_ons(org_id, db, updated_add_ons)
+    return updated_add_ons["wordpress"]
+
+
+def _upsert_install(store: dict, install_id: str, updates: dict) -> dict:
+    installs = list(store.get("installs", []))
+    existing_index = next((index for index, install in enumerate(installs) if install.get("install_id") == install_id), None)
+    now = datetime.now(timezone.utc).isoformat()
+    current = installs[existing_index] if existing_index is not None else {"install_id": install_id, "created_at": now}
+    next_install = dict(current)
+    next_install.update({key: value for key, value in updates.items() if value is not None})
+    next_install["install_id"] = install_id
+    next_install.setdefault("created_at", now)
+    next_install["updated_at"] = now
+    next_install.setdefault("signed_post_count", 0)
+    next_install.setdefault("verified_post_count", 0)
+
+    if next_install.get("is_primary"):
+        installs = [{**install, "is_primary": False} for install in installs if install.get("install_id") != install_id]
+
+    if existing_index is None:
+        installs.append(next_install)
+    else:
+        installs[existing_index] = next_install
+
+    store["installs"] = installs
+    return next_install
+
+
+async def _register_wordpress_install(org_id: str, db: AsyncSession, payload: WordPressInstallRegistrationPayload) -> dict:
+    store = await _get_wordpress_store(org_id, db)
+    install_id = _resolve_install_id(payload.install_id)
+    install = _upsert_install(
+        store,
+        install_id,
+        {
+            "site_url": payload.site_url,
+            "admin_url": payload.admin_url,
+            "site_name": payload.site_name,
+            "environment": payload.environment,
+            "network_id": payload.network_id,
+            "blog_id": payload.blog_id,
+            "is_multisite": payload.is_multisite,
+            "is_primary": payload.is_primary if payload.is_primary is not None else len(store.get("installs", [])) == 0,
+            "plugin_version": payload.plugin_version,
+            "plugin_installed": True,
+            "organization_id": org_id,
+        },
+    )
+    saved = await _save_wordpress_store(org_id, db, store)
+    return _build_wordpress_summary(saved | {"installs": saved.get("installs", [])}) | {"registered_install": install}
+
+
+async def _get_wordpress_status(org_id: str, db: AsyncSession) -> dict:
+    store = await _get_wordpress_store(org_id, db)
+    return _build_wordpress_summary(store)
+
+
+async def _write_wordpress_status(org_id: str, db: AsyncSession, payload: WordPressIntegrationStatusPayload) -> dict:
+    store = await _get_wordpress_store(org_id, db)
+    install_id = _resolve_install_id(payload.install_id)
+    _upsert_install(
+        store,
+        install_id,
+        {
+            "connection_status": payload.connection_status,
+            "site_url": payload.site_url,
+            "admin_url": payload.admin_url,
+            "site_name": payload.site_name,
+            "environment": payload.environment,
+            "network_id": payload.network_id,
+            "blog_id": payload.blog_id,
+            "is_multisite": payload.is_multisite,
+            "is_primary": payload.is_primary,
+            "organization_id": payload.organization_id or org_id,
+            "organization_name": payload.organization_name,
+            "plugin_version": payload.plugin_version,
+            "plugin_installed": payload.plugin_installed,
+            "connection_tested": payload.connection_tested,
+            "last_connection_checked_at": _parse_iso_datetime(payload.last_connection_checked_at),
+            "last_signed_at": _parse_iso_datetime(payload.last_signed_at),
+            "last_signed_post_id": payload.last_signed_post_id,
+            "last_signed_post_url": payload.last_signed_post_url,
+            "signed_post_count": payload.signed_post_count,
+        },
+    )
+    saved = await _save_wordpress_store(org_id, db, store)
+    return _build_wordpress_summary(saved)
+
+
+async def _record_wordpress_verification_event(org_id: str, db: AsyncSession, payload: WordPressVerificationEventPayload) -> dict:
+    store = await _get_wordpress_store(org_id, db)
+    install = _upsert_install(
+        store,
+        payload.install_id,
+        {
+            "last_verified_at": _parse_iso_datetime(payload.verified_at) or datetime.now(timezone.utc).isoformat(),
+            "last_verification_status": payload.status or ("verified" if payload.valid else "tampered" if payload.tampered else "failed"),
+            "verified_post_count": next(
+                (item.get("verified_post_count", 0) for item in store.get("installs", []) if item.get("install_id") == payload.install_id), 0
+            )
+            + 1,
+        },
+    )
+    store.setdefault("recent_events", []).append(
+        {
+            "event_id": f"wpev_{uuid.uuid4().hex[:16]}",
+            "type": "verification",
+            "install_id": payload.install_id,
+            "post_id": payload.post_id,
+            "post_url": payload.post_url,
+            "valid": payload.valid,
+            "tampered": payload.tampered,
+            "status": payload.status or install.get("last_verification_status"),
+            "verified_at": _parse_iso_datetime(payload.verified_at) or datetime.now(timezone.utc).isoformat(),
+            "source": payload.source,
+        }
+    )
+    saved = await _save_wordpress_store(org_id, db, store)
+    return _build_wordpress_summary(saved)
+
+
+async def _queue_wordpress_action(org_id: str, db: AsyncSession, install_id: str, payload: WordPressActionQueuePayload, requested_by: str) -> dict:
+    store = await _get_wordpress_store(org_id, db)
+    if not any(install.get("install_id") == install_id for install in store.get("installs", [])):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="WordPress install not found")
+    action = {
+        "action_id": f"wpa_{uuid.uuid4().hex[:16]}",
+        "install_id": install_id,
+        "action_type": payload.action_type,
+        "note": payload.note,
+        "status": "queued",
+        "requested_by": requested_by,
+        "requested_at": datetime.now(timezone.utc).isoformat(),
+        "completed_at": None,
+        "result_message": None,
+    }
+    store.setdefault("remote_actions", []).append(action)
+    saved = await _save_wordpress_store(org_id, db, store)
+    return {"queued_action": action, **_build_wordpress_summary(saved)}
+
+
+async def _pull_wordpress_actions(org_id: str, db: AsyncSession, install_id: str) -> dict:
+    store = await _get_wordpress_store(org_id, db)
+    actions = [action for action in store.get("remote_actions", []) if action.get("install_id") == install_id and action.get("status") == "queued"]
+    return {"install_id": install_id, "actions": actions}
+
+
+async def _ack_wordpress_action(org_id: str, db: AsyncSession, install_id: str, action_id: str, payload: WordPressActionAckPayload) -> dict:
+    store = await _get_wordpress_store(org_id, db)
+    updated_actions = []
+    found = False
+    for action in store.get("remote_actions", []):
+        if action.get("install_id") == install_id and action.get("action_id") == action_id:
+            found = True
+            next_action = dict(action)
+            next_action["status"] = payload.status
+            next_action["result_message"] = payload.result_message
+            next_action["completed_at"] = _parse_iso_datetime(payload.completed_at) or datetime.now(timezone.utc).isoformat()
+            updated_actions.append(next_action)
+        else:
+            updated_actions.append(action)
+    if not found:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="WordPress action not found")
+    store["remote_actions"] = updated_actions
+    saved = await _save_wordpress_store(org_id, db, store)
+    return _build_wordpress_summary(saved)
 
 
 # =============================================================================
@@ -125,10 +679,9 @@ async def _get_integration_by_token(token_hash: str, db: AsyncSession) -> GhostI
 async def _get_org_context_for_integration(org_id: str) -> dict:
     """Resolve an organization context by org ID for internal signing."""
     from app.config import settings
-    from app.dependencies import DEMO_KEYS, _normalize_org_context
-    from app.services.key_service_client import key_service_client
-    from app.services.auth_service_client import auth_service_client
     from app.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
+    from app.dependencies import DEMO_KEYS, _normalize_org_context
+    from app.services.auth_service_client import auth_service_client
 
     if settings.compose_org_context_via_auth_service:
         org_data = await auth_service_client.get_organization_context(org_id)
@@ -164,6 +717,161 @@ def _mask_key(key: str) -> str:
     if len(key) <= 8:
         return "****"
     return f"{'*' * (len(key) - 4)}{key[-4:]}"
+
+
+@router.get(
+    "/integrations/wordpress/status",
+    response_model=WordPressIntegrationStatusResponse,
+    tags=["Integrations"],
+    summary="Get WordPress integration status",
+)
+async def get_wordpress_integration_status(
+    organization: dict = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db),
+):
+    org_id = organization["organization_id"]
+    status_data = await _get_wordpress_status(org_id, db)
+    return WordPressIntegrationStatusResponse(data=status_data)
+
+
+@router.post(
+    "/integrations/wordpress/status-sync",
+    response_model=WordPressIntegrationStatusResponse,
+    tags=["Integrations"],
+    summary="Sync WordPress integration status",
+)
+async def sync_wordpress_integration_status(
+    body: WordPressIntegrationStatusPayload,
+    organization: dict = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db),
+):
+    org_id = organization["organization_id"]
+    status_data = await _write_wordpress_status(org_id, db, body)
+    return WordPressIntegrationStatusResponse(data=status_data)
+
+
+@router.post(
+    "/integrations/wordpress/register-install",
+    response_model=WordPressIntegrationStatusResponse,
+    tags=["Integrations"],
+    summary="Register or update a WordPress install",
+)
+async def register_wordpress_install(
+    body: WordPressInstallRegistrationPayload,
+    organization: dict = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db),
+):
+    org_id = organization["organization_id"]
+    status_data = await _register_wordpress_install(org_id, db, body)
+    return WordPressIntegrationStatusResponse(data=status_data)
+
+
+@router.post(
+    "/integrations/wordpress/verification-event",
+    response_model=WordPressIntegrationStatusResponse,
+    tags=["Integrations"],
+    summary="Record a WordPress verification event",
+)
+async def record_wordpress_verification_event(
+    body: WordPressVerificationEventPayload,
+    organization: dict = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db),
+):
+    org_id = organization["organization_id"]
+    status_data = await _record_wordpress_verification_event(org_id, db, body)
+    return WordPressIntegrationStatusResponse(data=status_data)
+
+
+@router.post(
+    "/integrations/wordpress/{install_id}/actions",
+    response_model=WordPressIntegrationStatusResponse,
+    tags=["Integrations"],
+    summary="Queue a remote action for a WordPress install",
+)
+async def queue_wordpress_install_action(
+    install_id: str,
+    body: WordPressActionQueuePayload,
+    organization: dict = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db),
+):
+    org_id = organization["organization_id"]
+    requested_by = organization.get("organization_name") or org_id
+    status_data = await _queue_wordpress_action(org_id, db, install_id, body, requested_by)
+    return WordPressIntegrationStatusResponse(data=status_data)
+
+
+@router.post(
+    "/integrations/wordpress/{install_id}/actions/pull",
+    response_model=WordPressIntegrationStatusResponse,
+    tags=["Integrations"],
+    summary="Pull queued remote actions for a WordPress install",
+)
+async def pull_wordpress_install_actions(
+    install_id: str,
+    organization: dict = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db),
+):
+    org_id = organization["organization_id"]
+    action_data = await _pull_wordpress_actions(org_id, db, install_id)
+    return WordPressIntegrationStatusResponse(data=action_data)
+
+
+@router.post(
+    "/integrations/wordpress/{install_id}/actions/{action_id}/ack",
+    response_model=WordPressIntegrationStatusResponse,
+    tags=["Integrations"],
+    summary="Acknowledge a WordPress remote action result",
+)
+async def ack_wordpress_install_action(
+    install_id: str,
+    action_id: str,
+    body: WordPressActionAckPayload,
+    organization: dict = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db),
+):
+    org_id = organization["organization_id"]
+    status_data = await _ack_wordpress_action(org_id, db, install_id, action_id, body)
+    return WordPressIntegrationStatusResponse(data=status_data)
+
+
+@router.post(
+    "/integrations/wordpress/connect/start",
+    response_model=WordPressConnectPollResponse,
+    tags=["Integrations"],
+    summary="Start a WordPress magic-link connect session",
+)
+async def start_wordpress_connect_session(
+    body: WordPressConnectStartPayload,
+):
+    session_data = await _create_wordpress_connect_session(body)
+    return WordPressConnectPollResponse(data=session_data)
+
+
+@router.get(
+    "/integrations/wordpress/connect/session/{session_id}",
+    response_model=WordPressConnectPollResponse,
+    tags=["Integrations"],
+    summary="Poll a WordPress magic-link connect session",
+)
+async def poll_wordpress_connect_session(
+    session_id: str,
+):
+    session_data = await _poll_wordpress_connect_session(session_id)
+    return WordPressConnectPollResponse(data=session_data)
+
+
+@router.post(
+    "/integrations/wordpress/connect/complete",
+    response_model=WordPressConnectPollResponse,
+    tags=["Integrations"],
+    summary="Complete a WordPress magic-link connect session",
+)
+async def complete_wordpress_connect_session(
+    body: WordPressConnectCompletePayload,
+    db: AsyncSession = Depends(get_db),
+):
+    session_data = await _complete_wordpress_connect_session(body.token, db)
+    return WordPressConnectPollResponse(data=session_data)
 
 
 def _build_response(
@@ -319,7 +1027,7 @@ async def delete_ghost_integration(
 @router.post(
     "/integrations/ghost/regenerate-token",
     summary="Regenerate webhook token",
-    description=("Invalidate the current webhook token and generate a new one. " "You must update the webhook URL in Ghost after regenerating."),
+    description=("Invalidate the current webhook token and generate a new one. You must update the webhook URL in Ghost after regenerating."),
     response_model=GhostTokenRegenerateResponse,
     tags=["Integrations"],
 )
@@ -452,7 +1160,7 @@ async def ghost_webhook(
     badge_enabled = integration.badge_enabled
 
     # Fire-and-forget signing task with fresh DB sessions
-    from app.database import core_session_factory, content_session_factory
+    from app.database import content_session_factory, core_session_factory
 
     async def _do_sign():
         try:

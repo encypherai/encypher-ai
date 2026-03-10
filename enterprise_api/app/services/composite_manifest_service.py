@@ -3,6 +3,7 @@
 Builds the article-level C2PA manifest that binds signed text and signed images
 into a single provenance unit. Each image is referenced as an ingredient.
 """
+
 import hashlib
 import json
 import uuid
@@ -68,13 +69,15 @@ def build_composite_manifest(
     # Build ingredient list, sorted by position for stable ordering
     ingredients = []
     for img in sorted(images, key=lambda x: x.position):
-        ingredients.append({
-            "title": img.filename or f"image_{img.position}",
-            "format": img.mime_type,
-            "instanceId": img.c2pa_instance_id,
-            "relationship": "componentOf",
-            "hash": img.signed_hash,
-        })
+        ingredients.append(
+            {
+                "title": img.filename or f"image_{img.position}",
+                "format": img.mime_type,
+                "instanceId": img.c2pa_instance_id,
+                "relationship": "componentOf",
+                "hash": img.signed_hash,
+            }
+        )
 
     manifest_data = {
         "claim_generator": "encypher-ai/1.0",

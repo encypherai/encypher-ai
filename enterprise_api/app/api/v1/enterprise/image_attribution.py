@@ -1,4 +1,5 @@
 """Enterprise image attribution endpoint: POST /enterprise/images/attribution."""
+
 import base64
 import logging
 
@@ -41,10 +42,7 @@ async def image_attribution(
     if payload.scope == "all" and not features.get("image_fuzzy_search", False):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=(
-                "scope='all' cross-organization search requires Enterprise tier. "
-                "Use scope='org' for organization-scoped search."
-            ),
+            detail=("scope='all' cross-organization search requires Enterprise tier. Use scope='org' for organization-scoped search."),
         )
 
     # Resolve pHash from image_data or direct hex input
@@ -65,11 +63,7 @@ async def image_attribution(
         try:
             phash_unsigned = int(payload.phash, 16)  # type: ignore[arg-type]
             # Convert to signed int64 for PostgreSQL BIGINT compatibility
-            phash_int = (
-                phash_unsigned
-                if phash_unsigned < (1 << 63)
-                else phash_unsigned - (1 << 64)
-            )
+            phash_int = phash_unsigned if phash_unsigned < (1 << 63) else phash_unsigned - (1 << 64)
             phash_hex = payload.phash  # type: ignore[assignment]
         except (ValueError, TypeError):
             raise HTTPException(status_code=400, detail="Invalid phash hex string")

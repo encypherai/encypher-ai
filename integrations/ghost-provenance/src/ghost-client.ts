@@ -23,6 +23,7 @@ export interface GhostPost {
   authors: Array<{ id: string; name: string; slug: string; email: string }>;
   primary_author: { id: string; name: string; slug: string; email: string } | null;
   primary_tag: { id: string; name: string; slug: string } | null;
+  feature_image: string | null;
 }
 
 export class GhostClient {

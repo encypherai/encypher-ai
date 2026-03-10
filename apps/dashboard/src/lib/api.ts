@@ -115,6 +115,85 @@ interface OrganizationInfo {
   created_at: string;
 }
 
+interface WordPressIntegrationStatus {
+  install_id?: string;
+  connection_status?: string;
+  site_url?: string | null;
+  admin_url?: string | null;
+  site_name?: string | null;
+  environment?: string | null;
+  organization_id?: string | null;
+  organization_name?: string | null;
+  plugin_version?: string | null;
+  plugin_installed?: boolean;
+  connection_tested?: boolean;
+  last_connection_checked_at?: string | null;
+  last_signed_at?: string | null;
+  last_signed_post_id?: number | null;
+  last_signed_post_url?: string | null;
+  signed_post_count?: number | null;
+  last_verified_at?: string | null;
+  verified_post_count?: number | null;
+  last_verification_status?: string | null;
+  install_count?: number;
+  queued_action_count?: number;
+  installs?: WordPressInstallStatus[];
+  remote_actions?: WordPressRemoteAction[];
+  recent_events?: WordPressVerificationEvent[];
+  updated_at?: string | null;
+}
+
+interface WordPressInstallStatus {
+  install_id: string;
+  site_url?: string | null;
+  admin_url?: string | null;
+  site_name?: string | null;
+  environment?: string | null;
+  network_id?: string | null;
+  blog_id?: number | null;
+  is_multisite?: boolean;
+  is_primary?: boolean;
+  connection_status?: string | null;
+  connection_tested?: boolean;
+  plugin_installed?: boolean;
+  plugin_version?: string | null;
+  organization_id?: string | null;
+  organization_name?: string | null;
+  last_connection_checked_at?: string | null;
+  last_signed_at?: string | null;
+  last_signed_post_id?: number | null;
+  last_signed_post_url?: string | null;
+  signed_post_count?: number | null;
+  last_verified_at?: string | null;
+  verified_post_count?: number | null;
+  last_verification_status?: string | null;
+  updated_at?: string | null;
+}
+
+interface WordPressRemoteAction {
+  action_id: string;
+  install_id: string;
+  action_type: string;
+  note?: string | null;
+  status: string;
+  requested_at?: string | null;
+  completed_at?: string | null;
+  result_message?: string | null;
+}
+
+interface WordPressVerificationEvent {
+  event_id: string;
+  type: string;
+  install_id: string;
+  post_id?: number | null;
+  post_url?: string | null;
+  valid?: boolean;
+  tampered?: boolean;
+  status?: string | null;
+  verified_at?: string | null;
+  source?: string | null;
+}
+
 interface OrganizationCreateResponse {
   success: boolean;
   data: OrganizationInfo;
@@ -581,6 +660,31 @@ const apiClient = {
       data: response,
       error: null,
     };
+  },
+
+  async getWordPressIntegrationStatus(accessToken: string): Promise<WordPressIntegrationStatus> {
+    const response = await fetchWithAuth<{ success: boolean; data: WordPressIntegrationStatus }>(
+      `${API_BASE_URL}/integrations/wordpress/status`,
+      accessToken
+    );
+    return response.data ?? {};
+  },
+
+  async queueWordPressInstallAction(
+    accessToken: string,
+    installId: string,
+    actionType: 'refresh_status' | 'test_connection',
+    note?: string
+  ): Promise<WordPressIntegrationStatus> {
+    const response = await fetchWithAuth<{ success: boolean; data: WordPressIntegrationStatus }>(
+      `${API_BASE_URL}/integrations/wordpress/${installId}/actions`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ action_type: actionType, note }),
+      }
+    );
+    return response.data ?? {};
   },
 
   /**
@@ -2203,6 +2307,10 @@ export type {
   WorkflowCategory,
   PublisherPlatform,
   SetupStatusResponse,
+  WordPressInstallStatus,
+  WordPressIntegrationStatus,
+  WordPressRemoteAction,
+  WordPressVerificationEvent,
   PublisherSettings,
   MfaStatusResponse,
   TotpSetupResponse,

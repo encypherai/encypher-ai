@@ -6,8 +6,6 @@ import logging
 import os
 from typing import Optional, cast
 
-from app.config import settings
-from app.utils.aws_signer import AWSSigner
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
@@ -16,6 +14,9 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from encypher.core.signing import SigningKey
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.config import settings
+from app.utils.aws_signer import AWSSigner
 
 logger = logging.getLogger(__name__)
 

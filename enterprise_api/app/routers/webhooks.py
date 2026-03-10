@@ -5,23 +5,23 @@ Provides endpoints for registering, listing, and managing webhooks.
 """
 
 import hashlib
-import hmac
 import logging
 import secrets
 from datetime import datetime, timezone
 from typing import List, Optional
 
 import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field
+from sqlalchemy import text
+from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
 from app.dependencies import get_current_organization
 from app.services.webhook_dispatcher import webhook_dispatcher
 from app.utils.crypto_utils import decrypt_sensitive_value, encrypt_sensitive_value
 from app.utils.outbound_url import validate_https_public_url
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field, HttpUrl
-from sqlalchemy import text
-from sqlalchemy.exc import ProgrammingError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 logger = logging.getLogger(__name__)

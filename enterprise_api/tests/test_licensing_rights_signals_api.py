@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
 import calendar
+from datetime import date, datetime, timezone
 
 import pytest
 from httpx import AsyncClient

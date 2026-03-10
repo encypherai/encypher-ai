@@ -37,7 +37,7 @@ const CHECK_MONO_SVG_B64 = fs.readFileSync(path.join(ICONS_DIR, 'encypher_check.
 const LOGO_COLOR_PNG_URI = `data:image/png;base64,${LOGO_COLOR_PNG_B64}`;
 const LOGO_WHITE_PNG_URI = `data:image/png;base64,${LOGO_WHITE_PNG_B64}`;
 const CHECK_COLOR_SVG_URI = `data:image/svg+xml;base64,${CHECK_COLOR_SVG_B64}`;
-const CHECK_MONO_SVG_URI = `data:image/svg+xml;base64,${CHECK_MONO_SVG_B64}`;
+const _CHECK_MONO_SVG_URI = `data:image/svg+xml;base64,${CHECK_MONO_SVG_B64}`;
 
 // Clean SVGs for inline embedding (strip XML declaration and Inkscape metadata)
 function cleanSvg(raw) {

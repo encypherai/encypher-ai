@@ -10,18 +10,17 @@ def _unique_document_id(prefix: str) -> str:
 
 
 def _assert_status(response, expected_status: int, label: str) -> None:
-    assert response.status_code == expected_status, (
-        f"{label} expected {expected_status}, got {response.status_code}. "
-        f"Body: {response.text}. Headers: {dict(response.headers)}"
-    )
+    assert (
+        response.status_code == expected_status
+    ), f"{label} expected {expected_status}, got {response.status_code}. Body: {response.text}. Headers: {dict(response.headers)}"
 
 
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_live_sign_and_verify(live_client, live_auth_headers, live_api_config) -> None:
-    assert live_api_config.base_url.startswith("https://api.encypherai.com"), (
-        f"Live tests should target production api. Got {live_api_config.base_url}"
-    )
+    assert live_api_config.base_url.startswith(
+        "https://api.encypherai.com"
+    ), f"Live tests should target production api. Got {live_api_config.base_url}"
     document_id = _unique_document_id("live_sign")
     original_text = "Live API verification test. This is a signed payload."
 
@@ -64,9 +63,9 @@ async def test_live_sign_and_verify(live_client, live_auth_headers, live_api_con
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_live_sign_advanced_and_verify_advanced(live_client, live_auth_headers, live_api_config) -> None:
-    assert live_api_config.base_url.startswith("https://api.encypherai.com"), (
-        f"Live tests should target production api. Got {live_api_config.base_url}"
-    )
+    assert live_api_config.base_url.startswith(
+        "https://api.encypherai.com"
+    ), f"Live tests should target production api. Got {live_api_config.base_url}"
     document_id = _unique_document_id("live_adv")
     original_text = "Live advanced signing test. Confirm advanced verify works."
 
@@ -104,8 +103,6 @@ async def test_live_sign_advanced_and_verify_advanced(live_client, live_auth_hea
     _assert_status(verify_response, 200, "POST /api/v1/verify/advanced")
     verify_payload = verify_response.json()
     assert verify_payload["success"] is True
-    assert verify_payload["data"]["valid"] is True, (
-        "Verification failed. "
-        f"Reason: {verify_payload['data'].get('reason_code')}. "
-        f"Details: {verify_payload['data'].get('details')}"
-    )
+    assert (
+        verify_payload["data"]["valid"] is True
+    ), f"Verification failed. Reason: {verify_payload['data'].get('reason_code')}. Details: {verify_payload['data'].get('details')}"

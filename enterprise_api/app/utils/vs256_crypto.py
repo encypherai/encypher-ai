@@ -39,9 +39,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from app.utils.legacy_safe_crypto import (
     TRAILING_PUNCTUATION,
+)
+from app.utils.legacy_safe_crypto import (
     embed_marker_safely as embed_signature_safely,
 )
-
 
 # =============================================================================
 # BASE-256 VARIATION SELECTOR ALPHABET
@@ -54,10 +55,10 @@ from app.utils.legacy_safe_crypto import (
 # This is 4x denser than base-4 ZW encoding (4 chars per byte)
 # =============================================================================
 
-VS_BMP_START = 0xFE00    # VS1
-VS_BMP_END = 0xFE0F      # VS16
+VS_BMP_START = 0xFE00  # VS1
+VS_BMP_END = 0xFE0F  # VS16
 VS_SUPP_START = 0xE0100  # VS17
-VS_SUPP_END = 0xE01EF    # VS256
+VS_SUPP_END = 0xE01EF  # VS256
 
 # Build lookup tables at module load time
 BYTE_TO_VS: list[str] = []
@@ -98,9 +99,9 @@ MAGIC_PREFIX = BYTE_TO_VS[239] + BYTE_TO_VS[240] + BYTE_TO_VS[241] + BYTE_TO_VS[
 MAGIC_PREFIX_LEN = 4
 
 # Signature layout constants
-LOG_ID_BYTES = 16            # 128-bit random log reference (hyperscale-safe)
-PAYLOAD_BYTES = 32           # 16 log_id + 16 HMAC
-PAYLOAD_CHARS = 32           # 1 char per byte in base-256
+LOG_ID_BYTES = 16  # 128-bit random log reference (hyperscale-safe)
+PAYLOAD_BYTES = 32  # 16 log_id + 16 HMAC
+PAYLOAD_CHARS = 32  # 1 char per byte in base-256
 SIGNATURE_CHARS = MAGIC_PREFIX_LEN + PAYLOAD_CHARS  # 36 total
 
 # Sentence content commitment bytes appended to HMAC input when enabled.
@@ -340,9 +341,7 @@ def find_all_markers(text: str) -> list[tuple[int, int, str]]:
             if text[i : i + MAGIC_PREFIX_LEN] == MAGIC_PREFIX:
                 # Verify remaining 32 chars are all VS
                 candidate = text[i : i + SIGNATURE_CHARS]
-                if len(candidate) == SIGNATURE_CHARS and all(
-                    ch in VS_CHAR_SET for ch in candidate[MAGIC_PREFIX_LEN:]
-                ):
+                if len(candidate) == SIGNATURE_CHARS and all(ch in VS_CHAR_SET for ch in candidate[MAGIC_PREFIX_LEN:]):
                     signatures.append((i, i + SIGNATURE_CHARS, candidate))
                     i += SIGNATURE_CHARS
                     continue
@@ -410,6 +409,7 @@ def derive_signing_key_from_private_key(private_key: Ed25519PrivateKey) -> bytes
 
 # Terminal punctuation characters
 TERMINAL_PUNCTUATION = ".!?"
+
 
 # Extended punctuation (includes quotes that often follow terminal punctuation)
 def get_signature_position(text: str) -> int:

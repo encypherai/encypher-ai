@@ -67,7 +67,7 @@ async def create_agreement(agreement_data: LicensingAgreementCreate, db: AsyncSe
             status=agreement.status,
             created_at=agreement.created_at,
         )
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to create licensing agreement")
         raise HTTPException(status_code=400, detail="Failed to create licensing agreement")
 
@@ -183,6 +183,7 @@ async def list_available_content(
     agreement_max = getattr(agreement, "max_monthly_calls", None) or getattr(agreement, "monthly_call_limit", None)
     if agreement_max:
         from datetime import datetime, timezone
+
         now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         monthly_count = await LicensingService.count_accesses_since(
@@ -277,10 +278,10 @@ async def create_revenue_distribution(distribution_data: RevenueDistributionCrea
                 for mr in member_revenues
             ],
         )
-    except ValueError as e:
+    except ValueError:
         logger.exception("Invalid revenue distribution request")
         raise HTTPException(status_code=400, detail="Invalid distribution parameters")
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to create revenue distribution")
         raise HTTPException(status_code=500, detail="Failed to create revenue distribution")
 
@@ -357,9 +358,9 @@ async def process_payouts(payout_data: PayoutCreate, db: AsyncSession = Depends(
         result = await LicensingService.process_payouts(db=db, distribution_id=payout_data.distribution_id, payment_method=payout_data.payment_method)
 
         return PayoutResponse(**result)
-    except ValueError as e:
+    except ValueError:
         logger.exception("Invalid payout request")
         raise HTTPException(status_code=400, detail="Invalid payout parameters")
-    except Exception as e:
+    except Exception:
         logger.exception("Failed to process payouts")
         raise HTTPException(status_code=500, detail="Failed to process payouts")

@@ -4,12 +4,13 @@ This service signs images using c2pa-python, embeds a C2PA manifest as JUMBF
 data, strips EXIF metadata before signing, and returns the signed image bytes
 plus metadata for storage.
 """
+
 import logging
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import BytesIO
-from typing import Any, List, Optional
+from typing import Any, List
 
 logger = logging.getLogger(__name__)
 
@@ -62,25 +63,29 @@ def _build_manifest_dict(
 
     # Add org/rights assertion
     if rights_data:
-        assertions.append({
-            "label": "com.encypher.rights.v1",
-            "data": rights_data,
-        })
+        assertions.append(
+            {
+                "label": "com.encypher.rights.v1",
+                "data": rights_data,
+            }
+        )
 
     # Add custom assertions
     for ca in custom_assertions:
         assertions.append(ca)
 
     # Add encypher provenance assertion
-    assertions.append({
-        "label": "com.encypher.provenance.v1",
-        "data": {
-            "organization_id": org_id,
-            "document_id": document_id,
-            "image_id": image_id,
-            "signed_at": now_iso,
-        },
-    })
+    assertions.append(
+        {
+            "label": "com.encypher.provenance.v1",
+            "data": {
+                "organization_id": org_id,
+                "document_id": document_id,
+                "image_id": image_id,
+                "signed_at": now_iso,
+            },
+        }
+    )
 
     return {
         "claim_generator": "encypher-ai/1.0",
@@ -110,13 +115,12 @@ def _create_signer_from_pem(
         c2pa.Signer instance. Caller must call .close() when done.
     """
     import c2pa
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
     # Detect algorithm from the key type
     from cryptography.hazmat.primitives.serialization import load_pem_private_key
-    from cryptography.hazmat.primitives.asymmetric import ec, rsa
-    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.asymmetric import padding
 
     key_bytes = private_key_pem.encode("utf-8")
     key_obj = load_pem_private_key(key_bytes, password=None)
@@ -227,7 +231,6 @@ async def sign_image(
     from app.config import settings
     from app.utils.image_utils import (
         compute_sha256,
-        extract_exif,
         strip_exif,
         validate_image,
     )
@@ -245,14 +248,11 @@ async def sign_image(
     # IMAGE_SIGNING_PASSTHROUGH flag is set. EXIF is still stripped, all hashes
     # and metadata are still computed and stored. Use for local dev / CI.
     # Never enable in production -- the returned image will have no C2PA manifest.
-    passthrough = settings.image_signing_passthrough or not (
-        signer_private_key_pem and signer_cert_chain_pem
-    )
+    passthrough = settings.image_signing_passthrough or not (signer_private_key_pem and signer_cert_chain_pem)
     if passthrough:
-        logger.debug(
-            "Image signing passthrough: XMP embedding for image_id=%s", image_id
-        )
+        logger.debug("Image signing passthrough: XMP embedding for image_id=%s", image_id)
         from app.utils.image_utils import inject_encypher_xmp
+
         instance_id = "urn:uuid:" + str(uuid.uuid4())
         embedded_bytes = inject_encypher_xmp(
             image_bytes=clean_bytes,

@@ -42,8 +42,8 @@ const DEFAULT_SETTINGS = {
   autoReplaceContent: true,
   defaultDocumentType: 'article',
   defaultDocType: 'article',
-  defaultEmbeddingTechnique: 'micro',
-  defaultSegmentationLevel: 'sentence',
+  defaultEmbeddingTechnique: 'micro_no_embed_c2pa',
+  defaultSegmentationLevel: 'document',
   showEditorButtons: true,
   extensionSetupStatus: 'not_started'
 };
@@ -52,7 +52,7 @@ function normalizeEmbeddingTechnique(value) {
   const mode = String(value || '').toLowerCase();
   if (mode === 'micro_ecc_c2pa' || mode === 'micro') return 'micro';
   if (mode === 'micro_ecc' || mode === 'micro_no_embed_c2pa') return 'micro_no_embed_c2pa';
-  return 'micro';
+  return 'micro_no_embed_c2pa';
 }
 
 /**
@@ -90,9 +90,9 @@ async function loadSettings() {
     if (autoReplaceContentCheckbox) autoReplaceContentCheckbox.checked = result.autoReplaceContent;
     if (defaultDocTypeSelect) defaultDocTypeSelect.value = result.defaultDocumentType || result.defaultDocType || 'article';
     if (defaultEmbeddingTechniqueSelect) {
-      defaultEmbeddingTechniqueSelect.value = normalizeEmbeddingTechnique(result.defaultEmbeddingTechnique || 'micro');
+      defaultEmbeddingTechniqueSelect.value = normalizeEmbeddingTechnique(result.defaultEmbeddingTechnique || 'micro_no_embed_c2pa');
     }
-    if (defaultSegmentationLevelSelect) defaultSegmentationLevelSelect.value = result.defaultSegmentationLevel || 'sentence';
+    if (defaultSegmentationLevelSelect) defaultSegmentationLevelSelect.value = result.defaultSegmentationLevel || 'document';
     if (showEditorButtonsCheckbox) showEditorButtonsCheckbox.checked = result.showEditorButtons;
 
     // Analytics settings

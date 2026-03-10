@@ -7,8 +7,6 @@ Keeps track of usage quotas, feature flags, and signing certificate state.
 from datetime import datetime
 from enum import Enum
 
-from app.core.pricing_constants import COALITION_ENCYPHER_SHARE, COALITION_PUBLISHER_SHARE
-
 from sqlalchemy import (
     TIMESTAMP,
     Boolean,
@@ -23,6 +21,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import synonym
 
+from app.core.pricing_constants import COALITION_ENCYPHER_SHARE, COALITION_PUBLISHER_SHARE
 from app.database import Base
 
 
@@ -137,6 +136,10 @@ class Organization(Base):
     fuzzy_index_calls_this_month = Column(Integer, default=0)
     fuzzy_search_calls_this_month = Column(Integer, default=0)
     batch_operations_this_month = Column(Integer, default=0)
+
+    # CDN Provenance feature (Phase 1)
+    cdn_provenance_enabled = Column(Boolean, default=False)
+    cdn_image_registrations_this_month = Column(Integer, default=0)
 
     # Timestamps
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)

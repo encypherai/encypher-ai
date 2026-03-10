@@ -5,8 +5,8 @@ Automatically records API call metrics for all requests.
 Non-blocking - metrics are buffered and flushed asynchronously.
 """
 
-import logging
 import json
+import logging
 import time
 import traceback
 from typing import Set, cast
@@ -15,7 +15,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from app.services.metrics_service import get_metrics_service, MetricType
+from app.services.metrics_service import MetricType, get_metrics_service
 
 logger = logging.getLogger(__name__)
 
@@ -74,8 +74,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         api_key_prefix = getattr(request.state, "api_key_prefix", None)
 
         metadata = {
-            "request_id": getattr(request.state, "request_id", None)
-                         or request.headers.get("x-request-id"),
+            "request_id": getattr(request.state, "request_id", None) or request.headers.get("x-request-id"),
             "method": request.method,
             "api_key_prefix": api_key_prefix,
         }
@@ -130,8 +129,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         api_key_prefix = getattr(request.state, "api_key_prefix", None)
 
         metadata = {
-            "request_id": getattr(request.state, "request_id", None)
-                         or request.headers.get("x-request-id"),
+            "request_id": getattr(request.state, "request_id", None) or request.headers.get("x-request-id"),
             "method": request.method,
             "api_key_prefix": api_key_prefix,
             "error_code": "E_UNHANDLED",

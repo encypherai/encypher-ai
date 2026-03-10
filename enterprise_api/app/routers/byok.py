@@ -14,12 +14,12 @@ from app.dependencies import get_current_organization
 from app.schemas.admin import PublicKeyListResponse, PublicKeyRegisterRequest, PublicKeyRegisterResponse
 from app.services.admin_service import PublicKeyService
 from app.utils.c2pa_trust_list import (
-    C2PA_TSA_TRUST_LIST_URL,
     C2PA_TRUST_LIST_URL,
+    C2PA_TSA_TRUST_LIST_URL,
     get_revocation_denylist_metadata,
-    get_tsa_trust_list_metadata,
     get_trust_anchor_subjects,
     get_trust_list_metadata,
+    get_tsa_trust_list_metadata,
     validate_certificate_chain,
 )
 

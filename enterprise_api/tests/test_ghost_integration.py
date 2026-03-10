@@ -19,10 +19,23 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 import app.routers.integrations as integrations_router
-
+from app.routers.integrations import (
+    WEBHOOK_BASE_PATH,
+    WEBHOOK_TOKEN_PREFIX,
+    _build_webhook_url,
+    _generate_webhook_token,
+    _hash_token,
+    _mask_key,
+)
+from app.schemas.integration_schemas import (
+    GhostIntegrationCreate,
+    GhostIntegrationResponse,
+    GhostManualSignRequest,
+    GhostTokenRegenerateResponse,
+    GhostWebhookPayload,
+)
 from app.services.ghost_integration import (
     GhostAdminClient,
-    _TextExtractor,
     clear_in_flight,
     detect_c2pa_embeddings,
     embed_signed_text_in_html,
@@ -30,26 +43,10 @@ from app.services.ghost_integration import (
     generate_badge_script,
     is_in_flight,
     merge_badge_injection,
-    sign_ghost_post,
     set_in_flight,
+    sign_ghost_post,
     strip_c2pa_embeddings,
 )
-from app.schemas.integration_schemas import (
-    GhostIntegrationCreate,
-    GhostIntegrationResponse,
-    GhostTokenRegenerateResponse,
-    GhostWebhookPayload,
-    GhostManualSignRequest,
-)
-from app.routers.integrations import (
-    _generate_webhook_token,
-    _hash_token,
-    _build_webhook_url,
-    _mask_key,
-    WEBHOOK_TOKEN_PREFIX,
-    WEBHOOK_BASE_PATH,
-)
-
 
 # =============================================================================
 # HTML Text Extraction Tests
@@ -133,19 +130,19 @@ class TestC2paEmbeddings:
         assert detect_c2pa_embeddings("Hello world") == 0
 
     def test_detect_vs_chars(self):
-        text = "Hello\uFE01 world\uFE0F"
+        text = "Hello\ufe01 world\ufe0f"
         assert detect_c2pa_embeddings(text) == 2
 
     def test_detect_supplementary_vs(self):
-        text = "Hello\U000E0100 world\U000E01EF"
+        text = "Hello\U000e0100 world\U000e01ef"
         assert detect_c2pa_embeddings(text) == 2
 
     def test_detect_bom(self):
-        text = "Hello\uFEFF world"
+        text = "Hello\ufeff world"
         assert detect_c2pa_embeddings(text) == 1
 
     def test_strip_removes_all(self):
-        text = "He\uFE01llo\uFEFF wo\U000E0100rld"
+        text = "He\ufe01llo\ufeff wo\U000e0100rld"
         stripped = strip_c2pa_embeddings(text)
         assert stripped == "Hello world"
         assert detect_c2pa_embeddings(stripped) == 0
@@ -163,14 +160,14 @@ class TestC2paEmbeddings:
 class TestEmbedSignedText:
     def test_basic_embedding(self):
         html = "<p>Hello world.</p><p>Second line.</p>"
-        signed = "Hello\uFE01 world.\nSecond\uFE02 line."
+        signed = "Hello\ufe01 world.\nSecond\ufe02 line."
         result = embed_signed_text_in_html(html, signed)
-        assert "\uFE01" in result
-        assert "\uFE02" in result
+        assert "\ufe01" in result
+        assert "\ufe02" in result
 
     def test_preserves_html_structure(self):
         html = "<h2>Title</h2><p>Content here.</p>"
-        signed = "Title\nContent\uFE01 here."
+        signed = "Title\nContent\ufe01 here."
         result = embed_signed_text_in_html(html, signed)
         assert "<h2>" in result
         assert "<p>" in result
@@ -182,16 +179,13 @@ class TestEmbedSignedText:
         assert result == html
 
     def test_embeds_visible_paragraph_not_matching_skipped_card_text(self):
-        html = (
-            '<div class="kg-code-card"><pre><code>Hello world.</code></pre></div>'
-            "<p>Hello world.</p>"
-        )
-        signed = "Hello\uFE01 world."
+        html = '<div class="kg-code-card"><pre><code>Hello world.</code></pre></div><p>Hello world.</p>'
+        signed = "Hello\ufe01 world."
 
         result = embed_signed_text_in_html(html, signed)
 
         assert "<code>Hello world.</code>" in result
-        assert "<p>Hello\uFE01 world.</p>" in result
+        assert "<p>Hello\ufe01 world.</p>" in result
 
 
 # =============================================================================
@@ -238,6 +232,7 @@ class TestBadgeInjection:
 class TestLoopPrevention:
     def setup_method(self):
         from app.services.ghost_integration import _in_flight
+
         _in_flight.clear()
 
     def test_not_in_flight_initially(self):
@@ -255,7 +250,8 @@ class TestLoopPrevention:
         assert not is_in_flight("post_123")
 
     def test_ttl_expiry(self):
-        from app.services.ghost_integration import _in_flight, _IN_FLIGHT_TTL_SECONDS
+        from app.services.ghost_integration import _IN_FLIGHT_TTL_SECONDS, _in_flight
+
         set_in_flight("post_123")
         # Manually backdate the timestamp
         _in_flight["post_123"] = time.time() - _IN_FLIGHT_TTL_SECONDS - 1
@@ -269,17 +265,13 @@ class TestLoopPrevention:
 
 class TestWebhookPayload:
     def test_post_published(self):
-        payload = GhostWebhookPayload(
-            post={"current": {"id": "abc123", "title": "Test", "status": "published"}}
-        )
+        payload = GhostWebhookPayload(post={"current": {"id": "abc123", "title": "Test", "status": "published"}})
         assert payload.get_resource_type() == "post"
         current = payload.get_current()
         assert current["id"] == "abc123"
 
     def test_page_published(self):
-        payload = GhostWebhookPayload(
-            page={"current": {"id": "page456", "title": "About", "status": "published"}}
-        )
+        payload = GhostWebhookPayload(page={"current": {"id": "page456", "title": "About", "status": "published"}})
         assert payload.get_resource_type() == "page"
         current = payload.get_current()
         assert current["id"] == "page456"
@@ -420,7 +412,7 @@ class TestGhostSignOrchestration:
                 "success": True,
                 "data": {
                     "document": {
-                        "embedded_text": "Hello\uFE01 world.",
+                        "embedded_text": "Hello\ufe01 world.",
                         "document_id": "doc_123",
                         "instance_id": "inst_123",
                         "total_segments": 1,
@@ -466,7 +458,7 @@ class TestGhostSignOrchestration:
                 "success": True,
                 "data": {
                     "document": {
-                        "signed_text": "Hello\uFE01 world.",
+                        "signed_text": "Hello\ufe01 world.",
                         "document_id": "doc_789",
                         "instance_id": "inst_789",
                         "total_segments": 1,
@@ -515,7 +507,7 @@ class TestGhostSignOrchestration:
                 "success": True,
                 "data": {
                     "document": {
-                        "embedded_text": "Hello\uFE01 world.",
+                        "embedded_text": "Hello\ufe01 world.",
                         "document_id": "doc_456",
                         "instance_id": "inst_456",
                         "total_segments": 1,

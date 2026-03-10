@@ -15,6 +15,7 @@
             this.applyTierConstraints();
             this.checkConnection();
             this.updateChecklistProgress();
+            this.resumeConnectPollingIfNeeded();
         },
 
         bindEvents() {
@@ -50,6 +51,141 @@
             $('#encypher-signing-mode').on('change', (event) => {
                 this.toggleSigningProfileField(event.target.value);
             });
+
+            $('#encypher-connect-start-btn').on('click', (e) => {
+                e.preventDefault();
+                this.startMagicLinkConnect();
+            });
+
+            $('#encypher-connect-poll-btn').on('click', (e) => {
+                e.preventDefault();
+                this.pollMagicLinkConnect();
+            });
+        },
+
+        async startMagicLinkConnect() {
+            const email = $('#encypher-connect-email').val();
+            const apiBaseUrl = $('#api_base_url').val();
+            const $status = $('#encypher-connect-status');
+            const $startBtn = $('#encypher-connect-start-btn');
+
+            if (!email) {
+                $status.html('<div class="notice notice-error"><p>Please enter a work email address.</p></div>');
+                return;
+            }
+
+            $startBtn.prop('disabled', true).text('Sending...');
+            $status.html('<div class="notice notice-info"><p>Sending your secure approval link…</p></div>');
+
+            try {
+                const response = await fetch(wpApiSettings.root + 'encypher-provenance/v1/connect/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': wpApiSettings.nonce
+                    },
+                    body: JSON.stringify({ email, api_base_url: apiBaseUrl })
+                });
+
+                const payload = await response.json();
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.message || payload.data?.message || 'Unable to start secure connect flow.');
+                }
+
+                const sessionId = payload.data?.session_id || '';
+                $('input[name="encypher_provenance_settings[connect_email]"]').val(email);
+                $('input[name="encypher_provenance_settings[connect_session_id]"]').val(sessionId);
+                if (window.EncypherSettingsData) {
+                    window.EncypherSettingsData.connectEmail = email;
+                    window.EncypherSettingsData.connectSessionId = sessionId;
+                }
+
+                $('#encypher-connect-poll-btn').prop('disabled', false);
+                $status.html(`<div class="notice notice-success"><p>${this.getData().strings?.connectStarted || 'Check your email for the secure approval link.'}</p></div>`);
+                this.beginConnectPolling();
+            } catch (error) {
+                $status.html(`<div class="notice notice-error"><p>${error.message}</p></div>`);
+            } finally {
+                $startBtn.prop('disabled', false).text('Email me a secure connect link');
+            }
+        },
+
+        async pollMagicLinkConnect() {
+            const sessionId = $('input[name="encypher_provenance_settings[connect_session_id]"]').val() || this.getData().connectSessionId;
+            const $status = $('#encypher-connect-status');
+
+            if (!sessionId) {
+                $status.html('<div class="notice notice-warning"><p>No pending secure connect session was found.</p></div>');
+                return;
+            }
+
+            try {
+                const response = await fetch(wpApiSettings.root + 'encypher-provenance/v1/connect/poll', {
+                    method: 'GET',
+                    headers: {
+                        'X-WP-Nonce': wpApiSettings.nonce
+                    }
+                });
+                const payload = await response.json();
+
+                if (!response.ok || !payload.success) {
+                    throw new Error(payload.message || payload.data?.message || 'Unable to check secure connect status.');
+                }
+
+                const data = payload.data || {};
+                if (data.status === 'completed' && data.api_key) {
+                    $('#api_key').val(data.api_key);
+                    $('input[name="encypher_provenance_settings[connect_session_id]"]').val('');
+                    $('input[name="encypher_provenance_settings[connect_email]"]').val('');
+                    $('#encypher-connect-poll-btn').prop('disabled', true);
+                    if (window.EncypherSettingsData) {
+                        window.EncypherSettingsData.connectSessionId = '';
+                        window.EncypherSettingsData.connectEmail = '';
+                    }
+
+                    this.showApiKeyStatus('saved', 'Provisioned automatically');
+                    this.setChecklistStepState('api-key', true);
+                    this.setChecklistStepState('connection-test', true);
+                    this.updateChecklistProgress();
+                    this.updateHealthCard({
+                        state: 'connected',
+                        stateLabel: 'Connected and ready',
+                        apiUrl: data.api_base_url || $('#api_base_url').val(),
+                        organization: data.organization_name || 'Connected workspace',
+                        lastCheck: this.currentTimestamp(),
+                    });
+                    $status.html(`<div class="notice notice-success"><p>${this.getData().strings?.connectCompleted || 'WordPress connected successfully.'}</p></div>`);
+                    this.stopConnectPolling();
+                    return;
+                }
+
+                $status.html('<div class="notice notice-info"><p>Waiting for email approval. We will keep checking automatically.</p></div>');
+            } catch (error) {
+                $status.html(`<div class="notice notice-error"><p>${error.message}</p></div>`);
+                this.stopConnectPolling();
+            }
+        },
+
+        beginConnectPolling() {
+            this.stopConnectPolling();
+            this._connectPollTimer = window.setInterval(() => {
+                this.pollMagicLinkConnect();
+            }, 5000);
+        },
+
+        stopConnectPolling() {
+            if (this._connectPollTimer) {
+                window.clearInterval(this._connectPollTimer);
+                this._connectPollTimer = null;
+            }
+        },
+
+        resumeConnectPollingIfNeeded() {
+            const sessionId = $('input[name="encypher_provenance_settings[connect_session_id]"]').val() || this.getData().connectSessionId;
+            if (sessionId) {
+                $('#encypher-connect-poll-btn').prop('disabled', false);
+                this.beginConnectPolling();
+            }
         },
 
         async checkConnection() {
@@ -193,15 +329,6 @@
                 .text(message);
         },
 
-        convertToLocalhostUrl(url) {
-            // Convert Docker internal URLs to localhost for browser testing
-            // enterprise-api:8000 -> localhost:9000 (mapped port)
-            if (url.includes('enterprise-api:8000')) {
-                return url.replace('enterprise-api:8000', 'localhost:9000');
-            }
-            return url;
-        },
-
         async testConnection() {
             const $btn = $('#test-connection-btn');
             const $result = $('#test-connection-result');
@@ -240,18 +367,18 @@
                 message += `<li><strong>API URL:</strong> ${data.api_url}</li>`;
                 message += `<li><strong>API Status:</strong> ${data.health?.status || 'OK'}</li>`;
                 message += `<li><strong>API Key:</strong> ${data.api_key_configured ? 'Configured' : 'Not configured (using demo mode)'}</li>`;
-                
+
                 if (data.auth_note) {
                     message += `<li><strong>Note:</strong> ${data.auth_note}</li>`;
                 }
-                
+
                 if (data.organization) {
                     message += `<li><strong>Organization:</strong> ${data.organization.name || data.organization.organization_id}</li>`;
                     if (data.organization.tier) {
                         message += `<li><strong>Tier:</strong> ${data.organization.tier}</li>`;
                     }
                 }
-                
+
                 message += '</ul></div>';
                 $result.html(message);
 

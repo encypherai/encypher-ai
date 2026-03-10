@@ -51,20 +51,30 @@ class HtmlParser
 
     /**
      * Elements whose content is never visible text and should be skipped entirely.
+     *
+     * Note: 'img', 'picture' are intentionally NOT in this list. Image blocks
+     * are now processed for CDN provenance — their src attributes are used by
+     * the CDN provenance pipeline to register and track signed image variants.
      */
     private const SKIP_ELEMENTS = [
         'script', 'style', 'noscript', 'svg', 'math', 'video', 'audio',
-        'canvas', 'iframe', 'object', 'embed', 'source', 'track', 'picture',
-        'template', 'img', 'input', 'select', 'textarea', 'button',
+        'canvas', 'iframe', 'object', 'embed', 'source', 'track',
+        'template', 'input', 'select', 'textarea', 'button',
         'map', 'area', 'link', 'meta', 'base', 'head', 'title',
     ];
 
     /**
      * WordPress block types that contain no user-authored text.
      * Their entire HTML output is skipped during text extraction.
+     *
+     * Note: 'wp:image', 'wp:gallery', and 'wp:post-featured-image' are
+     * intentionally NOT in this list. These blocks are now processed for
+     * CDN provenance — the block HTML is parsed to extract image src URLs
+     * for registration with the Encypher CDN provenance pipeline, enabling
+     * C2PA-Manifest-URL header injection on CDN-transformed image responses.
      */
     private const WP_SKIP_BLOCKS = [
-        'wp:image', 'wp:gallery', 'wp:video', 'wp:audio', 'wp:file',
+        'wp:video', 'wp:audio', 'wp:file',
         'wp:cover', 'wp:media-text',
         'wp:separator', 'wp:spacer', 'wp:more', 'wp:nextpage',
         'wp:buttons', 'wp:button',
@@ -74,7 +84,7 @@ class HtmlParser
         'wp:social-links', 'wp:social-link', 'wp:tag-cloud',
         'wp:navigation', 'wp:navigation-link', 'wp:site-logo',
         'wp:site-title', 'wp:site-tagline', 'wp:query',
-        'wp:post-template', 'wp:post-featured-image',
+        'wp:post-template',
         'wp:post-navigation-link', 'wp:loginout',
         'wp:template-part', 'wp:pattern', 'wp:block',
         'wp:code',

@@ -47,18 +47,26 @@ gh auth login
 
 ### 3. Set up the cron job
 
+Cron runs in a bare environment (no shell profile, minimal PATH, no API keys).
+`cron-wrapper.sh` handles this: it extends PATH and sources `.env.skills` before
+calling `run.sh`. The wrapper also redirects stdout+stderr to the log file.
+
 ```bash
 # Edit crontab
 crontab -e
 
-# Add this line (Tuesday 14:00 UTC = 9:00 AM EST):
-0 14 * * 2 /path/to/encypherai-commercial/scripts/agents/blog-writer/run.sh >> /var/log/encypher-blog-writer.log 2>&1
+# Add these two lines (Tuesday 9:00 AM EST):
+TZ=America/New_York
+0 9 * * 2 /home/developer/code/encypherai-commercial/scripts/agents/blog-writer/cron-wrapper.sh
 ```
 
 Verify the job is registered:
 ```bash
 crontab -l
 ```
+
+**Do not call `run.sh` directly from cron** — it relies on PATH and env vars that
+cron does not provide. Always go through `cron-wrapper.sh`.
 
 ### 4. Monitor logs
 
@@ -84,7 +92,8 @@ See `.windsurf/workflows/blog-publish.md` for the full checklist and commands.
 
 | File | Purpose |
 |------|---------|
-| `run.sh` | Entry point, called by cron. Handles git, launches agent, creates PR. |
+| `cron-wrapper.sh` | Cron entry point. Sets PATH, sources `.env.skills`, execs `run.sh`. |
+| `run.sh` | Main pipeline. Handles git, launches agent, creates PR. |
 | `AGENT_PROMPT.md` | Full instructions for the Claude agent |
 | `TOPICS.md` | Prioritized topic backlog. Check off `[x]` when published. |
 | `README.md` | This file |
@@ -105,16 +114,18 @@ Edit `AGENT_PROMPT.md` to:
 - Add/remove approved tags
 - Adjust tone guidelines
 
-## Environment Variables (optional)
+## Environment Variables
 
-Set in your shell or cron environment:
+When running manually, export these in your shell before calling `run.sh`:
 ```bash
-# Anthropic API key (if claude CLI needs it)
 export ANTHROPIC_API_KEY=sk-ant-...
-
-# GitHub token (if gh CLI needs it)
-export GITHUB_TOKEN=ghp_...
+export GH_TOKEN=ghp_...
+export ENCYPHER_API_KEY=...
 ```
+
+When running via cron, place them in `<repo-root>/.env.skills` (one `KEY=value`
+per line, no `export` prefix). `cron-wrapper.sh` sources that file automatically
+via `set -a / source / set +a`.
 
 ## Troubleshooting
 

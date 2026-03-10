@@ -15,7 +15,6 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 import app.utils.legacy_safe_crypto as ls
 import app.utils.legacy_safe_rs_crypto as lsrs
 
-
 # =============================================================================
 # FIXTURES
 # =============================================================================
@@ -135,9 +134,7 @@ def test_ls_round_trip_no_content_fallback(signing_key, log_id):
     """Marker created without sentence_text verifies when sentence_text is supplied."""
     marker = ls.create_marker(log_id, signing_key, sentence_text=None)
 
-    ok, returned_log_id = ls.verify_marker(
-        marker, signing_key, sentence_text="Any sentence text here."
-    )
+    ok, returned_log_id = ls.verify_marker(marker, signing_key, sentence_text="Any sentence text here.")
     assert ok is True
     assert returned_log_id == log_id
 
@@ -148,9 +145,7 @@ def test_ls_verify_nfc_stability(signing_key, log_id):
     marker = ls.create_marker(log_id, signing_key, sentence_text=sentence_decomposed)
 
     sentence_composed = "Caf\u00e9 prices rose."  # precomposed e-acute
-    ok, returned_log_id = ls.verify_marker(
-        marker, signing_key, sentence_text=sentence_composed
-    )
+    ok, returned_log_id = ls.verify_marker(marker, signing_key, sentence_text=sentence_composed)
     assert ok is True
     assert returned_log_id == log_id
 
@@ -191,9 +186,7 @@ def test_lsrs_round_trip_no_content_fallback(signing_key, log_id):
     """RS marker created without sentence_text verifies when sentence_text is supplied."""
     marker = lsrs.create_marker(log_id, signing_key, sentence_text=None)
 
-    ok, returned_log_id = lsrs.verify_marker(
-        marker, signing_key, sentence_text="Fallback verification sentence."
-    )
+    ok, returned_log_id = lsrs.verify_marker(marker, signing_key, sentence_text="Fallback verification sentence.")
     assert ok is True
     assert returned_log_id == log_id
 
@@ -229,18 +222,14 @@ def test_ls_wrong_content_fails(signing_key, log_id):
     """Content-bound marker fails verification when wrong sentence is supplied."""
     sentence = "Original sentence text here."
     marker = ls.create_marker(log_id, signing_key, sentence_text=sentence)
-    ok, _ = ls.verify_marker(
-        marker, signing_key, sentence_text="Completely different sentence."
-    )
+    ok, _ = ls.verify_marker(marker, signing_key, sentence_text="Completely different sentence.")
     assert ok is False
 
 
 def test_lsrs_wrong_content_fails(signing_key, log_id):
     sentence = "Original RS sentence."
     marker = lsrs.create_marker(log_id, signing_key, sentence_text=sentence)
-    ok, _ = lsrs.verify_marker(
-        marker, signing_key, sentence_text="Wrong RS sentence."
-    )
+    ok, _ = lsrs.verify_marker(marker, signing_key, sentence_text="Wrong RS sentence.")
     assert ok is False
 
 
@@ -469,8 +458,8 @@ def test_ls_alphabet_size():
 
 def test_ls_lrm_rlm_in_alphabet():
     """LRM and RLM must be in the base-6 alphabet to distinguish from base-4."""
-    lrm = "\u200E"
-    rlm = "\u200F"
+    lrm = "\u200e"
+    rlm = "\u200f"
     assert lrm in ls.CHARS_BASE6_SET
     assert rlm in ls.CHARS_BASE6_SET
 
@@ -478,5 +467,5 @@ def test_ls_lrm_rlm_in_alphabet():
 def test_ls_lrm_rlm_absent_from_base4():
     """LRM/RLM (indices 4-5 of base-6) must not appear in the base-4 subset (indices 0-3)."""
     base4_chars = set(ls.CHARS_BASE6[:4])
-    assert "\u200E" not in base4_chars  # LRM
-    assert "\u200F" not in base4_chars  # RLM
+    assert "\u200e" not in base4_chars  # LRM
+    assert "\u200f" not in base4_chars  # RLM

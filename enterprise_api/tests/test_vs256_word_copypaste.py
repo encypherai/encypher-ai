@@ -26,32 +26,22 @@ Usage:
 
 import sys
 import unicodedata
-from app.utils.vs256_crypto import generate_log_id
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+from app.utils.vs256_crypto import generate_log_id
 
 # Import VS256 crypto module
 sys.path.insert(0, ".")
 from app.utils.vs256_crypto import (
-    BYTE_TO_VS,
-    VS_TO_BYTE,
-    VS_BMP_START,
-    VS_BMP_END,
-    VS_SUPP_START,
-    VS_SUPP_END,
     MAGIC_PREFIX,
     SIGNATURE_CHARS,
-    create_signed_marker,
-    verify_signed_marker,
-    find_all_markers,
-    extract_marker,
-    embed_signature_safely,
-    derive_signing_key_from_private_key,
+    VS_TO_BYTE,
     create_embedded_sentence,
-    encode_bytes_vs256,
-    decode_bytes_vs256,
+    derive_signing_key_from_private_key,
+    find_all_markers,
+    verify_signed_marker,
 )
-
 
 # ──────────────────────────────────────────────────────────────────────
 # VS Character Properties
@@ -92,9 +82,7 @@ def print_vs_properties():
         utf8_bytes = len(char.encode("utf-8"))
         utf16_bytes = len(char.encode("utf-16-le"))
 
-        print(
-            f"U+{cp:05X}      {name:<40} {category:<5} {utf8_bytes}B     {utf16_bytes}B"
-        )
+        print(f"U+{cp:05X}      {name:<40} {category:<5} {utf8_bytes}B     {utf16_bytes}B")
 
     # Known-good ZW chars for comparison
     print(f"\n{'--- Known Word-Safe Characters (ZW base-4) for Comparison ---':^78}")
@@ -102,11 +90,11 @@ def print_vs_properties():
     print("-" * 78)
 
     zw_controls = [
-        ("\u200C", "ZWNJ (Word-safe, ZW byte 0)"),
-        ("\u200D", "ZWJ (Word-safe, ZW byte 1)"),
-        ("\u034F", "CGJ (Word-safe, ZW byte 2)"),
-        ("\u180E", "MVS (Word-safe, ZW byte 3)"),
-        ("\u200B", "ZWSP (STRIPPED by Word!)"),
+        ("\u200c", "ZWNJ (Word-safe, ZW byte 0)"),
+        ("\u200d", "ZWJ (Word-safe, ZW byte 1)"),
+        ("\u034f", "CGJ (Word-safe, ZW byte 2)"),
+        ("\u180e", "MVS (Word-safe, ZW byte 3)"),
+        ("\u200b", "ZWSP (STRIPPED by Word!)"),
     ]
 
     for char, label in zw_controls:
@@ -119,9 +107,7 @@ def print_vs_properties():
         utf8_bytes = len(char.encode("utf-8"))
         utf16_bytes = len(char.encode("utf-16-le"))
 
-        print(
-            f"U+{cp:04X}       {name:<40} {category:<5} {utf8_bytes}B     {utf16_bytes}B"
-        )
+        print(f"U+{cp:04X}       {name:<40} {category:<5} {utf8_bytes}B     {utf16_bytes}B")
 
     print()
     print("Key observations:")
@@ -177,9 +163,9 @@ def create_visibility_test_document():
 
     # Control chars (known behavior)
     controls = [
-        ("ZWNJ", "\u200C", "Word-safe control"),
-        ("ZWJ", "\u200D", "Word-safe control"),
-        ("ZWSP", "\u200B", "Known STRIPPED by Word"),
+        ("ZWNJ", "\u200c", "Word-safe control"),
+        ("ZWJ", "\u200d", "Word-safe control"),
+        ("ZWSP", "\u200b", "Known STRIPPED by Word"),
     ]
 
     lines.append("--- VARIATION SELECTORS (under test) ---")
@@ -544,9 +530,7 @@ def main():
         return
 
     # Analyze VS character preservation
-    vs_results, ctrl_results = analyze_vs_results(
-        test_doc, pasted_text, vs_test_set, controls
-    )
+    vs_results, ctrl_results = analyze_vs_results(test_doc, pasted_text, vs_test_set, controls)
 
     # Analyze cryptographic signature survival
     analyze_signature_results(pasted_text, signing_key, sig_sentences, sig_uuids)

@@ -11,13 +11,14 @@ import time
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from app.config import settings
-from app.services.session_service import session_service
-from app.utils.c2pa_verifier import C2PAAssertion, C2PAVerificationResult, C2PAVerifier, verify_c2pa_manifest
 from cryptography.hazmat.primitives import serialization
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.payloads import serialize_c2pa_payload_to_cbor
 from encypher.core.signing import sign_c2pa_cose
+
+from app.config import settings
+from app.services.session_service import session_service
+from app.utils.c2pa_verifier import C2PAAssertion, C2PAVerificationResult, C2PAVerifier, verify_c2pa_manifest
 
 
 class _FakeRedis:

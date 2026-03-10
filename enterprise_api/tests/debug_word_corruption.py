@@ -11,22 +11,22 @@ import sys
 
 def analyze_text(text, label):
     """Analyze and display text character by character."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"{label}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"Total length: {len(text)} characters\n")
-    
+
     # Count character types
-    zwsp_count = text.count('\u200B')
-    zwnj_count = text.count('\u200C')
-    zwj_count = text.count('\u200D')
-    
+    zwsp_count = text.count("\u200b")
+    zwnj_count = text.count("\u200c")
+    zwj_count = text.count("\u200d")
+
     print("Zero-width characters:")
     print(f"  ZWSP (U+200B): {zwsp_count}")
     print(f"  ZWNJ (U+200C): {zwnj_count}")
     print(f"  ZWJ  (U+200D): {zwj_count}")
     print(f"  Total ZW:      {zwsp_count + zwnj_count + zwj_count}")
-    
+
     # Show first 100 chars with code points
     print("\nFirst 100 characters (with code points):")
     for i, char in enumerate(text[:100]):
@@ -41,30 +41,30 @@ def analyze_text(text, label):
             name = f"U+{cp:04X}"
         else:
             name = char
-        
+
         if cp in (0x200B, 0x200C, 0x200D):
             print(f"  [{i}] {name} (U+{cp:04X})")
 
 
 def compare_texts(original, corrupted):
     """Compare two texts character by character."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("COMPARISON")
-    print(f"{'='*70}")
-    
+    print(f"{'=' * 70}")
+
     print(f"Original length:  {len(original)}")
     print(f"Corrupted length: {len(corrupted)}")
     print(f"Difference:       {len(original) - len(corrupted)} chars lost")
-    
+
     # Find where they diverge
     min_len = min(len(original), len(corrupted))
     first_diff = None
-    
+
     for i in range(min_len):
         if original[i] != corrupted[i]:
             first_diff = i
             break
-    
+
     if first_diff is not None:
         print(f"\nFirst difference at position {first_diff}:")
         print(f"  Original:  U+{ord(original[first_diff]):04X}")
@@ -76,11 +76,11 @@ def compare_texts(original, corrupted):
 
 
 def main():
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("WORD CORRUPTION DEBUGGER")
-    print("="*70)
+    print("=" * 70)
     print("\nThis tool analyzes what Word does to zero-width characters.\n")
-    
+
     print("Step 1: Paste the ORIGINAL text (from terminal before Word):")
     print("-" * 70)
     try:
@@ -88,10 +88,10 @@ def main():
     except (KeyboardInterrupt, EOFError):
         print("\nCancelled.")
         sys.exit(0)
-    
+
     analyze_text(original, "ORIGINAL TEXT (Before Word)")
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("Step 2: Paste the CORRUPTED text (after copying from Word):")
     print("-" * 70)
     try:
@@ -99,19 +99,19 @@ def main():
     except (KeyboardInterrupt, EOFError):
         print("\nCancelled.")
         sys.exit(0)
-    
+
     analyze_text(corrupted, "CORRUPTED TEXT (After Word)")
-    
+
     compare_texts(original, corrupted)
-    
+
     # Check if it's a known Word issue
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("DIAGNOSIS")
-    print("="*70)
-    
-    orig_zw = original.count('\u200B') + original.count('\u200C') + original.count('\u200D')
-    corr_zw = corrupted.count('\u200B') + corrupted.count('\u200C') + corrupted.count('\u200D')
-    
+    print("=" * 70)
+
+    orig_zw = original.count("\u200b") + original.count("\u200c") + original.count("\u200d")
+    corr_zw = corrupted.count("\u200b") + corrupted.count("\u200c") + corrupted.count("\u200d")
+
     if corr_zw == 0 and orig_zw > 0:
         print("\n❌ ISSUE: Word completely stripped all zero-width characters")
         print("\nThis is a known issue with some Word versions/settings:")

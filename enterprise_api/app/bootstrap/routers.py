@@ -1,3 +1,5 @@
+from fastapi import FastAPI
+
 from app.api.v1.api import api_router as api_v1_router
 from app.routers import (
     account,
@@ -5,7 +7,9 @@ from app.routers import (
     audit,
     batch,
     byok,
+    cdn_analytics,
     cdn_integrations,
+    cdn_provenance,
     chat,
     coalition,
     documents,
@@ -21,10 +25,14 @@ from app.routers import (
     rights,
     rights_licensing,
     signing,
+    streaming,
+    team,
+    tools,
+    usage,
+    verification,
+    webhooks,
 )
 from app.routers import status as status_router
-from app.routers import streaming, team, tools, usage, verification, webhooks
-from fastapi import FastAPI
 
 ROUTER_SPECS = [
     (account.router, "/api/v1", ["Account"]),
@@ -51,7 +59,10 @@ ROUTER_SPECS = [
     (tools.router, "/api/v1", ["Public Tools"]),
     (organizations_proxy.router, "/api/v1", ["Organizations Proxy"]),
     (integrations.router, "/api/v1", ["Integrations"]),
+    (cdn_analytics.router, "/api/v1", ["CDN Analytics"]),
     (cdn_integrations.router, "/api/v1", ["CDN Integrations"]),
+    (cdn_provenance.router, "/api/v1", ["CDN Provenance"]),
+    (cdn_provenance.well_known_router, None, ["CDN Provenance"]),
     (rights.router, "/api/v1", ["Rights Management"]),
     (notices.router, "/api/v1", ["Formal Notices"]),
     (rights_licensing.router, "/api/v1", ["Rights Licensing Transactions"]),

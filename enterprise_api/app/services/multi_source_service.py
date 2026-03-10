@@ -7,7 +7,7 @@ tracking, chronological ordering, and authority ranking.
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import List, Optional, Tuple, cast
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -172,9 +172,9 @@ class MultiSourceService:
             # Get organization info
             result = await db.execute(
                 text("""
-                    SELECT tier, is_verified, 
+                    SELECT tier, is_verified,
                            (SELECT COUNT(*) FROM content_references WHERE organization_id = :org_id) as doc_count
-                    FROM organizations 
+                    FROM organizations
                     WHERE id = :org_id
                 """),
                 {"org_id": organization_id},

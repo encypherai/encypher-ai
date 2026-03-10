@@ -5,17 +5,17 @@ export const dynamic = 'force-dynamic';
 
 const GUIDE_CONTENT = `# WordPress Plugin Installation Guide
 
-Install the Encypher Provenance plugin to automatically sign all your WordPress content with C2PA-compliant provenance markers and machine-readable licensing terms.
+Install the Encypher Provenance plugin to add standards-based proof of origin to your WordPress publishing workflow.
 
 ## What You'll Get
 
 After installation, your WordPress site will:
 
-- **Automatically sign new posts** with invisible C2PA provenance markers
-- **Embed your licensing terms** (Bronze/Silver/Gold tiers) into every article
-- **Display verification badges** so readers can verify content authenticity
-- **Bulk sign your archive** to protect existing content
-- **Provide court-admissible proof** of authorship and publication date
+- **Connect to your Encypher workspace** with a secure email-based approval flow
+- **Automatically sign new and updated posts** with invisible C2PA provenance markers
+- **Preserve provenance across edits** so the verification view reflects the content history
+- **Display verification badges** so readers can check authenticity on the frontend
+- **Bulk sign your archive** when you want older content covered too
 
 ---
 
@@ -24,9 +24,9 @@ After installation, your WordPress site will:
 Before you begin, make sure you have:
 
 1. **An Encypher account** - [Sign up here](https://dashboard.encypherai.com/signup) if you don't have one
-2. **An API key** - Generate one from the [API Keys](/api-keys) page
-3. **WordPress 5.0+** with admin access
-4. **PHP 7.4+** (WordPress default)
+2. **WordPress 6.0+** with admin access
+3. **PHP 7.4+** (WordPress default)
+4. **Access to your work email inbox** so you can approve the secure connection link
 
 ---
 
@@ -52,6 +52,7 @@ Download the Encypher Provenance plugin from your dashboard:
 4. Choose the \`encypher-provenance.zip\` file you downloaded
 5. Click **Install Now**
 6. After installation, click **Activate Plugin**
+7. Open **Encypher → Settings** after activation to start configuration
 
 ![Upload plugin in WordPress](/assets/docs/wordpress/step2-upload.png)
 
@@ -62,23 +63,32 @@ Download the Encypher Provenance plugin from your dashboard:
 3. Go to **Plugins** in WordPress admin
 4. Find "Encypher Provenance" and click **Activate**
 
----
-
-## Step 3: Configure Your API Key
-
-1. After activation, go to **Settings → Encypher Provenance**
-2. Enter your **API Key** from the [API Keys](/api-keys) page
-3. Enter your **Organization ID** (found in [Settings](/settings))
-4. Click **Save Changes**
-5. Click **Test Connection** to verify
-
-![Configure API key](/assets/docs/wordpress/step3-api-key.png)
-
-> **Tip**: Your Organization ID looks like \`org_abc123xyz\` and can be found in your dashboard settings.
+After activation, open **Encypher → Settings** to connect the site to your Encypher workspace.
 
 ---
 
-## Step 4: Configure Signing Options
+## Step 3: Connect Your Workspace
+
+1. After activation, go to **Encypher → Settings**
+2. Enter your **work email** and click **Email me a secure connect link**
+3. Open the email from Encypher and approve the WordPress connection in your browser
+4. Return to WordPress and keep the settings page open for a few seconds while the plugin polls for completion
+5. Confirm the plugin shows the workspace as connected and that the API key was provisioned automatically
+
+![Connect your workspace](/assets/docs/wordpress/step3-api-key.png)
+
+> **Tip**: If your organization already manages Encypher credentials centrally, you can still paste an existing API key manually and use **Test Connection** to verify the setup.
+
+### Manual API Key Fallback
+
+1. Open [API Keys](/api-keys) in the Encypher dashboard
+2. Create or copy an existing API key
+3. Paste it into the plugin settings page
+4. Click **Test Connection** to confirm the workspace metadata resolves correctly
+
+---
+
+## Step 4: Choose Your Signing Defaults
 
 The plugin offers several signing options:
 
@@ -86,14 +96,15 @@ The plugin offers several signing options:
 |--------|-------------|-------------|
 | **Auto-sign new posts** | Automatically sign posts when published | ✅ Yes |
 | **Auto-sign on update** | Re-sign posts when edited | ✅ Yes |
-| **Attach Rights Profile** | Embed your licensing terms | ✅ Yes |
-| **Include metadata** | Sign title, author, date | ✅ Yes |
+| **Show verification badge** | Display a public authenticity badge on signed posts | ✅ Yes |
+| **Metadata format** | Keep the default C2PA provenance wrapper enabled | ✅ Yes |
 
-### Enable Rights Profile
+### Recommended defaults
 
-1. Make sure you've set up your [Rights Profile](/rights) in the dashboard first
-2. In WordPress, enable **Attach Rights Profile**
-3. This embeds your Bronze/Silver/Gold licensing terms into every signed article
+1. Leave **Auto-sign new posts** enabled so published content is protected automatically
+2. Leave **Auto-sign on update** enabled so edited content preserves its provenance chain
+3. Keep **Metadata Format** on **C2PA** so the verification view exposes standards-based provenance details
+4. Use **Test Connection** once before publishing your first post
 
 ![Signing options](/assets/docs/wordpress/step4-options.png)
 
@@ -118,63 +129,72 @@ The verification badge lets readers verify your content's authenticity:
 
 ---
 
-## Step 6: Bulk Sign Your Archive
+## Step 6: Publish and Sign Your First Post
+
+Use a normal WordPress post to confirm the plugin is connected and signing correctly.
+
+1. Create a new post in WordPress
+2. Publish the post with **Auto-sign new posts** enabled
+3. Confirm the Encypher sidebar or post UI shows the content as signed
+4. Make a quick edit and update the post once to confirm the provenance chain stays intact
+
+After that first publish, your site is ready for broader rollout.
+
+![Signed post in WordPress](/assets/docs/wordpress/step4-options.png)
+
+---
+
+## Step 7: Bulk Sign Your Archive
 
 To sign your existing posts:
 
 1. Go to **Encypher → Bulk Sign** in WordPress admin
 2. Select post types to sign (Posts, Pages, etc.)
-3. Review the archive count and estimated cost
+3. Review the archive count
 4. Click **Start Bulk Signing**
 
 The plugin processes posts in batches and shows real-time progress.
 
 ![Bulk signing interface](/assets/docs/wordpress/step6-bulk-sign.png)
 
-### Archive Pricing
-
-- **Free tier**: 1,000 documents/month included
-- **Archive backfill**: $0.01/document (one-time)
-- **Enterprise**: Unlimited signing included
-
 ---
 
-## Verification: Test Your Setup
+## Step 8: Verify on the Frontend
 
 After installation, verify everything works:
 
-### 1. Create a Test Post
+### 1. Open a Signed Post
 
-1. Create a new post in WordPress
-2. Add some text content
-3. Publish the post
+1. Open a signed post on the frontend
+2. Confirm the article displays normally
+3. Look for the verification badge near the article footer or page edge, depending on your chosen badge position
+
+![Frontend verification badge on a signed post](/assets/docs/wordpress/frontend-badge.png)
 
 ### 2. Check Signing Status
 
 1. View the post on your site
 2. Look for the verification badge
-3. Click the badge to see provenance details
+3. Click the badge to see provenance details, signing status, and verification information
 
-### 3. Verify via API
+### 3. Verify in WordPress
 
-\`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/verify \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"content": "Paste your signed article text here..."}'
-\`\`\`
+1. Return to **Encypher → Analytics** or the relevant post screen in WordPress
+2. Confirm the post appears as signed
+3. Review the latest verification details and timestamps
 
 ---
 
-## Content Inventory
+## Step 9: Review Ongoing Coverage
 
-Track which posts are signed:
+After the first successful publish, use the plugin's WordPress surfaces to confirm the rollout is healthy:
 
-1. Go to **Encypher → Content Inventory**
-2. Filter by signing status (Signed, Unsigned, Failed)
-3. Click any post to view its provenance details
+1. Open **Encypher → Analytics** to review signing coverage and recent activity
+2. Use **Encypher → Content** to inspect signed posts and confirm the latest content is protected
+3. Return to **Encypher → Settings** if you need to retest the workspace connection
+4. For multi-site teams, repeat the same flow for each WordPress property
 
-![Content inventory](/assets/docs/wordpress/step7-inventory.png)
+![WordPress content coverage](/assets/docs/wordpress/step7-inventory.png)
 
 ---
 
@@ -182,8 +202,8 @@ Track which posts are signed:
 
 ### "Connection Failed" Error
 
-- Verify your API key is correct
-- Check that your Organization ID matches your account
+- Re-run **Email me a secure connect link** and approve the latest secure link
+- If using manual credentials, verify your API key is correct
 - Ensure your server can make outbound HTTPS requests
 
 ### Posts Not Being Signed
@@ -196,7 +216,7 @@ Track which posts are signed:
 
 - Clear your WordPress cache
 - Check that the badge is enabled in settings
-- Verify the post is actually signed (check Content Inventory)
+- Verify the post is actually signed (check Encypher → Content or Analytics)
 
 ### Bulk Signing Stops
 
@@ -250,6 +270,10 @@ No. The provenance markers are invisible Unicode characters that don't affect ho
 ### Can I sign posts retroactively?
 
 Yes! Use the Bulk Sign feature to sign your entire archive.
+
+### Does this support teams that already manage Encypher credentials centrally?
+
+Yes. Secure email connect is the recommended path for first-time setup, but the plugin still supports pasting an existing Encypher API key manually.
 
 ### What happens if I deactivate the plugin?
 

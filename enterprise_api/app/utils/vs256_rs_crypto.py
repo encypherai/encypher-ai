@@ -38,11 +38,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac as crypto_hmac
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from reedsolo import RSCodec, ReedSolomonError
+from reedsolo import ReedSolomonError, RSCodec
 
 # Re-use the VS256 alphabet and log_id from vs256_crypto
 from app.utils.vs256_crypto import (
-    BYTE_TO_VS,
     LOG_ID_BYTES,
     MAGIC_PREFIX,
     MAGIC_PREFIX_LEN,
@@ -50,7 +49,6 @@ from app.utils.vs256_crypto import (
     VS_TO_BYTE,
     decode_bytes_vs256,
     encode_bytes_vs256,
-    generate_log_id,
 )
 
 # =============================================================================
@@ -201,9 +199,7 @@ def find_all_markers(text: str) -> list[tuple[int, int, str]]:
         if text[i] == MAGIC_PREFIX[0]:
             if text[i : i + MAGIC_PREFIX_LEN] == MAGIC_PREFIX:
                 candidate = text[i : i + SIGNATURE_CHARS]
-                if len(candidate) == SIGNATURE_CHARS and all(
-                    ch in VS_CHAR_SET for ch in candidate[MAGIC_PREFIX_LEN:]
-                ):
+                if len(candidate) == SIGNATURE_CHARS and all(ch in VS_CHAR_SET for ch in candidate[MAGIC_PREFIX_LEN:]):
                     signatures.append((i, i + SIGNATURE_CHARS, candidate))
                     i += SIGNATURE_CHARS
                     continue
@@ -218,7 +214,6 @@ def find_all_markers(text: str) -> list[tuple[int, int, str]]:
 
 from app.utils.vs256_crypto import (  # noqa: E402
     embed_signature_safely,
-    get_signature_position,
 )
 
 

@@ -27,15 +27,14 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from app.utils.legacy_safe_crypto import (
+    CGJ,
     CHARS_BASE6,
     CHARS_BASE6_SET,
-    CGJ,
     LRM,
     MARKER_CHARS,
     MVS,
     PAYLOAD_BYTES,
     RLM,
-    TRAILING_PUNCTUATION,
     ZWJ,
     ZWNJ,
     _decode_base6,
@@ -50,7 +49,6 @@ from app.utils.legacy_safe_crypto import (
     remove_markers,
     verify_marker,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -333,13 +331,16 @@ def test_remove_markers_clean_text_unchanged():
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("sentence,expected_suffix", [
-    ("Hello world.", "."),
-    ("Hello world!", "!"),
-    ("Hello world?", "?"),
-    ('She said "Hi."', '"'),
-    ("No punctuation", ""),
-])
+@pytest.mark.parametrize(
+    "sentence,expected_suffix",
+    [
+        ("Hello world.", "."),
+        ("Hello world!", "!"),
+        ("Hello world?", "?"),
+        ('She said "Hi."', '"'),
+        ("No punctuation", ""),
+    ],
+)
 def test_embed_before_punctuation(sentence, expected_suffix, signing_key):
     lid = generate_log_id()
     marker = create_marker(lid, signing_key)

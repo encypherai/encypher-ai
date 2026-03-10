@@ -84,15 +84,15 @@ const tabs = document.querySelectorAll('.popup__tab');
 const DEFAULT_SIGN_SETTINGS = {
   defaultDocumentType: 'article',
   defaultDocType: 'article',
-  defaultEmbeddingTechnique: 'micro',
-  defaultSegmentationLevel: 'sentence',
+  defaultEmbeddingTechnique: 'micro_no_embed_c2pa',
+  defaultSegmentationLevel: 'document',
 };
 
 function normalizeEmbeddingTechnique(value) {
   const mode = String(value || '').toLowerCase();
   if (mode === 'micro_ecc_c2pa' || mode === 'micro') return 'micro';
   if (mode === 'micro_ecc' || mode === 'micro_no_embed_c2pa') return 'micro_no_embed_c2pa';
-  return 'micro';
+  return 'micro_no_embed_c2pa';
 }
 
 /**
@@ -130,16 +130,16 @@ async function loadSignDefaults() {
     const settings = await chrome.storage.sync.get(DEFAULT_SIGN_SETTINGS);
     if (signDocTypeEl) signDocTypeEl.value = settings.defaultDocumentType || settings.defaultDocType || 'article';
     if (signEmbeddingTechniqueEl) {
-      signEmbeddingTechniqueEl.value = normalizeEmbeddingTechnique(settings.defaultEmbeddingTechnique || 'micro');
+      signEmbeddingTechniqueEl.value = normalizeEmbeddingTechnique(settings.defaultEmbeddingTechnique || 'micro_no_embed_c2pa');
     }
-    if (signSegmentationLevelEl) signSegmentationLevelEl.value = settings.defaultSegmentationLevel || 'sentence';
+    if (signSegmentationLevelEl) signSegmentationLevelEl.value = settings.defaultSegmentationLevel || 'document';
     enforceSignMethodByTier(accountInfo);
   } catch (error) {
     // Keep in-UI defaults when storage read fails.
   }
 }
 
-function isPlausibleApiKey(value) {
+function _isPlausibleApiKey(value) {
   const key = String(value || '').trim();
   return key.length >= 16 && (key.startsWith('ency_') || key.startsWith('demo_'));
 }
@@ -549,8 +549,8 @@ async function signContent() {
 
   // Gather options
   const docType = signDocTypeEl?.value || 'article';
-  const manifestMode = signEmbeddingTechniqueEl?.value || 'micro';
-  const segmentationLevel = signSegmentationLevelEl?.value || 'sentence';
+  const manifestMode = signEmbeddingTechniqueEl?.value || 'micro_no_embed_c2pa';
+  const segmentationLevel = signSegmentationLevelEl?.value || 'document';
   const useMerkle = signMerkleEl?.checked && !signMerkleEl?.disabled;
   const useAttribution = signAttributionEl?.checked && !signAttributionEl?.disabled;
 
@@ -572,7 +572,7 @@ async function signContent() {
       }
     });
 
-    if (response && response.success) {
+    if (response && response.success && response.signedText) {
       signedOutputEl.value = response.signedText;
 
       // Copy to clipboard
@@ -580,7 +580,7 @@ async function signContent() {
 
       showSignState('result');
     } else {
-      signErrorMessageEl.textContent = response?.error || 'Signing failed. Please try again.';
+      signErrorMessageEl.textContent = response?.error || 'Signing failed. No signed content was returned.';
       showSignState('error');
     }
   } catch (error) {

@@ -234,16 +234,7 @@ def test_settings_page_surfaces_launch_readiness_checklist_and_health_card() -> 
         / "includes"
         / "class-encypher-provenance-admin.php"
     )
-    js_file = (
-        repo_root
-        / "integrations"
-        / "wordpress-provenance-plugin"
-        / "plugin"
-        / "encypher-provenance"
-        / "assets"
-        / "js"
-        / "settings-page.js"
-    )
+    js_file = repo_root / "integrations" / "wordpress-provenance-plugin" / "plugin" / "encypher-provenance" / "assets" / "js" / "settings-page.js"
 
     admin_src = admin_php.read_text(encoding="utf-8")
     js_src = js_file.read_text(encoding="utf-8")
@@ -258,7 +249,7 @@ def test_settings_page_surfaces_launch_readiness_checklist_and_health_card() -> 
     assert "Auth required" in js_src
     assert "Disconnected" in js_src
     assert "Last check:" in js_src
-    assert 'const $status = $(\'#connection-status\');' in js_src
+    assert "const $status = $('#connection-status');" in js_src
     assert 'status-text-success">Connected</span>' in js_src
     assert 'status-text-error">Not connected</span>' in js_src
 
@@ -341,16 +332,7 @@ def test_settings_page_optional_polish_includes_explanatory_help_copy() -> None:
 
 def test_editor_sidebar_surfaces_encypher_branding_c2pa_compatibility_and_free_plan_cap() -> None:
     repo_root = _repo_root()
-    sidebar_js = (
-        repo_root
-        / "integrations"
-        / "wordpress-provenance-plugin"
-        / "plugin"
-        / "encypher-provenance"
-        / "assets"
-        / "js"
-        / "editor-sidebar.js"
-    )
+    sidebar_js = repo_root / "integrations" / "wordpress-provenance-plugin" / "plugin" / "encypher-provenance" / "assets" / "js" / "editor-sidebar.js"
     src = sidebar_js.read_text(encoding="utf-8")
 
     assert "Encypher powers this provenance workflow with C2PA-compatible signing and verification." in src
@@ -401,16 +383,7 @@ def test_usage_progress_bars_surface_across_plugin_surfaces() -> None:
         / "includes"
         / "class-encypher-provenance-bulk.php"
     )
-    sidebar_js = (
-        repo_root
-        / "integrations"
-        / "wordpress-provenance-plugin"
-        / "plugin"
-        / "encypher-provenance"
-        / "assets"
-        / "js"
-        / "editor-sidebar.js"
-    )
+    sidebar_js = repo_root / "integrations" / "wordpress-provenance-plugin" / "plugin" / "encypher-provenance" / "assets" / "js" / "editor-sidebar.js"
 
     admin_src = admin_php.read_text(encoding="utf-8")
     bulk_src = bulk_php.read_text(encoding="utf-8")
@@ -470,24 +443,10 @@ def test_coalition_routes_use_dashboard_endpoint_and_valid_settings_slug() -> No
         / "class-encypher-provenance-coalition.php"
     )
     coalition_page = (
-        repo_root
-        / "integrations"
-        / "wordpress-provenance-plugin"
-        / "plugin"
-        / "encypher-provenance"
-        / "admin"
-        / "partials"
-        / "coalition-page.php"
+        repo_root / "integrations" / "wordpress-provenance-plugin" / "plugin" / "encypher-provenance" / "admin" / "partials" / "coalition-page.php"
     )
     coalition_widget = (
-        repo_root
-        / "integrations"
-        / "wordpress-provenance-plugin"
-        / "plugin"
-        / "encypher-provenance"
-        / "admin"
-        / "partials"
-        / "coalition-widget.php"
+        repo_root / "integrations" / "wordpress-provenance-plugin" / "plugin" / "encypher-provenance" / "admin" / "partials" / "coalition-widget.php"
     )
     bulk_php = (
         repo_root
@@ -890,7 +849,8 @@ def test_all_debug_logging_gated_behind_wp_debug() -> None:
     src_without_debug_fn = src[:debug_log_fn_start] + src[debug_log_fn_end:]
 
     import re
-    bare_calls = re.findall(r'\berror_log\s*\(', src_without_debug_fn)
+
+    bare_calls = re.findall(r"\berror_log\s*\(", src_without_debug_fn)
     assert len(bare_calls) == 0, f"Found {len(bare_calls)} bare error_log() call(s) outside debug_log(): {bare_calls}"
 
 
@@ -960,13 +920,7 @@ def test_error_log_class_exists_with_required_interface() -> None:
 def test_error_log_class_is_required_in_plugin_bootstrap() -> None:
     repo_root = _repo_root()
     bootstrap_php = (
-        repo_root
-        / "integrations"
-        / "wordpress-provenance-plugin"
-        / "plugin"
-        / "encypher-provenance"
-        / "includes"
-        / "class-encypher-provenance.php"
+        repo_root / "integrations" / "wordpress-provenance-plugin" / "plugin" / "encypher-provenance" / "includes" / "class-encypher-provenance.php"
     )
     src = bootstrap_php.read_text(encoding="utf-8")
     assert "class-encypher-provenance-error-log.php" in src
@@ -1238,13 +1192,7 @@ def test_analytics_page_shows_real_verify_hits_from_wp_options() -> None:
 
 def test_enterprise_api_does_not_register_public_verify_route() -> None:
     repo_root = _repo_root()
-    verification_py = (
-        repo_root
-        / "enterprise_api"
-        / "app"
-        / "routers"
-        / "verification.py"
-    )
+    verification_py = repo_root / "enterprise_api" / "app" / "routers" / "verification.py"
     src = verification_py.read_text(encoding="utf-8")
 
     # POST /api/v1/verify is routed by Traefik to the verification-service.
@@ -1260,13 +1208,7 @@ def test_enterprise_api_does_not_register_public_verify_route() -> None:
 
 def test_webhook_test_endpoint_uses_module_level_httpx_import() -> None:
     repo_root = _repo_root()
-    webhooks_py = (
-        repo_root
-        / "enterprise_api"
-        / "app"
-        / "routers"
-        / "webhooks.py"
-    )
+    webhooks_py = repo_root / "enterprise_api" / "app" / "routers" / "webhooks.py"
     src = webhooks_py.read_text(encoding="utf-8")
 
     # httpx must be imported at module level (not inside function body)

@@ -24,6 +24,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/auth/verify-email') ||
+    pathname.startsWith('/wordpress/connect') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/assets') ||
     pathname === '/health' ||

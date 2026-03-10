@@ -21,9 +21,10 @@ from collections import defaultdict, deque
 from dataclasses import dataclass
 from typing import Deque, Dict, Optional, Tuple
 
+from fastapi import Request
+
 from app.config import settings
 from app.core.tier_config import TIER_RATE_LIMITS_PER_SECOND  # SSOT
-from fastapi import Request
 
 
 @dataclass

@@ -1,8 +1,8 @@
 # Encypher C2PA - Text Authentication for WordPress
 
-**Version:** 1.0.0  
-**Requires WordPress:** 6.0+  
-**Requires PHP:** 7.4+  
+**Version:** 1.1.0
+**Requires WordPress:** 6.0+
+**Requires PHP:** 7.4+
 **License:** GPL-2.0-or-later
 
 C2PA-compliant text authentication for WordPress. Embed cryptographic proof of origin into your blog posts and pages. Built on standards we're developing with Google, BBC, OpenAI, Adobe, and Microsoft.
@@ -16,11 +16,15 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 - **Auto-Mark on Publish:** Automatically embed C2PA manifests when publishing posts
 - **Auto-Mark on Update:** Re-sign manifests when content is updated
 - **Manual Marking:** Mark individual posts with a button in the editor
-- **Gutenberg Integration:** Sidebar panel in block editor
+- **Gutenberg Integration:** Sidebar panel in block editor with provenance status, sentence verification, and manifest viewer
 - **Classic Editor Support:** Meta box for classic editor users
 - **Public Verification:** Verification links for readers to check authenticity
-- **Sentence-Level Verification:** Per-sentence verifier chips in Gutenberg sidebar for all tiers.
-- **Analytics Dashboard:** Built-in dashboard widget and **Encypher > Analytics** summarize coverage, sentence-level adoption, and recent signing activity.
+- **Sentence-Level Verification:** Per-sentence verifier chips in Gutenberg sidebar for all tiers
+- **Analytics Dashboard:** Built-in dashboard widget and **Encypher > Analytics** summarize coverage, sentence-level adoption, and recent signing activity
+- **Bulk Signing:** Archive all existing posts via **Encypher > Bulk Sign** with real-time progress, pause/resume, and error logs
+- **Coalition Dashboard:** **Encypher > Coalition** shows content pool stats, earnings, and membership status
+- **WordPress/ai Integration:** Auto-signs AI-generated content from the WordPress/ai plugin experiments (title, excerpt, summary, review notes, alt text)
+- **WordPress Abilities API:** Registers `encypher/sign` and `encypher/verify` as callable abilities for third-party plugins
 
 ### C2PA Compliance
 - **C2PATextManifestWrapper:** Full manifest structure with magic number, version, JUMBF container
@@ -31,7 +35,7 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 - **Provenance Chain:** Ingredient references for updated content
 
 ### Tier Support
-- **Free Tier:** Managed signing, sentence-level embeddings, C2PA manifests, verification badges
+- **Free Tier:** Managed signing, sentence-level embeddings, C2PA manifests, verification badges, Coalition enrollment, WordPress/ai integration
 - **Enterprise Tier:** BYOK signing, advanced key management, multi-site support, custom branding, dedicated support
 
 ### Plans & Capabilities
@@ -44,6 +48,9 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 | C2PA manifests | ✅ | ✅ |
 | Bulk signing | 10 posts/batch | Unlimited |
 | Verification badge | ✅ | ✅ (custom styles) |
+| Coalition dashboard & enrollment | ✅ | ✅ |
+| WordPress/ai auto-signing | ✅ | ✅ |
+| WordPress Abilities API (`encypher/sign`, `encypher/verify`) | ✅ | ✅ |
 | Bring Your Own Key (BYOK) | ❌ | ✅ |
 | Custom branding | ❌ | ✅ |
 | C2PA manifest viewer | ❌ | ✅ |
@@ -53,14 +60,20 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 ### Dashboard & Account Management
 
 All users authenticate via [dashboard.encypherai.com](https://dashboard.encypherai.com) to:
-- Create a workspace and retrieve API keys (Free tier)
+- Create and manage a workspace for WordPress signing and verification
 - Upgrade to Enterprise for BYOK, custom branding, and advanced features
 - Manage billing and organization settings
 
 The plugin settings page surfaces direct links:
-- **Get API Key / Manage Account** – opens the dashboard to copy keys or update billing
+- **Open Dashboard / Manage Account** – opens the dashboard for workspace management and credential fallback
 - **Bring Your Own Key** – launches the dashboard wizard to upload a public key and obtain a signing profile ID (Enterprise only)
 - **Enterprise Support** – pre-filled contact form to reach your CSM
+
+The recommended onboarding path now starts directly in WordPress:
+- Enter a work email on the settings page
+- Receive a secure magic link from Encypher
+- Approve the site in the browser
+- Let the plugin poll and store the provisioned API key automatically
 
 The API key contains a `tier` claim that the plugin reads to automatically enable or limit functionality (e.g., bulk batch size, BYOK controls). If billing lapses, the plugin gracefully reverts to Free limits but preserves previously signed manifests.
 
@@ -69,7 +82,7 @@ The API key contains a `tier` claim that the plugin reads to automatically enabl
 ## Installation
 
 ### From WordPress Admin
-1. Download the plugin ZIP file
+1. Download `encypher-provenance.zip` from the Encypher dashboard
 2. Go to **Plugins → Add New → Upload Plugin**
 3. Upload the ZIP file and click **Install Now**
 4. Click **Activate Plugin**
@@ -80,14 +93,21 @@ The API key contains a `tier` claim that the plugin reads to automatically enabl
 
 ### Configuration
 1. Go to **Encypher > Settings**
-2. Click **Get API Key / Manage Account** to open [dashboard.encypherai.com](https://dashboard.encypherai.com) and either create a free workspace or sign in to your Pro/Enterprise account
-3. Configure your settings:
+2. Enter your work email and click **Email me a secure connect link**
+3. Open the secure email from Encypher and approve the WordPress connection
+4. Return to the settings page and wait a few seconds while the plugin polls for completion and stores the provisioned API key automatically
+5. Review or adjust your settings:
    - **API Base URL:** `https://api.encypherai.com/api/v1` (default)
-   - **API Key:** Get your free key from [dashboard.encypherai.com](https://dashboard.encypherai.com)
+   - **API Key:** Auto-provisioned by the email connect flow, or entered manually if you already manage credentials
    - **Bring Your Own Signature (Pro/Enterprise):** Paste the Signing Profile ID generated in the dashboard BYOK wizard
    - **Auto-mark on publish/update:** Enable to automatically mark content (recommended)
    - **Metadata Format:** C2PA (default) or Basic
-   - **Hard Binding:** Enable for c2pa.hash.data assertion (recommended)
+   - **Hard Binding:** Enabled by default for `c2pa.hash.data`
+
+### Manual API Key Setup
+1. Go to **Encypher > Settings**
+2. Paste an existing Encypher API key
+3. Click **Test Connection** to confirm the workspace and site metadata resolve correctly
 
 ---
 
@@ -237,22 +257,34 @@ You can override auto-marking for specific posts:
 - Provides content hash for tamper detection
 - Recommended for maximum security
 
-### API Configuration
+### WordPress/ai Integration Settings
+
+**Enable WordPress/ai Integration** (`wordpress_ai_enabled`, default: OFF)
+- When ON: hooks into all WordPress/ai experiment output filters and auto-signs AI-generated content before it's committed to the post
+- Requires the WordPress/ai plugin to be active; admin shows a notice if it isn't detected
+
+**Coalition Auto-Enrollment** (`coalition_auto_enroll`, default: OFF)
+- When first toggled ON: POSTs site URL and name to `/coalition/enroll`
+- Stores `encypher_coalition_enrolled` + `encypher_coalition_enrolled_at` options
+- Shows a WP admin notice confirming enrollment (or error details on failure)
+- Rising-edge trigger — re-saving settings without changing the toggle does not re-enroll
+
+### Workspace Connection & API Settings
 
 **API Base URL**
 - Default: `https://api.encypherai.com/api/v1`
 - Only change if using self-hosted Enterprise API
 
 **API Key**
-- Get your free key from [dashboard.encypherai.com](https://dashboard.encypherai.com)
-- Required for all tiers
+- Usually provisioned automatically by secure email connect
+- Can still be pasted manually if your team manages credentials outside WordPress
 
 ---
 
 ## Tier Comparison
 
 ### Free Tier
-**Perfect for:** Individual bloggers, small publishers  
+**Perfect for:** Individual bloggers, small publishers
 **Features:**
 - ✅ Auto-sign on publish/update
 - ✅ Sentence-level embeddings
@@ -269,7 +301,7 @@ You can override auto-marking for specific posts:
 **Price:** Free forever
 
 ### Enterprise Tier
-**Perfect for:** Professional publishers, media organizations, enterprises  
+**Perfect for:** Professional publishers, media organizations, enterprises
 **Features:**
 - ✅ All Free features
 - ✅ Bring Your Own Key (BYOK)
@@ -353,16 +385,28 @@ The plugin communicates with the Encypher Enterprise API:
 
 ### Database Schema
 
-The plugin stores metadata in WordPress post meta:
+Post meta keys written by the plugin:
 
 ```
-_encypher_marked           // boolean: true if marked
-_encypher_marked_date      // datetime: when marked
-_encypher_manifest_id      // string: manifest UUID
-_encypher_content_hash     // string: SHA-256 of content
-_encypher_skip_marking     // boolean: user override to skip
-_encypher_verification_url // string: public verification URL
-_encypher_action_type      // string: c2pa.created or c2pa.edited
+_encypher_provenance_status         // string: c2pa_protected | tampered | not_signed | modified
+_encypher_provenance_signature      // string: raw C2PA signature
+_encypher_provenance_document_id    // string: document UUID
+_encypher_provenance_instance_id    // string: signing instance UUID
+_encypher_provenance_total_sentences// int: number of signed sentences
+_encypher_provenance_last_signed    // datetime: last successful sign
+_encypher_provenance_verification   // array: cached verify result
+_encypher_provenance_needs_verify   // bool: dirty flag
+_encypher_skip_marking              // bool: user override to skip auto-signing
+_encypher_wpai_experiments          // array: keyed by experiment slug — records of WP/ai signed content
+                                    //   { name, generator, signed_at }
+```
+
+WordPress options written by the plugin:
+
+```
+encypher_provenance_settings        // main settings array (api_key, api_base_url, tier, wordpress_ai_enabled, coalition_auto_enroll, …)
+encypher_coalition_enrolled         // bool: true when Coalition enrollment confirmed
+encypher_coalition_enrolled_at      // datetime: when enrollment was confirmed
 ```
 
 ---
@@ -437,7 +481,41 @@ The plugin sends the following data to the Encypher API:
 
 ---
 
+## REST Endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/encypher-provenance/v1/sign` | Editor | Sign a post by ID |
+| `GET` | `/encypher-provenance/v1/status` | Editor | Post signing status + sentence segments |
+| `POST` | `/encypher-provenance/v1/verify` | Public | Verify post content against Encypher API |
+| `GET` | `/encypher-provenance/v1/provenance` | Public | Provenance report by post/instance ID |
+| `POST` | `/encypher-provenance/v1/extract` | Public | Verify arbitrary text (no post required) |
+| `POST` | `/encypher-provenance/v1/test-connection` | Admin | Test API key + base URL |
+| `POST` | `/encypher-provenance/v1/quick-connect` | Admin | Store API key from email connect flow |
+| `POST` | `/encypher-provenance/v1/connect/start` | Admin | Initiate email connect flow |
+| `GET` | `/encypher-provenance/v1/wordpress-ai-status` | Editor | AI content provenance status for a post |
+
+---
+
 ## Changelog
+
+### 1.2.0 (2026-03-10)
+- **WordPress/ai Integration:** Auto-sign AI-generated content from all 5 WordPress/ai experiments (title, excerpt, summary, review notes, alt text) via `class-encypher-provenance-wordpress-ai.php`
+- **WordPress Abilities API:** Register `encypher/sign` and `encypher/verify` as first-class abilities callable via `wp_do_ability()` (`class-encypher-sign-ability.php`, `class-encypher-verify-ability.php`)
+- **AI Content Provenance sidebar panel:** New Gutenberg panel (`assets/js/wordpress-ai-provenance.js`) with shield badge (green/yellow/red/grey) and signed experiment list
+- **New REST endpoint:** `GET /encypher-provenance/v1/wordpress-ai-status` returning provenance status per post
+- **Coalition auto-enrollment:** Rising-edge settings toggle POSTs to `/coalition/enroll` and stores confirmation with WP admin notice
+- **Admin settings:** New "WordPress/ai Integration" section with `wordpress_ai_enabled` and `coalition_auto_enroll` toggles; enrollment status display
+
+### 1.1.0
+- Coalition dashboard and widget (`class-encypher-provenance-coalition.php`)
+- Bulk signing UI (`class-encypher-provenance-bulk.php`) with pause/resume, error log
+- Frontend C2PA badge (`class-encypher-provenance-frontend.php`)
+- Sentence-level verifier chips in Gutenberg sidebar
+- Pre-publish panel in block editor
+- C2PA verification page at `/c2pa-verify/{instance_id}`
+- Email connect flow for API key provisioning
+- Provenance chain ingredient references
 
 ### 1.0.0 (2025-10-31)
 - Initial release
@@ -451,9 +529,9 @@ The plugin sends the following data to the Encypher API:
 
 ## Credits
 
-**Developed by:** Encypher Corporation  
-**Website:** [encypherai.com](https://encypherai.com)  
-**Standards:** Co-Chair of C2PA Text Provenance Task Force  
+**Developed by:** Encypher Corporation
+**Website:** [encypherai.com](https://encypherai.com)
+**Standards:** Co-Chair of C2PA Text Provenance Task Force
 **License:** GPL-2.0-or-later
 
 Built on standards we're developing with Google, BBC, OpenAI, Adobe, and Microsoft.

@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 # TEAM_054: Regression tests for C2PA text manifest exclusions using byte offsets.
-
 import base64
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
-
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.payloads import deserialize_c2pa_payload_from_cbor, deserialize_jumbf_payload
 from encypher.core.signing import extract_payload_from_cose_sign1

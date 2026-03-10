@@ -4,7 +4,6 @@ Cleanup utility for batch request retention.
 
 import asyncio
 from datetime import datetime, timezone
-
 from typing import cast
 
 from sqlalchemy import delete, select

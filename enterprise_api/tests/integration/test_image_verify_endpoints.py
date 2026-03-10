@@ -12,7 +12,6 @@ import io
 import json
 import os
 import sys
-import uuid
 from pathlib import Path
 from typing import AsyncGenerator
 from unittest.mock import AsyncMock, MagicMock
@@ -35,13 +34,14 @@ os.environ.setdefault(
 os.environ.setdefault("DATABASE_URL", os.environ["CORE_DATABASE_URL"])
 
 import pytest
+from httpx import ASGITransport, AsyncClient
+from PIL import Image
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.config import settings
 from app.database import get_content_db, get_db
 from app.main import app
 from app.middleware.public_rate_limiter import public_rate_limiter
-from httpx import ASGITransport, AsyncClient
-from PIL import Image
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _make_jpeg_b64(width: int = 10, height: int = 10) -> str:

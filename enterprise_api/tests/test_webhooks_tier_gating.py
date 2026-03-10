@@ -41,8 +41,6 @@ async def test_webhook_test_rejects_untrusted_stored_url(
     db,
     monkeypatch,
 ) -> None:
-    import httpx
-
     webhook_id = "wh_test_poisoned_url"
 
     await db.execute(
@@ -87,6 +85,7 @@ async def test_webhook_test_rejects_untrusted_stored_url(
             raise AssertionError("Outbound request should not be attempted for untrusted webhook URL")
 
     import app.routers.webhooks as webhooks_module
+
     monkeypatch.setattr(webhooks_module, "httpx", type("_httpx", (), {"AsyncClient": FakeAsyncClient})())
 
     try:

@@ -48,13 +48,10 @@ async def test_load_organization_private_key_auto_provisions_when_missing(
     assert row.public_key
 
     decrypted = decrypt_private_key(bytes(row.private_key_encrypted))
-    assert (
-        decrypted.public_key().public_bytes(
-            encoding=serialization.Encoding.Raw,
-            format=serialization.PublicFormat.Raw,
-        )
-        == bytes(row.public_key)
-    )
+    assert decrypted.public_key().public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw,
+    ) == bytes(row.public_key)
 
 
 @pytest.mark.asyncio

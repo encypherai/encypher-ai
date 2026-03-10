@@ -1,16 +1,19 @@
 """Pydantic schemas for rich article signing (text + embedded images)."""
+
 import base64
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
-SUPPORTED_MIME_TYPES = frozenset({
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/webp",
-    "image/tiff",
-})
+SUPPORTED_MIME_TYPES = frozenset(
+    {
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+        "image/tiff",
+    }
+)
 
 
 class RichContentImage(BaseModel):
@@ -30,15 +33,10 @@ class RichContentImage(BaseModel):
             raise ValueError(f"image data is not valid base64: {e}") from e
         # Validate size (10MB limit)
         if len(raw) > 10_485_760:
-            raise ValueError(
-                f"Image {self.filename!r} exceeds 10MB limit ({len(raw)} bytes)"
-            )
+            raise ValueError(f"Image {self.filename!r} exceeds 10MB limit ({len(raw)} bytes)")
         # Validate MIME type
         if self.mime_type.lower() not in SUPPORTED_MIME_TYPES:
-            raise ValueError(
-                f"Unsupported MIME type: {self.mime_type!r}. "
-                f"Supported: {sorted(SUPPORTED_MIME_TYPES)}"
-            )
+            raise ValueError(f"Unsupported MIME type: {self.mime_type!r}. Supported: {sorted(SUPPORTED_MIME_TYPES)}")
         return self
 
 

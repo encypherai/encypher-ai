@@ -6,19 +6,15 @@ allowing users to try encoding/decoding without authentication.
 """
 
 import logging
-import re
 from typing import Any, Dict, Literal, Optional
 
 from encypher.core.constants import MetadataTarget
-from encypher.core.unicode_metadata import UnicodeMetadata
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
 from app.database import get_db
-from app.utils.crypto_utils import get_demo_private_key, load_organization_public_key
-from app.utils.multi_embedding import extract_and_verify_all_embeddings, extract_all_embeddings
+from app.utils.crypto_utils import get_demo_private_key
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tools", tags=["Public Tools"])

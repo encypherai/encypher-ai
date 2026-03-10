@@ -4,6 +4,7 @@ Tests C2PA verification logic and SHA-256 hash utility.
 Uses an in-memory JPEG (Pillow) to avoid file I/O.
 No database calls.
 """
+
 import io
 import os
 import sys
@@ -26,7 +27,6 @@ os.environ.setdefault(
 )
 os.environ.setdefault("DATABASE_URL", os.environ["CORE_DATABASE_URL"])
 
-import pytest
 from PIL import Image
 
 from app.services.image_verification_service import compute_sha256, verify_image_c2pa
@@ -61,13 +61,13 @@ class TestComputeSha256:
         result = compute_sha256(b"test data")
         prefix = "sha256:"
         assert result.startswith(prefix)
-        hex_part = result[len(prefix):]
+        hex_part = result[len(prefix) :]
         assert len(hex_part) == 64
 
     def test_hex_chars_only(self) -> None:
         """The hex portion contains only lowercase hex characters."""
         result = compute_sha256(b"example")
-        hex_part = result[len("sha256:"):]
+        hex_part = result[len("sha256:") :]
         assert all(c in "0123456789abcdef" for c in hex_part)
 
     def test_deterministic(self) -> None:

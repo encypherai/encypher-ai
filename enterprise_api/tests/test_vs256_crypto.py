@@ -88,6 +88,7 @@ def test_bmp_vs_supplementary_split():
 def test_no_overlap_with_legacy_safe_chars():
     """Verify VS256 alphabet is disjoint from legacy_safe base-6 alphabet."""
     from app.utils.legacy_safe_crypto import CHARS_BASE6_SET
+
     overlap = VS_CHAR_SET & CHARS_BASE6_SET
     assert len(overlap) == 0, f"VS256 and legacy_safe alphabets overlap: {overlap}"
 
@@ -139,7 +140,7 @@ def test_decode_byte_invalid_char():
     with pytest.raises(ValueError):
         decode_byte_vs256("A")
     with pytest.raises(ValueError):
-        decode_byte_vs256("\u200C")  # ZWNJ is not a VS char
+        decode_byte_vs256("\u200c")  # ZWNJ is not a VS char
 
 
 # =============================================================================
@@ -185,7 +186,7 @@ def test_magic_prefix_structure():
 
 def test_no_false_positives_on_natural_vs():
     """Text with emoji VS usage should not trigger false detection."""
-    text_with_emoji_vs = "Hello \u2764\uFE0F world \u2600\uFE0F today"
+    text_with_emoji_vs = "Hello \u2764\ufe0f world \u2600\ufe0f today"
     found = find_all_markers(text_with_emoji_vs)
     assert len(found) == 0
 
@@ -448,9 +449,14 @@ def test_create_embedded_sentence_roundtrip(signing_key):
 def test_vs256_does_not_interfere_with_legacy_safe(signing_key):
     from app.utils.legacy_safe_crypto import (
         create_marker as ls_create,
+    )
+    from app.utils.legacy_safe_crypto import (
         find_all_markers as ls_find_all,
+    )
+    from app.utils.legacy_safe_crypto import (
         generate_log_id as ls_generate_log_id,
     )
+
     ls_sig = ls_create(ls_generate_log_id(), signing_key)
     vs_sig = create_signed_marker(generate_log_id(), signing_key)
     text = f"First{ls_sig}. Second{vs_sig}."

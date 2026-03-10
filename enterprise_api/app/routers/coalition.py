@@ -16,7 +16,8 @@ from app.dependencies import require_read_permission
 router = APIRouter(prefix="/coalition", tags=["Coalition"])
 
 
-from app.core.tier_config import get_tier_rev_share, coerce_tier_name as _coerce_tier_for_rev_share
+from app.core.tier_config import coerce_tier_name as _coerce_tier_for_rev_share
+from app.core.tier_config import get_tier_rev_share
 
 
 class ContentStats(BaseModel):
@@ -107,7 +108,7 @@ async def get_coalition_dashboard(
     # Get current period content stats
     stats_result = await db.execute(
         text("""
-            SELECT documents_count, sentences_count, total_characters, 
+            SELECT documents_count, sentences_count, total_characters,
                    unique_content_hash_count, content_categories
             FROM coalition_content_stats
             WHERE organization_id = :org_id
@@ -122,7 +123,7 @@ async def get_coalition_dashboard(
     if not stats_row:
         doc_stats = await content_db.execute(
             text("""
-                SELECT 
+                SELECT
                     COUNT(*) as doc_count,
                     COALESCE(SUM(total_sentences), 0) as sentence_count,
                     COUNT(DISTINCT text_hash) as unique_hashes
@@ -155,7 +156,7 @@ async def get_coalition_dashboard(
     # Get earnings summary
     earnings_result = await db.execute(
         text("""
-            SELECT 
+            SELECT
                 COALESCE(SUM(publisher_earnings_cents), 0) as lifetime,
                 COALESCE(SUM(CASE WHEN status = 'pending' THEN publisher_earnings_cents ELSE 0 END), 0) as pending,
                 COALESCE(SUM(CASE WHEN status = 'paid' THEN publisher_earnings_cents ELSE 0 END), 0) as paid
@@ -169,7 +170,7 @@ async def get_coalition_dashboard(
     # Get recent earnings (last 6 months)
     recent_earnings_result = await db.execute(
         text("""
-            SELECT 
+            SELECT
                 period_start, period_end,
                 SUM(gross_revenue_cents) as gross,
                 AVG(publisher_share_percent)::int as share_percent,
@@ -408,7 +409,7 @@ async def calculate_content_stats(
     # Calculate stats from documents table (in content database)
     result = await content_db.execute(
         text("""
-            SELECT 
+            SELECT
                 COUNT(*) as doc_count,
                 COALESCE(SUM(total_sentences), 0) as sentence_count,
                 COUNT(DISTINCT text_hash) as unique_hashes
@@ -481,13 +482,13 @@ async def attribute_deal_revenue(
     # Get all coalition members with their content stats
     result = await db.execute(
         text("""
-            SELECT 
+            SELECT
                 o.organization_id,
                 o.tier,
                 o.coalition_rev_share_publisher,
                 COALESCE(cs.sentences_count, 0) as sentences
             FROM organizations o
-            LEFT JOIN coalition_content_stats cs ON 
+            LEFT JOIN coalition_content_stats cs ON
                 cs.organization_id = o.organization_id
                 AND cs.period_start = :start
                 AND cs.period_end = :end

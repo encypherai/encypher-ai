@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 REGULAR_SPACE = "\u0020"
 THIN_SPACE = "\u2009"  # THIN SPACE - ~5/18 em, Unicode General_Category=Zs
 
-PAYLOAD_BYTES = 16        # 128-bit fingerprint
+PAYLOAD_BYTES = 16  # 128-bit fingerprint
 MIN_SPACES = PAYLOAD_BYTES * 8  # 128 inter-word positions required
 
 
@@ -57,8 +57,7 @@ def encode_print_fingerprint(text: str, payload: bytes) -> str:
     required = len(payload) * 8
     if len(space_positions) < required:
         logger.warning(
-            "print_stego: %d spaces available, %d required for %d-byte payload"
-            " - returning text unmodified",
+            "print_stego: %d spaces available, %d required for %d-byte payload - returning text unmodified",
             len(space_positions),
             required,
             len(payload),

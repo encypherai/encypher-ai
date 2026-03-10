@@ -23,7 +23,7 @@
 
 // Configuration
 const EDITOR_CONFIG = {
-  minTextLength: 10,
+  minTextLength: 1,
   debounceMs: 300,
   buttonGap: 12,
   viewportMargin: 16,
@@ -39,8 +39,8 @@ const activeEditors = new Map();
 let editorButtonsEnabled = true;
 
 // Signing option defaults (loaded from settings)
-let defaultEmbeddingTechnique = 'micro';
-let defaultSegmentationLevel = 'sentence';
+let defaultEmbeddingTechnique = 'micro_no_embed_c2pa';
+let defaultSegmentationLevel = 'document';
 let defaultDocumentType = 'article';
 let defaultAutoReplaceContent = true;
 let cachedAccountInfo = null;
@@ -48,6 +48,7 @@ let accountInfoPromise = null;
 let primaryEditorId = null;
 let editorObserverStarted = false;
 const _observedShadowRoots = new WeakSet();
+let cachedApiKey = null;
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -66,7 +67,7 @@ function normalizeEmbeddingTechnique(value) {
   const mode = String(value || '').toLowerCase();
   if (mode === 'micro_ecc_c2pa' || mode === 'micro') return 'micro';
   if (mode === 'micro_ecc' || mode === 'micro_no_embed_c2pa') return 'micro_no_embed_c2pa';
-  return 'micro';
+  return 'micro_no_embed_c2pa';
 }
 
 // ── Embedding byte detection (mirrors detector.js constants) ──
@@ -146,7 +147,7 @@ const PROVENANCE_MAX_ENTRIES = 50;
  * Store an embedding's bytes as provenance before it is deleted or replaced.
  * Keyed by a hash of the visible text that contained the embedding.
  */
-async function storeProvenance(visibleTextHash, embeddingBytes, metadata = {}) {
+async function _storeProvenance(visibleTextHash, embeddingBytes, metadata = {}) {
   try {
     const result = await chrome.storage.local.get({ [PROVENANCE_KEY]: {} });
     const store = result[PROVENANCE_KEY] || {};
@@ -190,7 +191,7 @@ async function storeProvenance(visibleTextHash, embeddingBytes, metadata = {}) {
 /**
  * Retrieve provenance chain for content identified by its visible text hash.
  */
-async function getProvenance(visibleTextHash) {
+async function _getProvenance(visibleTextHash) {
   try {
     const result = await chrome.storage.local.get({ [PROVENANCE_KEY]: {} });
     return (result[PROVENANCE_KEY] || {})[visibleTextHash] || [];
@@ -485,8 +486,8 @@ function createSignButton(editorId) {
   button.className = 'encypher-sign-btn encypher-sign-btn--compact';
   button.id = `encypher-sign-${editorId}`;
   button.setAttribute('type', 'button');
-  button.setAttribute('aria-label', 'Sign content with Encypher');
-  button.setAttribute('title', 'Quick sign with Encypher · Shift-click for options');
+  button.setAttribute('aria-label', 'Open signing options with Encypher');
+  button.setAttribute('title', 'Open signing options with Encypher');
 
   // Use the Encypher logo (defined in detector.js, which loads first in the
   // same content-script group).  Fall back to a simple shield if unavailable.
@@ -528,6 +529,22 @@ function setPrimaryEditor(editorId) {
   for (const [, info] of activeEditors) {
     info.updateVisibility?.();
   }
+}
+
+async function getStoredApiKey() {
+  if (cachedApiKey !== null) return cachedApiKey;
+  try {
+    const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
+    cachedApiKey = String(apiKey || '').trim();
+    return cachedApiKey;
+  } catch (e) {
+    void e;
+    return '';
+  }
+}
+
+async function hasSigningCredentials() {
+  return Boolean(await getStoredApiKey());
 }
 
 function positionButton(button, editor) {
@@ -601,7 +618,7 @@ function showSigningUI(editor, editorType, button) {
 
   const text = getEditorText(editor, editorType) || '';
   const preview = text.trim().slice(0, 240);
-  const signerLabel = getSignerLabel(cachedAccountInfo);
+  const signerLabel = cachedAccountInfo ? getSignerLabel(cachedAccountInfo) : 'add an API key in extension settings';
 
   ui.innerHTML = `
     <div class="encypher-sign-ui__header">
@@ -613,7 +630,7 @@ function showSigningUI(editor, editorType, button) {
     </div>
     <div class="encypher-sign-ui__body">
       <div class="encypher-sign-ui__identity">Signing as: ${escapeHtml(signerLabel)}</div>
-      <div class="encypher-sign-ui__trust">Invisible proof of origin is embedded into your text and can be verified later.</div>
+      <div class="encypher-sign-ui__trust">Invisible proof of origin is added to your text and can be verified later.</div>
       <div class="encypher-sign-ui__preview">
         <label>Preview</label>
         <div class="encypher-sign-ui__text">${escapeHtml(preview || 'No content to preview yet.')}</div>
@@ -625,16 +642,16 @@ function showSigningUI(editor, editorType, button) {
         <div class="encypher-sign-ui__select-group">
           <label for="encypher-manifest-mode">Proof mode</label>
           <select id="encypher-manifest-mode" class="encypher-sign-ui__select">
+            <option value="micro_no_embed_c2pa">Minimal (recommended)</option>
             <option value="micro">Embedded</option>
-            <option value="micro_no_embed_c2pa">Compact</option>
           </select>
         </div>
         <div class="encypher-sign-ui__select-group">
           <label for="encypher-segmentation-level">Frequency</label>
           <select id="encypher-segmentation-level" class="encypher-sign-ui__select">
-            <option value="sentence">Sentence</option>
-            <option value="paragraph">Paragraph</option>
             <option value="document">Document</option>
+            <option value="paragraph">Paragraph</option>
+            <option value="sentence">Sentence</option>
           </select>
         </div>
         <div class="encypher-sign-ui__select-group">
@@ -678,10 +695,25 @@ function showSigningUI(editor, editorType, button) {
   documentTypeSelect.value = defaultDocumentType;
   replaceCheckbox.checked = defaultAutoReplaceContent;
 
+  const updateSigningAvailability = async () => {
+    const hasCredentials = await hasSigningCredentials();
+    const trimmedText = (getEditorText(editor, editorType) || '').trim();
+    const canSign = hasCredentials && trimmedText.length >= EDITOR_CONFIG.minTextLength;
+    primaryButton.disabled = !canSign;
+    if (!hasCredentials) {
+      primaryButton.title = 'Add an API key in extension settings to sign content.';
+    } else if (!trimmedText.length) {
+      primaryButton.title = 'Add some content to sign.';
+    } else {
+      primaryButton.title = '';
+    }
+  };
+
   const cleanup = () => {
     document.removeEventListener('mousedown', handleOutsideClick, true);
     window.removeEventListener('resize', reposition, { passive: true });
     window.removeEventListener('scroll', reposition, { passive: true });
+    editor.removeEventListener('input', updateSigningAvailability);
     ui.remove();
     activeEditors.get(editorId)?.updateVisibility?.();
   };
@@ -702,6 +734,8 @@ function showSigningUI(editor, editorType, button) {
   closeButton.addEventListener('click', cleanup);
   cancelButton.addEventListener('click', cleanup);
   primaryButton.addEventListener('click', async () => {
+    await updateSigningAvailability();
+    if (primaryButton.disabled) return;
     primaryButton.disabled = true;
     label.style.display = 'none';
     loading.classList.add('encypher-sign-ui__btn-loading--active');
@@ -715,6 +749,9 @@ function showSigningUI(editor, editorType, button) {
         segmentationLevel: segmentationSelect.value,
         documentType: documentTypeSelect.value,
       });
+      if (!result?.signedText) {
+        throw new Error('Signing failed. Please try again.');
+      }
       const verificationUrl = result?.verificationUrl;
       const documentId = result?.documentId;
       ui.querySelector('.encypher-sign-ui__body').innerHTML = `
@@ -731,9 +768,9 @@ function showSigningUI(editor, editorType, button) {
       reposition();
     } catch (error) {
       showNotification('error', error.message || 'Signing error');
-      primaryButton.disabled = false;
       label.style.display = '';
       loading.classList.remove('encypher-sign-ui__btn-loading--active');
+      await updateSigningAvailability();
     }
   });
 
@@ -743,9 +780,12 @@ function showSigningUI(editor, editorType, button) {
   getCachedAccountInfo().then(() => {
     const identityEl = ui.querySelector('.encypher-sign-ui__identity');
     if (identityEl) {
-      identityEl.textContent = `Signing as: ${getSignerLabel(cachedAccountInfo)}`;
+      identityEl.textContent = `Signing as: ${cachedAccountInfo ? getSignerLabel(cachedAccountInfo) : 'add an API key in extension settings'}`;
     }
+    updateSigningAvailability();
   });
+  editor.addEventListener('input', updateSigningAvailability);
+  updateSigningAvailability();
   reposition();
 }
 
@@ -941,13 +981,26 @@ function getSiteAdapter(editor) {
   }
 
   if (hostname === 'claude.ai') {
-    const container = document.querySelector('[data-testid="chat-input-grid-container"]');
-    const sendButton = container?.querySelector('button[aria-label="Send message"]');
-    const rightCluster = sendButton?.closest('.shrink-0.flex.items-center') || sendButton?.parentElement;
-    const leftCluster = container?.querySelector('[data-testid="model-selector-dropdown"]')?.closest('.relative.flex-1');
+    const root = editor?.closest?.('[data-testid="chat-input-grid-container"]')
+      || editor?.closest?.('form')
+      || document.querySelector('[data-testid="chat-input-grid-container"]')
+      || editor?.parentElement
+      || document;
+    const sendButton = root.querySelector('button[aria-label="Send message"], button[aria-label*="Send"], [data-testid="send-button"]');
+    const rightCluster = sendButton?.closest('[class*="items-center"], [class*="justify-end"]') || sendButton?.parentElement || null;
+    const leftCluster = root.querySelector('[data-testid="model-selector-dropdown"]')?.closest('[class*="flex"]')
+      || root.querySelector('[class*="ProseMirror"]')?.parentElement
+      || root.querySelector('[contenteditable="true"]')?.parentElement
+      || null;
     return {
       key: 'claude',
       tryAttach(button) {
+        if (rightCluster && rightCluster.contains(button)) {
+          return true;
+        }
+        if (leftCluster && leftCluster.contains(button)) {
+          return true;
+        }
         if (rightCluster && sendButton && !rightCluster.contains(button)) {
           rightCluster.insertBefore(button, sendButton);
           return true;
@@ -965,17 +1018,26 @@ function getSiteAdapter(editor) {
     const composeRegion = editor?.closest?.('[role="region"][aria-label="New Message"]');
     const formattingToolbar = composeRegion?.querySelector('[role="toolbar"][aria-label="Formatting options"]');
     const sendButton = composeRegion?.querySelector('[role="button"][data-tooltip*="Send"], [role="button"][aria-label*="Send"]');
+    const sendCell = sendButton?.closest('td');
+    const sendRow = sendCell?.parentElement;
+    const existingHostCell = sendRow?.querySelector('td[data-encypher-sign-host="true"]');
     return {
       key: 'gmail',
       tryAttach(button) {
+        if (formattingToolbar?.contains(button) || existingHostCell?.contains(button)) {
+          return true;
+        }
         if (formattingToolbar && isElementVisible(formattingToolbar) && !formattingToolbar.contains(button)) {
           formattingToolbar.appendChild(button);
           return true;
         }
-        const sendCell = sendButton?.closest('td');
-        const sendRow = sendCell?.parentElement;
+        if (existingHostCell && !existingHostCell.contains(button)) {
+          existingHostCell.appendChild(button);
+          return true;
+        }
         if (sendCell && sendRow && !sendRow.contains(button)) {
           const hostCell = document.createElement('td');
+          hostCell.dataset.encypherSignHost = 'true';
           hostCell.className = sendCell.className || 'gU';
           hostCell.appendChild(button);
           sendRow.insertBefore(hostCell, sendCell);
@@ -1044,6 +1106,10 @@ function attachButtonToPreferredHost(button, editor) {
     return true;
   }
 
+  if (button.dataset.hosted === 'true' && button.isConnected && button.parentElement && button.parentElement !== document.body) {
+    return true;
+  }
+
   button.dataset.hosted = 'false';
   button.dataset.hostKind = 'floating';
   button.classList.remove('encypher-sign-btn--hosted');
@@ -1057,7 +1123,7 @@ function ensureButtonMountedInBody(button) {
   }
 }
 
-function shouldPreferHostedPlacement(editor) {
+function shouldPreferHostedPlacement() {
   const hostname = window.location.hostname;
   return hostname === 'github.com'
     || hostname === 'x.com'
@@ -1086,8 +1152,8 @@ function updateButtonPresentation(button, options = {}) {
   button.classList.toggle('encypher-sign-btn--ready', ready);
   button.classList.toggle('encypher-sign-btn--compact', compact);
   button.dataset.surface = options.surface || 'generic';
-  button.setAttribute('aria-label', signed ? 'Signed content with Encypher' : (ready ? 'Quick sign content with Encypher' : 'Sign content with Encypher'));
-  button.setAttribute('title', signed ? 'Signed with Encypher · Click for details' : (ready ? 'Quick sign with Encypher · Shift-click for options' : 'Sign with Encypher · Shift-click for options'));
+  button.setAttribute('aria-label', signed ? 'Signed content with Encypher' : 'Open signing options with Encypher');
+  button.setAttribute('title', signed ? 'Signed with Encypher · Click for details' : 'Open signing options with Encypher');
 }
 
 function updateEditorButtonState(info, options = {}) {
@@ -1115,8 +1181,7 @@ async function signEditorContent(options) {
   const button = options.button;
   const text = getEditorText(editor, editorType);
   if ((text || '').trim().length < EDITOR_CONFIG.minTextLength) {
-    showNotification('error', 'Content too short to sign (minimum 10 characters)');
-    return null;
+    throw new Error('Add some content to sign.');
   }
 
   const response = await chrome.runtime.sendMessage({
@@ -1132,6 +1197,10 @@ async function signEditorContent(options) {
 
   if (!response?.success) {
     throw new Error(response?.error || 'Signing failed');
+  }
+
+  if (!response?.signedText) {
+    throw new Error('Signing failed. No signed content was returned.');
   }
 
   if (options.replaceContent) {
@@ -1253,7 +1322,8 @@ function attachSignButton(editor) {
     }, 200);
   };
   const handleHostedInput = () => {
-    if (!attachButtonToPreferredHost(button, editor)) {
+    const hostStable = attachButtonToPreferredHost(button, editor);
+    if (!hostStable && button.dataset.hosted !== 'true') {
       repositionHandler();
     }
   };
@@ -1332,35 +1402,8 @@ function attachSignButton(editor) {
     e.preventDefault();
     e.stopPropagation();
     setPrimaryEditor(editorId);
-    const hasModifier = e.shiftKey || e.altKey || e.metaKey || e.ctrlKey;
-    const ready = (getEditorText(editor, editorType) || '').trim().length >= EDITOR_CONFIG.minTextLength;
-    if (hasModifier || !ready || button.classList.contains('encypher-sign-btn--signed')) {
-      showSigningUI(editor, editorType, button);
-      return;
-    }
-    button.classList.add('encypher-sign-btn--busy');
-    try {
-      const result = await signEditorContent({
-        editor,
-        editorType,
-        button,
-        title: '',
-        replaceContent: defaultAutoReplaceContent,
-        manifestMode: defaultEmbeddingTechnique,
-        segmentationLevel: defaultSegmentationLevel,
-        documentType: defaultDocumentType,
-      });
-      if (result?.verificationUrl || result?.documentId) {
-        showSigningUI(editor, editorType, button);
-      } else {
-        showNotification('success', `Signed as ${getSignerLabel(cachedAccountInfo)}`);
-      }
-    } catch (error) {
-      showNotification('error', error.message || 'Signing error');
-    } finally {
-      button.classList.remove('encypher-sign-btn--busy');
-      activeEditors.get(editorId)?.updateVisibility?.();
-    }
+    showSigningUI(editor, editorType, button);
+    activeEditors.get(editorId)?.updateVisibility?.();
   });
 }
 
@@ -1651,12 +1694,104 @@ function _applyMarkersToText(text, normalizedOps) {
   return result;
 }
 
-function applyEmbeddingPlanToSelectionInPlace() {
-  return false;
+function replaceSelectionInPlace(signedText) {
+  const activeElement = document.activeElement;
+  if (activeElement && (activeElement.tagName === 'TEXTAREA' || activeElement.tagName === 'INPUT')) {
+    const start = activeElement.selectionStart;
+    const end = activeElement.selectionEnd;
+    if (start == null || end == null || start === end) return false;
+    const nextValue = `${activeElement.value.slice(0, start)}${signedText}${activeElement.value.slice(end)}`;
+    activeElement.value = nextValue;
+    const caret = start + signedText.length;
+    activeElement.setSelectionRange(caret, caret);
+    activeElement.dispatchEvent(new Event('input', { bubbles: true }));
+    activeElement.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  }
+
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return false;
+  const range = selection.getRangeAt(0);
+  range.deleteContents();
+  const node = document.createTextNode(signedText);
+  range.insertNode(node);
+  range.setStartAfter(node);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  node.parentElement?.dispatchEvent(new Event('input', { bubbles: true }));
+  return true;
 }
 
-function applyEmbeddingPlanToOnlineEditorInPlace() {
-  return false;
+function _buildNormalizedWhitespaceView(text) {
+  const source = [...String(text || '')];
+  let normalized = '';
+  const originalIndices = [];
+  let previousWhitespace = false;
+
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+    const isWhitespace = /\s/.test(char) || char === '\u00A0';
+    if (isWhitespace) {
+      if (!previousWhitespace) {
+        normalized += ' ';
+        originalIndices.push(i);
+      }
+      previousWhitespace = true;
+      continue;
+    }
+    normalized += char;
+    originalIndices.push(i);
+    previousWhitespace = false;
+  }
+
+  return { normalized, originalIndices, source };
+}
+
+function _findSingleNormalizedOccurrence(fullText, visibleText) {
+  const haystack = _buildNormalizedWhitespaceView(fullText);
+  const needle = _buildNormalizedWhitespaceView(visibleText);
+  if (!needle.normalized) return null;
+
+  const firstIndex = haystack.normalized.indexOf(needle.normalized);
+  if (firstIndex === -1) return null;
+  const lastIndex = haystack.normalized.lastIndexOf(needle.normalized);
+  if (firstIndex !== lastIndex) return null;
+
+  const start = haystack.originalIndices[firstIndex];
+  const endIndex = firstIndex + needle.normalized.length - 1;
+  const end = (haystack.originalIndices[endIndex] ?? start) + 1;
+  return { start, end };
+}
+
+function applyEmbeddingPlanToSelectionInPlace(embeddingPlan, visibleText) {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return false;
+  const rangeVisibleText = _stripEmbeddingChars(selection.toString());
+  if (rangeVisibleText !== visibleText) return false;
+
+  const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
+  if (!normalizedOps) return false;
+
+  return replaceSelectionInPlace(_applyMarkersToText(selection.toString(), normalizedOps));
+}
+
+function applyEmbeddingPlanToOnlineEditorInPlace(embeddingPlan, visibleText, onlinePlatform) {
+  const onlineEditor = getOnlineEditorElement(onlinePlatform);
+  if (!onlineEditor?.element) return false;
+
+  const fullText = getEditorText(onlineEditor.element, onlineEditor.type || onlinePlatform) || '';
+  const match = _findSingleNormalizedOccurrence(fullText, visibleText);
+  if (!match) return false;
+
+  const normalizedOps = _normalizeEmbeddingPlanOperations(embeddingPlan, visibleText);
+  if (!normalizedOps) return false;
+
+  const signedSegment = _applyMarkersToText(visibleText, normalizedOps);
+  const fullChars = [...fullText];
+  fullChars.splice(match.start, match.end - match.start, ...signedSegment);
+  setEditorText(onlineEditor.element, onlineEditor.type || onlinePlatform, fullChars.join(''));
+  return true;
 }
 
 /**
@@ -1689,16 +1824,17 @@ function applyEmbeddingPlanToEditorInPlace(editor, editorType, embeddingPlan, vi
 }
 
 async function handleSignSelection(text) {
-  const selectedText = String(text || '').trim();
-  if (selectedText.length < EDITOR_CONFIG.minTextLength) {
-    showNotification('error', 'Select text first (minimum 10 characters)');
+  const visibleText = String(text || '').trim();
+  if (visibleText.length < EDITOR_CONFIG.minTextLength) {
+    showNotification('error', 'Select some text first.');
     return;
   }
 
   try {
+    const onlinePlatform = detectOnlinePlatform();
     const response = await chrome.runtime.sendMessage({
       type: 'SIGN_CONTENT',
-      text: selectedText,
+      text: visibleText,
       options: {
         manifestMode: defaultEmbeddingTechnique,
         segmentationLevel: defaultSegmentationLevel,
@@ -1708,6 +1844,19 @@ async function handleSignSelection(text) {
 
     if (!response?.success) {
       throw new Error(response?.error || 'Signing failed');
+    }
+
+    let replaced = false;
+    if (response.embeddingPlan) {
+      if (onlinePlatform === 'google-docs' || onlinePlatform === 'ms-word-online') {
+        replaced = applyEmbeddingPlanToOnlineEditorInPlace(response.embeddingPlan, visibleText, onlinePlatform);
+      } else {
+        replaced = applyEmbeddingPlanToSelectionInPlace(response.embeddingPlan, visibleText);
+      }
+    }
+
+    if (!replaced) {
+      replaced = replaceSelectionInPlace(response.signedText);
     }
 
     try {
@@ -1776,7 +1925,7 @@ function handleSignShortcut(e) {
     return;
   }
 
-  showNotification('error', 'Select text first (minimum 10 characters)');
+  showNotification('error', 'Select some text first.');
 }
 
 function initSignShortcut() {
@@ -1801,8 +1950,8 @@ async function _initEditorSigner() {
   try {
     const settings = await chrome.storage.sync.get({
       showEditorButtons: true,
-      defaultEmbeddingTechnique: 'micro',
-      defaultSegmentationLevel: 'sentence',
+      defaultEmbeddingTechnique: 'micro_no_embed_c2pa',
+      defaultSegmentationLevel: 'document',
       defaultDocumentType: 'article',
       autoReplaceContent: true,
     });
@@ -1828,6 +1977,11 @@ async function _initEditorSigner() {
 
 // Listen for settings changes
 chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.apiKey) {
+    cachedApiKey = String(changes.apiKey.newValue || '').trim();
+    cachedAccountInfo = null;
+    accountInfoPromise = null;
+  }
   if (area !== 'sync') return;
   if (changes.showEditorButtons) {
     editorButtonsEnabled = changes.showEditorButtons.newValue;

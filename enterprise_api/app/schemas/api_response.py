@@ -21,6 +21,7 @@ T = TypeVar("T")
 # Tier Definitions
 # =============================================================================
 
+
 class TierName:
     """Tier name constants.
 
@@ -34,7 +35,7 @@ class TierName:
     DEMO = "demo"
 
 
-from app.core.tier_config import TIER_HIERARCHY, BATCH_LIMITS  # SSOT
+from app.core.tier_config import TIER_HIERARCHY  # SSOT
 
 
 def tier_at_least(current_tier: str, required_tier: str) -> bool:
@@ -48,9 +49,10 @@ def tier_at_least(current_tier: str, required_tier: str) -> bool:
 # Feature Definitions with Tier Requirements
 # =============================================================================
 
+
 class FeatureDefinition(BaseModel):
     """Definition of a feature with its tier requirement."""
-    
+
     name: str = Field(..., description="Feature identifier")
     display_name: str = Field(..., description="Human-readable feature name")
     description: str = Field(..., description="Feature description")
@@ -166,7 +168,6 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
         required_tier=TierName.FREE,
         category="signing",
     ),
-    
     # === Verification Features ===
     "basic_verification": FeatureDefinition(
         name="basic_verification",
@@ -224,7 +225,6 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
         required_tier=TierName.ENTERPRISE,
         category="verification",
     ),
-    
     # === Account Features ===
     "team_management": FeatureDefinition(
         name="team_management",
@@ -296,12 +296,14 @@ def get_gated_features(current_tier: str, category: Optional[str] = None) -> Lis
         if category and feature.category != category:
             continue
         if not is_feature_available(name, current_tier):
-            gated.append({
-                "feature": name,
-                "display_name": feature.display_name,
-                "required_tier": feature.required_tier,
-                "description": feature.description,
-            })
+            gated.append(
+                {
+                    "feature": name,
+                    "display_name": feature.display_name,
+                    "required_tier": feature.required_tier,
+                    "description": feature.description,
+                }
+            )
     return gated
 
 
@@ -309,16 +311,33 @@ def get_gated_features(current_tier: str, category: Optional[str] = None) -> Lis
 # Batch Limits by Tier
 # =============================================================================
 
-from app.core.tier_config import get_batch_limit  # SSOT
+_BATCH_LIMITS: Dict[str, int] = {
+    "free": 10,
+    "enterprise": 100,
+    "strategic_partner": 100,
+    # Legacy aliases
+    "starter": 10,
+    "professional": 25,
+    "business": 50,
+    "demo": 5,
+}
+
+_DEFAULT_BATCH_LIMIT = 10
+
+
+def get_batch_limit(tier: str) -> int:
+    """Return the maximum batch size allowed for the given tier."""
+    return _BATCH_LIMITS.get(tier.lower().replace("-", "_"), _DEFAULT_BATCH_LIMIT)
 
 
 # =============================================================================
 # Error Models
 # =============================================================================
 
+
 class ErrorDetail(BaseModel):
     """Standard API error object."""
-    
+
     code: str = Field(..., description="Stable machine-readable error code (e.g., E_RATE_LIMIT)")
     message: str = Field(..., description="Human-readable error description")
     hint: Optional[str] = Field(None, description="Optional remediation hint")
@@ -328,39 +347,39 @@ class ErrorDetail(BaseModel):
 # Common error codes
 class ErrorCode:
     """Standard error codes."""
-    
+
     # Authentication/Authorization
     E_UNAUTHORIZED = "E_UNAUTHORIZED"
     E_FORBIDDEN = "E_FORBIDDEN"
     E_INVALID_API_KEY = "E_INVALID_API_KEY"
     E_EXPIRED_API_KEY = "E_EXPIRED_API_KEY"
-    
+
     # Rate Limiting
     E_RATE_LIMIT = "E_RATE_LIMIT"
     E_RATE_SIGN = "E_RATE_SIGN"
     E_RATE_VERIFY = "E_RATE_VERIFY"
-    
+
     # Quota
     E_QUOTA_EXCEEDED = "E_QUOTA_EXCEEDED"
     E_QUOTA_SIGNATURES = "E_QUOTA_SIGNATURES"
-    
+
     # Tier/Feature
     E_TIER_REQUIRED = "E_TIER_REQUIRED"
     E_FEATURE_UNAVAILABLE = "E_FEATURE_UNAVAILABLE"
-    
+
     # Validation
     E_VALIDATION = "E_VALIDATION"
     E_INVALID_REQUEST = "E_INVALID_REQUEST"
     E_PAYLOAD_TOO_LARGE = "E_PAYLOAD_TOO_LARGE"
-    
+
     # Resource
     E_NOT_FOUND = "E_NOT_FOUND"
     E_DOCUMENT_NOT_FOUND = "E_DOCUMENT_NOT_FOUND"
-    
+
     # Server
     E_INTERNAL = "E_INTERNAL"
     E_SERVICE_UNAVAILABLE = "E_SERVICE_UNAVAILABLE"
-    
+
     # Deprecated
     E_DEPRECATED = "E_DEPRECATED"
 
@@ -369,9 +388,10 @@ class ErrorCode:
 # Response Metadata
 # =============================================================================
 
+
 class ResponseMeta(BaseModel):
     """Response metadata for observability and tier info."""
-    
+
     tier: str = Field(..., description="Current organization tier")
     features_used: List[str] = Field(default_factory=list, description="Features used in this request")
     features_available: List[str] = Field(default_factory=list, description="Features available at current tier")
@@ -392,14 +412,15 @@ class ResponseMeta(BaseModel):
 # Standard API Response Envelope
 # =============================================================================
 
+
 class ApiResponse(BaseModel, Generic[T]):
     """
     Standard API response envelope.
-    
+
     All API endpoints should return this structure for consistency.
     The `data` field contains the actual response payload.
     The `meta` field contains tier info, rate limits, and feature availability.
-    
+
     Example success response:
     ```json
     {
@@ -419,7 +440,7 @@ class ApiResponse(BaseModel, Generic[T]):
         }
     }
     ```
-    
+
     Example error response:
     ```json
     {
@@ -438,7 +459,7 @@ class ApiResponse(BaseModel, Generic[T]):
     }
     ```
     """
-    
+
     success: bool = Field(..., description="Whether the request was successful")
     data: Optional[T] = Field(None, description="Response payload when success is true")
     error: Optional[ErrorDetail] = Field(None, description="Error details when success is false")
@@ -468,6 +489,7 @@ class ApiResponse(BaseModel, Generic[T]):
 # Helper Functions for Building Responses
 # =============================================================================
 
+
 def build_success_response(
     data: Any,
     correlation_id: str,
@@ -489,7 +511,7 @@ def build_success_response(
         processing_time_ms=processing_time_ms,
         correlation_id=correlation_id,
     )
-    
+
     return {
         "success": True,
         "data": data,
@@ -515,14 +537,14 @@ def build_error_response(
         hint=hint,
         details=details,
     )
-    
+
     meta = ResponseMeta(
         tier=tier,
         features_available=get_available_features(tier, category),
         features_gated=get_gated_features(tier, category),
         correlation_id=correlation_id,
     )
-    
+
     return {
         "success": False,
         "data": None,
@@ -541,7 +563,7 @@ def build_tier_error(
     feature = FEATURE_REGISTRY.get(feature_name)
     required_tier = feature.required_tier if feature else TierName.ENTERPRISE
     display_name = feature.display_name if feature else feature_name
-    
+
     return build_error_response(
         code=ErrorCode.E_TIER_REQUIRED,
         message=f"{display_name} requires {required_tier.title()} tier or higher",

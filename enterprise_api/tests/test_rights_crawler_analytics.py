@@ -10,17 +10,15 @@ Covers:
 
 from __future__ import annotations
 
-import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -76,8 +74,8 @@ def _make_timeseries_row(event_date, category: str, cnt: int):
 # Test: Enhanced crawler summary has compliance fields
 # ---------------------------------------------------------------------------
 
-class TestEnhancedCrawlerSummary:
 
+class TestEnhancedCrawlerSummary:
     @pytest.mark.asyncio
     async def test_enhanced_crawler_summary_has_compliance_fields(self):
         from app.services.rights_service import RightsService
@@ -115,10 +113,18 @@ class TestEnhancedCrawlerSummary:
 
         # All required fields present
         required_fields = [
-            "crawler_name", "user_agent_category", "company",
-            "user_agent_pattern", "respects_rsl", "total_events",
-            "rsl_check_count", "rsl_check_rate", "rights_acknowledged_rate",
-            "last_seen", "compliance_score", "compliance_label",
+            "crawler_name",
+            "user_agent_category",
+            "company",
+            "user_agent_pattern",
+            "respects_rsl",
+            "total_events",
+            "rsl_check_count",
+            "rsl_check_rate",
+            "rights_acknowledged_rate",
+            "last_seen",
+            "compliance_score",
+            "compliance_label",
         ]
         for field in required_fields:
             assert field in c, f"Missing field: {field}"
@@ -133,8 +139,8 @@ class TestEnhancedCrawlerSummary:
 # Test: Compliance score = 100, label Excellent
 # ---------------------------------------------------------------------------
 
-class TestComplianceScoreExcellent:
 
+class TestComplianceScoreExcellent:
     @pytest.mark.asyncio
     async def test_compliance_score_excellent(self):
         from app.services.rights_service import RightsService
@@ -173,8 +179,8 @@ class TestComplianceScoreExcellent:
 # Test: All 5 compliance label boundaries
 # ---------------------------------------------------------------------------
 
-class TestComplianceLabelBoundaries:
 
+class TestComplianceLabelBoundaries:
     @pytest.mark.asyncio
     async def test_compliance_label_boundaries(self):
         from app.services.rights_service import RightsService
@@ -219,18 +225,17 @@ class TestComplianceLabelBoundaries:
 
             result = await svc.get_crawler_summary(db=db, organization_id="org_test", days=30)
             c = result["crawlers"][0]
-            assert c["compliance_label"] == expected_label, (
-                f"rsl={rsl_cnt}, ack={ack_cnt}, total={total}: "
-                f"expected {expected_label}, got {c['compliance_label']} (score={c['compliance_score']})"
-            )
+            assert (
+                c["compliance_label"] == expected_label
+            ), f"rsl={rsl_cnt}, ack={ack_cnt}, total={total}: expected {expected_label}, got {c['compliance_label']} (score={c['compliance_score']})"
 
 
 # ---------------------------------------------------------------------------
 # Test: Non-compliant when no RSL checks
 # ---------------------------------------------------------------------------
 
-class TestNonCompliantNoRsl:
 
+class TestNonCompliantNoRsl:
     @pytest.mark.asyncio
     async def test_non_compliant_when_no_rsl_checks(self):
         from app.services.rights_service import RightsService
@@ -269,8 +274,8 @@ class TestNonCompliantNoRsl:
 # Test: Timeseries shape (dates list, matching array lengths)
 # ---------------------------------------------------------------------------
 
-class TestCrawlerTimeseries:
 
+class TestCrawlerTimeseries:
     @pytest.mark.asyncio
     async def test_get_crawler_timeseries_shape(self):
         from app.services.rights_service import RightsService
@@ -293,7 +298,9 @@ class TestCrawlerTimeseries:
         db.execute = AsyncMock(side_effect=_exec)
 
         result = await svc.get_crawler_timeseries(
-            db=db, organization_id="org_test", days=7,
+            db=db,
+            organization_id="org_test",
+            days=7,
         )
 
         assert "dates" in result
@@ -317,8 +324,8 @@ class TestCrawlerTimeseries:
 # Test: Timeseries excludes human_browser
 # ---------------------------------------------------------------------------
 
-class TestTimeseriesExcludesHumanBrowser:
 
+class TestTimeseriesExcludesHumanBrowser:
     @pytest.mark.asyncio
     async def test_timeseries_excludes_human_browser(self):
         from app.services.rights_service import RightsService
@@ -341,7 +348,9 @@ class TestTimeseriesExcludesHumanBrowser:
         db.execute = AsyncMock(side_effect=_exec)
 
         result = await svc.get_crawler_timeseries(
-            db=db, organization_id="org_test", days=7,
+            db=db,
+            organization_id="org_test",
+            days=7,
         )
 
         assert "human_browser" not in result["by_crawler"]
@@ -352,12 +361,12 @@ class TestTimeseriesExcludesHumanBrowser:
 # Test: Timeseries endpoint returns 200
 # ---------------------------------------------------------------------------
 
-class TestTimeseriesEndpoint:
 
+class TestTimeseriesEndpoint:
     @pytest.mark.asyncio
     async def test_timeseries_endpoint_returns_200(self):
-        from app.main import app
         from app.database import get_db
+        from app.main import app
 
         mock_ts_result = {
             "dates": ["2026-02-20", "2026-02-21"],

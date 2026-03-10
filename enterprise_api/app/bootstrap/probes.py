@@ -1,13 +1,14 @@
 import asyncio
 import logging
 
+from fastapi import FastAPI, HTTPException, status
+from fastapi.responses import PlainTextResponse
+from sqlalchemy import text
+
 from app.config import settings
 from app.database import engine
 from app.observability.metrics import render_prometheus
 from app.services.session_service import session_service
-from fastapi import FastAPI, HTTPException, status
-from fastapi.responses import PlainTextResponse
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 

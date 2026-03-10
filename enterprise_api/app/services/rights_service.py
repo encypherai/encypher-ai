@@ -18,11 +18,13 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import date as date_type, datetime, timedelta, timezone
+from datetime import date as date_type
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from sqlalchemy import Date as SADate, and_, cast, desc, func, select
+from sqlalchemy import Date as SADate
+from sqlalchemy import and_, cast, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -34,10 +36,7 @@ from app.models.rights import (
     NoticeEvidenceChain,
     PublisherRightsProfile,
     RightsAuditLog,
-    RightsLicensingAgreement,
-    RightsLicensingRequest,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -675,10 +674,7 @@ class RightsService:
     ) -> list[FormalNotice]:
         """Return all formal notices for *organization_id*, most recent first."""
         result = await db.execute(
-            select(FormalNotice)
-            .where(FormalNotice.organization_id == organization_id)
-            .order_by(desc(FormalNotice.created_at))
-            .limit(limit)
+            select(FormalNotice).where(FormalNotice.organization_id == organization_id).order_by(desc(FormalNotice.created_at)).limit(limit)
         )
         return list(result.scalars().all())
 
@@ -688,11 +684,7 @@ class RightsService:
         notice_id: UUID,
     ) -> Optional[FormalNotice]:
         """Return a FormalNotice by ID (with evidence_chain eagerly loaded), or None."""
-        result = await db.execute(
-            select(FormalNotice)
-            .options(selectinload(FormalNotice.evidence_chain))
-            .where(FormalNotice.id == notice_id)
-        )
+        result = await db.execute(select(FormalNotice).options(selectinload(FormalNotice.evidence_chain)).where(FormalNotice.id == notice_id))
         return result.scalar_one_or_none()
 
     async def generate_evidence_package(
@@ -999,9 +991,7 @@ class RightsService:
 
         # robots.txt bypass count (events flagged from CDN log ingestion)
         bypass_result = await db.execute(
-            select(func.count(ContentDetectionEvent.id)).where(
-                and_(base_filter, ContentDetectionEvent.robots_txt_bypassed.is_(True))
-            )
+            select(func.count(ContentDetectionEvent.id)).where(and_(base_filter, ContentDetectionEvent.robots_txt_bypassed.is_(True)))
         )
         robots_txt_bypass_count: int = bypass_result.scalar_one() or 0
 
@@ -1043,15 +1033,9 @@ class RightsService:
                 ContentDetectionEvent.requester_user_agent,
                 ContentDetectionEvent.user_agent_category,
                 func.count(ContentDetectionEvent.id).label("total_cnt"),
-                func.count(ContentDetectionEvent.id).filter(
-                    ContentDetectionEvent.detection_source == "rsl_olp_check"
-                ).label("rsl_cnt"),
-                func.count(ContentDetectionEvent.id).filter(
-                    ContentDetectionEvent.rights_acknowledged.is_(True)
-                ).label("ack_cnt"),
-                func.count(ContentDetectionEvent.id).filter(
-                    ContentDetectionEvent.robots_txt_bypassed.is_(True)
-                ).label("bypass_cnt"),
+                func.count(ContentDetectionEvent.id).filter(ContentDetectionEvent.detection_source == "rsl_olp_check").label("rsl_cnt"),
+                func.count(ContentDetectionEvent.id).filter(ContentDetectionEvent.rights_acknowledged.is_(True)).label("ack_cnt"),
+                func.count(ContentDetectionEvent.id).filter(ContentDetectionEvent.robots_txt_bypassed.is_(True)).label("bypass_cnt"),
                 func.max(ContentDetectionEvent.created_at).label("last_seen"),
             )
             .where(
@@ -1106,21 +1090,23 @@ class RightsService:
                 compliance_label = "Non-compliant"
 
             kc = _match_known_crawler(row.requester_user_agent)
-            crawlers.append({
-                "crawler_name": kc.crawler_name if kc else (row.requester_user_agent or row.user_agent_category),
-                "user_agent_category": row.user_agent_category,
-                "company": kc.operator_org if kc else None,
-                "user_agent_pattern": kc.user_agent_pattern if kc else None,
-                "respects_rsl": kc.respects_rsl if kc else None,
-                "total_events": total_cnt,
-                "rsl_check_count": rsl_cnt,
-                "rsl_check_rate": round(rsl_check_rate, 4),
-                "rights_acknowledged_rate": round(rights_ack_rate, 4),
-                "bypass_count": bypass_cnt,
-                "last_seen": row.last_seen.isoformat() if row.last_seen else None,
-                "compliance_score": compliance_score,
-                "compliance_label": compliance_label,
-            })
+            crawlers.append(
+                {
+                    "crawler_name": kc.crawler_name if kc else (row.requester_user_agent or row.user_agent_category),
+                    "user_agent_category": row.user_agent_category,
+                    "company": kc.operator_org if kc else None,
+                    "user_agent_pattern": kc.user_agent_pattern if kc else None,
+                    "respects_rsl": kc.respects_rsl if kc else None,
+                    "total_events": total_cnt,
+                    "rsl_check_count": rsl_cnt,
+                    "rsl_check_rate": round(rsl_check_rate, 4),
+                    "rights_acknowledged_rate": round(rights_ack_rate, 4),
+                    "bypass_count": bypass_cnt,
+                    "last_seen": row.last_seen.isoformat() if row.last_seen else None,
+                    "compliance_score": compliance_score,
+                    "compliance_label": compliance_label,
+                }
+            )
             total_crawler_events += total_cnt
 
         known_crawlers = [
@@ -1188,7 +1174,7 @@ class RightsService:
 
         # Generate complete date range with no gaps
         today = _utcnow().date()
-        start = (today - timedelta(days=days - 1))
+        start = today - timedelta(days=days - 1)
         dates: list[date_type] = [start + timedelta(days=i) for i in range(days)]
         date_strings = [d.isoformat() for d in dates]
 

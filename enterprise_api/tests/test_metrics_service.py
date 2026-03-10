@@ -1,4 +1,5 @@
 import json
+
 import pytest
 
 from app.services.metrics_service import MetricEvent, MetricType, classify_bot
@@ -33,6 +34,7 @@ def test_metric_event_to_dict_serializes_metadata_as_json_string() -> None:
 # TEAM_218: New MetricType values
 # ---------------------------------------------------------------------------
 
+
 def test_rights_metric_types_exist() -> None:
     """RSL/rights MetricType values added in TEAM_218 must be present."""
     assert MetricType.RSL_FETCH == "rsl_fetch"
@@ -58,26 +60,30 @@ def test_metric_event_accepts_rsl_fetch_type() -> None:
 # TEAM_218: classify_bot()
 # ---------------------------------------------------------------------------
 
-@pytest.mark.parametrize("ua,expected", [
-    ("Mozilla/5.0 (compatible; GPTBot/1.0; +https://openai.com/gptbot)", "gptbot"),
-    ("Claude-Web/1.0 (compatible; ClaudeBot/1.0)", "claudebot"),
-    ("anthropic-ai/1.0", "claudebot"),
-    ("Google-Extended/1.0", "google-extended"),
-    ("GoogleOther/1.0", "google-extended"),
-    ("PerplexityBot/1.0", "perplexitybot"),
-    ("Bytespider; +https://bytedance.com", "bytespider"),
-    ("Meta-ExternalAgent/1.0", "meta"),
-    ("facebookexternalhit/1.1", "meta"),
-    ("CCBot/2.0", "ccbot"),
-    ("python-httpx/0.27.0", "python-sdk"),
-    ("python-requests/2.31.0", "python-sdk"),
-    ("curl/8.5.0", "curl"),
-    ("Googlebot/2.1 (+http://www.google.com/bot.html)", "googlebot"),
-    ("Bingbot/2.0", "bingbot"),
-    ("msnbot/2.0", "bingbot"),
-    ("MyCustomBrowser/3.0", "unknown"),
-    ("", "unknown"),
-])
+
+@pytest.mark.parametrize(
+    "ua,expected",
+    [
+        ("Mozilla/5.0 (compatible; GPTBot/1.0; +https://openai.com/gptbot)", "gptbot"),
+        ("Claude-Web/1.0 (compatible; ClaudeBot/1.0)", "claudebot"),
+        ("anthropic-ai/1.0", "claudebot"),
+        ("Google-Extended/1.0", "google-extended"),
+        ("GoogleOther/1.0", "google-extended"),
+        ("PerplexityBot/1.0", "perplexitybot"),
+        ("Bytespider; +https://bytedance.com", "bytespider"),
+        ("Meta-ExternalAgent/1.0", "meta"),
+        ("facebookexternalhit/1.1", "meta"),
+        ("CCBot/2.0", "ccbot"),
+        ("python-httpx/0.27.0", "python-sdk"),
+        ("python-requests/2.31.0", "python-sdk"),
+        ("curl/8.5.0", "curl"),
+        ("Googlebot/2.1 (+http://www.google.com/bot.html)", "googlebot"),
+        ("Bingbot/2.0", "bingbot"),
+        ("msnbot/2.0", "bingbot"),
+        ("MyCustomBrowser/3.0", "unknown"),
+        ("", "unknown"),
+    ],
+)
 def test_classify_bot(ua: str, expected: str) -> None:
     assert classify_bot(ua) == expected
 

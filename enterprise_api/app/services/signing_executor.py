@@ -198,11 +198,7 @@ async def execute_signing(
 
             assertions_payload: List[Dict[str, Any]] = []
             if isinstance(template_data, dict):
-                assertions_payload = [
-                    assertion
-                    for assertion in (template_data.get("assertions") or [])
-                    if isinstance(assertion, dict)
-                ]
+                assertions_payload = [assertion for assertion in (template_data.get("assertions") or []) if isinstance(assertion, dict)]
             elif isinstance(template_data, list):
                 assertions_payload = [assertion for assertion in template_data if isinstance(assertion, dict)]
 

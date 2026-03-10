@@ -1,10 +1,11 @@
 from pathlib import Path
 
-from app.config import settings
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse, JSONResponse, Response
+
+from app.config import settings
 
 _INTERNAL_DOC_TAGS = {
     "Admin",
