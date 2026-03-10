@@ -46,6 +46,7 @@ class Rest
         add_action('save_post', [$this, 'auto_sign_on_update'], 30, 3); // Higher priority to run after mark_post_needs_verification
         add_action('admin_notices', [$this, 'render_sign_error_notice']);
         add_action('wp_ajax_encypher_dismiss_sign_error', [$this, 'ajax_dismiss_sign_error']);
+        add_action('send_headers', [$this, 'inject_image_provenance_header']);
     }
 
     public function handle_public_extract_request(WP_REST_Request $request)
@@ -139,6 +140,18 @@ class Rest
             'callback' => [$this, 'handle_provenance_request'],
         ]);
 
+        register_rest_route('encypher-provenance/v1', '/wordpress-ai-status', [
+            'methods' => WP_REST_Server::READABLE,
+            'permission_callback' => [$this, 'can_edit_post'],
+            'args' => [
+                'post_id' => [
+                    'required' => true,
+                    'type' => 'integer',
+                ],
+            ],
+            'callback' => [$this, 'handle_wordpress_ai_status_request'],
+        ]);
+
         register_rest_route('encypher-provenance/v1', '/extract', [
             'methods' => WP_REST_Server::CREATABLE,
             'permission_callback' => '__return_true', // Public endpoint
@@ -190,6 +203,34 @@ class Rest
             ],
             'callback' => [$this, 'handle_quick_connect_request'],
         ]);
+
+        register_rest_route('encypher-provenance/v1', '/connect/start', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'permission_callback' => function () {
+                return current_user_can('manage_options');
+            },
+            'args' => [
+                'email' => [
+                    'type' => 'string',
+                    'required' => true,
+                    'sanitize_callback' => 'sanitize_email',
+                ],
+                'api_base_url' => [
+                    'type' => 'string',
+                    'required' => false,
+                    'sanitize_callback' => 'sanitize_text_field',
+                ],
+            ],
+            'callback' => [$this, 'handle_connect_start_request'],
+        ]);
+
+        register_rest_route('encypher-provenance/v1', '/connect/poll', [
+            'methods' => WP_REST_Server::READABLE,
+            'permission_callback' => function () {
+                return current_user_can('manage_options');
+            },
+            'callback' => [$this, 'handle_connect_poll_request'],
+        ]);
     }
 
     public function can_edit_post(WP_REST_Request $request): bool
@@ -229,7 +270,7 @@ class Rest
         $settings = get_option('encypher_provenance_settings', []);
         $metadata_format = $settings['metadata_format'] ?? 'c2pa';
         $add_hard_binding = $settings['add_hard_binding'] ?? true;
-        
+
         // Always strip invisible provenance markers before re-signing.
         // Some historical payloads contain sentence-level VS markers without a
         // full C2PA wrapper magic sequence. If we only strip when wrapper magic
@@ -259,14 +300,14 @@ class Rest
                 ['status' => 500]
             );
         }
-        
+
         // Determine action type (c2pa.created or c2pa.edited)
         $action_type = get_post_meta($post_id, '_encypher_action_type', true);
         if (!$action_type) {
             $is_marked = get_post_meta($post_id, '_encypher_marked', true);
             $action_type = $is_marked ? 'c2pa.edited' : 'c2pa.created';
         }
-        
+
         // Get previous instance_id for edit provenance chain
         $previous_instance_id = null;
         if ($action_type === 'c2pa.edited') {
@@ -279,10 +320,10 @@ class Rest
                 ));
             }
         }
-        
+
         // Get tier from settings (default to free)
         $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
-        
+
         $is_free = ($tier === 'free');
         $organization_name = ! empty($settings['organization_name']) ? sanitize_text_field((string) $settings['organization_name']) : '';
         $signing_mode = isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed';
@@ -302,7 +343,7 @@ class Rest
             time(),
             substr(md5(uniqid((string) $post_id, true)), 0, 8)
         );
-        
+
         // Extract plain text from HTML for signing.
         // WordPress post_content contains block comments (<!-- wp:paragraph -->)
         // and HTML tags that confuse the sentence segmenter, inflating the
@@ -316,7 +357,7 @@ class Rest
                 ['status' => 400]
             );
         }
-        
+
         $this->debug_log(sprintf(
             'Post %d extracted %d chars of plain text from %d chars of HTML',
             $post_id,
@@ -351,15 +392,15 @@ class Rest
                 'return_embedding_plan' => true,
             ],
         ];
-        
+
         // Add previous_instance_id for edit provenance chain
         if ($previous_instance_id) {
             $payload['options']['previous_instance_id'] = $previous_instance_id;
         }
-        
+
         // All tiers get sentence-level segmentation and attribution indexing
         // (TEAM_166 freemium model — no feature gating needed)
-        
+
         // Add license info if provided
         if (isset($metadata['license_type'])) {
             $payload['options']['license'] = [
@@ -367,7 +408,7 @@ class Rest
                 'url' => isset($metadata['license_url']) ? esc_url_raw($metadata['license_url']) : '',
             ];
         }
-        
+
         // Use unified /sign endpoint - features gated by tier server-side
         $response = $this->call_backend('/sign', $payload, true);
         if (is_wp_error($response)) {
@@ -418,7 +459,7 @@ class Rest
                 ['status' => 500]
             );
         }
-        
+
         // Embed signed text (with invisible markers) back into the original HTML
         $embedded_content = $this->embed_signed_text_in_html($clean_content, $signed_text);
 
@@ -436,7 +477,7 @@ class Rest
                 ['status' => 500]
             );
         }
-        
+
         $this->debug_log(sprintf(
             'Post %d successfully signed with C2PA wrapper (spec compliant). HTML: %d chars, signed text: %d chars',
             $post_id,
@@ -475,7 +516,7 @@ class Rest
 
         // Extract instance_id from result for provenance chain
         $new_instance_id = $instance_id ?: null;
-        
+
         // Store metadata about the C2PA marking
         update_post_meta($post_id, '_encypher_marked', true);
         update_post_meta($post_id, '_encypher_provenance_cached_content_hash', md5((string) $embedded_content));
@@ -487,12 +528,48 @@ class Rest
         update_post_meta($post_id, '_encypher_manifest_id', $document_id);
         update_post_meta($post_id, '_encypher_marked_date', current_time('mysql'));
         update_post_meta($post_id, '_encypher_provenance_signing_mode', $signing_mode);
+
+        $settings_after_sign = get_option('encypher_provenance_settings', []);
+        if (is_array($settings_after_sign)) {
+            $sign_api_base_url = isset($settings_after_sign['api_base_url']) ? (string) $settings_after_sign['api_base_url'] : '';
+            $sign_api_key = isset($settings_after_sign['api_key']) ? (string) $settings_after_sign['api_key'] : '';
+            $signed_count = count(get_posts([
+                'post_type' => 'any',
+                'post_status' => 'any',
+                'meta_key' => '_encypher_marked',
+                'meta_value' => true,
+                'fields' => 'ids',
+                'posts_per_page' => -1,
+                'suppress_filters' => true,
+            ]));
+            $this->sync_remote_wordpress_status($sign_api_base_url, $sign_api_key, [
+                'connection_status' => 'connected',
+                'site_url' => home_url('/'),
+                'admin_url' => admin_url('admin.php?page=encypher-settings'),
+                'site_name' => get_bloginfo('name'),
+                'environment' => function_exists('wp_get_environment_type') ? wp_get_environment_type() : 'production',
+                'network_id' => is_multisite() ? (string) get_current_network_id() : null,
+                'blog_id' => is_multisite() ? get_current_blog_id() : null,
+                'is_multisite' => is_multisite(),
+                'is_primary' => true,
+                'organization_id' => isset($settings_after_sign['organization_id']) ? (string) $settings_after_sign['organization_id'] : '',
+                'organization_name' => isset($settings_after_sign['organization_name']) ? (string) $settings_after_sign['organization_name'] : '',
+                'plugin_version' => ENCYPHER_PROVENANCE_VERSION,
+                'plugin_installed' => true,
+                'connection_tested' => true,
+                'last_connection_checked_at' => gmdate('c'),
+                'last_signed_at' => gmdate('c'),
+                'last_signed_post_id' => $post_id,
+                'last_signed_post_url' => get_permalink($post_id),
+                'signed_post_count' => $signed_count,
+            ]);
+        }
         if ($signing_profile_id) {
             update_post_meta($post_id, '_encypher_provenance_signing_profile_id', $signing_profile_id);
         } else {
             delete_post_meta($post_id, '_encypher_provenance_signing_profile_id');
         }
-        
+
         // Store new instance_id for next edit's provenance chain
         if ($new_instance_id) {
             update_post_meta($post_id, '_encypher_provenance_instance_id', $new_instance_id);
@@ -502,10 +579,10 @@ class Rest
                 $new_instance_id
             ));
         }
-        
+
         // Clear action type meta so it doesn't get reused
         delete_post_meta($post_id, '_encypher_action_type');
-        
+
         $response_embeddings = [];
         if (isset($result['embeddings']) && is_array($result['embeddings'])) {
             $response_embeddings = $result['embeddings'];
@@ -516,7 +593,7 @@ class Rest
         }
 
         $this->persist_sentence_segments($post_id, $response_embeddings);
-        
+
         // Clear any pending marking flags
         delete_post_meta($post_id, '_encypher_needs_marking');
         delete_post_meta($post_id, '_encypher_action_type');
@@ -535,6 +612,50 @@ class Rest
             'embedded_content' => $embedded_content,
             'total_sentences' => $total_sentences,
             'usage' => $updated_usage,
+        ]);
+    }
+
+    /**
+     * Return the WordPress/ai content provenance status for a post.
+     *
+     * Reads the `_encypher_wpai_experiments` post meta stored by the
+     * WordPress_AI_Compat layer whenever it signs an AI-generated snippet.
+     * Combines that with the overall post signing status to produce a
+     * shield-badge-ready status string.
+     *
+     * Response shape:
+     *   { status: 'verified'|'unverified'|'tampered'|'none', details: { experiments: [...] } }
+     */
+    public function handle_wordpress_ai_status_request(WP_REST_Request $request)
+    {
+        $post_id = (int) $request->get_param('post_id');
+
+        $experiments = get_post_meta($post_id, '_encypher_wpai_experiments', true);
+        if (!is_array($experiments) || empty($experiments)) {
+            return new WP_REST_Response([
+                'status'  => 'none',
+                'details' => ['experiments' => []],
+            ]);
+        }
+
+        // Derive shield status from the overall post signing state.
+        $post_status = get_post_meta($post_id, '_encypher_provenance_status', true);
+
+        if (in_array($post_status, ['c2pa_protected', 'c2pa_verified', 'signed', 'verified'], true)) {
+            $shield_status = 'verified';
+        } elseif ($post_status === 'tampered') {
+            $shield_status = 'tampered';
+        } else {
+            // Experiments were signed inline but the post hasn't been fully signed yet
+            // (e.g. still a draft). Show as unverified rather than none.
+            $shield_status = 'unverified';
+        }
+
+        return new WP_REST_Response([
+            'status'  => $shield_status,
+            'details' => [
+                'experiments' => array_values($experiments),
+            ],
         ]);
     }
 
@@ -609,7 +730,7 @@ class Rest
         // Set WP_DEBUG to true in wp-config.php for development mode
         $cache_enabled = !defined('WP_DEBUG') || !WP_DEBUG;
         $cache_key = 'encypher_verify_' . $post_id . '_' . md5($verify_text . '|' . $endpoint);
-        
+
         if ($cache_enabled) {
             $cached = get_transient($cache_key);
             if (false !== $cached && is_array($cached)) {
@@ -692,12 +813,12 @@ class Rest
         // Store verification result in post meta
         update_post_meta($post_id, '_encypher_provenance_verification', $normalized);
         update_post_meta($post_id, '_encypher_provenance_last_verified', current_time('mysql'));
-        
+
         // Store instance_id for public provenance lookup
         if (!empty($normalized['metadata']['instance_id'])) {
             update_post_meta($post_id, '_encypher_provenance_instance_id', $normalized['metadata']['instance_id']);
         }
-        
+
         // Update status based on verification
         $status = 'not_signed';
         if (!empty($normalized['valid'])) {
@@ -708,6 +829,21 @@ class Rest
         update_post_meta($post_id, '_encypher_provenance_status', $status);
 
         $normalized['cached'] = false;
+
+        $verify_settings = get_option('encypher_provenance_settings', []);
+        if (is_array($verify_settings)) {
+            $verify_api_base_url = isset($verify_settings['api_base_url']) ? (string) $verify_settings['api_base_url'] : '';
+            $verify_api_key = isset($verify_settings['api_key']) ? (string) $verify_settings['api_key'] : '';
+            $this->sync_remote_wordpress_verification_event($verify_api_base_url, $verify_api_key, [
+                'install_id' => $this->ensure_local_install_id($verify_settings),
+                'post_id' => $post_id,
+                'post_url' => get_permalink($post_id),
+                'valid' => ! empty($normalized['valid']),
+                'tampered' => ! empty($normalized['tampered']),
+                'status' => $status,
+                'verified_at' => gmdate('c'),
+            ]);
+        }
 
         // Increment site-wide verification hit counter
         $this->increment_verify_hits();
@@ -837,7 +973,7 @@ class Rest
         // Support lookup by instance_id or post_id
         $instance_id = $request->get_param('instance_id');
         $post_id = $request->get_param('post_id');
-        
+
         if ($instance_id) {
             // Query posts by instance_id stored in verification metadata
             $args = [
@@ -928,9 +1064,9 @@ class Rest
 
     /**
      * Auto-sign posts when they transition to published status.
-     * 
+     *
      * Handles: New post being published (draft -> publish)
-     * 
+     *
      * @param string $new_status New post status
      * @param string $old_status Old post status
      * @param WP_Post $post Post object
@@ -964,9 +1100,9 @@ class Rest
 
     /**
      * Auto-sign posts when they are updated (already published).
-     * 
+     *
      * Handles: Published post being updated (publish -> publish with content changes)
-     * 
+     *
      * @param int $post_id Post ID
      * @param WP_Post $post Post object after update
      * @param WP_Post $post_before Post object before update
@@ -1062,7 +1198,7 @@ class Rest
 
     /**
      * Perform the actual signing operation.
-     * 
+     *
      * @param int $post_id Post ID to sign
      * @param bool $is_update Whether this is an update (re-signing)
      */
@@ -1081,7 +1217,7 @@ class Rest
 
             // Call the sign handler
             $response = $this->handle_sign_request($request);
-            
+
             if (is_wp_error($response)) {
                 $this->debug_log(sprintf(
                     'Auto-sign failed for post %d: %s',
@@ -1111,6 +1247,8 @@ class Rest
                     $is_update ? 'updated' : 'new'
                 ));
                 ErrorLog::record_success($post_id);
+                // Sign the featured image for CDN provenance continuity
+                $this->sign_featured_image($post_id);
             }
         } catch (\Exception $e) {
             $this->debug_log(sprintf(
@@ -1461,9 +1599,29 @@ class Rest
             'timeout' => 20,
         ];
 
-        $response = wp_remote_post($url, $args);
-        if (is_wp_error($response)) {
-            return new WP_Error('http_error', $response->get_error_message(), ['status' => 500]);
+        // Retry once on transient server errors (5xx) or network-level failures.
+        $response = null;
+        $last_error = null;
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            $response = wp_remote_post($url, $args);
+            if (is_wp_error($response)) {
+                $last_error = $response;
+                if ($attempt < 2) {
+                    sleep(2);
+                }
+                continue;
+            }
+            $attempt_code = wp_remote_retrieve_response_code($response);
+            if ($attempt_code >= 500 && $attempt < 2) {
+                $last_error = null;
+                sleep(2);
+                continue;
+            }
+            $last_error = null;
+            break;
+        }
+        if ($last_error !== null) {
+            return new WP_Error('http_error', $last_error->get_error_message(), ['status' => 500]);
         }
 
         $status_code = wp_remote_retrieve_response_code($response);
@@ -1662,26 +1820,38 @@ class Rest
         if (!empty($api_key)) {
             $result['api_key_configured'] = true;
             $result['auth_note'] = 'API key configured (will be validated during signing)';
-            
-            if ($api_key === 'demo-local-key') {
+
+            $account = $this->fetch_remote_account($api_base_url, $api_key);
+            if (! is_wp_error($account)) {
                 $result['organization'] = [
-                    'organization_id' => 'org_demo',
-                    'name' => 'Demo Organization',
-                    'tier' => 'free'
+                    'organization_id' => $account['organization_id'] ?: 'org_unknown',
+                    'name' => $account['organization_name'] ?: ($account['organization_id'] ?: __('Your organization', 'encypher-provenance')),
+                    'tier' => $account['tier'],
                 ];
-            } else {
-                $account = $this->fetch_remote_account($api_base_url, $api_key);
-                if (! is_wp_error($account)) {
-                    $result['organization'] = [
-                        'organization_id' => $account['organization_id'] ?: 'org_unknown',
-                        'name' => $account['organization_name'] ?: ($account['organization_id'] ?: __('Your organization', 'encypher-provenance')),
-                        'tier' => $account['tier'],
-                    ];
-                }
             }
         } else {
             $result['api_key_configured'] = false;
             $result['auth_note'] = 'No API key configured - using demo mode';
+        }
+
+        if (! empty($api_key) && ! empty($result['organization']['organization_id'])) {
+            $this->sync_remote_wordpress_status($api_base_url, $api_key, [
+                'connection_status' => 'connected',
+                'site_url' => home_url('/'),
+                'admin_url' => admin_url('admin.php?page=encypher-settings'),
+                'site_name' => get_bloginfo('name'),
+                'environment' => function_exists('wp_get_environment_type') ? wp_get_environment_type() : 'production',
+                'network_id' => is_multisite() ? (string) get_current_network_id() : null,
+                'blog_id' => is_multisite() ? get_current_blog_id() : null,
+                'is_multisite' => is_multisite(),
+                'is_primary' => true,
+                'organization_id' => $result['organization']['organization_id'],
+                'organization_name' => $result['organization']['name'],
+                'plugin_version' => ENCYPHER_PROVENANCE_VERSION,
+                'plugin_installed' => true,
+                'connection_tested' => true,
+                'last_connection_checked_at' => gmdate('c'),
+            ]);
         }
 
         return new WP_REST_Response($result);
@@ -1750,6 +1920,26 @@ class Rest
 
         update_option('encypher_provenance_settings', $current);
 
+        if (! empty($org['organization_id'])) {
+            $this->sync_remote_wordpress_status($api_base_url, $api_key, [
+                'connection_status' => 'connected',
+                'site_url' => home_url('/'),
+                'admin_url' => admin_url('admin.php?page=encypher-settings'),
+                'site_name' => get_bloginfo('name'),
+                'environment' => function_exists('wp_get_environment_type') ? wp_get_environment_type() : 'production',
+                'network_id' => is_multisite() ? (string) get_current_network_id() : null,
+                'blog_id' => is_multisite() ? get_current_blog_id() : null,
+                'is_multisite' => is_multisite(),
+                'is_primary' => true,
+                'organization_id' => $org['organization_id'],
+                'organization_name' => $org['name'],
+                'plugin_version' => ENCYPHER_PROVENANCE_VERSION,
+                'plugin_installed' => true,
+                'connection_tested' => true,
+                'last_connection_checked_at' => gmdate('c'),
+            ]);
+        }
+
         // Bust the account transient so the next full-save fetches fresh data
         $cache_key = 'encypher_account_' . md5(strtolower($api_base_url) . '|' . substr(hash('sha256', $api_key), 0, 16));
         delete_site_transient($cache_key);
@@ -1760,6 +1950,127 @@ class Rest
             'api_url'      => $api_base_url,
             'tier'         => $tier,
             'organization' => $org,
+        ]);
+    }
+
+    public function handle_connect_start_request(WP_REST_Request $request)
+    {
+        $email = sanitize_email((string) $request->get_param('email'));
+        $settings = get_option('encypher_provenance_settings', []);
+        if (! is_array($settings)) {
+            $settings = [];
+        }
+
+        $api_base_url = self::normalize_api_base_url((string) $request->get_param('api_base_url'));
+        if ('' === $api_base_url) {
+            $api_base_url = isset($settings['api_base_url']) ? self::normalize_api_base_url((string) $settings['api_base_url']) : 'https://api.encypherai.com/api/v1';
+        }
+
+        if ('' === $email) {
+            return new WP_Error('invalid_email', __('A valid email address is required.', 'encypher-provenance'), ['status' => 400]);
+        }
+
+        $install_id = $this->ensure_local_install_id($settings);
+        $response = wp_remote_post($api_base_url . '/integrations/wordpress/connect/start', [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ],
+            'body' => wp_json_encode([
+                'email' => $email,
+                'install_id' => $install_id,
+                'site_url' => home_url('/'),
+                'admin_url' => admin_url('admin.php?page=encypher-settings'),
+                'site_name' => get_bloginfo('name'),
+                'environment' => function_exists('wp_get_environment_type') ? wp_get_environment_type() : 'production',
+                'api_base_url' => $api_base_url,
+            ]),
+        ]);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (! is_array($body) || empty($body['success']) || ! isset($body['data']['session_id'])) {
+            return new WP_Error('connect_start_failed', __('Unable to start WordPress connect flow.', 'encypher-provenance'), ['status' => 500]);
+        }
+
+        $settings['connect_email'] = $email;
+        $settings['connect_session_id'] = sanitize_text_field((string) $body['data']['session_id']);
+        $settings['api_base_url'] = $api_base_url;
+        $settings['install_id'] = $install_id;
+        update_option('encypher_provenance_settings', $settings);
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data' => [
+                'session_id' => $settings['connect_session_id'],
+                'email' => $email,
+                'status' => $body['data']['status'] ?? 'pending_email_verification',
+                'email_sent' => ! empty($body['data']['email_sent']),
+            ],
+        ]);
+    }
+
+    public function handle_connect_poll_request(WP_REST_Request $request)
+    {
+        $settings = get_option('encypher_provenance_settings', []);
+        if (! is_array($settings)) {
+            $settings = [];
+        }
+
+        $session_id = isset($settings['connect_session_id']) ? trim((string) $settings['connect_session_id']) : '';
+        $api_base_url = isset($settings['api_base_url']) ? self::normalize_api_base_url((string) $settings['api_base_url']) : 'https://api.encypherai.com/api/v1';
+        if ('' === $session_id) {
+            return new WP_Error('missing_connect_session', __('No active WordPress connect session found.', 'encypher-provenance'), ['status' => 404]);
+        }
+
+        $response = wp_remote_get($api_base_url . '/integrations/wordpress/connect/session/' . rawurlencode($session_id), [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+            ],
+        ]);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (! is_array($body) || empty($body['success']) || ! isset($body['data']) || ! is_array($body['data'])) {
+            return new WP_Error('connect_poll_failed', __('Unable to check WordPress connect status.', 'encypher-provenance'), ['status' => 500]);
+        }
+
+        $data = $body['data'];
+        if (($data['status'] ?? '') === 'completed' && ! empty($data['api_key'])) {
+            $settings['api_key'] = sanitize_text_field((string) $data['api_key']);
+            $settings['organization_id'] = isset($data['organization_id']) ? sanitize_text_field((string) $data['organization_id']) : '';
+            $settings['organization_name'] = isset($data['organization_name']) ? sanitize_text_field((string) $data['organization_name']) : '';
+            $settings['connect_session_id'] = '';
+            $settings['connect_email'] = '';
+
+            $account = $this->fetch_remote_account($api_base_url, $settings['api_key']);
+            if (! is_wp_error($account)) {
+                $settings['tier'] = $account['tier'] ?? 'free';
+            }
+
+            update_option('encypher_provenance_settings', $settings);
+
+            $this->sync_remote_wordpress_status($api_base_url, $settings['api_key'], [
+                'connection_status' => 'connected',
+                'organization_id' => $settings['organization_id'],
+                'organization_name' => $settings['organization_name'],
+                'plugin_installed' => true,
+                'connection_tested' => true,
+                'last_connection_checked_at' => gmdate('c'),
+            ]);
+        }
+
+        return new WP_REST_Response([
+            'success' => true,
+            'data' => $data,
         ]);
     }
 
@@ -1814,6 +2125,214 @@ class Rest
         set_site_transient($cache_key, $account, 15 * MINUTE_IN_SECONDS);
 
         return $account;
+    }
+
+    private function ensure_local_install_id(array $settings): string
+    {
+        $install_id = isset($settings['install_id']) ? trim((string) $settings['install_id']) : '';
+        if ('' !== $install_id) {
+            return $install_id;
+        }
+
+        $install_id = 'wpi_' . substr(md5(home_url('/') . '|' . admin_url('admin.php?page=encypher-settings') . '|' . wp_generate_uuid4()), 0, 16);
+        $settings['install_id'] = $install_id;
+        update_option('encypher_provenance_settings', $settings);
+        return $install_id;
+    }
+
+    private function build_install_payload(array $settings): array
+    {
+        return [
+            'install_id' => $this->ensure_local_install_id($settings),
+            'site_url' => home_url('/'),
+            'admin_url' => admin_url('admin.php?page=encypher-settings'),
+            'site_name' => get_bloginfo('name'),
+            'environment' => function_exists('wp_get_environment_type') ? wp_get_environment_type() : 'production',
+            'network_id' => is_multisite() ? (string) get_current_network_id() : null,
+            'blog_id' => is_multisite() ? get_current_blog_id() : null,
+            'is_multisite' => is_multisite(),
+            'is_primary' => true,
+            'plugin_version' => ENCYPHER_PROVENANCE_VERSION,
+        ];
+    }
+
+    private function register_remote_wordpress_install(string $api_base_url, string $api_key, array $settings): string
+    {
+        $base = self::normalize_api_base_url($api_base_url);
+        if ('' === $base || '' === trim($api_key)) {
+            return isset($settings['install_id']) ? (string) $settings['install_id'] : '';
+        }
+
+        $payload = $this->build_install_payload($settings);
+        $response = wp_remote_post($base . '/integrations/wordpress/register-install', [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+            'body' => wp_json_encode($payload),
+        ]);
+
+        if (! is_wp_error($response)) {
+            $body = json_decode(wp_remote_retrieve_body($response), true);
+            if (is_array($body) && isset($body['data']['registered_install']['install_id'])) {
+                $settings['install_id'] = sanitize_text_field((string) $body['data']['registered_install']['install_id']);
+                update_option('encypher_provenance_settings', $settings);
+                return $settings['install_id'];
+            }
+        }
+
+        return $payload['install_id'];
+    }
+
+    private function sync_remote_wordpress_status(string $api_base_url, string $api_key, array $payload): void
+    {
+        $base = self::normalize_api_base_url($api_base_url);
+        if ('' === $base || '' === trim($api_key)) {
+            return;
+        }
+
+        $settings = get_option('encypher_provenance_settings', []);
+        if (! is_array($settings)) {
+            $settings = [];
+        }
+        $install_id = $this->register_remote_wordpress_install($api_base_url, $api_key, $settings);
+        $settings['install_id'] = $install_id;
+        $payload = array_merge($this->build_install_payload($settings), $payload, [
+            'install_id' => $install_id,
+        ]);
+
+        $response = wp_remote_post($base . '/integrations/wordpress/status-sync', [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+            'body' => wp_json_encode($payload),
+        ]);
+
+        if (is_wp_error($response)) {
+            $this->debug_log('WordPress status sync failed: ' . $response->get_error_message());
+            return;
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code >= 400) {
+            $this->debug_log('WordPress status sync returned status ' . $status_code);
+            return;
+        }
+
+        $this->process_remote_wordpress_actions($base, $api_key, $install_id);
+    }
+
+    private function sync_remote_wordpress_verification_event(string $api_base_url, string $api_key, array $payload): void
+    {
+        $base = self::normalize_api_base_url($api_base_url);
+        if ('' === $base || '' === trim($api_key)) {
+            return;
+        }
+
+        wp_remote_post($base . '/integrations/wordpress/verification-event', [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+            'body' => wp_json_encode($payload),
+        ]);
+    }
+
+    private function process_remote_wordpress_actions(string $api_base_url, string $api_key, string $install_id): void
+    {
+        if ('' === $install_id) {
+            return;
+        }
+
+        $response = wp_remote_post($api_base_url . '/integrations/wordpress/' . rawurlencode($install_id) . '/actions/pull', [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+        ]);
+
+        if (is_wp_error($response)) {
+            return;
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $actions = isset($body['data']['actions']) && is_array($body['data']['actions']) ? $body['data']['actions'] : [];
+        foreach ($actions as $action) {
+            if (! is_array($action) || empty($action['action_id']) || empty($action['action_type'])) {
+                continue;
+            }
+
+            $result = $this->execute_remote_wordpress_action((string) $action['action_type'], (string) ($action['note'] ?? ''), $api_base_url, $api_key);
+            $this->ack_remote_wordpress_action(
+                $api_base_url,
+                $api_key,
+                $install_id,
+                (string) $action['action_id'],
+                [
+                    'status' => $result['status'],
+                    'result_message' => $result['result_message'],
+                    'completed_at' => gmdate('c'),
+                ]
+            );
+        }
+    }
+
+    private function execute_remote_wordpress_action(string $action_type, string $note, string $api_base_url, string $api_key): array
+    {
+        if ('refresh_status' === $action_type) {
+            return [
+                'status' => 'completed',
+                'result_message' => $note !== '' ? $note : 'Status refresh acknowledged by WordPress.',
+            ];
+        }
+
+        if ('test_connection' === $action_type) {
+            $health = $this->probe_health($api_base_url);
+            if (is_wp_error($health)) {
+                return [
+                    'status' => 'failed',
+                    'result_message' => $health->get_error_message(),
+                ];
+            }
+
+            $settings = get_option('encypher_provenance_settings', []);
+            if (is_array($settings)) {
+                $settings['connection_last_status'] = 'connected';
+                $settings['connection_last_checked_at'] = gmdate('c');
+                update_option('encypher_provenance_settings', $settings);
+            }
+
+            return [
+                'status' => 'completed',
+                'result_message' => 'Connection test completed successfully.',
+            ];
+        }
+
+        return [
+            'status' => 'failed',
+            'result_message' => 'Unsupported remote action: ' . $action_type,
+        ];
+    }
+
+    private function ack_remote_wordpress_action(string $api_base_url, string $api_key, string $install_id, string $action_id, array $payload): void
+    {
+        wp_remote_post($api_base_url . '/integrations/wordpress/' . rawurlencode($install_id) . '/actions/' . rawurlencode($action_id) . '/ack', [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+            'body' => wp_json_encode($payload),
+        ]);
     }
 
     private function resolve_usage_snapshot($settings, bool $refresh_remote = false): array
@@ -1955,5 +2474,139 @@ class Rest
                 'period_end' => isset($api_calls['period_end']) ? sanitize_text_field((string) $api_calls['period_end']) : '',
             ],
         ];
+    }
+
+    // =========================================================================
+    // CDN Provenance Continuity — Phase 2: WordPress media image signing
+    // =========================================================================
+
+    /**
+     * Sign the featured image of a post via POST /api/v1/cdn/images/sign and
+     * persist the returned record_id / manifest_url as post meta so that the
+     * C2PA-Manifest-URL response header can be injected for image-carrying posts.
+     */
+    private function sign_featured_image(int $post_id): void
+    {
+        $thumbnail_id = get_post_thumbnail_id($post_id);
+        if (!$thumbnail_id) {
+            return; // No featured image
+        }
+
+        $file_path = get_attached_file($thumbnail_id);
+        if (!$file_path || !file_exists($file_path)) {
+            $this->debug_log(sprintf('Featured image file not found for post %d (attachment %d)', $post_id, $thumbnail_id));
+            return;
+        }
+
+        $mime_type = get_post_mime_type($thumbnail_id);
+        $supported = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        if (!in_array($mime_type, $supported, true)) {
+            $this->debug_log(sprintf('Unsupported image mime type %s for post %d', $mime_type, $post_id));
+            return;
+        }
+
+        $image_data = file_get_contents($file_path);
+        if ($image_data === false) {
+            $this->debug_log(sprintf('Could not read image file for post %d', $post_id));
+            return;
+        }
+
+        $original_url = wp_get_attachment_url($thumbnail_id) ?: '';
+
+        // POST multipart to /cdn/images/sign
+        $boundary = wp_generate_password(24, false);
+        $body = "--{$boundary}\r\n";
+        $body .= "Content-Disposition: form-data; name=\"file\"; filename=\"" . basename($file_path) . "\"\r\n";
+        $body .= "Content-Type: {$mime_type}\r\n\r\n";
+        $body .= $image_data . "\r\n";
+        $body .= "--{$boundary}\r\n";
+        $body .= "Content-Disposition: form-data; name=\"title\"\r\n\r\n";
+        $body .= get_the_title($post_id) . "\r\n";
+        $body .= "--{$boundary}\r\n";
+        $body .= "Content-Disposition: form-data; name=\"original_url\"\r\n\r\n";
+        $body .= $original_url . "\r\n";
+        $body .= "--{$boundary}--";
+
+        $settings = get_option('encypher_provenance_settings', []);
+        $api_key = $settings['api_key'] ?? '';
+        $api_url = rtrim($settings['api_url'] ?? 'https://enterprise.encypherai.com', '/');
+
+        $response = wp_remote_post(
+            $api_url . '/api/v1/cdn/images/sign',
+            [
+                'timeout' => 30,
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $api_key,
+                    'Content-Type' => 'multipart/form-data; boundary=' . $boundary,
+                ],
+                'body' => $body,
+            ]
+        );
+
+        if (is_wp_error($response)) {
+            $this->debug_log(sprintf('Image signing failed for post %d: %s', $post_id, $response->get_error_message()));
+            return;
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+        if ($status !== 201 && $status !== 200) {
+            $this->debug_log(sprintf('Image signing HTTP %d for post %d', $status, $post_id));
+            return;
+        }
+
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        if (!is_array($data)) {
+            return;
+        }
+
+        $record_id    = $data['record_id']    ?? '';
+        $manifest_url = $data['manifest_url'] ?? '';
+
+        if ($record_id) {
+            update_post_meta($post_id, '_encypher_image_record_id', sanitize_text_field($record_id));
+            update_post_meta($post_id, '_encypher_image_manifest_url', esc_url_raw($manifest_url));
+            update_post_meta($thumbnail_id, '_encypher_image_record_id', sanitize_text_field($record_id));
+            $this->debug_log(sprintf('Image signed for post %d: record_id=%s', $post_id, $record_id));
+        }
+    }
+
+    /**
+     * Inject a C2PA-Manifest-URL response header for single post/page responses
+     * that have a signed featured image.
+     *
+     * Hooked on send_headers.
+     */
+    public function inject_image_provenance_header(): void
+    {
+        // Only inject on single post/page responses
+        if (!is_singular()) {
+            return;
+        }
+
+        $post_id = get_the_ID();
+        if (!$post_id) {
+            return;
+        }
+
+        $manifest_url = get_post_meta($post_id, '_encypher_image_manifest_url', true);
+        if ($manifest_url) {
+            header('C2PA-Manifest-URL: ' . esc_url($manifest_url));
+        }
+    }
+
+    /**
+     * Return the CDN image record ID stored for a post's featured image.
+     */
+    public function get_image_record_id(int $post_id): string
+    {
+        return (string) get_post_meta($post_id, '_encypher_image_record_id', true);
+    }
+
+    /**
+     * Return the CDN manifest URL stored for a post's featured image.
+     */
+    public function get_image_manifest_url(int $post_id): string
+    {
+        return (string) get_post_meta($post_id, '_encypher_image_manifest_url', true);
     }
 }

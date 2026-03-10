@@ -1,7 +1,7 @@
 # Encypher Commercial - Documentation Index
 
-**Last Updated**: February 13, 2026  
-**Repository**: encypherai-commercial  
+**Last Updated**: March 10, 2026
+**Repository**: encypherai-commercial
 **Documentation Status**: Complete and Current
 
 ---
@@ -44,8 +44,8 @@ Use this index to jump directly to the documentation you need.
 | [audit_log_cli/agents.md](./audit_log_cli/agents.md) | **Development guide, known issues, constraints** |
 | [audit_log_cli/pyproject.toml](./audit_log_cli/pyproject.toml) | Dependencies (has duplicates - see agents.md) |
 
-**Key Features**: Scan files, validate metadata, generate CSV reports, trusted signers  
-**Status**: Functional (needs refactoring - see agents.md)  
+**Key Features**: Scan files, validate metadata, generate CSV reports, trusted signers
+**Status**: Functional (needs refactoring - see agents.md)
 **Tier**: Free
 
 #### Policy Validator CLI
@@ -55,8 +55,8 @@ Use this index to jump directly to the documentation you need.
 | [policy_validator_cli/agents.md](./policy_validator_cli/agents.md) | **Development guide, best practices** |
 | [policy_validator_cli/sample.policy.json](./policy_validator_cli/sample.policy.json) | Example policy file |
 
-**Key Features**: Policy validation, JSON schemas, compliance checking  
-**Status**: Production Ready  
+**Key Features**: Policy validation, JSON schemas, compliance checking
+**Status**: Production Ready
 **Tier**: Free
 
 ---
@@ -68,8 +68,8 @@ Use this index to jump directly to the documentation you need.
 |----------|---------|
 | [apps/marketing-site/README.md](./apps/marketing-site/README.md) | Setup, development, deployment |
 
-**Domain**: `encypherai.com`  
-**Tech**: Next.js, React, Tailwind CSS  
+**Domain**: `encypherai.com`
+**Tech**: Next.js, React, Tailwind CSS
 **Status**: Active
 
 #### Dashboard
@@ -78,9 +78,9 @@ Use this index to jump directly to the documentation you need.
 | [apps/dashboard/README.md](./apps/dashboard/README.md) | Setup, features, deployment |
 | [PRDs/dashboard_enhancements.md](./PRDs/dashboard_enhancements.md) | Dashboard enhancement PRD |
 
-**Domain**: `dashboard.encypherai.com`  
-**Tech**: Next.js, React, Tailwind CSS  
-**Features**: API key management, usage tracking, team management, webhooks, notifications, command palette, dark mode, CSV export  
+**Domain**: `dashboard.encypherai.com`
+**Tech**: Next.js, React, Tailwind CSS
+**Features**: API key management, usage tracking, team management, webhooks, notifications, command palette, dark mode, CSV export
 **Status**: Active (Enhanced November 2025)
 
 #### Compliance Dashboard
@@ -90,9 +90,9 @@ Use this index to jump directly to the documentation you need.
 | [dashboard_app/backend/](./dashboard_app/backend/) | FastAPI backend |
 | [dashboard_app/frontend/](./dashboard_app/frontend/) | Next.js frontend |
 
-**Purpose**: Enterprise compliance, directory signing, verification  
-**Tech**: FastAPI + Next.js  
-**Status**: Production Ready  
+**Purpose**: Enterprise compliance, directory signing, verification
+**Tech**: FastAPI + Next.js
+**Status**: Production Ready
 **Tier**: Enterprise
 
 ---
@@ -123,10 +123,24 @@ Use this index to jump directly to the documentation you need.
 | [enterprise_api/docs/LICENSING_API.md](./enterprise_api/docs/LICENSING_API.md) | Licensing API reference (agreements, content, payouts) |
 | [docs/perf/batch-sign.md](./docs/perf/batch-sign.md) | Batch throughput benchmark results |
 
-**Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection  
-**Status**: Production Ready  
-**Tier**: Enterprise  
+**Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection, CDN provenance continuity
+**Status**: Production Ready
+**Tier**: Enterprise
 **Port**: 9000
+
+#### CDN Provenance Continuity
+| Document | Purpose |
+|----------|---------|
+| [docs/c2pa/CDN_PROVENANCE_CONTINUITY.md](./docs/c2pa/CDN_PROVENANCE_CONTINUITY.md) | **Technical reference** — architecture, API endpoints, verification states, CDN integrations |
+| [PRDs/CURRENT/PRD_CDN_Provenance_Continuity.md](./PRDs/CURRENT/PRD_CDN_Provenance_Continuity.md) | Product requirements and WBS task list |
+| [integrations/cloudflare-workers/](./integrations/cloudflare-workers/) | Cloudflare Worker + wrangler config template |
+| [integrations/fastly-compute/](./integrations/fastly-compute/) | Fastly Compute@Edge (Rust) |
+| [integrations/lambda-edge/](./integrations/lambda-edge/) | Lambda@Edge viewer-response handler (Node.js) |
+
+**Key Features**: pHash-based manifest sidecar, three-state verification, CF/Fastly/Lambda@Edge workers, WordPress + Ghost image signing, CBOR manifests, analytics dashboard
+**Status**: Production Ready (Phase 1-3 complete)
+**Tier**: Enterprise
+**Tests**: 36 pytest tests passing
 
 #### Enterprise SDKs
 | Document | Purpose |
@@ -138,9 +152,9 @@ Use this index to jump directly to the documentation you need.
 | [sdk/rust/](./sdk/rust/) | Rust SDK (auto-generated from OpenAPI) |
 | [archive/enterprise_sdk_deprecated/DEPRECATED.md](./archive/enterprise_sdk_deprecated/DEPRECATED.md) | Deprecation notice for the archived hand-crafted SDK |
 
-**Key Features**: Auto-generated from API spec, always in sync, MIT licensed  
-**Status**: Generated (not yet published to registries)  
-**Tier**: Enterprise  
+**Key Features**: Auto-generated from API spec, always in sync, MIT licensed
+**Status**: Generated (not yet published to registries)
+**Tier**: Enterprise
 **API Docs**: [api.encypherai.com/docs](https://api.encypherai.com/docs)
 
 ---
@@ -154,7 +168,7 @@ Use this index to jump directly to the documentation you need.
 | [services/ENV_VARS_MAPPING.md](./services/ENV_VARS_MAPPING.md) | Environment variables mapping |
 | [docker-compose.microservices.yml](./docker-compose.microservices.yml) | Full microservices stack |
 
-**Architecture**: 8 core services plus the Enterprise API  
+**Architecture**: 8 core services plus the Enterprise API
 **Status**: Active
 
 #### Active Services
@@ -180,7 +194,7 @@ Use this index to jump directly to the documentation you need.
 |----------|---------|
 | [integrations/wordpress-provenance-plugin/README.md](./integrations/wordpress-provenance-plugin/README.md) | Installation, configuration, Docker setup |
 
-**Features**: Gutenberg & Classic editor integration, Enterprise API calls  
+**Features**: Gutenberg & Classic editor integration, Enterprise API calls
 **Status**: Production Ready
 
 ---
@@ -193,8 +207,8 @@ Use this index to jump directly to the documentation you need.
 | [shared_commercial_libs/README.md](./shared_commercial_libs/README.md) | High-level API, utilities |
 | [shared_commercial_libs/agents.md](./shared_commercial_libs/agents.md) | **Development guide** (580 lines) |
 
-**Purpose**: Shared Python library for all commercial tools  
-**Status**: Production Ready  
+**Purpose**: Shared Python library for all commercial tools
+**Status**: Production Ready
 **Used By**: audit_log_cli, dashboard_app
 
 #### Design System
@@ -203,8 +217,8 @@ Use this index to jump directly to the documentation you need.
 | [packages/design-system/README.md](./packages/design-system/README.md) | **Component library** (395 lines) |
 | [packages/design-system/IMPLEMENTATION_GUIDE.md](./packages/design-system/IMPLEMENTATION_GUIDE.md) | Implementation guide |
 
-**Purpose**: Unified React/TypeScript components for all web properties  
-**Status**: Production Ready  
+**Purpose**: Unified React/TypeScript components for all web properties
+**Status**: Production Ready
 **Used By**: All web applications
 
 ---
@@ -483,6 +497,6 @@ Use this index to jump directly to the documentation you need.
 
 ---
 
-**Last Updated**: February 13, 2026  
-**Maintained By**: Development Team  
+**Last Updated**: February 13, 2026
+**Maintained By**: Development Team
 **Next Review**: May 13, 2026 (or after major changes)

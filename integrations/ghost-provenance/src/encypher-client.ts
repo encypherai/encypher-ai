@@ -152,6 +152,26 @@ export class EncypherClient {
   }
 
   /**
+   * POST multipart form data to an Encypher API endpoint.
+   * Used for image signing (CDN provenance).
+   */
+  async postFormData(path: string, form: FormData): Promise<Record<string, unknown>> {
+    const url = `${this.baseUrl}${path}`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        // Do NOT set Content-Type: browser/node will set it with boundary for FormData
+      },
+      body: form,
+    });
+    if (!resp.ok) {
+      throw new Error(`Encypher API ${path} returned ${resp.status}`);
+    }
+    return resp.json() as Promise<Record<string, unknown>>;
+  }
+
+  /**
    * Extract the signed text from the API response, handling both
    * new unified format and legacy flat format.
    */

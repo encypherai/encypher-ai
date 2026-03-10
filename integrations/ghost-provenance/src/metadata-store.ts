@@ -17,8 +17,16 @@ export interface SigningRecord {
   previous_instance_id: string | null;
 }
 
+interface ImageSigningRecord {
+  ghost_post_id: string;
+  image_record_id: string;
+  manifest_url: string;
+  signed_at: string;
+}
+
 export class MetadataStore {
   private db: Database.Database;
+  private imageRecords: Map<string, ImageSigningRecord> = new Map();
 
   constructor(dbPath: string) {
     const dir = path.dirname(dbPath);
@@ -138,6 +146,16 @@ export class MetadataStore {
     `);
 
     return stmt.all(limit, offset) as SigningRecord[];
+  }
+
+  recordImageSigning(record: ImageSigningRecord): void {
+    // Store alongside the text signing records
+    const key = `image_${record.ghost_post_id}`;
+    this.imageRecords.set(key, record);
+  }
+
+  getImageRecord(postId: string): ImageSigningRecord | undefined {
+    return this.imageRecords.get(`image_${postId}`);
   }
 
   close(): void {

@@ -21,12 +21,14 @@ counted as errors and skipped.
 
 import json
 import logging
+import re
 from datetime import datetime, timedelta, timezone
-from urllib.parse import urlparse
 
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.cdn_attribution_event import CdnAttributionEvent
+from app.models.cdn_image_record import CdnImageRecord  # noqa: F401  (used for future URL lookup)
 from app.models.rights import ContentDetectionEvent, KnownCrawler
 from app.schemas.cdn_schemas import LogpushIngestResult
 from app.services.metrics_service import classify_bot
@@ -148,10 +150,40 @@ async def _get_rsl_respecting_categories(db: AsyncSession) -> set[str]:
     bypass is meaningful for them. Bots that never claimed compliance are
     not flagged as bypass events.
     """
-    result = await db.execute(
-        select(KnownCrawler.crawler_type).where(KnownCrawler.respects_rsl.is_(True))
-    )
+    result = await db.execute(select(KnownCrawler.crawler_type).where(KnownCrawler.respects_rsl.is_(True)))
     return {row[0] for row in result.all()}
+
+
+async def _maybe_record_image_attribution(
+    db: AsyncSession,
+    organization_id: str,
+    host: str,
+    uri: str,
+    status: int | None,
+    client_ip: str | None,
+) -> None:
+    """Best-effort: record image attribution event if URI looks like an image."""
+    IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif", ".tiff"}
+    IMAGE_PATH_HINTS = ("/images/", "/img/", "/photos/", "/media/", "/cdn-cgi/image/")
+
+    lower_uri = uri.lower()
+    is_image = any(lower_uri.endswith(ext) for ext in IMAGE_EXTENSIONS) or any(hint in lower_uri for hint in IMAGE_PATH_HINTS)
+    if not is_image:
+        return
+
+    # Strip /cdn-cgi/image/{opts}/ prefix
+    canonical_uri = re.sub(r"^/cdn-cgi/image/[^/]+/", "/", uri)
+    canonical_url = f"https://{host}{canonical_uri}" if host else canonical_uri
+    full_url = f"https://{host}{uri}" if host else uri
+
+    event = CdnAttributionEvent(
+        organization_id=organization_id,
+        image_url=full_url[:2048],
+        canonical_url=canonical_url[:2048],
+        http_status=status,
+        client_ip=client_ip[:64] if client_ip else None,
+    )
+    db.add(event)
 
 
 async def ingest_logpush_batch(
@@ -225,9 +257,7 @@ async def ingest_logpush_batch(
             robots_txt_bypassed: bool | None = None
             if bot_category in rsl_respecting:
                 if bot_category not in rsl_check_cache:
-                    rsl_check_cache[bot_category] = await _has_recent_rsl_check(
-                        db, organization_id, bot_category
-                    )
+                    rsl_check_cache[bot_category] = await _has_recent_rsl_check(db, organization_id, bot_category)
                 had_rsl_check = rsl_check_cache[bot_category]
                 robots_txt_bypassed = not had_rsl_check
                 if robots_txt_bypassed:
@@ -253,6 +283,25 @@ async def ingest_logpush_batch(
             )
             db.add(event)
             events_created += 1
+
+            # Best-effort image attribution tracking for 2xx responses
+            status_code = parsed.get("status")
+            if status_code is not None and 200 <= int(status_code) < 300:
+                try:
+                    await _maybe_record_image_attribution(
+                        db=db,
+                        organization_id=organization_id,
+                        host=parsed["domain"] or "",
+                        uri=parsed["uri"] or "",
+                        status=status_code,
+                        client_ip=parsed.get("client_ip"),
+                    )
+                except Exception:
+                    logger.debug(
+                        "logpush: image attribution error for org=%s",
+                        organization_id,
+                        exc_info=True,
+                    )
 
         except Exception:
             logger.debug(

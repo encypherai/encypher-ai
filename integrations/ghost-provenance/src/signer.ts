@@ -66,6 +66,12 @@ export interface SignResult {
   error?: string;
 }
 
+export interface ImageSignResult {
+  record_id: string;
+  manifest_url: string;
+  image_id: string;
+}
+
 export class Signer {
   private config: Config;
   private ghostClient: GhostClient;
@@ -311,6 +317,20 @@ export class Signer {
       previous_instance_id: previousInstanceId,
     });
 
+    // Best-effort: sign the featured image for CDN provenance
+    this.signFeaturedImage(post).then(imageResult => {
+      if (imageResult) {
+        this.metadataStore.recordImageSigning({
+          ghost_post_id: postId,
+          image_record_id: imageResult.record_id,
+          manifest_url: imageResult.manifest_url,
+          signed_at: new Date().toISOString(),
+        });
+      }
+    }).catch(err => {
+      logger.warn({ postId, err }, 'signFeaturedImage promise rejected');
+    });
+
     logger.info({
       postId,
       documentId,
@@ -326,5 +346,54 @@ export class Signer {
       totalSegments,
       actionType,
     };
+  }
+
+  private async signFeaturedImage(post: GhostPost): Promise<ImageSignResult | null> {
+    if (!post.feature_image) {
+      return null;
+    }
+
+    // Only process known image types
+    const supportedExts = ['.jpg', '.jpeg', '.png', '.webp'];
+    const lowerUrl = post.feature_image.toLowerCase();
+    const isSupported = supportedExts.some(ext => lowerUrl.includes(ext));
+    if (!isSupported) {
+      logger.debug({ postId: post.id, feature_image: post.feature_image }, 'Feature image not a supported type, skipping');
+      return null;
+    }
+
+    // Fetch the image bytes
+    let imageBytes: Buffer;
+    let mimeType: string;
+    try {
+      const resp = await fetch(post.feature_image);
+      if (!resp.ok) {
+        logger.warn({ url: post.feature_image, status: resp.status }, 'Failed to fetch feature image');
+        return null;
+      }
+      const contentType = resp.headers.get('content-type') || 'image/jpeg';
+      mimeType = contentType.split(';')[0].trim();
+      imageBytes = Buffer.from(await resp.arrayBuffer());
+    } catch (err) {
+      logger.warn({ url: post.feature_image, err }, 'Error fetching feature image');
+      return null;
+    }
+
+    // POST multipart to Encypher /cdn/images/sign
+    const formData = new FormData();
+    formData.append('file', new Blob([imageBytes], { type: mimeType }), 'feature_image');
+    formData.append('title', post.title || 'Untitled');
+    formData.append('original_url', post.feature_image);
+
+    try {
+      const resp = await this.encypherClient.postFormData('/cdn/images/sign', formData);
+      if (resp && resp.record_id) {
+        logger.info({ postId: post.id, record_id: resp.record_id }, 'Feature image signed successfully');
+        return resp as ImageSignResult;
+      }
+    } catch (err) {
+      logger.warn({ postId: post.id, err }, 'Feature image signing failed (non-critical)');
+    }
+    return null;
   }
 }
