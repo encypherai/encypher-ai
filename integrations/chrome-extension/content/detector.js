@@ -597,15 +597,54 @@ function _isEditableSurface(element) {
   return false;
 }
 
+/**
+ * Returns true when this content script is running inside an iframe whose
+ * body IS the email/document content (e.g. Zoho Mail compose frame).
+ * In these frames, appending anything to document.body would pollute the email.
+ */
+function _isEditableBodyFrame() {
+  return window !== window.top && document.body?.contentEditable === 'true';
+}
+
+/**
+ * Returns the document.body to use for floating badge / panel mounts.
+ * For editable-body iframes we mount on the parent frame body so badges
+ * never touch the email content. Returns null for cross-origin parents.
+ */
+function _getBadgeMountRoot() {
+  if (_isEditableBodyFrame()) {
+    try { return window.parent.document.body; } catch (e) { /* cross-origin */ }
+    return null;
+  }
+  return document.body;
+}
+
+/**
+ * Returns the iframe's bounding-rect offset within the parent viewport,
+ * used to convert element positions from the iframe coordinate space to
+ * the parent-frame coordinate space when mounting badges on the parent body.
+ */
+function _getIframeOffset() {
+  if (!_isEditableBodyFrame()) return { x: 0, y: 0 };
+  try {
+    const rect = window.frameElement?.getBoundingClientRect();
+    return rect ? { x: rect.left, y: rect.top } : { x: 0, y: 0 };
+  } catch (e) { return { x: 0, y: 0 }; }
+}
+
 function _positionFloatingBadge(badge, anchor) {
   const rect = anchor.getBoundingClientRect();
+  const { x: iframeX, y: iframeY } = _getIframeOffset();
   const badgeWidth = 30;
-  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
-  const top = Math.max(window.scrollY + rect.top - 10, window.scrollY + 8);
-  let left = window.scrollX + rect.right + 6;
+  const vpWin = _isEditableBodyFrame() ? (() => { try { return window.parent; } catch(e) { return window; } })() : window;
+  const viewportWidth = vpWin.innerWidth || document.documentElement.clientWidth || 0;
+  const scrollX = _isEditableBodyFrame() ? (vpWin.scrollX || 0) : window.scrollX;
+  const scrollY = _isEditableBodyFrame() ? (vpWin.scrollY || 0) : window.scrollY;
+  const top = Math.max(scrollY + rect.top + iframeY - 10, scrollY + 8);
+  let left = scrollX + rect.right + iframeX + 6;
 
-  if (left + badgeWidth > window.scrollX + viewportWidth - 8) {
-    left = Math.max(window.scrollX + rect.left - badgeWidth - 6, window.scrollX + 8);
+  if (left + badgeWidth > scrollX + viewportWidth - 8) {
+    left = Math.max(scrollX + rect.left + iframeX - badgeWidth - 6, scrollX + 8);
   }
 
   badge.style.position = 'absolute';
@@ -615,11 +654,15 @@ function _positionFloatingBadge(badge, anchor) {
 }
 
 /**
- * Close any open detail panels
+ * Close any open detail panels (searches both current frame and parent frame)
  */
 function _closeDetailPanels() {
-  document.querySelectorAll('.encypher-detail-panel').forEach(p => p.remove());
-  document.querySelectorAll('.encypher-badge--panel-open').forEach(b => b.classList.remove('encypher-badge--panel-open'));
+  const roots = [document];
+  try { if (_isEditableBodyFrame()) roots.push(window.parent.document); } catch (e) {}
+  for (const d of roots) {
+    d.querySelectorAll('.encypher-detail-panel').forEach(p => p.remove());
+    d.querySelectorAll('.encypher-badge--panel-open').forEach(b => b.classList.remove('encypher-badge--panel-open'));
+  }
 }
 
 /**
@@ -774,33 +817,40 @@ function _showDetailPanel(badge, details) {
     badge.classList.remove('encypher-badge--panel-open');
   });
   
-  // Close on outside click
+  // Mount on the safe root (parent frame body for editable-body iframes)
+  const mountRoot = _getBadgeMountRoot();
+  if (!mountRoot) return; // cross-origin editable-body frame; can't mount safely
+  const mountDoc = mountRoot.ownerDocument || document;
+  const mountWin = mountDoc.defaultView || window;
+
+  // Close on outside click — listen on the document that owns the panel
   const closeOnOutsideClick = (e) => {
     if (!panel.contains(e.target) && !badge.contains(e.target)) {
       panel.remove();
       badge.classList.remove('encypher-badge--panel-open');
-      document.removeEventListener('click', closeOnOutsideClick, true);
+      mountDoc.removeEventListener('click', closeOnOutsideClick, true);
     }
   };
-  setTimeout(() => document.addEventListener('click', closeOnOutsideClick, true), 0);
-  
-  // Position relative to badge
-  document.body.appendChild(panel);
+  setTimeout(() => mountDoc.addEventListener('click', closeOnOutsideClick, true), 0);
+
+  // Position relative to badge, accounting for iframe offset
+  mountRoot.appendChild(panel);
+  const { x: iframeX, y: iframeY } = _getIframeOffset();
   const badgeRect = badge.getBoundingClientRect();
   const panelRect = panel.getBoundingClientRect();
-  
-  let top = badgeRect.bottom + window.scrollY + 8;
-  let left = badgeRect.right + window.scrollX - panelRect.width;
-  
+
+  let top = badgeRect.bottom + iframeY + mountWin.scrollY + 8;
+  let left = badgeRect.right + iframeX + mountWin.scrollX - panelRect.width;
+
   // Keep panel within viewport
   if (left < 8) left = 8;
-  if (left + panelRect.width > window.innerWidth - 8) {
-    left = window.innerWidth - panelRect.width - 8;
+  if (left + panelRect.width > mountWin.innerWidth - 8) {
+    left = mountWin.innerWidth - panelRect.width - 8;
   }
-  if (top + panelRect.height > window.innerHeight + window.scrollY - 8) {
-    top = badgeRect.top + window.scrollY - panelRect.height - 8;
+  if (top + panelRect.height > mountWin.innerHeight + mountWin.scrollY - 8) {
+    top = badgeRect.top + iframeY + mountWin.scrollY - panelRect.height - 8;
   }
-  
+
   panel.style.top = `${top}px`;
   panel.style.left = `${left}px`;
 }
@@ -865,10 +915,16 @@ function injectBadge(element, status, details) {
     }
   });
   
-  if (editableSurface) {
+  // In an editable-body iframe (e.g. Zoho Mail compose), document.body IS the
+  // email content, so we must never append badges there. Use the parent-frame
+  // body for all badge mounts; if the parent is cross-origin, skip entirely.
+  const mountRoot = _getBadgeMountRoot();
+
+  if (editableSurface || _isEditableBodyFrame()) {
+    if (!mountRoot) return; // cross-origin; can't mount safely
     _positionFloatingBadge(badge, element);
     badge.dataset.encypherFloating = 'true';
-    document.body.appendChild(badge);
+    mountRoot.appendChild(badge);
     _floatingBadgeByElement.set(element, badge);
     return;
   }
