@@ -1970,6 +1970,131 @@ function applyEmbeddingPlanToOnlineEditorInPlace(embeddingPlan, visibleText, onl
 /**
  * Apply embedding-plan markers directly into an editor element.
  */
+/**
+ * Build a per-codepoint map from the visible (innerText-equivalent) text of a
+ * rich contenteditable element to the DOM nodes where those characters live.
+ *
+ * Each entry describes one codepoint in the reconstructed visible text:
+ *   { type: 'text',  node: Text,    localCPIdx: number }  – inside a Text node
+ *   { type: 'br',    node: Element }                       – \n from a <br>
+ *   { type: 'block', node: Element }                       – \n from a block boundary
+ *
+ * Returns null when the reconstructed text does not match visibleText closely
+ * enough to safely apply the plan (mismatches trigger the plain-text fallback).
+ */
+function _buildRichTextDomMap(editor, visibleText) {
+  const BLOCK_TAGS = new Set([
+    'DIV','P','H1','H2','H3','H4','H5','H6','LI','BLOCKQUOTE','PRE',
+    'TD','TH','TR','SECTION','ARTICLE','HEADER','FOOTER','MAIN','NAV',
+    'ASIDE','FORM','FIELDSET','ADDRESS','CAPTION','FIGURE','DETAILS',
+  ]);
+
+  const domMap = [];
+  let built = '';
+
+  function visit(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const cps = [...node.data];
+      for (let i = 0; i < cps.length; i++) {
+        domMap.push({ type: 'text', node, localCPIdx: i });
+        built += cps[i];
+      }
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const tag = node.tagName;
+    if (tag === 'BR') {
+      domMap.push({ type: 'br', node });
+      built += '\n';
+      return;
+    }
+
+    // Block elements contribute a leading \n (unless we're already at a newline
+    // or at the very start of the document).
+    if (BLOCK_TAGS.has(tag) && built.length > 0 && built[built.length - 1] !== '\n') {
+      domMap.push({ type: 'block', node });
+      built += '\n';
+    }
+
+    for (const child of node.childNodes) {
+      visit(child);
+    }
+  }
+
+  for (const child of editor.childNodes) {
+    visit(child);
+  }
+
+  // Compare with visibleText, normalising trailing whitespace and NBSP.
+  const norm = s => String(s || '').replace(/\s+$/, '').replace(/\u00A0/g, ' ');
+  if (norm(built) !== norm(visibleText)) return null;
+
+  // Trim domMap to match the normalised length.
+  const trimLen = [...norm(built)].length;
+  return domMap.slice(0, trimLen);
+}
+
+/**
+ * Insert embedding-plan marker characters directly into the DOM text nodes of
+ * a rich contenteditable editor, preserving all HTML structure (links, bold,
+ * etc.).  Falls back gracefully — returns false if the DOM map can't be built.
+ *
+ * Algorithm invariant: normalizedOps is processed in *descending* cpOffset order.
+ * This ensures that when we split a text node at localCPIdx N, all subsequent
+ * operations (lower cpOffset) that reference the same text node reference
+ * positions < N, which still live in the (now-shorter) original text node.
+ */
+function _applyEmbeddingPlanToRichContentEditable(editor, normalizedOps, visibleText) {
+  if (!normalizedOps || normalizedOps.length === 0) return false;
+
+  const domMap = _buildRichTextDomMap(editor, visibleText);
+  if (!domMap) return false;
+
+  for (const op of normalizedOps) {
+    const cpOffset = op.cpOffset;
+    if (cpOffset < 0) continue;
+
+    const markerNode = document.createTextNode(op.marker);
+
+    if (cpOffset >= domMap.length) {
+      // Insert at end: after the last text node (or last child of editor).
+      const lastText = domMap.length > 0 ? domMap[domMap.length - 1] : null;
+      if (lastText?.type === 'text') {
+        const n = lastText.node;
+        n.nextSibling
+          ? n.parentNode.insertBefore(markerNode, n.nextSibling)
+          : n.parentNode.appendChild(markerNode);
+      } else {
+        editor.appendChild(markerNode);
+      }
+      continue;
+    }
+
+    const entry = domMap[cpOffset];
+
+    if (entry.type === 'text') {
+      const textNode = entry.node;
+      const utf16Offset = _codepointOffsetToUtf16(textNode.data, entry.localCPIdx);
+
+      if (utf16Offset === 0) {
+        // Insert marker before this text node.
+        textNode.parentNode.insertBefore(markerNode, textNode);
+      } else {
+        // Split at the insertion point and insert marker between the two halves.
+        const afterNode = textNode.splitText(utf16Offset);
+        textNode.parentNode.insertBefore(markerNode, afterNode);
+      }
+    } else if (entry.type === 'br' || entry.type === 'block') {
+      // Insert marker text node immediately before the br / block element.
+      entry.node.parentNode.insertBefore(markerNode, entry.node);
+    }
+  }
+
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
+  return true;
+}
+
 function applyEmbeddingPlanToEditorInPlace(editor, editorType, embeddingPlan, visibleText) {
   if (!embeddingPlan || !Array.isArray(embeddingPlan.operations) || !visibleText) {
     return false;
@@ -1990,6 +2115,15 @@ function applyEmbeddingPlanToEditorInPlace(editor, editorType, embeddingPlan, vi
     return true;
   }
 
+  // For rich contenteditable editors: insert markers directly into DOM text nodes
+  // to preserve HTML formatting (links, bold, etc.) without touching element structure.
+  if (editor.isContentEditable || editor.getAttribute?.('contenteditable') === 'true') {
+    if (_applyEmbeddingPlanToRichContentEditable(editor, normalizedOps, visibleText)) {
+      return true;
+    }
+  }
+
+  // Fallback: plain-text replacement (loses HTML formatting but always works).
   const currentText = getEditorText(editor, editorType);
   const signedText = _applyMarkersToText(currentText || visibleText, normalizedOps);
   setEditorText(editor, editorType, signedText);
@@ -2204,6 +2338,8 @@ window._encypherEditorSigner = {
   applyEmbeddingPlanToSelectionInPlace,
   applyEmbeddingPlanToOnlineEditorInPlace,
   applyEmbeddingPlanToEditorInPlace,
+  _buildRichTextDomMap,
+  _applyEmbeddingPlanToRichContentEditable,
   _normalizeEmbeddingPlanOperations,
   _codepointOffsetToUtf16,
   VS_RANGES,
