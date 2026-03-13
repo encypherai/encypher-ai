@@ -78,14 +78,20 @@ describe('Popup branding + debug logging regressions', () => {
 
     assert.match(
       detectorCode,
-      /document\.body\.appendChild\(badge\)/,
-      'Editable-surface badges should be mounted on document.body as floating overlays'
+      /mountRoot\.appendChild\(badge\)/,
+      'Editable-surface badges should be mounted via _getBadgeMountRoot() to avoid polluting email bodies'
     );
 
     assert.match(
       detectorCode,
-      /if\s*\(editableSurface\)[\s\S]*return;[\s\S]*element\.appendChild\(badge\)/,
-      'Detector should avoid inline badge insertion for editable surfaces while preserving inline mode for static content'
+      /function\s+_getBadgeMountRoot\(/,
+      'Detector should use _getBadgeMountRoot() to safely mount badges outside editable-body iframes'
+    );
+
+    assert.match(
+      detectorCode,
+      /if\s*\(\s*editableSurface\s*\|\|\s*_isEditableBodyFrame\(\s*\)\s*\)[\s\S]*return;[\s\S]*element\.appendChild\(badge\)/,
+      'Detector should avoid inline badge insertion for editable surfaces and editable-body iframes while preserving inline mode for static content'
     );
   });
 

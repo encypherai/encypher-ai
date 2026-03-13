@@ -66,6 +66,7 @@ function escapeHtml(value) {
 function normalizeEmbeddingTechnique(value) {
   const mode = String(value || '').toLowerCase();
   if (mode === 'micro_ecc_c2pa' || mode === 'micro') return 'micro';
+  if (mode === 'micro_legacy_safe') return 'micro_legacy_safe';
   if (mode === 'micro_ecc' || mode === 'micro_no_embed_c2pa') return 'micro_no_embed_c2pa';
   return 'micro_no_embed_c2pa';
 }
@@ -360,6 +361,71 @@ function detectEditorType(element) {
 /**
  * Get text content from editor element
  */
+/**
+ * Capture the active text selection within the given editor at the current
+ * moment.  Call this from a pointerdown handler (before click may move focus).
+ *
+ * Returns { text, start, end, editorEl } for textarea/input, or
+ *         { text, range }               for contenteditable editors, or
+ * null when there is no meaningful selection.
+ */
+function _captureEditorSelection(editor, editorType) {
+  if (editorType === 'textarea' || editorType === 'input') {
+    const start = editor.selectionStart;
+    const end   = editor.selectionEnd;
+    if (start == null || end == null || start === end) return null;
+    return { text: editor.value.slice(start, end), start, end, editorEl: editor };
+  }
+
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return null;
+  const text = sel.toString();
+  if (!text.trim()) return null;
+
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return null;
+
+  return { text, range: range.cloneRange() };
+}
+
+/**
+ * Replace the previously-captured selection range with signedText.
+ * Falls back to setEditorText on error.
+ */
+function _replaceEditorSelection(editor, editorType, selection, signedText) {
+  if (editorType === 'textarea' || editorType === 'input') {
+    const el = selection.editorEl || editor;
+    const full = el.value;
+    el.value = full.slice(0, selection.start) + signedText + full.slice(selection.end);
+    const caret = selection.start + signedText.length;
+    el.setSelectionRange(caret, caret);
+    el.dispatchEvent(new Event('input',  { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    return;
+  }
+
+  if (selection.range) {
+    try {
+      const winSel = window.getSelection();
+      winSel.removeAllRanges();
+      winSel.addRange(selection.range);
+      selection.range.deleteContents();
+      const node = document.createTextNode(signedText);
+      selection.range.insertNode(node);
+      selection.range.setStartAfter(node);
+      selection.range.collapse(true);
+      winSel.removeAllRanges();
+      winSel.addRange(selection.range);
+      node.parentElement?.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    } catch (e) {
+      // Range may be stale — fall through to full replacement
+    }
+  }
+
+  setEditorText(editor, editorType, signedText);
+}
+
 function getEditorText(element, editorType) {
   switch (editorType) {
     case 'textarea':
@@ -547,23 +613,69 @@ async function hasSigningCredentials() {
   return Boolean(await getStoredApiKey());
 }
 
+/**
+ * Returns true when running inside an iframe whose body is itself
+ * contenteditable (e.g. Zoho Mail's rich-text compose frame).
+ * Buttons must never be appended to such a body — they would be
+ * serialized into the outgoing email.
+ */
+function _isEditableBodyFrame() {
+  return window !== window.top && document.body?.contentEditable === 'true';
+}
+
+/**
+ * Returns the DOM body to use as the floating-button mount point.
+ * For editable-body iframes (email compose frames) we mount on the
+ * parent frame's body so buttons don't end up inside the email.
+ * Returns null when cross-origin prevents safe mounting.
+ */
+function _getButtonMountRoot() {
+  if (_isEditableBodyFrame()) {
+    try { return window.parent.document.body; } catch (e) { /* cross-origin */ }
+    return null;
+  }
+  return document.body;
+}
+
+/**
+ * When buttons are mounted on the parent frame's body (editable-body
+ * iframe case), fixed positions must be offset by the iframe's position
+ * within the parent viewport.
+ */
+function _getIframeViewportOffset() {
+  try {
+    const rect = window.frameElement?.getBoundingClientRect();
+    return rect ? { x: rect.left, y: rect.top } : { x: 0, y: 0 };
+  } catch (e) {
+    return { x: 0, y: 0 };
+  }
+}
+
 function positionButton(button, editor) {
   if (!button?.isConnected || !editor?.isConnected || button.dataset.hosted === 'true') return;
 
   const editorRect = editor.getBoundingClientRect();
+  const { x: iframeX, y: iframeY } = _isEditableBodyFrame() ? _getIframeViewportOffset() : { x: 0, y: 0 };
+
   const margin = EDITOR_CONFIG.viewportMargin;
   const gap = EDITOR_CONFIG.buttonGap;
   const buttonWidth = button.offsetWidth || 110;
   const buttonHeight = button.offsetHeight || 36;
-  let top = editorRect.top - buttonHeight - gap;
+  let top = editorRect.top + iframeY - buttonHeight - gap;
 
   if (top < margin) {
-    top = editorRect.bottom + gap;
+    top = editorRect.bottom + iframeY + gap;
   }
 
-  const maxTop = Math.max(margin, window.innerHeight - margin - buttonHeight);
-  const maxLeft = Math.max(margin, window.innerWidth - margin - buttonWidth);
-  const left = clamp(editorRect.right - buttonWidth, margin, maxLeft);
+  let vpWidth = window.innerWidth;
+  let vpHeight = window.innerHeight;
+  if (_isEditableBodyFrame()) {
+    try { vpWidth = window.parent.innerWidth; vpHeight = window.parent.innerHeight; } catch (e) { /* cross-origin */ }
+  }
+
+  const maxTop = Math.max(margin, vpHeight - margin - buttonHeight);
+  const maxLeft = Math.max(margin, vpWidth - margin - buttonWidth);
+  const left = clamp(editorRect.right + iframeX - buttonWidth, margin, maxLeft);
 
   button.style.position = 'fixed';
   button.style.top = `${clamp(top, margin, maxTop)}px`;
@@ -587,15 +699,19 @@ function createRepositionScheduler(button, editor) {
 }
 
 function positionSigningUI(ui, button) {
+  // Use the window that owns the button's document, not the local window.
+  // When the button lives in a parent frame (e.g. editable-body email iframes)
+  // window.inner* would be the iframe viewport, not the parent's.
+  const win = button.ownerDocument?.defaultView || window;
   const buttonRect = button.getBoundingClientRect();
   const margin = EDITOR_CONFIG.viewportMargin;
   const gap = 8;
   const uiRect = ui.getBoundingClientRect();
-  const maxLeft = Math.max(margin, window.innerWidth - margin - uiRect.width);
-  const maxTop = Math.max(margin, window.innerHeight - margin - uiRect.height);
+  const maxLeft = Math.max(margin, win.innerWidth - margin - uiRect.width);
+  const maxTop = Math.max(margin, win.innerHeight - margin - uiRect.height);
   let top = buttonRect.bottom + gap;
 
-  if (top + uiRect.height > window.innerHeight - margin) {
+  if (top + uiRect.height > win.innerHeight - margin) {
     top = buttonRect.top - uiRect.height - gap;
   }
 
@@ -608,18 +724,28 @@ function positionSigningUI(ui, button) {
   ui.style.right = 'auto';
 }
 
-function showSigningUI(editor, editorType, button) {
-  document.querySelector('.encypher-sign-ui')?.remove();
+function showSigningUI(editor, editorType, button, selection) {
+  // Use the document/window that owns the button. When the button is mounted
+  // on a parent frame's body (e.g. Zoho Mail editable-body iframe), using the
+  // local `document`/`window` would target the wrong frame — causing missed
+  // dedup removals (multiple UIs) and wrong viewport dimensions for positioning.
+  const ownerDoc = button.ownerDocument || document;
+  const ownerWin = ownerDoc.defaultView || window;
+
+  ownerDoc.querySelector('.encypher-sign-ui')?.remove();
 
   const editorId = button.id.replace('encypher-sign-', '');
-  const ui = document.createElement('div');
+  const ui = ownerDoc.createElement('div');
   ui.className = 'encypher-sign-ui';
   ui.dataset.editorId = editorId;
 
-  const text = getEditorText(editor, editorType) || '';
+  // When text is selected, sign only that selection
+  const selectionMode = !!(selection && selection.text && selection.text.trim().length >= EDITOR_CONFIG.minTextLength);
+  const text = selectionMode ? selection.text : (getEditorText(editor, editorType) || '');
   const preview = text.trim().slice(0, 240);
   const signerLabel = cachedAccountInfo ? getSignerLabel(cachedAccountInfo) : 'add an API key in extension settings';
 
+  const replaceLabel = selectionMode ? 'Replace selected text after signing' : 'Replace editor content after signing';
   ui.innerHTML = `
     <div class="encypher-sign-ui__header">
       <div class="encypher-sign-ui__header-brand">
@@ -629,6 +755,7 @@ function showSigningUI(editor, editorType, button) {
       <button type="button" class="encypher-sign-ui__close" aria-label="Close">×</button>
     </div>
     <div class="encypher-sign-ui__body">
+      ${selectionMode ? '<div class="encypher-sign-ui__selection-badge">Signing selected text</div>' : ''}
       <div class="encypher-sign-ui__identity">Signing as: ${escapeHtml(signerLabel)}</div>
       <div class="encypher-sign-ui__trust">Invisible proof of origin is added to your text and can be verified later.</div>
       <div class="encypher-sign-ui__preview">
@@ -644,6 +771,7 @@ function showSigningUI(editor, editorType, button) {
           <select id="encypher-manifest-mode" class="encypher-sign-ui__select">
             <option value="micro_no_embed_c2pa">Minimal (recommended)</option>
             <option value="micro">Embedded</option>
+            <option value="micro_legacy_safe">Compatible (ZWC)</option>
           </select>
         </div>
         <div class="encypher-sign-ui__select-group">
@@ -657,14 +785,14 @@ function showSigningUI(editor, editorType, button) {
         <div class="encypher-sign-ui__select-group">
           <label for="encypher-document-type">Document type</label>
           <select id="encypher-document-type" class="encypher-sign-ui__select">
-            <option value="article">Article</option>
-            <option value="social">Social</option>
-            <option value="email">Email</option>
-            <option value="message">Message</option>
+            <option value="article">Article / Blog / Email</option>
+            <option value="legal_brief">Legal</option>
+            <option value="contract">Contract</option>
+            <option value="ai_output">AI Output</option>
           </select>
         </div>
         <div class="encypher-sign-ui__options">
-          <label><input type="checkbox" id="encypher-replace-content"> Replace editor content after signing</label>
+          <label><input type="checkbox" id="encypher-replace-content"> ${escapeHtml(replaceLabel)}</label>
         </div>
       </div>
     </div>
@@ -677,7 +805,7 @@ function showSigningUI(editor, editorType, button) {
     </div>
   `;
 
-  document.body.appendChild(ui);
+  ownerDoc.body.appendChild(ui);
   const advancedToggle = ui.querySelector('.encypher-sign-ui__toggle');
   const advancedPanel = ui.querySelector('.encypher-sign-ui__advanced');
   const closeButton = ui.querySelector('.encypher-sign-ui__close');
@@ -697,7 +825,9 @@ function showSigningUI(editor, editorType, button) {
 
   const updateSigningAvailability = async () => {
     const hasCredentials = await hasSigningCredentials();
-    const trimmedText = (getEditorText(editor, editorType) || '').trim();
+    const trimmedText = selectionMode
+      ? text.trim()
+      : (getEditorText(editor, editorType) || '').trim();
     const canSign = hasCredentials && trimmedText.length >= EDITOR_CONFIG.minTextLength;
     primaryButton.disabled = !canSign;
     if (!hasCredentials) {
@@ -710,9 +840,9 @@ function showSigningUI(editor, editorType, button) {
   };
 
   const cleanup = () => {
-    document.removeEventListener('mousedown', handleOutsideClick, true);
-    window.removeEventListener('resize', reposition, { passive: true });
-    window.removeEventListener('scroll', reposition, { passive: true });
+    ownerDoc.removeEventListener('mousedown', handleOutsideClick, true);
+    ownerWin.removeEventListener('resize', reposition, { passive: true });
+    ownerWin.removeEventListener('scroll', reposition, { passive: true });
     editor.removeEventListener('input', updateSigningAvailability);
     ui.remove();
     activeEditors.get(editorId)?.updateVisibility?.();
@@ -748,6 +878,7 @@ function showSigningUI(editor, editorType, button) {
         manifestMode: manifestSelect.value,
         segmentationLevel: segmentationSelect.value,
         documentType: documentTypeSelect.value,
+        selection: selectionMode ? selection : null,
       });
       if (!result?.signedText) {
         throw new Error('Signing failed. Please try again.');
@@ -774,9 +905,9 @@ function showSigningUI(editor, editorType, button) {
     }
   });
 
-  document.addEventListener('mousedown', handleOutsideClick, true);
-  window.addEventListener('resize', reposition, { passive: true });
-  window.addEventListener('scroll', reposition, { passive: true });
+  ownerDoc.addEventListener('mousedown', handleOutsideClick, true);
+  ownerWin.addEventListener('resize', reposition, { passive: true });
+  ownerWin.addEventListener('scroll', reposition, { passive: true });
   getCachedAccountInfo().then(() => {
     const identityEl = ui.querySelector('.encypher-sign-ui__identity');
     if (identityEl) {
@@ -983,26 +1114,30 @@ function getSiteAdapter(editor) {
   if (hostname === 'claude.ai') {
     const root = editor?.closest?.('[data-testid="chat-input-grid-container"]')
       || editor?.closest?.('form')
-      || document.querySelector('[data-testid="chat-input-grid-container"]')
       || editor?.parentElement
       || document;
+    // Claude's send button selector changes over time; find the right-side action cluster
+    // by looking for a flex row with gap that contains the last action buttons
     const sendButton = root.querySelector('button[aria-label="Send message"], button[aria-label*="Send"], [data-testid="send-button"]');
-    const rightCluster = sendButton?.closest('[class*="items-center"], [class*="justify-end"]') || sendButton?.parentElement || null;
-    const leftCluster = root.querySelector('[data-testid="model-selector-dropdown"]')?.closest('[class*="flex"]')
+    const rightCluster = sendButton?.parentElement
+      || sendButton?.closest('[class*="items-center"], [class*="justify-end"]')
+      || null;
+    // Use parentElement (not closest) so we never resolve to the button element itself
+    const leftCluster = root.querySelector('[data-testid="model-selector-dropdown"]')?.closest('div[class*="flex"]:not(button)')
       || root.querySelector('[class*="ProseMirror"]')?.parentElement
       || root.querySelector('[contenteditable="true"]')?.parentElement
       || null;
     return {
       key: 'claude',
       tryAttach(button) {
-        if (rightCluster && rightCluster.contains(button)) {
-          return true;
-        }
-        if (leftCluster && leftCluster.contains(button)) {
-          return true;
-        }
+        if (rightCluster?.contains(button)) return true;
+        if (leftCluster?.contains(button)) return true;
         if (rightCluster && sendButton && !rightCluster.contains(button)) {
           rightCluster.insertBefore(button, sendButton);
+          return true;
+        }
+        if (rightCluster && !rightCluster.contains(button)) {
+          rightCluster.appendChild(button);
           return true;
         }
         if (leftCluster && !leftCluster.contains(button)) {
@@ -1092,8 +1227,18 @@ function attachButtonToPreferredHost(button, editor) {
   const adapter = getSiteAdapter(editor);
   if (!adapter) return false;
 
+  const previousParent = button.parentElement;
   const attached = adapter.tryAttach(button);
   if (attached) {
+    // Dedup: if the button landed in a container that already had a sign button,
+    // remove this duplicate and fall back to floating placement.
+    const newParent = button.parentElement;
+    if (newParent && newParent !== previousParent &&
+        newParent.querySelectorAll('.encypher-sign-btn').length > 1) {
+      button.remove();
+      ensureButtonMountedInBody(button);
+      return false;
+    }
     button.dataset.hosted = 'true';
     button.dataset.hostKind = adapter.key;
     button.classList.add('encypher-sign-btn--hosted', 'encypher-sign-btn--visible', 'encypher-sign-btn--expanded');
@@ -1118,8 +1263,10 @@ function attachButtonToPreferredHost(button, editor) {
 }
 
 function ensureButtonMountedInBody(button) {
-  if (button.parentElement !== document.body) {
-    document.body.appendChild(button);
+  const mountRoot = _getButtonMountRoot();
+  if (!mountRoot) return; // cross-origin editable-body frame; cannot mount safely
+  if (button.parentElement !== mountRoot) {
+    mountRoot.appendChild(button);
   }
 }
 
@@ -1179,7 +1326,9 @@ async function signEditorContent(options) {
   const editor = options.editor;
   const editorType = options.editorType;
   const button = options.button;
-  const text = getEditorText(editor, editorType);
+  const selection = options.selection || null;
+  // When signing a selection, use only the selected text; otherwise the full editor text.
+  const text = selection ? selection.text : getEditorText(editor, editorType);
   if ((text || '').trim().length < EDITOR_CONFIG.minTextLength) {
     throw new Error('Add some content to sign.');
   }
@@ -1204,11 +1353,16 @@ async function signEditorContent(options) {
   }
 
   if (options.replaceContent) {
-    const applied = response.embeddingPlan
-      ? applyEmbeddingPlanToEditorInPlace(editor, editorType, response.embeddingPlan, text)
-      : false;
-    if (!applied) {
-      setEditorText(editor, editorType, response.signedText);
+    if (selection) {
+      // Replace only the captured selection range
+      _replaceEditorSelection(editor, editorType, selection, response.signedText);
+    } else {
+      const applied = response.embeddingPlan
+        ? applyEmbeddingPlanToEditorInPlace(editor, editorType, response.embeddingPlan, text)
+        : false;
+      if (!applied) {
+        setEditorText(editor, editorType, response.signedText);
+      }
     }
   }
 
@@ -1246,7 +1400,9 @@ function attachSignButton(editor) {
 
   // Create button
   const button = createSignButton(editorId);
-  document.body.appendChild(button);
+  const _mountRoot = _getButtonMountRoot();
+  if (!_mountRoot) return; // cross-origin editable-body iframe; cannot mount safely
+  _mountRoot.appendChild(button);
   const repositionHandler = createRepositionScheduler(button, editor);
   const surface = getEditorSurfaceKind(editor, editorType);
   const prefersHostedPlacement = shouldPreferHostedPlacement(editor);
@@ -1398,11 +1554,23 @@ function attachSignButton(editor) {
     updateButtonPresentation(button, { ready: true, signed: true, surface });
   }
 
+  // Capture selection before button click can steal focus from editor
+  let _capturedSelection = null;
+  button.addEventListener('pointerdown', (e) => {
+    _capturedSelection = _captureEditorSelection(editor, editorType);
+    // Prevent contenteditable from losing focus (which clears window.getSelection())
+    if (editor.isContentEditable) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
   button.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    const sel = _capturedSelection;
+    _capturedSelection = null;
     setPrimaryEditor(editorId);
-    showSigningUI(editor, editorType, button);
+    showSigningUI(editor, editorType, button, sel);
     activeEditors.get(editorId)?.updateVisibility?.();
   });
 }
@@ -1423,6 +1591,10 @@ function scanForEditorsInRoot(root) {
   const textareas = root.querySelectorAll('textarea');
   textareas.forEach(ta => {
     if (ta.rows >= 3 || ta.offsetHeight >= 80) {
+      candidates.add(ta);
+    } else if (ta.closest?.('[data-testid="chat-input-grid-container"]')) {
+      // Auto-growing composer textareas start small (e.g. Claude's main composer
+      // at ~22px); include them explicitly so they aren't filtered out by size.
       candidates.add(ta);
     }
   });
@@ -1582,7 +1754,8 @@ function shouldSkipEditor(element, editorType) {
   }
   if (editorType === 'input' && !['text', 'search', ''].includes(element.type || '')) return true;
   const rect = element.getBoundingClientRect();
-  if (rect.width < 180 || rect.height < 28) return true;
+  const minHeight = element.closest?.('[data-testid="chat-input-grid-container"]') ? 8 : 28;
+  if (rect.width < 180 || rect.height < minHeight) return true;
   return false;
 }
 
@@ -1797,6 +1970,131 @@ function applyEmbeddingPlanToOnlineEditorInPlace(embeddingPlan, visibleText, onl
 /**
  * Apply embedding-plan markers directly into an editor element.
  */
+/**
+ * Build a per-codepoint map from the visible (innerText-equivalent) text of a
+ * rich contenteditable element to the DOM nodes where those characters live.
+ *
+ * Each entry describes one codepoint in the reconstructed visible text:
+ *   { type: 'text',  node: Text,    localCPIdx: number }  – inside a Text node
+ *   { type: 'br',    node: Element }                       – \n from a <br>
+ *   { type: 'block', node: Element }                       – \n from a block boundary
+ *
+ * Returns null when the reconstructed text does not match visibleText closely
+ * enough to safely apply the plan (mismatches trigger the plain-text fallback).
+ */
+function _buildRichTextDomMap(editor, visibleText) {
+  const BLOCK_TAGS = new Set([
+    'DIV','P','H1','H2','H3','H4','H5','H6','LI','BLOCKQUOTE','PRE',
+    'TD','TH','TR','SECTION','ARTICLE','HEADER','FOOTER','MAIN','NAV',
+    'ASIDE','FORM','FIELDSET','ADDRESS','CAPTION','FIGURE','DETAILS',
+  ]);
+
+  const domMap = [];
+  let built = '';
+
+  function visit(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const cps = [...node.data];
+      for (let i = 0; i < cps.length; i++) {
+        domMap.push({ type: 'text', node, localCPIdx: i });
+        built += cps[i];
+      }
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const tag = node.tagName;
+    if (tag === 'BR') {
+      domMap.push({ type: 'br', node });
+      built += '\n';
+      return;
+    }
+
+    // Block elements contribute a leading \n (unless we're already at a newline
+    // or at the very start of the document).
+    if (BLOCK_TAGS.has(tag) && built.length > 0 && built[built.length - 1] !== '\n') {
+      domMap.push({ type: 'block', node });
+      built += '\n';
+    }
+
+    for (const child of node.childNodes) {
+      visit(child);
+    }
+  }
+
+  for (const child of editor.childNodes) {
+    visit(child);
+  }
+
+  // Compare with visibleText, normalising trailing whitespace and NBSP.
+  const norm = s => String(s || '').replace(/\s+$/, '').replace(/\u00A0/g, ' ');
+  if (norm(built) !== norm(visibleText)) return null;
+
+  // Trim domMap to match the normalised length.
+  const trimLen = [...norm(built)].length;
+  return domMap.slice(0, trimLen);
+}
+
+/**
+ * Insert embedding-plan marker characters directly into the DOM text nodes of
+ * a rich contenteditable editor, preserving all HTML structure (links, bold,
+ * etc.).  Falls back gracefully — returns false if the DOM map can't be built.
+ *
+ * Algorithm invariant: normalizedOps is processed in *descending* cpOffset order.
+ * This ensures that when we split a text node at localCPIdx N, all subsequent
+ * operations (lower cpOffset) that reference the same text node reference
+ * positions < N, which still live in the (now-shorter) original text node.
+ */
+function _applyEmbeddingPlanToRichContentEditable(editor, normalizedOps, visibleText) {
+  if (!normalizedOps || normalizedOps.length === 0) return false;
+
+  const domMap = _buildRichTextDomMap(editor, visibleText);
+  if (!domMap) return false;
+
+  for (const op of normalizedOps) {
+    const cpOffset = op.cpOffset;
+    if (cpOffset < 0) continue;
+
+    const markerNode = document.createTextNode(op.marker);
+
+    if (cpOffset >= domMap.length) {
+      // Insert at end: after the last text node (or last child of editor).
+      const lastText = domMap.length > 0 ? domMap[domMap.length - 1] : null;
+      if (lastText?.type === 'text') {
+        const n = lastText.node;
+        n.nextSibling
+          ? n.parentNode.insertBefore(markerNode, n.nextSibling)
+          : n.parentNode.appendChild(markerNode);
+      } else {
+        editor.appendChild(markerNode);
+      }
+      continue;
+    }
+
+    const entry = domMap[cpOffset];
+
+    if (entry.type === 'text') {
+      const textNode = entry.node;
+      const utf16Offset = _codepointOffsetToUtf16(textNode.data, entry.localCPIdx);
+
+      if (utf16Offset === 0) {
+        // Insert marker before this text node.
+        textNode.parentNode.insertBefore(markerNode, textNode);
+      } else {
+        // Split at the insertion point and insert marker between the two halves.
+        const afterNode = textNode.splitText(utf16Offset);
+        textNode.parentNode.insertBefore(markerNode, afterNode);
+      }
+    } else if (entry.type === 'br' || entry.type === 'block') {
+      // Insert marker text node immediately before the br / block element.
+      entry.node.parentNode.insertBefore(markerNode, entry.node);
+    }
+  }
+
+  editor.dispatchEvent(new Event('input', { bubbles: true }));
+  return true;
+}
+
 function applyEmbeddingPlanToEditorInPlace(editor, editorType, embeddingPlan, visibleText) {
   if (!embeddingPlan || !Array.isArray(embeddingPlan.operations) || !visibleText) {
     return false;
@@ -1817,6 +2115,15 @@ function applyEmbeddingPlanToEditorInPlace(editor, editorType, embeddingPlan, vi
     return true;
   }
 
+  // For rich contenteditable editors: insert markers directly into DOM text nodes
+  // to preserve HTML formatting (links, bold, etc.) without touching element structure.
+  if (editor.isContentEditable || editor.getAttribute?.('contenteditable') === 'true') {
+    if (_applyEmbeddingPlanToRichContentEditable(editor, normalizedOps, visibleText)) {
+      return true;
+    }
+  }
+
+  // Fallback: plain-text replacement (loses HTML formatting but always works).
   const currentText = getEditorText(editor, editorType);
   const signedText = _applyMarkersToText(currentText || visibleText, normalizedOps);
   setEditorText(editor, editorType, signedText);
@@ -2031,6 +2338,8 @@ window._encypherEditorSigner = {
   applyEmbeddingPlanToSelectionInPlace,
   applyEmbeddingPlanToOnlineEditorInPlace,
   applyEmbeddingPlanToEditorInPlace,
+  _buildRichTextDomMap,
+  _applyEmbeddingPlanToRichContentEditable,
   _normalizeEmbeddingPlanOperations,
   _codepointOffsetToUtf16,
   VS_RANGES,

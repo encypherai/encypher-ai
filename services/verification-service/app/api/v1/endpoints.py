@@ -129,11 +129,7 @@ async def _bulk_resolve_segment_uuids(segment_uuids: list[str]) -> dict[str, dic
     if response and response.status_code == 200:
         payload = response.json()
         if isinstance(payload, dict) and "results" in payload:
-            return {
-                r["segment_uuid"]: r
-                for r in payload["results"]
-                if isinstance(r, dict) and "segment_uuid" in r
-            }
+            return {r["segment_uuid"]: r for r in payload["results"] if isinstance(r, dict) and "segment_uuid" in r}
 
     # Fallback: resolve one-by-one
     results: dict[str, dict] = {}
@@ -550,12 +546,7 @@ async def verify_text(
     # content_references, so this must not be a hard gate.
     trust_anchor_public_key = None
     trust_anchor_name = None  # TEAM_156: org name from trust anchor API
-    if (
-        not organization_id
-        and not certificate_pem
-        and isinstance(extracted_signer_id, str)
-        and extracted_signer_id.startswith("org_")
-    ):
+    if not organization_id and not certificate_pem and isinstance(extracted_signer_id, str) and extracted_signer_id.startswith("org_"):
         if isinstance(extracted_manifest_uuid, str) and extracted_manifest_uuid.strip():
             # Soft check: try to confirm manifest_uuid in content_references
             try:
@@ -747,11 +738,7 @@ async def verify_text(
                         _ch_data = _ch_assertion.get("data", {})
                         _stored_hash = _ch_data.get("hash", "")
                         _raw_excls = _ch_data.get("exclusions", [])
-                        _excls = [
-                            (e["start"], e["length"])
-                            for e in _raw_excls
-                            if isinstance(e, dict) and "start" in e and "length" in e
-                        ]
+                        _excls = [(e["start"], e["length"]) for e in _raw_excls if isinstance(e, dict) and "start" in e and "length" in e]
                         if _stored_hash and _excls:
                             _norm = unicodedata.normalize("NFC", _ws_text)
                             _buf = bytearray(_norm.encode("utf-8"))
@@ -874,12 +861,14 @@ async def verify_text(
                                             paragraph_index=loc_data.get("paragraph_index", 0),
                                             sentence_in_paragraph=loc_data.get("sentence_in_paragraph", 0),
                                         )
-                                    resolved_embeddings.append(EmbeddingDetail(
-                                        segment_uuid=uuid_str,
-                                        leaf_index=r.get("leaf_index"),
-                                        segment_location=seg_loc,
-                                        manifest_mode=r.get("manifest_mode"),
-                                    ))
+                                    resolved_embeddings.append(
+                                        EmbeddingDetail(
+                                            segment_uuid=uuid_str,
+                                            leaf_index=r.get("leaf_index"),
+                                            segment_location=seg_loc,
+                                            manifest_mode=r.get("manifest_mode"),
+                                        )
+                                    )
 
                             manifest = {
                                 "segment_uuid": zw_uuid_str,
@@ -967,12 +956,14 @@ async def verify_text(
                                             paragraph_index=loc_data.get("paragraph_index", 0),
                                             sentence_in_paragraph=loc_data.get("sentence_in_paragraph", 0),
                                         )
-                                    resolved_embeddings.append(EmbeddingDetail(
-                                        segment_uuid=uuid_str,
-                                        leaf_index=r.get("leaf_index"),
-                                        segment_location=seg_loc,
-                                        manifest_mode=r.get("manifest_mode"),
-                                    ))
+                                    resolved_embeddings.append(
+                                        EmbeddingDetail(
+                                            segment_uuid=uuid_str,
+                                            leaf_index=r.get("leaf_index"),
+                                            segment_location=seg_loc,
+                                            manifest_mode=r.get("manifest_mode"),
+                                        )
+                                    )
 
                             manifest = {
                                 "segment_uuid": vs256_uuid_str,
@@ -989,6 +980,77 @@ async def verify_text(
         except Exception as vs256_exc:
             logger.debug("verify_vs256_detection_error", error=str(vs256_exc))
 
+    # Legacy-safe (base-6 ZWC) embedding fallback.
+    # Handles both 100-char (plain) and 112-char (RS-ECC) markers.
+    # LRM/RLM presence distinguishes these from base-4 ZW markers.
+    legacy_safe_org_id = None
+    legacy_safe_document_id = None
+    if not signer_id or not is_valid:
+        try:
+            from ...utils.legacy_safe_detect import (
+                find_legacy_safe_markers,
+                extract_log_id_from_marker,
+            )
+
+            ls_markers = find_legacy_safe_markers(verify_request.text)
+            if ls_markers:
+                ls_log_ids: list[str] = []
+                for _start, _end, marker_str in ls_markers:
+                    log_id_hex = extract_log_id_from_marker(marker_str)
+                    if log_id_hex:
+                        ls_log_ids.append(log_id_hex)
+
+                if ls_log_ids:
+                    resolved_map = await _bulk_resolve_segment_uuids(ls_log_ids)
+
+                    if resolved_map:
+                        first_result = resolved_map.get(ls_log_ids[0]) or next(iter(resolved_map.values()))
+                        legacy_safe_org_id = first_result.get("organization_id")
+                        legacy_safe_document_id = first_result.get("document_id")
+
+                        if legacy_safe_org_id:
+                            signer_id = legacy_safe_org_id
+                            is_valid = True
+
+                            if first_result.get("manifest_data") and not resolved_c2pa_manifest:
+                                resolved_c2pa_manifest = first_result["manifest_data"]
+                            if first_result.get("total_segments") and not resolved_total_segments:
+                                resolved_total_segments = first_result.get("total_segments")
+
+                            for log_id_hex in ls_log_ids:
+                                r = resolved_map.get(log_id_hex)
+                                if r:
+                                    seg_loc = None
+                                    loc_data = r.get("segment_location")
+                                    if isinstance(loc_data, dict):
+                                        seg_loc = SegmentLocationInfo(
+                                            paragraph_index=loc_data.get("paragraph_index", 0),
+                                            sentence_in_paragraph=loc_data.get("sentence_in_paragraph", 0),
+                                        )
+                                    resolved_embeddings.append(
+                                        EmbeddingDetail(
+                                            segment_uuid=log_id_hex,
+                                            leaf_index=r.get("leaf_index"),
+                                            segment_location=seg_loc,
+                                            manifest_mode=r.get("manifest_mode"),
+                                        )
+                                    )
+
+                            manifest = {
+                                "segment_uuid": ls_log_ids[0],
+                                "total_signatures": len(ls_markers),
+                            }
+                            logger.info(
+                                "verify_legacy_safe_resolved",
+                                log_id=ls_log_ids[0],
+                                organization_id=legacy_safe_org_id,
+                                document_id=legacy_safe_document_id,
+                                total_signatures=len(ls_markers),
+                                resolved_count=len(resolved_embeddings),
+                            )
+        except Exception as ls_exc:
+            logger.debug("verify_legacy_safe_detection_error", error=str(ls_exc))
+
     duration_ms = int((time.perf_counter() - start) * 1000)
 
     reason_code = "OK" if is_valid else "SIGNATURE_INVALID"
@@ -999,6 +1061,9 @@ async def verify_text(
         reason_code = "OK"
     elif vs256_org_id and signer_id == vs256_org_id:
         # TEAM_158: VS256 DB-resolved — skip public_key_resolver check
+        reason_code = "OK"
+    elif legacy_safe_org_id and signer_id == legacy_safe_org_id:
+        # Legacy-safe DB-resolved — skip public_key_resolver check
         reason_code = "OK"
     elif public_key_resolver(signer_id) is None:
         reason_code = "CERT_NOT_FOUND"
@@ -1093,9 +1158,12 @@ async def verify_text(
         # TEAM_210: Prefer publisher name from signed manifest, then org name from
         # authenticated context, then trust anchor name, then signer_id.
         signer_name=(
-            publisher_name if publisher_name
-            else organization_name if (signer_id and signer_id == organization_id and organization_name)
-            else trust_anchor_name if trust_anchor_name
+            publisher_name
+            if publisher_name
+            else organization_name
+            if (signer_id and signer_id == organization_id and organization_name)
+            else trust_anchor_name
+            if trust_anchor_name
             else signer_id
         ),
         organization_id=organization_id if signer_id == organization_id else (extracted_signer_id if extracted_signer_id else None),

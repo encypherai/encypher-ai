@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { OrganizationSwitcher } from '../OrganizationSwitcher';
 import { MobileNav } from '../MobileNav';
@@ -267,6 +267,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [setupWizardLatchedOpen, setSetupWizardLatchedOpen] = useState(false);
+  const sessionExpiryHandledRef = useRef(false);
+  const isAuthenticated = status === 'authenticated';
+  const hasAccessToken = Boolean(accessToken);
+  const shouldRedirectToLogin = status === 'unauthenticated' || (isAuthenticated && !hasAccessToken);
+  const isAuthReady = isAuthenticated && hasAccessToken && sessionError !== 'RefreshAccessTokenError';
 
   // TEAM_006: Check if user is super admin via API
   const { data: isSuperAdmin } = useQuery({
@@ -275,7 +280,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       if (!accessToken) return false;
       return apiClient.isSuperAdmin(accessToken);
     },
-    enabled: Boolean(accessToken),
+    enabled: isAuthReady,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -283,14 +288,27 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Session guard: redirect unauthenticated users and force-logout on refresh failure
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login?callbackUrl=' + encodeURIComponent(pathname));
+    if (status === 'loading') {
       return;
     }
-    if (sessionError === 'RefreshAccessTokenError') {
-      signOut({ callbackUrl: '/login?reason=session_expired' });
+
+    if (shouldRedirectToLogin) {
+      router.replace('/login?callbackUrl=' + encodeURIComponent(pathname));
+      return;
     }
-  }, [status, sessionError, router, pathname]);
+
+    if (sessionError === 'RefreshAccessTokenError') {
+      if (sessionExpiryHandledRef.current) {
+        return;
+      }
+
+      sessionExpiryHandledRef.current = true;
+      void signOut({ callbackUrl: '/login?reason=session_expired' });
+      return;
+    }
+
+    sessionExpiryHandledRef.current = false;
+  }, [status, shouldRedirectToLogin, sessionError, router, pathname]);
 
   // TEAM_191: Check if mandatory setup wizard is complete
   const { data: setupStatus, isLoading: setupLoading } = useQuery({
@@ -299,7 +317,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       if (!accessToken) return null;
       return apiClient.getSetupStatus(accessToken);
     },
-    enabled: Boolean(accessToken),
+    enabled: isAuthReady,
     staleTime: 60_000,
     retry: 1,
   });
@@ -340,6 +358,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     if (href === '/') return pathname === '/';
     return pathname === href || pathname.startsWith(href + '/');
   };
+
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-blue-ncs dark:border-slate-700 dark:border-t-columbia-blue" />
+          <span>Checking your session...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-900">

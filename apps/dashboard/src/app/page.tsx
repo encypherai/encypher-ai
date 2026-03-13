@@ -2,7 +2,7 @@
 
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@encypher/design-system';
 import { useQuery } from '@tanstack/react-query';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
@@ -176,7 +176,8 @@ function ValueProofCard({ stats, isLoading }: { stats?: UsageStats; isLoading: b
 }
 
 export default function DashboardPage() {
-  const { session, status, accessToken, isLoading } = useRequireAuth();
+  const { data: session } = useSession();
+  const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const { activeOrganization } = useOrganization();
   const orgId = activeOrganization?.id;
 

@@ -33,10 +33,10 @@ function isVariationSelector(codePoint) {
 
 function extractEmbeddedBytes(text) {
   const bytes = [];
-  
+
   for (const char of text) {
     const codePoint = char.codePointAt(0);
-    
+
     if (codePoint >= VS_RANGES.VS1_START && codePoint <= VS_RANGES.VS1_END) {
       // Bytes 0-15 from VS1 range
       bytes.push(codePoint - VS_RANGES.VS1_START);
@@ -45,7 +45,7 @@ function extractEmbeddedBytes(text) {
       bytes.push((codePoint - VS_RANGES.VS2_START) + 16);
     }
   }
-  
+
   return new Uint8Array(bytes);
 }
 
@@ -94,17 +94,17 @@ function byteToVS(byte) {
 function embedBytes(visibleText, bytes) {
   let result = String.fromCodePoint(ZWNBSP);
   let byteIndex = 0;
-  
+
   for (const char of visibleText) {
     result += char;
-    
+
     // Embed one byte after each visible character (one VS per byte)
     if (byteIndex < bytes.length) {
       result += byteToVS(bytes[byteIndex]);
       byteIndex++;
     }
   }
-  
+
   return result;
 }
 
@@ -274,12 +274,12 @@ describe('findWrappers', () => {
     const headerBytes = [...C2PA_MAGIC, 0x01, 0x00, 0x00, 0x00, 0x04]; // version=1, length=4
     const manifestBytes = [0xDE, 0xAD, 0xBE, 0xEF]; // 4-byte dummy manifest
     const allBytes = [...headerBytes, ...manifestBytes];
-    
+
     let wrapper = String.fromCodePoint(ZWNBSP);
     for (const b of allBytes) {
       wrapper += byteToVS(b);
     }
-    
+
     const text = 'Hello world' + wrapper + ' more text';
     const found = findWrappers(text);
     assert.strictEqual(found.length, 1);
@@ -375,5 +375,57 @@ describe('embedBytes helper', () => {
     const embedded = embedBytes('Hello', [0x01, 0x02, 0x03]);
     const visible = extractVisibleText(embedded);
     assert.strictEqual(visible, 'Hello');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// _hasLegacySafeChars helper (mirrors content/detector.js)
+// ---------------------------------------------------------------------------
+
+// Replicated here because detector.js is a content script, not an ES module.
+const LEGACY_SAFE_STRONG_INDICATORS = new Set([0x034F, 0x180E, 0x200E, 0x200F]);
+
+function hasLegacySafeChars(text) {
+  for (const char of text) {
+    if (LEGACY_SAFE_STRONG_INDICATORS.has(char.codePointAt(0))) return true;
+  }
+  return false;
+}
+
+describe('_hasLegacySafeChars', () => {
+  it('returns true for CGJ (U+034F)', () => {
+    assert.strictEqual(hasLegacySafeChars('hello\u034Fworld'), true);
+  });
+
+  it('returns true for MVS (U+180E)', () => {
+    assert.strictEqual(hasLegacySafeChars('test\u180Etext'), true);
+  });
+
+  it('returns true for LRM (U+200E)', () => {
+    assert.strictEqual(hasLegacySafeChars('\u200Emarked'), true);
+  });
+
+  it('returns true for RLM (U+200F)', () => {
+    assert.strictEqual(hasLegacySafeChars('marked\u200F'), true);
+  });
+
+  it('returns false for plain text with no ZWC markers', () => {
+    assert.strictEqual(hasLegacySafeChars('Hello, world! No markers here.'), false);
+  });
+
+  it('returns false for ZWNJ/ZWJ alone (base-4 ZW chars, not sufficient)', () => {
+    // ZWNJ and ZWJ are NOT strong indicators — they appear in normal Unicode text
+    assert.strictEqual(hasLegacySafeChars('\u200C\u200D'), false);
+  });
+
+  it('returns false for variation selector chars (VS mode, not legacy_safe)', () => {
+    const vsText = String.fromCodePoint(0xFE00, 0xFE01, 0xE0100);
+    assert.strictEqual(hasLegacySafeChars(vsText), false);
+  });
+
+  it('returns true when legacy_safe marker is embedded in normal text', () => {
+    // Simulate a sentence with an embedded legacy_safe marker containing LRM
+    const textWithMarker = 'This is a signed sentence.\u200Csome\u200Dmore\u200Echars';
+    assert.strictEqual(hasLegacySafeChars(textWithMarker), true);
   });
 });

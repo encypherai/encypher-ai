@@ -599,7 +599,13 @@ async def bulk_resolve_segment_uuids(
             found_uuids[uuid_val] = row
         log_id_val = getattr(row, "log_id", None)
         if log_id_val:
-            # Convert hex log_id back to UUID-with-dashes for lookup
+            # Store under the raw hex (no-dashes) key so callers that pass
+            # hex log_ids directly (e.g. legacy_safe / VS256 verification)
+            # can look up the result without a format conversion.
+            if log_id_val not in found_uuids:
+                found_uuids[log_id_val] = row
+            # Also store under UUID-with-dashes form for callers that pass
+            # UUID-formatted segment_uuids.
             try:
                 from uuid import UUID as _UUID
 

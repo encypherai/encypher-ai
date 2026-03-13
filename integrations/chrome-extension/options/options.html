@@ -86,12 +86,10 @@
         <div class="options__field">
           <label for="defaultDocType">Default Document Type</label>
           <select id="defaultDocType">
-            <option value="article">Article</option>
-            <option value="blog_post">Blog Post</option>
-            <option value="social_media">Social Media</option>
-            <option value="press_release">Press Release</option>
-            <option value="legal">Legal Document</option>
-            <option value="other">Other</option>
+            <option value="article">Article / Blog / Email</option>
+            <option value="legal_brief">Legal</option>
+            <option value="contract">Contract</option>
+            <option value="ai_output">AI Output</option>
           </select>
         </div>
 
@@ -100,8 +98,9 @@
           <select id="defaultEmbeddingTechnique">
             <option value="micro_no_embed_c2pa">Minimal (recommended)</option>
             <option value="micro">Embedded</option>
+            <option value="micro_legacy_safe">Compatible (ZWC)</option>
           </select>
-          <p class="options__hint">Minimal keeps invisible markers while storing the full proof server-side. Embedded adds C2PA proof data directly into the signed text.</p>
+          <p class="options__hint">Minimal keeps invisible markers while storing the full proof server-side. Embedded adds C2PA proof data directly into the signed text. Compatible (ZWC) uses zero-width characters for maximum compatibility with email clients and word processors.</p>
         </div>
 
         <div class="options__field">

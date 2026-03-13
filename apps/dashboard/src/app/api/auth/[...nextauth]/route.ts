@@ -10,7 +10,7 @@ const API_BASE =
 // Backend access token lifetime (8 hours), refresh 5 min before expiry
 const ACCESS_TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
 const REFRESH_BUFFER_MS = 5 * 60 * 1000;
-const SESSION_VERIFICATION_INTERVAL_MS = 10 * 60 * 1000;
+const SESSION_VERIFICATION_INTERVAL_MS = 60 * 60 * 1000;
 
 type BackendUser = {
   id?: string;
@@ -117,17 +117,17 @@ const handler = NextAuth({
         if (credentials.password.startsWith('__TOKEN__')) {
           const accessToken = credentials.password.replace('__TOKEN__', '');
           console.log('[NextAuth] Token-based login for:', credentials.email);
-          
+
           // Verify the token with the auth service
           try {
             const verifyRes = await fetch(`${API_BASE}/auth/verify`, {
               method: 'POST',
-              headers: { 
+              headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${accessToken}`,
               },
             });
-            
+
             if (verifyRes.ok) {
               const verifyData = await verifyRes.json();
               if (verifyData.success && verifyData.data) {
@@ -145,7 +145,7 @@ const handler = NextAuth({
                 } as any;
               }
             }
-            
+
             // Token verification failed, fall through to show success but require manual login
             console.log('[NextAuth] Token verification failed, user should login manually');
             throw new Error('Session expired. Please log in with your credentials.');
@@ -214,7 +214,7 @@ const handler = NextAuth({
             console.log('[NextAuth] Login failed - unauthorized:', errorDetail || 'Invalid credentials');
             throw new Error(errorDetail || 'Invalid email or password');
           }
-          
+
           if (res.status === 403) {
             console.log('[NextAuth] Login failed - account not verified');
             throw new Error('Please verify your email before signing in');
@@ -243,7 +243,7 @@ const handler = NextAuth({
               tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
             } as any;
           }
-          
+
           console.log('[NextAuth] Login failed - invalid response structure');
           throw new Error('Login failed. Please try again.');
         } catch (error) {
@@ -256,7 +256,7 @@ const handler = NextAuth({
         }
       }
     }),
-    
+
     // Google OAuth
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -269,7 +269,7 @@ const handler = NextAuth({
         }
       }
     }),
-    
+
     // GitHub OAuth
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID || '',
@@ -383,12 +383,20 @@ const handler = NextAuth({
             };
           }
 
-          return { ...token, error: 'RefreshAccessTokenError' };
+          console.warn('[NextAuth] Backend session verify refresh fallback failed; keeping current valid access token until expiry');
+          return {
+            ...token,
+            backendVerifiedAt: Date.now(),
+            error: undefined,
+          };
         }
 
-        return { ...token, error: 'RefreshAccessTokenError' };
-
-        return token;
+        console.warn('[NextAuth] Backend session verify failed without refresh token; keeping current valid access token until expiry');
+        return {
+          ...token,
+          backendVerifiedAt: Date.now(),
+          error: undefined,
+        };
       }
 
       // Access token expired (or no expiry recorded for legacy sessions) - attempt silent refresh

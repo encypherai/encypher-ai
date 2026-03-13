@@ -132,4 +132,92 @@ describe('Editor signer embedding-plan DOM preservation', () => {
       'Online-editor fallback should use normalized matching for segmentation whitespace drift'
     );
   });
+
+  describe('rich contenteditable DOM-level plan insertion', () => {
+    it('defines _buildRichTextDomMap for mapping innerText positions to DOM nodes', () => {
+      const signerPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.js');
+      const signerCode = fs.readFileSync(signerPath, 'utf8');
+
+      assert.match(
+        signerCode,
+        /function\s+_buildRichTextDomMap\s*\(/,
+        'Editor signer should define a DOM position map builder for rich contenteditable'
+      );
+    });
+
+    it('defines _applyEmbeddingPlanToRichContentEditable for DOM-preserving marker insertion', () => {
+      const signerPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.js');
+      const signerCode = fs.readFileSync(signerPath, 'utf8');
+
+      assert.match(
+        signerCode,
+        /function\s+_applyEmbeddingPlanToRichContentEditable\s*\(/,
+        'Editor signer should define a rich-DOM marker insertion function'
+      );
+    });
+
+    it('applyEmbeddingPlanToEditorInPlace tries rich DOM insertion before plain-text fallback', () => {
+      const signerPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.js');
+      const signerCode = fs.readFileSync(signerPath, 'utf8');
+
+      assert.match(
+        signerCode,
+        /_applyEmbeddingPlanToRichContentEditable\(editor,\s*normalizedOps,\s*visibleText\)/,
+        'applyEmbeddingPlanToEditorInPlace should call rich DOM insertion for contenteditable editors'
+      );
+
+      // The fallback plain-text path must still exist
+      assert.match(
+        signerCode,
+        /setEditorText\(editor,\s*editorType,\s*signedText\)/,
+        'applyEmbeddingPlanToEditorInPlace must retain plain-text fallback'
+      );
+    });
+
+    it('DOM map accounts for <br> and block-element newlines matching innerText', () => {
+      const signerPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.js');
+      const signerCode = fs.readFileSync(signerPath, 'utf8');
+
+      assert.match(
+        signerCode,
+        /tag\s*===\s*'BR'/,
+        'DOM map builder should handle <br> elements as \\n contributors'
+      );
+
+      assert.match(
+        signerCode,
+        /BLOCK_TAGS/,
+        'DOM map builder should track block-level element newline contributions'
+      );
+    });
+
+    it('processes normalizedOps in descending order to preserve text-node split invariant', () => {
+      const signerPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.js');
+      const signerCode = fs.readFileSync(signerPath, 'utf8');
+
+      // normalizedOps comes from _normalizeEmbeddingPlanOperations which sorts descending
+      assert.match(
+        signerCode,
+        /\.sort\(\s*\(a,\s*b\)\s*=>\s*b\.cpOffset\s*-\s*a\.cpOffset\s*\)/,
+        'Embedding plan ops should be sorted in descending cpOffset order so DOM splits remain valid'
+      );
+    });
+
+    it('returns false and triggers plain-text fallback when DOM map text does not match visibleText', () => {
+      const signerPath = path.join(EXTENSION_ROOT, 'content', 'editor-signer.js');
+      const signerCode = fs.readFileSync(signerPath, 'utf8');
+
+      assert.match(
+        signerCode,
+        /norm\(built\)\s*!==\s*norm\(visibleText\)/,
+        'DOM map builder should reject when constructed text does not match visibleText'
+      );
+
+      assert.match(
+        signerCode,
+        /if\s*\(_applyEmbeddingPlanToRichContentEditable[\s\S]*?\)\s*\{[\s\S]*?return\s+true[\s\S]*?\}/,
+        'applyEmbeddingPlanToEditorInPlace should only skip to fallback when rich insertion returns false'
+      );
+    });
+  });
 });
