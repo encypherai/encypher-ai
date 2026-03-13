@@ -1,15 +1,15 @@
 /**
  * Encypher Verify - Content Detector
- * 
+ *
  * Scans the page for C2PA and Encypher text embeddings using Unicode variation selectors.
  * When found, injects verification badges and communicates with the service worker.
- * 
+ *
  * Key design principles:
  * - Only hit the verification API when a valid embedding (C2PA/Encypher magic bytes) is found
  * - Deduplicate: never re-verify the same content (tracked by content hash)
  * - MutationObserver scans only newly added DOM nodes, not the full page
  * - Debounce mutations for infinite-scroll pages (LinkedIn, Twitter, etc.)
- * 
+ *
  * Supports two marker types:
  * - C2PA Text Manifest: "C2PATXT\0" (standard C2PA format)
  * - Encypher Marker: "ENCYPHER" (Encypher-specific format)
@@ -197,19 +197,35 @@ function isVariationSelector(codePoint) {
   );
 }
 
+// Legacy-safe (base-6 ZWC) char set: ZWNJ ZWJ CGJ MVS LRM RLM
+// CGJ (0x034F) and MVS (0x180E) are the rarest of these in legitimate text;
+// LRM (0x200E) / RLM (0x200F) are the discriminating chars vs base-4 ZW.
+const LEGACY_SAFE_CHARS = new Set([0x200C, 0x200D, 0x034F, 0x180E, 0x200E, 0x200F]);
+
+function _hasLegacySafeChars(text) {
+  for (const char of text) {
+    const cp = char.codePointAt(0);
+    // CGJ, MVS, LRM, RLM are strong indicators — much rarer than ZWNJ/ZWJ in normal text
+    if (cp === 0x034F || cp === 0x180E || cp === 0x200E || cp === 0x200F) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Extract embedded bytes from variation selectors in text.
- * 
+ *
  * Uses the c2pa_text standard encoding where each VS maps to one byte:
  *   VS1 (FE00-FE0F) → bytes 0-15
  *   VS2 (E0100-E01EF) → bytes 16-255
  */
 function extractEmbeddedBytes(text) {
   const bytes = [];
-  
+
   for (const char of text) {
     const codePoint = char.codePointAt(0);
-    
+
     if (codePoint >= VS_RANGES.VS1_START && codePoint <= VS_RANGES.VS1_END) {
       // Bytes 0-15 from VS1 range
       bytes.push(codePoint - VS_RANGES.VS1_START);
@@ -218,7 +234,7 @@ function extractEmbeddedBytes(text) {
       bytes.push((codePoint - VS_RANGES.VS2_START) + 16);
     }
   }
-  
+
   return new Uint8Array(bytes);
 }
 
@@ -366,7 +382,7 @@ function findWrappers(text) {
   const wrappers = [];
   let i = 0;
   const chars = [...text]; // proper codepoint iteration
-  
+
   while (i < chars.length) {
     if (chars[i].codePointAt(0) === ZWNBSP) {
       // Found ZWNBSP prefix, collect contiguous VS chars
@@ -419,7 +435,7 @@ function findMicroEmbeddings(text) {
   const results = [];
   const chars = [...text];
   let i = 0;
-  
+
   while (i < chars.length) {
     const cp = chars[i].codePointAt(0);
     // Skip ZWNBSP-prefixed sequences (handled by findWrappers)
@@ -428,7 +444,7 @@ function findMicroEmbeddings(text) {
       while (i < chars.length && isVariationSelector(chars[i].codePointAt(0))) i++;
       continue;
     }
-    
+
     if (isVariationSelector(cp)) {
       // Found a VS char not preceded by ZWNBSP — start of a micro-embedding
       const startIdx = i;
@@ -473,22 +489,22 @@ function findNodesWithEmbeddings(root = document.body) {
         // Skip script, style, and hidden elements
         const parent = node.parentElement;
         if (!parent) return NodeFilter.FILTER_REJECT;
-        
+
         const tagName = parent.tagName.toLowerCase();
         if (['script', 'style', 'noscript', 'template'].includes(tagName)) {
           return NodeFilter.FILTER_REJECT;
         }
-        
-        // Check if text contains variation selectors
+
+        // Check if text contains variation selectors or legacy-safe ZWC chars
         const text = node.textContent || '';
-        if (_hasVariationSelectors(text)) {
+        if (_hasVariationSelectors(text) || _hasLegacySafeChars(text)) {
           return NodeFilter.FILTER_ACCEPT;
         }
         return NodeFilter.FILTER_REJECT;
       }
     }
   );
-  
+
   const nodes = [];
   let node;
   while ((node = walker.nextNode())) {
@@ -518,8 +534,8 @@ function getContainingBlock(node) {
   let element = node.parentElement;
   while (element) {
     const display = window.getComputedStyle(element).display;
-    if (display === 'block' || display === 'flex' || display === 'grid' || 
-        element.tagName === 'P' || element.tagName === 'DIV' || 
+    if (display === 'block' || display === 'flex' || display === 'grid' ||
+        element.tagName === 'P' || element.tagName === 'DIV' ||
         element.tagName === 'ARTICLE' || element.tagName === 'SECTION') {
       return element;
     }
@@ -677,24 +693,24 @@ function _showDetailPanel(badge, details) {
 
   const panel = document.createElement('div');
   panel.className = 'encypher-detail-panel';
-  
+
   const statusMeta = _getStatusMetadata(details._status || 'unknown');
   const markerLabel = _markerTypeLabel(details.markerType);
-  
+
   let rows = '';
-  
+
   // Status row
   rows += `<div class="encypher-detail-panel__row">
     <span class="encypher-detail-panel__label">Status</span>
     <span class="encypher-detail-panel__value" style="color:${statusMeta.color};font-weight:600">${_escapeHtml(statusMeta.label)}</span>
   </div>`;
-  
+
   // Format
   rows += `<div class="encypher-detail-panel__row">
     <span class="encypher-detail-panel__label">Format</span>
     <span class="encypher-detail-panel__value">${_escapeHtml(markerLabel)}</span>
   </div>`;
-  
+
   // Signing identity (prefer explicit signer identity, avoid raw opaque IDs in UI)
   const signingIdentity = _resolveSigningIdentity(details);
   if (signingIdentity) {
@@ -703,7 +719,7 @@ function _showDetailPanel(badge, details) {
       <span class="encypher-detail-panel__value">${_escapeHtml(signingIdentity)}</span>
     </div>`;
   }
-  
+
   // Signer — only show if it's a human-readable name (not an ID like org_xxx or usr_xxx)
   const signerDisplay = details.signer;
   const signerIsId = signerDisplay && /^(org_|usr_|user_)[a-z0-9-]+$/i.test(signerDisplay);
@@ -713,7 +729,7 @@ function _showDetailPanel(badge, details) {
       <span class="encypher-detail-panel__value">${_escapeHtml(signerDisplay)}</span>
     </div>`;
   }
-  
+
   // Timestamp
   if (details.timestamp) {
     const date = new Date(details.timestamp);
@@ -723,7 +739,7 @@ function _showDetailPanel(badge, details) {
       <span class="encypher-detail-panel__value">${_escapeHtml(formatted)}</span>
     </div>`;
   }
-  
+
   // Document ID
   if (details.documentId) {
     rows += `<div class="encypher-detail-panel__row">
@@ -740,7 +756,7 @@ function _showDetailPanel(badge, details) {
       <span class="encypher-detail-panel__value"><a href="${_escapeHtml(verificationUrl)}" target="_blank" rel="noopener">Open verification record</a></span>
     </div>`;
   }
-  
+
   // Document title
   if (details.title) {
     rows += `<div class="encypher-detail-panel__row">
@@ -748,7 +764,7 @@ function _showDetailPanel(badge, details) {
       <span class="encypher-detail-panel__value">${_escapeHtml(details.title)}</span>
     </div>`;
   }
-  
+
   // Document type
   if (details.documentType) {
     rows += `<div class="encypher-detail-panel__row">
@@ -756,7 +772,7 @@ function _showDetailPanel(badge, details) {
       <span class="encypher-detail-panel__value">${_escapeHtml(details.documentType)}</span>
     </div>`;
   }
-  
+
   // C2PA validation
   if (details.c2paValidated !== undefined) {
     let c2paSource = 'no';
@@ -771,7 +787,7 @@ function _showDetailPanel(badge, details) {
     </div>`;
   }
   rows += _buildC2paManifestDisclosure(details);
-  
+
   // License
   if (details.licenseType) {
     rows += `<div class="encypher-detail-panel__row">
@@ -779,7 +795,7 @@ function _showDetailPanel(badge, details) {
       <span class="encypher-detail-panel__value">${_escapeHtml(details.licenseType)}</span>
     </div>`;
   }
-  
+
   // Error
   if (details.error) {
     rows += `<div class="encypher-detail-panel__row">
@@ -787,7 +803,7 @@ function _showDetailPanel(badge, details) {
       <span class="encypher-detail-panel__value" style="color:#EF4444">${_escapeHtml(details.error)}</span>
     </div>`;
   }
-  
+
   // Revoked at
   if (details.revokedAt) {
     const date = new Date(details.revokedAt);
@@ -797,7 +813,7 @@ function _showDetailPanel(badge, details) {
       <span class="encypher-detail-panel__value" style="color:#8B5CF6">${_escapeHtml(formatted)}</span>
     </div>`;
   }
-  
+
   panel.innerHTML = `
     <div class="encypher-detail-panel__header">
       <span class="encypher-detail-panel__logo">${ENCYPHER_LOGO_SVG}</span>
@@ -809,14 +825,14 @@ function _showDetailPanel(badge, details) {
       <a href="https://encypherai.com" target="_blank" rel="noopener">encypherai.com</a>
     </div>
   `;
-  
+
   // Close button handler
   panel.querySelector('.encypher-detail-panel__close').addEventListener('click', (e) => {
     e.stopPropagation();
     panel.remove();
     badge.classList.remove('encypher-badge--panel-open');
   });
-  
+
   // Mount on the safe root (parent frame body for editable-body iframes)
   const mountRoot = _getBadgeMountRoot();
   if (!mountRoot) return; // cross-origin editable-body frame; can't mount safely
@@ -875,13 +891,13 @@ function injectBadge(element, status, details) {
       _floatingBadgeByElement.delete(element);
     }
   }
-  
+
   const badge = document.createElement('div');
   badge.className = `encypher-badge encypher-badge--${status}`;
   badge.setAttribute('role', 'button');
   badge.setAttribute('aria-label', `Encypher verified content: ${status}`);
   badge.setAttribute('tabindex', '0');
-  
+
   // Use Encypher logo for verified, status indicators for others
   const statusOverlay = {
     verified: '',
@@ -890,23 +906,23 @@ function injectBadge(element, status, details) {
     revoked: '<span class="encypher-badge__status">&#x2298;</span>',
     error: '<span class="encypher-badge__status">!</span>'
   };
-  
+
   badge.innerHTML = `
     <span class="encypher-badge__icon">${ENCYPHER_LOGO_SVG}</span>
     ${statusOverlay[status] || ''}
     ${_buildHoverTooltipHtml({ details, status })}
   `;
-  
+
   // Store full details on the badge for the click handler
   const fullDetails = { ...details, _status: status };
-  
+
   // Click handler to show rich detail panel
   badge.addEventListener('click', (e) => {
     e.stopPropagation();
     e.preventDefault();
     _showDetailPanel(badge, fullDetails);
   });
-  
+
   // Keyboard accessibility
   badge.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -914,7 +930,7 @@ function injectBadge(element, status, details) {
       _showDetailPanel(badge, fullDetails);
     }
   });
-  
+
   // In an editable-body iframe (e.g. Zoho Mail compose), document.body IS the
   // email content, so we must never append badges there. Use the parent-frame
   // body for all badge mounts; if the parent is cross-origin, skip entirely.
@@ -940,7 +956,7 @@ function injectBadge(element, status, details) {
  *   1. C2PA wrappers (ZWNBSP + VS sequence with magic bytes)
  *   2. Legacy Encypher format (scattered VS with magic bytes)
  *   3. Micro-embeddings (contiguous VS runs without magic bytes — UUID/fingerprint)
- * 
+ *
  * Returns { uncached, cached } where cached detections already have results
  * from the local browser cache and don't need an API call.
  */
@@ -949,19 +965,19 @@ function _detectEmbeddings(root = document.body) {
   const uncached = [];
   const cached = [];
   const queuedElements = new Set();
-  
+
   for (const node of nodes) {
     const text = node.textContent || '';
     const containingBlock = getContainingBlock(node);
-    
+
     // Skip if this element already has a badge (already processed)
     if (_processedElements.has(containingBlock) || queuedElements.has(containingBlock)) {
       continue;
     }
-    
+
     // Compute a hash for deduplication and cache lookup
     const textHash = _hashText(text);
-    
+
     // Check local browser cache first (1-hour TTL)
     const cachedEntry = _getCachedResult(textHash);
     if (cachedEntry) {
@@ -975,9 +991,9 @@ function _detectEmbeddings(root = document.body) {
       queuedElements.add(containingBlock);
       continue;
     }
-    
+
     let found = false;
-    
+
     // 1. Find ZWNBSP-prefixed wrapper sequences (standard C2PA text wrapper format)
     const wrappers = findWrappers(text);
     for (const wrapper of wrappers) {
@@ -994,7 +1010,7 @@ function _detectEmbeddings(root = document.body) {
         break; // Only take the first valid wrapper per text node
       }
     }
-    
+
     // 2. Fallback: non-wrapper VS embeddings (legacy Encypher format)
     if (!found && wrappers.length === 0) {
       const bytes = extractEmbeddedBytes(text);
@@ -1017,7 +1033,7 @@ function _detectEmbeddings(root = document.body) {
         found = true;
       }
     }
-    
+
     // 3. Micro-embeddings: contiguous VS runs without magic bytes (UUID/fingerprint)
     if (!found) {
       const micros = findMicroEmbeddings(text);
@@ -1035,10 +1051,24 @@ function _detectEmbeddings(root = document.body) {
           microBytes: largest.byteCount
         });
         queuedElements.add(containingBlock);
+        found = true;
       }
     }
+
+    // 4. Legacy-safe (base-6 ZWC) embeddings: CGJ/MVS/LRM/RLM chars present.
+    // No client-side marker parsing needed — send full text to the API.
+    if (!found && _hasLegacySafeChars(text)) {
+      const visibleText = extractVisibleText(text);
+      uncached.push({
+        element: containingBlock, node, text, textHash, visibleText,
+        detectionId: _getOrCreateDetectionId(containingBlock, textHash),
+        bytes: [],
+        markerType: 'legacy_safe',
+      });
+      queuedElements.add(containingBlock);
+    }
   }
-  
+
   return { uncached, cached };
 }
 
@@ -1173,7 +1203,7 @@ function _resolveWaitingElements(textHash, status, details) {
  */
 async function _verifyDetections(detections) {
   if (detections.length === 0) return;
-  
+
   for (const detection of detections) {
     // Mark as processed immediately to prevent duplicate work
     _processedElements.add(detection.element);
@@ -1192,11 +1222,11 @@ async function _verifyDetections(detections) {
       _debugLog('DEBUG', 'detector', `Subscribed element to in-flight verification (hash=${detection.textHash})`);
       continue;
     }
-    
+
     // Show pending badge
     const markerLabel = detection.markerType === 'micro' ? 'micro-embedding' : detection.markerType;
     _debugLog('INFO', 'detector', `Verifying ${markerLabel} (${detection.bytes.length} bytes)`);
-    injectBadge(detection.element, 'pending', { 
+    injectBadge(detection.element, 'pending', {
       message: 'Verifying...',
       markerType: detection.markerType
     });
@@ -1296,9 +1326,9 @@ async function _verifyDetections(detections) {
  */
 async function scanPage(root = document.body) {
   _debugLog('INFO', 'detector', `Scanning ${root === document.body ? 'page' : 'subtree'}: ${window.location.href}`);
-  
+
   let { uncached, cached } = _detectEmbeddings(root);
-  
+
   // On Google Docs / MS Word Online, also scan platform-specific content layers
   // that may not be reachable from a normal body TreeWalker.
   if (root === document.body) {
@@ -1314,7 +1344,7 @@ async function scanPage(root = document.body) {
   cached = _dedupeDetectionsByElement(cached);
   const uncachedElements = new Set(uncached.map(entry => entry.element));
   cached = cached.filter(entry => !uncachedElements.has(entry.element));
-  
+
   // Apply cached results immediately (no API call needed)
   for (const entry of cached) {
     _processedElements.add(entry.element);
@@ -1336,7 +1366,7 @@ async function scanPage(root = document.body) {
     });
     _debugLog('DEBUG', 'detector', `Cache hit: ${entry.cachedStatus} (hash=${entry.textHash})`);
   }
-  
+
   const totalFound = uncached.length + cached.length;
   _debugLog('INFO', 'detector', `Scan complete: ${totalFound} embeddings (${cached.length} cached, ${uncached.length} new)`);
 
@@ -1348,7 +1378,7 @@ async function scanPage(root = document.body) {
       url: window.location.href,
     });
   }
-  
+
   if (uncached.length > 0) {
     await _verifyDetections(uncached);
   } else if (totalFound === 0 && root === document.body && _verificationCache.size === 0) {
@@ -1359,7 +1389,7 @@ async function scanPage(root = document.body) {
       url: window.location.href
     });
   }
-  
+
   return totalFound;
 }
 
@@ -1405,7 +1435,7 @@ function observeDOM() {
   let debounceTimer = null;
   let pendingInputRoots = [];
   let inputDebounceTimer = null;
-  
+
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type === 'childList') {
@@ -1423,14 +1453,14 @@ function observeDOM() {
         }
       }
     }
-    
+
     if (pendingNodes.length > 0) {
       // Debounce: wait for mutations to settle (handles rapid infinite-scroll loads)
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         const nodesToScan = pendingNodes;
         pendingNodes = [];
-        
+
         // Scan only the newly added subtrees
         for (const node of nodesToScan) {
           if (node.isConnected) {
@@ -1440,7 +1470,7 @@ function observeDOM() {
       }, 500);
     }
   });
-  
+
   observer.observe(document.body, {
     childList: true,
     characterData: true,
@@ -1508,7 +1538,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true; // async response
   }
-  
+
   if (message.type === 'VERIFY_SELECTION') {
     // Verify selected text via context menu
     verifySelectedText(message.text, {
@@ -1580,21 +1610,21 @@ function showVerificationNotification(status, details) {
   const notification = document.createElement('div');
   notification.className = `encypher-notification encypher-notification--${status}`;
   notification.setAttribute('role', 'alert');
-  
+
   const icons = {
     verified: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     invalid: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
     revoked: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
     error: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
   };
-  
+
   const messages = {
     verified: 'Verified Content',
     invalid: 'Invalid Signature',
     revoked: 'Content Revoked',
     error: 'Verification Error'
   };
-  
+
   notification.innerHTML = `
     <div class="encypher-notification__icon">${icons[status] || '?'}</div>
     <div class="encypher-notification__content">
@@ -1604,9 +1634,9 @@ function showVerificationNotification(status, details) {
       ${details.error ? `<br>${_escapeHtml(details.error)}` : ''}
     </div>
   `;
-  
+
   document.body.appendChild(notification);
-  
+
   // Auto-remove after 5 seconds
   setTimeout(() => {
     notification.style.opacity = '0';

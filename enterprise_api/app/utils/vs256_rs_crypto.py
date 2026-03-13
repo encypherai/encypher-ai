@@ -214,6 +214,7 @@ def find_all_markers(text: str) -> list[tuple[int, int, str]]:
 
 from app.utils.vs256_crypto import (  # noqa: E402
     embed_signature_safely,
+    generate_log_id,
 )
 
 

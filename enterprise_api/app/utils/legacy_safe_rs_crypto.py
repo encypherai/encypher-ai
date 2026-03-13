@@ -46,7 +46,9 @@ from app.utils.legacy_safe_crypto import (
     LOG_ID_BYTES,
     LRM_RLM_SET,
     ZWNJ,
+    derive_signing_key_from_private_key,
     embed_marker_safely,
+    generate_log_id,
 )
 
 # =============================================================================
