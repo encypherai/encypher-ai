@@ -183,6 +183,18 @@
   margin-bottom: 6px;
 }
 
+.encypher-sign-ui__selection-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1D4ED8;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-bottom: 10px;
+}
+
 .encypher-sign-ui__trust {
   font-size: 12px;
   line-height: 1.5;

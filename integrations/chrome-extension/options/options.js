@@ -48,9 +48,21 @@ const DEFAULT_SETTINGS = {
   extensionSetupStatus: 'not_started'
 };
 
+const VALID_DOC_TYPES = new Set(['article', 'legal_brief', 'contract', 'ai_output']);
+const DOC_TYPE_MAP = {
+  blog_post: 'article', social_media: 'article', social: 'article',
+  press_release: 'article', email: 'article', message: 'article',
+  legal: 'legal_brief', other: 'article',
+};
+function normalizeDocumentType(value) {
+  const v = String(value || 'article').toLowerCase();
+  return VALID_DOC_TYPES.has(v) ? v : (DOC_TYPE_MAP[v] || 'article');
+}
+
 function normalizeEmbeddingTechnique(value) {
   const mode = String(value || '').toLowerCase();
   if (mode === 'micro_ecc_c2pa' || mode === 'micro') return 'micro';
+  if (mode === 'micro_legacy_safe') return 'micro_legacy_safe';
   if (mode === 'micro_ecc' || mode === 'micro_no_embed_c2pa') return 'micro_no_embed_c2pa';
   return 'micro_no_embed_c2pa';
 }
@@ -88,7 +100,7 @@ async function loadSettings() {
 
     // Signing settings
     if (autoReplaceContentCheckbox) autoReplaceContentCheckbox.checked = result.autoReplaceContent;
-    if (defaultDocTypeSelect) defaultDocTypeSelect.value = result.defaultDocumentType || result.defaultDocType || 'article';
+    if (defaultDocTypeSelect) defaultDocTypeSelect.value = normalizeDocumentType(result.defaultDocumentType || result.defaultDocType || 'article');
     if (defaultEmbeddingTechniqueSelect) {
       defaultEmbeddingTechniqueSelect.value = normalizeEmbeddingTechnique(result.defaultEmbeddingTechnique || 'micro_no_embed_c2pa');
     }

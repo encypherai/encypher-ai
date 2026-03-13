@@ -91,6 +91,7 @@ const DEFAULT_SIGN_SETTINGS = {
 function normalizeEmbeddingTechnique(value) {
   const mode = String(value || '').toLowerCase();
   if (mode === 'micro_ecc_c2pa' || mode === 'micro') return 'micro';
+  if (mode === 'micro_legacy_safe') return 'micro_legacy_safe';
   if (mode === 'micro_ecc' || mode === 'micro_no_embed_c2pa') return 'micro_no_embed_c2pa';
   return 'micro_no_embed_c2pa';
 }
@@ -768,6 +769,11 @@ debugLogsEl?.addEventListener('click', (e) => {
 
 // Event listeners - Debug tab
 debugRefreshBtn?.addEventListener('click', loadDebugLogs);
+
+document.getElementById('debug-reload')?.addEventListener('click', async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  await chrome.runtime.sendMessage({ type: 'DEV_RELOAD', tabId: tab?.id ?? null });
+});
 
 debugClearBtn?.addEventListener('click', async () => {
   await chrome.runtime.sendMessage({ type: 'CLEAR_DEBUG_LOGS' });

@@ -55,6 +55,15 @@
       "match_about_blank": true
     }
   ],
+  "commands": {
+    "dev-reload": {
+      "suggested_key": {
+        "default": "Alt+Shift+R",
+        "mac": "Alt+Shift+R"
+      },
+      "description": "Reload Encypher extension and active tab (dev only)"
+    }
+  },
   "web_accessible_resources": [
     {
       "resources": ["icons/*", "content/badge.css", "content/editor-signer.css"],

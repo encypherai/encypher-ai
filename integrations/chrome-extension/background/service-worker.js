@@ -580,12 +580,25 @@ async function signContent(text, title, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
 
+    // Map extension-friendly document type values to API-valid values.
+    // API only accepts: article | legal_brief | contract | ai_output
+    const VALID_DOC_TYPES = new Set(['article', 'legal_brief', 'contract', 'ai_output']);
+    const DOC_TYPE_MAP = {
+      blog_post: 'article', social_media: 'article', social: 'article',
+      press_release: 'article', email: 'article', message: 'article',
+      legal: 'legal_brief', other: 'article',
+    };
+    const rawDocType = String(options.documentType || 'article').toLowerCase();
+    const documentType = VALID_DOC_TYPES.has(rawDocType)
+      ? rawDocType
+      : (DOC_TYPE_MAP[rawDocType] || 'article');
+
     // Build unified request body with options object
     const requestBody = {
       text: text,
       document_title: title || undefined,
       options: withEmbeddingPlanRequest({
-        document_type: options.documentType || 'article',
+        document_type: documentType,
       })
     };
 
@@ -611,6 +624,12 @@ async function signContent(text, title, options = {}) {
         requestBody.options.ecc = false;
       }
       if (requestedMode === 'micro_no_embed_c2pa') {
+        requestBody.options.embed_c2pa = false;
+      }
+      if (requestedMode === 'micro_legacy_safe') {
+        // Zero-width character markers — survives word processors, email clients,
+        // and terminals that strip non-ZWC invisible characters.
+        requestBody.options.legacy_safe = true;
         requestBody.options.embed_c2pa = false;
       }
     }
@@ -1214,6 +1233,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       debugLog.isDevMode().then(devMode => sendResponse({ devMode }));
       return true;
 
+    case 'DEV_RELOAD':
+      // Store the active tab ID so we can reload it after the extension restarts
+      chrome.storage.session.set({ _devReloadTabId: message.tabId ?? null }).then(() => {
+        sendResponse({ ok: true });
+        chrome.runtime.reload();
+      });
+      return true;
+
     case 'SETTINGS_UPDATED':
       // Update API config when settings change
       if (message.setting === 'apiBaseUrl') {
@@ -1265,6 +1292,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Clean up tab state when tab is closed
 chrome.tabs.onRemoved.addListener((tabId) => {
   tabState.delete(tabId);
+});
+
+// Dev reload — keyboard shortcut handler (Alt+Shift+R)
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'dev-reload') {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tabId = tabs[0]?.id ?? null;
+      chrome.storage.session.set({ _devReloadTabId: tabId }).then(() => {
+        chrome.runtime.reload();
+      });
+    });
+  }
+});
+
+// After a dev reload, re-inject content scripts into the tab that was active
+chrome.storage.session.get('_devReloadTabId', ({ _devReloadTabId }) => {
+  if (!_devReloadTabId) return;
+  chrome.storage.session.remove('_devReloadTabId');
+  chrome.tabs.reload(_devReloadTabId);
 });
 
 // Clean up cache periodically
