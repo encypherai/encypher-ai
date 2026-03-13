@@ -340,17 +340,13 @@ export default function SettingsPage() {
 
   // Pre-populate with session data as fallback, then update with API data
   useEffect(() => {
-    if (!session?.user) {
-      window.location.href = '/login';
-      return;
-    }
-    if (session?.user) {
-      setProfile((prev) => ({
-        ...prev,
-        name: (session.user as any)?.name || prev.name,
-        email: session.user?.email || prev.email,
-      }));
-    }
+    if (!session?.user) return;
+
+    setProfile((prev) => ({
+      ...prev,
+      name: (session.user as any)?.name || prev.name,
+      email: session.user?.email || prev.email,
+    }));
   }, [session]);
 
   useEffect(() => {

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
 import {
   Button,
   Card,
@@ -295,7 +295,8 @@ function CopyPasteSurvivalTester({ apiKey }: { apiKey: string }) {
 }
 
 export default function PlaygroundPage() {
-  const { session, status, accessToken } = useRequireAuth();
+  const { data: session } = useSession();
+  const accessToken = (session?.user as Record<string, unknown>)?.accessToken as string | undefined;
   // Get user tier from session (default to free for new users)
   const userTier = ((session?.user as Record<string, unknown>)?.tier as Tier) || 'free';
 
@@ -325,7 +326,7 @@ export default function PlaygroundPage() {
   const [showQuickStart, setShowQuickStart] = useState<boolean>(true);
   const [quickStartStep, setQuickStartStep] = useState<number>(0);
   const [lastSignedContent, setLastSignedContent] = useState<string | null>(null);
-  
+
   // Guided Tour State (4 steps: 0=API Key, 1=Sign, 2=Copy, 3=Verify)
   const [tourActive, setTourActive] = useState<boolean>(false);
   const [tourStep, setTourStep] = useState<number>(0);
@@ -354,7 +355,7 @@ export default function PlaygroundPage() {
   const filteredEndpoints = useMemo(() => {
     if (!endpointSearch.trim()) return endpoints;
     const search = endpointSearch.toLowerCase();
-    return endpoints.filter(e => 
+    return endpoints.filter(e =>
       e.name.toLowerCase().includes(search) ||
       e.path.toLowerCase().includes(search) ||
       e.description.toLowerCase().includes(search)
@@ -605,7 +606,7 @@ export default function PlaygroundPage() {
 
   const nextTourStep = () => {
     const nextStep = tourStep + 1;
-    
+
     if (nextStep === 1) {
       // Step 1: Load Sign endpoint with demo content
       const signEndpoint = endpoints.find(e => e.id === 'sign');
@@ -673,7 +674,7 @@ export default function PlaygroundPage() {
       setGeneratedApiKey(key);
       setSelectedApiKey('generated');
       toast.success('New API key generated for the playground');
-      
+
       // Auto-advance tour if active on step 0
       if (tourActive && tourStep === 0) {
         setTimeout(() => nextTourStep(), 1000);
@@ -878,8 +879,8 @@ export default function PlaygroundPage() {
                   <h4 className="font-semibold text-blue-900 dark:text-blue-200">Sign</h4>
                 </div>
                 <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-                  Send your text to <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">POST /sign</code>. 
-                  We embed invisible cryptographic signatures using Unicode variation selectors. 
+                  Send your text to <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">POST /sign</code>.
+                  We embed invisible cryptographic signatures using Unicode variation selectors.
                   The signed text looks identical to the original.
                 </p>
                 <div className="mt-2 p-2 bg-white dark:bg-slate-800 rounded text-xs font-mono text-slate-600 dark:text-slate-300">
@@ -892,7 +893,7 @@ export default function PlaygroundPage() {
                   <h4 className="font-semibold text-green-900 dark:text-green-200">Publish</h4>
                 </div>
                 <p className="text-xs text-green-800 dark:text-green-300 leading-relaxed">
-                  Use the <code className="bg-green-100 dark:bg-green-800 px-1 rounded">signed_text</code> from the response everywhere you publish. 
+                  Use the <code className="bg-green-100 dark:bg-green-800 px-1 rounded">signed_text</code> from the response everywhere you publish.
                   The invisible signatures survive copy-paste and travel with the text across platforms.
                 </p>
               </div>
@@ -902,8 +903,8 @@ export default function PlaygroundPage() {
                   <h4 className="font-semibold text-purple-900 dark:text-purple-200">Verify</h4>
                 </div>
                 <p className="text-xs text-purple-800 dark:text-purple-300 leading-relaxed">
-                  Send the signed text to <code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">POST /verify</code>. 
-                  Get back: who signed it, when, and whether it has been tampered with. 
+                  Send the signed text to <code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">POST /verify</code>.
+                  Get back: who signed it, when, and whether it has been tampered with.
                   Sentence-level signing pinpoints exactly which sentence changed.
                 </p>
               </div>
@@ -1247,7 +1248,7 @@ export default function PlaygroundPage() {
                   )}
                 </div>
               )}
-              
+
               {selectedApiKey === 'session' && (
                 <div className="space-y-2">
                   {accessToken ? (
@@ -1848,9 +1849,9 @@ export default function PlaygroundPage() {
                                 </div>
                               )}
                               {showQuickStart && lastSignedContent && (
-                                <Button 
-                                  variant="secondary" 
-                                  size="sm" 
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
                                   className="mt-3"
                                   onClick={handleCopyToVerify}
                                 >
@@ -1901,10 +1902,10 @@ export default function PlaygroundPage() {
                         Copy All
                       </button>
                     </div>
-                    <pre 
+                    <pre
                       className="bg-slate-900 text-slate-100 p-4 pt-10 rounded-lg overflow-auto max-h-96 text-sm font-mono"
-                      style={{ 
-                        WebkitUserSelect: 'text', 
+                      style={{
+                        WebkitUserSelect: 'text',
                         userSelect: 'text',
                         cursor: 'text',
                       }}
@@ -1974,4 +1975,3 @@ export default function PlaygroundPage() {
     </DashboardLayout>
   );
 }
-
