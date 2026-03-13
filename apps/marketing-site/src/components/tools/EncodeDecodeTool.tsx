@@ -102,12 +102,12 @@ async function toolsApiCall<T>(path: string, options: RequestInit = {}): Promise
       ...options.headers,
     },
   });
-  
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.detail || `Request failed with status ${response.status}`);
   }
-  
+
   return response.json();
 }
 
@@ -221,7 +221,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
             },
           });
           setOutput(response.encoded_text);
-          
+
           // Automatically verify to get full manifest details for consistent display
           try {
             const verifyResponse = await verifyEncodedText(response.encoded_text);
@@ -369,12 +369,12 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
     const verdict = response.raw_hidden_data;
     const embeddingsFound = response.embeddings_found || 0;
     const allEmbeddings = response.all_embeddings || [];
-    
+
     // Multi-embedding case
     if (embeddingsFound > 1 && allEmbeddings.length > 0) {
       const verifiedCount = allEmbeddings.filter(e => e.verdict?.valid).length;
       const tamperedCount = allEmbeddings.filter(e => !e.verdict?.valid && e.metadata).length;
-      
+
       if (verifiedCount === embeddingsFound) {
         return {
           variant: "default" as const,
@@ -401,7 +401,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
         };
       }
     }
-    
+
     // Single embedding case
     if (verdict?.valid) {
       return {
@@ -412,7 +412,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
         icon: "✅"
       };
     }
-    
+
     // Check for manifest presence to distinguish Tampered vs Not Signed
     const manifest = (response.metadata as any)?.manifest;
     const hasManifest = manifest && typeof manifest === 'object' && Object.keys(manifest).length > 0;
@@ -431,8 +431,8 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
       variant: "destructive" as const,
       className: "border-red-900 bg-red-800 text-white",
       title: "Verification Failed",
-      description: verdict?.reason_code === 'SIGNER_UNKNOWN' && !hasManifest 
-        ? "No C2PA signature or invisible watermark found in this text." 
+      description: verdict?.reason_code === 'SIGNER_UNKNOWN' && !hasManifest
+        ? "No C2PA signature or invisible watermark found in this text."
         : (verdict?.reason_code || "No valid signature found."),
       icon: "❌"
     };
@@ -550,7 +550,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                 </AlertTitle>
                 <AlertDescription>
                   {mode === 'decode' && <div className="mb-2">{getStatusUI(lastDecodeResponse).description}</div>}
-                  
+
                   {lastDecodeResponse.error ? (
                       <div className="text-xs">
                         <strong>Error Details:</strong> {getErrorMessage(lastDecodeResponse.error, 'An unknown error occurred.')}
@@ -609,13 +609,13 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                               </strong>
                               {(lastDecodeResponse.embeddings_found || 0) > 1 && (
                                 <div className="flex gap-2">
-                                  <button 
+                                  <button
                                     onClick={expandAllEmbeddings}
                                     className="text-xs text-blue-400 hover:text-blue-300 underline"
                                   >
                                     Expand All
                                   </button>
-                                  <button 
+                                  <button
                                     onClick={collapseAllEmbeddings}
                                     className="text-xs text-blue-400 hover:text-blue-300 underline"
                                   >
@@ -629,7 +629,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                                 const isExpanded = expandedEmbeddings.has(idx);
                                 // Check if this is a C2PA manifest by looking for C2PA-specific fields
                                 const hasC2PAStructure = embedding.metadata && (
-                                  '@context' in embedding.metadata || 
+                                  '@context' in embedding.metadata ||
                                   'assertions' in embedding.metadata ||
                                   'instance_id' in embedding.metadata
                                 );
@@ -639,10 +639,10 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                                 // TEAM_171: Look up segment location from the segment_embeddings array
                                 const segDetail = lastDecodeResponse.segment_embeddings?.[idx];
                                 const segLoc = segDetail?.segment_location;
-                                
+
                                 return (
-                                  <div 
-                                    key={idx} 
+                                  <div
+                                    key={idx}
                                     className={`rounded border text-xs ${getEmbeddingStatusClass(embedding)}`}
                                   >
                                     {/* Collapsible Header */}
@@ -676,7 +676,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                                         {embedding.verdict?.valid ? 'Verified' : (embedding.verdict?.tampered || (!embedding.verdict?.valid && embedding.metadata)) ? 'Tampered' : 'Failed'}
                                       </span>
                                     </button>
-                                    
+
                                     {/* Collapsible Content */}
                                     {isExpanded && (
                                       <div className="p-3 pt-0 border-t border-slate-700/50">
@@ -731,8 +731,31 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                         {/* Show signer info + C2PA manifest when no all_embeddings array */}
                         {!lastDecodeResponse.all_embeddings && (lastDecodeResponse.metadata || lastDecodeResponse.c2pa) && (
                           <div className="mt-4 p-3 bg-slate-900 text-slate-50 rounded text-xs border border-slate-800 max-w-full">
+                            {(lastDecodeResponse.raw_hidden_data || lastDecodeResponse.metadata) && (
+                              <div>
+                                <div>
+                                    <strong className="text-slate-400">Signer:</strong>
+                                    <span className="text-slate-50 ml-1">
+                                        {lastDecodeResponse.raw_hidden_data?.signer_name ||
+                                         lastDecodeResponse.raw_hidden_data?.signer_id ||
+                                         "Unknown"}
+                                    </span>
+                                    {lastDecodeResponse.raw_hidden_data?.valid && (
+                                      <span className="text-green-400 ml-2">(Verified via Trust Anchor)</span>
+                                    )}
+                                </div>
+                                <div>
+                                    <strong className="text-slate-400">Reason Code:</strong>
+                                    <span className="text-slate-50 ml-1">
+                                        {lastDecodeResponse.raw_hidden_data?.reason_code ||
+                                         (lastDecodeResponse.raw_hidden_data?.valid ? "VERIFIED" : "Unknown")}
+                                    </span>
+                                </div>
+                              </div>
+                            )}
+
                             {lastDecodeResponse.c2pa && (
-                              <div className="mb-3">
+                              <div className="mt-3 pt-3 border-t border-slate-700">
                                 <strong className="block mb-2 text-slate-400">C2PA Manifest:</strong>
                                 <div className="space-y-1">
                                   <div>
@@ -766,34 +789,11 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                             )}
 
                             {lastDecodeResponse.metadata && !lastDecodeResponse.c2pa && (
-                              <div className="mb-3">
+                              <div className="mt-3 pt-3 border-t border-slate-700">
                                 <strong className="block mb-2 text-slate-400">Manifest Data:</strong>
                                 <pre className="whitespace-pre-wrap break-all overflow-x-auto text-slate-50 max-w-full">
                                   {JSON.stringify(lastDecodeResponse.metadata, null, 2)}
                                 </pre>
-                              </div>
-                            )}
-                            
-                            {(lastDecodeResponse.raw_hidden_data || lastDecodeResponse.metadata) && (
-                              <div className="mt-2 pt-2 border-t border-slate-700">
-                                <div>
-                                    <strong className="text-slate-400">Signer:</strong> 
-                                    <span className="text-slate-50 ml-1">
-                                        {lastDecodeResponse.raw_hidden_data?.signer_name || 
-                                         lastDecodeResponse.raw_hidden_data?.signer_id || 
-                                         "Unknown"}
-                                    </span>
-                                    {lastDecodeResponse.raw_hidden_data?.valid && (
-                                      <span className="text-green-400 ml-2">(Verified via Trust Anchor)</span>
-                                    )}
-                                </div>
-                                <div>
-                                    <strong className="text-slate-400">Reason Code:</strong> 
-                                    <span className="text-slate-50 ml-1">
-                                        {lastDecodeResponse.raw_hidden_data?.reason_code || 
-                                         (lastDecodeResponse.raw_hidden_data?.valid ? "VERIFIED" : "Unknown")}
-                                    </span>
-                                </div>
                               </div>
                             )}
                           </div>
