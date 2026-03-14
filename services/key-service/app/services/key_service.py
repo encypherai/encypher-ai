@@ -5,7 +5,7 @@ Key service business logic
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 import httpx
 import logging
 
@@ -22,6 +22,41 @@ from ..core.security import (
 from ..core.config import settings
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Permission allowlist
+# ---------------------------------------------------------------------------
+# Permissions any authenticated user may assign to their own keys.
+ALLOWED_USER_PERMISSIONS: frozenset[str] = frozenset({"sign", "verify", "read"})
+# Permissions that confer elevated / administrative privileges.
+# Only an existing superadmin caller may assign these.
+PRIVILEGED_PERMISSIONS: frozenset[str] = frozenset({"super_admin", "admin", "merkle"})
+
+
+def _validate_permissions(permissions: list[str], *, caller_is_superadmin: bool) -> list[str]:
+    """
+    Validate and filter a caller-supplied permissions list.
+
+    Regular callers may only assign ALLOWED_USER_PERMISSIONS.
+    Superadmin callers may additionally assign PRIVILEGED_PERMISSIONS.
+    Any permission outside ALLOWED_USER_PERMISSIONS | PRIVILEGED_PERMISSIONS
+    is silently dropped.
+
+    Raises:
+        ValueError: if the caller requests a privileged permission without
+                    holding superadmin status.
+    """
+    requested = set(permissions)
+    disallowed = requested & PRIVILEGED_PERMISSIONS
+    if disallowed and not caller_is_superadmin:
+        sorted_names = ", ".join(sorted(disallowed))
+        raise ValueError(
+            f"Cannot assign privileged permissions without superadmin status: {sorted_names}. "
+            f"Permitted permissions for regular users: {', '.join(sorted(ALLOWED_USER_PERMISSIONS))}."
+        )
+
+    all_allowed = ALLOWED_USER_PERMISSIONS | (PRIVILEGED_PERMISSIONS if caller_is_superadmin else frozenset())
+    return [p for p in permissions if p in all_allowed]
 
 
 def _normalize_tier_name(tier: Optional[str]) -> str:
@@ -73,9 +108,7 @@ class KeyService:
         )
 
         if active_key_count >= max_keys:
-            raise ValueError(
-                f"Free tier allows up to {max_keys} active API keys. Revoke an old key or upgrade your plan."
-            )
+            raise ValueError(f"Free tier allows up to {max_keys} active API keys. Revoke an old key or upgrade your plan.")
 
     @staticmethod
     def _fetch_org_certificate_pem(organization_id: str) -> Optional[str]:
@@ -122,12 +155,12 @@ class KeyService:
 
         Delegates provisioning to enterprise-api so certificates align with
         the organization's signing key.
-        
+
         Args:
             organization_id: Organization identifier
             organization_name: Organization name for certificate CN
             authorization: Optional auth header to pass to auth-service
-            
+
         Returns:
             True if certificate exists or was created, False on failure
         """
@@ -238,33 +271,16 @@ class KeyService:
             return False
 
     @staticmethod
-    def _ensure_user_has_organization(db: Session, user_id: str) -> Optional[str]:
-        """
-        Try to find or create an organization for the user.
-
-        Note: The key-service may be on a different database than auth-service,
-        so organization_members table may not exist here. In that case, we
-        return None and the key will be user-level only.
-
-        Returns the organization_id or None if not available.
-        """
-        from sqlalchemy import text
-
-        # The key-service database may not have the organization tables
-        # (they're managed by auth-service on a different DB)
-        # Just return None - the key will work as a user-level key
-        return None
-
-    @staticmethod
     def create_key(
         db: Session,
         user_id: str,
         key_data: ApiKeyCreate,
         organization_id: str = None,
         authorization: str = None,
+        caller_is_superadmin: bool = False,
     ) -> Tuple[ApiKey, str]:
         """
-        Create a new API key
+        Create a new API key.
         Returns: (ApiKey model, actual key string)
 
         If organization_id is not provided, looks up user's default organization.
@@ -275,15 +291,26 @@ class KeyService:
             key_data: Key creation data (name, permissions, etc.)
             organization_id: Optional organization ID to link the key to
             authorization: Bearer token for auth-service calls (required if organization_id is set)
+            caller_is_superadmin: True when the calling user has superadmin status.
+                                  Required to assign privileged permissions such as
+                                  ``super_admin``, ``admin``, or ``merkle``.
+
+        Raises:
+            ValueError: if the caller requests privileged permissions without superadmin status,
+                        or if the organisation cannot be synced.
         """
-        from sqlalchemy import text
+        # Enforce permission allowlist before touching the database.
+        permissions = _validate_permissions(
+            list(key_data.permissions or []),
+            caller_is_superadmin=caller_is_superadmin,
+        )
 
         # If organization_id is provided, ensure it exists in our local DB
         # This syncs the org from auth-service if needed
         if organization_id and authorization:
             if not KeyService._ensure_organization_exists(db, organization_id, authorization):
                 raise ValueError(f"Organization {organization_id} not found or could not be synced")
-            
+
             # Auto-provision certificate if needed
             org = db.query(Organization).filter(Organization.id == organization_id).first()
             org_name = org.name if org else organization_id
@@ -320,7 +347,7 @@ class KeyService:
             key_hash=key_hash,
             key_prefix=key_prefix,
             fingerprint=fingerprint,
-            permissions=key_data.permissions,
+            permissions=permissions,
             description=key_data.description,
             expires_at=key_data.expires_at,
             created_by=user_id,
@@ -419,8 +446,6 @@ class KeyService:
             dict with key_id, organization_id, user_id, permissions
             or None if invalid
         """
-        from sqlalchemy import text
-
         if not verify_api_key_format(api_key):
             return None
 
@@ -490,8 +515,6 @@ class KeyService:
             dict with organization_id, tier, features, permissions
             or None if invalid
         """
-        from sqlalchemy import text
-
         # Check format
         if not verify_api_key_format(api_key):
             return None
@@ -500,7 +523,7 @@ class KeyService:
         key_hash = hash_api_key(api_key)
 
         query_without_certificate = text("""
-            SELECT 
+            SELECT
                 k.id as key_id,
                 k.organization_id,
                 k.user_id,
@@ -537,7 +560,7 @@ class KeyService:
         try:
             db.execute(
                 text("""
-                UPDATE api_keys 
+                UPDATE api_keys
                 SET last_used_at = NOW(), usage_count = usage_count + 1
                 WHERE key_hash = :key_hash
             """),
@@ -557,13 +580,9 @@ class KeyService:
             has_merkle = "merkle" in key_permissions
             is_super_admin = "admin" in key_permissions or "super_admin" in key_permissions
 
-            # SHORT-TERM FIX: Hardcoded superadmin user IDs
-            # TODO: Remove after shared core DB migration (see PRD_Shared_Core_DB.md)
-            # These users get full enterprise access regardless of key permissions
-            SUPERADMIN_USER_IDS = {
-                "a1621dd6-3298-473f-b2ad-232ca72c3df5",  # erik.svilich@encypherai.com
-            }
-            if result.user_id in SUPERADMIN_USER_IDS:
+            # SHORT-TERM FIX: Config-driven superadmin user IDs
+            # TODO(TEAM_XXX): Remove after shared core DB migration (see PRD_Shared_Core_DB.md)
+            if result.user_id in settings.superadmin_user_ids_set:
                 is_super_admin = True
 
             configured_superadmin_identity = (settings.SUPERADMIN_PUBLISHER_DISPLAY_NAME or "").strip()
@@ -627,8 +646,23 @@ class KeyService:
         user_id: str,
         update_data: ApiKeyUpdate,
         organization_id: Optional[str] = None,
+        caller_is_superadmin: bool = False,
     ) -> Optional[ApiKey]:
-        """Update an API key"""
+        """
+        Update an API key.
+
+        Args:
+            db: Database session
+            key_id: ID of the key to update
+            user_id: ID of the calling user (used for ownership check)
+            update_data: Fields to update
+            organization_id: Scope the lookup to an organisation
+            caller_is_superadmin: True when the calling user has superadmin status.
+                                  Required to assign privileged permissions.
+
+        Raises:
+            ValueError: if the caller requests privileged permissions without superadmin status.
+        """
         db_key = KeyService.get_key_by_id(db, key_id, user_id=user_id, organization_id=organization_id)
 
         if not db_key:
@@ -642,7 +676,10 @@ class KeyService:
             db_key.description = update_data.description
 
         if update_data.permissions is not None:
-            db_key.permissions = update_data.permissions
+            db_key.permissions = _validate_permissions(
+                list(update_data.permissions),
+                caller_is_superadmin=caller_is_superadmin,
+            )
 
         db_key.updated_at = datetime.utcnow()
         db.commit()
@@ -700,6 +737,7 @@ class KeyService:
         reason: Optional[str] = None,
         organization_id: Optional[str] = None,
         authorization: str = None,
+        caller_is_superadmin: bool = False,
     ) -> Optional[Tuple[ApiKey, str]]:
         """
         Rotate an API key (create new one, revoke old one)
@@ -724,6 +762,7 @@ class KeyService:
             new_key_data,
             organization_id=organization_id or old_key.organization_id,
             authorization=authorization,
+            caller_is_superadmin=caller_is_superadmin,
         )
 
         # Revoke old key
@@ -781,15 +820,13 @@ class KeyService:
         if not db_key:
             return {}
 
-        # Get total requests
-        total_requests = db.query(KeyUsage).filter(KeyUsage.key_id == key_id).count()
-
-        # Get requests by endpoint
+        # Single query: group by endpoint; derive total from the sum
         endpoint_stats = (
             db.query(KeyUsage.endpoint, func.count(KeyUsage.id).label("count")).filter(KeyUsage.key_id == key_id).group_by(KeyUsage.endpoint).all()
         )
 
         requests_by_endpoint = {stat.endpoint: stat.count for stat in endpoint_stats}
+        total_requests = sum(requests_by_endpoint.values())
 
         return {
             "key_id": key_id,

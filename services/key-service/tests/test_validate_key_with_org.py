@@ -10,7 +10,7 @@ def test_validate_key_returns_certificate_pem(client, monkeypatch) -> None:
         lambda _org_id: "-----BEGIN PUBLIC KEY-----\nZm9v\n-----END PUBLIC KEY-----\n",
     )
 
-    api_key = "ency_" + ("a" * 32)
+    api_key = "ency_" + ("a" * 32)  # pragma: allowlist secret
     response = client.post("/api/v1/keys/validate", json={"key": api_key})
 
     assert response.status_code == 200
@@ -24,7 +24,7 @@ def test_validate_key_returns_none_when_no_certificate(client, monkeypatch) -> N
 
     monkeypatch.setattr(KeyService, "_fetch_org_certificate_pem", lambda _org_id: None)
 
-    api_key = "ency_" + ("a" * 32)
+    api_key = "ency_" + ("a" * 32)  # pragma: allowlist secret
     response = client.post("/api/v1/keys/validate", json={"key": api_key})
 
     assert response.status_code == 200
@@ -70,7 +70,7 @@ def test_validate_key_fetches_certificate_from_auth_service(monkeypatch, client)
 
     monkeypatch.setattr("app.services.key_service.httpx.Client", _dummy_client_factory)
 
-    api_key = "ency_" + ("a" * 32)
+    api_key = "ency_" + ("a" * 32)  # pragma: allowlist secret
     response = client.post("/api/v1/keys/validate", json={"key": api_key})
 
     assert response.status_code == 200
@@ -164,6 +164,7 @@ def test_user_level_super_admin_key_uses_configured_publisher_identity(monkeypat
             return None
 
     monkeypatch.setattr(settings, "SUPERADMIN_PUBLISHER_DISPLAY_NAME", "Encypher Publisher", raising=False)
+    monkeypatch.setattr(settings, "SUPERADMIN_USER_IDS", "a1621dd6-3298-473f-b2ad-232ca72c3df5", raising=False)
     result = KeyService.verify_key_with_org(_DummyDB(), "ency_" + ("a" * 32))
 
     assert result is not None

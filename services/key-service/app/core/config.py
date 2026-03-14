@@ -56,6 +56,14 @@ class Settings(BaseSettings):
     KEY_PREFIX: str = "ency_"
     KEY_LENGTH: int = 32
     SUPERADMIN_PUBLISHER_DISPLAY_NAME: str = "Encypher Publisher"
+    # Comma-separated list of user IDs that receive superadmin privileges on user-level keys.
+    # TODO(TEAM_XXX): Remove after shared core DB migration (see PRD_Shared_Core_DB.md)
+    SUPERADMIN_USER_IDS: str = ""
+
+    @property
+    def superadmin_user_ids_set(self) -> set:
+        """Parse SUPERADMIN_USER_IDS into a set for O(1) lookup."""
+        return {uid.strip() for uid in self.SUPERADMIN_USER_IDS.split(",") if uid.strip()}
 
     model_config = SettingsConfigDict(
         env_file=".env",

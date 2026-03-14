@@ -15,11 +15,13 @@ class DummyMetricsClient:
         self.events = []
 
     async def emit(self, metric_type, organization_id, **kwargs):
-        self.events.append({
-            "metric_type": metric_type,
-            "organization_id": organization_id,
-            **kwargs,
-        })
+        self.events.append(
+            {
+                "metric_type": metric_type,
+                "organization_id": organization_id,
+                **kwargs,
+            }
+        )
         return True
 
 

@@ -24,10 +24,33 @@ from ...models.schemas import (
 )
 from ...services.key_service import KeyService
 from ...core.config import settings
+from ...core.response import make_error_body
 
 router = APIRouter()
 
 ROLE_CAN_MANAGE_KEYS = {"owner", "admin", "manager"}
+
+# Default pagination upper bound for list endpoints
+_LIST_LIMIT_MAX = 200
+
+
+def _is_superadmin(current_user: dict) -> bool:
+    """
+    Return True if the authenticated user holds superadmin status.
+
+    Combines the auth-service flag (``is_super_admin``) with the
+    config-driven allowlist (``SUPERADMIN_USER_IDS``) so both paths
+    are honoured consistently across all endpoints.
+    """
+    return bool(current_user.get("is_super_admin")) or (current_user.get("id", "") in settings.superadmin_user_ids_set)
+
+
+def _bind_key_context_to_request(request: Optional[Request], context: dict) -> None:
+    """Bind key/org context to request state for downstream middleware (e.g. metrics)."""
+    if request is not None:
+        request.state.organization_id = context.get("organization_id")
+        request.state.user_id = context.get("user_id")
+        request.state.api_key_id = context.get("key_id")
 
 
 async def _emit_audit_log(
@@ -69,7 +92,10 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid authentication credentials",
+                    detail=make_error_body(
+                        status.HTTP_401_UNAUTHORIZED,
+                        "Invalid authentication credentials",
+                    ),
                 )
 
             payload = response.json()
@@ -81,12 +107,20 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
                 return payload
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="Invalid response from auth service",
+                detail=make_error_body(
+                    status.HTTP_502_BAD_GATEWAY,
+                    "Invalid response from auth service",
+                    hint="The auth service returned an unexpected payload. Contact support.",
+                ),
             )
     except httpx.RequestError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Auth service unavailable",
+            detail=make_error_body(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                "Auth service unavailable",
+                hint="The auth service is unreachable. Retry with exponential back-off.",
+            ),
         )
 
 
@@ -131,11 +165,20 @@ async def _fetch_org_role(authorization: str, org_id: str, user_id: str) -> Opti
 async def _require_org_key_permission(authorization: str, org_id: str, user_id: str) -> None:
     role = await _fetch_org_role(authorization, org_id, user_id)
     if not role:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=make_error_body(
+                status.HTTP_403_FORBIDDEN,
+                "Access denied: you are not a member of this organisation.",
+            ),
+        )
     if role not in ROLE_CAN_MANAGE_KEYS:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient permissions to manage API keys",
+            detail=make_error_body(
+                status.HTTP_403_FORBIDDEN,
+                f"Insufficient permissions to manage API keys. Required role: one of {sorted(ROLE_CAN_MANAGE_KEYS)}. Your role: {role}.",
+            ),
         )
 
 
@@ -159,19 +202,26 @@ async def generate_key(
     """
     try:
         organization_id = key_data.organization_id
+        caller_superadmin = _is_superadmin(current_user)
 
-        if organization_id and not current_user.get("is_super_admin"):
+        if organization_id and not caller_superadmin:
             await _require_org_key_permission(authorization, organization_id, current_user["id"])
 
-        # If user is a superadmin, ensure the key has super_admin permission
-        if current_user.get("is_super_admin"):
+        # If user is a superadmin, ensure the key has super_admin permission.
+        # This runs before create_key so the allowlist validator sees it.
+        if caller_superadmin:
             if key_data.permissions is None:
                 key_data.permissions = ["sign", "verify", "super_admin"]
             elif "super_admin" not in key_data.permissions:
                 key_data.permissions = list(key_data.permissions) + ["super_admin"]
 
         db_key, api_key = KeyService.create_key(
-            db, current_user["id"], key_data, organization_id=organization_id, authorization=authorization
+            db,
+            current_user["id"],
+            key_data,
+            organization_id=organization_id,
+            authorization=authorization,
+            caller_is_superadmin=caller_superadmin,
         )
 
         if request is not None:
@@ -204,12 +254,12 @@ async def generate_key(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(exc),
+            detail=make_error_body(status.HTTP_403_FORBIDDEN, str(exc)),
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate key",
+            detail=make_error_body(status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to generate key"),
         )
 
 
@@ -217,22 +267,31 @@ async def generate_key(
 async def list_keys(
     include_revoked: bool = False,
     organization_id: Optional[str] = None,
+    limit: int = 50,
+    offset: int = 0,
     db: Session = Depends(get_db),
     authorization: str = Header(...),
     current_user: dict = Depends(get_current_user),
 ):
     """
-    List all API keys for the current user
+    List API keys for the current user or organisation.
 
     - **include_revoked**: Include revoked keys in the list
+    - **limit**: Maximum number of keys to return (1-200, default 50)
+    - **offset**: Number of keys to skip for pagination (default 0)
     """
+    # Clamp limit to a safe upper bound to prevent unbounded result sets.
+    limit = max(1, min(limit, _LIST_LIMIT_MAX))
+    offset = max(0, offset)
+
     if organization_id:
-        if not current_user.get("is_super_admin"):
+        if not _is_superadmin(current_user):
             await _require_org_key_permission(authorization, organization_id, current_user["id"])
         keys = KeyService.get_org_keys(db, organization_id, include_revoked)
-        return keys
+        return keys[offset : offset + limit]
 
-    return KeyService.get_user_keys(db, current_user["id"], include_revoked)
+    keys = KeyService.get_user_keys(db, current_user["id"], include_revoked)
+    return keys[offset : offset + limit]
 
 
 @router.get("/{key_id}", response_model=ApiKeyInfo)
@@ -248,7 +307,7 @@ async def get_key(
 
     - **key_id**: ID of the key to retrieve
     """
-    if organization_id and not current_user.get("is_super_admin"):
+    if organization_id and not _is_superadmin(current_user):
         await _require_org_key_permission(authorization, organization_id, current_user["id"])
 
     db_key = KeyService.get_key_by_id(db, key_id, user_id=current_user["id"], organization_id=organization_id)
@@ -256,7 +315,7 @@ async def get_key(
     if not db_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="API key not found",
+            detail=make_error_body(status.HTTP_404_NOT_FOUND, "API key not found"),
         )
 
     return db_key
@@ -277,17 +336,32 @@ async def update_key(
     - **key_id**: ID of the key to update
     - **name**: New name (optional)
     - **description**: New description (optional)
-    - **permissions**: New permissions (optional)
+    - **permissions**: New permissions (sign, verify, read only for regular users)
     """
-    if organization_id and not current_user.get("is_super_admin"):
+    caller_superadmin = _is_superadmin(current_user)
+
+    if organization_id and not caller_superadmin:
         await _require_org_key_permission(authorization, organization_id, current_user["id"])
 
-    db_key = KeyService.update_key(db, key_id, current_user["id"], update_data, organization_id=organization_id)
+    try:
+        db_key = KeyService.update_key(
+            db,
+            key_id,
+            current_user["id"],
+            update_data,
+            organization_id=organization_id,
+            caller_is_superadmin=caller_superadmin,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=make_error_body(status.HTTP_403_FORBIDDEN, str(exc)),
+        )
 
     if not db_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="API key not found",
+            detail=make_error_body(status.HTTP_404_NOT_FOUND, "API key not found"),
         )
 
     return db_key
@@ -308,7 +382,7 @@ async def revoke_key(
 
     - **key_id**: ID of the key to revoke
     """
-    if organization_id and not current_user.get("is_super_admin"):
+    if organization_id and not _is_superadmin(current_user):
         await _require_org_key_permission(authorization, organization_id, current_user["id"])
 
     success = KeyService.revoke_key(db, key_id, current_user["id"], organization_id=organization_id)
@@ -316,7 +390,7 @@ async def revoke_key(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="API key not found",
+            detail=make_error_body(status.HTTP_404_NOT_FOUND, "API key not found"),
         )
 
     await _emit_audit_log(
@@ -349,17 +423,23 @@ async def rotate_key(
     - **key_id**: ID of the key to rotate
     - **reason**: Optional reason for rotation
     """
-    if organization_id and not current_user.get("is_super_admin"):
+    if organization_id and not _is_superadmin(current_user):
         await _require_org_key_permission(authorization, organization_id, current_user["id"])
 
     result = KeyService.rotate_key(
-        db, key_id, current_user["id"], rotation_data.reason, organization_id=organization_id, authorization=authorization
+        db,
+        key_id,
+        current_user["id"],
+        rotation_data.reason,
+        organization_id=organization_id,
+        authorization=authorization,
+        caller_is_superadmin=_is_superadmin(current_user),
     )
 
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="API key not found",
+            detail=make_error_body(status.HTTP_404_NOT_FOUND, "API key not found"),
         )
 
     new_db_key, new_api_key = result
@@ -400,7 +480,7 @@ async def revoke_keys_by_user(
     current_user: dict = Depends(get_current_user),
 ):
     """Revoke all API keys created by a specific user within an organization"""
-    if not current_user.get("is_super_admin"):
+    if not _is_superadmin(current_user):
         await _require_org_key_permission(authorization, payload.organization_id, current_user["id"])
 
     revoked_count = KeyService.revoke_keys_by_user(
@@ -476,13 +556,10 @@ async def validate_key_with_org(
     if not org_context:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired API key",
+            detail=make_error_body(status.HTTP_401_UNAUTHORIZED, "Invalid or expired API key"),
         )
 
-    if request is not None:
-        request.state.organization_id = org_context.get("organization_id")
-        request.state.user_id = org_context.get("user_id")
-        request.state.api_key_id = org_context.get("key_id")
+    _bind_key_context_to_request(request, org_context)
 
     return {
         "success": True,
@@ -501,13 +578,10 @@ async def validate_key_minimal(
     if not key_context:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired API key",
+            detail=make_error_body(status.HTTP_401_UNAUTHORIZED, "Invalid or expired API key"),
         )
 
-    if request is not None:
-        request.state.organization_id = key_context.get("organization_id")
-        request.state.user_id = key_context.get("user_id")
-        request.state.api_key_id = key_context.get("key_id")
+    _bind_key_context_to_request(request, key_context)
 
     return {
         "success": True,
@@ -528,7 +602,7 @@ async def get_key_usage(
 
     - **key_id**: ID of the key
     """
-    if organization_id and not current_user.get("is_super_admin"):
+    if organization_id and not _is_superadmin(current_user):
         await _require_org_key_permission(authorization, organization_id, current_user["id"])
 
     stats = KeyService.get_key_usage_stats(db, key_id, current_user["id"], organization_id=organization_id)
@@ -536,7 +610,7 @@ async def get_key_usage(
     if not stats:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="API key not found",
+            detail=make_error_body(status.HTTP_404_NOT_FOUND, "API key not found"),
         )
 
     return KeyUsageStats(**stats, requests_by_day={})
