@@ -1,6 +1,6 @@
 [project]
 name = "encypher-notification-service"
-version = "1.0.0"
+version = "1.1.0"
 description = "Notification microservice for Encypher platform"
 readme = "README.md"
 requires-python = ">=3.11"
