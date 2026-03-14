@@ -12,6 +12,7 @@ from app.routers import (
     cdn_provenance,
     chat,
     coalition,
+    discovery,
     documents,
     integrations,
     keys,
@@ -67,6 +68,7 @@ ROUTER_SPECS = [
     (notices.router, "/api/v1", ["Formal Notices"]),
     (rights_licensing.router, "/api/v1", ["Rights Licensing Transactions"]),
     (partner.router, "/api/v1", ["Partner"]),
+    (discovery.router, None, ["Discovery"]),
     (api_v1_router, "/api/v1", None),
 ]
 

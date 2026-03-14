@@ -342,6 +342,8 @@ class ErrorDetail(BaseModel):
     message: str = Field(..., description="Human-readable error description")
     hint: Optional[str] = Field(None, description="Optional remediation hint")
     details: Optional[Dict[str, Any]] = Field(None, description="Additional error context")
+    next_action: Optional[str] = Field(None, description="Concrete next step to resolve the error")
+    docs_url: Optional[str] = Field(None, description="Link to relevant API documentation")
 
 
 # Common error codes
@@ -382,6 +384,85 @@ class ErrorCode:
 
     # Deprecated
     E_DEPRECATED = "E_DEPRECATED"
+
+
+# =============================================================================
+# Error Navigation -- maps error codes to actionable next steps
+# =============================================================================
+
+ERROR_NAVIGATION: Dict[str, Dict[str, str]] = {
+    ErrorCode.E_UNAUTHORIZED: {
+        "next_action": "Provide an API key via the Authorization: Bearer <key> header.",
+        "docs_url": "/docs#/API%20Keys",
+    },
+    ErrorCode.E_FORBIDDEN: {
+        "next_action": "Check that your API key has the required permission scope.",
+        "docs_url": "/docs#/API%20Keys",
+    },
+    ErrorCode.E_INVALID_API_KEY: {
+        "next_action": "Verify your API key is correct. Manage keys via GET /api/v1/keys.",
+        "docs_url": "/docs#/API%20Keys",
+    },
+    ErrorCode.E_EXPIRED_API_KEY: {
+        "next_action": "Rotate your API key via POST /api/v1/keys/{key_id}/rotate.",
+        "docs_url": "/docs#/API%20Keys",
+    },
+    ErrorCode.E_RATE_LIMIT: {
+        "next_action": "Wait for the Retry-After period, then retry. Check X-RateLimit-* headers.",
+    },
+    ErrorCode.E_RATE_SIGN: {
+        "next_action": "Wait for the Retry-After period. Use batch signing to reduce request count.",
+    },
+    ErrorCode.E_RATE_VERIFY: {
+        "next_action": "Wait for the Retry-After period. Use batch verification to reduce request count.",
+    },
+    ErrorCode.E_QUOTA_EXCEEDED: {
+        "next_action": "Check your quota via GET /api/v1/usage. Upgrade tier for higher limits.",
+        "docs_url": "/docs#/Usage",
+    },
+    ErrorCode.E_QUOTA_SIGNATURES: {
+        "next_action": "Monthly signature quota reached. Check GET /api/v1/usage for reset date.",
+        "docs_url": "/docs#/Usage",
+    },
+    ErrorCode.E_TIER_REQUIRED: {
+        "next_action": "Upgrade your plan at https://encypherai.com/pricing.",
+    },
+    ErrorCode.E_FEATURE_UNAVAILABLE: {
+        "next_action": "This feature requires a higher tier. Check GET /api/v1/account for available features.",
+    },
+    ErrorCode.E_VALIDATION: {
+        "next_action": "Check the request body against the endpoint schema.",
+        "docs_url": "/docs",
+    },
+    ErrorCode.E_INVALID_REQUEST: {
+        "next_action": "Check the request body against the endpoint schema.",
+        "docs_url": "/docs",
+    },
+    ErrorCode.E_PAYLOAD_TOO_LARGE: {
+        "next_action": "Reduce request size. For large payloads, use batch endpoints or streaming.",
+    },
+    ErrorCode.E_NOT_FOUND: {
+        "next_action": "Verify the resource ID. List available resources via the parent collection endpoint.",
+    },
+    ErrorCode.E_DOCUMENT_NOT_FOUND: {
+        "next_action": "Verify the document ID. List documents via GET /api/v1/documents.",
+        "docs_url": "/docs#/Documents",
+    },
+    ErrorCode.E_INTERNAL: {
+        "next_action": "Retry the request. If the problem persists, contact support with the correlation_id.",
+    },
+    ErrorCode.E_SERVICE_UNAVAILABLE: {
+        "next_action": "The service is temporarily unavailable. Retry after a short delay.",
+    },
+    ErrorCode.E_DEPRECATED: {
+        "next_action": "This endpoint is deprecated. Check the message for the replacement endpoint.",
+    },
+}
+
+
+def get_error_navigation(code: str) -> Dict[str, str]:
+    """Return navigation hints for the given error code."""
+    return ERROR_NAVIGATION.get(code, {})
 
 
 # =============================================================================

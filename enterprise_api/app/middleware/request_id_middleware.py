@@ -51,6 +51,17 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         return response
 
 
+def get_correlation_id(request: Request) -> str:
+    """Return the canonical correlation ID for *request*.
+
+    Checks ``request.state.request_id`` first (set by the middleware on the
+    inbound path), falls back to the ``x-request-id`` header, and finally
+    generates a new ID.  Use this instead of copy-pasting the extraction
+    logic in every router.
+    """
+    return getattr(request.state, "request_id", None) or request.headers.get("x-request-id") or f"req-{uuid4().hex[:12]}"
+
+
 class RequestIDFilter(logging.Filter):
     """Logging filter that injects the current request_id into every log record.
 

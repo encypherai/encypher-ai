@@ -9326,6 +9326,30 @@
             ],
             "title": "Hint",
             "description": "Optional remediation hint"
+          },
+          "next_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Action",
+            "description": "Concrete next step to resolve the error"
+          },
+          "docs_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Docs Url",
+            "description": "Link to relevant API documentation"
           }
         },
         "type": "object",

@@ -327,6 +327,34 @@ class SignOptions(BaseModel):
 # =============================================================================
 
 
+_ALLOWED_CONTROL = frozenset({0x09, 0x0A, 0x0D})  # tab, newline, carriage return
+
+
+def validate_text_content(v: str) -> str:
+    """Reject binary or malformed content in text fields.
+
+    Checks for null bytes and control characters (except tab/newline/CR)
+    that indicate binary data was submitted to a text endpoint.
+
+    Scans the first 10K chars for all control characters, then does a fast
+    null-byte check on the remainder to catch nulls anywhere without a
+    full character-by-character scan.
+    """
+    scan_limit = min(len(v), 10_000)
+    for i in range(scan_limit):
+        cp = ord(v[i])
+        if cp < 0x20 and cp not in _ALLOWED_CONTROL:
+            if cp == 0:
+                raise ValueError("Text contains null bytes. Text endpoints accept UTF-8 only; binary content is not supported.")
+            raise ValueError(
+                f"Text contains control character U+{cp:04X} at position {i}. Text endpoints accept UTF-8 only; binary content is not supported."
+            )
+    # Fast null-byte check on the remainder beyond the scan limit
+    if scan_limit < len(v) and "\x00" in v[scan_limit:]:
+        raise ValueError("Text contains null bytes. Text endpoints accept UTF-8 only; binary content is not supported.")
+    return v
+
+
 class SignDocument(BaseModel):
     """A single document in a batch sign request."""
 
@@ -336,6 +364,12 @@ class SignDocument(BaseModel):
         min_length=1,
         max_length=1_000_000,
     )
+
+    @field_validator("text")
+    @classmethod
+    def validate_text_is_not_binary(cls, v: str) -> str:
+        return validate_text_content(v)
+
     document_id: Optional[str] = Field(
         default=None,
         description="Optional custom document identifier",
@@ -399,6 +433,14 @@ class UnifiedSignRequest(BaseModel):
         min_length=1,
         max_length=1_000_000,
     )
+
+    @field_validator("text")
+    @classmethod
+    def validate_text_is_not_binary(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            return validate_text_content(v)
+        return v
+
     document_id: Optional[str] = Field(
         default=None,
         description="Optional custom document identifier",

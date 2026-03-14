@@ -6,9 +6,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.models.response_models import ErrorDetail, VerifyVerdict
+from app.schemas.sign_schemas import validate_text_content
 
 BatchMode = Literal["c2pa", "embeddings"]
 SegmentationLevel = Literal["document", "paragraph", "sentence"]
@@ -21,6 +22,12 @@ class BatchItemPayload(BaseModel):
 
     document_id: str = Field(..., description="Unique document identifier", min_length=1, max_length=255)
     text: str = Field(..., description="Raw document text to process", min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def validate_text_is_not_binary(cls, v: str) -> str:
+        return validate_text_content(v)
+
     title: Optional[str] = Field(None, description="Optional title metadata", max_length=255)
     metadata: Optional[Dict[str, Any]] = Field(
         None,

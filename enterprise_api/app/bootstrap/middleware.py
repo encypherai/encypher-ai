@@ -153,8 +153,10 @@ def register_middleware(app: FastAPI) -> None:
     app.add_middleware(SecurityHeadersMiddleware)
 
     from app.middleware.metrics_middleware import MetricsMiddleware
+    from app.middleware.response_envelope import ResponseEnvelopeMiddleware
 
     app.add_middleware(MetricsMiddleware)
+    app.add_middleware(ResponseEnvelopeMiddleware)
     app.add_middleware(RequestIDMiddleware)
 
     @app.middleware("http")

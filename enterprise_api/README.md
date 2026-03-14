@@ -1497,14 +1497,37 @@ See [BENCHMARK_BASELINE.md](BENCHMARK_BASELINE.md) for detailed analysis of the 
 {
   "success": false,
   "error": {
-    "code": "ERROR_CODE",
-    "message": "Human-readable error message",
-    "hint": "Optional suggestion for resolution"
+    "code": "E_UNAUTHORIZED",
+    "message": "API key required",
+    "hint": "Optional suggestion for resolution",
+    "next_action": "Provide an API key via the Authorization: Bearer <key> header.",
+    "docs_url": "/docs#/API%20Keys"
   },
-  "correlation_id": "req_abc123",
-  "status_code": 400
+  "correlation_id": "req-abc123def456",
+  "meta": {
+    "api_version": "v1",
+    "processing_time_ms": 12,
+    "status": "error"
+  }
 }
 ```
+
+Every error includes a `next_action` field with a concrete next step, and
+optionally a `docs_url` pointing to the relevant API documentation section.
+Validation errors (422) additionally include grouped `field_errors` in
+`error.details`.
+
+### API Discovery
+
+`GET /api/v1/` returns a public, unauthenticated index of all available
+endpoints with their HTTP methods, summaries, and tags. Internal/admin
+routes are filtered out. The response is cached after the first request.
+
+### Binary Content Guard
+
+Text input fields (`text` in sign/verify/batch requests) reject null bytes
+and ASCII control characters (except tab, newline, CR) with a clear error
+message. This prevents binary data from being submitted to text endpoints.
 
 ---
 

@@ -29,6 +29,7 @@ from app.database import get_db
 from app.dependencies import get_current_organization, require_sign_permission, require_super_admin_dep
 from app.middleware.api_rate_limiter import api_rate_limiter
 from app.middleware.rate_limiter import streaming_rate_limiter
+from app.middleware.request_id_middleware import get_correlation_id
 from app.middleware.websocket_auth import authenticate_websocket, require_streaming_permission
 from app.models.organization import Organization
 from app.models.request_models import SignRequest
@@ -58,7 +59,7 @@ async def stream_signing(
 ) -> StreamingResponse:
     """Stream signing progress via SSE."""
 
-    correlation_id = getattr(request.state, "request_id", None) or request.headers.get("x-request-id") or f"req-{uuid4().hex}"
+    correlation_id = get_correlation_id(request)
     run_id = stream_request.run_id or f"run_{uuid4().hex}"
     document_id = stream_request.document_id or f"doc_{uuid4().hex[:16]}"
 

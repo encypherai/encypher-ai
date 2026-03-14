@@ -1,22 +1,17 @@
 """Batch signing and verification endpoints."""
 
-from uuid import uuid4
-
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import require_sign_permission, require_verify_permission
 from app.middleware.api_rate_limiter import api_rate_limiter
+from app.middleware.request_id_middleware import get_correlation_id
 from app.schemas.batch import BatchResponseEnvelope, BatchSignRequest, BatchVerifyRequest
 from app.services.batch_service import batch_service
 from app.utils.quota import QuotaManager, QuotaType
 
 router = APIRouter(prefix="/api/v1", tags=["Batch"])
-
-
-def _correlation_id(request: Request) -> str:
-    return getattr(request.state, "request_id", None) or request.headers.get("x-request-id") or f"req-{uuid4().hex}"
 
 
 @router.post("/batch/sign", response_model=BatchResponseEnvelope)
@@ -38,7 +33,7 @@ async def batch_sign(
             },
         )
 
-    correlation_id = _correlation_id(request)
+    correlation_id = get_correlation_id(request)
     tier = organization.get("tier", "free")
 
     result, limited_dimension = api_rate_limiter.check_request_limits(
@@ -117,7 +112,7 @@ async def batch_verify(
             },
         )
 
-    correlation_id = _correlation_id(request)
+    correlation_id = get_correlation_id(request)
     tier = organization.get("tier", "free")
 
     result, limited_dimension = api_rate_limiter.check_request_limits(
