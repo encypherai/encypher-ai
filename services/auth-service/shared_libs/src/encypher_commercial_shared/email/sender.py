@@ -132,8 +132,9 @@ def send_email(
         if plain_content:
             msg.attach(MIMEText(plain_content, "plain"))
 
-        # HTML content
-        msg.attach(MIMEText(html_content, "html"))
+        # HTML content (skip empty to avoid a blank HTML alternative)
+        if html_content:
+            msg.attach(MIMEText(html_content, "html"))
 
         # Build recipient list (BCC is not in headers, just in sendmail)
         recipients = [to_email]

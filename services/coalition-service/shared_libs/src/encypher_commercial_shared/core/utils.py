@@ -74,24 +74,6 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
     file_path = Path(file_path) if isinstance(file_path, str) else file_path
     suffix = file_path.suffix.lower()
 
-    # Check if PyPDF2 is available for PDF extraction
-    PYPDF2_AVAILABLE = False
-    try:
-        import PyPDF2
-
-        PYPDF2_AVAILABLE = True
-    except ImportError:
-        pass
-
-    # Check if docx2txt is available for DOCX extraction
-    DOCX2TXT_AVAILABLE = False
-    try:
-        import docx2txt
-
-        DOCX2TXT_AVAILABLE = True
-    except ImportError:
-        pass
-
     if suffix in [".txt", ".md", ".py", ".js", ".html", ".css", ".json", ".xml", ".csv", ".log"]:
         try:
             with open(file_path, encoding="utf-8", errors="replace") as f:
@@ -298,43 +280,6 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
             except Exception as e:
                 console.print(f"[yellow]pdfminer.six import failed: {e}[/yellow]")
 
-        # Method 3: Try using Microsoft Word COM automation if available
-        if not extracted_text:
-            try:
-                import os
-                import tempfile
-
-                import comtypes.client
-
-                # Create a temporary text file
-                temp_txt = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
-                temp_txt.close()
-
-                # Use Word to open the PDF and save as text
-                word = comtypes.client.CreateObject("Word.Application")
-                word.Visible = 0
-
-                # Try to open the PDF with Word
-                try:
-                    doc = word.Documents.Open(str(file_path))
-                    doc.SaveAs(temp_txt.name, FileFormat=2)  # FileFormat=2 is for text
-                    doc.Close()
-
-                    # Read the text file
-                    with open(temp_txt.name, encoding="utf-8", errors="replace") as f:
-                        extracted_text = f.read()
-                except Exception as e:
-                    console.print(f"[yellow]Word automation failed to open PDF: {e}[/yellow]")
-                finally:
-                    word.Quit()
-                    # Clean up the temporary file
-                    try:
-                        os.unlink(temp_txt.name)
-                    except:
-                        pass
-            except Exception as e:
-                console.print(f"[yellow]Word COM automation not available: {e}[/yellow]")
-
         if extracted_text:
             return extracted_text
 
@@ -390,40 +335,6 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                     extracted_text = text
             except Exception as e:
                 console.print(f"[yellow]docx2txt extraction failed: {e}[/yellow]")
-
-        # Method 3: Try using Microsoft Word COM automation if available
-        if not extracted_text:
-            try:
-                import os
-                import tempfile
-
-                import comtypes.client
-
-                # Create a temporary text file
-                temp_txt = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
-                temp_txt.close()
-
-                # Use Word to open the DOCX and save as text
-                word = comtypes.client.CreateObject("Word.Application")
-                word.Visible = 0
-
-                # Open the DOCX with Word
-                doc = word.Documents.Open(str(file_path))
-                doc.SaveAs(temp_txt.name, FileFormat=2)  # FileFormat=2 is for text
-                doc.Close()
-                word.Quit()
-
-                # Read the text file
-                with open(temp_txt.name, encoding="utf-8", errors="replace") as f:
-                    extracted_text = f.read()
-
-                # Clean up the temporary file
-                try:
-                    os.unlink(temp_txt.name)
-                except Exception:
-                    pass
-            except Exception as e:
-                console.print(f"[yellow]Word COM automation not available: {e}[/yellow]")
 
         if extracted_text:
             return extracted_text
@@ -553,23 +464,16 @@ def scan_directory(
                         except Exception as e:
                             # If both methods fail, create a failed result
                             console.print(f"[yellow]Error verifying {file_path}: {e}[/yellow]")
-                            result = VerificationResult(
-                                verified=False, has_metadata=False, signer_id=None, timestamp=None, model_id=None, format=None, raw_payload=None
-                            )
+                            result = VerificationResult(verified=False, raw_payload=None)
 
-                    # If content integrity verification is enabled and metadata was found
-                    if verify_content_integrity and result.has_metadata:
-                        # If the signature is valid, perform additional checks
-                        if result.verified:
-                            # Extract text from the file
-                            content = extract_text_from_file(file_path)
-                            if content:
-                                # Check if the content has been tampered with after metadata was embedded
-                                if "[THIS TEXT WAS MODIFIED AFTER SIGNING]" in content:
-                                    # Mark as tampered
-                                    result.verified = False
-                                    if hasattr(result, "verification_details"):
-                                        result.verification_details = "Content modified after signing"
+                    # If content integrity verification is enabled and metadata was found,
+                    # reuse already-extracted text_content to avoid a second file read.
+                    if verify_content_integrity and result.has_metadata and result.verified:
+                        content = text_content  # already extracted above; no re-read needed
+                        if content and "[THIS TEXT WAS MODIFIED AFTER SIGNING]" in content:
+                            result.verified = False
+                            if hasattr(result, "verification_details"):
+                                result.verification_details = "Content modified after signing"
 
                     results[str(file_path)] = result
                 except Exception as e:
@@ -598,37 +502,23 @@ def scan_directory(
                     except Exception as inner_e:
                         # If both methods fail, create a failed result
                         console.print(f"[yellow]Failed to verify {file_path}: {inner_e}[/yellow]")
-                        result = VerificationResult(
-                            verified=False,
-                            has_metadata=False,
-                            signer_id=None,
-                            timestamp=None,
-                            model_id=None,
-                            format=None,
-                            raw_payload=None,
-                            verification_details="Text extraction and direct verification failed",
-                        )
+                        result = VerificationResult(verified=False, raw_payload=None)
 
-                # If content integrity verification is enabled and metadata was found
-                if verify_content_integrity and result.has_metadata:
-                    # If the signature is valid, perform additional checks
-                    if result.verified:
-                        # Extract text from the file
-                        content = extract_text_from_file(file_path)
-                        if content:
-                            # Check if the content has been tampered with after metadata was embedded
-                            # Look for various tampering markers
-                            tampering_markers = [
-                                "[THIS TEXT WAS MODIFIED AFTER SIGNING]",
-                                "[THIS TEXT WAS MODIFIED]",
-                                "[TAMPERED]",
-                                "This file has been tampered with",
-                            ]
-                            if any(marker in content for marker in tampering_markers):
-                                # Mark as tampered
-                                result.verified = False
-                                if hasattr(result, "verification_details"):
-                                    result.verification_details = "Content modified after signing"
+                # If content integrity verification is enabled and metadata was found,
+                # reuse already-extracted text_content to avoid a second file read.
+                if verify_content_integrity and result.has_metadata and result.verified:
+                    content = text_content  # already extracted above; no re-read needed
+                    if content:
+                        tampering_markers = [
+                            "[THIS TEXT WAS MODIFIED AFTER SIGNING]",
+                            "[THIS TEXT WAS MODIFIED]",
+                            "[TAMPERED]",
+                            "This file has been tampered with",
+                        ]
+                        if any(marker in content for marker in tampering_markers):
+                            result.verified = False
+                            if hasattr(result, "verification_details"):
+                                result.verification_details = "Content modified after signing"
 
                 results[str(file_path)] = result
             except Exception as e:
