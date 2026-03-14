@@ -5,15 +5,27 @@ GitHub: https://github.com/adobe/trustmark (Apache 2.0)
 
 Install in production:
   pip install trustmark torch torchvision
-  OR use the optional-requirements.txt in this directory.
 
 If trustmark is not installed, all methods raise ServiceUnavailableError.
 """
+
 import logging
 from io import BytesIO
-from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+# Watermark bit-width used by TrustMark (ECC mode).
+_WATERMARK_BITS = 100
+# Format string for converting hex -> zero-padded binary of sufficient width.
+_BIN_FORMAT = f"0{_WATERMARK_BITS + 4}b"  # 104 bits covers 26 hex chars (13 bytes)
+
+# Module-level constant to avoid rebuilding the dict on every call.
+_MIME_TO_PIL: dict[str, str] = {
+    "image/jpeg": "JPEG",
+    "image/jpg": "JPEG",
+    "image/png": "PNG",
+    "image/webp": "WEBP",
+}
 
 
 class ServiceUnavailableError(Exception):
@@ -21,18 +33,12 @@ class ServiceUnavailableError(Exception):
 
 
 def _mime_to_pil_format(mime_type: str) -> str:
-    mapping = {
-        "image/jpeg": "JPEG",
-        "image/jpg": "JPEG",
-        "image/png": "PNG",
-        "image/webp": "WEBP",
-    }
-    return mapping.get(mime_type.lower(), "JPEG")
+    return _MIME_TO_PIL.get(mime_type.lower(), "JPEG")
 
 
 class TrustMarkService:
     def __init__(self) -> None:
-        self._model: Optional[object] = None
+        self._model: object | None = None
         self._available: bool = False
 
     def load_model(self) -> None:
@@ -65,19 +71,18 @@ class TrustMarkService:
 
         Returns:
             Tuple of (watermarked_bytes, confidence).
+            confidence is always 1.0 for encode (TrustMark does not score encode quality).
 
         Raises:
             ServiceUnavailableError: If TrustMark model is not loaded.
         """
         if not self._available or self._model is None:
-            raise ServiceUnavailableError(
-                "TrustMark model not available. Install trustmark and torch."
-            )
+            raise ServiceUnavailableError("TrustMark model not available. Install trustmark and torch.")
         from PIL import Image
 
         # Convert hex message to binary string (TrustMark expects a binary string).
         msg_int = int(message_bits, 16)
-        binary_str = format(msg_int, "0100b")[:100]  # 100 bits
+        binary_str = format(msg_int, _BIN_FORMAT)[:_WATERMARK_BITS]
 
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
         # TrustMark.encode() returns a PIL Image.
@@ -91,7 +96,7 @@ class TrustMarkService:
         watermarked_img.save(buf, **save_kwargs)
         return buf.getvalue(), 1.0
 
-    def decode(self, image_bytes: bytes) -> tuple[bool, Optional[str], float]:
+    def decode(self, image_bytes: bytes) -> tuple[bool, str | None, float]:
         """Detect watermark in image.
 
         Args:
@@ -105,9 +110,7 @@ class TrustMarkService:
             ServiceUnavailableError: If TrustMark model is not loaded.
         """
         if not self._available or self._model is None:
-            raise ServiceUnavailableError(
-                "TrustMark model not available. Install trustmark and torch."
-            )
+            raise ServiceUnavailableError("TrustMark model not available. Install trustmark and torch.")
         from PIL import Image
 
         img = Image.open(BytesIO(image_bytes)).convert("RGB")
@@ -118,6 +121,6 @@ class TrustMarkService:
             return False, None, float(confidence)
 
         # Convert binary string back to 26-char hex.
-        msg_int = int(secret[:100], 2)
+        msg_int = int(secret[:_WATERMARK_BITS], 2)
         msg_hex = format(msg_int, "026x")
         return True, msg_hex, float(confidence)

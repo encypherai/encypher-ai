@@ -1,14 +1,28 @@
 import logging
+import time
+from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.routers.health import router as health_router
 from app.routers.watermark import router as watermark_router
 from app.services.trustmark_service import TrustMarkService
 
 logger = logging.getLogger(__name__)
+
+
+class ProcessingTimeMiddleware(BaseHTTPMiddleware):
+    """Attach X-Processing-Time-Ms header to every response."""
+
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+        t0 = time.perf_counter()
+        response = await call_next(request)
+        elapsed_ms = round((time.perf_counter() - t0) * 1000, 2)
+        response.headers["X-Processing-Time-Ms"] = str(elapsed_ms)
+        return response
 
 
 @asynccontextmanager
@@ -19,29 +33,23 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     requests arrive. If trustmark/torch are not installed the service
     still starts and returns 503 for watermark endpoints.
     """
-    global trustmark_service  # noqa: PLW0603 -- module-level reference for tests
     logger.info("Loading TrustMark model...")
-    trustmark_service = TrustMarkService()
+    svc = TrustMarkService()
     try:
-        trustmark_service.load_model()
-        if trustmark_service.is_available:
+        svc.load_model()
+        if svc.is_available:
             logger.info("TrustMark model loaded")
         else:
-            logger.warning(
-                "TrustMark model not available. "
-                "Install trustmark + torch to enable watermarking endpoints."
-            )
+            logger.warning("TrustMark model not available. Install trustmark + torch to enable watermarking endpoints.")
     except Exception as e:
         logger.warning("TrustMark model not available: %s. Service will return errors.", e)
-    app.state.trustmark_service = trustmark_service
+    app.state.trustmark_service = svc
     yield
     logger.info("image-service shutting down")
 
 
-# Module-level reference used by tests to override app.state before TestClient.
-trustmark_service: TrustMarkService | None = None
-
 app = FastAPI(title="Encypher Image Service", version="0.1.0", lifespan=lifespan)
 
+app.add_middleware(ProcessingTimeMiddleware)
 app.include_router(health_router)
 app.include_router(watermark_router, prefix="/api/v1")

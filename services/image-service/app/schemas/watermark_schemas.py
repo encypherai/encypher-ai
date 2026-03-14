@@ -1,4 +1,3 @@
-from typing import Optional
 from pydantic import BaseModel, Field
 
 
@@ -10,10 +9,11 @@ class WatermarkRequest(BaseModel):
         description=(
             "100-bit message as 26-char hex string "
             "(100 bits = 12.5 bytes, use 13 bytes = 26 hex chars, padded). "
-            "Must be exactly 26 hex chars."
+            "Must be exactly 26 lowercase or uppercase hex chars [0-9a-fA-F]."
         ),
         min_length=26,
         max_length=26,
+        pattern=r"^[0-9a-fA-F]{26}$",
     )
 
 
@@ -25,13 +25,13 @@ class WatermarkResponse(BaseModel):
 
 
 class DetectRequest(BaseModel):
-    image_b64: str
-    mime_type: str
+    image_b64: str = Field(..., description="Base64-encoded image bytes")
+    mime_type: str = Field(..., description="MIME type: image/jpeg, image/png, image/webp")
 
 
 class DetectResponse(BaseModel):
     detected: bool
-    message_bits: Optional[str] = None
+    message_bits: str | None = None
     confidence: float
     processing_time_ms: float
 
