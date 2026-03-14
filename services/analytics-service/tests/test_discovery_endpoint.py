@@ -10,14 +10,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DATABASE_URL", "sqlite:///./analytics_service_test.db")
 os.environ.setdefault("AUTH_SERVICE_URL", "http://auth-service:8001")
 
-import pytest
-from datetime import datetime
-from pydantic import ValidationError
-from pathlib import Path
+import pytest  # noqa: E402
+from datetime import datetime  # noqa: E402
+from pydantic import ValidationError  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 # Import schemas directly for unit tests
-from app.models.schemas import DiscoveryEvent, DiscoveryBatchRequest, DiscoveryResponse, DiscoveryStats
-from app.api.v1.endpoints import _should_verify_auth_header
+from app.models.schemas import DiscoveryEvent, DiscoveryBatchRequest, DiscoveryResponse, DiscoveryStats  # noqa: E402
+from app.api.v1.endpoints import _should_verify_auth_header  # noqa: E402
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def sample_discovery_event_data():
         "markerType": "c2pa",
         "embeddingCount": 1,
         "extensionVersion": "1.0.0",
-        "sessionId": "sess_abc123"
+        "sessionId": "sess_abc123",
     }
 
 
@@ -53,21 +53,13 @@ class TestDiscoveryEventSchema:
 
     def test_minimal_event(self):
         """Test minimal required fields."""
-        event = DiscoveryEvent(
-            timestamp=datetime.utcnow(),
-            pageUrl="https://example.com",
-            pageDomain="example.com"
-        )
+        event = DiscoveryEvent(timestamp=datetime.utcnow(), pageUrl="https://example.com", pageDomain="example.com")
         assert event.verified is False
         assert event.embeddingCount == 1
 
     def test_event_defaults(self):
         """Test default values are applied."""
-        event = DiscoveryEvent(
-            timestamp=datetime.utcnow(),
-            pageUrl="https://example.com",
-            pageDomain="example.com"
-        )
+        event = DiscoveryEvent(timestamp=datetime.utcnow(), pageUrl="https://example.com", pageDomain="example.com")
         assert event.eventType == "embedding_discovered"
         assert event.verified is False
         assert event.embeddingCount == 1
@@ -113,19 +105,13 @@ class TestDiscoveryBatchRequest:
 
     def test_valid_batch(self, sample_discovery_event_data):
         """Test valid batch request."""
-        batch = DiscoveryBatchRequest(
-            events=[DiscoveryEvent(**sample_discovery_event_data)],
-            source="chrome_extension",
-            version="1.0.0"
-        )
+        batch = DiscoveryBatchRequest(events=[DiscoveryEvent(**sample_discovery_event_data)], source="chrome_extension", version="1.0.0")
         assert len(batch.events) == 1
         assert batch.source == "chrome_extension"
 
     def test_batch_defaults(self, sample_discovery_event_data):
         """Test batch default values."""
-        batch = DiscoveryBatchRequest(
-            events=[DiscoveryEvent(**sample_discovery_event_data)]
-        )
+        batch = DiscoveryBatchRequest(events=[DiscoveryEvent(**sample_discovery_event_data)])
         assert batch.source == "chrome_extension"
         assert batch.version is None
 
@@ -146,21 +132,13 @@ class TestDiscoveryResponse:
 
     def test_success_response(self):
         """Test successful response."""
-        response = DiscoveryResponse(
-            success=True,
-            data={"events_recorded": 5, "message": "Success"},
-            error=None
-        )
+        response = DiscoveryResponse(success=True, data={"events_recorded": 5, "message": "Success"}, error=None)
         assert response.success is True
         assert response.data["events_recorded"] == 5
 
     def test_error_response(self):
         """Test error response."""
-        response = DiscoveryResponse(
-            success=False,
-            data=None,
-            error="Rate limit exceeded"
-        )
+        response = DiscoveryResponse(success=False, data=None, error="Rate limit exceeded")
         assert response.success is False
         assert response.error == "Rate limit exceeded"
 
@@ -179,7 +157,7 @@ class TestDiscoveryStats:
             top_domains=[{"domain": "example.com", "count": 50}],
             top_signers=[{"signer_id": "org_123", "signer_name": "Test Org", "count": 30}],
             period_start=datetime.utcnow(),
-            period_end=datetime.utcnow()
+            period_end=datetime.utcnow(),
         )
         assert stats.total_discoveries == 100
         assert stats.verified_count == 85

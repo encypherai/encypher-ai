@@ -396,9 +396,7 @@ class TestQueryMethods:
         all_results = DiscoveryService.get_discoveries_for_org(db_session, "org_456")
         assert len(all_results) == 2
 
-        external_results = DiscoveryService.get_discoveries_for_org(
-            db_session, "org_456", external_only=True
-        )
+        external_results = DiscoveryService.get_discoveries_for_org(db_session, "org_456", external_only=True)
         assert len(external_results) == 1
         assert external_results[0].page_domain == "copier.com"
 
@@ -427,9 +425,7 @@ class TestQueryMethods:
         all_summaries = DiscoveryService.get_domain_summaries(db_session, "org_456")
         assert len(all_summaries) == 2
 
-        external_summaries = DiscoveryService.get_domain_summaries(
-            db_session, "org_456", external_only=True
-        )
+        external_summaries = DiscoveryService.get_domain_summaries(db_session, "org_456", external_only=True)
         assert len(external_summaries) == 1
         assert external_summaries[0].page_domain == "copier.com"
 
@@ -460,19 +456,13 @@ class TestQueryMethods:
         for _ in range(5):
             DiscoveryService.record_discovery(db_session, sample_event)
 
-        page1 = DiscoveryService.get_discoveries_for_org(
-            db_session, "org_456", limit=2, offset=0
-        )
+        page1 = DiscoveryService.get_discoveries_for_org(db_session, "org_456", limit=2, offset=0)
         assert len(page1) == 2
 
-        page2 = DiscoveryService.get_discoveries_for_org(
-            db_session, "org_456", limit=2, offset=2
-        )
+        page2 = DiscoveryService.get_discoveries_for_org(db_session, "org_456", limit=2, offset=2)
         assert len(page2) == 2
 
-        page3 = DiscoveryService.get_discoveries_for_org(
-            db_session, "org_456", limit=2, offset=4
-        )
+        page3 = DiscoveryService.get_discoveries_for_org(db_session, "org_456", limit=2, offset=4)
         assert len(page3) == 1
 
 
@@ -526,18 +516,14 @@ class TestOwnedDomainCRUD:
     """Tests for owned domain CRUD operations."""
 
     def test_add_owned_domain(self, db_session):
-        owned = DiscoveryService.add_owned_domain(
-            db_session, organization_id="org_1", domain_pattern="example.com", label="Main site"
-        )
+        owned = DiscoveryService.add_owned_domain(db_session, organization_id="org_1", domain_pattern="example.com", label="Main site")
         assert owned.organization_id == "org_1"
         assert owned.domain_pattern == "example.com"
         assert owned.label == "Main site"
         assert owned.is_active == 1
 
     def test_add_wildcard_domain(self, db_session):
-        owned = DiscoveryService.add_owned_domain(
-            db_session, organization_id="org_1", domain_pattern="*.example.com", label="Subdomains"
-        )
+        owned = DiscoveryService.add_owned_domain(db_session, organization_id="org_1", domain_pattern="*.example.com", label="Subdomains")
         assert owned.domain_pattern == "*.example.com"
 
     def test_add_duplicate_raises(self, db_session):
@@ -574,9 +560,7 @@ class TestOwnedDomainCRUD:
 
     def test_update_owned_domain(self, db_session):
         owned = DiscoveryService.add_owned_domain(db_session, "org_1", "old.com")
-        updated = DiscoveryService.update_owned_domain(
-            db_session, owned.id, "org_1", domain_pattern="new.com", label="Updated"
-        )
+        updated = DiscoveryService.update_owned_domain(db_session, owned.id, "org_1", domain_pattern="new.com", label="Updated")
         assert updated.domain_pattern == "new.com"
         assert updated.label == "Updated"
 

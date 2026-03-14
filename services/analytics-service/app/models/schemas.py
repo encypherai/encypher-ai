@@ -1,8 +1,9 @@
 """Pydantic schemas for Analytics Service"""
 
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class MetricCreate(BaseModel):
@@ -112,12 +113,6 @@ class ActivityAlertSummary(BaseModel):
     top_error_codes: List[ActivityAlertCodeCount]
     period_start: datetime
     period_end: datetime
-
-
-class MessageResponse(BaseModel):
-    """Generic message response"""
-
-    message: str
 
 
 class PageviewEvent(BaseModel):

@@ -5,7 +5,7 @@ This module provides comprehensive metrics collection for monitoring
 service health, performance, and business operations.
 """
 
-from prometheus_client import Counter, Histogram, Gauge, Info
+from prometheus_client import Counter, Gauge, Histogram, Info
 from prometheus_fastapi_instrumentator import Instrumentator
 
 # Service information

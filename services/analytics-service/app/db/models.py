@@ -1,9 +1,10 @@
 """SQLAlchemy database models for Analytics Service"""
 
-from sqlalchemy import Column, String, Integer, DateTime, JSON, Float
+import uuid
+
+from sqlalchemy import JSON, Column, DateTime, Float, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
-import uuid
 
 Base = declarative_base()
 
@@ -44,42 +45,6 @@ class UsageMetric(Base):
 
     def __repr__(self):
         return f"<UsageMetric(id={self.id}, metric_type={self.metric_type}, user_id={self.user_id})>"
-
-
-class AggregatedMetric(Base):
-    """Pre-aggregated metrics for performance"""
-
-    __tablename__ = "aggregated_metrics"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, nullable=True, index=True)
-    organization_id = Column(String, nullable=True, index=True)
-
-    # Aggregation details
-    metric_type = Column(String, nullable=False, index=True)
-    service_name = Column(String, nullable=False, index=True)
-    aggregation_period = Column(String, nullable=False, index=True)  # hourly, daily, weekly, monthly
-    period_start = Column(DateTime(timezone=True), nullable=False, index=True)
-    period_end = Column(DateTime(timezone=True), nullable=False)
-
-    # Aggregated values
-    total_count = Column(Integer, nullable=False, default=0)
-    total_value = Column(Float, nullable=True)
-    avg_response_time_ms = Column(Float, nullable=True)
-    min_response_time_ms = Column(Integer, nullable=True)
-    max_response_time_ms = Column(Integer, nullable=True)
-    success_count = Column(Integer, nullable=False, default=0)
-    error_count = Column(Integer, nullable=False, default=0)
-
-    # Metadata (renamed to avoid SQLAlchemy reserved attribute name)
-    meta = Column(JSON, nullable=True)
-
-    # Timestamp
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    def __repr__(self):
-        return f"<AggregatedMetric(id={self.id}, metric_type={self.metric_type}, period={self.aggregation_period})>"
 
 
 class ContentDiscovery(Base):
@@ -128,10 +93,7 @@ class ContentDiscovery(Base):
     date = Column(String, nullable=False, index=True)  # YYYY-MM-DD for aggregation
 
     def __repr__(self):
-        return (
-            f"<ContentDiscovery(id={self.id}, domain={self.page_domain}, "
-            f"signer={self.signer_id}, external={self.is_external_domain})>"
-        )
+        return f"<ContentDiscovery(id={self.id}, domain={self.page_domain}, signer={self.signer_id}, external={self.is_external_domain})>"
 
 
 class DiscoveryDomainSummary(Base):
@@ -168,10 +130,7 @@ class DiscoveryDomainSummary(Base):
     last_seen_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     def __repr__(self):
-        return (
-            f"<DiscoveryDomainSummary(org={self.organization_id}, "
-            f"domain={self.page_domain}, count={self.discovery_count})>"
-        )
+        return f"<DiscoveryDomainSummary(org={self.organization_id}, domain={self.page_domain}, count={self.discovery_count})>"
 
 
 class OwnedDomain(Base):
@@ -205,7 +164,4 @@ class OwnedDomain(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     def __repr__(self):
-        return (
-            f"<OwnedDomain(org={self.organization_id}, "
-            f"pattern={self.domain_pattern})>"
-        )
+        return f"<OwnedDomain(org={self.organization_id}, pattern={self.domain_pattern})>"
