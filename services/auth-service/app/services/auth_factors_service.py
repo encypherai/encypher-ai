@@ -15,6 +15,7 @@ except ModuleNotFoundError:
     pyotp = None
 from cryptography.fernet import Fernet
 from sqlalchemy.orm import Session
+
 try:
     from webauthn import (
         generate_authentication_options,
@@ -222,9 +223,7 @@ class AuthFactorsService:
             raise ValueError("No passkeys registered")
 
         allow_creds = [
-            PublicKeyCredentialDescriptor(id=base64url_to_bytes(cred["credential_id"]))
-            for cred in credentials
-            if cred.get("credential_id")
+            PublicKeyCredentialDescriptor(id=base64url_to_bytes(cred["credential_id"])) for cred in credentials if cred.get("credential_id")
         ]
 
         options = generate_authentication_options(

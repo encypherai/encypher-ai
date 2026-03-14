@@ -95,9 +95,7 @@ def test_bulk_provision_single_publisher_success():
         resp = client.post(
             "/api/v1/organizations/internal/bulk-provision",
             json={
-                "publishers": [
-                    {"name": "Daily Tribune", "contact_email": "editor@dailytribune.example.com"}
-                ],
+                "publishers": [{"name": "Daily Tribune", "contact_email": "editor@dailytribune.example.com"}],
                 "partner_org_id": "org_partner",
                 "partner_name": "Freestar",
             },
@@ -145,10 +143,7 @@ def test_bulk_provision_three_publishers():
         resp = client.post(
             "/api/v1/organizations/internal/bulk-provision",
             json={
-                "publishers": [
-                    {"name": f"Publisher {i}", "contact_email": f"ed{i}@pub{i}.example.com"}
-                    for i in range(1, 4)
-                ],
+                "publishers": [{"name": f"Publisher {i}", "contact_email": f"ed{i}@pub{i}.example.com"} for i in range(1, 4)],
                 "partner_org_id": "org_partner",
                 "partner_name": "Freestar",
             },
@@ -186,9 +181,7 @@ def test_bulk_provision_provisioned_orgs_have_free_tier():
         resp = client.post(
             "/api/v1/organizations/internal/bulk-provision",
             json={
-                "publishers": [
-                    {"name": "Test Pub", "contact_email": "ed@testpub.example.com"}
-                ],
+                "publishers": [{"name": "Test Pub", "contact_email": "ed@testpub.example.com"}],
                 "partner_org_id": "org_partner",
                 "partner_name": "Freestar",
             },

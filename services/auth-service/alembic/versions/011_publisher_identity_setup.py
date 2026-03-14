@@ -40,10 +40,7 @@ def upgrade() -> None:
     )
 
     # 4. Mark existing users as setup-complete (they were already using the system)
-    op.execute(
-        "UPDATE users SET setup_completed_at = created_at "
-        "WHERE setup_completed_at IS NULL"
-    )
+    op.execute("UPDATE users SET setup_completed_at = created_at WHERE setup_completed_at IS NULL")
 
 
 def downgrade() -> None:

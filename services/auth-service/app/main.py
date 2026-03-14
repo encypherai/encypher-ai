@@ -2,8 +2,13 @@
 Auth Service - Main Application
 """
 
-from fastapi import FastAPI, Response
+import traceback
+import uuid as _uuid
+
+from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 
 from .core.config import settings
@@ -156,6 +161,64 @@ app.include_router(organizations_router, prefix="/api/v1", tags=["organizations"
 app.include_router(saml_router, prefix="/api/v1/auth", tags=["saml"])
 app.include_router(scim_router)
 
+
+# ---------------------------------------------------------------
+# Global exception handlers
+# ---------------------------------------------------------------
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Return field-level validation errors with a usage hint."""
+    request_id = getattr(request.state, "request_id", None) or str(_uuid.uuid4())
+    errors = [
+        {
+            "field": " -> ".join(str(loc) for loc in err.get("loc", [])),
+            "message": err.get("msg", ""),
+            "type": err.get("type", ""),
+        }
+        for err in exc.errors()
+    ]
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "data": None,
+            "error": {
+                "detail": "Request validation failed. Check the 'errors' field for details.",
+                "errors": errors,
+                "hint": "Consult the API docs at /docs for field requirements.",
+                "request_id": request_id,
+            },
+        },
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch-all handler for unhandled 500 errors."""
+    request_id = getattr(request.state, "request_id", None) or str(_uuid.uuid4())
+    logger.error(
+        "unhandled_exception",
+        request_id=request_id,
+        path=request.url.path,
+        method=request.method,
+        error=str(exc),
+        traceback=traceback.format_exc(),
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "data": None,
+            "error": {
+                "detail": "An unexpected error occurred. Please try again or contact support.",
+                "request_id": request_id,
+            },
+        },
+    )
+
+
 # Fallback metrics endpoint (in case instrumentator isn't exposing it)
 try:
     from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
@@ -170,11 +233,20 @@ except ImportError:
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
+    """Capabilities index - lists available route groups."""
     return {
         "service": settings.SERVICE_NAME,
         "version": "1.0.0",
         "status": "running",
+        "routes": {
+            "authentication": "/api/v1/auth",
+            "organizations": "/api/v1/organizations",
+            "saml": "/api/v1/auth/saml",
+            "scim": "/scim/v2",
+            "health": "/health",
+            "metrics": "/metrics",
+            "docs": "/docs",
+        },
     }
 
 

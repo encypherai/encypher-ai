@@ -159,9 +159,7 @@ def test_complete_passkey_registration_stores_credential(service, mock_db, user)
 
 
 def test_begin_passkey_authentication_uses_existing_credentials(service, mock_db, user):
-    user.passkey_credentials = [
-        {"credential_id": "Y3JlZC1pZA", "public_key": "cHViLWtleQ", "sign_count": 0, "name": "Laptop"}
-    ]
+    user.passkey_credentials = [{"credential_id": "Y3JlZC1pZA", "public_key": "cHViLWtleQ", "sign_count": 0, "name": "Laptop"}]
     _wire_user(mock_db, user)
 
     with patch("app.services.auth_factors_service.generate_authentication_options") as generate_options:
@@ -176,9 +174,7 @@ def test_begin_passkey_authentication_uses_existing_credentials(service, mock_db
 def test_complete_passkey_authentication_updates_counter(service, mock_db, user):
     user.passkey_challenge = "Y2hhbGxlbmdl"
     user.passkey_challenge_expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
-    user.passkey_credentials = [
-        {"credential_id": "Y3JlZC1pZA", "public_key": "cHViLWtleQ", "sign_count": 1, "name": "Laptop"}
-    ]
+    user.passkey_credentials = [{"credential_id": "Y3JlZC1pZA", "public_key": "cHViLWtleQ", "sign_count": 1, "name": "Laptop"}]
     _wire_user(mock_db, user)
 
     credential = {"id": "Y3JlZC1pZA", "response": {}}

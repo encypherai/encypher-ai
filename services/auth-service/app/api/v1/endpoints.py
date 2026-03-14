@@ -56,6 +56,8 @@ from ...services.auth_factors_service import AuthFactorsService
 from ...services.turnstile_service import verify_turnstile_token
 from ...core.config import settings
 from ...core.security import create_typed_token, verify_token as verify_jwt_token, get_password_hash
+from ...core.auth import extract_bearer_token as _extract_bearer_token
+from ...core.responses import ok
 from ...db.models import Organization
 from ...deps.rate_limit import rate_limiter
 from ...db.models import User
@@ -91,18 +93,7 @@ def require_super_admin(db: Session, user_id: str) -> None:
         )
 
 
-def _extract_bearer_token(authorization: str) -> str:
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-        return token
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
+# _extract_bearer_token is imported from core.auth as _extract_bearer_token
 
 
 async def _enforce_turnstile_if_required(*, route: str, token: Optional[str], remote_ip: Optional[str]) -> None:
@@ -159,35 +150,31 @@ async def signup(
                 # Unverified user - resend verification email
                 token = AuthService.create_verification_token(db, user)
                 AuthService.send_verification_email(user, token)
-                return {
-                    "success": True,
-                    "data": {
+                return ok(
+                    {
                         **UserResponse.model_validate(user).model_dump(),
                         "verification_email_sent": True,
                         "message": "A verification email has been resent to your email address.",
-                    },
-                    "error": None,
-                }
+                    }
+                )
 
         # New user - send verification email
         token = AuthService.create_verification_token(db, user)
         AuthService.send_verification_email(user, token)
 
         # Wrap in standard response format
-        return {
-            "success": True,
-            "data": {
+        return ok(
+            {
                 **UserResponse.model_validate(user).model_dump(),
                 "verification_email_sent": True,
-            },
-            "error": None,
-        }
+            }
+        )
     except HTTPException:
         raise
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Request validation failed",
+            detail=str(e),
         )
 
 
@@ -241,7 +228,7 @@ async def login(
                     "error": {
                         "code": "E_MFA_SETUP_REQUIRED",
                         "message": (
-                            "Your organization requires two-factor authentication. " "Please sign in and go to Settings > Security to set up 2FA."
+                            "Your organization requires two-factor authentication. Please sign in and go to Settings > Security to set up 2FA."
                         ),
                     },
                 }
@@ -258,15 +245,13 @@ async def login(
                 token_type="mfa_challenge",
                 expires_delta=timedelta(minutes=settings.MFA_CHALLENGE_EXPIRE_MINUTES),
             )
-            return {
-                "success": True,
-                "data": {
+            return ok(
+                {
                     "mfa_required": True,
                     "mfa_token": mfa_token,
                     "available_methods": ["totp", "backup_code"],
-                },
-                "error": None,
-            }
+                }
+            )
 
         mfa_method = factor_service.verify_totp_or_backup(user, credentials.mfa_code)
         if not mfa_method:
@@ -289,17 +274,15 @@ async def login(
     )
     AuthService.mark_login_success(db, user)
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
             "mfa_method": mfa_method,
             "user": UserResponse.model_validate(user).model_dump(),
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.get("/mfa/status", response_model=None)
@@ -320,16 +303,14 @@ async def get_mfa_status(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "totp_enabled": bool(user.totp_enabled),
             "backup_codes_remaining": len(user.totp_backup_code_hashes or []),
             "passkeys_count": len(user.passkey_credentials or []),
             "passkeys": user.passkey_credentials or [],
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.post("/mfa/totp/setup", response_model=None)
@@ -343,7 +324,7 @@ async def setup_totp(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
 
     setup = AuthFactorsService(db).begin_totp_setup(payload["sub"])
-    return {"success": True, "data": setup, "error": None}
+    return ok(setup)
 
 
 @router.post("/mfa/totp/confirm", response_model=None)
@@ -359,7 +340,7 @@ async def confirm_totp(
 
     try:
         result = AuthFactorsService(db).confirm_totp_setup(payload["sub"], request.code)
-        return {"success": True, "data": result, "error": None}
+        return ok(result)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -395,17 +376,15 @@ async def complete_mfa_login(
     )
     AuthService.mark_login_success(db, user)
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
             "mfa_method": method,
             "user": UserResponse.model_validate(user).model_dump(),
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.post("/mfa/totp/disable", response_model=None)
@@ -421,7 +400,7 @@ async def disable_totp(
 
     try:
         AuthFactorsService(db).disable_totp(payload["sub"], request.code)
-        return {"success": True, "data": {"totp_enabled": False}, "error": None}
+        return ok({"totp_enabled": False})
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -439,7 +418,7 @@ async def start_passkey_registration(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
 
     result = AuthFactorsService(db).begin_passkey_registration(payload["sub"])
-    return {"success": True, "data": result, "error": None}
+    return ok(result)
 
 
 @router.post("/passkeys/register/complete", response_model=None)
@@ -457,7 +436,7 @@ async def complete_passkey_registration(
 
     try:
         result = AuthFactorsService(db).complete_passkey_registration(payload["sub"], request.credential, request.name)
-        return {"success": True, "data": result, "error": None}
+        return ok(result)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -471,7 +450,7 @@ async def start_passkey_authentication(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Passkeys disabled")
     try:
         result = AuthFactorsService(db).begin_passkey_authentication(request.email)
-        return {"success": True, "data": result, "error": None}
+        return ok(result)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
@@ -501,16 +480,14 @@ async def complete_passkey_authentication(
     )
     AuthService.mark_login_success(db, user)
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
             "user": UserResponse.model_validate(user).model_dump(),
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.delete("/passkeys/{credential_id}", response_model=None)
@@ -525,7 +502,7 @@ async def delete_passkey(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
     try:
         AuthFactorsService(db).delete_passkey(payload["sub"], credential_id)
-        return {"success": True, "data": {"deleted": True}, "error": None}
+        return ok({"deleted": True})
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
@@ -568,17 +545,15 @@ async def verify_email(
         ip_address=x_forwarded_for,
     )
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "message": "Email verified successfully",
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
             "user": UserResponse.model_validate(user).model_dump(),
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.post("/resend-verification")
@@ -595,13 +570,11 @@ async def resend_verification(
     # Always return success to prevent email enumeration
     AuthService.resend_verification_email(db, request.email)
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "message": "If an account exists with this email, a verification email has been sent.",
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 # ==========================================
@@ -624,13 +597,11 @@ async def forgot_password(
     """
     AuthService.request_password_reset(db, request.email)
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "message": "If an account exists with this email, a password reset email has been sent.",
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.post("/reset-password")
@@ -652,13 +623,11 @@ async def reset_password(
             detail="Invalid or expired reset token",
         )
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "message": "Password reset successfully. You can now log in with your new password.",
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.get("/validate-reset-token")
@@ -681,13 +650,11 @@ async def validate_reset_token(
             detail="Invalid or expired reset token",
         )
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "valid": True,
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 # ==========================================
@@ -716,16 +683,14 @@ async def refresh_token(
 
     new_access_token, new_refresh_token, user = result
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "access_token": new_access_token,
             "refresh_token": new_refresh_token,
             "token_type": "bearer",
             "user": UserResponse.model_validate(user).model_dump(),
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.post("/oauth/exchange")
@@ -816,16 +781,14 @@ async def oauth_exchange(
         user_agent=user_agent,
         ip_address=x_forwarded_for,
     )
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
             "user": UserResponse.model_validate(user).model_dump(),
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.post("/logout")
@@ -849,21 +812,11 @@ async def logout(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Refresh token not found",
             )
-        return {"success": True, "data": {"message": "Successfully logged out"}, "error": None}
+        return ok({"message": "Successfully logged out"})
 
-    # Case 2: Authorization header with access token – revoke all user's refresh tokens
+    # Case 2: Authorization header with access token -- revoke all user's refresh tokens
     if authorization:
-        try:
-            scheme, token = authorization.split()
-            if scheme.lower() != "bearer":
-                raise ValueError()
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
+        token = _extract_bearer_token(authorization)
         payload = AuthService.verify_access_token(token)
         if not payload:
             raise HTTPException(
@@ -873,7 +826,7 @@ async def logout(
             )
 
         AuthService.revoke_all_refresh_tokens_for_user(db, payload["sub"])
-        return {"success": True, "data": {"message": "Successfully logged out"}, "error": None}
+        return ok({"message": "Successfully logged out"})
 
     # Neither provided
     raise HTTPException(
@@ -895,16 +848,7 @@ async def verify_token(
     - **Authorization**: Bearer token in header
     """
     # Extract token from "Bearer <token>"
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     # Verify token
     payload = AuthService.verify_access_token(token)
@@ -925,7 +869,7 @@ async def verify_token(
             detail="User not found",
         )
 
-    return {"success": True, "data": UserResponse.model_validate(user).model_dump(), "error": None}
+    return ok(UserResponse.model_validate(user).model_dump())
 
 
 @router.get("/health")
@@ -954,16 +898,7 @@ async def request_api_access(
     - **use_case**: Description of how you plan to use the API (min 20 chars)
     """
     # Verify token and get user
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -978,15 +913,11 @@ async def request_api_access(
     try:
         service = ApiAccessService(db)
         result = await service.request_api_access(user_id=user_id, use_case=request.use_case)
-        return {
-            "success": True,
-            "data": result.model_dump(),
-            "error": None,
-        }
+        return ok(result.model_dump())
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Request validation failed",
+            detail=str(e),
         )
 
 
@@ -1006,16 +937,7 @@ async def get_api_access_status(
     - **denial_reason**: Reason if denied
     """
     # Verify token and get user
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1030,15 +952,11 @@ async def get_api_access_status(
     try:
         service = ApiAccessService(db)
         result = await service.get_api_access_status(user_id=user_id)
-        return {
-            "success": True,
-            "data": result.model_dump(),
-            "error": None,
-        }
+        return ok(result.model_dump())
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Request validation failed",
+            detail=str(e),
         )
 
 
@@ -1058,16 +976,7 @@ async def check_is_super_admin(
     Returns { is_super_admin: true/false }
     """
     # Verify token
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1080,13 +989,11 @@ async def check_is_super_admin(
     user_id = payload["sub"]
     is_admin = verify_super_admin(db, user_id)
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "is_super_admin": is_admin,
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.get("/admin/pending-access-requests", response_model=None)
@@ -1102,16 +1009,7 @@ async def list_pending_access_requests(
     Returns list of pending requests with user info and use cases.
     """
     # Verify token
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1129,14 +1027,12 @@ async def list_pending_access_requests(
     service = ApiAccessService(db)
     requests = await service.list_pending_requests()
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "requests": [r.model_dump() for r in requests],
             "total": len(requests),
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.get("/admin/stats", response_model=None)
@@ -1145,16 +1041,7 @@ async def get_admin_stats(
     db: Session = Depends(get_db),
 ):
     """Return platform stats for the admin dashboard."""
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1168,11 +1055,7 @@ async def get_admin_stats(
     require_super_admin(db, admin_user_id)
 
     stats = AdminService.get_platform_stats(db)
-    return {
-        "success": True,
-        "data": stats,
-        "error": None,
-    }
+    return ok(stats)
 
 
 @router.get("/admin/users", response_model=None)
@@ -1180,21 +1063,12 @@ async def list_admin_users(
     authorization: str = Header(...),
     search: Optional[str] = None,
     tier: Optional[str] = None,
-    page: int = 1,
-    page_size: int = 50,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
     """List users for the admin dashboard."""
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1214,11 +1088,7 @@ async def list_admin_users(
         page=page,
         page_size=page_size,
     )
-    return {
-        "success": True,
-        "data": result,
-        "error": None,
-    }
+    return ok(result)
 
 
 @router.get("/admin/newsletter-subscribers", response_model=None)
@@ -1230,16 +1100,7 @@ async def list_newsletter_subscribers(
     db: Session = Depends(get_db),
 ):
     """List newsletter subscribers for the admin dashboard (super admin only)."""
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1264,11 +1125,7 @@ async def list_newsletter_subscribers(
             detail="Newsletter service unavailable",
         ) from exc
 
-    return {
-        "success": True,
-        "data": result,
-        "error": None,
-    }
+    return ok(result)
 
 
 @router.post("/admin/newsletter-subscribers/{subscriber_id}/status", response_model=None)
@@ -1278,16 +1135,7 @@ async def update_newsletter_subscriber_status(
     authorization: str = Header(...),
     db: Session = Depends(get_db),
 ):
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     verified = AuthService.verify_access_token(token)
     if not verified:
@@ -1311,11 +1159,7 @@ async def update_newsletter_subscriber_status(
             detail="Newsletter service unavailable",
         ) from exc
 
-    return {
-        "success": True,
-        "data": result,
-        "error": None,
-    }
+    return ok(result)
 
 
 @router.delete("/admin/newsletter-subscribers/{subscriber_id}", response_model=None)
@@ -1324,16 +1168,7 @@ async def delete_newsletter_subscriber(
     authorization: str = Header(...),
     db: Session = Depends(get_db),
 ):
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     verified = AuthService.verify_access_token(token)
     if not verified:
@@ -1353,11 +1188,7 @@ async def delete_newsletter_subscriber(
             detail="Newsletter service unavailable",
         ) from exc
 
-    return {
-        "success": True,
-        "data": result,
-        "error": None,
-    }
+    return ok(result)
 
 
 @router.get("/admin/organizations/search", response_model=None)
@@ -1368,16 +1199,7 @@ async def search_admin_organizations(
     db: Session = Depends(get_db),
 ):
     """Search organizations for admin typeahead."""
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1391,11 +1213,7 @@ async def search_admin_organizations(
     require_super_admin(db, admin_user_id)
 
     results = AdminService.search_organizations(db=db, query=query, limit=limit)
-    return {
-        "success": True,
-        "data": results,
-        "error": None,
-    }
+    return ok(results)
 
 
 @router.post("/admin/users/update-tier", response_model=TierUpdateResponse)
@@ -1405,16 +1223,7 @@ async def update_admin_user_tier(
     db: Session = Depends(get_db),
 ):
     """Update a user's tier (super admin only)."""
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1448,16 +1257,7 @@ async def update_admin_user_status(
     db: Session = Depends(get_db),
 ):
     """Suspend or activate a user (super admin only)."""
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1491,16 +1291,7 @@ async def update_admin_user_role(
     db: Session = Depends(get_db),
 ):
     """Update a user's role within their organization (super admin only)."""
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1540,16 +1331,7 @@ async def approve_api_access(
     - **user_id**: ID of the user to approve
     """
     # Verify token
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1567,15 +1349,11 @@ async def approve_api_access(
     try:
         service = ApiAccessService(db)
         result = await service.approve_api_access(user_id=request.user_id, admin_user_id=admin_user_id)
-        return {
-            "success": True,
-            "data": result.model_dump(),
-            "error": None,
-        }
+        return ok(result.model_dump())
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Request validation failed",
+            detail=str(e),
         )
 
 
@@ -1594,16 +1372,7 @@ async def deny_api_access(
     - **reason**: Reason for denial (shown to user)
     """
     # Verify token
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1621,15 +1390,11 @@ async def deny_api_access(
     try:
         service = ApiAccessService(db)
         result = await service.deny_api_access(user_id=request.user_id, admin_user_id=admin_user_id, reason=request.reason)
-        return {
-            "success": True,
-            "data": result.model_dump(),
-            "error": None,
-        }
+        return ok(result.model_dump())
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Request validation failed",
+            detail=str(e),
         )
 
 
@@ -1650,16 +1415,7 @@ async def check_user_api_access(
     - **approved**: True if user can generate API keys
     """
     # Verify token
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1672,14 +1428,12 @@ async def check_user_api_access(
     service = ApiAccessService(db)
     is_approved = await service.is_api_access_approved(user_id=user_id)
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "user_id": user_id,
             "approved": is_approved,
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 # TEAM_164: Admin endpoint to directly set a user's API access status
@@ -1699,16 +1453,7 @@ async def set_api_access_status(
     - **status**: New API access status (not_requested, pending, approved, denied, suspended)
     - **reason**: Optional reason for the change
     """
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1740,7 +1485,7 @@ async def set_api_access_status(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Request validation failed",
+            detail=str(e),
         )
 
 
@@ -1765,16 +1510,7 @@ async def promote_to_super_admin(
     logger = structlog.get_logger(__name__)
 
     # Verify token
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1799,16 +1535,14 @@ async def promote_to_super_admin(
 
     # Check if already super admin
     if target_user.is_super_admin:
-        return {
-            "success": True,
-            "data": {
+        return ok(
+            {
                 "user_id": str(target_user.id),
                 "email": target_user.email,
                 "is_super_admin": True,
                 "message": "User is already a super admin",
-            },
-            "error": None,
-        }
+            }
+        )
 
     # Promote to super admin
     target_user.is_super_admin = True
@@ -1821,16 +1555,14 @@ async def promote_to_super_admin(
         target_email=request.email,
     )
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "user_id": str(target_user.id),
             "email": target_user.email,
             "is_super_admin": True,
             "message": "User promoted to super admin",
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.post("/admin/demote", response_model=None)
@@ -1850,16 +1582,7 @@ async def demote_from_super_admin(
     logger = structlog.get_logger(__name__)
 
     # Verify token
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1891,16 +1614,14 @@ async def demote_from_super_admin(
 
     # Check if not a super admin
     if not target_user.is_super_admin:
-        return {
-            "success": True,
-            "data": {
+        return ok(
+            {
                 "user_id": str(target_user.id),
                 "email": target_user.email,
                 "is_super_admin": False,
                 "message": "User is not a super admin",
-            },
-            "error": None,
-        }
+            }
+        )
 
     # Demote from super admin
     target_user.is_super_admin = False
@@ -1913,16 +1634,14 @@ async def demote_from_super_admin(
         target_email=request.email,
     )
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "user_id": str(target_user.id),
             "email": target_user.email,
             "is_super_admin": False,
             "message": "User demoted from super admin",
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.get("/admin/list-super-admins", response_model=None)
@@ -1936,16 +1655,7 @@ async def list_super_admins(
     **Super Admin only** - Requires existing super admin privileges.
     """
     # Verify token
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -1963,9 +1673,8 @@ async def list_super_admins(
     # Get all super admins
     super_admins = db.query(User).filter(User.is_super_admin == True).all()
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "super_admins": [
                 {
                     "user_id": str(u.id),
@@ -1975,9 +1684,8 @@ async def list_super_admins(
                 for u in super_admins
             ],
             "total": len(super_admins),
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 # ============================================
@@ -1993,16 +1701,7 @@ async def get_onboarding_status(
     """
     Get the current onboarding checklist status for the authenticated user.
     """
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -2017,11 +1716,7 @@ async def get_onboarding_status(
     try:
         service = OnboardingService(db)
         result = service.get_onboarding_status(user_id)
-        return {
-            "success": True,
-            "data": result.model_dump(),
-            "error": None,
-        }
+        return ok(result.model_dump())
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -2038,16 +1733,7 @@ async def complete_onboarding_step(
     """
     Mark an onboarding step as complete for the authenticated user.
     """
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -2062,11 +1748,7 @@ async def complete_onboarding_step(
     try:
         service = OnboardingService(db)
         result = service.complete_step(user_id, request.step_id)
-        return {
-            "success": True,
-            "data": result.model_dump(),
-            "error": None,
-        }
+        return ok(result.model_dump())
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -2083,16 +1765,7 @@ async def dismiss_onboarding(
     Dismiss the onboarding checklist for the authenticated user.
     The checklist will no longer be shown.
     """
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -2107,11 +1780,7 @@ async def dismiss_onboarding(
     try:
         service = OnboardingService(db)
         result = service.dismiss_checklist(user_id)
-        return {
-            "success": True,
-            "data": result.model_dump(),
-            "error": None,
-        }
+        return ok(result.model_dump())
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -2133,16 +1802,7 @@ async def get_setup_status(
     Check if the authenticated user has completed the mandatory setup wizard.
     Dashboard should call this on load and block UI if setup_completed is false.
     """
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -2162,9 +1822,8 @@ async def get_setup_status(
     if user.default_organization_id:
         org = db.query(Organization).filter(Organization.id == user.default_organization_id).first()
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "setup_completed": user.setup_completed_at is not None,
             "setup_completed_at": user.setup_completed_at.isoformat() if user.setup_completed_at else None,
             "account_type": org.account_type if org else None,
@@ -2173,9 +1832,8 @@ async def get_setup_status(
             "dashboard_layout": org.dashboard_layout if org else None,
             "publisher_platform": org.publisher_platform if org else None,
             "publisher_platform_custom": org.publisher_platform_custom if org else None,
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.post("/setup/complete", response_model=None)
@@ -2189,16 +1847,7 @@ async def complete_setup(
     Sets the organization's account_type, display_name, and name,
     then marks the user's setup as complete.
     """
-    try:
-        scheme, token = authorization.split()
-        if scheme.lower() != "bearer":
-            raise ValueError()
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    token = _extract_bearer_token(authorization)
 
     payload = AuthService.verify_access_token(token)
     if not payload:
@@ -2249,9 +1898,8 @@ async def complete_setup(
 
     db.commit()
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "setup_completed": True,
             "setup_completed_at": user.setup_completed_at.isoformat(),
             "account_type": org.account_type,
@@ -2260,9 +1908,8 @@ async def complete_setup(
             "dashboard_layout": org.dashboard_layout,
             "publisher_platform": org.publisher_platform,
             "publisher_platform_custom": org.publisher_platform_custom,
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 # ============================================================
@@ -2321,11 +1968,10 @@ async def create_user_internal(
     access_token, refresh_token = AuthService.create_tokens(user)
     AuthService.store_refresh_token(db, user.id, refresh_token)
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "user_id": user.id,
             "access_token": access_token,
             "refresh_token": refresh_token,
-        },
-    }
+        }
+    )

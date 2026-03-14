@@ -25,16 +25,10 @@ def upgrade() -> None:
     # 1. Auto-approve all existing users who haven't requested access yet
     #    (they were stuck at 'not_requested' under the old gate)
     #    Do NOT touch suspended or denied users — admins set those intentionally.
-    op.execute(
-        "UPDATE users SET api_access_status = 'approved' "
-        "WHERE api_access_status = 'not_requested'"
-    )
+    op.execute("UPDATE users SET api_access_status = 'approved' WHERE api_access_status = 'not_requested'")
 
     # 2. Also auto-approve pending users (no more manual review)
-    op.execute(
-        "UPDATE users SET api_access_status = 'approved' "
-        "WHERE api_access_status = 'pending'"
-    )
+    op.execute("UPDATE users SET api_access_status = 'approved' WHERE api_access_status = 'pending'")
 
     # 3. Change the column default to 'approved' for new signups
     op.alter_column(
