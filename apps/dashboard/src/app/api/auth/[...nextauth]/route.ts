@@ -41,7 +41,11 @@ function mapBackendUser(user: BackendUser | undefined) {
   };
 }
 
-async function refreshBackendToken(refreshToken: string): Promise<RefreshedBackendSession | null> {
+type RefreshResult =
+  | { ok: true; data: RefreshedBackendSession }
+  | { ok: false; reason: string };
+
+async function refreshBackendToken(refreshToken: string): Promise<RefreshResult> {
   try {
     const res = await fetch(`${API_BASE}/auth/refresh`, {
       method: 'POST',
@@ -49,22 +53,29 @@ async function refreshBackendToken(refreshToken: string): Promise<RefreshedBacke
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
     if (!res.ok) {
-      console.warn('[NextAuth] Token refresh failed:', res.status);
-      return null;
+      const reason = `HTTP ${res.status}`;
+      console.warn('[NextAuth] Token refresh failed:', reason);
+      return { ok: false, reason };
     }
     const data = await res.json();
     if (data.success && data.data?.access_token) {
       return {
-        accessToken: data.data.access_token,
-        refreshToken: data.data.refresh_token,
-        accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
-        user: data.data.user,
+        ok: true,
+        data: {
+          accessToken: data.data.access_token,
+          refreshToken: data.data.refresh_token,
+          accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
+          user: data.data.user,
+        },
       };
     }
-    return null;
+    const reason = data.error?.message || data.detail || 'Unexpected response shape';
+    console.warn('[NextAuth] Token refresh: unexpected response -', reason);
+    return { ok: false, reason };
   } catch (err) {
-    console.error('[NextAuth] Token refresh error:', err);
-    return null;
+    const reason = err instanceof Error ? err.message : String(err);
+    console.error('[NextAuth] Token refresh error:', reason);
+    return { ok: false, reason };
   }
 }
 
@@ -94,6 +105,138 @@ async function verifyBackendAccessToken(accessToken: string): Promise<BackendUse
   }
 }
 
+// Shape returned from each authorize sub-handler (matches NextAuth User fields + extensions).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AuthorizeResult = any;
+
+// Shared helper: build the user object returned from a successful login.
+function buildAuthorizedUser(
+  user: BackendUser & { id?: string | number },
+  accessToken: string,
+  refreshToken: string | undefined,
+): AuthorizeResult {
+  return {
+    id: String(user.id),
+    email: user.email,
+    name: user.name,
+    accessToken,
+    refreshToken,
+    accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
+    role: user.role ?? user.account_type ?? user.permission ?? 'member',
+    tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
+  };
+}
+
+// Sub-handler: token-based login (email verification flow).
+// The password field carries the access token prefixed with '__TOKEN__'.
+async function authorizeWithToken(
+  email: string,
+  accessToken: string,
+  refreshToken: string | undefined,
+): Promise<AuthorizeResult> {
+  console.log('[NextAuth] Token-based login for:', email);
+  const verifyRes = await fetch(`${API_BASE}/auth/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!verifyRes.ok) {
+    console.log('[NextAuth] Token verification failed (HTTP', verifyRes.status, '), redirecting to manual login');
+    throw new Error('Session expired. Please log in with your credentials.');
+  }
+
+  const verifyData = await verifyRes.json();
+  if (verifyData.success && verifyData.data) {
+    console.log('[NextAuth] Token verification successful for:', verifyData.data.email);
+    return buildAuthorizedUser(verifyData.data, accessToken, refreshToken);
+  }
+
+  console.log('[NextAuth] Token verification failed: unexpected response');
+  throw new Error('Session expired. Please log in with your credentials.');
+}
+
+// Sub-handler: MFA completion flow.
+// Returns the authorized user on success, or { staleMfaChallenge: true } if the challenge expired.
+type MfaResult =
+  | { user: AuthorizeResult }
+  | { staleMfaChallenge: true };
+
+async function authorizeWithMfa(mfaToken: string, mfaCode: string): Promise<MfaResult> {
+  const mfaRes = await fetch(`${API_BASE}/auth/login/mfa/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mfa_token: mfaToken, mfa_code: mfaCode }),
+  });
+  const mfaData = await mfaRes.json();
+
+  if (mfaRes.ok && mfaData.success) {
+    return { user: buildAuthorizedUser(mfaData.data.user, mfaData.data.access_token, mfaData.data.refresh_token) };
+  }
+
+  const mfaErrorMessage = mfaData.detail || mfaData.error?.message || 'Invalid multi-factor authentication code';
+  if (mfaErrorMessage === 'Invalid or expired MFA challenge') {
+    console.warn('[NextAuth] Stale MFA challenge detected; retrying primary login flow');
+    return { staleMfaChallenge: true };
+  }
+
+  throw new Error(mfaErrorMessage);
+}
+
+// Sub-handler: standard credential login (email + password).
+// Also handles MFA-required redirect and HTTP error shaping.
+async function authorizeWithCredentials(
+  email: string,
+  password: string,
+  mfaCode: string | undefined,
+  turnstileToken: string | undefined,
+): Promise<AuthorizeResult> {
+  console.log('[NextAuth] Attempting login to:', `${API_BASE}/auth/login`);
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      password,
+      mfa_code: mfaCode || undefined,
+      turnstile_token: turnstileToken || undefined,
+    }),
+  });
+
+  const data = await res.json();
+  console.log('[NextAuth] API response status:', res.status, 'success:', data.success);
+
+  if (res.status === 401) {
+    const errorDetail = data?.detail || data?.error?.message;
+    console.log('[NextAuth] Login failed - unauthorized:', errorDetail || 'Invalid credentials');
+    throw new Error(errorDetail || 'Invalid email or password');
+  }
+
+  if (res.status === 403) {
+    console.log('[NextAuth] Login failed - account not verified');
+    throw new Error('Please verify your email before signing in');
+  }
+
+  if (!res.ok) {
+    console.log('[NextAuth] Login failed - server error:', res.status);
+    throw new Error(data.error?.message || data.detail || 'Login failed. Please try again.');
+  }
+
+  if (data.success && data.data?.mfa_required && data.data?.mfa_token) {
+    throw new Error(`MFA_REQUIRED:${data.data.mfa_token}`);
+  }
+
+  if (data.success && data.data?.user && data.data?.access_token) {
+    console.log('[NextAuth] Login successful for user:', data.data.user.email);
+    return buildAuthorizedUser(data.data.user, data.data.access_token, data.data.refresh_token);
+  }
+
+  console.log('[NextAuth] Login failed - invalid response structure');
+  throw new Error('Login failed. Please try again.');
+}
+
 const handler = NextAuth({
   providers: [
     // Email/Password Authentication
@@ -110,145 +253,35 @@ const handler = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           console.log('[NextAuth] Missing credentials');
-          throw new Error('Please enter both email and password');
-        }
-
-        // Handle token-based login from email verification
-        if (credentials.password.startsWith('__TOKEN__')) {
-          const accessToken = credentials.password.replace('__TOKEN__', '');
-          console.log('[NextAuth] Token-based login for:', credentials.email);
-
-          // Verify the token with the auth service
-          try {
-            const verifyRes = await fetch(`${API_BASE}/auth/verify`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-              },
-            });
-
-            if (verifyRes.ok) {
-              const verifyData = await verifyRes.json();
-              if (verifyData.success && verifyData.data) {
-                const user = verifyData.data;
-                console.log('[NextAuth] Token verification successful for:', user.email);
-                return {
-                  id: String(user.id),
-                  email: user.email,
-                  name: user.name,
-                  accessToken: accessToken,
-                  refreshToken: credentials.refreshToken,
-                  accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
-                  role: user.role ?? user.account_type ?? user.permission ?? 'member',
-                  tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
-                } as any;
-              }
-            }
-
-            // Token verification failed, fall through to show success but require manual login
-            console.log('[NextAuth] Token verification failed, user should login manually');
-            throw new Error('Session expired. Please log in with your credentials.');
-          } catch (error) {
-            console.error('[NextAuth] Token verification error:', error);
-            throw new Error('Session expired. Please log in with your credentials.');
-          }
+          throw new Error('Please enter both email and password. Navigate to /login if you need to reset your password.');
         }
 
         try {
-          let shouldRequestFreshMfaChallenge = false;
+          // Token-based login: password field carries a pre-issued access token.
+          if (credentials.password.startsWith('__TOKEN__')) {
+            const accessToken = credentials.password.replace('__TOKEN__', '');
+            return await authorizeWithToken(credentials.email, accessToken, credentials.refreshToken);
+          }
 
+          // MFA completion flow: client supplies both token and code.
           if (credentials.mfaToken && credentials.mfaCode) {
-            const mfaRes = await fetch(`${API_BASE}/auth/login/mfa/complete`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                mfa_token: credentials.mfaToken,
-                mfa_code: credentials.mfaCode,
-              }),
-            });
-            const mfaData = await mfaRes.json();
-            if (mfaRes.ok && mfaData.success) {
-              const user = mfaData.data.user;
-              return {
-                id: String(user.id),
-                email: user.email,
-                name: user.name,
-                accessToken: mfaData.data.access_token,
-                refreshToken: mfaData.data.refresh_token,
-                accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
-                role: user.role ?? user.account_type ?? user.permission ?? 'member',
-                tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
-              } as any;
+            const mfaResult = await authorizeWithMfa(credentials.mfaToken, credentials.mfaCode);
+            if ('user' in mfaResult) {
+              return mfaResult.user;
             }
-
-            const mfaErrorMessage = mfaData.detail || mfaData.error?.message || 'Invalid multi-factor authentication code';
-            if (mfaErrorMessage === 'Invalid or expired MFA challenge') {
-              console.warn('[NextAuth] Stale MFA challenge detected; retrying primary login flow');
-              // Request a fresh MFA challenge from primary login; do not send the stale code.
-              shouldRequestFreshMfaChallenge = true;
-            } else {
-              throw new Error(mfaErrorMessage);
-            }
+            // Stale challenge: fall through to fresh credential login without the stale MFA code.
           }
 
-          console.log('[NextAuth] Attempting login to:', `${API_BASE}/auth/login`);
-          // Call API Gateway auth login (SRF)
-          const res = await fetch(`${API_BASE}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-              mfa_code: shouldRequestFreshMfaChallenge ? undefined : credentials.mfaCode || undefined,
-              turnstile_token: credentials.turnstileToken || undefined,
-            }),
-          });
-
-          const data = await res.json();
-          console.log('[NextAuth] API response status:', res.status, 'success:', data.success);
-
-          // Handle specific error responses
-          if (res.status === 401) {
-            const errorDetail = data?.detail || data?.error?.message;
-            console.log('[NextAuth] Login failed - unauthorized:', errorDetail || 'Invalid credentials');
-            throw new Error(errorDetail || 'Invalid email or password');
-          }
-
-          if (res.status === 403) {
-            console.log('[NextAuth] Login failed - account not verified');
-            throw new Error('Please verify your email before signing in');
-          }
-
-          if (!res.ok) {
-            console.log('[NextAuth] Login failed - server error:', res.status);
-            throw new Error(data.error?.message || data.detail || 'Login failed. Please try again.');
-          }
-
-          if (data.success && data.data?.mfa_required && data.data?.mfa_token) {
-            throw new Error(`MFA_REQUIRED:${data.data.mfa_token}`);
-          }
-
-          if (data.success && data.data?.user && data.data?.access_token) {
-            const user = data.data.user;
-            console.log('[NextAuth] Login successful for user:', user.email);
-            return {
-              id: String(user.id),
-              email: user.email,
-              name: user.name,
-              accessToken: data.data.access_token,
-              refreshToken: data.data.refresh_token,
-              accessTokenExpires: Date.now() + ACCESS_TOKEN_TTL_MS - REFRESH_BUFFER_MS,
-              role: user.role ?? user.account_type ?? user.permission ?? 'member',
-              tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
-            } as any;
-          }
-
-          console.log('[NextAuth] Login failed - invalid response structure');
-          throw new Error('Login failed. Please try again.');
+          // Standard credential login (also handles fresh MFA challenge after stale one).
+          const mfaCode = (credentials.mfaToken && credentials.mfaCode) ? undefined : credentials.mfaCode;
+          return await authorizeWithCredentials(
+            credentials.email,
+            credentials.password,
+            mfaCode,
+            credentials.turnstileToken,
+          );
         } catch (error) {
           console.error('[NextAuth] Auth error:', error);
-          // Re-throw if it's already our custom error
           if (error instanceof Error) {
             throw error;
           }
@@ -365,8 +398,9 @@ const handler = NextAuth({
 
         if (token.refreshToken) {
           console.warn('[NextAuth] Backend session verify failed, attempting refresh fallback');
-          const refreshed = await refreshBackendToken(token.refreshToken as string);
-          if (refreshed) {
+          const refreshResult = await refreshBackendToken(token.refreshToken as string);
+          if (refreshResult.ok) {
+            const refreshed = refreshResult.data;
             const mappedUser = mapBackendUser(refreshed.user);
             return {
               ...token,
@@ -383,7 +417,7 @@ const handler = NextAuth({
             };
           }
 
-          console.warn('[NextAuth] Backend session verify refresh fallback failed; keeping current valid access token until expiry');
+          console.warn('[NextAuth] Backend session verify refresh fallback failed:', refreshResult.reason, '- keeping current valid access token until expiry');
           return {
             ...token,
             backendVerifiedAt: Date.now(),
@@ -402,9 +436,10 @@ const handler = NextAuth({
       // Access token expired (or no expiry recorded for legacy sessions) - attempt silent refresh
       if (token.refreshToken) {
         console.log('[NextAuth] Access token expired, attempting silent refresh');
-        const refreshed = await refreshBackendToken(token.refreshToken as string);
-        if (refreshed) {
+        const refreshResult = await refreshBackendToken(token.refreshToken as string);
+        if (refreshResult.ok) {
           console.log('[NextAuth] Silent token refresh successful');
+          const refreshed = refreshResult.data;
           const mappedUser = mapBackendUser(refreshed.user);
           return {
             ...token,
@@ -420,8 +455,8 @@ const handler = NextAuth({
             error: undefined,
           };
         }
-        console.warn('[NextAuth] Silent token refresh failed - marking session for logout');
-        return { ...token, error: 'RefreshAccessTokenError' };
+        console.warn('[NextAuth] Silent token refresh failed:', refreshResult.reason, '- marking session for logout');
+        return { ...token, error: `RefreshAccessTokenError: ${refreshResult.reason}` };
       }
 
       // Legacy sessions without refresh tokens are allowed to continue until they naturally expire.
