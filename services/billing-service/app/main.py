@@ -42,11 +42,11 @@ async def lifespan(app: FastAPI):
             validation_results = await price_cache.validate_prices_on_startup()
             valid_count = sum(1 for v in validation_results.values() if v)
             total_count = len(validation_results)
-            
+
             if valid_count == total_count:
-                logger.info(f"✅ All {total_count} Stripe prices validated successfully")
+                logger.info(f"All {total_count} Stripe prices validated successfully")
             else:
-                logger.warning(f"⚠️  Only {valid_count}/{total_count} Stripe prices validated")
+                logger.warning(f"Only {valid_count}/{total_count} Stripe prices validated")
                 logger.warning("Service will continue, but some checkout flows may fail")
         except Exception as e:
             logger.error(f"Failed to validate Stripe prices: {e}")
@@ -89,6 +89,24 @@ async def root():
         "service": settings.SERVICE_NAME,
         "version": "1.0.0",
         "status": "running",
+        "docs_url": "/docs",
+        "openapi_url": "/openapi.json",
+        "health_url": "/health",
+        "capabilities": [
+            "GET  /api/v1/billing/subscription   - get current subscription",
+            "POST /api/v1/billing/subscription   - create subscription",
+            "DELETE /api/v1/billing/subscription/{id} - cancel subscription",
+            "GET  /api/v1/billing/invoices        - list invoices",
+            "GET  /api/v1/billing/stats           - billing statistics",
+            "GET  /api/v1/billing/usage           - current period usage metrics",
+            "GET  /api/v1/billing/plans           - available plans and pricing",
+            "POST /api/v1/billing/checkout        - create Stripe checkout session",
+            "POST /api/v1/billing/checkout/add-on - purchase add-on",
+            "GET  /api/v1/billing/portal          - Stripe billing portal URL",
+            "POST /api/v1/billing/upgrade         - change subscription tier",
+            "GET  /api/v1/billing/coalition        - coalition earnings summary",
+            "GET  /api/v1/billing/health          - service health",
+        ],
     }
 
 
@@ -97,6 +115,8 @@ async def health():
     return {
         "status": "healthy",
         "service": settings.SERVICE_NAME,
+        "docs_url": "/docs",
+        "openapi_url": "/openapi.json",
     }
 
 

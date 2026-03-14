@@ -1,10 +1,11 @@
 """API endpoints for Billing Service v1"""
 
+import asyncio
 import httpx
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Header
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -76,25 +77,15 @@ class InternalTrialResponse(BaseModel):
     data: SubscriptionResponse
 
 
-def _build_subscription_response(subscription: SubscriptionCreate | SubscriptionResponse | object) -> SubscriptionResponse:
+def _build_subscription_response(subscription: object) -> SubscriptionResponse:
     if isinstance(subscription, SubscriptionResponse):
         return subscription
-    return SubscriptionResponse(
-        id=subscription.id,
-        user_id=subscription.user_id,
-        organization_id=getattr(subscription, "organization_id", None),
-        plan_id=subscription.plan_id,
-        plan_name=subscription.plan_name,
-        tier=subscription.plan_id,
-        status=subscription.status,
-        billing_cycle=subscription.billing_cycle,
-        amount=subscription.amount,
-        currency=subscription.currency,
-        current_period_start=subscription.current_period_start,
-        current_period_end=subscription.current_period_end,
-        cancel_at_period_end=subscription.cancel_at_period_end,
-        created_at=subscription.created_at,
-    )
+    # `tier` is not a DB column; derive it from plan_id before validation.
+    fields = {field: getattr(subscription, field, None) for field in SubscriptionResponse.model_fields}
+    # Override tier only when absent or None — it mirrors plan_id.
+    if not fields.get("tier"):
+        fields["tier"] = getattr(subscription, "plan_id", None) or ""
+    return SubscriptionResponse.model_validate(fields)
 
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
@@ -105,7 +96,7 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid authentication credentials",
+                    detail=("Invalid authentication credentials. Provide a valid Bearer token in the Authorization header."),
                 )
             payload = response.json()
             if isinstance(payload, dict) and "data" in payload:
@@ -118,7 +109,7 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
     except httpx.RequestError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Auth service unavailable",
+            detail=("Auth service unavailable. Please retry in a few moments. If the problem persists, contact support@encypherai.com."),
         )
 
 
@@ -136,10 +127,10 @@ async def create_subscription(
             subscription_data=subscription_data,
         )
         return _build_subscription_response(subscription)
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Request validation failed",
+            detail=(f"Request validation failed: {e}. See available plans: GET /api/v1/billing/plans."),
         )
 
 
@@ -154,7 +145,9 @@ async def get_subscription(
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No active subscription found",
+            detail=(
+                "No active subscription found. To create one: POST /api/v1/billing/subscription. To view available plans: GET /api/v1/billing/plans."
+            ),
         )
 
     return _build_subscription_response(subscription)
@@ -172,7 +165,7 @@ async def cancel_subscription(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Subscription not found",
+            detail=("Subscription not found. To retrieve your current subscription ID: GET /api/v1/billing/subscription."),
         )
 
     return {"message": "Subscription will be canceled at period end"}
@@ -180,11 +173,11 @@ async def cancel_subscription(
 
 @router.get("/invoices", response_model=List[InvoiceResponse])
 async def get_invoices(
-    limit: int = 100,
+    limit: int = Query(default=20, ge=1, le=100, description="Number of invoices to return (max 100)"),
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    """Get invoices"""
+    """Get invoices (max 100 per request). Use limit param to control page size."""
     invoices = BillingService.get_invoices(db, current_user["id"], limit)
     return invoices
 
@@ -205,9 +198,10 @@ async def create_trial_subscription_internal(
     internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
     db: Session = Depends(get_db),
 ):
-    if settings.INTERNAL_SERVICE_TOKEN:
-        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+    if not settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Internal endpoint not configured")
+    if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
     try:
         subscription = BillingService.create_trial_subscription(
             db=db,
@@ -216,8 +210,11 @@ async def create_trial_subscription_internal(
             tier=payload.tier.value,
             trial_months=payload.trial_months,
         )
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Request validation failed: {e}. Valid tiers: free, pro, enterprise.",
+        )
 
     return InternalTrialResponse(success=True, data=_build_subscription_response(subscription))
 
@@ -247,13 +244,26 @@ async def create_checkout_session(
     if request.tier in [TierName.FREE, TierName.ENTERPRISE, TierName.STRATEGIC_PARTNER]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot checkout for {request.tier.value} tier. Free tier requires no payment; Enterprise requires contacting sales.",
+            detail=(
+                f"Cannot checkout for {request.tier.value} tier. "
+                "Free tier requires no payment. "
+                "Enterprise requires contacting sales at sales@encypherai.com. "
+                "For self-service checkout, use tier=pro with billing_cycle=monthly or annual. "
+                "See available plans: GET /api/v1/billing/plans."
+            ),
         )
 
     # Get Stripe price ID
     price_id = get_stripe_price_id(request.tier.value, request.billing_cycle)
     if not price_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Price not configured for {request.tier.value} {request.billing_cycle}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Price not configured for {request.tier.value}/{request.billing_cycle}. "
+                "Valid billing_cycle values: monthly, annual. "
+                "See available plans: GET /api/v1/billing/plans."
+            ),
+        )
 
     try:
         # Get or create Stripe customer
@@ -286,8 +296,14 @@ async def create_checkout_session(
             session_id=session.id,
         )
 
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create checkout session")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("create_checkout_session_failed error=%s type=%s", e, type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create checkout session: {type(e).__name__}. Contact support if this persists.",
+        )
 
 
 @router.post("/checkout/add-on", response_model=CheckoutResponse)
@@ -297,11 +313,17 @@ async def create_add_on_checkout_session(
 ):
     add_on = request.add_on.replace("-", "_")
     if add_on != "bulk_archive_backfill":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported add-on")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(f"Unsupported add-on: {request.add_on!r}. Valid add-ons: bulk_archive_backfill (also accepted as bulk-archive-backfill)."),
+        )
 
     price_id = get_add_on_stripe_price_id(add_on)
     if not price_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Price not configured for add-on")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=("Price not configured for add-on. The add-on price may not be set up in Stripe. Contact support@encypherai.com."),
+        )
 
     try:
         customer = await StripeService.get_or_create_customer(
@@ -329,8 +351,14 @@ async def create_add_on_checkout_session(
         )
 
         return CheckoutResponse(checkout_url=session.url, session_id=session.id)
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create add-on checkout session")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("create_add_on_checkout_failed error=%s type=%s", e, type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create add-on checkout session: {type(e).__name__}. Contact support if this persists.",
+        )
 
 
 @router.get("/portal", response_model=PortalResponse)
@@ -367,8 +395,14 @@ async def get_billing_portal(
 
         return PortalResponse(portal_url=session.url)
 
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create billing portal session")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("create_billing_portal_failed error=%s type=%s", e, type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create billing portal session: {type(e).__name__}. Contact support if this persists.",
+        )
 
 
 @router.post("/upgrade", response_model=UpgradeResponse)
@@ -378,84 +412,22 @@ async def upgrade_subscription(
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Upgrade to a higher tier.
+    Change tier.
 
-    For paid tiers, returns a Stripe checkout URL.
-    For downgrades or free tier, processes immediately.
+    Enterprise requires contacting sales. Free tier downgrades
+    route through the Stripe Billing Portal for cancellation.
     """
     target_tier = request.target_tier
 
-    # If moving to a paid tier, route through Stripe confirmation
-    if target_tier in [TierName.PROFESSIONAL, TierName.BUSINESS]:
-        price_id = get_stripe_price_id(target_tier.value, request.billing_cycle)
-
-        if not price_id:
-            return UpgradeResponse(
-                success=False,
-                message=f"Price not configured for {target_tier.value}. Please contact support.",
-            )
-
-        try:
-            existing_subscription = BillingService.get_user_subscription(db, current_user["id"])
-            customer = await StripeService.get_or_create_customer(
-                email=current_user.get("email"),
-                organization_id=current_user.get("organization_id"),
-            )
-
-            base_url = settings.DASHBOARD_URL
-            if existing_subscription and existing_subscription.stripe_subscription_id:
-                portal_session = await StripeService.create_billing_portal_session(
-                    customer_id=customer.id,
-                    return_url=f"{base_url}/billing",
-                    flow_data={
-                        "type": "subscription_update",
-                        "subscription_update": {
-                            "subscription": existing_subscription.stripe_subscription_id,
-                        },
-                    },
-                )
-                return UpgradeResponse(
-                    success=True,
-                    checkout_url=portal_session.url,
-                    message="Redirecting to Stripe to confirm your plan change.",
-                    new_tier=target_tier.value,
-                )
-
-            # No active subscription yet -> use Checkout to create it
-            session = await StripeService.create_checkout_session(
-                customer_id=customer.id,
-                price_id=price_id,
-                success_url=f"{base_url}/billing?upgrade=success",
-                cancel_url=f"{base_url}/billing?upgrade=canceled",
-                organization_id=current_user.get("organization_id"),
-                metadata={
-                    "user_id": current_user.get("id") or "",
-                    "organization_id": current_user.get("organization_id") or "",
-                },
-            )
-
-            return UpgradeResponse(
-                success=True,
-                checkout_url=session.url,
-                message=f"Redirecting to checkout for {target_tier.value} plan",
-                new_tier=target_tier.value,
-            )
-
-        except Exception as e:
-            return UpgradeResponse(
-                success=False,
-                message=f"Failed to create checkout: {str(e)}",
-            )
-
-    # For Enterprise, return contact sales message
-    elif target_tier == TierName.ENTERPRISE:
+    # Enterprise requires custom pricing — no self-service path.
+    if target_tier == TierName.ENTERPRISE:
         return UpgradeResponse(
             success=False,
             message="Enterprise plans require custom pricing. Please contact sales@encypherai.com",
         )
 
-    # For Starter (downgrade), redirect to Stripe Billing Portal for confirmation
-    elif target_tier == TierName.STARTER:
+    # Free tier: redirect to Stripe Billing Portal to cancel existing subscription.
+    if target_tier == TierName.FREE:
         try:
             existing_subscription = BillingService.get_user_subscription(db, current_user["id"])
             customer = await StripeService.get_or_create_customer(
@@ -469,9 +441,7 @@ async def upgrade_subscription(
                 return_url=f"{base_url}/billing",
                 flow_data={
                     "type": "subscription_cancel",
-                    "subscription_cancel": {
-                        "subscription": subscription_id,
-                    },
+                    "subscription_cancel": {"subscription": subscription_id},
                 }
                 if subscription_id
                 else None,
@@ -480,17 +450,18 @@ async def upgrade_subscription(
                 success=True,
                 checkout_url=portal_session.url,
                 message="Redirecting to Stripe to confirm your downgrade.",
-                new_tier="free",
+                new_tier=TierName.FREE.value,
             )
         except Exception as e:
+            logger.error("upgrade_to_free_failed error=%s", e)
             return UpgradeResponse(
                 success=False,
-                message=f"Failed to open billing portal: {str(e)}",
+                message="Failed to open billing portal. Please try again or contact support.",
             )
 
     return UpgradeResponse(
         success=False,
-        message="Invalid tier specified",
+        message=f"Unrecognised target tier: {target_tier.value}",
     )
 
 
@@ -711,17 +682,20 @@ async def get_coalition_earnings(
     tier_info = PRICING_TIERS.get(tier, PRICING_TIERS["free"])
     rev_share = tier_info["coalition_rev_share"]
 
-    # Fetch real coalition data from coalition-service
+    # Fetch real coalition data from coalition-service — both requests run concurrently.
     coalition_raw = None
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            status_resp = await client.get(
-                f"{settings.COALITION_SERVICE_URL}/api/v1/coalition/status/{user_id}",
-                headers={"Authorization": authorization},
-            )
-            revenue_resp = await client.get(
-                f"{settings.COALITION_SERVICE_URL}/api/v1/coalition/revenue/{user_id}",
-                headers={"Authorization": authorization},
+            auth_headers = {"Authorization": authorization}
+            status_resp, revenue_resp = await asyncio.gather(
+                client.get(
+                    f"{settings.COALITION_SERVICE_URL}/api/v1/coalition/status/{user_id}",
+                    headers=auth_headers,
+                ),
+                client.get(
+                    f"{settings.COALITION_SERVICE_URL}/api/v1/coalition/revenue/{user_id}",
+                    headers=auth_headers,
+                ),
             )
             if status_resp.status_code == 200 and revenue_resp.status_code == 200:
                 coalition_raw = {
@@ -734,6 +708,7 @@ async def get_coalition_earnings(
     if coalition_raw:
         status_data = coalition_raw["status"]
         revenue_data = coalition_raw["revenue"]
+        earnings_history = revenue_data.get("earnings_history", [])
         return {
             "member": status_data.get("is_member", True),
             "opted_out": status_data.get("opted_out", False),
@@ -743,9 +718,13 @@ async def get_coalition_earnings(
             "total_earnings": revenue_data.get("total_earnings", 0.0),
             "pending_earnings": revenue_data.get("pending_earnings", 0.0),
             "last_payout_date": revenue_data.get("last_payout_date"),
-            "earnings_history": revenue_data.get("earnings_history", []),
+            "earnings_history": earnings_history,
             "payout_account_connected": revenue_data.get("payout_account_connected", False),
             "payout_account_url": revenue_data.get("payout_account_url"),
+            "pagination": {
+                "returned": len(earnings_history),
+                "note": "earnings_history shows most recent records only",
+            },
         }
     else:
         # Coalition-service unreachable or auth failed.
@@ -753,10 +732,16 @@ async def get_coalition_earnings(
         org_id = current_user.get("organization_id") or current_user.get("default_organization_id")
         content_earnings = _query_content_coalition_earnings(org_id) if org_id else None
         if content_earnings:
-            return content_earnings | {
+            history = content_earnings.get("earnings_history", [])
+            result = content_earnings | {
                 "publisher_share_percent": rev_share["publisher"],
                 "encypher_share_percent": rev_share["encypher"],
+                "pagination": {
+                    "returned": len(history),
+                    "note": "earnings_history capped at 12 most recent records (fallback query)",
+                },
             }
+            return result
         return {
             "member": True,
             "opted_out": False,
@@ -769,6 +754,10 @@ async def get_coalition_earnings(
             "earnings_history": [],
             "payout_account_connected": False,
             "payout_account_url": None,
+            "pagination": {
+                "returned": 0,
+                "note": "no earnings data available",
+            },
         }
 
 

@@ -16,10 +16,12 @@ stripe_service = importlib.import_module("app.services.stripe_service")
 @pytest.mark.parametrize(
     "price_id,expected",
     [
-        ("price_prof_monthly", "professional"),
-        ("price_prof_annual", "professional"),
-        ("price_business_monthly", "business"),
-        ("price_business_annual", "business"),
+        # Legacy professional/business price IDs now map to "free" (TEAM_145).
+        ("price_prof_monthly", "free"),
+        ("price_prof_annual", "free"),
+        ("price_business_monthly", "free"),
+        ("price_business_annual", "free"),
+        # Unknown or None price IDs return None.
         ("price_unknown", None),
         (None, None),
     ],
@@ -35,6 +37,7 @@ def test_resolve_tier_from_price_id(monkeypatch, price_id, expected):
 
 @pytest.mark.asyncio
 async def test_handle_subscription_updated_syncs_and_persists(monkeypatch):
+    """Subscription updated with a legacy professional price ID -> resolves to 'free'."""
     monkeypatch.setattr(stripe_service.settings, "STRIPE_PRICE_PROFESSIONAL_MONTHLY", "price_prof_monthly")
     monkeypatch.setattr(stripe_service.settings, "STRIPE_PRICE_PROFESSIONAL_ANNUAL", "price_prof_annual")
     monkeypatch.setattr(stripe_service.settings, "STRIPE_PRICE_BUSINESS_MONTHLY", "price_business_monthly")
@@ -61,8 +64,9 @@ async def test_handle_subscription_updated_syncs_and_persists(monkeypatch):
 
     result = await stripe_service.StripeService._handle_subscription_updated(subscription)
 
-    assert result["tier"] == "professional"
+    # Legacy price IDs resolve to "free" (TEAM_145: professional/business tiers removed).
+    assert result["tier"] == "free"
     assert calls["sync"]["organization_id"] == "org_123"
     assert calls["sync"]["stripe_subscription_id"] == "sub_123"
     assert calls["upsert"]["organization_id"] == "org_123"
-    assert calls["upsert"]["tier"] == "professional"
+    assert calls["upsert"]["tier"] == "free"

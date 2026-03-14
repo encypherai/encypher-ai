@@ -348,33 +348,6 @@ class StripeService:
             logger.error(f"Failed to create one-time checkout session: {e}")
             raise
 
-    @staticmethod
-    async def create_upgrade_checkout(
-        customer_id: str, current_subscription_id: str, new_price_id: str, success_url: str, cancel_url: str
-    ) -> stripe.checkout.Session:
-        """
-        Create checkout session for upgrading subscription.
-
-        Uses Stripe's proration to handle upgrade billing.
-        """
-        try:
-            # For upgrades, we use the billing portal or modify subscription directly
-            # Checkout is mainly for new subscriptions
-            session = stripe.checkout.Session.create(
-                customer=customer_id,
-                mode="subscription",
-                line_items=[{"price": new_price_id, "quantity": 1}],
-                success_url=success_url,
-                cancel_url=cancel_url,
-                subscription_data={"metadata": {"upgrade_from": current_subscription_id}},
-            )
-
-            return session
-
-        except StripeError as e:
-            logger.error(f"Failed to create upgrade checkout: {e}")
-            raise
-
     # =========================================================================
     # Billing Portal
     # =========================================================================

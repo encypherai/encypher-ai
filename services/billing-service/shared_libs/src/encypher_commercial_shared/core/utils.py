@@ -74,23 +74,8 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
     file_path = Path(file_path) if isinstance(file_path, str) else file_path
     suffix = file_path.suffix.lower()
 
-    # Check if PyPDF2 is available for PDF extraction
-    PYPDF2_AVAILABLE = False
-    try:
-        import PyPDF2
-
-        PYPDF2_AVAILABLE = True
-    except ImportError:
-        pass
-
-    # Check if docx2txt is available for DOCX extraction
-    DOCX2TXT_AVAILABLE = False
-    try:
-        import docx2txt
-
-        DOCX2TXT_AVAILABLE = True
-    except ImportError:
-        pass
+    # Use module-level availability flags set at import time.
+    # (Re-importing inside this function would shadow those flags and add per-call overhead.)
 
     if suffix in [".txt", ".md", ".py", ".js", ".html", ".css", ".json", ".xml", ".csv", ".log"]:
         try:
@@ -561,8 +546,8 @@ def scan_directory(
                     if verify_content_integrity and result.has_metadata:
                         # If the signature is valid, perform additional checks
                         if result.verified:
-                            # Extract text from the file
-                            content = extract_text_from_file(file_path)
+                            # Reuse text_content already extracted above (avoid redundant read).
+                            content = text_content
                             if content:
                                 # Check if the content has been tampered with after metadata was embedded
                                 if "[THIS TEXT WAS MODIFIED AFTER SIGNING]" in content:
@@ -613,11 +598,10 @@ def scan_directory(
                 if verify_content_integrity and result.has_metadata:
                     # If the signature is valid, perform additional checks
                     if result.verified:
-                        # Extract text from the file
-                        content = extract_text_from_file(file_path)
+                        # Reuse text_content already extracted above (avoid redundant read).
+                        content = text_content
                         if content:
                             # Check if the content has been tampered with after metadata was embedded
-                            # Look for various tampering markers
                             tampering_markers = [
                                 "[THIS TEXT WAS MODIFIED AFTER SIGNING]",
                                 "[THIS TEXT WAS MODIFIED]",
