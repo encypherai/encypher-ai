@@ -35,3 +35,8 @@ target-version = "py311"
 
 [tool.ruff.lint]
 ignore = ["E402", "E701", "E712", "E722", "E741", "F401", "F841", "B904", "B005"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.6",
+]
