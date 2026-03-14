@@ -13,7 +13,7 @@ from app.api.utils import create_demo_record, send_emails_background
 from app.schemas.demo_request import DemoRequestCreate
 
 logger = logging.getLogger(__name__)
-router = APIRouter(description="Sales contact form endpoints for enterprise and general inquiries.")
+router = APIRouter()
 
 
 async def _create_sales_contact(

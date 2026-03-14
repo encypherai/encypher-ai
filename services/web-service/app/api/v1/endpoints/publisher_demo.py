@@ -18,7 +18,7 @@ from app.schemas.analytics_event import AnalyticsEventCreate, AnalyticsEventResp
 from app.schemas.demo_request import DemoRequestCreate
 
 logger = logging.getLogger(__name__)
-router = APIRouter(description="Demo requests and analytics for the Publisher Demo landing page.")
+router = APIRouter()
 
 _SOURCE = "publisher-demo"
 

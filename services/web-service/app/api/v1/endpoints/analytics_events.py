@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app import crud, schemas
 from app.api import deps
 
-router = APIRouter(description="Track and retrieve marketing analytics events.")
+router = APIRouter()
 
 
 @router.post("/", response_model=schemas.AnalyticsEventResponse)

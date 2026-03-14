@@ -12,7 +12,7 @@ from app.api import deps
 from app.core.config import settings
 from app.services.email import send_demo_confirmation, send_demo_notification
 
-router = APIRouter(description="CRUD endpoints for demo request records. Admin/internal use only.")
+router = APIRouter()
 
 
 def _require_internal_token(internal_token: str | None) -> None:

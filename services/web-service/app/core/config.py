@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import AnyHttpUrl, PostgresDsn, field_validator
+from pydantic import AnyHttpUrl, Field, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     def assemble_cors_origins(cls, v: str | list[str]) -> list[str] | str:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
-        elif isinstance(v, (list, str)):
+        elif isinstance(v, list | str):
             return v
         raise ValueError(v)
 
@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""  # noqa: S105
     EMAILS_ENABLED: bool = False
     EMAIL_FROM_EMAIL: str = "noreply@encypherai.com"
-    EMAIL_FROM_NAME: str = "Encypher"
+    EMAIL_FROM_NAME: str = Field(default="Encypher", validation_alias="MAIL_FROM_NAME")
     CONTACT_EMAIL: str = "contact@encypherai.com"
     SALES_EMAIL: str = "sales@encypherai.com"
     DEMO_EMAIL: str = "demo@encypherai.com"
