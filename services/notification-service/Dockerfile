@@ -6,10 +6,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev c
 RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 -m appuser
 
 # Copy shared library (copied from repo during build)
-COPY shared_libs /shared_libs
+COPY shared_libs ./shared_libs
 
 # Install shared library
-RUN uv pip install --system /shared_libs
+RUN uv pip install --system ./shared_libs
 
 # Copy dependency files
 COPY pyproject.toml ./
