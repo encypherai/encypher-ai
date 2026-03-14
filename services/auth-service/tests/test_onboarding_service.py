@@ -127,10 +127,7 @@ class TestOnboardingService:
 
     def test_get_status_all_completed(self, service, mock_db, mock_user):
         """User with all steps completed should show all_completed=True"""
-        mock_user.onboarding_checklist = {
-            step["step_id"]: {"completed_at": "2026-02-14T12:00:00+00:00"}
-            for step in ONBOARDING_STEPS
-        }
+        mock_user.onboarding_checklist = {step["step_id"]: {"completed_at": "2026-02-14T12:00:00+00:00"} for step in ONBOARDING_STEPS}
         mock_user.onboarding_completed_at = datetime(2026, 2, 14, 12, 0, tzinfo=timezone.utc)
         self._setup_user_query(mock_db, mock_user)
 
@@ -197,10 +194,7 @@ class TestOnboardingService:
     def test_complete_all_steps_sets_completed_at(self, service, mock_db, mock_user):
         """Completing the last step should set onboarding_completed_at"""
         # Pre-complete all steps except one
-        mock_user.onboarding_checklist = {
-            step["step_id"]: {"completed_at": "2026-02-14T12:00:00+00:00"}
-            for step in ONBOARDING_STEPS[:-1]
-        }
+        mock_user.onboarding_checklist = {step["step_id"]: {"completed_at": "2026-02-14T12:00:00+00:00"} for step in ONBOARDING_STEPS[:-1]}
         self._setup_user_query(mock_db, mock_user)
 
         last_step_id = ONBOARDING_STEPS[-1]["step_id"]

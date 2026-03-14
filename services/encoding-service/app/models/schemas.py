@@ -34,6 +34,21 @@ class SignedDocumentResponse(BaseModel):
     content_hash: str
     manifest: Dict[str, Any]
     created_at: datetime
+    processing_time_ms: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DocumentSummary(BaseModel):
+    """Lightweight schema for document list entries (no full content)"""
+
+    document_id: str
+    content_hash: str
+    format: str
+    encoding_method: str
+    is_active: bool
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -91,3 +106,5 @@ class ErrorResponse(BaseModel):
     """Error response schema"""
 
     detail: str
+    hint: Optional[str] = None
+    request_id: Optional[str] = None

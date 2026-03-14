@@ -50,11 +50,17 @@ export default function ContactPage() {
           source: 'contact-page',
         }),
       });
-      if (!response.ok) throw new Error('Failed to submit');
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        const hint = errData.next_action || errData.detail;
+        throw new Error(hint || 'Failed to submit. Please try again or email sales@encypherai.com');
+      }
       setStatus('success');
-    } catch {
+    } catch (err) {
       setStatus('error');
-      setErrorMessage('Failed to submit. Please try again or email sales@encypherai.com');
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Failed to submit. Please try again or email sales@encypherai.com'
+      );
     }
   };
 

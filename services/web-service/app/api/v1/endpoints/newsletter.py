@@ -18,14 +18,18 @@ from app.services.email import send_newsletter_broadcast, send_newsletter_welcom
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(description="Newsletter subscription, broadcast, and subscriber management endpoints.")
 
 
 def _require_internal_token(internal_token: str | None) -> None:
+    """Raise 401 if the request lacks a valid internal service token."""
     if not settings.INTERNAL_SERVICE_TOKEN:
         return
     if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized. Supply a valid X-Internal-Token header to access this endpoint.",
+        )
 
 
 def _status_to_active(status_value: str) -> bool:
@@ -176,12 +180,7 @@ def list_subscribers(
 
     total = query.count()
     offset = (page - 1) * page_size
-    rows = (
-        query.order_by(NewsletterSubscriber.subscribed_at.desc())
-        .offset(offset)
-        .limit(page_size)
-        .all()
-    )
+    rows = query.order_by(NewsletterSubscriber.subscribed_at.desc()).offset(offset).limit(page_size).all()
 
     return {
         "success": True,

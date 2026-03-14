@@ -25,6 +25,30 @@ from ..db.session import SessionLocal
 logger = logging.getLogger(__name__)
 
 
+def _coerce_int(value: Any) -> Optional[int]:
+    """Coerce a loosely-typed value to int, returning None on failure."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(round(value))
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return None
+        try:
+            return int(stripped)
+        except ValueError:
+            try:
+                return int(round(float(stripped)))
+            except ValueError:
+                return None
+    return None
+
+
 class StreamConsumer:
     """
     Redis Stream consumer for processing metric events.
@@ -248,29 +272,6 @@ class StreamConsumer:
         Returns:
             UsageMetric instance or None if invalid
         """
-
-        def _coerce_int(value: Any) -> Optional[int]:
-            if value is None:
-                return None
-            if isinstance(value, bool):
-                return int(value)
-            if isinstance(value, int):
-                return value
-            if isinstance(value, float):
-                return int(round(value))
-            if isinstance(value, str):
-                stripped = value.strip()
-                if not stripped:
-                    return None
-                try:
-                    return int(stripped)
-                except ValueError:
-                    try:
-                        return int(round(float(stripped)))
-                    except ValueError:
-                        return None
-            return None
-
         try:
             # Extract required fields
             metric_type = data.get("metric_type")

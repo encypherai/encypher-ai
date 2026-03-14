@@ -2,14 +2,15 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+import httpx
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from .api.v1.endpoints import router as v1_router
 from .core.config import settings
 from .core.logging_config import setup_logging
-from .db.models import Base
-from .db.session import engine
 from .middleware.logging import RequestLoggingMiddleware
 from .monitoring.metrics import setup_metrics
 
@@ -33,7 +34,12 @@ async def lifespan(app: FastAPI):
         exit_on_failure=True,
     )
 
+    # Shared HTTP client -- reuses connections across all requests
+    app.state.http_client = httpx.AsyncClient()
+
     yield
+
+    await app.state.http_client.aclose()
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 
 
@@ -56,14 +62,71 @@ setup_metrics(app)
 app.include_router(v1_router, prefix="/api/v1/users", tags=["users"])
 
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Return structured 422 with field errors and usage guidance."""
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": exc.errors(),
+            "hint": (
+                "One or more request fields failed validation. "
+                "Check the 'detail' list for field names and expected types. "
+                "See the interactive API docs at GET /docs for full schema examples."
+            ),
+        },
+    )
+
+
+# Capabilities summary exposed on the root and health routes so agent
+# callers can discover available endpoints without reading full OpenAPI docs.
+_CAPABILITIES = {
+    "endpoints": [
+        {
+            "method": "GET",
+            "path": "/api/v1/users/profile",
+            "description": "Get the authenticated user's profile",
+        },
+        {
+            "method": "PUT",
+            "path": "/api/v1/users/profile",
+            "description": "Update the authenticated user's profile",
+        },
+        {
+            "method": "POST",
+            "path": "/api/v1/users/teams",
+            "description": "Create a new team",
+        },
+        {
+            "method": "GET",
+            "path": "/api/v1/users/teams",
+            "description": "List teams (paginated; query params: page, page_size)",
+        },
+    ],
+    "auth": "Bearer token required in Authorization header for all /api/v1/ routes",
+    "docs": "/docs",
+}
+
+
 @app.get("/")
 async def root():
-    return {"service": settings.SERVICE_NAME, "version": "1.0.0", "status": "running"}
+    """Service identity and capabilities summary."""
+    return {
+        "service": settings.SERVICE_NAME,
+        "version": "1.0.0",
+        "status": "running",
+        "capabilities": _CAPABILITIES,
+    }
 
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "service": settings.SERVICE_NAME}
+    """Liveness probe with capabilities summary."""
+    return {
+        "status": "healthy",
+        "service": settings.SERVICE_NAME,
+        "capabilities": _CAPABILITIES,
+    }
 
 
 if __name__ == "__main__":

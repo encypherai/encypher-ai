@@ -94,18 +94,23 @@ def test_verify_zw_embedding_resolved_via_api(client, mock_db, monkeypatch) -> N
     org_id = "org_test_zw_123"
     doc_id = "doc_zw_abc"
 
-    zw_resolve_response = _DummyResponse(200, {
-        "segment_uuid": str(seg_uuid),
-        "organization_id": org_id,
-        "document_id": doc_id,
-    })
+    zw_resolve_response = _DummyResponse(
+        200,
+        {
+            "segment_uuid": str(seg_uuid),
+            "organization_id": org_id,
+            "document_id": doc_id,
+        },
+    )
 
     monkeypatch.setattr(
         verify_endpoints.httpx,
         "AsyncClient",
-        lambda: _RoutingAsyncClient({
-            "/zw/resolve/": zw_resolve_response,
-        }),
+        lambda: _RoutingAsyncClient(
+            {
+                "/zw/resolve/": zw_resolve_response,
+            }
+        ),
     )
 
     response = client.post("/api/v1/verify", json={"text": text_with_zw})

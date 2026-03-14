@@ -1,47 +1,53 @@
 """API endpoints for Analytics Service v1"""
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header, Query, Request
-from fastapi.responses import Response
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from typing import List, Dict
-from pydantic import BaseModel
-from datetime import datetime, timedelta
 import csv
-import httpx
 import io
 import json
+import logging
+import time
+from datetime import datetime, timedelta
+from typing import Dict, List
 
-from ...db.session import get_db
+import httpx
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
+from fastapi.responses import Response
+from pydantic import BaseModel
+from sqlalchemy import distinct, func
+from sqlalchemy.orm import Session
+
+from ...core.config import settings
+from ...db.models import ContentDiscovery as CDModel
 from ...db.models import UsageMetric
+from ...db.session import get_db
 from ...models.schemas import (
-    MetricCreate,
-    MetricResponse,
-    UsageStats,
-    ServiceMetrics,
-    TimeSeriesData,
-    AnalyticsReport,
-    PageviewEvent,
-    ActivityItem,
-    ActivityFeedPage,
     ActivityAlertSummary,
+    ActivityFeedPage,
+    ActivityItem,
+    AnalyticsReport,
+    ContentDiscoveryItem,
+    ContentDiscoveryListResponse,
     DiscoveryBatchRequest,
     DiscoveryResponse,
     DiscoveryStats,
-    DomainSummaryItem,
-    DomainSummaryResponse,
     DomainAlertItem,
     DomainAlertsResponse,
-    ContentDiscoveryItem,
-    ContentDiscoveryListResponse,
+    DomainSummaryItem,
+    DomainSummaryResponse,
+    MetricCreate,
+    MetricResponse,
     OwnedDomainCreate,
-    OwnedDomainUpdate,
     OwnedDomainItem,
     OwnedDomainListResponse,
+    OwnedDomainUpdate,
+    PageviewEvent,
+    ServiceMetrics,
+    TimeSeriesData,
+    UsageStats,
 )
 from ...services.analytics_service import AnalyticsService
 from ...services.discovery_service import DiscoveryService
-from ...core.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -126,7 +132,11 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid authentication credentials",
+                    detail={
+                        "code": "INVALID_CREDENTIALS",
+                        "detail": "Invalid authentication credentials",
+                        "next_action": "Obtain a valid JWT via POST /api/v1/auth/login and include it as Authorization: Bearer <token>",
+                    },
                 )
             payload = response.json()
             # Expect { success: bool, data: { user fields }, error: null }
@@ -137,12 +147,20 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
                 return payload
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="Invalid response from auth service",
+                detail={
+                    "code": "AUTH_SERVICE_ERROR",
+                    "detail": "Invalid response from auth service",
+                    "next_action": "Retry the request. If the error persists, contact support.",
+                },
             )
     except httpx.RequestError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Auth service unavailable",
+            detail={
+                "code": "AUTH_SERVICE_UNAVAILABLE",
+                "detail": "Auth service unavailable",
+                "next_action": "Retry after a short delay. If the error persists, contact support.",
+            },
         )
 
 
@@ -175,7 +193,11 @@ async def record_metric(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to record metric",
+            detail={
+                "code": "METRIC_RECORD_ERROR",
+                "detail": "Failed to record metric",
+                "next_action": "Retry the request. Check GET /api/v1/analytics/health for service status.",
+            },
         )
 
 
@@ -394,6 +416,8 @@ async def export_activity_audit_events(
         has_stack,
     )
 
+    _EXPORT_ROW_CAP = 10_000
+
     identity = _resolve_identity(current_user)
     rows = AnalyticsService.get_activity_export_rows(
         db=db,
@@ -413,22 +437,40 @@ async def export_activity_audit_events(
         has_stack=filters["has_stack"],
     )
 
+    # Overflow protection: cap at _EXPORT_ROW_CAP rows
+    truncated = len(rows) > _EXPORT_ROW_CAP
+    if truncated:
+        rows = rows[:_EXPORT_ROW_CAP]
+
+    extra_headers: dict = {}
+    if truncated:
+        extra_headers["X-Truncated"] = "true"
+        extra_headers["X-Row-Cap"] = str(_EXPORT_ROW_CAP)
+        extra_headers["X-Next-Action"] = "Result set was truncated. Use start_at/end_at or add filters to narrow the query."
+
     timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
     if format == "json":
         payload = [
             {
-                **row,
+                **{k: _sanitize_string(v) for k, v in row.items()},
                 "timestamp": row["timestamp"].isoformat() if isinstance(row.get("timestamp"), datetime) else row.get("timestamp"),
             }
             for row in rows
         ]
+        resp_body: dict = {"data": payload, "row_count": len(payload)}
+        if truncated:
+            resp_body["truncated"] = True
+            resp_body["next_action"] = extra_headers["X-Next-Action"]
         return Response(
-            content=json.dumps(payload),
+            content=json.dumps(resp_body),
             media_type="application/json",
-            headers={"Content-Disposition": f'attachment; filename="audit-events-{timestamp}.json"'},
+            headers={
+                "Content-Disposition": f'attachment; filename="audit-events-{timestamp}.json"',
+                **extra_headers,
+            },
         )
 
-    headers = [
+    csv_field_names = [
         "id",
         "timestamp",
         "type",
@@ -451,10 +493,10 @@ async def export_activity_audit_events(
         "organization_id",
     ]
     output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=headers)
+    writer = csv.DictWriter(output, fieldnames=csv_field_names)
     writer.writeheader()
     for row in rows:
-        csv_row = dict(row)
+        csv_row = {k: _sanitize_string(v) for k, v in dict(row).items()}
         ts_value = csv_row.get("timestamp")
         if isinstance(ts_value, datetime):
             csv_row["timestamp"] = ts_value.isoformat()
@@ -463,7 +505,10 @@ async def export_activity_audit_events(
     return Response(
         content=output.getvalue(),
         media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="audit-events-{timestamp}.csv"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="audit-events-{timestamp}.csv"',
+            **extra_headers,
+        },
     )
 
 
@@ -541,32 +586,70 @@ async def get_analytics_report(
 
 
 # --- Public Anonymous Pageview Endpoint ---
-_rl_store = {}
+
+# Single in-process rate-limit store keyed by (route, ip).
+# NOTE: This is process-local and resets on restart; suitable for low-traffic
+# deployments only. For multi-instance setups, replace with Redis-backed limits.
+_rl_store: Dict[tuple, list] = {}
 
 
-def _rate_limit(ip: str, route: str, limit: int = 60, window_sec: int = 60):
-    import time
+def _client_ip(request: Request) -> str:
+    """Extract the real client IP from X-Forwarded-For or the direct connection."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
 
+
+def _rate_limit(ip: str, route: str, limit: int = 60, window_sec: int = 60) -> None:
+    """Sliding-window in-process rate limiter. Raises HTTP 429 when limit is exceeded."""
     now = time.time()
-    key = (ip, route)
+    key = (route, ip)
     timestamps = _rl_store.get(key, [])
     cutoff = now - window_sec
     timestamps = [t for t in timestamps if t >= cutoff]
     if len(timestamps) >= limit:
-        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Rate limit exceeded")
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded",
+            headers={"Retry-After": str(window_sec)},
+        )
     timestamps.append(now)
     _rl_store[key] = timestamps
+
+
+def _make_error(detail: str, next_action: str, code: str = "ERROR", request_id: str | None = None) -> dict:
+    """Build a uniform error response body with navigation hint and optional request_id."""
+    body: dict = {
+        "success": False,
+        "error": {
+            "code": code,
+            "detail": detail,
+            "next_action": next_action,
+        },
+        "data": None,
+    }
+    if request_id:
+        body["error"]["request_id"] = request_id
+    return body
+
+
+def _sanitize_string(value: object) -> object:
+    """Strip null bytes and non-printable control characters from string values.
+
+    Used to guard CSV/JSON export rows against binary or malformed content
+    originating from the meta JSON field.
+    """
+    if not isinstance(value, str):
+        return value
+    # Remove null bytes and ASCII control characters (except tab, newline, CR)
+    return "".join(ch for ch in value if ch == "\t" or ch == "\n" or ch == "\r" or (ord(ch) >= 32))
 
 
 @router.post("/pageview", status_code=status.HTTP_202_ACCEPTED)
 async def record_pageview(event: PageviewEvent, request: Request, db: Session = Depends(get_db)):
     """Record anonymous pageview with basic rate limiting."""
-    # Determine client IP
-    ip = request.headers.get("x-forwarded-for")
-    if ip:
-        ip = ip.split(",")[0].strip()
-    else:
-        ip = request.client.host if request.client else "unknown"
+    ip = _client_ip(request)
     _rate_limit(ip, "analytics_pageview", limit=60, window_sec=60)
 
     try:
@@ -593,7 +676,14 @@ async def record_pageview(event: PageviewEvent, request: Request, db: Session = 
         )
         return {"success": True, "data": {"message": "accepted"}, "error": None}
     except Exception:
-        raise HTTPException(status_code=500, detail="Failed to record pageview")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "code": "PAGEVIEW_RECORD_ERROR",
+                "detail": "Failed to record pageview",
+                "next_action": "Retry the request. Check GET /health for service status.",
+            },
+        )
 
 
 @router.get("/health")
@@ -622,9 +712,7 @@ async def get_request_trace(
     events = (
         db.query(UsageMetric)
         .filter(UsageMetric.meta["request_id"].astext == request_id)
-        .filter(
-            (UsageMetric.organization_id == identity) | (UsageMetric.user_id == identity)
-        )
+        .filter((UsageMetric.organization_id == identity) | (UsageMetric.user_id == identity))
         .order_by(UsageMetric.created_at.asc())
         .all()
     )
@@ -632,24 +720,32 @@ async def get_request_trace(
     if not events:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No events found for request_id: {request_id}",
+            detail={
+                "code": "TRACE_NOT_FOUND",
+                "detail": f"No events found for request_id: {request_id}",
+                "next_action": (
+                    "Verify the request_id value from the X-Request-ID response header. "
+                    "Use GET /api/v1/analytics/activity/audit-events to browse recent events."
+                ),
+            },
         )
 
     items = []
     for m in events:
-        items.append({
-            "id": str(m.id),
-            "metric_type": m.metric_type,
-            "endpoint": m.endpoint,
-            "method": m.meta.get("method") if isinstance(m.meta, dict) else None,
-            "status_code": m.status_code,
-            "response_time_ms": m.response_time_ms,
-            "organization_id": m.organization_id,
-            "user_id": m.user_id,
-            "api_key_id": m.api_key_id,
-            "timestamp": m.created_at.isoformat() if m.created_at else None,
-            "metadata": m.meta,
-        })
+        items.append(
+            {
+                "id": str(m.id),
+                "metric_type": m.metric_type,
+                "endpoint": m.endpoint,
+                "method": m.meta.get("method") if isinstance(m.meta, dict) else None,
+                "status_code": m.status_code,
+                "response_time_ms": m.response_time_ms,
+                "organization_id": m.organization_id,
+                "user_id": m.user_id,
+                "timestamp": m.created_at.isoformat() if m.created_at else None,
+                "metadata": m.meta,
+            }
+        )
 
     return {
         "request_id": request_id,
@@ -662,23 +758,6 @@ async def get_request_trace(
 # Public Discovery Analytics Endpoints
 # ============================================
 
-_discovery_rl_store = {}
-
-
-def _discovery_rate_limit(ip: str, limit: int = 100, window_sec: int = 60):
-    """Rate limit for discovery endpoint - more permissive than pageview"""
-    import time
-
-    now = time.time()
-    key = ("discovery", ip)
-    timestamps = _discovery_rl_store.get(key, [])
-    cutoff = now - window_sec
-    timestamps = [t for t in timestamps if t >= cutoff]
-    if len(timestamps) >= limit:
-        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Rate limit exceeded")
-    timestamps.append(now)
-    _discovery_rl_store[key] = timestamps
-
 
 @router.post("/discovery", response_model=DiscoveryResponse, status_code=status.HTTP_202_ACCEPTED)
 async def record_discovery_events(
@@ -689,23 +768,17 @@ async def record_discovery_events(
 ):
     """
     Record embedding discovery events from Chrome extension.
-    
+
     This is a public endpoint that accepts anonymous discovery reports.
     If an API key is provided, events are associated with the organization.
-    
+
     - **events**: List of discovery events
     - **source**: Source of events (e.g., "chrome_extension")
     - **version**: Extension version
     """
-    # Determine client IP for rate limiting
-    ip = request.headers.get("x-forwarded-for")
-    if ip:
-        ip = ip.split(",")[0].strip()
-    else:
-        ip = request.client.host if request.client else "unknown"
-    
-    _discovery_rate_limit(ip, limit=100, window_sec=60)
-    
+    ip = _client_ip(request)
+    _rate_limit(ip, "discovery", limit=100, window_sec=60)
+
     # Try to get organization from auth if token provided
     organization_id = None
     if _should_verify_auth_header(authorization):
@@ -713,27 +786,37 @@ async def record_discovery_events(
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
-                    headers={"Authorization": authorization}
+                    headers={"Authorization": authorization},
                 )
                 if response.status_code == 200:
                     payload = response.json()
                     if isinstance(payload, dict) and payload.get("success"):
                         user_data = payload.get("data", {})
                         organization_id = user_data.get("organization_id")
-        except Exception:
-            pass  # Continue without org association
-    
+        except Exception as exc:
+            logger.debug("Auth lookup skipped for discovery event: %s", exc)
+
+    # Security: never trust client-supplied organizationId.
+    # If authenticated, override every event's organizationId with the server-verified value.
+    # If unauthenticated, strip organizationId entirely so it cannot be injected.
+    sanitized_events = []
+    for event in batch.events:
+        if organization_id:
+            sanitized_events.append(event.model_copy(update={"organizationId": organization_id}))
+        else:
+            sanitized_events.append(event.model_copy(update={"organizationId": None}))
+
     try:
         # Record into dedicated content_discoveries table
         events_recorded = DiscoveryService.record_batch(
             db=db,
-            events=batch.events,
+            events=sanitized_events,
             source=batch.source,
             extension_version=batch.version,
         )
 
         # Also record into legacy UsageMetric for backward compatibility
-        for event in batch.events:
+        for event in sanitized_events:
             try:
                 AnalyticsService.record_metric(
                     db=db,
@@ -747,44 +830,43 @@ async def record_discovery_events(
                         response_time_ms=None,
                         status_code=200 if event.verified else 400,
                         metadata={
-                            "page_url": event.pageUrl,
-                            "page_domain": event.pageDomain,
-                            "page_title": event.pageTitle,
-                            "signer_id": event.signerId,
-                            "signer_name": event.signerName,
-                            "organization_id": event.organizationId,
-                            "document_id": event.documentId,
-                            "original_domain": event.originalDomain,
+                            "page_url": _sanitize_string(event.pageUrl),
+                            "page_domain": _sanitize_string(event.pageDomain),
+                            "page_title": _sanitize_string(event.pageTitle),
+                            "signer_id": _sanitize_string(event.signerId),
+                            "signer_name": _sanitize_string(event.signerName),
+                            "organization_id": _sanitize_string(event.organizationId),
+                            "document_id": _sanitize_string(event.documentId),
+                            "original_domain": _sanitize_string(event.originalDomain),
                             "verified": event.verified,
-                            "verification_status": event.verificationStatus,
-                            "marker_type": event.markerType,
+                            "verification_status": _sanitize_string(event.verificationStatus),
+                            "marker_type": _sanitize_string(event.markerType),
                             "domain_mismatch": event.domainMismatch,
-                            "mismatch_reason": event.mismatchReason,
-                            "discovery_source": event.discoverySource,
-                            "content_length_bucket": event.contentLengthBucket,
+                            "mismatch_reason": _sanitize_string(event.mismatchReason),
+                            "discovery_source": _sanitize_string(event.discoverySource),
+                            "content_length_bucket": _sanitize_string(event.contentLengthBucket),
                             "embedding_byte_length": event.embeddingByteLength,
-                            "extension_version": event.extensionVersion or batch.version,
-                            "session_id": event.sessionId,
-                            "source": batch.source,
+                            "extension_version": _sanitize_string(event.extensionVersion or batch.version),
+                            "session_id": _sanitize_string(event.sessionId),
+                            "source": _sanitize_string(batch.source),
                         },
                     ),
                     organization_id=organization_id,
                 )
-            except Exception:
-                pass  # Legacy metric recording is best-effort
-        
+            except Exception as exc:
+                logger.warning("Legacy metric recording failed for discovery event: %s", exc)
+
         return DiscoveryResponse(
-            success=True,
-            data={
-                "events_recorded": events_recorded,
-                "message": "Discovery events recorded successfully"
-            },
-            error=None
+            success=True, data={"events_recorded": events_recorded, "message": "Discovery events recorded successfully"}, error=None
         )
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to process discovery events",
+            detail={
+                "code": "DISCOVERY_RECORD_ERROR",
+                "detail": "Failed to process discovery events",
+                "next_action": "Retry the request. Check GET /health for service status.",
+            },
         )
 
 
@@ -796,81 +878,92 @@ async def get_discovery_stats(
 ):
     """
     Get discovery statistics for the authenticated organization.
-    
+
     - **days**: Number of days to look back (default: 30)
     """
-    from sqlalchemy import func, distinct
-    
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
-    
+
     identity = _resolve_identity(current_user)
-    
+
     # Query discovery metrics
     base_query = db.query(UsageMetric).filter(
         UsageMetric.metric_type == "embedding_discovery",
         UsageMetric.created_at >= start_date,
         UsageMetric.created_at <= end_date,
     )
-    
+
     # Filter by organization if not admin
     user_role = current_user.get("role", "").lower()
     is_admin = bool(current_user.get("is_super_admin")) or user_role in ("admin", "super_admin")
-    
+
     if not is_admin:
         # Show discoveries where this org's content was found
-        base_query = base_query.filter(
-            UsageMetric.meta["organization_id"].astext == identity
-        )
-    
+        base_query = base_query.filter(UsageMetric.meta["organization_id"].astext == identity)
+
     # Get total counts
     total_discoveries = base_query.count()
     verified_count = base_query.filter(UsageMetric.meta["verified"].astext == "true").count()
     invalid_count = total_discoveries - verified_count
-    
+
     # Get unique domains
-    unique_domains = db.query(func.count(distinct(UsageMetric.endpoint))).filter(
-        UsageMetric.metric_type == "embedding_discovery",
-        UsageMetric.created_at >= start_date,
-    ).scalar() or 0
-    
+    unique_domains = (
+        db.query(func.count(distinct(UsageMetric.endpoint)))
+        .filter(
+            UsageMetric.metric_type == "embedding_discovery",
+            UsageMetric.created_at >= start_date,
+        )
+        .scalar()
+        or 0
+    )
+
     # Get unique signers
-    unique_signers = db.query(func.count(distinct(UsageMetric.meta["signer_id"].astext))).filter(
-        UsageMetric.metric_type == "embedding_discovery",
-        UsageMetric.created_at >= start_date,
-        UsageMetric.meta["signer_id"].astext.isnot(None),
-    ).scalar() or 0
-    
+    unique_signers = (
+        db.query(func.count(distinct(UsageMetric.meta["signer_id"].astext)))
+        .filter(
+            UsageMetric.metric_type == "embedding_discovery",
+            UsageMetric.created_at >= start_date,
+            UsageMetric.meta["signer_id"].astext.isnot(None),
+        )
+        .scalar()
+        or 0
+    )
+
     # Get top domains
-    top_domains_query = db.query(
-        UsageMetric.endpoint,
-        func.count(UsageMetric.id).label("count")
-    ).filter(
-        UsageMetric.metric_type == "embedding_discovery",
-        UsageMetric.created_at >= start_date,
-    ).group_by(UsageMetric.endpoint).order_by(func.count(UsageMetric.id).desc()).limit(10).all()
-    
+    top_domains_query = (
+        db.query(UsageMetric.endpoint, func.count(UsageMetric.id).label("count"))
+        .filter(
+            UsageMetric.metric_type == "embedding_discovery",
+            UsageMetric.created_at >= start_date,
+        )
+        .group_by(UsageMetric.endpoint)
+        .order_by(func.count(UsageMetric.id).desc())
+        .limit(10)
+        .all()
+    )
+
     top_domains = [{"domain": d[0], "count": d[1]} for d in top_domains_query if d[0]]
-    
+
     # Get top signers
-    top_signers_query = db.query(
-        UsageMetric.meta["signer_id"].astext.label("signer_id"),
-        UsageMetric.meta["signer_name"].astext.label("signer_name"),
-        func.count(UsageMetric.id).label("count")
-    ).filter(
-        UsageMetric.metric_type == "embedding_discovery",
-        UsageMetric.created_at >= start_date,
-        UsageMetric.meta["signer_id"].astext.isnot(None),
-    ).group_by(
-        UsageMetric.meta["signer_id"].astext,
-        UsageMetric.meta["signer_name"].astext
-    ).order_by(func.count(UsageMetric.id).desc()).limit(10).all()
-    
-    top_signers = [
-        {"signer_id": s[0], "signer_name": s[1], "count": s[2]} 
-        for s in top_signers_query if s[0]
-    ]
-    
+    top_signers_query = (
+        db.query(
+            UsageMetric.meta["signer_id"].astext.label("signer_id"),
+            UsageMetric.meta["signer_name"].astext.label("signer_name"),
+            func.count(UsageMetric.id).label("count"),
+        )
+        .filter(
+            UsageMetric.metric_type == "embedding_discovery",
+            UsageMetric.created_at >= start_date,
+            UsageMetric.meta["signer_id"].astext.isnot(None),
+        )
+        .group_by(UsageMetric.meta["signer_id"].astext, UsageMetric.meta["signer_name"].astext)
+        .order_by(func.count(UsageMetric.id).desc())
+        .limit(10)
+        .all()
+    )
+
+    top_signers = [{"signer_id": s[0], "signer_name": s[1], "count": s[2]} for s in top_signers_query if s[0]]
+
     return DiscoveryStats(
         total_discoveries=total_discoveries,
         verified_count=verified_count,
@@ -1011,7 +1104,6 @@ async def get_discovery_events(
     ]
 
     # Get total count for pagination
-    from ...db.models import ContentDiscovery as CDModel
     total_query = db.query(func.count(CDModel.id)).filter(
         CDModel.organization_id == identity,
         CDModel.discovered_at >= start_date,
@@ -1045,7 +1137,11 @@ async def list_owned_domains(
     if not org_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Organization ID required",
+            detail={
+                "code": "ORG_ID_REQUIRED",
+                "detail": "Organization ID required",
+                "next_action": "Ensure your JWT token includes an organization_id claim.",
+            },
         )
 
     domains = DiscoveryService.get_owned_domains(db, org_id, active_only=False)
@@ -1079,7 +1175,11 @@ async def add_owned_domain(
     if not org_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Organization ID required",
+            detail={
+                "code": "ORG_ID_REQUIRED",
+                "detail": "Organization ID required",
+                "next_action": "Ensure your JWT token includes an organization_id claim.",
+            },
         )
 
     try:
@@ -1092,7 +1192,11 @@ async def add_owned_domain(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=str(exc),
+            detail={
+                "code": "DOMAIN_CONFLICT",
+                "detail": str(exc),
+                "next_action": "Use GET /api/v1/analytics/discovery/owned-domains to list existing patterns.",
+            },
         )
 
     return OwnedDomainItem(
@@ -1118,7 +1222,11 @@ async def update_owned_domain(
     if not org_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Organization ID required",
+            detail={
+                "code": "ORG_ID_REQUIRED",
+                "detail": "Organization ID required",
+                "next_action": "Ensure your JWT token includes an organization_id claim.",
+            },
         )
 
     owned = DiscoveryService.update_owned_domain(
@@ -1132,7 +1240,11 @@ async def update_owned_domain(
     if not owned:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Owned domain not found",
+            detail={
+                "code": "DOMAIN_NOT_FOUND",
+                "detail": "Owned domain not found",
+                "next_action": "Use GET /api/v1/analytics/discovery/owned-domains to retrieve valid domain IDs.",
+            },
         )
 
     return OwnedDomainItem(
@@ -1157,14 +1269,22 @@ async def delete_owned_domain(
     if not org_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Organization ID required",
+            detail={
+                "code": "ORG_ID_REQUIRED",
+                "detail": "Organization ID required",
+                "next_action": "Ensure your JWT token includes an organization_id claim.",
+            },
         )
 
     deleted = DiscoveryService.delete_owned_domain(db, domain_id=domain_id, organization_id=org_id)
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Owned domain not found",
+            detail={
+                "code": "DOMAIN_NOT_FOUND",
+                "detail": "Owned domain not found",
+                "next_action": "Use GET /api/v1/analytics/discovery/owned-domains to retrieve valid domain IDs.",
+            },
         )
 
 
@@ -1198,7 +1318,11 @@ async def get_admin_usage_counts(
     if not is_super_admin and user_role not in ("admin", "super_admin", "superadmin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required",
+            detail={
+                "code": "ADMIN_REQUIRED",
+                "detail": "Admin access required",
+                "next_action": "This endpoint is restricted to admin users. Contact your administrator.",
+            },
         )
 
     cutoff = datetime.utcnow() - timedelta(days=request.days)
@@ -1254,7 +1378,11 @@ async def get_user_activity(
     if not is_admin and not is_self:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied",
+            detail={
+                "code": "ACCESS_DENIED",
+                "detail": "Access denied",
+                "next_action": "You can only view your own activity. Admins can view any user's activity.",
+            },
         )
 
     cutoff = datetime.utcnow() - timedelta(days=days)
@@ -1272,12 +1400,7 @@ async def get_user_activity(
     total = query.count()
 
     # Get paginated results
-    metrics = (
-        query.order_by(UsageMetric.created_at.desc())
-        .offset(offset)
-        .limit(limit)
-        .all()
-    )
+    metrics = query.order_by(UsageMetric.created_at.desc()).offset(offset).limit(limit).all()
 
     # Transform to activity items
     activities = []
@@ -1285,18 +1408,20 @@ async def get_user_activity(
         method = None
         if isinstance(m.meta, dict):
             method = m.meta.get("method")
-        activities.append({
-            "id": str(m.id),
-            "type": m.metric_type or "api_call",
-            "description": f"{method or 'API'} {m.endpoint or 'request'}",
-            "timestamp": m.created_at.isoformat() if m.created_at else None,
-            "metadata": {
-                "endpoint": m.endpoint,
-                "method": method,
-                "status": m.status_code,
-                "latency_ms": m.response_time_ms,
-            },
-        })
+        activities.append(
+            {
+                "id": str(m.id),
+                "type": m.metric_type or "api_call",
+                "description": f"{method or 'API'} {m.endpoint or 'request'}",
+                "timestamp": m.created_at.isoformat() if m.created_at else None,
+                "metadata": {
+                    "endpoint": m.endpoint,
+                    "method": method,
+                    "status": m.status_code,
+                    "latency_ms": m.response_time_ms,
+                },
+            }
+        )
 
     return UserActivityResponse(
         activities=activities,

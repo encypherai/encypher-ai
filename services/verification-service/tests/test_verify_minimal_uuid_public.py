@@ -150,7 +150,7 @@ def test_verify_minimal_uuid_public_missing_table_falls_through_to_trust_anchor(
     mock_db.execute.side_effect = ProgrammingError(
         "SELECT 1 FROM content_references",
         {"manifest_uuid": manifest_uuid},
-        Exception("relation \"content_references\" does not exist"),
+        Exception('relation "content_references" does not exist'),
     )
 
     dummy_response = _DummyResponse(

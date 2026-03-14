@@ -3,7 +3,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-router = APIRouter()
+router = APIRouter(description="Legacy encode/decode tool endpoints (deprecated, returns 410).")
 
 
 class EncodeRequest(BaseModel):

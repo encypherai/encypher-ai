@@ -33,6 +33,19 @@ class PriceCache:
         self._prices: Dict[str, Dict] = {}
         self._last_refresh: Optional[datetime] = None
         self._refresh_interval = timedelta(hours=24)
+        # Build add-on -> price-ID map once at construction time (settings are frozen).
+        self._add_on_price_map: Dict[str, Optional[str]] = {
+            "attribution_analytics": getattr(settings, "STRIPE_PRICE_ATTRIBUTION_ANALYTICS", None),
+            "custom_signing_identity": getattr(settings, "STRIPE_PRICE_CUSTOM_SIGNING_IDENTITY", None),
+            "white_label_verification": getattr(settings, "STRIPE_PRICE_WHITE_LABEL_VERIFICATION", None),
+            "custom_verification_domain": getattr(settings, "STRIPE_PRICE_CUSTOM_VERIFICATION_DOMAIN", None),
+            "byok": getattr(settings, "STRIPE_PRICE_BYOK", None),
+            "priority_support": getattr(settings, "STRIPE_PRICE_PRIORITY_SUPPORT", None),
+            "bulk_archive_backfill": getattr(settings, "STRIPE_PRICE_BULK_ARCHIVE_BACKFILL", None),
+            "enforcement_bundle": getattr(settings, "STRIPE_PRICE_ENFORCEMENT_BUNDLE", None),
+            "publisher_identity_bundle": getattr(settings, "STRIPE_PRICE_PUBLISHER_IDENTITY_BUNDLE", None),
+            "full_stack_bundle": getattr(settings, "STRIPE_PRICE_FULL_STACK_BUNDLE", None),
+        }
 
     def get_add_on_price_id(self, add_on: str) -> Optional[str]:
         """
@@ -45,20 +58,7 @@ class PriceCache:
         Returns:
             Stripe price ID or None
         """
-        normalized_add_on = add_on.replace("-", "_")
-        add_on_price_map: Dict[str, Optional[str]] = {
-            "attribution_analytics": getattr(settings, "STRIPE_PRICE_ATTRIBUTION_ANALYTICS", None),
-            "custom_signing_identity": getattr(settings, "STRIPE_PRICE_CUSTOM_SIGNING_IDENTITY", None),
-            "white_label_verification": getattr(settings, "STRIPE_PRICE_WHITE_LABEL_VERIFICATION", None),
-            "custom_verification_domain": getattr(settings, "STRIPE_PRICE_CUSTOM_VERIFICATION_DOMAIN", None),
-            "byok": getattr(settings, "STRIPE_PRICE_BYOK", None),
-            "priority_support": getattr(settings, "STRIPE_PRICE_PRIORITY_SUPPORT", None),
-            "bulk_archive_backfill": getattr(settings, "STRIPE_PRICE_BULK_ARCHIVE_BACKFILL", None),
-            "enforcement_bundle": getattr(settings, "STRIPE_PRICE_ENFORCEMENT_BUNDLE", None),
-            "publisher_identity_bundle": getattr(settings, "STRIPE_PRICE_PUBLISHER_IDENTITY_BUNDLE", None),
-            "full_stack_bundle": getattr(settings, "STRIPE_PRICE_FULL_STACK_BUNDLE", None),
-        }
-        return add_on_price_map.get(normalized_add_on)
+        return self._add_on_price_map.get(add_on.replace("-", "_"))
 
     def get_price_id(self, tier: str, billing_cycle: str) -> Optional[str]:
         """
@@ -123,7 +123,7 @@ class PriceCache:
                     "active": price.active,
                 }
 
-                logger.info(f"Validated price {name}: {price_id} (${price.unit_amount/100:.2f}/{price.recurring.get('interval')})")
+                logger.info(f"Validated price {name}: {price_id} (${price.unit_amount / 100:.2f}/{price.recurring.get('interval')})")
 
             except StripeError as e:
                 logger.error(f"Failed to validate price {name} ({price_id}): {e}")

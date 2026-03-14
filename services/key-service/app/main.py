@@ -11,6 +11,7 @@ from .core.config import settings
 from .api.v1.endpoints import router as v1_router
 from .db.models import Base
 from .db.session import engine
+from .middleware.timing import TimingMiddleware
 from encypher_commercial_shared.metrics import MetricsClient, MetricsMiddleware, set_metrics_client
 
 # Import database startup utilities
@@ -69,6 +70,7 @@ app.add_middleware(
 )
 
 app.add_middleware(MetricsMiddleware, metrics_client=metrics_client)
+app.add_middleware(TimingMiddleware)
 
 # Include routers
 app.include_router(v1_router, prefix="/api/v1/keys", tags=["keys"])
@@ -76,11 +78,25 @@ app.include_router(v1_router, prefix="/api/v1/keys", tags=["keys"])
 
 @app.get("/")
 async def root():
-    """Root endpoint"""
+    """Root endpoint - returns service identity and endpoint index."""
     return {
         "service": settings.SERVICE_NAME,
         "version": "1.0.0",
         "status": "running",
+        "endpoints": {
+            "docs": "/docs",
+            "generate_key": "POST /api/v1/keys/generate",
+            "list_keys": "GET /api/v1/keys",
+            "get_key": "GET /api/v1/keys/{key_id}",
+            "update_key": "PUT /api/v1/keys/{key_id}",
+            "revoke_key": "DELETE /api/v1/keys/{key_id}",
+            "rotate_key": "POST /api/v1/keys/{key_id}/rotate",
+            "verify_key": "POST /api/v1/keys/verify",
+            "validate_key": "POST /api/v1/keys/validate",
+            "validate_key_minimal": "POST /api/v1/keys/validate-minimal",
+            "key_usage": "GET /api/v1/keys/{key_id}/usage",
+            "health": "GET /health",
+        },
     }
 
 

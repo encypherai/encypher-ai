@@ -46,24 +46,27 @@ class CoalitionClient:
                     )
                     return True
                 else:
+                    upstream_detail = response.text[:500] if response.text else "(empty response)"
                     logger.warning(
                         "coalition_auto_enrollment_failed",
                         user_id=str(user_id),
                         status_code=response.status_code,
-                        response=response.text,
+                        upstream_detail=upstream_detail,
                     )
-                    return False
+                    raise RuntimeError(f"Coalition enrollment rejected (HTTP {response.status_code}): {upstream_detail}")
 
-        except httpx.TimeoutException:
+        except httpx.TimeoutException as exc:
             logger.error(
                 "coalition_auto_enrollment_timeout",
                 user_id=str(user_id),
             )
-            return False
-        except Exception as e:
+            raise RuntimeError("Coalition service timed out during enrollment") from exc
+        except RuntimeError:
+            raise
+        except Exception as exc:
             logger.error(
                 "coalition_auto_enrollment_error",
                 user_id=str(user_id),
-                error=str(e),
+                error=str(exc),
             )
-            return False
+            raise RuntimeError(f"Coalition enrollment error: {exc}") from exc

@@ -39,20 +39,9 @@ logger = logging.getLogger(__name__)
 
 def _get_email_config() -> "EmailConfig":
     """Create email config from settings. Import lazily to avoid test issues."""
-    from app.core.config import settings
+    from app.core.auth import get_email_config
 
-    return EmailConfig(
-        smtp_host=settings.SMTP_HOST,
-        smtp_port=settings.SMTP_PORT,
-        smtp_user=settings.SMTP_USER,
-        smtp_pass=settings.SMTP_PASS,
-        smtp_tls=settings.SMTP_TLS,
-        email_from=settings.EMAIL_FROM,
-        email_from_name=settings.EMAIL_FROM_NAME,
-        frontend_url=settings.FRONTEND_URL,
-        dashboard_url=settings.DASHBOARD_URL,
-        support_email=settings.SUPPORT_EMAIL,
-    )
+    return get_email_config()
 
 
 class ApiAccessService:
@@ -69,9 +58,7 @@ class ApiAccessService:
     def __init__(self, db: Session):
         self.db = db
 
-    async def set_api_access_status(
-        self, user_id: str, new_status: str, admin_user_id: str, reason: Optional[str] = None
-    ) -> ApiAccessStatusResponse:
+    async def set_api_access_status(self, user_id: str, new_status: str, admin_user_id: str, reason: Optional[str] = None) -> ApiAccessStatusResponse:
         """
         TEAM_164: Admin directly sets a user's API access status.
 
@@ -115,10 +102,7 @@ class ApiAccessService:
 
         self.db.commit()
 
-        logger.info(
-            f"TEAM_164: Admin {admin_user_id} set API access status for user {user_id}: "
-            f"{previous_status} -> {new_status} (reason: {reason})"
-        )
+        logger.info(f"TEAM_164: Admin {admin_user_id} set API access status for user {user_id}: {previous_status} -> {new_status} (reason: {reason})")
 
         # Build message based on new status
         messages = {
@@ -161,10 +145,7 @@ class ApiAccessService:
 
         # TEAM_164: Suspended users cannot request API access
         if current_status == ApiAccessStatus.SUSPENDED.value:
-            raise ValueError(
-                "Your API access has been suspended. If you believe this is an error, "
-                "please contact support at support@encypherai.com."
-            )
+            raise ValueError("Your API access has been suspended. If you believe this is an error, please contact support at support@encypherai.com.")
 
         # Check if already pending
         if current_status == ApiAccessStatus.PENDING.value:
@@ -268,8 +249,7 @@ class ApiAccessService:
             ApiAccessStatusEnum.DENIED: "Your API access request was denied. You may submit a new request with more details.",
             # TEAM_164: Suspended users see a contact-support message
             ApiAccessStatusEnum.SUSPENDED: (
-                "Your API access has been suspended. If you believe this is an error, "
-                "please contact support at support@encypherai.com."
+                "Your API access has been suspended. If you believe this is an error, please contact support at support@encypherai.com."
             ),
         }
 

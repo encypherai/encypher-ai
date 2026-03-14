@@ -1,7 +1,9 @@
 """Verification Service - Main Application"""
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 from sqlalchemy.orm import Session
 
@@ -68,6 +70,33 @@ setup_metrics(app)
 app.include_router(v1_endpoints.router, prefix="/api/v1/verify", tags=["verification"])
 
 
+# ---------------------------------------------------------------------------
+# Task 8.2: Custom 422 handler with usage example
+# ---------------------------------------------------------------------------
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Return structured 422 with a usage example to guide callers."""
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": "VALIDATION_ERROR",
+            "detail": exc.errors(),
+            "hint": (
+                "Ensure your request body matches the VerifyRequest schema. "
+                "Example: POST /api/v1/verify with body: "
+                '{"text": "<your signed text here>"}'
+            ),
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# Root and health
+# ---------------------------------------------------------------------------
+
+
 @app.get("/")
 async def root():
     return {
@@ -85,74 +114,74 @@ async def health():
     }
 
 
+# ---------------------------------------------------------------------------
+# Task 3.0: Consolidated portal route
+# /{document_id} and /demo/{document_id} both call the same handler.
+# ---------------------------------------------------------------------------
+
+
 @app.get("/{document_id}", include_in_schema=False)
 async def verify_portal_document_id(
     document_id: str,
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    return await v1_endpoints.verify_by_document_id(document_id=document_id, db=db)
+    return await v1_endpoints.verify_by_document_id(document_id=document_id, db=db, request=request)
 
 
 @app.get("/demo/{document_id}", include_in_schema=False)
 async def verify_portal_demo_document_id(
     document_id: str,
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    return await v1_endpoints.verify_by_document_id(document_id=document_id, db=db)
+    return await v1_endpoints.verify_by_document_id(document_id=document_id, db=db, request=request)
+
+
+# ---------------------------------------------------------------------------
+# Task 4.3: Merged status list proxy routes
+# Both UUID-based and legacy org/list_index paths are handled here.
+# ---------------------------------------------------------------------------
+
+
+async def _proxy_status_list(url: str) -> JSONResponse:
+    """Shared proxy logic for status list endpoints."""
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(url)
+        return JSONResponse(
+            content=resp.json(),
+            status_code=resp.status_code,
+            headers={
+                "Cache-Control": "public, max-age=300",
+                "Content-Type": "application/json",
+            },
+        )
+    except Exception as exc:
+        logger.error("Failed to proxy status list request", error=str(exc))
+        return JSONResponse(
+            content={
+                "error": "Failed to fetch status list",
+                "error_detail": str(exc),
+            },
+            status_code=502,
+        )
 
 
 @app.get("/status/v1/lists/{list_id}", include_in_schema=False)
 async def status_list_proxy(list_id: str):
-    """Proxy status list requests to enterprise-api (UUID-based)."""
-    import httpx
-    from fastapi.responses import JSONResponse
-
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(
-                f"{settings.ENTERPRISE_API_URL}/api/v1/status/lists/{list_id}",
-            )
-        return JSONResponse(
-            content=resp.json(),
-            status_code=resp.status_code,
-            headers={
-                "Cache-Control": "public, max-age=300",
-                "Content-Type": "application/json",
-            },
-        )
-    except Exception:
-        logger.error("Failed to proxy status list request", exc_info=True)
-        return JSONResponse(
-            content={"error": "Failed to fetch status list"},
-            status_code=502,
-        )
+    """Proxy UUID-based status list requests to enterprise-api."""
+    url = f"{settings.ENTERPRISE_API_URL}/api/v1/status/lists/{list_id}"
+    return await _proxy_status_list(url)
 
 
 @app.get("/status/v1/{organization_id}/list/{list_index}", include_in_schema=False)
 async def status_list_proxy_legacy(organization_id: str, list_index: int):
-    """Legacy proxy — kept for backward compatibility with old URLs."""
-    import httpx
-    from fastapi.responses import JSONResponse
-
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(
-                f"{settings.ENTERPRISE_API_URL}/api/v1/status/list/{organization_id}/{list_index}",
-            )
-        return JSONResponse(
-            content=resp.json(),
-            status_code=resp.status_code,
-            headers={
-                "Cache-Control": "public, max-age=300",
-                "Content-Type": "application/json",
-            },
-        )
-    except Exception:
-        logger.error("Failed to proxy legacy status list request", exc_info=True)
-        return JSONResponse(
-            content={"error": "Failed to fetch status list"},
-            status_code=502,
-        )
+    """Legacy proxy -- kept for backward compatibility with old URLs."""
+    url = f"{settings.ENTERPRISE_API_URL}/api/v1/status/list/{organization_id}/{list_index}"
+    return await _proxy_status_list(url)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@ from ..core.security import (
     verify_token,
 )
 from ..core.config import settings
+from ..core.auth import get_email_config as _get_email_config
 from encypher_commercial_shared.email import (
     EmailConfig,
     generate_token,
@@ -31,22 +32,6 @@ from encypher_commercial_shared.email import (
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-# Create email config from settings
-def _get_email_config() -> EmailConfig:
-    return EmailConfig(
-        smtp_host=settings.SMTP_HOST,
-        smtp_port=settings.SMTP_PORT,
-        smtp_user=settings.SMTP_USER,
-        smtp_pass=settings.SMTP_PASS,
-        smtp_tls=settings.SMTP_TLS,
-        email_from=settings.EMAIL_FROM,
-        email_from_name=settings.EMAIL_FROM_NAME,
-        frontend_url=settings.FRONTEND_URL,
-        dashboard_url=settings.DASHBOARD_URL,
-        support_email=settings.SUPPORT_EMAIL,
-    )
 
 
 class AuthService:
@@ -98,6 +83,7 @@ class AuthService:
 
             # TEAM_191: Initialize onboarding checklist for new user
             from .onboarding_service import OnboardingService
+
             OnboardingService(db).initialize_for_new_user(db_user.id)
 
             db.commit()
@@ -140,7 +126,7 @@ class AuthService:
             features={
                 "team_management": False,
                 "audit_logs": False,
-                "merkle_enabled": True,   # TEAM_173: Free tier includes Merkle
+                "merkle_enabled": True,  # TEAM_173: Free tier includes Merkle
                 "bulk_operations": False,
                 "sentence_tracking": True,  # TEAM_173: Free tier includes sentence tracking
                 "streaming": True,
@@ -417,6 +403,7 @@ class AuthService:
 
         # TEAM_191: Initialize onboarding checklist for new OAuth user
         from .onboarding_service import OnboardingService
+
         OnboardingService(db).initialize_for_new_user(user.id)
 
         db.commit()

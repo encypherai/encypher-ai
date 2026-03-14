@@ -54,8 +54,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             # Log request completion
             logger.info("request_completed", status_code=response.status_code, duration_ms=round(duration * 1000, 2))
 
-            # Add request ID to response headers
+            # Add request ID and timing to response headers
             response.headers["X-Request-ID"] = request_id
+            response.headers["X-Response-Time"] = str(round(duration * 1000, 2))
 
             return response
 

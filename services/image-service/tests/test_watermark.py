@@ -3,6 +3,7 @@
 All tests run WITHOUT TrustMark/torch installed. The service layer is either
 left unloaded (testing 503 fallback) or replaced with a MagicMock.
 """
+
 import base64
 from io import BytesIO
 from unittest.mock import MagicMock
@@ -14,6 +15,7 @@ from fastapi.testclient import TestClient
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_test_jpeg() -> bytes:
     """Return a minimal valid JPEG (64x64 solid colour)."""
@@ -38,6 +40,7 @@ def make_test_png() -> bytes:
 # ---------------------------------------------------------------------------
 # Health endpoint
 # ---------------------------------------------------------------------------
+
 
 class TestHealthEndpoint:
     def test_health_model_not_loaded(self) -> None:
@@ -88,6 +91,7 @@ class TestHealthEndpoint:
 # Watermark endpoint -- 503 when model not loaded
 # ---------------------------------------------------------------------------
 
+
 class TestWatermarkEndpoint503:
     def _client_with_unloaded_service(self) -> TestClient:
         from app.main import app
@@ -130,6 +134,7 @@ class TestWatermarkEndpoint503:
 # Detect endpoint -- 503 when model not loaded
 # ---------------------------------------------------------------------------
 
+
 class TestDetectEndpoint503:
     def _client_with_unloaded_service(self) -> TestClient:
         from app.main import app
@@ -163,6 +168,7 @@ class TestDetectEndpoint503:
 # ---------------------------------------------------------------------------
 # Watermark endpoint -- mocked service (happy path)
 # ---------------------------------------------------------------------------
+
 
 class TestWatermarkEndpointMocked:
     def test_watermark_with_mocked_service(self) -> None:
@@ -256,6 +262,7 @@ class TestWatermarkEndpointMocked:
 # Detect endpoint -- mocked service (happy path)
 # ---------------------------------------------------------------------------
 
+
 class TestDetectEndpointMocked:
     def test_detect_found_with_mocked_service(self) -> None:
         from app.main import app
@@ -320,6 +327,7 @@ class TestDetectEndpointMocked:
 # ---------------------------------------------------------------------------
 # TrustMarkService unit tests (no real model)
 # ---------------------------------------------------------------------------
+
 
 class TestTrustMarkServiceUnit:
     def test_service_not_available_by_default(self) -> None:

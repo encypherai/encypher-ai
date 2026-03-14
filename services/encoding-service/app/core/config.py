@@ -54,6 +54,13 @@ class Settings(BaseSettings):
     MAX_DOCUMENT_SIZE: int = 10485760  # 10MB
     SUPPORTED_FORMATS: str = "text,json,markdown"
 
+    # ===========================================
+    # SERVICE-SPECIFIC: Signing Key
+    # Load Ed25519 private key PEM from environment.
+    # In production, inject via secrets manager.
+    # ===========================================
+    SIGNING_PRIVATE_KEY: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

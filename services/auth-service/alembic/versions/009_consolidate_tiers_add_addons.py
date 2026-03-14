@@ -23,10 +23,7 @@ depends_on = None
 def upgrade() -> None:
     # 1. Coerce legacy tier values to 'free'
     #    Auth-service uses a VARCHAR tier column, not a PG enum.
-    op.execute(
-        "UPDATE organizations SET tier = 'free' "
-        "WHERE tier IN ('starter', 'professional', 'business')"
-    )
+    op.execute("UPDATE organizations SET tier = 'free' WHERE tier IN ('starter', 'professional', 'business')")
 
     # 2. Add add_ons JSON column (default empty dict)
     op.add_column(
@@ -35,10 +32,7 @@ def upgrade() -> None:
     )
 
     # 3. Update coalition rev share defaults for existing orgs on old 65/35 split
-    op.execute(
-        "UPDATE organizations SET coalition_rev_share = 60 "
-        "WHERE coalition_rev_share = 65"
-    )
+    op.execute("UPDATE organizations SET coalition_rev_share = 60 WHERE coalition_rev_share = 65")
 
 
 def downgrade() -> None:
@@ -46,6 +40,4 @@ def downgrade() -> None:
     op.drop_column("organizations", "add_ons")
 
     # Revert 'free' tier back to 'starter'
-    op.execute(
-        "UPDATE organizations SET tier = 'starter' WHERE tier = 'free'"
-    )
+    op.execute("UPDATE organizations SET tier = 'starter' WHERE tier = 'free'")

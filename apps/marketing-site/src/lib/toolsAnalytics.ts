@@ -12,6 +12,14 @@ type ToolAnalyticsEventInput = {
   properties?: Record<string, unknown>;
 };
 
+/** Page context read from window — only available in browser. */
+type PageContext = {
+  pageUrl: string;
+  pageTitle: string;
+  referrer: string;
+  userAgent: string;
+};
+
 const TOOL_SESSION_KEY = "encypher_tools_session_id";
 
 export function getToolSessionId(
@@ -54,13 +62,26 @@ function defaultIdGenerator(): string {
   return `tools_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function trackToolEvent(input: Omit<ToolAnalyticsEventInput, "sessionId">) {
+function readPageContext(): PageContext {
+  return {
+    pageUrl: window.location.href,
+    pageTitle: document.title,
+    referrer: document.referrer,
+    userAgent: navigator.userAgent,
+  };
+}
+
+export function trackToolEvent(
+  input: Omit<ToolAnalyticsEventInput, "sessionId" | "pageUrl" | "pageTitle" | "referrer" | "userAgent"> & Partial<PageContext>
+) {
   if (typeof window === "undefined") {
     return;
   }
 
+  const page = readPageContext();
   const sessionId = getToolSessionId(window.sessionStorage, defaultIdGenerator);
   const payload = buildToolAnalyticsEvent({
+    ...page,
     ...input,
     sessionId,
   });

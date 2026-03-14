@@ -21,10 +21,8 @@ if (process.env.NODE_ENV === 'development') {
   console.info(`[dashboard] Using API base URL: ${API_BASE_URL}`);
 }
 
-const AUTH_SERVICE_URL = API_BASE_URL;
-const KEY_SERVICE_URL = API_BASE_URL;
-const ANALYTICS_SERVICE_URL = API_BASE_URL;
-const BILLING_SERVICE_URL = API_BASE_URL;
+// All services route through the same API gateway; no separate microservice URLs.
+// Use API_BASE_URL directly for all endpoints.
 
 interface ApiResponse<T = unknown> {
   success: boolean;
@@ -484,7 +482,10 @@ class ApiError extends Error {
   constructor(
     message: string,
     public statusCode: number,
-    public code?: string
+    public code?: string,
+    public nextAction?: string,
+    public docsUrl?: string,
+    public fieldErrors?: Record<string, string[]>
   ) {
     super(message);
     this.name = 'ApiError';
@@ -509,20 +510,46 @@ async function fetchWithAuth<T>(
     ...options.headers,
   };
 
+  const startMs = Date.now();
+
   const response = await fetch(url, {
     ...options,
     headers,
   });
 
+  const elapsedMs = Date.now() - startMs;
+
   if (!response.ok) {
     let errorMessage = `Request failed with status ${response.status}`;
+    let code: string | undefined;
+    let nextAction: string | undefined;
+    let docsUrl: string | undefined;
+    let fieldErrors: Record<string, string[]> | undefined;
     try {
       const errorData = await response.json();
-      errorMessage = errorData.detail || errorData.message || errorMessage;
+      // Envelope format: { error: { code, message, next_action, docs_url, details } }
+      const err = errorData.error;
+      if (err && typeof err === 'object') {
+        errorMessage = err.message || errorMessage;
+        code = err.code;
+        nextAction = err.next_action;
+        docsUrl = err.docs_url;
+        fieldErrors = err.details?.field_errors;
+      } else {
+        // Legacy format: { detail: "..." }
+        errorMessage = errorData.detail || errorData.message || errorMessage;
+      }
     } catch {
       // Ignore JSON parse errors
     }
-    throw new ApiError(errorMessage, response.status);
+    if (process.env.NODE_ENV === 'development') {
+      console.debug(`[api] ERROR ${response.status} ${url} (${elapsedMs}ms)`);
+    }
+    throw new ApiError(errorMessage, response.status, code, nextAction, docsUrl, fieldErrors);
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    console.debug(`[api] OK ${response.status} ${url} (${elapsedMs}ms)`);
   }
 
   return response.json();
@@ -543,7 +570,7 @@ const apiClient = {
     }
     const query = params.toString();
     const response = await fetchWithAuth<ApiKeyInfo[]>(
-      `${KEY_SERVICE_URL}/keys${query ? `?${query}` : ''}`,
+      `${API_BASE_URL}/keys${query ? `?${query}` : ''}`,
       accessToken
     );
     return response;
@@ -554,7 +581,7 @@ const apiClient = {
    */
   async listDomainClaims(accessToken: string, organizationId: string): Promise<DomainClaimInfo[]> {
     const response = await fetchWithAuth<{ success: boolean; data: DomainClaimInfo[] }>(
-      `${AUTH_SERVICE_URL}/organizations/${organizationId}/domain-claims`,
+      `${API_BASE_URL}/organizations/${organizationId}/domain-claims`,
       accessToken
     );
     return response.data ?? [];
@@ -569,7 +596,7 @@ const apiClient = {
     payload: { domain: string; verification_email: string }
   ): Promise<DomainClaimResponse> {
     const response = await fetchWithAuth<DomainClaimResponse>(
-      `${AUTH_SERVICE_URL}/organizations/${organizationId}/domain-claims`,
+      `${API_BASE_URL}/organizations/${organizationId}/domain-claims`,
       accessToken,
       {
         method: 'POST',
@@ -588,7 +615,7 @@ const apiClient = {
     claimId: string
   ): Promise<DomainClaimResponse> {
     const response = await fetchWithAuth<DomainClaimResponse>(
-      `${AUTH_SERVICE_URL}/organizations/${organizationId}/domain-claims/${claimId}/verify-dns`,
+      `${API_BASE_URL}/organizations/${organizationId}/domain-claims/${claimId}/verify-dns`,
       accessToken,
       { method: 'POST' }
     );
@@ -605,7 +632,7 @@ const apiClient = {
     enabled: boolean
   ): Promise<DomainClaimResponse> {
     const response = await fetchWithAuth<DomainClaimResponse>(
-      `${AUTH_SERVICE_URL}/organizations/${organizationId}/domain-claims/${claimId}/auto-join`,
+      `${API_BASE_URL}/organizations/${organizationId}/domain-claims/${claimId}/auto-join`,
       accessToken,
       {
         method: 'PATCH',
@@ -624,7 +651,7 @@ const apiClient = {
     claimId: string
   ): Promise<DomainClaimResponse> {
     const response = await fetchWithAuth<DomainClaimResponse>(
-      `${AUTH_SERVICE_URL}/organizations/${organizationId}/domain-claims/${claimId}`,
+      `${API_BASE_URL}/organizations/${organizationId}/domain-claims/${claimId}`,
       accessToken,
       { method: 'DELETE' }
     );
@@ -648,7 +675,7 @@ const apiClient = {
       payload.organization_id = organizationId;
     }
     const response = await fetchWithAuth<ApiKeyCreateResponse>(
-      `${KEY_SERVICE_URL}/keys/generate`,
+      `${API_BASE_URL}/keys/generate`,
       accessToken,
       {
         method: 'POST',
@@ -692,7 +719,7 @@ const apiClient = {
    */
   async deleteApiKey(accessToken: string, keyId: string): Promise<void> {
     await fetchWithAuth<{ message: string }>(
-      `${KEY_SERVICE_URL}/keys/${keyId}`,
+      `${API_BASE_URL}/keys/${keyId}`,
       accessToken,
       { method: 'DELETE' }
     );
@@ -703,7 +730,7 @@ const apiClient = {
    */
   async revokeKeysByUser(accessToken: string, organizationId: string, userId: string): Promise<{ revoked_count: number }> {
     return fetchWithAuth<{ revoked_count: number }>(
-      `${KEY_SERVICE_URL}/keys/revoke-by-user`,
+      `${API_BASE_URL}/keys/revoke-by-user`,
       accessToken,
       {
         method: 'POST',
@@ -724,7 +751,7 @@ const apiClient = {
     payload: { name: string; email: string }
   ): Promise<OrganizationCreateResponse> {
     const response = await fetchWithAuth<OrganizationCreateResponse>(
-      `${AUTH_SERVICE_URL}/organizations`,
+      `${API_BASE_URL}/organizations`,
       accessToken,
       {
         method: 'POST',
@@ -739,7 +766,7 @@ const apiClient = {
    */
   async getKeyUsage(accessToken: string, keyId: string): Promise<unknown> {
     return fetchWithAuth(
-      `${KEY_SERVICE_URL}/keys/${keyId}/usage`,
+      `${API_BASE_URL}/keys/${keyId}/usage`,
       accessToken
     );
   },
@@ -753,7 +780,7 @@ const apiClient = {
    */
   async getUsageStats(accessToken: string, days: number = 30): Promise<UsageStats> {
     return fetchWithAuth<UsageStats>(
-      `${ANALYTICS_SERVICE_URL}/analytics/usage?days=${days}`,
+      `${API_BASE_URL}/analytics/usage?days=${days}`,
       accessToken
     );
   },
@@ -763,7 +790,7 @@ const apiClient = {
    */
   async getAnalyticsReport(accessToken: string, days: number = 30): Promise<AnalyticsReport> {
     return fetchWithAuth<AnalyticsReport>(
-      `${ANALYTICS_SERVICE_URL}/analytics/report?days=${days}`,
+      `${API_BASE_URL}/analytics/report?days=${days}`,
       accessToken
     );
   },
@@ -778,7 +805,7 @@ const apiClient = {
     interval: 'hour' | 'day' = 'day'
   ): Promise<TimeSeriesData[]> {
     return fetchWithAuth<TimeSeriesData[]>(
-      `${ANALYTICS_SERVICE_URL}/analytics/timeseries?metric_type=${metricType}&days=${days}&interval=${interval}`,
+      `${API_BASE_URL}/analytics/timeseries?metric_type=${metricType}&days=${days}&interval=${interval}`,
       accessToken
     );
   },
@@ -792,7 +819,7 @@ const apiClient = {
    */
   async getUserProfile(accessToken: string): Promise<unknown> {
     return fetchWithAuth(
-      `${AUTH_SERVICE_URL}/auth/verify`,
+      `${API_BASE_URL}/auth/verify`,
       accessToken,
       { method: 'POST' }
     );
@@ -803,7 +830,7 @@ const apiClient = {
    */
   async logout(accessToken: string): Promise<void> {
     await fetchWithAuth(
-      `${AUTH_SERVICE_URL}/auth/logout`,
+      `${API_BASE_URL}/auth/logout`,
       accessToken,
       { method: 'POST' }
     );
@@ -818,7 +845,7 @@ const apiClient = {
    */
   async getApiAccessStatus(accessToken: string): Promise<ApiAccessStatusResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: ApiAccessStatusResponse }>(
-      `${AUTH_SERVICE_URL}/auth/api-access-status`,
+      `${API_BASE_URL}/auth/api-access-status`,
       accessToken
     );
     return response.data;
@@ -841,7 +868,7 @@ const apiClient = {
     if (options?.activeOnly) params.append('active_only', 'true');
 
     const queryString = params.toString();
-    const url = `${AUTH_SERVICE_URL}/auth/admin/newsletter-subscribers${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_BASE_URL}/auth/admin/newsletter-subscribers${queryString ? `?${queryString}` : ''}`;
 
     const response = await fetchWithAuth<{ success: boolean; data: AdminNewsletterSubscribersResponse }>(
       url,
@@ -857,7 +884,7 @@ const apiClient = {
     reason?: string
   ): Promise<AdminNewsletterSubscriber> {
     const response = await fetchWithAuth<{ success: boolean; data: AdminNewsletterSubscriber }>(
-      `${AUTH_SERVICE_URL}/auth/admin/newsletter-subscribers/${subscriberId}/status`,
+      `${API_BASE_URL}/auth/admin/newsletter-subscribers/${subscriberId}/status`,
       accessToken,
       {
         method: 'POST',
@@ -869,7 +896,7 @@ const apiClient = {
 
   async deleteAdminNewsletterSubscriber(accessToken: string, subscriberId: number): Promise<void> {
     await fetchWithAuth<{ success: boolean; data: { deleted: boolean; id: number } }>(
-      `${AUTH_SERVICE_URL}/auth/admin/newsletter-subscribers/${subscriberId}`,
+      `${API_BASE_URL}/auth/admin/newsletter-subscribers/${subscriberId}`,
       accessToken,
       { method: 'DELETE' }
     );
@@ -880,7 +907,7 @@ const apiClient = {
    */
   async requestApiAccess(accessToken: string, useCase: string): Promise<ApiAccessRequestResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: ApiAccessRequestResponse }>(
-      `${AUTH_SERVICE_URL}/auth/request-api-access`,
+      `${API_BASE_URL}/auth/request-api-access`,
       accessToken,
       {
         method: 'POST',
@@ -896,7 +923,7 @@ const apiClient = {
   async isSuperAdmin(accessToken: string): Promise<boolean> {
     try {
       const response = await fetchWithAuth<{ success: boolean; data: { is_super_admin: boolean } }>(
-        `${AUTH_SERVICE_URL}/auth/admin/is-super-admin`,
+        `${API_BASE_URL}/auth/admin/is-super-admin`,
         accessToken
       );
       return response.data.is_super_admin;
@@ -911,7 +938,7 @@ const apiClient = {
   async searchAdminOrganizations(accessToken: string, query: string, limit = 10): Promise<unknown[]> {
     const params = new URLSearchParams({ query, limit: limit.toString() });
     const response = await fetchWithAuth<{ success: boolean; data: unknown[] }>(
-      `${AUTH_SERVICE_URL}/auth/admin/organizations/search?${params.toString()}`,
+      `${API_BASE_URL}/auth/admin/organizations/search?${params.toString()}`,
       accessToken
     );
     return response.data;
@@ -922,7 +949,7 @@ const apiClient = {
    */
   async getPendingAccessRequests(accessToken: string): Promise<PendingAccessRequest[]> {
     const response = await fetchWithAuth<{ success: boolean; data: { requests: PendingAccessRequest[]; total: number } }>(
-      `${AUTH_SERVICE_URL}/auth/admin/pending-access-requests`,
+      `${API_BASE_URL}/auth/admin/pending-access-requests`,
       accessToken
     );
     return response.data.requests;
@@ -933,7 +960,7 @@ const apiClient = {
    */
   async approveApiAccess(accessToken: string, userId: string): Promise<void> {
     await fetchWithAuth(
-      `${AUTH_SERVICE_URL}/auth/admin/approve-api-access`,
+      `${API_BASE_URL}/auth/admin/approve-api-access`,
       accessToken,
       {
         method: 'POST',
@@ -947,7 +974,7 @@ const apiClient = {
    */
   async denyApiAccess(accessToken: string, userId: string, reason: string): Promise<void> {
     await fetchWithAuth(
-      `${AUTH_SERVICE_URL}/auth/admin/deny-api-access`,
+      `${API_BASE_URL}/auth/admin/deny-api-access`,
       accessToken,
       {
         method: 'POST',
@@ -967,7 +994,7 @@ const apiClient = {
     reason?: string
   ): Promise<void> {
     await fetchWithAuth(
-      `${AUTH_SERVICE_URL}/auth/admin/set-api-access-status`,
+      `${API_BASE_URL}/auth/admin/set-api-access-status`,
       accessToken,
       {
         method: 'POST',
@@ -985,7 +1012,7 @@ const apiClient = {
    */
   async getProfile(accessToken: string): Promise<unknown> {
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${AUTH_SERVICE_URL}/auth/verify`,
+      `${API_BASE_URL}/auth/verify`,
       accessToken,
       { method: 'POST' }
     );
@@ -1011,7 +1038,7 @@ const apiClient = {
     // For now, we'll make the call and handle gracefully if it doesn't exist
     try {
       return await fetchWithAuth(
-        `${AUTH_SERVICE_URL}/auth/profile`,
+        `${API_BASE_URL}/auth/profile`,
         accessToken,
         {
           method: 'PUT',
@@ -1033,7 +1060,7 @@ const apiClient = {
    */
   async getAdminStats(accessToken: string): Promise<unknown> {
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${AUTH_SERVICE_URL}/auth/admin/stats`,
+      `${API_BASE_URL}/auth/admin/stats`,
       accessToken
     );
     return response.data;
@@ -1056,7 +1083,7 @@ const apiClient = {
     if (pageSize) params.append('page_size', pageSize.toString());
 
     const queryString = params.toString();
-    const url = `${AUTH_SERVICE_URL}/auth/admin/users${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_BASE_URL}/auth/admin/users${queryString ? `?${queryString}` : ''}`;
 
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
       url,
@@ -1070,7 +1097,7 @@ const apiClient = {
    */
   async updateUserTier(accessToken: string, userId: string, newTier: string, reason?: string): Promise<unknown> {
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${AUTH_SERVICE_URL}/auth/admin/users/update-tier`,
+      `${API_BASE_URL}/auth/admin/users/update-tier`,
       accessToken,
       {
         method: 'POST',
@@ -1085,7 +1112,7 @@ const apiClient = {
    */
   async toggleUserStatus(accessToken: string, userId: string, enabled: boolean, reason?: string): Promise<unknown> {
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${AUTH_SERVICE_URL}/auth/admin/users/update-status`,
+      `${API_BASE_URL}/auth/admin/users/update-status`,
       accessToken,
       {
         method: 'POST',
@@ -1129,7 +1156,7 @@ const apiClient = {
    */
   async updateUserRole(accessToken: string, userId: string, newRole: string): Promise<unknown> {
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${AUTH_SERVICE_URL}/auth/admin/users/update-role`,
+      `${API_BASE_URL}/auth/admin/users/update-role`,
       accessToken,
       {
         method: 'POST',
@@ -1250,7 +1277,7 @@ const apiClient = {
    * Get all available subscription plans
    */
   async getPlans(): Promise<PlanInfo[]> {
-    const response = await fetch(`${BILLING_SERVICE_URL}/billing/plans`);
+    const response = await fetch(`${API_BASE_URL}/billing/plans`);
     if (!response.ok) {
       throw new ApiError('Failed to fetch plans', response.status);
     }
@@ -1263,7 +1290,7 @@ const apiClient = {
   async getSubscription(accessToken: string): Promise<SubscriptionInfo | null> {
     try {
       return await fetchWithAuth<SubscriptionInfo>(
-        `${BILLING_SERVICE_URL}/billing/subscription`,
+        `${API_BASE_URL}/billing/subscription`,
         accessToken
       );
     } catch (error) {
@@ -1295,7 +1322,7 @@ const apiClient = {
   async getInvoices(accessToken: string): Promise<Invoice[]> {
     try {
       return await fetchWithAuth<Invoice[]>(
-        `${BILLING_SERVICE_URL}/billing/invoices`,
+        `${API_BASE_URL}/billing/invoices`,
         accessToken
       );
     } catch (error) {
@@ -1309,7 +1336,7 @@ const apiClient = {
    */
   async getBillingUsage(accessToken: string): Promise<BillingUsageStats> {
     return fetchWithAuth<BillingUsageStats>(
-      `${BILLING_SERVICE_URL}/billing/usage`,
+      `${API_BASE_URL}/billing/usage`,
       accessToken
     );
   },
@@ -1319,7 +1346,7 @@ const apiClient = {
    */
   async getCoalitionEarnings(accessToken: string): Promise<CoalitionSummary> {
     return fetchWithAuth<CoalitionSummary>(
-      `${BILLING_SERVICE_URL}/billing/coalition`,
+      `${API_BASE_URL}/billing/coalition`,
       accessToken
     );
   },
@@ -1366,7 +1393,7 @@ const apiClient = {
     billingCycle: 'monthly' | 'annual'
   ): Promise<CheckoutResponse> {
     return fetchWithAuth<CheckoutResponse>(
-      `${BILLING_SERVICE_URL}/billing/checkout`,
+      `${API_BASE_URL}/billing/checkout`,
       accessToken,
       {
         method: 'POST',
@@ -1380,7 +1407,7 @@ const apiClient = {
     payload: AddOnCheckoutRequest
   ): Promise<CheckoutResponse> {
     return fetchWithAuth<CheckoutResponse>(
-      `${BILLING_SERVICE_URL}/billing/checkout/add-on`,
+      `${API_BASE_URL}/billing/checkout/add-on`,
       accessToken,
       {
         method: 'POST',
@@ -1394,7 +1421,7 @@ const apiClient = {
    */
   async getBillingPortal(accessToken: string): Promise<PortalResponse> {
     return fetchWithAuth<PortalResponse>(
-      `${BILLING_SERVICE_URL}/billing/portal`,
+      `${API_BASE_URL}/billing/portal`,
       accessToken
     );
   },
@@ -1408,7 +1435,7 @@ const apiClient = {
     billingCycle: 'monthly' | 'annual'
   ): Promise<UpgradeResponse> {
     return fetchWithAuth<UpgradeResponse>(
-      `${BILLING_SERVICE_URL}/billing/upgrade`,
+      `${API_BASE_URL}/billing/upgrade`,
       accessToken,
       {
         method: 'POST',
@@ -1422,7 +1449,7 @@ const apiClient = {
    */
   async cancelSubscription(accessToken: string, subscriptionId: string): Promise<void> {
     await fetchWithAuth(
-      `${BILLING_SERVICE_URL}/billing/subscription/${subscriptionId}`,
+      `${API_BASE_URL}/billing/subscription/${subscriptionId}`,
       accessToken,
       { method: 'DELETE' }
     );
@@ -1489,97 +1516,6 @@ const apiClient = {
     );
   },
 
-  // Generic HTTP methods for flexibility
-  async get<T = unknown>(url: string, accessToken?: string): Promise<{ data: T }> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      method: 'GET',
-      headers,
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new ApiError(error.message || 'Request failed', response.status);
-    }
-
-    const data = await response.json();
-    return { data };
-  },
-
-  async post<T = unknown>(url: string, body?: unknown, accessToken?: string): Promise<{ data: T }> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      method: 'POST',
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new ApiError(error.message || 'Request failed', response.status);
-    }
-
-    const data = await response.json();
-    return { data };
-  },
-
-  async patch<T = unknown>(url: string, body?: unknown, accessToken?: string): Promise<{ data: T }> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      method: 'PATCH',
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new ApiError(error.message || 'Request failed', response.status);
-    }
-
-    const data = await response.json();
-    return { data };
-  },
-
-  async delete<T = unknown>(url: string, accessToken?: string): Promise<{ data: T }> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      method: 'DELETE',
-      headers,
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }));
-      throw new ApiError(error.message || 'Request failed', response.status);
-    }
-
-    const data = await response.json().catch(() => ({}));
-    return { data };
-  },
-
   // ============================================
   // Admin Analytics (Usage Counts & Activity Logs)
   // ============================================
@@ -1588,7 +1524,7 @@ const apiClient = {
    * Get usage counts for multiple users (admin only)
    */
   async getAdminUsageCounts(accessToken: string, userIds: string[], days: number = 30): Promise<Record<string, number>> {
-    const response = await fetch(`${ANALYTICS_SERVICE_URL}/analytics/admin/usage-counts`, {
+    const response = await fetch(`${API_BASE_URL}/analytics/admin/usage-counts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1632,7 +1568,7 @@ const apiClient = {
     if (options.metricType) params.append('metric_type', options.metricType);
 
     const response = await fetchWithAuth<any>(
-      `${ANALYTICS_SERVICE_URL}/analytics/user/${userId}/activity?${params.toString()}`,
+      `${API_BASE_URL}/analytics/user/${userId}/activity?${params.toString()}`,
       accessToken
     );
 
@@ -1648,7 +1584,7 @@ const apiClient = {
    */
   async getOnboardingStatus(accessToken: string): Promise<OnboardingStatusResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: OnboardingStatusResponse }>(
-      `${AUTH_SERVICE_URL}/auth/onboarding-status`,
+      `${API_BASE_URL}/auth/onboarding-status`,
       accessToken
     );
     return response.data;
@@ -1659,7 +1595,7 @@ const apiClient = {
    */
   async completeOnboardingStep(accessToken: string, stepId: string): Promise<OnboardingStatusResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: OnboardingStatusResponse }>(
-      `${AUTH_SERVICE_URL}/auth/onboarding/complete-step`,
+      `${API_BASE_URL}/auth/onboarding/complete-step`,
       accessToken,
       {
         method: 'POST',
@@ -1674,7 +1610,7 @@ const apiClient = {
    */
   async dismissOnboarding(accessToken: string): Promise<OnboardingStatusResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: OnboardingStatusResponse }>(
-      `${AUTH_SERVICE_URL}/auth/onboarding/dismiss`,
+      `${API_BASE_URL}/auth/onboarding/dismiss`,
       accessToken,
       { method: 'POST' }
     );
@@ -1690,7 +1626,7 @@ const apiClient = {
    */
   async getSetupStatus(accessToken: string): Promise<SetupStatusResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: SetupStatusResponse }>(
-      `${AUTH_SERVICE_URL}/auth/setup-status`,
+      `${API_BASE_URL}/auth/setup-status`,
       accessToken
     );
     return response.data;
@@ -1708,7 +1644,7 @@ const apiClient = {
     publisher_platform_custom?: string;
   }): Promise<SetupStatusResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: SetupStatusResponse }>(
-      `${AUTH_SERVICE_URL}/auth/setup/complete`,
+      `${API_BASE_URL}/auth/setup/complete`,
       accessToken,
       {
         method: 'POST',
@@ -1734,7 +1670,7 @@ const apiClient = {
     }
   ): Promise<PublisherSettings> {
     const response = await fetchWithAuth<{ success: boolean; data: PublisherSettings }>(
-      `${AUTH_SERVICE_URL}/organizations/${orgId}/publisher-settings`,
+      `${API_BASE_URL}/organizations/${orgId}/publisher-settings`,
       accessToken,
       {
         method: 'PATCH',
@@ -1746,7 +1682,7 @@ const apiClient = {
 
   async getMfaStatus(accessToken: string): Promise<MfaStatusResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: MfaStatusResponse }>(
-      `${AUTH_SERVICE_URL}/auth/mfa/status`,
+      `${API_BASE_URL}/auth/mfa/status`,
       accessToken
     );
     return response.data;
@@ -1754,7 +1690,7 @@ const apiClient = {
 
   async beginTotpSetup(accessToken: string): Promise<TotpSetupResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: TotpSetupResponse }>(
-      `${AUTH_SERVICE_URL}/auth/mfa/totp/setup`,
+      `${API_BASE_URL}/auth/mfa/totp/setup`,
       accessToken,
       { method: 'POST' }
     );
@@ -1763,7 +1699,7 @@ const apiClient = {
 
   async confirmTotpSetup(accessToken: string, code: string): Promise<{ enabled: boolean; recovery_codes_remaining: number }> {
     const response = await fetchWithAuth<{ success: boolean; data: { enabled: boolean; recovery_codes_remaining: number } }>(
-      `${AUTH_SERVICE_URL}/auth/mfa/totp/confirm`,
+      `${API_BASE_URL}/auth/mfa/totp/confirm`,
       accessToken,
       {
         method: 'POST',
@@ -1775,7 +1711,7 @@ const apiClient = {
 
   async disableTotp(accessToken: string, code: string): Promise<void> {
     await fetchWithAuth(
-      `${AUTH_SERVICE_URL}/auth/mfa/totp/disable`,
+      `${API_BASE_URL}/auth/mfa/totp/disable`,
       accessToken,
       {
         method: 'POST',
@@ -1785,7 +1721,7 @@ const apiClient = {
   },
 
   async completeMfaLogin(mfaToken: string, mfaCode: string): Promise<unknown> {
-    const response = await fetch(`${AUTH_SERVICE_URL}/auth/login/mfa/complete`, {
+    const response = await fetch(`${API_BASE_URL}/auth/login/mfa/complete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mfa_token: mfaToken, mfa_code: mfaCode }),
@@ -1799,7 +1735,7 @@ const apiClient = {
 
   async startPasskeyRegistration(accessToken: string): Promise<PasskeyOptionsResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: PasskeyOptionsResponse }>(
-      `${AUTH_SERVICE_URL}/auth/passkeys/register/options`,
+      `${API_BASE_URL}/auth/passkeys/register/options`,
       accessToken,
       { method: 'POST' }
     );
@@ -1808,7 +1744,7 @@ const apiClient = {
 
   async completePasskeyRegistration(accessToken: string, credential: Record<string, unknown>, name?: string): Promise<unknown> {
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${AUTH_SERVICE_URL}/auth/passkeys/register/complete`,
+      `${API_BASE_URL}/auth/passkeys/register/complete`,
       accessToken,
       {
         method: 'POST',
@@ -1819,7 +1755,7 @@ const apiClient = {
   },
 
   async startPasskeyAuthentication(email: string): Promise<PasskeyOptionsResponse> {
-    const response = await fetch(`${AUTH_SERVICE_URL}/auth/passkeys/authenticate/options`, {
+    const response = await fetch(`${API_BASE_URL}/auth/passkeys/authenticate/options`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -1832,7 +1768,7 @@ const apiClient = {
   },
 
   async completePasskeyAuthentication(email: string, credential: Record<string, unknown>): Promise<unknown> {
-    const response = await fetch(`${AUTH_SERVICE_URL}/auth/passkeys/authenticate/complete`, {
+    const response = await fetch(`${API_BASE_URL}/auth/passkeys/authenticate/complete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, credential }),
@@ -1846,7 +1782,7 @@ const apiClient = {
 
   async deletePasskey(accessToken: string, credentialId: string): Promise<void> {
     await fetchWithAuth(
-      `${AUTH_SERVICE_URL}/auth/passkeys/${encodeURIComponent(credentialId)}`,
+      `${API_BASE_URL}/auth/passkeys/${encodeURIComponent(credentialId)}`,
       accessToken,
       { method: 'DELETE' }
     );

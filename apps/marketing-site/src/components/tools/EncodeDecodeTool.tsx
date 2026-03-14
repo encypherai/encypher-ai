@@ -1,18 +1,14 @@
 'use client';
 
-// Force HMR update
 import React, { useState, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-// import { Copy } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { trackToolEvent } from "@/lib/toolsAnalytics";
-
-// Temporary replacement for Copy icon to debug import issue
-const Copy = (props: any) => <span {...props}>📋</span>;
 
 // --- Types matching backend DecodeToolResponse ---
 interface VerifyVerdict {
@@ -71,15 +67,6 @@ interface DecodeToolResponse {
   c2pa?: C2PAInfo | null;
 }
 
-function hasOriginalText(metadata: unknown): metadata is MetadataWithOriginalText {
-  return (
-    typeof metadata === 'object' &&
-    metadata !== null &&
-    'original_text' in metadata &&
-    typeof (metadata as MetadataWithOriginalText).original_text === 'string'
-  );
-}
-
 interface EncodeDecodeToolProps {
   initialMode?: "encode" | "decode";
 }
@@ -89,6 +76,10 @@ function getErrorMessage(error: string | { message: string } | null | undefined,
   if (typeof error === "string") return error;
   if (typeof error === "object" && "message" in error && typeof error.message === "string") return error.message;
   return fallback;
+}
+
+function isTampered(embedding: EmbeddingResult): boolean {
+  return Boolean(embedding.verdict?.tampered || (!embedding.verdict?.valid && embedding.metadata));
 }
 
 /**
@@ -105,7 +96,9 @@ async function toolsApiCall<T>(path: string, options: RequestInit = {}): Promise
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `Request failed with status ${response.status}`);
+    const detail = errorData.detail || `Request failed with status ${response.status}`;
+    const nextAction = errorData.next_action;
+    throw new Error(nextAction ? `${detail} -- ${nextAction}` : detail);
   }
 
   return response.json();
@@ -134,10 +127,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
     const nextMode = mode === "encode" ? "decode" : "encode";
     trackToolEvent({
       eventName: "tools_mode_toggle",
-      pageUrl: window.location.href,
-      pageTitle: document.title,
-      referrer: document.referrer,
-      userAgent: navigator.userAgent,
       properties: {
         from: mode === "encode" ? "sign" : "verify",
         to: nextMode === "encode" ? "sign" : "verify",
@@ -181,10 +170,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
     const startedAt = Date.now();
     trackToolEvent({
       eventName: mode === "encode" ? "tools_sign_started" : "tools_verify_started",
-      pageUrl: window.location.href,
-      pageTitle: document.title,
-      referrer: document.referrer,
-      userAgent: navigator.userAgent,
       properties: {
         mode: mode === "encode" ? "sign" : "verify",
         inputLength: inputText.length,
@@ -209,10 +194,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
         if (response && response.encoded_text) {
           trackToolEvent({
             eventName: "tools_sign_success",
-            pageUrl: window.location.href,
-            pageTitle: document.title,
-            referrer: document.referrer,
-            userAgent: navigator.userAgent,
             properties: {
               mode: "sign",
               inputLength: inputText.length,
@@ -229,10 +210,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
             if (verifyResponse && verifyResponse.verification_status === "Success") {
               trackToolEvent({
                 eventName: "tools_verify_after_sign_success",
-                pageUrl: window.location.href,
-                pageTitle: document.title,
-                referrer: document.referrer,
-                userAgent: navigator.userAgent,
                 properties: {
                   mode: "verify",
                   inputLength: response.encoded_text.length,
@@ -244,10 +221,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
             } else {
               trackToolEvent({
                 eventName: "tools_verify_after_sign_fallback",
-                pageUrl: window.location.href,
-                pageTitle: document.title,
-                referrer: document.referrer,
-                userAgent: navigator.userAgent,
                 properties: {
                   mode: "verify",
                   inputLength: response.encoded_text.length,
@@ -262,13 +235,9 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                 raw_hidden_data: { valid: true, signer_name: "org_demo (Demo Key)", reason_code: "CREATED" } as any,
               });
             }
-          } catch (e) {
+          } catch {
             trackToolEvent({
               eventName: "tools_verify_after_sign_error",
-              pageUrl: window.location.href,
-              pageTitle: document.title,
-              referrer: document.referrer,
-              userAgent: navigator.userAgent,
               properties: {
                 mode: "verify",
                 inputLength: response.encoded_text.length,
@@ -293,10 +262,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
         }
         trackToolEvent({
           eventName: "tools_verify_success",
-          pageUrl: window.location.href,
-          pageTitle: document.title,
-          referrer: document.referrer,
-          userAgent: navigator.userAgent,
           properties: {
             mode: "verify",
             inputLength: inputText.length,
@@ -311,10 +276,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
       const errorMessage = err.response?.data?.detail || err.message || "An unexpected error occurred.";
       trackToolEvent({
         eventName: mode === "encode" ? "tools_sign_error" : "tools_verify_error",
-        pageUrl: window.location.href,
-        pageTitle: document.title,
-        referrer: document.referrer,
-        userAgent: navigator.userAgent,
         properties: {
           mode: mode === "encode" ? "sign" : "verify",
           inputLength: inputText.length,
@@ -337,10 +298,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
       () => {
         trackToolEvent({
           eventName: "tools_output_copied",
-          pageUrl: window.location.href,
-          pageTitle: document.title,
-          referrer: document.referrer,
-          userAgent: navigator.userAgent,
           properties: {
             mode: mode === "encode" ? "sign" : "verify",
             outputLength: text.length,
@@ -351,10 +308,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
       (err) => {
         trackToolEvent({
           eventName: "tools_copy_failed",
-          pageUrl: window.location.href,
-          pageTitle: document.title,
-          referrer: document.referrer,
-          userAgent: navigator.userAgent,
           properties: {
             mode: mode === "encode" ? "sign" : "verify",
             outputLength: text.length,
@@ -440,15 +393,13 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
 
   const getEmbeddingStatusIcon = (embedding: EmbeddingResult) => {
     if (embedding.verdict?.valid) return "✅";
-    // Show tampered if explicitly tampered OR if verification failed but metadata exists
-    if (embedding.verdict?.tampered || (!embedding.verdict?.valid && embedding.metadata)) return "⚠️";
+    if (isTampered(embedding)) return "⚠️";
     return "❌";
   };
 
   const getEmbeddingStatusClass = (embedding: EmbeddingResult) => {
     if (embedding.verdict?.valid) return "border-green-700 bg-green-900/30";
-    // Show tampered styling if explicitly tampered OR if verification failed but metadata exists
-    if (embedding.verdict?.tampered || (!embedding.verdict?.valid && embedding.metadata)) return "border-yellow-700 bg-yellow-900/30";
+    if (isTampered(embedding)) return "border-yellow-700 bg-yellow-900/30";
     return "border-red-700 bg-red-900/30";
   };
 
@@ -516,17 +467,19 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                   <div className="flex items-center gap-2">
                     <span className="break-all font-mono text-sm">{output}</span>
                     <Button ref={copyBtnRef} variant="ghost" size="icon" onClick={() => handleCopy(output)}>
-                      Copy
+                      <Copy className="w-4 h-4" />
                     </Button>
                   </div>
                 </AlertDescription>
               </Alert>
             )}
 
-            {lastDecodeResponse && (
+            {lastDecodeResponse && (() => {
+              const statusUI = getStatusUI(lastDecodeResponse);
+              return (
               <Alert
                 variant={lastDecodeResponse.verification_status === 'Success' ? 'default' : 'destructive'}
-                className={getStatusUI(lastDecodeResponse).className}
+                className={statusUI.className}
               >
                 <AlertTitle className="flex items-center gap-2">
                   {mode === 'encode' ? (
@@ -536,20 +489,13 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                     </>
                   ) : (
                     <div className="flex items-center gap-2">
-                        {(() => {
-                            const statusUI = getStatusUI(lastDecodeResponse);
-                            return (
-                                <>
-                                    <span>{statusUI.icon}</span>
-                                    {statusUI.title}
-                                </>
-                            );
-                        })()}
+                      <span>{statusUI.icon}</span>
+                      {statusUI.title}
                     </div>
                   )}
                 </AlertTitle>
                 <AlertDescription>
-                  {mode === 'decode' && <div className="mb-2">{getStatusUI(lastDecodeResponse).description}</div>}
+                  {mode === 'decode' && <div className="mb-2">{statusUI.description}</div>}
 
                   {lastDecodeResponse.error ? (
                       <div className="text-xs">
@@ -575,7 +521,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                               </div>
                               <div className="p-2 bg-yellow-900/30 rounded border border-yellow-700">
                                 <div className="text-lg font-bold text-yellow-400">
-                                  {lastDecodeResponse.all_embeddings.filter(e => e.verdict?.tampered || (!e.verdict?.valid && e.metadata)).length}
+                                  {lastDecodeResponse.all_embeddings.filter(isTampered).length}
                                 </div>
                                 <div className="text-yellow-300">Tampered</div>
                               </div>
@@ -802,7 +748,8 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                     )}
                 </AlertDescription>
               </Alert>
-            )}
+              );
+            })()}
           </div>
         </CardContent>
       </Card>

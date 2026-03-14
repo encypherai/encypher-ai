@@ -507,11 +507,7 @@ class OrganizationService:
 
     def verify_domain_email(self, token: str) -> OrganizationDomainClaim:
         """Verify a domain claim via email token."""
-        claim = (
-            self.db.query(OrganizationDomainClaim)
-            .filter(OrganizationDomainClaim.email_token == token)
-            .first()
-        )
+        claim = self.db.query(OrganizationDomainClaim).filter(OrganizationDomainClaim.email_token == token).first()
         if not claim:
             raise ValueError("Domain claim not found")
 

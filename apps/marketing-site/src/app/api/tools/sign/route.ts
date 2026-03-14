@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
     // Use basic /sign endpoint (works with Starter tier)
     const signRequest = buildSignBasicRequest({
       original_text: originalText,
-      custom_metadata: body.custom_metadata || {},
-      ai_info: body.ai_info || null,
+      custom_metadata: (body.custom_metadata as Record<string, unknown>) || {},
+      ai_info: (body.ai_info as { claim_generator?: string; provenance?: string; [key: string]: unknown } | null) || null,
     });
 
     console.info(`${logPrefix} forwarding request`, {
@@ -90,7 +90,11 @@ export async function POST(request: NextRequest) {
         rawBody ||
         `Request failed with status ${upstream.status}`;
 
-      return NextResponse.json({ detail }, { status: upstream.status });
+      const nextAction = (data?.error as any)?.next_action;
+      return NextResponse.json(
+        { detail, ...(nextAction ? { next_action: nextAction } : {}) },
+        { status: upstream.status }
+      );
     }
 
     if (!data) {

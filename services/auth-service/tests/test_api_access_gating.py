@@ -460,10 +460,7 @@ class TestSuspendedUserBlocking:
         mock_db.query.return_value.filter.return_value.first.return_value = suspended_user
 
         with pytest.raises(ValueError, match="suspended"):
-            await service.request_api_access(
-                user_id=suspended_user.id,
-                use_case="I want to use the API for content verification"
-            )
+            await service.request_api_access(user_id=suspended_user.id, use_case="I want to use the API for content verification")
 
     @pytest.mark.asyncio
     async def test_suspended_user_not_approved(self, service, suspended_user, mock_db):

@@ -1,6 +1,6 @@
 [project]
 name = "encypher-user-service"
-version = "1.0.0"
+version = "1.1.0"
 description = "User management microservice for Encypher platform"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -34,3 +34,9 @@ target-version = "py311"
 
 [tool.ruff.lint]
 ignore = ["E402", "E701", "E712", "E722", "E741", "F401", "F841", "B904", "B005"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.15.6",
+]

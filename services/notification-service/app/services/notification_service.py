@@ -10,24 +10,22 @@ from encypher_commercial_shared.email import EmailConfig, send_email
 
 from ..core.config import settings
 from ..db.models import Notification
-from ..models.schemas import NotificationCreate
+from ..models.schemas import NotificationCreate, NotificationStatus
 
 logger = structlog.get_logger(__name__)
 
-
-def _get_email_config() -> EmailConfig:
-    """Create email config from settings."""
-    return EmailConfig(
-        smtp_host=settings.SMTP_HOST,
-        smtp_port=settings.SMTP_PORT,
-        smtp_user=settings.SMTP_USER,
-        smtp_pass=settings.SMTP_PASS,
-        smtp_tls=settings.SMTP_TLS,
-        email_from=settings.EMAIL_FROM,
-        email_from_name=settings.EMAIL_FROM_NAME,
-        frontend_url=settings.FRONTEND_URL,
-        dashboard_url=settings.DASHBOARD_URL,
-    )
+# Build EmailConfig once at module load — settings are static after startup.
+_EMAIL_CONFIG = EmailConfig(
+    smtp_host=settings.SMTP_HOST,
+    smtp_port=settings.SMTP_PORT,
+    smtp_user=settings.SMTP_USER,
+    smtp_pass=settings.SMTP_PASS,
+    smtp_tls=settings.SMTP_TLS,
+    email_from=settings.EMAIL_FROM,
+    email_from_name=settings.EMAIL_FROM_NAME,
+    frontend_url=settings.MARKETING_SITE_URL,
+    dashboard_url=settings.DASHBOARD_URL,
+)
 
 
 class NotificationService:
@@ -43,11 +41,11 @@ class NotificationService:
         notification = Notification(
             user_id=user_id,
             notification_type=notification_data.notification_type,
-            status="pending",
+            status=NotificationStatus.PENDING,
             recipient=notification_data.recipient,
             subject=notification_data.subject,
             content=notification_data.content,
-            metadata=notification_data.metadata,
+            meta_data=notification_data.metadata,
         )
 
         db.add(notification)
@@ -55,11 +53,13 @@ class NotificationService:
         db.refresh(notification)
 
         # Send based on notification type
+        error: str | None = None
         success = False
         if notification_data.notification_type == "email":
-            success = NotificationService._send_email_notification(notification)
+            success, error = NotificationService._send_email_notification(notification)
         else:
-            # For other types (sms, webhook), mark as pending for future implementation
+            # sms and webhook are not yet implemented
+            error = f"notification_type '{notification_data.notification_type}' is not supported"
             logger.warning(
                 "unsupported_notification_type",
                 notification_type=notification_data.notification_type,
@@ -68,10 +68,12 @@ class NotificationService:
 
         # Update status
         if success:
-            notification.status = "sent"
+            notification.status = NotificationStatus.SENT
             notification.sent_at = datetime.utcnow()
         else:
-            notification.status = "failed"
+            notification.status = NotificationStatus.FAILED
+            notification.failed_at = datetime.utcnow()
+            notification.error_message = error
 
         db.commit()
         db.refresh(notification)
@@ -79,19 +81,24 @@ class NotificationService:
         return notification
 
     @staticmethod
-    def _send_email_notification(notification: Notification) -> bool:
-        """Send an email notification."""
-        config = _get_email_config()
-
-        return send_email(
-            config=config,
-            to_email=notification.recipient,
-            subject=notification.subject,
-            html_content=notification.content,
-            logger=logger,
-        )
+    def _send_email_notification(notification: Notification) -> tuple[bool, str | None]:
+        """Send an email notification. Returns (success, error_message)."""
+        try:
+            ok = send_email(
+                config=_EMAIL_CONFIG,
+                to_email=notification.recipient,
+                subject=notification.subject or "",
+                html_content="",
+                plain_content=notification.content,
+                logger=logger,
+            )
+            if ok:
+                return True, None
+            return False, "send_email returned False"
+        except Exception as exc:
+            return False, str(exc)
 
     @staticmethod
-    def get_user_notifications(db: Session, user_id: str, limit: int = 100) -> List[Notification]:
+    def get_user_notifications(db: Session, user_id: str, limit: int = 20) -> List[Notification]:
         """Get notifications for user"""
         return db.query(Notification).filter(Notification.user_id == user_id).order_by(Notification.created_at.desc()).limit(limit).all()

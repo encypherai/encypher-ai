@@ -147,6 +147,7 @@ See `.env.example` for all available configuration options.
 - `KEY_PREFIX` - Prefix for generated keys (default: ency_)
 - `KEY_LENGTH` - Length of random part (default: 32)
 - `SUPERADMIN_PUBLISHER_DISPLAY_NAME` - Publisher identity label used for user-level super-admin keys (default: `Encypher Publisher`)
+- `SUPERADMIN_USER_IDS` - Comma-separated list of user UUIDs that receive superadmin privileges on user-level keys (no org). **Must be set in every environment.** Example: `SUPERADMIN_USER_IDS=a1621dd6-3298-473f-b2ad-232ca72c3df5`. If left empty, no user gets superadmin access via this mechanism. This variable replaces the previously hardcoded UUID. See also: the `is_super_admin` flag returned by the auth service, which takes effect independently of this list.
 
 ## Architecture
 
@@ -157,14 +158,17 @@ app/
 │       └── endpoints.py    # API routes
 ├── core/
 │   ├── config.py          # Configuration
+│   ├── response.py        # Shared error/success response helpers
 │   └── security.py        # Key generation
 ├── db/
 │   ├── models.py          # Database models
 │   └── session.py         # Database session
+├── middleware/
+│   └── timing.py          # X-Processing-Time-Ms header middleware
 ├── models/
 │   └── schemas.py         # Pydantic schemas
 ├── services/
-│   └── key_service.py     # Business logic
+│   └── key_service.py     # Business logic (includes permission allowlist)
 └── main.py                # Application entry point
 ```
 

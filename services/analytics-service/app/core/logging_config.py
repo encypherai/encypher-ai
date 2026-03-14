@@ -4,6 +4,7 @@ Structured logging configuration using structlog.
 
 import logging
 import sys
+
 import structlog
 from pythonjsonlogger import jsonlogger
 

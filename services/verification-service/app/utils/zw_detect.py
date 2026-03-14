@@ -11,10 +11,10 @@ from typing import List, Optional, Tuple
 from uuid import UUID
 
 # Word-safe invisible characters used by ZW base-4 encoding
-ZWNJ = "\u200C"  # 0
-ZWJ = "\u200D"   # 1
-CGJ = "\u034F"   # 2
-MVS = "\u180E"   # 3
+ZWNJ = "\u200c"  # 0
+ZWJ = "\u200d"  # 1
+CGJ = "\u034f"  # 2
+MVS = "\u180e"  # 3
 
 _CHARS_BASE4_SET = frozenset({ZWNJ, ZWJ, CGJ, MVS})
 _CHAR_TO_DIGIT = {ZWNJ: 0, ZWJ: 1, CGJ: 2, MVS: 3}

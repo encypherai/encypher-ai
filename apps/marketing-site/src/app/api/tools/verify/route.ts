@@ -96,7 +96,11 @@ export async function POST(request: NextRequest) {
         data?.error?.message ||
         `Request failed with status ${upstream.status}`;
 
-      const response = NextResponse.json({ detail }, { status: upstream.status });
+      const nextAction = data?.error?.next_action;
+      const response = NextResponse.json(
+        { detail, ...(nextAction ? { next_action: nextAction } : {}) },
+        { status: upstream.status }
+      );
       Object.entries(upstreamTraceHeaders).forEach(([key, value]) => {
         response.headers.set(key, value);
       });

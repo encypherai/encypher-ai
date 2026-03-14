@@ -22,7 +22,7 @@ async def test_internal_trial_requires_token(monkeypatch):
     payload = endpoints.InternalTrialRequest(
         organization_id="org_123",
         user_id="user_123",
-        tier=endpoints.TierName.BUSINESS,
+        tier=endpoints.TierName.ENTERPRISE,
         trial_months=2,
     )
 
@@ -40,11 +40,11 @@ async def test_internal_trial_creates_subscription(monkeypatch):
         id="sub_123",
         user_id="user_123",
         organization_id="org_123",
-        plan_id="business",
-        plan_name="Business",
+        plan_id="enterprise",
+        plan_name="Enterprise",
         status="trialing",
         billing_cycle="monthly",
-        amount=499,
+        amount=0,
         currency="usd",
         current_period_start=datetime.utcnow(),
         current_period_end=datetime.utcnow() + timedelta(days=60),
@@ -60,12 +60,12 @@ async def test_internal_trial_creates_subscription(monkeypatch):
     payload = endpoints.InternalTrialRequest(
         organization_id="org_123",
         user_id="user_123",
-        tier=endpoints.TierName.BUSINESS,
+        tier=endpoints.TierName.ENTERPRISE,
         trial_months=2,
     )
 
     response = await endpoints.create_trial_subscription_internal(payload, internal_token="secret", db=SimpleNamespace())
 
     assert response.success is True
-    assert response.data.plan_id == "business"
+    assert response.data.plan_id == "enterprise"
     assert response.data.status == "trialing"

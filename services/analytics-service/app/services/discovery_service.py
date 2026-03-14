@@ -7,7 +7,7 @@ known domain) and flags them for alerting.
 
 import fnmatch
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import distinct, func
@@ -136,9 +136,7 @@ class DiscoveryService:
         count = 0
         for event in events:
             try:
-                DiscoveryService.record_discovery(
-                    db, event, source=source, extension_version=extension_version
-                )
+                DiscoveryService.record_discovery(db, event, source=source, extension_version=extension_version)
                 count += 1
             except Exception as exc:
                 logger.warning("Failed to record discovery event: %s", exc)
@@ -172,9 +170,7 @@ class DiscoveryService:
             return page_domain != original_domain
 
         # 3. Fall back to domain-summary heuristic
-        return DiscoveryService._check_domain_mismatch_heuristic(
-            db, organization_id, page_domain
-        )
+        return DiscoveryService._check_domain_mismatch_heuristic(db, organization_id, page_domain)
 
     @staticmethod
     def _check_domain_mismatch_heuristic(
@@ -384,12 +380,7 @@ class DiscoveryService:
         if external_only:
             query = query.filter(ContentDiscovery.is_external_domain == 1)
 
-        return (
-            query.order_by(ContentDiscovery.discovered_at.desc())
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
+        return query.order_by(ContentDiscovery.discovered_at.desc()).offset(offset).limit(limit).all()
 
     @staticmethod
     def get_domain_summaries(
@@ -448,7 +439,6 @@ class DiscoveryService:
         if not end_date:
             end_date = now
         if not start_date:
-            from datetime import timedelta
             start_date = end_date - timedelta(days=30)
 
         base = db.query(ContentDiscovery).filter(
@@ -495,9 +485,7 @@ class DiscoveryService:
             "invalid_count": total - verified,
             "external_domain_count": external,
             "unique_domains": unique_domains,
-            "top_domains": [
-                {"domain": d, "count": c} for d, c in top_domains_q if d
-            ],
+            "top_domains": [{"domain": d, "count": c} for d, c in top_domains_q if d],
             "period_start": start_date,
             "period_end": end_date,
         }

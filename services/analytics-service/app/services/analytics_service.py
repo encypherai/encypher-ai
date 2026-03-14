@@ -1,12 +1,21 @@
 """Analytics service business logic"""
 
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
 
 from ..db.models import UsageMetric
 from ..models.schemas import MetricCreate
+
+
+def _user_or_org_filter(user_id: str):
+    """Return an OR filter matching user_id or organization_id columns."""
+    return or_(
+        UsageMetric.user_id == user_id,
+        UsageMetric.organization_id == user_id,
+    )
 
 
 class AnalyticsService:
@@ -55,105 +64,32 @@ class AnalyticsService:
         Args:
             user_id: User ID or organization ID to query
         """
-        from sqlalchemy import or_
-
-        # Query by both user_id and organization_id for compatibility
-        def user_or_org_filter():
-            return or_(
-                UsageMetric.user_id == user_id,
-                UsageMetric.organization_id == user_id,
-            )
-
-        # Total API calls
-        total_api_calls = (
-            db.query(func.sum(UsageMetric.count))
-            .filter(
-                and_(
-                    user_or_org_filter(),
-                    UsageMetric.metric_type.in_(["api_call", "API_CALL"]),
-                    UsageMetric.created_at >= start_date,
-                    UsageMetric.created_at <= end_date,
-                )
-            )
-            .scalar()
-            or 0
+        date_filter = and_(
+            _user_or_org_filter(user_id),
+            UsageMetric.created_at >= start_date,
+            UsageMetric.created_at <= end_date,
         )
 
-        # Documents signed
-        total_documents_signed = (
-            db.query(func.sum(UsageMetric.count))
-            .filter(
-                and_(
-                    user_or_org_filter(),
-                    UsageMetric.metric_type.in_(["document_signed", "DOCUMENT_SIGNED"]),
-                    UsageMetric.created_at >= start_date,
-                    UsageMetric.created_at <= end_date,
-                )
-            )
-            .scalar()
-            or 0
-        )
+        def _sum_count(*extra_filters) -> int:
+            return db.query(func.sum(UsageMetric.count)).filter(date_filter, *extra_filters).scalar() or 0
 
-        # Verifications
-        total_verifications = (
-            db.query(func.sum(UsageMetric.count))
-            .filter(
-                and_(
-                    user_or_org_filter(),
-                    UsageMetric.metric_type.in_(["verification", "document_verified", "DOCUMENT_VERIFIED"]),
-                    UsageMetric.created_at >= start_date,
-                    UsageMetric.created_at <= end_date,
-                )
-            )
-            .scalar()
-            or 0
-        )
+        def _count_rows(*extra_filters) -> int:
+            return db.query(func.count(UsageMetric.id)).filter(date_filter, *extra_filters).scalar() or 0
 
-        # Calculate success rate from status codes
-        total_requests = (
-            db.query(func.count(UsageMetric.id))
-            .filter(
-                and_(
-                    user_or_org_filter(),
-                    UsageMetric.status_code.isnot(None),
-                    UsageMetric.created_at >= start_date,
-                    UsageMetric.created_at <= end_date,
-                )
-            )
-            .scalar()
-            or 0
-        )
+        total_api_calls = _sum_count(UsageMetric.metric_type.in_(["api_call", "API_CALL"]))
+        total_documents_signed = _sum_count(UsageMetric.metric_type.in_(["document_signed", "DOCUMENT_SIGNED"]))
+        total_verifications = _sum_count(UsageMetric.metric_type.in_(["verification", "document_verified", "DOCUMENT_VERIFIED"]))
 
-        successful_requests = (
-            db.query(func.count(UsageMetric.id))
-            .filter(
-                and_(
-                    user_or_org_filter(),
-                    UsageMetric.status_code >= 200,
-                    UsageMetric.status_code < 400,
-                    UsageMetric.created_at >= start_date,
-                    UsageMetric.created_at <= end_date,
-                )
-            )
-            .scalar()
-            or 0
+        total_requests = _count_rows(UsageMetric.status_code.isnot(None))
+        successful_requests = _count_rows(
+            UsageMetric.status_code >= 200,
+            UsageMetric.status_code < 400,
         )
 
         success_rate = (successful_requests / total_requests * 100) if total_requests > 0 else 0.0
 
-        # Average response time
         avg_response_time = (
-            db.query(func.avg(UsageMetric.response_time_ms))
-            .filter(
-                and_(
-                    user_or_org_filter(),
-                    UsageMetric.response_time_ms.isnot(None),
-                    UsageMetric.created_at >= start_date,
-                    UsageMetric.created_at <= end_date,
-                )
-            )
-            .scalar()
-            or 0.0
+            db.query(func.avg(UsageMetric.response_time_ms)).filter(date_filter, UsageMetric.response_time_ms.isnot(None)).scalar() or 0.0
         )
 
         return {
@@ -409,36 +345,38 @@ class AnalyticsService:
         start_date: datetime,
         end_date: datetime,
     ) -> Dict[str, Any]:
-        """Aggregate audit-alert summary statistics for dashboard visibility."""
-        query = AnalyticsService._build_activity_query(
+        """Aggregate audit-alert summary statistics for dashboard visibility.
+
+        All aggregation is pushed to the database to avoid loading large result
+        sets into Python memory.
+        """
+        base_q = AnalyticsService._build_activity_query(
             db=db,
             user_id=user_id,
             start_date=start_date,
             end_date=end_date,
         )
-        metrics = query.all()
 
-        total_requests = len(metrics)
-        failure_metrics = [m for m in metrics if m.status_code is not None and m.status_code >= 400]
-        critical_failures = [m for m in metrics if m.status_code is not None and m.status_code >= 500]
-        failure_requests = len(failure_metrics)
+        total_requests = base_q.count()
+        failure_requests = base_q.filter(UsageMetric.status_code >= 400).count()
+        critical_failures = base_q.filter(UsageMetric.status_code >= 500).count()
         failure_rate = round((failure_requests / total_requests) * 100, 2) if total_requests > 0 else 0.0
 
+        # Top error codes from failure rows — limited fetch, not full table scan
+        failure_rows = base_q.filter(UsageMetric.status_code >= 400).with_entities(UsageMetric.meta).limit(1000).all()
         error_counts: Dict[str, int] = {}
-        for metric in failure_metrics:
-            meta = metric.meta if isinstance(metric.meta, dict) else {}
-            code = meta.get("error_code") or "UNKNOWN"
+        for (meta,) in failure_rows:
+            code = (meta.get("error_code") if isinstance(meta, dict) else None) or "UNKNOWN"
             error_counts[code] = error_counts.get(code, 0) + 1
 
         top_error_codes = [
-            {"error_code": code, "count": count}
-            for code, count in sorted(error_counts.items(), key=lambda item: item[1], reverse=True)[:5]
+            {"error_code": code, "count": count} for code, count in sorted(error_counts.items(), key=lambda item: item[1], reverse=True)[:5]
         ]
 
         return {
             "total_requests": total_requests,
             "failure_requests": failure_requests,
-            "critical_failures": len(critical_failures),
+            "critical_failures": critical_failures,
             "failure_rate": failure_rate,
             "top_error_codes": top_error_codes,
             "period_start": start_date,
@@ -464,17 +402,9 @@ class AnalyticsService:
         has_stack: Optional[bool] = None,
     ):
         """Build filtered query used by audit activity endpoints and exports."""
-        from sqlalchemy import or_
-
-        def user_or_org_filter():
-            return or_(
-                UsageMetric.user_id == user_id,
-                UsageMetric.organization_id == user_id,
-            )
-
         metric_query = db.query(UsageMetric).filter(
             and_(
-                user_or_org_filter(),
+                _user_or_org_filter(user_id),
                 UsageMetric.created_at >= start_date,
                 UsageMetric.created_at <= end_date,
             )
@@ -528,9 +458,7 @@ class AnalyticsService:
             if "critical" in normalized:
                 severity_conditions.append(UsageMetric.status_code >= 500)
             if "high" in normalized:
-                severity_conditions.append(
-                    and_(UsageMetric.status_code >= 400, UsageMetric.status_code < 500)
-                )
+                severity_conditions.append(and_(UsageMetric.status_code >= 400, UsageMetric.status_code < 500))
             if "medium" in normalized:
                 severity_conditions.append(
                     and_(
@@ -644,19 +572,11 @@ class AnalyticsService:
         limit: int = 10,
     ) -> List[UsageMetric]:
         """Get recent activity items for a user or organization."""
-        from sqlalchemy import or_
-
-        def user_or_org_filter():
-            return or_(
-                UsageMetric.user_id == user_id,
-                UsageMetric.organization_id == user_id,
-            )
-
         return (
             db.query(UsageMetric)
             .filter(
                 and_(
-                    user_or_org_filter(),
+                    _user_or_org_filter(user_id),
                     UsageMetric.created_at >= start_date,
                     UsageMetric.created_at <= end_date,
                 )

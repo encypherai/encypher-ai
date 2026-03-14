@@ -1,9 +1,27 @@
 """Pydantic schemas for User Service"""
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+
+T = TypeVar("T")
+
+
+class _OrmBase(BaseModel):
+    """Shared base for ORM-backed response schemas."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """Generic paginated list response envelope."""
+
+    items: List[T]
+    total: int
+    page: int
+    page_size: int
+    next_page: Optional[int] = None
 
 
 class ProfileUpdate(BaseModel):
@@ -18,21 +36,18 @@ class ProfileUpdate(BaseModel):
     preferences: Optional[Dict[str, Any]] = None
 
 
-class ProfileResponse(BaseModel):
+class ProfileResponse(_OrmBase):
     """Schema for profile response"""
 
     id: str
     user_id: str
-    display_name: Optional[str]
-    bio: Optional[str]
-    avatar_url: Optional[str]
-    company: Optional[str]
-    location: Optional[str]
-    website: Optional[str]
+    display_name: Optional[str] = None
+    bio: Optional[str] = None
+    avatar_url: Optional[str] = None
+    company: Optional[str] = None
+    location: Optional[str] = None
+    website: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class TeamCreate(BaseModel):
@@ -42,21 +57,12 @@ class TeamCreate(BaseModel):
     description: Optional[str] = None
 
 
-class TeamResponse(BaseModel):
+class TeamResponse(_OrmBase):
     """Schema for team response"""
 
     id: str
     name: str
     owner_id: str
-    description: Optional[str]
+    description: Optional[str] = None
     is_active: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class MessageResponse(BaseModel):
-    """Generic message response"""
-
-    message: str

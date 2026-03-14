@@ -1,6 +1,6 @@
 [project]
 name = "web-service"
-version = "0.1.0"
+version = "0.2.0"
 description = "Marketing website backend service for Encypher - handles demo requests, analytics, and sales contact forms"
 authors = [{name = "Encypher Team", email = "contact@encypherai.com"}]
 license = {text = "Proprietary"}

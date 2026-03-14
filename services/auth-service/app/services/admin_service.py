@@ -42,8 +42,7 @@ class AdminService:
                     User.last_login_at.is_not(None),
                     User.last_login_at >= thirty_days_ago,
                 )
-            )
-            .scalar()
+            ).scalar()
             or 0
         )
 
@@ -66,9 +65,7 @@ class AdminService:
         page: int = 1,
         page_size: int = 50,
     ) -> Dict[str, Any]:
-        query = select(User, Organization).join(
-            Organization, Organization.id == User.default_organization_id, isouter=True
-        )
+        query = select(User, Organization).join(Organization, Organization.id == User.default_organization_id, isouter=True)
         count_query = select(func.count(User.id))
 
         if search:
@@ -130,13 +127,7 @@ class AdminService:
             Organization.id.ilike(f"%{query}%"),
             Organization.slug.ilike(f"%{query}%"),
         )
-        orgs = (
-            db.query(Organization)
-            .filter(search_filter)
-            .order_by(Organization.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+        orgs = db.query(Organization).filter(search_filter).order_by(Organization.created_at.desc()).limit(limit).all()
 
         return [
             {

@@ -6,7 +6,7 @@ import logging
 import html
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel, EmailStr, Field
@@ -15,6 +15,8 @@ from datetime import datetime
 from ...db.models import User, OrganizationDomainClaim
 from ...db.session import get_db
 from ...core.config import settings
+from ...core.auth import get_email_config as _get_email_config
+from ...core.responses import ok
 from ...services.organization_service import OrganizationService
 from ...models.schemas import UserTier
 import dns.resolver
@@ -35,19 +37,7 @@ ALLOWED_SIGNING_IDENTITY_MODES = {
 }
 
 
-def _get_email_config() -> EmailConfig:
-    return EmailConfig(
-        smtp_host=settings.SMTP_HOST,
-        smtp_port=settings.SMTP_PORT,
-        smtp_user=settings.SMTP_USER,
-        smtp_pass=settings.SMTP_PASS,
-        smtp_tls=settings.SMTP_TLS,
-        email_from=settings.EMAIL_FROM,
-        email_from_name=settings.EMAIL_FROM_NAME,
-        frontend_url=settings.FRONTEND_URL,
-        dashboard_url=settings.DASHBOARD_URL,
-        support_email=settings.SUPPORT_EMAIL,
-    )
+# _get_email_config is imported from core.auth as _get_email_config
 
 
 def _build_invitation_email(
@@ -448,9 +438,9 @@ async def create_organization(
         org_service = OrganizationService(db)
         org = org_service.create_organization(name=org_data.name, email=org_data.email, owner_user_id=actor_user_id)
 
-        return {"success": True, "data": OrganizationResponse.model_validate(org).model_dump(), "error": None}
+        return ok(OrganizationResponse.model_validate(org).model_dump())
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/invitations/trial")
@@ -495,11 +485,11 @@ async def create_trial_invitation_for_new_org(
                 trial_months=invitation.trial_months,
             )
 
-        return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
+        return ok(InvitationResponse.model_validate(invitation).model_dump())
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/internal/{org_id}/context", response_model=InternalOrgContextResponse, include_in_schema=False)
@@ -563,7 +553,7 @@ async def update_organization_tier_internal(
         )
         return InternalTierUpdateResponse(success=True, data=OrganizationResponse.model_validate(org).model_dump())
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # ==========================================
@@ -622,7 +612,7 @@ async def update_organization_certificate_internal(
     db.refresh(org)
 
     logger.info(f"Updated certificate for organization {org_id}")
-    return {"success": True, "data": {"organization_id": org_id, "certificate_updated": True}}
+    return ok({"organization_id": org_id, "certificate_updated": True})
 
 
 @router.post("/internal/bulk-provision", include_in_schema=False)
@@ -707,16 +697,15 @@ async def bulk_provision_publishers(
                 )
             )
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "provisioned": [p.model_dump() for p in provisioned],
             "failed": [f.model_dump() for f in failed],
             "total": len(payload.publishers),
             "success_count": len(provisioned),
             "failure_count": len(failed),
-        },
-    }
+        }
+    )
 
 
 # ==========================================
@@ -736,13 +725,9 @@ async def list_domain_claims(
     org_service = OrganizationService(db)
     try:
         claims = org_service.list_domain_claims(org_id, user_id)
-        return {
-            "success": True,
-            "data": [DomainClaimResponse.model_validate(claim).model_dump() for claim in claims],
-            "error": None,
-        }
+        return ok([DomainClaimResponse.model_validate(claim).model_dump() for claim in claims])
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
 
 @router.post("/{org_id}/domain-claims", status_code=status.HTTP_201_CREATED)
@@ -782,15 +767,11 @@ async def create_domain_claim(
 
         response = DomainClaimResponse.model_validate(claim).model_dump()
         response["dns_txt_record"] = f"encypher-domain-claim={claim.dns_token}"
-        return {
-            "success": True,
-            "data": response,
-            "error": None,
-        }
+        return ok(response)
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/{org_id}/domain-claims/{claim_id}/verify-dns")
@@ -812,15 +793,11 @@ async def verify_domain_dns(
         records = dns.resolver.resolve(claim.domain, "TXT")
         txt_records = ["".join(part.decode("utf-8") for part in record.strings) for record in records]
         verified = org_service.verify_domain_dns(org_id, claim_id, user_id, txt_records)
-        return {
-            "success": True,
-            "data": DomainClaimResponse.model_validate(verified).model_dump(),
-            "error": None,
-        }
+        return ok(DomainClaimResponse.model_validate(verified).model_dump())
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except (ValueError, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers) as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.patch("/{org_id}/domain-claims/{claim_id}/auto-join")
@@ -837,15 +814,11 @@ async def update_domain_auto_join(
 
     try:
         claim = org_service.set_domain_auto_join(org_id, claim_id, user_id, payload.enabled)
-        return {
-            "success": True,
-            "data": DomainClaimResponse.model_validate(claim).model_dump(),
-            "error": None,
-        }
+        return ok(DomainClaimResponse.model_validate(claim).model_dump())
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.delete("/{org_id}/domain-claims/{claim_id}")
@@ -861,15 +834,11 @@ async def delete_domain_claim(
 
     try:
         claim = org_service.delete_domain_claim(org_id, claim_id, user_id)
-        return {
-            "success": True,
-            "data": DomainClaimResponse.model_validate(claim).model_dump(),
-            "error": None,
-        }
+        return ok(DomainClaimResponse.model_validate(claim).model_dump())
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/domain-claims/verify-email")
@@ -878,13 +847,9 @@ async def verify_domain_email(token: str, db: Session = Depends(get_db)):
     org_service = OrganizationService(db)
     try:
         claim = org_service.verify_domain_email(token)
-        return {
-            "success": True,
-            "data": DomainClaimResponse.model_validate(claim).model_dump(),
-            "error": None,
-        }
+        return ok(DomainClaimResponse.model_validate(claim).model_dump())
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("")
@@ -898,7 +863,7 @@ async def list_organizations(
     org_service = OrganizationService(db)
     orgs = org_service.get_user_organizations(user_id)
 
-    return {"success": True, "data": [OrganizationResponse.model_validate(org).model_dump() for org in orgs], "error": None}
+    return ok([OrganizationResponse.model_validate(org).model_dump() for org in orgs])
 
 
 @router.get("/{org_id}")
@@ -920,7 +885,7 @@ async def get_organization(
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
-    return {"success": True, "data": OrganizationResponse.model_validate(org).model_dump(), "error": None}
+    return ok(OrganizationResponse.model_validate(org).model_dump())
 
 
 @router.patch("/{org_id}")
@@ -940,11 +905,11 @@ async def update_organization(
         if not org:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
-        return {"success": True, "data": OrganizationResponse.model_validate(org).model_dump(), "error": None}
+        return ok(OrganizationResponse.model_validate(org).model_dump())
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # ==========================================
@@ -985,7 +950,7 @@ async def list_members(
         }
         result.append(member_data)
 
-    return {"success": True, "data": result, "error": None}
+    return ok(result)
 
 
 @router.patch("/{org_id}/members/{target_user_id}")
@@ -1003,20 +968,18 @@ async def update_member_role(
         org_service = OrganizationService(db)
         member = org_service.update_member_role(org_id=org_id, target_user_id=target_user_id, new_role=role_update.role, actor_user_id=user_id)
 
-        return {
-            "success": True,
-            "data": {
+        return ok(
+            {
                 "id": member.id,
                 "user_id": member.user_id,
                 "role": member.role,
                 "status": member.status,
-            },
-            "error": None,
-        }
+            }
+        )
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.delete("/{org_id}/members/{target_user_id}")
@@ -1033,11 +996,11 @@ async def remove_member(
         org_service = OrganizationService(db)
         org_service.remove_member(org_id=org_id, target_user_id=target_user_id, actor_user_id=user_id)
 
-        return {"success": True, "data": {"removed": True}, "error": None}
+        return ok({"removed": True})
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/{org_id}/seats")
@@ -1057,7 +1020,7 @@ async def get_seat_info(
 
     seat_info = org_service.get_seat_count(org_id)
 
-    return {"success": True, "data": seat_info, "error": None}
+    return ok(seat_info)
 
 
 # ==========================================
@@ -1114,11 +1077,11 @@ async def create_invitation(
                 trial_months=invitation.trial_months,
             )
 
-        return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
+        return ok(InvitationResponse.model_validate(invitation).model_dump())
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/{org_id}/invitations")
@@ -1138,7 +1101,7 @@ async def list_invitations(
 
     invitations = org_service.get_pending_invitations(org_id)
 
-    return {"success": True, "data": [InvitationResponse.model_validate(inv).model_dump() for inv in invitations], "error": None}
+    return ok([InvitationResponse.model_validate(inv).model_dump() for inv in invitations])
 
 
 @router.delete("/{org_id}/invitations/{invitation_id}")
@@ -1155,11 +1118,11 @@ async def cancel_invitation(
         org_service = OrganizationService(db)
         org_service.cancel_invitation(org_id=org_id, invitation_id=invitation_id, actor_user_id=user_id)
 
-        return {"success": True, "data": {"cancelled": True}, "error": None}
+        return ok({"cancelled": True})
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/{org_id}/invitations/{invitation_id}/resend")
@@ -1197,11 +1160,11 @@ async def resend_invitation(
                 trial_months=invitation.trial_months,
             )
 
-        return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
+        return ok(InvitationResponse.model_validate(invitation).model_dump())
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # ==========================================
@@ -1228,7 +1191,7 @@ async def get_invitation_details(
     if not details:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
 
-    return {"success": True, "data": details, "error": None}
+    return ok(details)
 
 
 @router.post("/invitations/{token}/accept")
@@ -1244,13 +1207,9 @@ async def accept_invitation(
         org_service = OrganizationService(db)
         member = org_service.accept_invitation(token=token, user_id=user_id)
 
-        return {
-            "success": True,
-            "data": {"organization_id": member.organization_id, "role": member.role, "message": "Successfully joined the organization"},
-            "error": None,
-        }
+        return ok({"organization_id": member.organization_id, "role": member.role, "message": "Successfully joined the organization"})
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/invitations/{token}/accept-new")
@@ -1277,9 +1236,8 @@ async def accept_invitation_new_user(
         access_token = AuthService.create_access_token(user)
         refresh_token_obj = AuthService.create_refresh_token(db, user)
 
-        return {
-            "success": True,
-            "data": {
+        return ok(
+            {
                 "user": {
                     "id": user.id,
                     "email": user.email,
@@ -1290,11 +1248,10 @@ async def accept_invitation_new_user(
                 "access_token": access_token,
                 "refresh_token": refresh_token_obj.token,
                 "message": "Account created and joined the organization",
-            },
-            "error": None,
-        }
+            }
+        )
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # ==========================================
@@ -1306,8 +1263,8 @@ async def accept_invitation_new_user(
 async def get_audit_logs(
     org_id: str,
     request: Request,
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
     action: Optional[str] = None,
     user_id_filter: Optional[str] = None,
     db: Session = Depends(get_db),
@@ -1329,7 +1286,7 @@ async def get_audit_logs(
         user_id_filter=user_id_filter,
     )
 
-    return {"success": True, "data": [AuditLogResponse.model_validate(log).model_dump() for log in logs], "error": None}
+    return ok([AuditLogResponse.model_validate(log).model_dump() for log in logs])
 
 
 class AuditLogCreate(BaseModel):
@@ -1366,11 +1323,7 @@ async def create_audit_log(
     logs = org_service.get_audit_logs(org_id=org_id, limit=1, offset=0)
     created_log = logs[0] if logs else None
 
-    return {
-        "success": True,
-        "data": AuditLogResponse.model_validate(created_log).model_dump() if created_log else None,
-        "error": None,
-    }
+    return ok(AuditLogResponse.model_validate(created_log).model_dump() if created_log else None)
 
 
 # ============================================
@@ -1532,9 +1485,8 @@ async def update_publisher_settings(
         )
         db.commit()
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "display_name": org.display_name,
             "account_type": org.account_type,
             "dashboard_layout": org.dashboard_layout,
@@ -1545,9 +1497,8 @@ async def update_publisher_settings(
             "custom_signing_identity_enabled": bool((org.add_ons or {}).get("custom-signing-identity"))
             or org.tier in {"enterprise", "strategic_partner"},
             "anonymous_publisher": org.anonymous_publisher,
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 # ============================================================
@@ -1576,13 +1527,11 @@ async def get_org_security_settings(
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "enforce_mfa": bool((org.features or {}).get("enforce_mfa", False)),
-        },
-        "error": None,
-    }
+        }
+    )
 
 
 @router.patch("/{org_id}/security")
@@ -1609,10 +1558,8 @@ async def update_org_security_settings(
     org.features = features
     db.commit()
 
-    return {
-        "success": True,
-        "data": {
+    return ok(
+        {
             "enforce_mfa": bool(features.get("enforce_mfa", False)),
-        },
-        "error": None,
-    }
+        }
+    )

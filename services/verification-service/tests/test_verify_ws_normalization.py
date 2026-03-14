@@ -117,9 +117,7 @@ def test_verify_browser_paste_whitespace_normalization(client, monkeypatch) -> N
     payload = response.json()
     assert payload["success"] is True
     data = payload["data"]
-    assert data["valid"] is True, (
-        f"Expected valid=True after ws-normalization retry, got reason_code={data.get('reason_code')}"
-    )
+    assert data["valid"] is True, f"Expected valid=True after ws-normalization retry, got reason_code={data.get('reason_code')}"
     assert data["reason_code"] == "OK"
     assert data["signer_id"] == signer_id
 
@@ -188,9 +186,7 @@ def test_verify_browser_paste_whitespace_manual_hash_path(client, monkeypatch) -
     payload = response.json()
     assert payload["success"] is True
     data = payload["data"]
-    assert data["valid"] is True, (
-        f"Expected valid=True via manual hash path, got reason_code={data.get('reason_code')}"
-    )
+    assert data["valid"] is True, f"Expected valid=True via manual hash path, got reason_code={data.get('reason_code')}"
     assert data["reason_code"] == "OK"
 
 
