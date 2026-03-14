@@ -29,7 +29,7 @@ class UserService:
         """Update user profile"""
         profile = UserService.get_or_create_profile(db, user_id)
 
-        for field, value in profile_data.dict(exclude_unset=True).items():
+        for field, value in profile_data.model_dump(exclude_unset=True).items():
             setattr(profile, field, value)
 
         db.commit()
