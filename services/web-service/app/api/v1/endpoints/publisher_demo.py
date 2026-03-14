@@ -3,58 +3,35 @@ API endpoints for Publisher Demo feature.
 Handles demo requests and analytics events from the publisher-demo page.
 """
 
-import hashlib
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.api import deps
+from app.api.utils import create_demo_record, get_client_ip, hash_ip, send_emails_background
+from app.core.config import settings
 from app.models.analytics_event import AnalyticsEvent
 from app.models.demo_request import DemoRequest
 from app.schemas.analytics_event import AnalyticsEventCreate, AnalyticsEventResponse
 from app.schemas.demo_request import DemoRequestCreate
-from app.services.email import send_demo_confirmation, send_demo_notification
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(description="Demo requests and analytics for the Publisher Demo landing page.")
+
+_SOURCE = "publisher-demo"
 
 
-def get_client_ip(request: Request) -> str | None:
-    """Extract client IP address from request."""
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip
-
-    if request.client:
-        return request.client.host
-
-    return None
-
-
-def hash_ip(ip: str | None) -> str | None:
-    """Hash IP address for privacy."""
-    if not ip:
-        return None
-    return hashlib.sha256(ip.encode()).hexdigest()[:16]
-
-
-def send_emails_background(demo_request: DemoRequest) -> None:
-    """Background task to send notification and confirmation emails."""
-    try:
-        send_demo_notification(demo_request, context="publisher-demo")
-    except Exception as e:
-        logger.error(f"Failed to send notification email: {e}")
-
-    try:
-        send_demo_confirmation(demo_request.email, demo_request.name, context="publisher-demo")
-    except Exception as e:
-        logger.error(f"Failed to send confirmation email: {e}")
+def _require_internal_token(internal_token: str | None) -> None:
+    """Raise 401 if the request lacks a valid internal service token."""
+    if not settings.INTERNAL_SERVICE_TOKEN:
+        return
+    if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(
+            status_code=401,
+            detail="Unauthorized. Supply a valid X-Internal-Token header.",
+        )
 
 
 @router.post("/demo-requests")
@@ -64,37 +41,11 @@ async def create_demo_request(
     background_tasks: BackgroundTasks,
     db: Session = Depends(deps.get_db),
 ) -> dict:
-    """
-    Create a new demo request from the publisher-demo page.
-    """
+    """Create a new demo request from the publisher-demo page."""
     try:
-        # Extract request metadata
-        user_agent = request.headers.get("User-Agent")
-        ip_address = hash_ip(get_client_ip(request))
-        referrer = request.headers.get("Referer")
-
-        # Create demo request record
-        db_demo_request = DemoRequest(
-            name=demo_request_in.name,
-            email=demo_request_in.email,
-            organization=demo_request_in.organization,
-            role=demo_request_in.role,
-            message=demo_request_in.message,
-            consent=demo_request_in.consent,
-            source=demo_request_in.source or "publisher-demo",
-            user_agent=user_agent,
-            ip_address=ip_address,
-            referrer=referrer,
-        )
-
-        db.add(db_demo_request)
-        db.commit()
-        db.refresh(db_demo_request)
-
+        db_demo_request = create_demo_record(db, request, demo_request_in, default_source=_SOURCE)
         logger.info(f"Publisher Demo request created: {db_demo_request.uuid} from {demo_request_in.email} at {demo_request_in.organization}")
-
-        # Send emails in background
-        background_tasks.add_task(send_emails_background, db_demo_request)
+        background_tasks.add_task(send_emails_background, db_demo_request, _SOURCE)
 
         return {
             "success": True,
@@ -107,7 +58,7 @@ async def create_demo_request(
         db.rollback()
         raise HTTPException(
             status_code=500,
-            detail="Failed to submit demo request. Please contact demo@encypher.com",
+            detail="Failed to submit demo request. Please contact demo@encypher.com if the problem persists.",
         ) from e
 
 
@@ -117,21 +68,16 @@ async def track_analytics_event(
     event: AnalyticsEventCreate,
     db: Session = Depends(deps.get_db),
 ) -> AnalyticsEventResponse:
-    """
-    Track an analytics event from the publisher-demo page.
-    """
+    """Track an analytics event from the publisher-demo page."""
     try:
-        # Extract request metadata
         user_agent = request.headers.get("User-Agent")
         ip_address = hash_ip(get_client_ip(request))
         referrer = request.headers.get("Referer")
 
-        # Get URL from properties if available
         url = None
         if event.properties:
             url = event.properties.get("url") or event.properties.get("page_url")
 
-        # Create analytics event record
         db_event = AnalyticsEvent(
             session_id=event.session_id or "unknown",
             event_type=event.event_type or "custom",
@@ -146,7 +92,6 @@ async def track_analytics_event(
         db.add(db_event)
         db.commit()
 
-        # Log significant events
         if event.event_name in [
             "publisher_demo_loaded",
             "scroll_100_percent",
@@ -160,7 +105,6 @@ async def track_analytics_event(
     except Exception as e:
         logger.error(f"Error tracking publisher demo analytics event: {e}")
         db.rollback()
-        # Don't raise exception for analytics - fail silently
         return AnalyticsEventResponse(success=False, message="Failed to track event")
 
 
@@ -168,15 +112,18 @@ async def track_analytics_event(
 async def get_demo_request(
     request_id: UUID,
     db: Session = Depends(deps.get_db),
+    internal_token: str | None = Header(None, alias="X-Internal-Token"),
 ) -> dict:
-    """
-    Get a demo request by UUID (for internal use).
-    TODO: Add authentication/authorization for this endpoint.
-    """
+    """Get a publisher demo request by UUID. Requires X-Internal-Token header."""
+    _require_internal_token(internal_token)
+
     demo_request = db.query(DemoRequest).filter(DemoRequest.uuid == request_id).first()
 
     if not demo_request:
-        raise HTTPException(status_code=404, detail="Demo request not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Demo request not found. Verify the UUID and that the record originated from publisher-demo.",
+        )
 
     return {
         "id": str(demo_request.uuid),

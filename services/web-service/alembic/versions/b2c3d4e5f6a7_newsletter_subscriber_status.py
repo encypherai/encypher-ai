@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision = "b2c3d4e5f6a7"
-down_revision = "a1b2c3d4e5f6"
+revision = "b2c3d4e5f6a7"  # pragma: allowlist secret
+down_revision = "a1b2c3d4e5f6"  # pragma: allowlist secret
 branch_labels = None
 depends_on = None
 
@@ -31,11 +31,7 @@ def upgrade() -> None:
         ["status"],
         unique=False,
     )
-    op.execute(
-        sa.text(
-            "UPDATE newsletter_subscribers SET status = CASE WHEN active THEN 'active' ELSE 'unsubscribed' END"
-        )
-    )
+    op.execute(sa.text("UPDATE newsletter_subscribers SET status = CASE WHEN active THEN 'active' ELSE 'unsubscribed' END"))
     op.alter_column("newsletter_subscribers", "status", server_default=None)
 
 
