@@ -20,10 +20,10 @@ from typing import List, Optional, Tuple
 from uuid import UUID
 
 # VS256 alphabet ranges
-VS_BMP_START = 0xFE00    # VS1
-VS_BMP_END = 0xFE0F      # VS16
+VS_BMP_START = 0xFE00  # VS1
+VS_BMP_END = 0xFE0F  # VS16
 VS_SUPP_START = 0xE0100  # VS17
-VS_SUPP_END = 0xE01EF    # VS256
+VS_SUPP_END = 0xE01EF  # VS256
 
 # Build lookup tables
 _VS_TO_BYTE: dict[str, int] = {}
@@ -40,7 +40,7 @@ MAGIC_PREFIX = _BYTE_TO_VS[239] + _BYTE_TO_VS[240] + _BYTE_TO_VS[241] + _BYTE_TO
 MAGIC_PREFIX_LEN = 4
 
 # Signature lengths
-SIGNATURE_CHARS = 36      # Legacy: 4 prefix + 32 payload
+SIGNATURE_CHARS = 36  # Legacy: 4 prefix + 32 payload
 ECC_SIGNATURE_CHARS = 44  # Current ECC: 4 prefix + 40 payload (RS-protected)
 
 # RS constants for legacy 36-char format: RS(8) over 32 bytes -> 24 bytes data
@@ -49,7 +49,7 @@ _RS_DATA_BYTES = 24  # 16 log_id + 8 HMAC-64
 
 # RS constants for 44-char ECC format: RS(8) over 40 bytes -> 32 bytes data
 _ECC_RS_NSYM = 8
-_ECC_RS_DATA_BYTES = 32   # 16 log_id + 16 HMAC-128
+_ECC_RS_DATA_BYTES = 32  # 16 log_id + 16 HMAC-128
 
 
 def find_vs256_signatures(text: str) -> List[Tuple[int, int, str]]:
@@ -120,6 +120,7 @@ def extract_uuid_from_vs256_signature(sig: str) -> Optional[UUID]:
         # 44-char ECC: RS(8) over 40 bytes -> 32 bytes; log_id = first 16
         try:
             from reedsolo import RSCodec
+
             rs = RSCodec(_ECC_RS_NSYM)
             decoded = bytes(rs.decode(payload_bytes)[0])
             if len(decoded) == _ECC_RS_DATA_BYTES:
@@ -135,6 +136,7 @@ def extract_uuid_from_vs256_signature(sig: str) -> Optional[UUID]:
     # 36-char legacy format
     try:
         from reedsolo import RSCodec
+
         rs = RSCodec(_RS_NSYM)
         decoded = bytes(rs.decode(payload_bytes)[0])
         if len(decoded) == _RS_DATA_BYTES:

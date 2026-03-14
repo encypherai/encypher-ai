@@ -1,21 +1,22 @@
 """API endpoints for Verification Service v1"""
 
 import hashlib
+import html
+import os
 import re
 import time
 import unicodedata
+from typing import Callable, List, Optional
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header, Request
-from fastapi.responses import JSONResponse, HTMLResponse
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from sqlalchemy.exc import OperationalError, ProgrammingError
-from typing import List, Optional
+import base64
 import httpx
 import json
-import os
-from uuid import uuid4
-import base64
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Header
+from fastapi.responses import HTMLResponse, JSONResponse
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError, ProgrammingError
+from sqlalchemy.orm import Session
 
 try:
     import structlog
@@ -80,6 +81,94 @@ from ...utils.c2pa_trust_list import (
 router = APIRouter()
 
 MAX_VERIFY_BYTES = 2 * 1024 * 1024
+MAX_MANIFEST_BYTES = 50 * 1024  # 50 KB cap on serialized manifest
+
+# ---------------------------------------------------------------------------
+# Template helpers (Task 1.0 - move inline HTML to template files)
+# ---------------------------------------------------------------------------
+
+_TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "templates")
+
+
+def _load_template(name: str) -> str:
+    """Load an HTML template from the templates directory."""
+    path = os.path.join(_TEMPLATES_DIR, name)
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
+
+
+def _render_portal_not_found(document_id: str, accept: str) -> HTMLResponse | JSONResponse:
+    """Return 404 response for missing portal document.
+
+    Returns JSON when the caller prefers it (Accept: application/json),
+    otherwise HTML.
+    """
+    if "application/json" in accept:
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": "NOT_FOUND",
+                "message": "Document not found in database.",
+                "document_id": html.escape(document_id),
+                "hint": ("Demo documents are not stored. Use POST /api/v1/verify with the signed text to verify content directly."),
+            },
+        )
+    safe_id = html.escape(document_id)
+    template = _load_template("portal_not_found.html")
+    content = template.replace("{document_id}", safe_id)
+    return HTMLResponse(content=content, status_code=404)
+
+
+def _render_portal_result(
+    *,
+    document_id: str,
+    title: str | None,
+    org_name: str,
+    signer_id: str | None,
+    signer_name: str,
+    reason_code: str,
+    is_valid: bool,
+    manifest: dict | None,
+    accept: str,
+) -> HTMLResponse | JSONResponse:
+    """Render portal result page with all user-controlled values escaped."""
+    if "application/json" in accept:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "document_id": document_id,
+                "valid": is_valid,
+                "reason_code": reason_code,
+                "signer_id": signer_id,
+                "signer_name": signer_name,
+                "title": title,
+                "org_name": org_name,
+                "manifest": manifest or {},
+            },
+        )
+
+    manifest_json = _render_manifest_json(manifest or {})
+    status_color = "#00875A" if is_valid else "#D14343"
+    status_text = "Valid" if is_valid else "Invalid"
+
+    template = _load_template("portal_result.html")
+    content = template.format(
+        document_id=html.escape(document_id),
+        title=html.escape(title or "Untitled"),
+        org_name=html.escape(org_name),
+        signer_id=html.escape(signer_id or "Unknown"),
+        signer_name=html.escape(signer_name),
+        reason_code=html.escape(reason_code),
+        status_color=status_color,  # static value - safe
+        status_text=html.escape(status_text),
+        manifest_json=html.escape(manifest_json),
+    )
+    return HTMLResponse(content=content, status_code=200)
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
 
 
 async def _resolve_zw_segment_uuid(segment_uuid: str) -> dict | None:
@@ -241,6 +330,23 @@ def _render_manifest_json(manifest: dict) -> str:
         return "{}"
 
 
+def _cap_manifest(manifest: dict | None) -> tuple[dict | None, bool]:
+    """Cap serialized manifest at MAX_MANIFEST_BYTES.
+
+    Returns ``(manifest_or_none, truncated_flag)``.
+    When the serialized form exceeds the cap, returns an empty dict and True.
+    """
+    if not manifest:
+        return manifest, False
+    try:
+        serialized = json.dumps(manifest)
+    except (TypeError, ValueError):
+        return {}, True
+    if len(serialized.encode("utf-8")) > MAX_MANIFEST_BYTES:
+        return {}, True
+    return manifest, False
+
+
 def _error_response(
     status_code: int,
     *,
@@ -248,12 +354,14 @@ def _error_response(
     code: str,
     message: str,
     hint: str | None = None,
+    duration_ms: int | None = None,
 ) -> JSONResponse:
     payload = VerifyResponse(
         success=False,
         data=None,
         error=ErrorDetail(code=code, message=message, hint=hint),
         correlation_id=correlation_id,
+        duration_ms=duration_ms,
     )
     return JSONResponse(status_code=status_code, content=payload.model_dump())
 
@@ -449,43 +557,32 @@ async def _is_embedded_c2pa_key_trusted(text: str) -> bool:
     return ok
 
 
-@router.post(
-    "",
-    response_model=VerifyResponse,
-    description="Verify signed content and return a structured verdict.",
-)
-async def verify_text(
-    verify_request: VerifyRequest,
-    organization: Optional[dict] = Depends(get_optional_organization),
-    db: Session = Depends(get_db),
-):
-    logger = structlog.get_logger(__name__)
-    correlation_id = f"req-{uuid4().hex}"
-    structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
-    payload_bytes = len(verify_request.text.encode("utf-8"))
-    vs_count = _count_variation_selectors(verify_request.text)
-    try:
-        wrapper_info = find_wrapper_info_bytes(verify_request.text)
-    except Exception:  # pragma: no cover
-        wrapper_info = None
-    has_c2pa_wrapper = bool(wrapper_info)
+# ---------------------------------------------------------------------------
+# Org context and trust anchor resolution helper
+# ---------------------------------------------------------------------------
 
-    logger.info(
-        "verify_received",
-        payload_bytes=payload_bytes,
-        variation_selectors=vs_count,
-        has_c2pa_wrapper=has_c2pa_wrapper,
-        has_auth_context=bool(organization),
-    )
-    if payload_bytes > MAX_VERIFY_BYTES:
-        return _error_response(
-            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            correlation_id=correlation_id,
-            code="ERR_VERIFY_PAYLOAD_TOO_LARGE",
-            message="Verification payload exceeds the 2 MB limit.",
-            hint="Submit smaller payloads.",
-        )
 
+async def _resolve_org_context(
+    *,
+    organization: dict | None,
+    text: str,
+    has_c2pa_wrapper: bool,
+    wrapper_info,
+    db: Session,
+    logger,
+) -> tuple[
+    str | None,  # organization_id
+    str | None,  # organization_name
+    object | None,  # public_key (loaded from certificate_pem)
+    str | None,  # extracted_signer_id
+    str | None,  # extracted_manifest_uuid
+    object | None,  # trust_anchor_public_key
+    str | None,  # trust_anchor_name
+]:
+    """Extract org credentials and resolve trust anchor for unauthenticated requests.
+
+    Returns a tuple of all org-context fields needed by verify_text.
+    """
     organization_id = organization.get("organization_id") if organization else None
     organization_name = organization.get("organization_name") if organization else None
     certificate_pem = organization.get("certificate_pem") if organization else None
@@ -507,12 +604,10 @@ async def verify_text(
         except Exception:
             public_key = None
 
-    # Public minimal_uuid path:
-    # If unauthenticated, attempt to resolve org signer keys via trust-anchor lookup
-    # and ensure the embedded manifest_uuid exists in the content DB.
+    # Extract signer_id and manifest_uuid from embedded metadata
     extracted_metadata = None
     try:
-        extracted_metadata = UnicodeMetadata.extract_metadata(verify_request.text)
+        extracted_metadata = UnicodeMetadata.extract_metadata(text)
     except Exception:
         extracted_metadata = None
 
@@ -526,7 +621,6 @@ async def verify_text(
 
     # TEAM_156: For C2PA format, extract_metadata returns the decoded CBOR
     # payload which doesn't include signer_id (it's in the outer/JUMBF layer).
-    # Fall back to extracting signer_id from the JUMBF manifest store.
     if not extracted_signer_id and has_c2pa_wrapper and wrapper_info:
         try:
             manifest_bytes = wrapper_info[0]
@@ -538,14 +632,9 @@ async def verify_text(
         except Exception:
             pass
 
-    # TEAM_156: Trust anchor resolution for unauthenticated requests.
-    # If a manifest_uuid is present, attempt a soft lookup in content_references
-    # to confirm the content was registered (advanced signing). If the table
-    # doesn't exist or the row isn't found, log a warning and fall through —
-    # lightweight UUID mode also includes manifest_uuid but doesn't write to
-    # content_references, so this must not be a hard gate.
+    # Trust anchor resolution for unauthenticated requests
     trust_anchor_public_key = None
-    trust_anchor_name = None  # TEAM_156: org name from trust anchor API
+    trust_anchor_name = None
     if not organization_id and not certificate_pem and isinstance(extracted_signer_id, str) and extracted_signer_id.startswith("org_"):
         if isinstance(extracted_manifest_uuid, str) and extracted_manifest_uuid.strip():
             # Soft check: try to confirm manifest_uuid in content_references
@@ -569,15 +658,13 @@ async def verify_text(
                     )
             except (ProgrammingError, OperationalError) as exc:
                 # TEAM_156: Table may not exist (lightweight UUID mode, dev env).
-                # Log and fall through to trust anchor verification.
                 logger.warning(
                     "content_references_lookup_failed",
                     manifest_uuid=extracted_manifest_uuid,
                     error=str(exc),
                 )
-                db.rollback()  # Reset the failed transaction
+                db.rollback()
 
-        # Fetch trust anchor public key and org name from enterprise API
         trust_anchor_pem, trust_anchor_name = await _fetch_trust_anchor(signer_id=extracted_signer_id)
         if trust_anchor_pem:
             try:
@@ -585,485 +672,258 @@ async def verify_text(
             except Exception:
                 trust_anchor_public_key = None
 
-    embedded_public_key = _extract_embedded_c2pa_public_key(verify_request.text)
-    embedded_trusted = await _is_embedded_c2pa_key_trusted(verify_request.text)
-
-    logger.info(
-        "verify_embedded_key_context",
-        has_embedded_public_key=embedded_public_key is not None,
-        embedded_trusted=embedded_trusted,
+    return (
+        organization_id,
+        organization_name,
+        public_key,
+        extracted_signer_id,
+        extracted_manifest_uuid,
+        trust_anchor_public_key,
+        trust_anchor_name,
     )
 
-    def public_key_resolver(signer_id: str):
-        # TEAM_065: Support demo/user signers without requiring org auth.
-        # TEAM_066: Also support org_encypher* signers (e.g., org_encypher_marketing) which use demo key.
-        if signer_id == "org_demo" or signer_id.startswith("user_") or signer_id.startswith("org_encypher"):
-            return _demo_public_key()
-        if organization_id and signer_id == organization_id:
-            return public_key
-        if trust_anchor_public_key is not None and signer_id == extracted_signer_id:
-            return trust_anchor_public_key
-        if embedded_public_key is not None:
-            return embedded_public_key
-        return None
 
-    start = time.perf_counter()
+# ---------------------------------------------------------------------------
+# Fallback embedding detection helpers (Task 2.0)
+# ---------------------------------------------------------------------------
+
+
+def _build_embedding_details(uuids: list[str], resolved_map: dict[str, dict]) -> list[EmbeddingDetail]:
+    """Build EmbeddingDetail list from resolved UUIDs."""
+    details: list[EmbeddingDetail] = []
+    for uuid_str in uuids:
+        r = resolved_map.get(uuid_str)
+        if not r:
+            continue
+        seg_loc = None
+        loc_data = r.get("segment_location")
+        if isinstance(loc_data, dict):
+            seg_loc = SegmentLocationInfo(
+                paragraph_index=loc_data.get("paragraph_index", 0),
+                sentence_in_paragraph=loc_data.get("sentence_in_paragraph", 0),
+            )
+        details.append(
+            EmbeddingDetail(
+                segment_uuid=uuid_str,
+                leaf_index=r.get("leaf_index"),
+                segment_location=seg_loc,
+                manifest_mode=r.get("manifest_mode"),
+            )
+        )
+    return details
+
+
+async def _run_embedding_fallback(
+    *,
+    ids: list[str],
+    detect_label: str,
+    logger,
+) -> tuple[str | None, str | None, list[EmbeddingDetail], dict | None, int | None, bool]:
+    """Resolve a list of embedding IDs against the enterprise API.
+
+    Returns ``(org_id, document_id, embedding_details, c2pa_manifest, total_segments, is_valid)``.
+    """
+    if not ids:
+        return None, None, [], None, None, False
+
+    resolved_map = await _bulk_resolve_segment_uuids(ids)
+    if not resolved_map:
+        return None, None, [], None, None, False
+
+    first_result = resolved_map.get(ids[0]) or next(iter(resolved_map.values()))
+    org_id = first_result.get("organization_id")
+    document_id = first_result.get("document_id")
+
+    if not org_id:
+        return None, document_id, [], None, None, False
+
+    c2pa_manifest = first_result.get("manifest_data") if first_result.get("manifest_data") else None
+    total_segments = first_result.get("total_segments")
+    embedding_details = _build_embedding_details(ids, resolved_map)
+
+    logger.info(
+        f"verify_{detect_label}_resolved",
+        first_id=ids[0],
+        organization_id=org_id,
+        document_id=document_id,
+        total_ids=len(ids),
+        resolved_count=len(embedding_details),
+    )
+
+    return org_id, document_id, embedding_details, c2pa_manifest, total_segments, True
+
+
+async def _run_zw_fallback(
+    text: str,
+    logger,
+) -> tuple[str | None, str | None, str | None, list[EmbeddingDetail], dict | None, int | None, bool]:
+    """ZWC embedding fallback.
+
+    Returns ``(org_id, document_id, uuid_str, embeddings, c2pa_manifest, total_segments, is_valid)``.
+    """
     try:
-        is_valid, signer_id, manifest = UnicodeMetadata.verify_metadata(
-            text=verify_request.text,
-            public_key_resolver=public_key_resolver,
+        from ...utils.zw_detect import find_zw_signatures, extract_uuid_from_signature
+
+        zw_sigs = find_zw_signatures(text)
+        if not zw_sigs:
+            return None, None, None, [], None, None, False
+
+        zw_uuids: list[str] = []
+        for _start, _end, sig_str in zw_sigs:
+            sig_uuid = extract_uuid_from_signature(sig_str)
+            if sig_uuid:
+                zw_uuids.append(str(sig_uuid))
+
+        if not zw_uuids:
+            return None, None, None, [], None, None, False
+
+        first_uuid = zw_uuids[0]
+        org_id, doc_id, embeddings, manifest, total_segs, valid = await _run_embedding_fallback(
+            ids=zw_uuids,
+            detect_label="zw",
+            logger=logger,
         )
-        logger.info(
-            "verify_unicode_metadata_result",
-            is_valid=is_valid,
-            signer_id=signer_id,
-            manifest_type=type(manifest).__name__,
-            manifest_keys=list(manifest.keys()) if isinstance(manifest, dict) else None,
-        )
+        return org_id, doc_id, first_uuid, embeddings, manifest, total_segs, valid
+
     except Exception as exc:
-        logger.warning(
-            "verify_unicode_metadata_exception",
-            exception_type=type(exc).__name__,
-            exception=str(exc),
-            has_c2pa_wrapper=has_c2pa_wrapper,
+        logger.debug("verify_zw_detection_error", error=str(exc))
+        return None, None, None, [], None, None, False
+
+
+async def _run_vs256_fallback(
+    text: str,
+    logger,
+) -> tuple[str | None, str | None, str | None, list[EmbeddingDetail], dict | None, int | None, bool]:
+    """VS256 embedding fallback.
+
+    Returns ``(org_id, document_id, uuid_str, embeddings, c2pa_manifest, total_segments, is_valid)``.
+    """
+    try:
+        from ...utils.vs256_detect import (
+            find_vs256_signatures,
+            extract_uuid_from_vs256_signature,
+            collect_distributed_vs_chars,
+            reassemble_signature_from_distributed,
         )
-        # Fallback: Attempt C2PA wrapper-only verification.
-        # This avoids failures when non-JSON VS blocks (e.g. mixed multi-embeddings)
-        # break the legacy outer-payload extraction logic.
-        try:
-            info = find_wrapper_info_bytes(verify_request.text)
-        except Exception:  # pragma: no cover - defensive
-            info = None
 
-        if info:
-            manifest_bytes, wrapper_start_byte, wrapper_length_byte = info
-            try:
-                manifest_store = deserialize_jumbf_payload(manifest_bytes)
-                if isinstance(manifest_store, dict):
-                    fallback_signer_id = manifest_store.get("signer_id")
-                    cose_sign1 = manifest_store.get("cose_sign1")
-                else:
-                    fallback_signer_id = None
-                    cose_sign1 = None
+        vs256_sigs = find_vs256_signatures(text)
 
-                if isinstance(fallback_signer_id, str) and isinstance(cose_sign1, str):
-                    outer_payload = {
-                        "format": "c2pa",
-                        "signer_id": fallback_signer_id,
-                        "cose_sign1": cose_sign1,
-                    }
-                    is_valid, signer_id, manifest = UnicodeMetadata._verify_c2pa(
-                        original_text=verify_request.text,
-                        outer_payload=outer_payload,
-                        public_key_resolver=public_key_resolver,
-                        return_payload_on_failure=True,
-                        require_hard_binding=True,
-                        wrapper_exclusion=(wrapper_start_byte, wrapper_length_byte),
-                    )
-                else:
-                    is_valid, signer_id, manifest = False, None, None
-            except Exception:  # pragma: no cover - defensive
-                is_valid, signer_id, manifest = False, None, None
-
-            logger.info(
-                "verify_c2pa_fallback_result",
-                is_valid=is_valid,
-                signer_id=signer_id,
-                manifest_type=type(manifest).__name__ if manifest is not None else None,
-            )
-        else:
-            duration_ms = int((time.perf_counter() - start) * 1000)
-            verdict = VerifyVerdict(
-                valid=False,
-                tampered=False,
-                reason_code="VERIFY_EXCEPTION",
-                signer_id=None,
-                signer_name=None,
-                timestamp=None,
-                details={
-                    "manifest": {},
-                    "duration_ms": duration_ms,
-                    "payload_bytes": payload_bytes,
-                    "exception": str(exc),
-                },
-            )
-            return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
-
-    # Whitespace-normalization retry.
-    # Browser copy-paste of rendered HTML produces \n\n between paragraphs
-    # while the signed text was built with single spaces (WordPress extract_text
-    # joins paragraphs via implode(' ', ...)).  When COSE verifies (signer_id is
-    # set) but the content hash fails (is_valid=False), collapse all whitespace
-    # runs to single spaces and retry before giving up.
-    #
-    # Two-step approach:
-    # 1. Call verify_metadata() on the ws-normalized text (handles most cases).
-    # 2. If that still fails (e.g. stored byte-offset exclusions land differently),
-    #    manually re-compute the content hash from the manifest's stored
-    #    c2pa.hash.data.v1 assertion.  COSE already verified, so we only need
-    #    to confirm the content hash matches.
-    if not is_valid and signer_id is not None and manifest is not None:
-        _ws_text = re.sub(r"\s+", " ", verify_request.text).strip()
-        if _ws_text != verify_request.text:
-            # Step 1: full re-verification with ws-normalized text
-            try:
-                _is_valid_ws, _signer_id_ws, _manifest_ws = UnicodeMetadata.verify_metadata(
-                    text=_ws_text,
-                    public_key_resolver=public_key_resolver,
+        # If no contiguous signatures found, try reassembling from distributed VS chars
+        if not vs256_sigs:
+            vs_chars = collect_distributed_vs_chars(text)
+            reassembled = reassemble_signature_from_distributed(vs_chars)
+            if reassembled:
+                vs256_sigs = [(0, len(reassembled), reassembled)]
+                logger.info(
+                    "verify_vs256_reassembled_from_distributed",
+                    total_vs_chars=len(vs_chars),
                 )
-                if _is_valid_ws:
-                    is_valid = _is_valid_ws
-                    signer_id = _signer_id_ws
-                    manifest = _manifest_ws
-                    logger.info(
-                        "verify_ws_normalized_success",
-                        signer_id=signer_id,
-                        payload_bytes=payload_bytes,
-                    )
-            except Exception as _ws_exc:
-                logger.warning("verify_ws_normalized_exception", error=str(_ws_exc))
 
-            # Step 2: manual content-hash check.
-            # COSE is already trusted (signer_id resolved above).  Compute the
-            # SHA-256 of the ws-normalized text with stored exclusions applied and
-            # compare against the hash committed in the COSE payload.
-            if not is_valid:
-                try:
-                    _assertions = manifest.get("assertions", []) if isinstance(manifest, dict) else []
-                    _ch_assertion = next(
-                        (a for a in _assertions if isinstance(a, dict) and a.get("label") == "c2pa.hash.data.v1"),
-                        None,
-                    )
-                    if _ch_assertion:
-                        _ch_data = _ch_assertion.get("data", {})
-                        _stored_hash = _ch_data.get("hash", "")
-                        _raw_excls = _ch_data.get("exclusions", [])
-                        _excls = [(e["start"], e["length"]) for e in _raw_excls if isinstance(e, dict) and "start" in e and "length" in e]
-                        if _stored_hash and _excls:
-                            _norm = unicodedata.normalize("NFC", _ws_text)
-                            _buf = bytearray(_norm.encode("utf-8"))
-                            _ok = True
-                            for _s, _l in sorted(_excls, key=lambda x: x[0], reverse=True):
-                                if _s + _l > len(_buf):
-                                    _ok = False
-                                    break
-                                del _buf[_s : _s + _l]
-                            if _ok:
-                                _actual_hash = hashlib.sha256(bytes(_buf)).hexdigest()
-                                if _actual_hash == _stored_hash:
-                                    is_valid = True
-                                    logger.info(
-                                        "verify_ws_manual_hash_success",
-                                        signer_id=signer_id,
-                                        payload_bytes=payload_bytes,
-                                    )
-                except Exception as _mh_exc:
-                    logger.warning("verify_ws_manual_hash_exception", error=str(_mh_exc))
+        if not vs256_sigs:
+            return None, None, None, [], None, None, False
 
-    # Fallback: no exception, but no signer_id extracted.
-    if not signer_id:
-        logger.info(
-            "verify_missing_signer_id_primary",
-            has_c2pa_wrapper=has_c2pa_wrapper,
-            is_valid=is_valid,
+        vs256_uuids: list[str] = []
+        for _start, _end, sig_str in vs256_sigs:
+            sig_uuid = extract_uuid_from_vs256_signature(sig_str)
+            if sig_uuid:
+                vs256_uuids.append(str(sig_uuid))
+
+        if not vs256_uuids:
+            return None, None, None, [], None, None, False
+
+        first_uuid = vs256_uuids[0]
+        org_id, doc_id, embeddings, manifest, total_segs, valid = await _run_embedding_fallback(
+            ids=vs256_uuids,
+            detect_label="vs256",
+            logger=logger,
         )
-        try:
-            info = find_wrapper_info_bytes(verify_request.text)
-        except Exception:  # pragma: no cover - defensive
-            info = None
-        if info:
-            manifest_bytes, wrapper_start_byte, wrapper_length_byte = info
-            try:
-                manifest_store = deserialize_jumbf_payload(manifest_bytes)
-                if isinstance(manifest_store, dict):
-                    fallback_signer_id = manifest_store.get("signer_id")
-                    cose_sign1 = manifest_store.get("cose_sign1")
-                else:
-                    fallback_signer_id = None
-                    cose_sign1 = None
-                if isinstance(fallback_signer_id, str) and isinstance(cose_sign1, str):
-                    outer_payload = {
-                        "format": "c2pa",
-                        "signer_id": fallback_signer_id,
-                        "cose_sign1": cose_sign1,
-                    }
-                    is_valid, signer_id, manifest = UnicodeMetadata._verify_c2pa(
-                        original_text=verify_request.text,
-                        outer_payload=outer_payload,
-                        public_key_resolver=public_key_resolver,
-                        return_payload_on_failure=True,
-                        require_hard_binding=True,
-                        wrapper_exclusion=(wrapper_start_byte, wrapper_length_byte),
-                    )
-            except Exception:  # pragma: no cover - defensive
-                pass
+        return org_id, doc_id, first_uuid, embeddings, manifest, total_segs, valid
 
-        logger.info(
-            "verify_missing_signer_id_fallback_result",
-            is_valid=is_valid,
-            signer_id=signer_id,
-            manifest_type=type(manifest).__name__ if manifest is not None else None,
+    except Exception as exc:
+        logger.debug("verify_vs256_detection_error", error=str(exc))
+        return None, None, None, [], None, None, False
+
+
+async def _run_legacy_safe_fallback(
+    text: str,
+    logger,
+) -> tuple[str | None, str | None, str | None, list[EmbeddingDetail], dict | None, int | None, bool]:
+    """Legacy-safe (base-6 ZWC) embedding fallback.
+
+    Returns ``(org_id, document_id, first_log_id, embeddings, c2pa_manifest, total_segments, is_valid)``.
+    """
+    try:
+        from ...utils.legacy_safe_detect import (
+            find_legacy_safe_markers,
+            extract_log_id_from_marker,
         )
 
-    # TEAM_156 / TEAM_170: ZW embedding fallback — resolve ALL ZW signatures
-    # so we can report segment locations for every detected embedding.
-    zw_org_id = None
-    zw_document_id = None
-    zw_uuid_str = None
-    resolved_embeddings: list[EmbeddingDetail] = []
-    resolved_c2pa_manifest: dict | None = None
-    resolved_total_segments: int | None = None
-    # Run ZWC fallback when signer_id is absent OR when C2PA found a signer_id
-    # but the content hash failed (e.g. user pasted the whole article including
-    # title/badge text that is not part of the signed region).  In that case the
-    # per-sentence ZWC markers can still prove provenance without a full doc hash.
-    if not signer_id or not is_valid:
-        try:
-            from ...utils.zw_detect import find_zw_signatures, extract_uuid_from_signature
+        ls_markers = find_legacy_safe_markers(text)
+        if not ls_markers:
+            return None, None, None, [], None, None, False
 
-            zw_sigs = find_zw_signatures(verify_request.text)
-            if zw_sigs:
-                # Extract UUIDs from all detected signatures
-                zw_uuids: list[str] = []
-                for _start, _end, sig_str in zw_sigs:
-                    sig_uuid = extract_uuid_from_signature(sig_str)
-                    if sig_uuid:
-                        zw_uuids.append(str(sig_uuid))
+        ls_log_ids: list[str] = []
+        for _start, _end, marker_str in ls_markers:
+            log_id_hex = extract_log_id_from_marker(marker_str)
+            if log_id_hex:
+                ls_log_ids.append(log_id_hex)
 
-                if zw_uuids:
-                    zw_uuid_str = zw_uuids[0]
-                    resolved_map = await _bulk_resolve_segment_uuids(zw_uuids)
+        if not ls_log_ids:
+            return None, None, None, [], None, None, False
 
-                    if resolved_map:
-                        # Use first resolved result for top-level fields
-                        first_result = resolved_map.get(zw_uuid_str) or next(iter(resolved_map.values()))
-                        zw_org_id = first_result.get("organization_id")
-                        zw_document_id = first_result.get("document_id")
+        first_log_id = ls_log_ids[0]
+        org_id, doc_id, embeddings, manifest, total_segs, valid = await _run_embedding_fallback(
+            ids=ls_log_ids,
+            detect_label="legacy_safe",
+            logger=logger,
+        )
+        return org_id, doc_id, first_log_id, embeddings, manifest, total_segs, valid
 
-                        if zw_org_id:
-                            signer_id = zw_org_id
-                            is_valid = True
-                            first_result.get("manifest_mode") or "zw_embedding"
+    except Exception as exc:
+        logger.debug("verify_legacy_safe_detection_error", error=str(exc))
+        return None, None, None, [], None, None, False
 
-                            # Extract C2PA manifest from first result (shared across segments)
-                            if first_result.get("manifest_data"):
-                                resolved_c2pa_manifest = first_result["manifest_data"]
-                            resolved_total_segments = first_result.get("total_segments")
 
-                            # Build embedding details for ALL resolved signatures
-                            for uuid_str in zw_uuids:
-                                r = resolved_map.get(uuid_str)
-                                if r:
-                                    seg_loc = None
-                                    loc_data = r.get("segment_location")
-                                    if isinstance(loc_data, dict):
-                                        seg_loc = SegmentLocationInfo(
-                                            paragraph_index=loc_data.get("paragraph_index", 0),
-                                            sentence_in_paragraph=loc_data.get("sentence_in_paragraph", 0),
-                                        )
-                                    resolved_embeddings.append(
-                                        EmbeddingDetail(
-                                            segment_uuid=uuid_str,
-                                            leaf_index=r.get("leaf_index"),
-                                            segment_location=seg_loc,
-                                            manifest_mode=r.get("manifest_mode"),
-                                        )
-                                    )
+# ---------------------------------------------------------------------------
+# Verdict builder (Task 2.4)
+# ---------------------------------------------------------------------------
 
-                            manifest = {
-                                "segment_uuid": zw_uuid_str,
-                                "total_signatures": len(zw_sigs),
-                            }
-                            logger.info(
-                                "verify_zw_resolved",
-                                segment_uuid=zw_uuid_str,
-                                organization_id=zw_org_id,
-                                document_id=zw_document_id,
-                                total_signatures=len(zw_sigs),
-                                resolved_count=len(resolved_embeddings),
-                            )
-        except Exception as zw_exc:
-            logger.debug("verify_zw_detection_error", error=str(zw_exc))
 
-    # TEAM_158 / TEAM_170: VS256 embedding fallback — resolve ALL VS256
-    # signatures so we can report segment locations for every detected
-    # embedding.  Tries contiguous detection first, then reassembly from
-    # distributed (redistributed) VS chars.
-    vs256_org_id = None
-    vs256_document_id = None
-    vs256_uuid_str = None
-    # Same rationale as ZWC: allow VS256 fallback when C2PA hash failed but
-    # signer_id was extracted from COSE.
-    if not signer_id or not is_valid:
-        try:
-            from ...utils.vs256_detect import (
-                find_vs256_signatures,
-                extract_uuid_from_vs256_signature,
-                collect_distributed_vs_chars,
-                reassemble_signature_from_distributed,
-            )
-
-            vs256_sigs = find_vs256_signatures(verify_request.text)
-
-            # If no contiguous signatures found, try reassembling from
-            # distributed VS chars (copy-paste from redistributed PDF)
-            if not vs256_sigs:
-                vs_chars = collect_distributed_vs_chars(verify_request.text)
-                reassembled = reassemble_signature_from_distributed(vs_chars)
-                if reassembled:
-                    vs256_sigs = [(0, len(reassembled), reassembled)]
-                    logger.info(
-                        "verify_vs256_reassembled_from_distributed",
-                        total_vs_chars=len(vs_chars),
-                    )
-
-            if vs256_sigs:
-                # Extract UUIDs from ALL detected signatures
-                vs256_uuids: list[str] = []
-                for _start, _end, sig_str in vs256_sigs:
-                    sig_uuid = extract_uuid_from_vs256_signature(sig_str)
-                    if sig_uuid:
-                        vs256_uuids.append(str(sig_uuid))
-
-                if vs256_uuids:
-                    vs256_uuid_str = vs256_uuids[0]
-                    resolved_map = await _bulk_resolve_segment_uuids(vs256_uuids)
-
-                    if resolved_map:
-                        first_result = resolved_map.get(vs256_uuid_str) or next(iter(resolved_map.values()))
-                        vs256_org_id = first_result.get("organization_id")
-                        vs256_document_id = first_result.get("document_id")
-
-                        if vs256_org_id:
-                            signer_id = vs256_org_id
-                            is_valid = True
-                            first_result.get("manifest_mode") or "micro"
-
-                            # Extract C2PA manifest from first result (shared across segments)
-                            if first_result.get("manifest_data") and not resolved_c2pa_manifest:
-                                resolved_c2pa_manifest = first_result["manifest_data"]
-                            if first_result.get("total_segments") and not resolved_total_segments:
-                                resolved_total_segments = first_result.get("total_segments")
-
-                            # Build embedding details for ALL resolved signatures
-                            for uuid_str in vs256_uuids:
-                                r = resolved_map.get(uuid_str)
-                                if r:
-                                    seg_loc = None
-                                    loc_data = r.get("segment_location")
-                                    if isinstance(loc_data, dict):
-                                        seg_loc = SegmentLocationInfo(
-                                            paragraph_index=loc_data.get("paragraph_index", 0),
-                                            sentence_in_paragraph=loc_data.get("sentence_in_paragraph", 0),
-                                        )
-                                    resolved_embeddings.append(
-                                        EmbeddingDetail(
-                                            segment_uuid=uuid_str,
-                                            leaf_index=r.get("leaf_index"),
-                                            segment_location=seg_loc,
-                                            manifest_mode=r.get("manifest_mode"),
-                                        )
-                                    )
-
-                            manifest = {
-                                "segment_uuid": vs256_uuid_str,
-                                "total_signatures": len(vs256_sigs),
-                            }
-                            logger.info(
-                                "verify_vs256_resolved",
-                                segment_uuid=vs256_uuid_str,
-                                organization_id=vs256_org_id,
-                                document_id=vs256_document_id,
-                                total_signatures=len(vs256_sigs),
-                                resolved_count=len(resolved_embeddings),
-                            )
-        except Exception as vs256_exc:
-            logger.debug("verify_vs256_detection_error", error=str(vs256_exc))
-
-    # Legacy-safe (base-6 ZWC) embedding fallback.
-    # Handles both 100-char (plain) and 112-char (RS-ECC) markers.
-    # LRM/RLM presence distinguishes these from base-4 ZW markers.
-    legacy_safe_org_id = None
-    legacy_safe_document_id = None
-    if not signer_id or not is_valid:
-        try:
-            from ...utils.legacy_safe_detect import (
-                find_legacy_safe_markers,
-                extract_log_id_from_marker,
-            )
-
-            ls_markers = find_legacy_safe_markers(verify_request.text)
-            if ls_markers:
-                ls_log_ids: list[str] = []
-                for _start, _end, marker_str in ls_markers:
-                    log_id_hex = extract_log_id_from_marker(marker_str)
-                    if log_id_hex:
-                        ls_log_ids.append(log_id_hex)
-
-                if ls_log_ids:
-                    resolved_map = await _bulk_resolve_segment_uuids(ls_log_ids)
-
-                    if resolved_map:
-                        first_result = resolved_map.get(ls_log_ids[0]) or next(iter(resolved_map.values()))
-                        legacy_safe_org_id = first_result.get("organization_id")
-                        legacy_safe_document_id = first_result.get("document_id")
-
-                        if legacy_safe_org_id:
-                            signer_id = legacy_safe_org_id
-                            is_valid = True
-
-                            if first_result.get("manifest_data") and not resolved_c2pa_manifest:
-                                resolved_c2pa_manifest = first_result["manifest_data"]
-                            if first_result.get("total_segments") and not resolved_total_segments:
-                                resolved_total_segments = first_result.get("total_segments")
-
-                            for log_id_hex in ls_log_ids:
-                                r = resolved_map.get(log_id_hex)
-                                if r:
-                                    seg_loc = None
-                                    loc_data = r.get("segment_location")
-                                    if isinstance(loc_data, dict):
-                                        seg_loc = SegmentLocationInfo(
-                                            paragraph_index=loc_data.get("paragraph_index", 0),
-                                            sentence_in_paragraph=loc_data.get("sentence_in_paragraph", 0),
-                                        )
-                                    resolved_embeddings.append(
-                                        EmbeddingDetail(
-                                            segment_uuid=log_id_hex,
-                                            leaf_index=r.get("leaf_index"),
-                                            segment_location=seg_loc,
-                                            manifest_mode=r.get("manifest_mode"),
-                                        )
-                                    )
-
-                            manifest = {
-                                "segment_uuid": ls_log_ids[0],
-                                "total_signatures": len(ls_markers),
-                            }
-                            logger.info(
-                                "verify_legacy_safe_resolved",
-                                log_id=ls_log_ids[0],
-                                organization_id=legacy_safe_org_id,
-                                document_id=legacy_safe_document_id,
-                                total_signatures=len(ls_markers),
-                                resolved_count=len(resolved_embeddings),
-                            )
-        except Exception as ls_exc:
-            logger.debug("verify_legacy_safe_detection_error", error=str(ls_exc))
-
-    duration_ms = int((time.perf_counter() - start) * 1000)
-
+def _build_verdict(
+    *,
+    is_valid: bool,
+    signer_id: str | None,
+    manifest: dict | None,
+    duration_ms: int,
+    payload_bytes: int,
+    organization_id: str | None,
+    organization_name: str | None,
+    extracted_signer_id: str | None,
+    trust_anchor_name: str | None,
+    embedded_public_key,
+    embedded_trusted: bool,
+    public_key_resolver: Callable[[str], object | None],
+    resolved_embeddings: list[EmbeddingDetail],
+    resolved_c2pa_manifest: dict | None,
+    resolved_total_segments: int | None,
+    zw_org_id: str | None,
+    vs256_org_id: str | None,
+    legacy_safe_org_id: str | None,
+    include_merkle: bool,
+) -> VerifyVerdict:
+    """Assemble VerifyVerdict from all verification state."""
+    # Determine reason_code
     reason_code = "OK" if is_valid else "SIGNATURE_INVALID"
     if not signer_id:
         reason_code = "SIGNER_UNKNOWN"
     elif zw_org_id and signer_id == zw_org_id:
-        # TEAM_156: ZW DB-resolved — skip public_key_resolver check
+        # TEAM_156: ZW DB-resolved - skip public_key_resolver check
         reason_code = "OK"
     elif vs256_org_id and signer_id == vs256_org_id:
-        # TEAM_158: VS256 DB-resolved — skip public_key_resolver check
+        # TEAM_158: VS256 DB-resolved - skip public_key_resolver check
         reason_code = "OK"
     elif legacy_safe_org_id and signer_id == legacy_safe_org_id:
-        # Legacy-safe DB-resolved — skip public_key_resolver check
+        # Legacy-safe DB-resolved - skip public_key_resolver check
         reason_code = "OK"
     elif public_key_resolver(signer_id) is None:
         reason_code = "CERT_NOT_FOUND"
@@ -1071,24 +931,27 @@ async def verify_text(
         # TEAM_065: Valid signature, but signer cannot be validated to a trusted root.
         reason_code = "UNTRUSTED_SIGNER"
 
-    logger.info(
-        "verify_verdict",
-        reason_code=reason_code,
-        is_valid=is_valid,
-        signer_id=signer_id,
-        payload_bytes=payload_bytes,
-        duration_ms=duration_ms,
-        has_c2pa_wrapper=has_c2pa_wrapper,
-        variation_selectors=vs_count,
-    )
+    # Attach navigation hints for non-OK reason codes
+    _REASON_HINTS: dict[str, str] = {
+        "SIGNER_UNKNOWN": (
+            "No signer identity could be extracted from the content. "
+            "Ensure the text is copied without modification from the original signed document."
+        ),
+        "CERT_NOT_FOUND": (
+            "The signer's public key could not be resolved. "
+            "The signing organization may not be registered, or use POST /api/v1/verify "
+            "with an API key to supply the certificate directly."
+        ),
+        "UNTRUSTED_SIGNER": (
+            "The signature is cryptographically valid but the signer certificate is not "
+            "anchored to a trusted root. Contact the publisher for their trust anchor PEM."
+        ),
+    }
+    hint = _REASON_HINTS.get(reason_code)
 
-    # Build rich response with document info, C2PA details, and licensing (all free)
+    # Build document_info
     document_info = None
-    c2pa_info = None
     licensing_info = None
-    merkle_proof_info = None
-
-    # Extract document info from manifest
     if isinstance(manifest, dict):
         custom_metadata = manifest.get("custom_metadata", {})
         if isinstance(custom_metadata, dict):
@@ -1098,7 +961,6 @@ async def verify_text(
                 author=custom_metadata.get("author"),
                 document_type=custom_metadata.get("document_type"),
             )
-            # Extract licensing info
             if custom_metadata.get("license_type") or custom_metadata.get("license_url"):
                 licensing_info = LicensingInfo(
                     license_type=custom_metadata.get("license_type"),
@@ -1107,8 +969,8 @@ async def verify_text(
                     attribution_required=custom_metadata.get("attribution_required", False),
                 )
 
-    # Build C2PA info — prefer DB-backed manifest from micro_c2pa / micro_ecc_c2pa
-    # modes (resolved via segment UUID), then fall back to inline C2PA wrapper.
+    # Build c2pa_info
+    c2pa_info = None
     if resolved_c2pa_manifest and isinstance(resolved_c2pa_manifest, dict):
         c2pa_info = C2PAInfo(
             validated=is_valid,
@@ -1117,22 +979,17 @@ async def verify_text(
         )
         if resolved_c2pa_manifest.get("assertions"):
             c2pa_info.assertions = resolved_c2pa_manifest["assertions"]
-    elif has_c2pa_wrapper and isinstance(manifest, dict):
+    elif isinstance(manifest, dict) and manifest.get("cose_sign1") or (isinstance(manifest, dict) and manifest.get("manifest_hash")):
         c2pa_info = C2PAInfo(
             validated=is_valid,
             validation_type="cryptographic" if is_valid else None,
-            manifest_hash=manifest.get("manifest_hash"),
+            manifest_hash=manifest.get("manifest_hash") if isinstance(manifest, dict) else None,
         )
-        # Include assertions if present
-        if manifest.get("assertions"):
+        if isinstance(manifest, dict) and manifest.get("assertions"):
             c2pa_info.assertions = manifest.get("assertions")
 
-    # Include Merkle proof only if requested AND user has API key (paid feature)
-    include_merkle = False
-    if verify_request.options and verify_request.options.include_merkle_proof:
-        if organization_id:  # Has valid API key
-            include_merkle = True
-
+    # Merkle proof (paid feature)
+    merkle_proof_info = None
     if include_merkle and isinstance(manifest, dict):
         custom_metadata = manifest.get("custom_metadata", {})
         if isinstance(custom_metadata, dict) and custom_metadata.get("merkle_root"):
@@ -1143,13 +1000,25 @@ async def verify_text(
                 verified=is_valid,
             )
 
-    # TEAM_210: Extract publisher name from C2PA manifest assertions (c2pa.metadata).
-    # This is the most authoritative human-readable identity — it is embedded in the
-    # signed content itself and takes priority over all backend-derived names.
+    # Publisher name
     manifest_for_publisher = resolved_c2pa_manifest if resolved_c2pa_manifest else (manifest if isinstance(manifest, dict) else None)
     publisher_name = _extract_publisher_name_from_manifest(manifest_for_publisher)
 
-    verdict = VerifyVerdict(
+    # Cap manifest before including in details
+    raw_manifest_for_details = manifest or {}
+    capped_manifest, manifest_truncated = _cap_manifest(raw_manifest_for_details if isinstance(raw_manifest_for_details, dict) else {})
+
+    details: dict = {
+        "manifest": capped_manifest or {},
+        "duration_ms": duration_ms,
+        "payload_bytes": payload_bytes,
+    }
+    if manifest_truncated:
+        details["manifest_truncated"] = True
+    if hint:
+        details["hint"] = hint
+
+    return VerifyVerdict(
         valid=is_valid,
         tampered=(not is_valid and reason_code == "SIGNATURE_INVALID"),
         reason_code=reason_code,
@@ -1176,14 +1045,417 @@ async def verify_text(
         total_embeddings=len(resolved_embeddings) if resolved_embeddings else None,
         total_segments_in_document=resolved_total_segments,
         merkle_proof=merkle_proof_info,
-        details={
-            "manifest": manifest or {},
-            "duration_ms": duration_ms,
-            "payload_bytes": payload_bytes,
-        },
+        details=details,
     )
 
-    return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
+
+# ---------------------------------------------------------------------------
+# C2PA fallback verification helper
+# ---------------------------------------------------------------------------
+
+
+def _try_c2pa_fallback(
+    text: str,
+    public_key_resolver: Callable[[str], object | None],
+) -> tuple[bool, str | None, dict | None]:
+    """Attempt C2PA wrapper-only verification when primary fails.
+
+    Returns ``(is_valid, signer_id, manifest)``.
+    """
+    try:
+        info = find_wrapper_info_bytes(text)
+    except Exception:  # pragma: no cover - defensive
+        info = None
+
+    if not info:
+        return False, None, None
+
+    manifest_bytes, wrapper_start_byte, wrapper_length_byte = info
+    try:
+        manifest_store = deserialize_jumbf_payload(manifest_bytes)
+        if isinstance(manifest_store, dict):
+            fallback_signer_id = manifest_store.get("signer_id")
+            cose_sign1 = manifest_store.get("cose_sign1")
+        else:
+            fallback_signer_id = None
+            cose_sign1 = None
+
+        if isinstance(fallback_signer_id, str) and isinstance(cose_sign1, str):
+            outer_payload = {
+                "format": "c2pa",
+                "signer_id": fallback_signer_id,
+                "cose_sign1": cose_sign1,
+            }
+            is_valid, signer_id, manifest = UnicodeMetadata._verify_c2pa(
+                original_text=text,
+                outer_payload=outer_payload,
+                public_key_resolver=public_key_resolver,
+                return_payload_on_failure=True,
+                require_hard_binding=True,
+                wrapper_exclusion=(wrapper_start_byte, wrapper_length_byte),
+            )
+            return is_valid, signer_id, manifest
+    except Exception:  # pragma: no cover - defensive
+        pass
+
+    return False, None, None
+
+
+# ---------------------------------------------------------------------------
+# Whitespace-normalization retry
+# ---------------------------------------------------------------------------
+
+
+def _try_ws_normalized_retry(
+    text: str,
+    manifest: dict | None,
+    public_key_resolver: Callable[[str], object | None],
+    logger,
+) -> tuple[bool, str | None, dict | None]:
+    """Retry verification on whitespace-normalized text.
+
+    Called when COSE identified a signer but the content hash failed
+    (browser copy-paste may introduce extra newlines).
+
+    Returns updated ``(is_valid, signer_id, manifest)``.
+    """
+    _ws_text = re.sub(r"\s+", " ", text).strip()
+    if _ws_text == text:
+        return False, None, manifest
+
+    # Step 1: full re-verification with ws-normalized text
+    try:
+        _is_valid_ws, _signer_id_ws, _manifest_ws = UnicodeMetadata.verify_metadata(
+            text=_ws_text,
+            public_key_resolver=public_key_resolver,
+        )
+        if _is_valid_ws:
+            logger.info("verify_ws_normalized_success", payload_bytes=len(text.encode("utf-8")))
+            return _is_valid_ws, _signer_id_ws, _manifest_ws
+    except Exception as _ws_exc:
+        logger.warning("verify_ws_normalized_exception", error=str(_ws_exc))
+
+    # Step 2: manual content-hash check.
+    # COSE is already trusted (signer_id resolved above). Compute the
+    # SHA-256 of the ws-normalized text with stored exclusions applied and
+    # compare against the hash committed in the COSE payload.
+    if not isinstance(manifest, dict):
+        return False, None, manifest
+
+    try:
+        _assertions = manifest.get("assertions", [])
+        _ch_assertion = next(
+            (a for a in _assertions if isinstance(a, dict) and a.get("label") == "c2pa.hash.data.v1"),
+            None,
+        )
+        if _ch_assertion:
+            _ch_data = _ch_assertion.get("data", {})
+            _stored_hash = _ch_data.get("hash", "")
+            _raw_excls = _ch_data.get("exclusions", [])
+            _excls = [(e["start"], e["length"]) for e in _raw_excls if isinstance(e, dict) and "start" in e and "length" in e]
+            if _stored_hash and _excls:
+                _norm = unicodedata.normalize("NFC", _ws_text)
+                _buf = bytearray(_norm.encode("utf-8"))
+                _ok = True
+                for _s, _l in sorted(_excls, key=lambda x: x[0], reverse=True):
+                    if _s + _l > len(_buf):
+                        _ok = False
+                        break
+                    del _buf[_s : _s + _l]
+                if _ok:
+                    _actual_hash = hashlib.sha256(bytes(_buf)).hexdigest()
+                    if _actual_hash == _stored_hash:
+                        logger.info("verify_ws_manual_hash_success", payload_bytes=len(text.encode("utf-8")))
+                        return True, None, manifest  # signer_id unchanged by caller
+    except Exception as _mh_exc:
+        logger.warning("verify_ws_manual_hash_exception", error=str(_mh_exc))
+
+    return False, None, manifest
+
+
+# ---------------------------------------------------------------------------
+# Primary verify endpoint
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "",
+    response_model=VerifyResponse,
+    description="Verify signed content and return a structured verdict.",
+)
+async def verify_text(
+    verify_request: VerifyRequest,
+    organization: Optional[dict] = Depends(get_optional_organization),
+    db: Session = Depends(get_db),
+):
+    logger = structlog.get_logger(__name__)
+    correlation_id = f"req-{uuid4().hex}"
+    structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
+    start = time.perf_counter()
+
+    # Task 5.0: Binary content guard
+    if "\x00" in verify_request.text or any(ord(c) < 9 for c in verify_request.text):
+        duration_ms = int((time.perf_counter() - start) * 1000)
+        return _error_response(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            correlation_id=correlation_id,
+            code="ERR_BINARY_INPUT",
+            message="Input contains null bytes or binary control characters.",
+            hint="Submit plain text content. Binary or binary-encoded data is not supported.",
+            duration_ms=duration_ms,
+        )
+
+    payload_bytes = len(verify_request.text.encode("utf-8"))
+    vs_count = _count_variation_selectors(verify_request.text)
+    try:
+        wrapper_info = find_wrapper_info_bytes(verify_request.text)
+    except Exception:  # pragma: no cover
+        wrapper_info = None
+    has_c2pa_wrapper = bool(wrapper_info)
+
+    logger.info(
+        "verify_received",
+        payload_bytes=payload_bytes,
+        variation_selectors=vs_count,
+        has_c2pa_wrapper=has_c2pa_wrapper,
+        has_auth_context=bool(organization),
+    )
+    if payload_bytes > MAX_VERIFY_BYTES:
+        duration_ms = int((time.perf_counter() - start) * 1000)
+        return _error_response(
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            correlation_id=correlation_id,
+            code="ERR_VERIFY_PAYLOAD_TOO_LARGE",
+            message="Verification payload exceeds the 2 MB limit.",
+            hint="Submit smaller payloads.",
+            duration_ms=duration_ms,
+        )
+
+    (
+        organization_id,
+        organization_name,
+        public_key,
+        extracted_signer_id,
+        _extracted_manifest_uuid,
+        trust_anchor_public_key,
+        trust_anchor_name,
+    ) = await _resolve_org_context(
+        organization=organization,
+        text=verify_request.text,
+        has_c2pa_wrapper=has_c2pa_wrapper,
+        wrapper_info=wrapper_info,
+        db=db,
+        logger=logger,
+    )
+
+    embedded_public_key = _extract_embedded_c2pa_public_key(verify_request.text)
+    embedded_trusted = await _is_embedded_c2pa_key_trusted(verify_request.text)
+
+    logger.info(
+        "verify_embedded_key_context",
+        has_embedded_public_key=embedded_public_key is not None,
+        embedded_trusted=embedded_trusted,
+    )
+
+    def public_key_resolver(signer_id: str):
+        # TEAM_065: Support demo/user signers without requiring org auth.
+        # TEAM_066: Also support org_encypher* signers (e.g., org_encypher_marketing) which use demo key.
+        if signer_id == "org_demo" or signer_id.startswith("user_") or signer_id.startswith("org_encypher"):
+            return _demo_public_key()
+        if organization_id and signer_id == organization_id:
+            return public_key
+        if trust_anchor_public_key is not None and signer_id == extracted_signer_id:
+            return trust_anchor_public_key
+        if embedded_public_key is not None:
+            return embedded_public_key
+        return None
+
+    try:
+        is_valid, signer_id, manifest = UnicodeMetadata.verify_metadata(
+            text=verify_request.text,
+            public_key_resolver=public_key_resolver,
+        )
+        logger.info(
+            "verify_unicode_metadata_result",
+            is_valid=is_valid,
+            signer_id=signer_id,
+            manifest_type=type(manifest).__name__,
+            manifest_keys=list(manifest.keys()) if isinstance(manifest, dict) else None,
+        )
+    except Exception as exc:
+        logger.warning(
+            "verify_unicode_metadata_exception",
+            exception_type=type(exc).__name__,
+            exception=str(exc),
+            has_c2pa_wrapper=has_c2pa_wrapper,
+        )
+        # Fallback: Attempt C2PA wrapper-only verification.
+        is_valid, signer_id, manifest = _try_c2pa_fallback(verify_request.text, public_key_resolver)
+
+        logger.info(
+            "verify_c2pa_fallback_result",
+            is_valid=is_valid,
+            signer_id=signer_id,
+            manifest_type=type(manifest).__name__ if manifest is not None else None,
+        )
+
+        if not is_valid and not signer_id:
+            # No C2PA wrapper found at all - return early
+            duration_ms = int((time.perf_counter() - start) * 1000)
+            verdict = VerifyVerdict(
+                valid=False,
+                tampered=False,
+                reason_code="VERIFY_EXCEPTION",
+                signer_id=None,
+                signer_name=None,
+                timestamp=None,
+                details={
+                    "manifest": {},
+                    "duration_ms": duration_ms,
+                    "payload_bytes": payload_bytes,
+                    "exception": str(exc),
+                },
+            )
+            return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id, duration_ms=duration_ms)
+
+    # Whitespace-normalization retry.
+    if not is_valid and signer_id is not None and manifest is not None:
+        _ws_valid, _ws_signer, _ws_manifest = _try_ws_normalized_retry(verify_request.text, manifest, public_key_resolver, logger)
+        if _ws_valid:
+            is_valid = True
+            if _ws_signer:
+                signer_id = _ws_signer
+            if _ws_manifest:
+                manifest = _ws_manifest
+
+    # Fallback: no exception, but no signer_id extracted.
+    if not signer_id:
+        logger.info(
+            "verify_missing_signer_id_primary",
+            has_c2pa_wrapper=has_c2pa_wrapper,
+            is_valid=is_valid,
+        )
+        _fb_valid, _fb_signer, _fb_manifest = _try_c2pa_fallback(verify_request.text, public_key_resolver)
+        if _fb_signer:
+            is_valid = _fb_valid
+            signer_id = _fb_signer
+            manifest = _fb_manifest
+
+        logger.info(
+            "verify_missing_signer_id_fallback_result",
+            is_valid=is_valid,
+            signer_id=signer_id,
+            manifest_type=type(manifest).__name__ if manifest is not None else None,
+        )
+
+    # TEAM_156 / TEAM_170: ZW embedding fallback
+    # TEAM_158 / TEAM_170: VS256 embedding fallback
+    # Legacy-safe (base-6 ZWC) embedding fallback
+    zw_org_id = None
+    zw_document_id = None
+    zw_uuid_str = None
+    resolved_embeddings: list[EmbeddingDetail] = []
+    resolved_c2pa_manifest: dict | None = None
+    resolved_total_segments: int | None = None
+
+    vs256_org_id = None
+    vs256_document_id = None
+    vs256_uuid_str = None
+
+    legacy_safe_org_id = None
+    legacy_safe_document_id = None
+
+    if not signer_id or not is_valid:
+        # ZWC fallback
+        zw_org_id, zw_document_id, zw_uuid_str, zw_embeddings, zw_manifest, zw_total_segs, zw_valid = await _run_zw_fallback(
+            verify_request.text, logger
+        )
+        if zw_valid and zw_org_id:
+            signer_id = zw_org_id
+            is_valid = True
+            resolved_embeddings = zw_embeddings
+            resolved_c2pa_manifest = zw_manifest
+            resolved_total_segments = zw_total_segs
+            manifest = {"segment_uuid": zw_uuid_str, "total_signatures": len(zw_embeddings)}
+
+    if not signer_id or not is_valid:
+        # VS256 fallback
+        vs256_org_id, vs256_document_id, vs256_uuid_str, vs256_embeddings, vs256_manifest, vs256_total_segs, vs256_valid = await _run_vs256_fallback(
+            verify_request.text, logger
+        )
+        if vs256_valid and vs256_org_id:
+            signer_id = vs256_org_id
+            is_valid = True
+            resolved_embeddings = vs256_embeddings
+            if vs256_manifest and not resolved_c2pa_manifest:
+                resolved_c2pa_manifest = vs256_manifest
+            if vs256_total_segs and not resolved_total_segments:
+                resolved_total_segments = vs256_total_segs
+            manifest = {"segment_uuid": vs256_uuid_str, "total_signatures": len(vs256_embeddings)}
+
+    if not signer_id or not is_valid:
+        # Legacy-safe fallback
+        (
+            legacy_safe_org_id,
+            legacy_safe_document_id,
+            ls_first_id,
+            ls_embeddings,
+            ls_manifest,
+            ls_total_segs,
+            ls_valid,
+        ) = await _run_legacy_safe_fallback(verify_request.text, logger)
+        if ls_valid and legacy_safe_org_id:
+            signer_id = legacy_safe_org_id
+            is_valid = True
+            resolved_embeddings = ls_embeddings
+            if ls_manifest and not resolved_c2pa_manifest:
+                resolved_c2pa_manifest = ls_manifest
+            if ls_total_segs and not resolved_total_segments:
+                resolved_total_segments = ls_total_segs
+            manifest = {"segment_uuid": ls_first_id, "total_signatures": len(ls_embeddings)}
+
+    duration_ms = int((time.perf_counter() - start) * 1000)
+
+    logger.info(
+        "verify_verdict",
+        is_valid=is_valid,
+        signer_id=signer_id,
+        payload_bytes=payload_bytes,
+        duration_ms=duration_ms,
+        has_c2pa_wrapper=has_c2pa_wrapper,
+        variation_selectors=vs_count,
+    )
+
+    include_merkle = bool(verify_request.options and verify_request.options.include_merkle_proof and organization_id)
+
+    verdict = _build_verdict(
+        is_valid=is_valid,
+        signer_id=signer_id,
+        manifest=manifest,
+        duration_ms=duration_ms,
+        payload_bytes=payload_bytes,
+        organization_id=organization_id,
+        organization_name=organization_name,
+        extracted_signer_id=extracted_signer_id,
+        trust_anchor_name=trust_anchor_name,
+        embedded_public_key=embedded_public_key,
+        embedded_trusted=embedded_trusted,
+        public_key_resolver=public_key_resolver,
+        resolved_embeddings=resolved_embeddings,
+        resolved_c2pa_manifest=resolved_c2pa_manifest,
+        resolved_total_segments=resolved_total_segments,
+        zw_org_id=zw_org_id,
+        vs256_org_id=vs256_org_id,
+        legacy_safe_org_id=legacy_safe_org_id,
+        include_merkle=include_merkle,
+    )
+
+    return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id, duration_ms=duration_ms)
+
+
+# ---------------------------------------------------------------------------
+# Advanced verify proxy
+# ---------------------------------------------------------------------------
 
 
 @router.post(
@@ -1206,7 +1478,6 @@ async def verify_advanced_proxy(request: Request):
     logger = structlog.get_logger(__name__)
     body = await request.body()
 
-    # Forward all auth headers so the enterprise API can authenticate
     forward_headers = {}
     for key in ("authorization", "x-api-key", "content-type", "x-request-id"):
         value = request.headers.get(key)
@@ -1229,24 +1500,30 @@ async def verify_advanced_proxy(request: Request):
                 "error": {
                     "code": "PROXY_ERROR",
                     "message": "Failed to reach enterprise API for advanced verification.",
+                    "error_detail": str(exc),
                 },
             },
         )
+
+
+# ---------------------------------------------------------------------------
+# Portal endpoint (GET by document_id)
+# ---------------------------------------------------------------------------
 
 
 @router.get("/{document_id}")
 async def verify_by_document_id(
     document_id: str,
     db: Session = Depends(get_db),
+    request: Request = None,
 ):
     """
     Verify a document by its ID (for clickable verification links).
 
-    Returns an HTML page so users can preview verification state in a browser.
-    This endpoint queries the content database for the signed document.
+    Returns HTML or JSON depending on the Accept header.
     """
-    # Query content database for document
-    # Note: verification-service uses same DATABASE_URL as content DB
+    accept = (request.headers.get("accept", "") if request else "") or ""
+
     result = db.execute(
         text("SELECT signed_text, title, organization_id FROM documents WHERE id = :doc_id"),
         {"doc_id": document_id},
@@ -1254,46 +1531,13 @@ async def verify_by_document_id(
     row = result.fetchone()
 
     if not row:
-        return HTMLResponse(
-            content=f"""
-            <html>
-                <head><title>Document Not Found</title></head>
-                <body style="font-family: sans-serif; padding: 40px; max-width: 800px; margin: 0 auto;">
-                    <h1>Document Not Found in Database</h1>
-                    <p><strong>Document ID:</strong> {document_id}</p>
-                    <div style="background: #fff3cd; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
-                        <h3 style="margin-top: 0;">Demo Organization Note</h3>
-                        <p>This document was signed using a demo API key. Demo documents are not stored in the database for verification.</p>
-                        <p>To verify this document:</p>
-                        <ol>
-                            <li>Copy the signed text from the file</li>
-                            <li>Use the POST <code>/api/v1/verify</code> endpoint with the signed text in the request body</li>
-                            <li>Or use the Enterprise SDK's verify method</li>
-                        </ol>
-                    </div>
-                    <h3>Alternative: Verify via API</h3>
-                    <p>Use this curl command to verify the signed content:</p>
-                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;">
-curl -X POST https://api.encypherai.com/api/v1/verify \\
-  -H "Content-Type: application/json" \\
-  -d '{{"text": "YOUR_SIGNED_TEXT_HERE"}}'
-                    </pre>
-                    <p style="margin-top: 40px; color: #666; font-size: 14px;">
-                        For production use with persistent verification, use a non-demo API key.
-                    </p>
-                </body>
-            </html>
-            """,
-            status_code=404,
-        )
+        return _render_portal_not_found(document_id, accept)
 
-    # Extract row data (handle both mapping and tuple access)
     mapping = getattr(row, "_mapping", None)
     signed_text = mapping["signed_text"] if mapping else row[0]
     title = mapping["title"] if mapping else row[1]
     org_id = mapping["organization_id"] if mapping else row[2]
 
-    # Verify the signed text
     try:
         is_valid, signer_id, manifest = UnicodeMetadata.verify_metadata(
             text=signed_text,
@@ -1308,56 +1552,39 @@ curl -X POST https://api.encypherai.com/api/v1/verify \\
     if not signer_id:
         reason_code = "SIGNER_UNKNOWN"
 
-    manifest_json = _render_manifest_json(manifest or {})
-    status_color = "#00875A" if is_valid else "#D14343"
-    status_text = "Valid" if is_valid else "Invalid"
+    org_name = org_id or "Unknown"
     signer_name = signer_id or "Unknown"
 
-    # Try to get organization name from auth DB
-    org_name = "Unknown"
-    try:
-        # Note: This requires verification-service to have access to auth DB
-        # For now, we'll use a simple fallback
-        org_name = org_id or "Unknown"
-    except Exception:
-        pass
-
-    return HTMLResponse(
-        content=f"""
-    <html>
-        <head>
-            <title>Verification Result - {title or document_id}</title>
-            <style>
-                body {{ font-family: sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }}
-                .status {{ font-size: 24px; font-weight: bold; color: {status_color}; margin: 20px 0; }}
-                .info {{ background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; }}
-                .label {{ font-weight: bold; }}
-                pre {{ background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }}
-            </style>
-        </head>
-        <body>
-            <h1>Content Verification</h1>
-            <div class="status">{status_text}</div>
-            <div class="info">
-                <p><span class="label">Document ID:</span> {document_id}</p>
-                <p><span class="label">Title:</span> {title or "Untitled"}</p>
-                <p><span class="label">Organization:</span> {org_name}</p>
-                <p><span class="label">Signer ID:</span> {signer_id or "Unknown"}</p>
-                <p><span class="label">Signer Name:</span> {signer_name}</p>
-                <p><span class="label">Reason Code:</span> {reason_code}</p>
-            </div>
-            <h2>Manifest Details</h2>
-            <pre>{manifest_json}</pre>
-            <p style="margin-top: 40px; color: #666; font-size: 14px;">
-                Verified by Encypher Verification Service
-            </p>
-        </body>
-    </html>
-    """
+    return _render_portal_result(
+        document_id=document_id,
+        title=title,
+        org_name=org_name,
+        signer_id=signer_id,
+        signer_name=signer_name,
+        reason_code=reason_code,
+        is_valid=is_valid,
+        manifest=manifest if isinstance(manifest, dict) else None,
+        accept=accept,
     )
 
 
-@router.post("/signature", response_model=VerificationResponse)
+# ---------------------------------------------------------------------------
+# Legacy endpoints (deprecated) - Tasks 4.1 and 4.2
+# ---------------------------------------------------------------------------
+
+_LEGACY_DEPRECATION_HINT = (
+    "This endpoint is deprecated. Use POST /api/v1/verify with a VerifyRequest body instead. "
+    "See https://docs.encypherai.com/api/verify for migration guide."
+)
+
+
+@router.post(
+    "/signature",
+    response_model=VerificationResponse,
+    deprecated=True,
+    summary="[DEPRECATED] Verify a signature",
+    description=("**Deprecated.** Use `POST /api/v1/verify` instead. This endpoint will be removed in a future release."),
+)
 async def verify_signature(
     verify_data: SignatureVerify,
     x_forwarded_for: Optional[str] = Header(None),
@@ -1366,11 +1593,13 @@ async def verify_signature(
     current_user: Optional[dict] = Depends(get_current_user),
 ):
     """
-    Verify a signature (public endpoint)
+    Verify a signature (deprecated endpoint).
 
     - **content**: Original content
     - **signature**: Hex-encoded signature
     - **public_key_pem**: PEM-encoded public key
+
+    Migrate to: ``POST /api/v1/verify``
     """
     try:
         result, processing_time = VerificationService.verify_signature_only(
@@ -1396,11 +1625,20 @@ async def verify_signature(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Verification failed",
+            detail={
+                "message": "Verification failed",
+                "hint": _LEGACY_DEPRECATION_HINT,
+            },
         )
 
 
-@router.post("/document", response_model=VerificationResponse)
+@router.post(
+    "/document",
+    response_model=VerificationResponse,
+    deprecated=True,
+    summary="[DEPRECATED] Verify a document",
+    description=("**Deprecated.** Use `POST /api/v1/verify` instead. This endpoint will be removed in a future release."),
+)
 async def verify_document(
     verify_data: DocumentVerify,
     x_forwarded_for: Optional[str] = Header(None),
@@ -1409,10 +1647,12 @@ async def verify_document(
     current_user: Optional[dict] = Depends(get_current_user),
 ):
     """
-    Complete document verification (public endpoint)
+    Complete document verification (deprecated endpoint).
 
     - **document_id**: Document ID from encoding service
     - **content**: Current content to verify
+
+    Migrate to: ``POST /api/v1/verify``
     """
     try:
         result, processing_time = await VerificationService.verify_document_complete(
@@ -1438,8 +1678,16 @@ async def verify_document(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Verification failed",
+            detail={
+                "message": "Verification failed",
+                "hint": _LEGACY_DEPRECATION_HINT,
+            },
         )
+
+
+# ---------------------------------------------------------------------------
+# History, stats, health
+# ---------------------------------------------------------------------------
 
 
 @router.get("/history/{document_id}", response_model=List[VerificationHistory])

@@ -135,9 +135,7 @@ def _make_routing_client(zw_uuids: list[str], org_id: str, public_key=None):
 # ---------------------------------------------------------------------------
 
 
-def test_zwc_fallback_runs_when_c2pa_signer_id_set_but_hash_fails(
-    client, monkeypatch
-) -> None:
+def test_zwc_fallback_runs_when_c2pa_signer_id_set_but_hash_fails(client, monkeypatch) -> None:
     """When C2PA extracts a signer_id from COSE but the content hash fails
     (because extra browser content surrounds the signed article), the ZWC fallback
     must still run and resolve the sentence-level embeddings.
@@ -185,10 +183,7 @@ def test_zwc_fallback_runs_when_c2pa_signer_id_set_but_hash_fails(
     payload = response.json()
     assert payload["success"] is True
     data = payload["data"]
-    assert data["valid"] is True, (
-        "Expected valid=True after ZWC fallback for full-article paste, "
-        f"got reason_code={data.get('reason_code')}"
-    )
+    assert data["valid"] is True, f"Expected valid=True after ZWC fallback for full-article paste, got reason_code={data.get('reason_code')}"
     assert data["reason_code"] == "OK"
     assert data["signer_id"] == zw_org_id
 

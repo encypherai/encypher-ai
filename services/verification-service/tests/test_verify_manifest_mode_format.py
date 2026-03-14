@@ -61,6 +61,7 @@ def _make_vs256_signature(sentence_uuid) -> str:
 # Mock HTTP client — supports both GET (single) and POST (bulk) resolve
 # ---------------------------------------------------------------------------
 
+
 class _DummyResponse:
     def __init__(self, status_code: int, payload: dict | None = None):
         self.status_code = status_code
@@ -318,11 +319,7 @@ def test_vs256_multi_sentence_returns_all_embeddings(client, mock_db, monkeypatc
     signatures and return embeddings with segment locations for each."""
     uuids = [uuid4() for _ in range(3)]
     sigs = [_make_vs256_signature(u) for u in uuids]
-    text = (
-        f"First sentence.{sigs[0]} "
-        f"Second sentence.{sigs[1]} "
-        f"Third sentence.{sigs[2]}"
-    )
+    text = f"First sentence.{sigs[0]} Second sentence.{sigs[1]} Third sentence.{sigs[2]}"
 
     uuid_map = {}
     for i, u in enumerate(uuids):

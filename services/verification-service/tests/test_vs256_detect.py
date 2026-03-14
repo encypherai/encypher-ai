@@ -175,6 +175,7 @@ class TestReassembleSignature:
 # Tests for 44-char ECC format (vs256_rs_crypto -- current micro+ecc mode)
 # ---------------------------------------------------------------------------
 
+
 class TestECCSignatureDetection:
     """44-char ECC signatures (RS(8) over 40 bytes -> 32 data bytes)."""
 
@@ -231,8 +232,8 @@ class TestECCSignatureDetection:
         extracted_uuid = extract_uuid_from_vs256_signature(sig)
         assert extracted_uuid is not None
         # This is how the verify service builds the lookup key
-        uuid_str = str(extracted_uuid)                     # "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-        log_id_hex = uuid_str.replace("-", "")             # "a1b2c3d4e5f67890abcdef1234567890"
+        uuid_str = str(extracted_uuid)  # "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+        log_id_hex = uuid_str.replace("-", "")  # "a1b2c3d4e5f67890abcdef1234567890"
         # This must match what embedding_service stores as embedding_metadata["log_id"]
         assert log_id_hex == log_id_bytes.hex()
 

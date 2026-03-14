@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 class VerifyOptions(BaseModel):
     """Optional parameters for verification request."""
+
     include_merkle_proof: bool = Field(default=False, description="Include Merkle proof details (requires API key)")
     include_raw_manifest: bool = Field(default=False, description="Include raw C2PA manifest data")
 
@@ -25,6 +26,7 @@ class ErrorDetail(BaseModel):
 
 class DocumentInfo(BaseModel):
     """Document metadata from the embedding."""
+
     document_id: Optional[str] = None
     title: Optional[str] = None
     author: Optional[str] = None
@@ -34,6 +36,7 @@ class DocumentInfo(BaseModel):
 
 class C2PAInfo(BaseModel):
     """C2PA manifest information."""
+
     manifest_url: Optional[str] = None
     manifest_hash: Optional[str] = None
     validated: bool = False
@@ -44,12 +47,14 @@ class C2PAInfo(BaseModel):
 
 class SegmentLocationInfo(BaseModel):
     """Location of a segment within the original document."""
+
     paragraph_index: int = Field(..., description="0-indexed paragraph number")
     sentence_in_paragraph: int = Field(..., description="0-indexed sentence within the paragraph")
 
 
 class EmbeddingDetail(BaseModel):
     """Details for a single detected embedding/signature."""
+
     segment_uuid: str
     leaf_index: Optional[int] = None
     segment_location: Optional[SegmentLocationInfo] = None
@@ -58,6 +63,7 @@ class EmbeddingDetail(BaseModel):
 
 class MerkleProofInfo(BaseModel):
     """Merkle tree proof information (paid feature)."""
+
     root_hash: Optional[str] = None
     leaf_hash: Optional[str] = None
     leaf_index: Optional[int] = None
@@ -67,6 +73,7 @@ class MerkleProofInfo(BaseModel):
 
 class LicensingInfo(BaseModel):
     """Content licensing information."""
+
     license_type: Optional[str] = None
     license_url: Optional[str] = None
     usage_terms: Optional[str] = None
@@ -75,6 +82,7 @@ class LicensingInfo(BaseModel):
 
 class VerifyVerdict(BaseModel):
     """Core verification result."""
+
     valid: bool
     tampered: bool
     reason_code: str
@@ -103,3 +111,4 @@ class VerifyResponse(BaseModel):
     data: Optional[VerifyVerdict] = None
     error: Optional[ErrorDetail] = None
     correlation_id: str
+    duration_ms: Optional[int] = Field(default=None, description="Total request processing time in milliseconds")
