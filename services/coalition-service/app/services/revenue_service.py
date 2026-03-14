@@ -250,40 +250,27 @@ class RevenueService:
             )
             return
 
-        # Get unique members from content
-        members = set()
-        for content_id in content_ids:
-            content = db.query(CoalitionContent).filter(CoalitionContent.id == content_id).first()
-            if content:
-                members.add(content.member_id)
+        # Fetch all content records in a single query
+        content_records = db.query(CoalitionContent).filter(CoalitionContent.id.in_(content_ids)).all()
 
-        if not members:
+        # Build member -> content_ids map in Python — no per-row queries
+        member_content_map: Dict[uuid.UUID, List[uuid.UUID]] = {}
+        for record in content_records:
+            member_content_map.setdefault(record.member_id, []).append(record.id)
+
+        if not member_content_map:
             return
 
-        # Equal split
-        per_member_amount = distribution.member_pool / Decimal(len(members))
-        contribution_pct = Decimal(100) / Decimal(len(members))
+        num_members = len(member_content_map)
+        per_member_amount = distribution.member_pool / Decimal(num_members)
+        contribution_pct = Decimal(100) / Decimal(num_members)
 
-        for member_id in members:
-            # Count this member's content
-            member_content = [
-                cid
-                for cid in content_ids
-                if db.query(CoalitionContent)
-                .filter(
-                    and_(
-                        CoalitionContent.id == cid,
-                        CoalitionContent.member_id == member_id,
-                    )
-                )
-                .first()
-            ]
-
+        for member_id, m_content_ids in member_content_map.items():
             member_rev = MemberRevenue(
                 id=uuid.uuid4(),
                 distribution_id=distribution.id,
                 member_id=member_id,
-                content_count=len(member_content),
+                content_count=len(m_content_ids),
                 access_count=0,  # Not tracked in equal split
                 contribution_percentage=contribution_pct.quantize(Decimal("0.01")),
                 revenue_amount=per_member_amount.quantize(Decimal("0.01")),
@@ -291,7 +278,6 @@ class RevenueService:
                 status="pending",
                 created_at=datetime.utcnow(),
             )
-
             db.add(member_rev)
 
         db.commit()
@@ -313,13 +299,19 @@ class RevenueService:
         if not access_logs:
             return
 
+        # Prefetch all referenced content in one query — eliminates N+1
+        content_ids_needed = {log.content_id for log in access_logs}
+        content_map: Dict[uuid.UUID, CoalitionContent] = {
+            c.id: c for c in db.query(CoalitionContent).filter(CoalitionContent.id.in_(content_ids_needed)).all()
+        }
+
         # Get member weights (word count)
-        member_weights = {}
-        member_access_count = {}
-        member_content_count = {}
+        member_weights: Dict[uuid.UUID, int] = {}
+        member_access_count: Dict[uuid.UUID, int] = {}
+        member_content_count: Dict[uuid.UUID, set] = {}
 
         for log in access_logs:
-            content = db.query(CoalitionContent).filter(CoalitionContent.id == log.content_id).first()
+            content = content_map.get(log.content_id)
 
             if not content:
                 continue
