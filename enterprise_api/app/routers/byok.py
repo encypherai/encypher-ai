@@ -38,13 +38,20 @@ def require_byok_business_tier(
 
     byok_enabled = byok_enabled or organization.get("byok_enabled", False)
 
+    # Check add_ons dict for BYOK purchased as a subscription add-on
+    add_ons = organization.get("add_ons", {})
+    if isinstance(add_ons, dict):
+        byok_add_on = add_ons.get("byok", {})
+        if isinstance(byok_add_on, dict) and byok_add_on.get("active"):
+            byok_enabled = True
+
     tier = (organization.get("tier") or "free").lower().replace("-", "_")
     allowed_tiers = {"enterprise", "strategic_partner", "demo"}
 
     if not byok_enabled and tier not in allowed_tiers:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="BYOK (Bring Your Own Key) requires Enterprise tier. Please upgrade your plan.",
+            detail="BYOK (Bring Your Own Key) requires Enterprise tier or BYOK add-on. Please upgrade your plan.",
         )
 
     return organization

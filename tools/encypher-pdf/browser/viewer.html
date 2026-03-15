@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Encypher PDF Verification Viewer</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f3f4f6;
+        color: #111827;
+      }
+      header {
+        padding: 12px 16px;
+        background: white;
+        border-bottom: 1px solid #d1d5db;
+      }
+      main {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 820px) minmax(280px, 1fr);
+        gap: 16px;
+      }
+      #canvas-wrap {
+        background: white;
+        border: 1px solid #d1d5db;
+        padding: 16px;
+        overflow: auto;
+      }
+      #page-canvas {
+        display: block;
+        margin: 0 auto;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+      #meta {
+        background: white;
+        border: 1px solid #d1d5db;
+        padding: 16px;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 70vh;
+        overflow: auto;
+      }
+      .label {
+        font-weight: 700;
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>Encypher PDF Verification Viewer</strong>
+      <span id="status"></span>
+    </header>
+    <main>
+      <section id="canvas-wrap">
+        <canvas id="page-canvas"></canvas>
+      </section>
+      <aside id="meta">
+        <div class="label">PDF</div>
+        <div id="pdf-path"></div>
+        <div class="label">Extracted Text</div>
+        <pre id="extracted-text"></pre>
+        <div class="label">Codepoints</div>
+        <pre id="codepoints"></pre>
+      </aside>
+    </main>
+    <script type="module">
+      const params = new URLSearchParams(window.location.search);
+      const pdf = params.get('pdf');
+      const status = document.getElementById('status');
+      const pdfPath = document.getElementById('pdf-path');
+      const extractedText = document.getElementById('extracted-text');
+      const codepoints = document.getElementById('codepoints');
+      pdfPath.textContent = pdf || '(missing pdf query parameter)';
+
+      const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.min.mjs');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.worker.min.mjs';
+
+      function dumpCodepoints(text) {
+        return Array.from(text).map((char) => `U+${char.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')} ${JSON.stringify(char)}`).join('\n');
+      }
+
+      async function extractOperatorText(page, OPS) {
+        const opList = await page.getOperatorList();
+        const chars = [];
+        for (let i = 0; i < opList.fnArray.length; i++) {
+          const fn = opList.fnArray[i];
+          if (fn !== OPS.showText && fn !== OPS.showSpacedText) {
+            continue;
+          }
+          const items = opList.argsArray[i][0];
+          if (!Array.isArray(items)) {
+            continue;
+          }
+          for (const item of items) {
+            if (item && typeof item === 'object' && 'unicode' in item) {
+              chars.push(item.unicode);
+            }
+          }
+        }
+        return chars.join('');
+      }
+
+      try {
+        const loadingTask = pdfjsLib.getDocument(pdf);
+        const documentRef = await loadingTask.promise;
+        const page = await documentRef.getPage(1);
+        const viewport = page.getViewport({ scale: 1.25 });
+        const canvas = document.getElementById('page-canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const text = await extractOperatorText(page, pdfjsLib.OPS);
+        extractedText.textContent = text;
+        codepoints.textContent = dumpCodepoints(text);
+        window.__encypherPdfState = {
+          ok: true,
+          text,
+          codepoints: Array.from(text).map((char) => char.codePointAt(0)),
+          pageCount: documentRef.numPages,
+        };
+        status.textContent = ` — loaded ${documentRef.numPages} page(s)`;
+      } catch (error) {
+        window.__encypherPdfState = { ok: false, error: String(error) };
+        extractedText.textContent = String(error);
+        status.textContent = ' — error';
+      }
+    </script>
+  </body>
+</html>

@@ -131,12 +131,13 @@ services:
 
   # API Gateway
   api-gateway:
-    build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
+    image: traefik:v3.0
     container_name: encypher-api-gateway
+    command:
+      - --configFile=/etc/traefik/traefik.yml
     ports:
       - "8000:8000"
+      - "8080:8080"
     environment:
       # Shared Variables
       REDIS_URL: redis://redis:6379
@@ -157,7 +158,8 @@ services:
       analytics-service:
         condition: service_started
     volumes:
-      - ./api-gateway/app:/app/app
+      - ../infrastructure/traefik/traefik-local.yml:/etc/traefik/traefik.yml:ro
+      - ../infrastructure/traefik/routes-local.yml:/etc/traefik/routes-local.yml:ro
     restart: unless-stopped
 
   # Key Service

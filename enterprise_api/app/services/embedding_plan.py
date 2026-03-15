@@ -5,11 +5,12 @@ from __future__ import annotations
 from typing import Optional
 
 from app.schemas.sign_schemas import EmbeddingPlan, EmbeddingPlanOperation
+from app.utils.legacy_safe_crypto import CHARS_BASE6_SET
 
 
 def _is_embedding_char(ch: str) -> bool:
     code_point = ord(ch)
-    return code_point == 0xFEFF or 0xFE00 <= code_point <= 0xFE0F or 0xE0100 <= code_point <= 0xE01EF
+    return ch in CHARS_BASE6_SET or code_point == 0xFEFF or 0xFE00 <= code_point <= 0xFE0F or 0xE0100 <= code_point <= 0xE01EF
 
 
 def build_embedding_plan(*, visible_text: str, signed_text: str) -> Optional[EmbeddingPlan]:

@@ -7,12 +7,15 @@ requires-python = ">=3.10"
 license = "MIT"
 dependencies = [
     "fonttools>=4.50.0",
+    "pymupdf>=1.24.0",
 ]
+
+[project.scripts]
+encypher-pdf = "encypher_pdf.cli:main"
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
-    "pymupdf>=1.24.0",
 ]
 
 [build-system]

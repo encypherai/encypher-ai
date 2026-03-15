@@ -17,6 +17,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient from '../../lib/api';
+import { downloadCsv } from '../../lib/exportCsv';
 import type {
   RightsProfile,
   RightsTier,
@@ -25,6 +26,9 @@ import type {
   LicensingRequest,
   LicensingAgreement,
   CrawlerSummaryEntry,
+  ContentDiscoveryItem,
+  DomainAlertItem,
+  DomainSummaryItem,
   DetectionSummary,
   RightsProfileVersion,
 } from '../../lib/api';
@@ -386,48 +390,145 @@ function ProfileTab({ accessToken }: { accessToken: string }) {
   );
 }
 
-// ── Analytics tab ─────────────────────────────────────────────────────────────
+  // ── Analytics tab ─────────────────────────────────────────────────────────────
 
 function AnalyticsTab({ accessToken }: { accessToken: string }) {
+  const queryClient = useQueryClient();
+  const [days, setDays] = useState<'7' | '30' | '90'>('30');
+  const [externalOnly, setExternalOnly] = useState(false);
+
   const detectionsQuery = useQuery({
-    queryKey: ['rights-detections'],
-    queryFn: () => apiClient.getDetectionAnalytics(accessToken),
+    queryKey: ['rights-detections', days],
+    queryFn: () => apiClient.getDetectionAnalytics(accessToken, parseInt(days, 10)),
     enabled: Boolean(accessToken),
   });
 
   const crawlersQuery = useQuery({
-    queryKey: ['rights-crawlers'],
-    queryFn: () => apiClient.getCrawlerAnalytics(accessToken),
+    queryKey: ['rights-crawlers', days],
+    queryFn: () => apiClient.getCrawlerAnalytics(accessToken, parseInt(days, 10)),
     enabled: Boolean(accessToken),
+  });
+
+  const discoveryEventsQuery = useQuery({
+    queryKey: ['rights-discovery-events', days, externalOnly],
+    queryFn: () => apiClient.getDiscoveryEvents(accessToken, { days: parseInt(days, 10), externalOnly, limit: 50, offset: 0 }),
+    enabled: Boolean(accessToken),
+  });
+
+  const discoveryDomainsQuery = useQuery({
+    queryKey: ['rights-discovery-domains', externalOnly],
+    queryFn: () => apiClient.getDiscoveryDomains(accessToken, { externalOnly }),
+    enabled: Boolean(accessToken),
+  });
+
+  const discoveryAlertsQuery = useQuery({
+    queryKey: ['rights-discovery-alerts'],
+    queryFn: () => apiClient.getDiscoveryAlerts(accessToken),
+    enabled: Boolean(accessToken),
+  });
+
+  const acknowledgeAlertMutation = useMutation({
+    mutationFn: (alertId: string) => apiClient.acknowledgeDiscoveryAlert(accessToken, alertId),
+    onSuccess: () => {
+      toast.success('Alert acknowledged.');
+      queryClient.invalidateQueries({ queryKey: ['rights-discovery-alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['rights-discovery-domains'] });
+    },
+    onError: () => toast.error('Failed to acknowledge alert.'),
   });
 
   const crawlers = crawlersQuery.data?.crawlers ?? [];
   const detectionSummary = detectionsQuery.data;
+  const discoveryEvents = discoveryEventsQuery.data?.data ?? [];
+  const discoveryDomains = discoveryDomainsQuery.data?.data ?? [];
+  const discoveryAlerts = discoveryAlertsQuery.data?.data ?? [];
+
+  const exportDiscoveries = () => {
+    if (discoveryEvents.length === 0) {
+      toast.error('No discovery events to export.');
+      return;
+    }
+    downloadCsv(
+      discoveryEvents.map((item: ContentDiscoveryItem) => ({
+        page_url: item.page_url,
+        page_domain: item.page_domain,
+        page_title: item.page_title ?? '',
+        signer_name: item.signer_name ?? '',
+        document_id: item.document_id ?? '',
+        original_domain: item.original_domain ?? '',
+        verification_status: item.verification_status ?? '',
+        marker_type: item.marker_type ?? '',
+        is_external_domain: item.is_external_domain ? 'yes' : 'no',
+        discovered_at: item.discovered_at,
+      })),
+      {
+        filename: `encypher-content-discoveries-${new Date().toISOString().split('T')[0]}`,
+        headers: ['page_url', 'page_domain', 'page_title', 'signer_name', 'document_id', 'original_domain', 'verification_status', 'marker_type', 'is_external_domain', 'discovered_at'],
+      }
+    );
+    toast.success('Discovery events exported.');
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Content Access Analytics</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          Phone-home telemetry — logged when any system resolves your signed documents.
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Content Access Analytics</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            Phone-home telemetry and owner-visible discovery events when signed content is verified on any webpage.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+            {(['7', '30', '90'] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setDays(range)}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${days === range ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'}`}
+              >
+                {range}d
+              </button>
+            ))}
+          </div>
+          <Button variant={externalOnly ? 'primary' : 'outline'} size="sm" onClick={() => setExternalOnly(v => !v)}>
+            {externalOnly ? 'External only' : 'All domains'}
+          </Button>
+          <Button variant="outline" size="sm" onClick={exportDiscoveries}>
+            Export CSV
+          </Button>
+        </div>
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-5">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Total detections</p>
             <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-              {crawlersQuery.isLoading ? '—' : (crawlersQuery.data?.total_crawler_events ?? 0).toLocaleString()}
+              {detectionsQuery.isLoading ? '—' : (detectionSummary?.total_events ?? 0).toLocaleString()}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-5">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Unique crawlers</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Discovery events</p>
             <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-              {crawlersQuery.isLoading ? '—' : crawlers.length}
+              {discoveryEventsQuery.isLoading ? '—' : (discoveryEventsQuery.data?.total ?? 0).toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">External domains</p>
+            <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+              {discoveryDomainsQuery.isLoading ? '—' : discoveryDomains.filter((item: DomainSummaryItem) => !item.is_owned_domain).length.toLocaleString()}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Open alerts</p>
+            <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+              {discoveryAlertsQuery.isLoading ? '—' : discoveryAlerts.length.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -441,21 +542,48 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
         </Card>
       </div>
 
-      {/* Detection summary breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">External discovery alerts</CardTitle>
+          <CardDescription>New non-owned domains where your signed content has been found.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {discoveryAlertsQuery.isLoading ? (
+            <div className="space-y-2">{[1, 2].map(i => <div key={i} className="h-12 bg-muted rounded animate-pulse" />)}</div>
+          ) : discoveryAlerts.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-8">No unacknowledged external-domain alerts.</p>
+          ) : (
+            <div className="space-y-3">
+              {discoveryAlerts.map((alert: DomainAlertItem) => (
+                <div key={alert.id} className="flex items-center justify-between gap-3 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 p-4">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{alert.page_domain}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                      {alert.discovery_count.toLocaleString()} discoveries · first seen {formatDate(alert.first_seen_at)} · last seen {formatDate(alert.last_seen_at)}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => acknowledgeAlertMutation.mutate(alert.id)} disabled={acknowledgeAlertMutation.isPending}>
+                    Acknowledge
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Detection summary</CardTitle>
-          <CardDescription>Aggregate breakdown over the last {detectionSummary?.period_days ?? 30} days.</CardDescription>
+          <CardDescription>Aggregate breakdown over the last {detectionSummary?.period_days ?? parseInt(days, 10)} days.</CardDescription>
         </CardHeader>
         <CardContent>
           {detectionsQuery.isLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}
-            </div>
+            <div className="space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}</div>
           ) : !detectionSummary || detectionSummary.total_events === 0 ? (
             <p className="text-sm text-slate-400 text-center py-8">No detection events recorded yet.</p>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <p className="text-xs font-medium text-slate-500 mb-2">By source</p>
                 <div className="space-y-1">
@@ -478,12 +606,129 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
                   ))}
                 </div>
               </div>
+              <div>
+                <p className="text-xs font-medium text-slate-500 mb-2">Integrity</p>
+                <div className="space-y-1">
+                  {Object.entries(detectionSummary.by_integrity_status ?? {}).map(([status, count]) => (
+                    <div key={status} className="flex justify-between text-xs">
+                      <span className="font-mono text-slate-600 dark:text-slate-400">{status}</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-200">{(count as number).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Crawler breakdown */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Discovery domains</CardTitle>
+          <CardDescription>Where your signed content has been found, grouped by domain.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {discoveryDomainsQuery.isLoading ? (
+            <div className="space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}</div>
+          ) : discoveryDomains.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-8">No discovery domains recorded yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-700">
+                    <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Domain</th>
+                    <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Owned</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-slate-500">Discoveries</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-slate-500">First seen</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-slate-500">Last seen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {discoveryDomains.map((domain: DomainSummaryItem) => (
+                    <tr key={domain.id} className="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                      <td className="py-2.5 px-3 font-mono text-xs text-slate-700 dark:text-slate-300">{domain.page_domain}</td>
+                      <td className="py-2.5 px-3">
+                        <Badge variant="secondary" className={domain.is_owned_domain ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'}>
+                          {domain.is_owned_domain ? 'Owned' : 'External'}
+                        </Badge>
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-medium text-slate-800 dark:text-slate-200">{domain.discovery_count.toLocaleString()}</td>
+                      <td className="py-2.5 px-3 text-right text-slate-500 text-xs">{formatDate(domain.first_seen_at)}</td>
+                      <td className="py-2.5 px-3 text-right text-slate-500 text-xs">{formatDate(domain.last_seen_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Raw discovery events</CardTitle>
+          <CardDescription>Evidence-quality rows showing where and when your signed content was found.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {discoveryEventsQuery.isLoading ? (
+            <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}</div>
+          ) : discoveryEvents.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-8">No discovery events recorded yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-700">
+                    <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Found URL</th>
+                    <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Status</th>
+                    <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Document</th>
+                    <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Original domain</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-slate-500">Discovered</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {discoveryEvents.map((event: ContentDiscoveryItem) => (
+                    <tr key={event.id} className="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 align-top">
+                      <td className="py-2.5 px-3 text-xs text-slate-600 dark:text-slate-400 max-w-sm">
+                        <div className="space-y-1">
+                          <a href={event.page_url} target="_blank" rel="noopener noreferrer" className="font-mono text-blue-600 dark:text-blue-400 hover:underline break-all">
+                            {event.page_url}
+                          </a>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-slate-500">{event.page_domain}</span>
+                            {event.is_external_domain && (
+                              <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">External</Badge>
+                            )}
+                          </div>
+                          {event.page_title && <p className="text-slate-500 line-clamp-2">{event.page_title}</p>}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-xs">
+                        <div className="space-y-1">
+                          <Badge variant="secondary" className={event.verified ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}>
+                            {event.verification_status ?? (event.verified ? 'verified' : 'invalid')}
+                          </Badge>
+                          {event.marker_type && <p className="font-mono text-slate-500">{event.marker_type}</p>}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-xs text-slate-600 dark:text-slate-400">
+                        <div className="space-y-1">
+                          <p>{event.document_id ?? '—'}</p>
+                          <p>{event.signer_name ?? '—'}</p>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-xs text-slate-600 dark:text-slate-400">{event.original_domain ?? '—'}</td>
+                      <td className="py-2.5 px-3 text-right text-xs text-slate-500">{formatDate(event.discovered_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Crawler activity</CardTitle>
@@ -491,9 +736,7 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
         </CardHeader>
         <CardContent>
           {crawlersQuery.isLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3, 4].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}
-            </div>
+            <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}</div>
           ) : crawlers.length === 0 ? (
             <p className="text-sm text-slate-400 text-center py-8">No crawler activity recorded yet.</p>
           ) : (
@@ -569,7 +812,6 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
       toast.success('Formal notice created.');
       queryClient.invalidateQueries({ queryKey: ['rights-notices'] });
       setShowCreate(false);
-      setForm({ recipient_entity: 'OpenAI', recipient_contact: 'legal@openai.com', violation_type: 'unauthorized_training', notice_text: "OpenAI's GPTBot has been systematically crawling The Encypher Times content without acknowledging our Rights Signal Layer terms. Cryptographic watermarks confirm ingestion of 47 articles between October and December 2025. This constitutes unauthorized training data collection in violation of our published licensing requirements. Continued use beyond the date of this notice constitutes willful copyright infringement under 17 U.S.C. § 504(c)(2)." });
     },
     onError: () => toast.error('Failed to create notice.'),
   });
@@ -600,7 +842,6 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
         </Button>
       </div>
 
-      {/* Create form */}
       {showCreate && (
         <Card>
           <CardHeader>
@@ -619,10 +860,9 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Contact email</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Recipient contact</label>
                   <Input
-                    type="email"
-                    placeholder="legal@aicompany.com"
+                    placeholder="legal@example.com"
                     value={form.recipient_contact}
                     onChange={e => setForm(f => ({ ...f, recipient_contact: e.target.value }))}
                   />
@@ -633,7 +873,7 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
                 <select
                   value={form.violation_type}
                   onChange={e => setForm(f => ({ ...f, violation_type: e.target.value }))}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   <option value="unauthorized_training">Unauthorized training</option>
                   <option value="unauthorized_scraping">Unauthorized scraping</option>
@@ -667,18 +907,12 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
         </Card>
       )}
 
-      {/* Notices list */}
       <Card>
         <CardContent className="pt-4">
           {noticesQuery.isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => <div key={i} className="h-14 bg-muted rounded-lg animate-pulse" />)}
-            </div>
+            <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-14 bg-muted rounded-lg animate-pulse" />)}</div>
           ) : notices.length === 0 ? (
             <div className="text-center py-12">
-              <svg className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
               <p className="text-sm text-slate-400">No formal notices issued yet.</p>
             </div>
           ) : (
@@ -727,16 +961,12 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
         </CardContent>
       </Card>
 
-      {/* Evidence package panel */}
       {evidenceNoticeId && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Evidence Package</CardTitle>
-              <button
-                onClick={() => setEvidenceNoticeId(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-              >
+              <button onClick={() => setEvidenceNoticeId(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -754,23 +984,6 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
                 <div className="font-mono text-xs bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
                   <p className="text-slate-500 mb-1">Notice hash (SHA-256)</p>
                   <p className="text-slate-700 dark:text-slate-300 break-all">{evidenceQuery.data.notice?.notice_hash}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-slate-500 mb-2">Evidence chain ({evidenceQuery.data.evidence_chain?.length ?? 0} events)</p>
-                  <div className="space-y-2">
-                    {(evidenceQuery.data.evidence_chain ?? []).map((event, idx) => (
-                      <div key={idx} className="flex items-start gap-3 text-xs">
-                        <div className="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-slate-500 font-medium">{idx + 1}</span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-slate-700 dark:text-slate-300 font-medium">{event.event_type}</p>
-                          <p className="text-slate-400">{formatDate(event.created_at)}</p>
-                          <p className="font-mono text-slate-400 truncate">{event.event_hash}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
                 <div className="flex justify-end gap-2">
                   <button
@@ -798,9 +1011,6 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
                     }}
                     className="text-xs px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white flex items-center gap-1.5"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
                     {pdfLoading ? 'Generating...' : 'Download PDF'}
                   </button>
                 </div>
@@ -861,7 +1071,6 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
         </p>
       </div>
 
-      {/* Requests */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Licensing requests</CardTitle>
@@ -965,7 +1174,6 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
         </CardContent>
       </Card>
 
-      {/* Agreements */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Active agreements</CardTitle>

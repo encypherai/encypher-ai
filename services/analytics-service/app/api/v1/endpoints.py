@@ -6,7 +6,7 @@ import json
 import logging
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
@@ -122,6 +122,59 @@ def _should_verify_auth_header(authorization: str | None) -> bool:
 
     # JWT shape: header.payload.signature
     return token.count(".") == 2
+
+
+def _extract_bearer_token(authorization: str | None) -> Optional[str]:
+    if not authorization:
+        return None
+
+    parts = authorization.strip().split(" ", 1)
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None
+
+    token = parts[1].strip()
+    return token or None
+
+
+async def _resolve_reporter_organization_id(authorization: str | None) -> Optional[str]:
+    """Resolve the reporter org from either JWT auth or API-key auth.
+
+    This context is useful for telemetry and self-verification flows, but must not
+    replace the owner-attribution fields derived from verified discovery payloads.
+    """
+    token = _extract_bearer_token(authorization)
+    if not token:
+        return None
+
+    try:
+        async with httpx.AsyncClient() as client:
+            if _should_verify_auth_header(authorization):
+                response = await client.post(
+                    f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
+                    headers={"Authorization": authorization},
+                )
+                if response.status_code == 200:
+                    payload = response.json()
+                    if isinstance(payload, dict) and payload.get("success"):
+                        user_data = payload.get("data", {})
+                        return user_data.get("organization_id")
+                    if isinstance(payload, dict):
+                        return payload.get("organization_id")
+                return None
+
+            response = await client.post(
+                f"{settings.KEY_SERVICE_URL}/api/v1/keys/validate-minimal",
+                json={"key": token},
+            )
+            if response.status_code == 200:
+                payload = response.json()
+                if isinstance(payload, dict) and payload.get("success"):
+                    key_data = payload.get("data", {})
+                    return key_data.get("organization_id")
+    except Exception as exc:
+        logger.debug("Reporter org lookup skipped for discovery event: %s", exc)
+
+    return None
 
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
@@ -779,32 +832,20 @@ async def record_discovery_events(
     ip = _client_ip(request)
     _rate_limit(ip, "discovery", limit=100, window_sec=60)
 
-    # Try to get organization from auth if token provided
-    organization_id = None
-    if _should_verify_auth_header(authorization):
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
-                    headers={"Authorization": authorization},
-                )
-                if response.status_code == 200:
-                    payload = response.json()
-                    if isinstance(payload, dict) and payload.get("success"):
-                        user_data = payload.get("data", {})
-                        organization_id = user_data.get("organization_id")
-        except Exception as exc:
-            logger.debug("Auth lookup skipped for discovery event: %s", exc)
+    reporter_organization_id = await _resolve_reporter_organization_id(authorization)
 
-    # Security: never trust client-supplied organizationId.
-    # If authenticated, override every event's organizationId with the server-verified value.
-    # If unauthenticated, strip organizationId entirely so it cannot be injected.
+    # Trust model:
+    # - reporter_organization_id comes from server-side auth/key validation for the sender.
+    # - event.organizationId is treated as owner attribution from verified content metadata.
+    #   We preserve it so the original signer can see discoveries even when the reporter is
+    #   anonymous or authenticated as a different org.
+    # - if owner attribution is absent, fall back to the reporter org for self-verification.
     sanitized_events = []
     for event in batch.events:
-        if organization_id:
-            sanitized_events.append(event.model_copy(update={"organizationId": organization_id}))
-        else:
-            sanitized_events.append(event.model_copy(update={"organizationId": None}))
+        owner_org_id = _sanitize_string(event.organizationId)
+        if not owner_org_id and reporter_organization_id:
+            owner_org_id = reporter_organization_id
+        sanitized_events.append(event.model_copy(update={"organizationId": owner_org_id}))
 
     try:
         # Record into dedicated content_discoveries table
@@ -818,9 +859,10 @@ async def record_discovery_events(
         # Also record into legacy UsageMetric for backward compatibility
         for event in sanitized_events:
             try:
+                metric_org_id = _sanitize_string(event.organizationId)
                 AnalyticsService.record_metric(
                     db=db,
-                    user_id=organization_id or "anonymous",
+                    user_id=reporter_organization_id or "anonymous",
                     metric_data=MetricCreate(
                         metric_type="embedding_discovery",
                         service_name="chrome_extension",
@@ -851,7 +893,7 @@ async def record_discovery_events(
                             "source": _sanitize_string(batch.source),
                         },
                     ),
-                    organization_id=organization_id,
+                    organization_id=metric_org_id,
                 )
             except Exception as exc:
                 logger.warning("Legacy metric recording failed for discovery event: %s", exc)
@@ -907,35 +949,19 @@ async def get_discovery_stats(
     invalid_count = total_discoveries - verified_count
 
     # Get unique domains
-    unique_domains = (
-        db.query(func.count(distinct(UsageMetric.endpoint)))
-        .filter(
-            UsageMetric.metric_type == "embedding_discovery",
-            UsageMetric.created_at >= start_date,
-        )
-        .scalar()
-        or 0
-    )
+    unique_domains = base_query.with_entities(func.count(distinct(UsageMetric.endpoint))).scalar() or 0
 
     # Get unique signers
     unique_signers = (
-        db.query(func.count(distinct(UsageMetric.meta["signer_id"].astext)))
-        .filter(
-            UsageMetric.metric_type == "embedding_discovery",
-            UsageMetric.created_at >= start_date,
-            UsageMetric.meta["signer_id"].astext.isnot(None),
-        )
+        base_query.filter(UsageMetric.meta["signer_id"].astext.isnot(None))
+        .with_entities(func.count(distinct(UsageMetric.meta["signer_id"].astext)))
         .scalar()
         or 0
     )
 
     # Get top domains
     top_domains_query = (
-        db.query(UsageMetric.endpoint, func.count(UsageMetric.id).label("count"))
-        .filter(
-            UsageMetric.metric_type == "embedding_discovery",
-            UsageMetric.created_at >= start_date,
-        )
+        base_query.with_entities(UsageMetric.endpoint, func.count(UsageMetric.id).label("count"))
         .group_by(UsageMetric.endpoint)
         .order_by(func.count(UsageMetric.id).desc())
         .limit(10)
@@ -946,15 +972,11 @@ async def get_discovery_stats(
 
     # Get top signers
     top_signers_query = (
-        db.query(
+        base_query.filter(UsageMetric.meta["signer_id"].astext.isnot(None))
+        .with_entities(
             UsageMetric.meta["signer_id"].astext.label("signer_id"),
             UsageMetric.meta["signer_name"].astext.label("signer_name"),
             func.count(UsageMetric.id).label("count"),
-        )
-        .filter(
-            UsageMetric.metric_type == "embedding_discovery",
-            UsageMetric.created_at >= start_date,
-            UsageMetric.meta["signer_id"].astext.isnot(None),
         )
         .group_by(UsageMetric.meta["signer_id"].astext, UsageMetric.meta["signer_name"].astext)
         .order_by(func.count(UsageMetric.id).desc())

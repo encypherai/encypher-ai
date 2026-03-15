@@ -1,0 +1,13 @@
+{
+  "name": "encypher-pdf-browser-harness",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "verify": "node ./verify_pdf_clipboard.mjs"
+  },
+  "dependencies": {
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0",
+    "puppeteer": "^24.7.1"
+  }
+}

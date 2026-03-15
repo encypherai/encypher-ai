@@ -112,6 +112,21 @@ function BillingPageContent() {
     },
   });
 
+  const addOnSubscriptionMutation = useMutation({
+    mutationFn: async (addOnId: string) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.createAddOnSubscriptionCheckout(accessToken, {
+        add_on: addOnId,
+      });
+    },
+    onSuccess: (response) => {
+      window.location.href = response.checkout_url;
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to start add-on checkout.');
+    },
+  });
+
   const subscription = billingQuery.data?.subscription;
   const invoices = billingQuery.data?.invoices || [];
   const usage = billingQuery.data?.usage;
@@ -524,39 +539,62 @@ function BillingPageContent() {
             </CardHeader>
             <CardContent>
               <div className="grid md:grid-cols-2 gap-3">
-                {ADD_ONS.map((addOn: AddOnConfig) => (
-                  <div key={addOn.id} className={`flex justify-between items-start p-3 bg-muted/30 rounded-lg ${addOn.comingSoon ? 'opacity-80' : ''} ${isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' ? 'border border-blue-ncs bg-blue-ncs/5' : ''}`}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-sm">{addOn.name}</p>
-                        {addOn.comingSoon && <span className="text-[10px] font-medium border rounded px-1.5 py-0.5 text-muted-foreground">Coming Soon</span>}
-                        {isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' && (
-                          <span className="text-[10px] font-medium rounded px-1.5 py-0.5 bg-blue-ncs text-white">Selected from WordPress</span>
+                {ADD_ONS.map((addOn: AddOnConfig) => {
+                  const orgAddOns = (activeOrganization?.add_ons || {}) as Record<string, { active?: boolean }>;
+                  const addOnState = orgAddOns[addOn.id];
+                  const isActive = Boolean(addOnState && addOnState.active);
+                  const isSubscriptionAddOn = ['custom-signing-identity', 'white-label-verification', 'byok', 'priority-support'].includes(addOn.id);
+                  const canPurchase = isSubscriptionAddOn && !addOn.comingSoon && !isActive && !isEnterpriseTier;
+
+                  return (
+                    <div key={addOn.id} className={`flex justify-between items-start p-3 bg-muted/30 rounded-lg ${addOn.comingSoon ? 'opacity-80' : ''} ${isActive ? 'border border-emerald-500 bg-emerald-500/5' : ''} ${isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' ? 'border border-blue-ncs bg-blue-ncs/5' : ''}`}>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm">{addOn.name}</p>
+                          {isActive && (
+                            <span className="text-[10px] font-semibold rounded px-1.5 py-0.5 bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">Active</span>
+                          )}
+                          {addOn.comingSoon && <span className="text-[10px] font-medium border rounded px-1.5 py-0.5 text-muted-foreground">Coming Soon</span>}
+                          {isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' && (
+                            <span className="text-[10px] font-medium rounded px-1.5 py-0.5 bg-blue-ncs text-white">Selected from WordPress</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{addOn.description}</p>
+                        {isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' && archiveQuantity > 0 && (
+                          <p className="text-xs text-delft-blue mt-2">
+                            {archiveQuantity.toLocaleString()} documents selected · ${archiveEstimatedTotal.toFixed(2)} one-time
+                          </p>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">{addOn.description}</p>
-                      {isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' && archiveQuantity > 0 && (
-                        <p className="text-xs text-delft-blue mt-2">
-                          {archiveQuantity.toLocaleString()} documents selected · ${archiveEstimatedTotal.toFixed(2)} one-time
-                        </p>
-                      )}
+                      <div className="ml-3 flex flex-col items-end gap-2">
+                        {!addOn.comingSoon && (
+                          <span className="text-sm font-bold text-blue-ncs whitespace-nowrap">{formatAddOnPrice(addOn)}</span>
+                        )}
+                        {canPurchase && (
+                          <Button
+                            size="sm"
+                            onClick={() => addOnSubscriptionMutation.mutate(addOn.id)}
+                            disabled={addOnSubscriptionMutation.isPending}
+                          >
+                            {addOnSubscriptionMutation.isPending ? 'Opening...' : 'Subscribe'}
+                          </Button>
+                        )}
+                        {isEnterpriseTier && !addOn.comingSoon && isSubscriptionAddOn && (
+                          <span className="text-[10px] font-medium text-muted-foreground">Included</span>
+                        )}
+                        {isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' && (
+                          <Button
+                            size="sm"
+                            onClick={() => addOnCheckoutMutation.mutate()}
+                            disabled={addOnCheckoutMutation.isPending || isEnterpriseTier}
+                          >
+                            {isEnterpriseTier ? 'Included' : addOnCheckoutMutation.isPending ? 'Opening...' : 'Checkout'}
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    <div className="ml-3 flex flex-col items-end gap-2">
-                      {!addOn.comingSoon && (
-                        <span className="text-sm font-bold text-blue-ncs whitespace-nowrap">{formatAddOnPrice(addOn)}</span>
-                      )}
-                      {isArchiveBackfillRequested && addOn.id === 'bulk-archive-backfill' && (
-                        <Button
-                          size="sm"
-                          onClick={() => addOnCheckoutMutation.mutate()}
-                          disabled={addOnCheckoutMutation.isPending || isEnterpriseTier}
-                        >
-                          {isEnterpriseTier ? 'Included' : addOnCheckoutMutation.isPending ? 'Opening…' : 'Checkout'}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

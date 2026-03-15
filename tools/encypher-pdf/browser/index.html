@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Encypher PDF Samples</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f5f7fb;
+        color: #111827;
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 32px;
+      }
+      p.lead {
+        margin: 0 0 24px;
+        color: #374151;
+        line-height: 1.6;
+        max-width: 860px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 18px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #dbe1ea;
+        border-radius: 14px;
+        box-shadow: 0 10px 24px rgba(17, 24, 39, 0.06);
+        padding: 18px;
+      }
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .meta {
+        font-size: 14px;
+        color: #4b5563;
+        line-height: 1.5;
+        min-height: 88px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      a.button {
+        text-decoration: none;
+        background: #111827;
+        color: white;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+      }
+      a.button.secondary {
+        background: #e5e7eb;
+        color: #111827;
+      }
+      .notes {
+        margin-top: 28px;
+        background: #fff;
+        border: 1px solid #dbe1ea;
+        border-radius: 14px;
+        padding: 18px;
+      }
+      ul {
+        margin: 10px 0 0 20px;
+        color: #374151;
+        line-height: 1.6;
+      }
+      code {
+        background: #eef2ff;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Encypher PDF Samples</h1>
+      <p class="lead">
+        This page lets you inspect the generated provenance-preserving sample PDFs directly.
+        Use <strong>Open PDF</strong> to view the raw file, or <strong>Open Verification Viewer</strong>
+        to see the rendered page alongside extracted text and codepoints.
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <div class="title">Roboto-style editorial PDF</div>
+          <div class="meta">
+            Sans-serif sample designed to resemble a modern business/editorial document.
+            Includes centered title, subtitle, readable body text, headings, references,
+            and embedded invisible provenance markers.
+          </div>
+          <div class="actions">
+            <a class="button" href="/examples/output/sample_roboto.pdf" target="_blank" rel="noreferrer">Open PDF</a>
+            <a class="button secondary" href="/browser/viewer.html?pdf=/examples/output/sample_roboto.pdf" target="_blank" rel="noreferrer">Open Verification Viewer</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title">Arial-like editorial PDF</div>
+          <div class="meta">
+            Arial-compatible sample with the same content and layout profile, useful for
+            checking a more classic sans-serif office-document feel while preserving
+            variation selectors and zero-width characters.
+          </div>
+          <div class="actions">
+            <a class="button" href="/examples/output/sample_arial.pdf" target="_blank" rel="noreferrer">Open PDF</a>
+            <a class="button secondary" href="/browser/viewer.html?pdf=/examples/output/sample_arial.pdf" target="_blank" rel="noreferrer">Open Verification Viewer</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title">Times-style editorial PDF</div>
+          <div class="meta">
+            Serif sample intended to resemble a more traditional report or essay-style PDF.
+            Useful for validating that the typography still looks normal and polished in a
+            Times-like rendering path.
+          </div>
+          <div class="actions">
+            <a class="button" href="/examples/output/sample_times.pdf" target="_blank" rel="noreferrer">Open PDF</a>
+            <a class="button secondary" href="/browser/viewer.html?pdf=/examples/output/sample_times.pdf" target="_blank" rel="noreferrer">Open Verification Viewer</a>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="margin: 28px 0 12px; font-size: 24px;">Signed verification fixtures</h2>
+      <p class="lead" style="margin-bottom: 18px; max-width: 920px;">
+        These PDFs were generated from text signed by the live local marketing-site workflow and verified successfully
+        through both <code>/api/tools/verify</code> and the raw <code>/api/v1/verify</code> API.
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <div class="title">Signed Roboto-style PDF</div>
+          <div class="meta">
+            Built from locally signed text and saved with the signed payload embedded in the PDF metadata stream.
+            Verification reports confirm signer identity, watermark presence, and manifest recovery.
+          </div>
+          <div class="actions">
+            <a class="button" href="/examples/output/sample_roboto_signed.pdf" target="_blank" rel="noreferrer">Open Signed PDF</a>
+            <a class="button secondary" href="/browser/viewer.html?pdf=/examples/output/sample_roboto_signed.pdf" target="_blank" rel="noreferrer">Open Verification Viewer</a>
+            <a class="button secondary" href="/examples/output/reports/sample_roboto_signed.verification.json" target="_blank" rel="noreferrer">Open Verify Report</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title">Signed Arial-like PDF</div>
+          <div class="meta">
+            Same signed content rendered with an Arial-compatible family for an office-document look, then re-verified
+            through the marketing-site tool path and the raw verification API.
+          </div>
+          <div class="actions">
+            <a class="button" href="/examples/output/sample_arial_signed.pdf" target="_blank" rel="noreferrer">Open Signed PDF</a>
+            <a class="button secondary" href="/browser/viewer.html?pdf=/examples/output/sample_arial_signed.pdf" target="_blank" rel="noreferrer">Open Verification Viewer</a>
+            <a class="button secondary" href="/examples/output/reports/sample_arial_signed.verification.json" target="_blank" rel="noreferrer">Open Verify Report</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title">Signed Times-style PDF</div>
+          <div class="meta">
+            Serif-styled signed fixture for validating a traditional report appearance while keeping the embedded
+            signed text fully verifiable by the local toolchain.
+          </div>
+          <div class="actions">
+            <a class="button" href="/examples/output/sample_times_signed.pdf" target="_blank" rel="noreferrer">Open Signed PDF</a>
+            <a class="button secondary" href="/browser/viewer.html?pdf=/examples/output/sample_times_signed.pdf" target="_blank" rel="noreferrer">Open Verification Viewer</a>
+            <a class="button secondary" href="/examples/output/reports/sample_times_signed.verification.json" target="_blank" rel="noreferrer">Open Verify Report</a>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="margin: 28px 0 12px; font-size: 24px;">Enterprise API segment-signed fixtures</h2>
+      <p class="lead" style="margin-bottom: 18px; max-width: 920px;">
+        These PDFs were generated directly from <code>enterprise_api /api/v1/sign</code> using sentence-level micro signing,
+        <code>return_embedding_plan=true</code>, and the indexed marker insertion plan before PDF rendering.
+      </p>
+
+      <div class="grid">
+        <div class="card">
+          <div class="title">micro VS256-RS with C2PA</div>
+          <div class="meta">
+            <code>manifest_mode=micro</code>, <code>ecc=true</code>, <code>legacy_safe=false</code>,
+            <code>embed_c2pa=true</code>. Sentence-level segment signing with compact VS256-RS markers plus embedded C2PA.
+          </div>
+          <div class="actions">
+            <a class="button" href="/examples/output/micro_vs256_rs_c2pa.pdf" target="_blank" rel="noreferrer">Open PDF</a>
+            <a class="button secondary" href="/browser/viewer.html?pdf=/examples/output/micro_vs256_rs_c2pa.pdf" target="_blank" rel="noreferrer">Open Verification Viewer</a>
+            <a class="button secondary" href="/examples/output/reports/micro_vs256_rs_c2pa.verification.json" target="_blank" rel="noreferrer">Open Verify Report</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title">micro VS256-RS markers only</div>
+          <div class="meta">
+            <code>manifest_mode=micro</code>, <code>ecc=true</code>, <code>legacy_safe=false</code>,
+            <code>embed_c2pa=false</code>. Sentence-level segment markers with DB-backed manifest verification.
+          </div>
+          <div class="actions">
+            <a class="button" href="/examples/output/micro_vs256_rs_markers_only.pdf" target="_blank" rel="noreferrer">Open PDF</a>
+            <a class="button secondary" href="/browser/viewer.html?pdf=/examples/output/micro_vs256_rs_markers_only.pdf" target="_blank" rel="noreferrer">Open Verification Viewer</a>
+            <a class="button secondary" href="/examples/output/reports/micro_vs256_rs_markers_only.verification.json" target="_blank" rel="noreferrer">Open Verify Report</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title">micro legacy_safe_rs with C2PA</div>
+          <div class="meta">
+            <code>manifest_mode=micro</code>, <code>ecc=true</code>, <code>legacy_safe=true</code>,
+            <code>embed_c2pa=true</code>. Word-safe zero-width marker family with embedded C2PA manifest.
+          </div>
+          <div class="actions">
+            <a class="button" href="/examples/output/micro_legacy_safe_rs_c2pa.pdf" target="_blank" rel="noreferrer">Open PDF</a>
+            <a class="button secondary" href="/browser/viewer.html?pdf=/examples/output/micro_legacy_safe_rs_c2pa.pdf" target="_blank" rel="noreferrer">Open Verification Viewer</a>
+            <a class="button secondary" href="/examples/output/reports/micro_legacy_safe_rs_c2pa.verification.json" target="_blank" rel="noreferrer">Open Verify Report</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="title">micro legacy_safe_rs markers only</div>
+          <div class="meta">
+            <code>manifest_mode=micro</code>, <code>ecc=true</code>, <code>legacy_safe=true</code>,
+            <code>embed_c2pa=false</code>. Word-safe sentence-level segment markers with DB-backed manifest verification.
+          </div>
+          <div class="actions">
+            <a class="button" href="/examples/output/micro_legacy_safe_rs_markers_only.pdf" target="_blank" rel="noreferrer">Open PDF</a>
+            <a class="button secondary" href="/browser/viewer.html?pdf=/examples/output/micro_legacy_safe_rs_markers_only.pdf" target="_blank" rel="noreferrer">Open Verification Viewer</a>
+            <a class="button secondary" href="/examples/output/reports/micro_legacy_safe_rs_markers_only.verification.json" target="_blank" rel="noreferrer">Open Verify Report</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="notes">
+        <strong>What to look for</strong>
+        <ul>
+          <li>Normal title and paragraph spacing</li>
+          <li>Readable body typography</li>
+          <li>Conventional heading hierarchy</li>
+          <li>No visible artifacts from invisible provenance markers</li>
+          <li>Reasonable output across sans-serif and serif families</li>
+        </ul>
+        <ul>
+          <li>These samples are visual and Unicode-fidelity demos</li>
+          <li>They are not enterprise-signed verification fixtures</li>
+          <li>Pasting their extracted text into the Sign/Verify demo will not validate unless the text was produced by the actual signing service</li>
+        </ul>
+        <ul>
+          <li>The signed fixtures below are produced by the live local signing workflow</li>
+          <li>Their verification reports show <code>verification_status: Success</code> and <code>reason_code: OK</code></li>
+          <li>Use those fixtures when testing the marketing-site verify flow or raw verify API</li>
+        </ul>
+        <ul>
+          <li>The enterprise fixture matrix uses sentence-level <code>micro</code> signing from <code>/api/v1/sign</code></li>
+          <li>Both VS256-RS and <code>legacy_safe_rs</code> now return an <code>embedding_plan</code> when requested</li>
+          <li>The mode matrix covers <code>embed_c2pa=true</code> and <code>embed_c2pa=false</code> for both families</li>
+        </ul>
+        <ul>
+          <li>Server root: <code>http://127.0.0.1:8123/</code></li>
+          <li>Gallery page: <code>/browser/index.html</code></li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>

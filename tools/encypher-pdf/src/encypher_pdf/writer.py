@@ -14,55 +14,14 @@ Architecture:
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-from encypher_pdf.font import embed_font, FontMapping
-from encypher_pdf.fonttools_subset import get_font_metrics
+from encypher_pdf.font import FontMapping, embed_font
+from encypher_pdf.font_registry import resolve_font_path
 from encypher_pdf.pdf_objects import PdfStream, PdfWriter
-
-
-# Default system fonts to search for
-_FONT_SEARCH_PATHS = [
-    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-    "/usr/share/fonts/truetype/liberation/LiberationSans-Italic.ttf",
-    "/usr/share/fonts/truetype/liberation/LiberationSans-BoldItalic.ttf",
-    "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
-    "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
-    "/usr/share/fonts/truetype/freefont/FreeSansOblique.ttf",
-    "/usr/share/fonts/truetype/freefont/FreeSansBoldOblique.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    # macOS
-    "/System/Library/Fonts/Helvetica.ttc",
-    "/Library/Fonts/Arial.ttf",
-]
-
-
-def _find_system_font(bold: bool = False, italic: bool = False) -> str:
-    """Find a suitable system TTF font."""
-    # Try specific variants first
-    for path in _FONT_SEARCH_PATHS:
-        if not os.path.exists(path):
-            continue
-        name = os.path.basename(path).lower()
-        is_bold = "bold" in name
-        is_italic = "italic" in name or "oblique" in name
-        if is_bold == bold and is_italic == italic:
-            return path
-
-    # Fallback: any TTF font
-    for path in _FONT_SEARCH_PATHS:
-        if os.path.exists(path):
-            return path
-
-    raise FileNotFoundError(
-        "No suitable TTF font found. Install liberation-fonts or freefont-freefont."
-    )
 
 
 class Alignment(Enum):
@@ -77,6 +36,7 @@ class TextStyle:
     """Style for a text block."""
 
     font_size: float = 10.0
+    font_family: str = "roboto"
     line_height: float = 1.3
     alignment: Alignment = Alignment.LEFT
     bold: bool = False
@@ -223,17 +183,18 @@ class Document:
         """Render and save the PDF."""
         # Phase 1: Collect all codepoints and resolve fonts
         all_codepoints: set[int] = set()
-        font_variants_needed: set[tuple[bool, bool]] = set()  # (bold, italic)
+        font_variants_needed: set[tuple[str, bool, bool, Optional[str]]] = set()
 
         for item in self._story:
             if isinstance(item, _TextBlock):
                 for ch in item.text:
                     all_codepoints.add(ord(ch))
-                font_variants_needed.add((item.style.bold, item.style.italic))
+                font_variants_needed.add((item.style.font_family, item.style.bold, item.style.italic, item.style.font_path))
 
         if self._footer_text:
             for ch in self._footer_text:
                 all_codepoints.add(ord(ch))
+            font_variants_needed.add(("roboto", False, False, None))
 
         # Always include basic ASCII + common punctuation
         for cp in range(0x20, 0x7F):
@@ -247,24 +208,23 @@ class Document:
         pages_id = writer.reserve_id()  # 2
 
         # Phase 3: Embed fonts
-        # font_map: (bold, italic) -> (obj_id, label, metrics, mapping)
-        font_map: dict[tuple[bool, bool], tuple[int, str, dict, FontMapping]] = {}
+        font_map: dict[tuple[str, bool, bool, Optional[str]], tuple[int, str, dict, FontMapping]] = {}
         font_label_counter = 0
 
-        for bold, italic in sorted(font_variants_needed):
-            font_path = _find_system_font(bold=bold, italic=italic)
-            font_obj_id, mapping = embed_font(writer, font_path, all_codepoints)
+        for family, bold, italic, explicit_font_path in sorted(font_variants_needed):
+            resolved_font = resolve_font_path(family, bold=bold, italic=italic, font_path=explicit_font_path)
+            font_obj_id, mapping = embed_font(writer, resolved_font.path, all_codepoints)
             font_label = f"F{font_label_counter}"
             font_label_counter += 1
-            font_map[(bold, italic)] = (font_obj_id, font_label, mapping.metrics, mapping)
+            font_map[(family, bold, italic, explicit_font_path)] = (font_obj_id, font_label, mapping.metrics, mapping)
 
         # Also embed a regular font for footer
-        if (False, False) not in font_map:
-            font_path = _find_system_font(bold=False, italic=False)
-            font_obj_id, mapping = embed_font(writer, font_path, all_codepoints)
+        if ("roboto", False, False, None) not in font_map:
+            resolved_font = resolve_font_path("roboto", bold=False, italic=False)
+            font_obj_id, mapping = embed_font(writer, resolved_font.path, all_codepoints)
             font_label = f"F{font_label_counter}"
             font_label_counter += 1
-            font_map[(False, False)] = (font_obj_id, font_label, mapping.metrics, mapping)
+            font_map[("roboto", False, False, None)] = (font_obj_id, font_label, mapping.metrics, mapping)
 
         # Phase 4: Layout and pagination
         pages_content = self._layout(font_map)
@@ -273,10 +233,7 @@ class Document:
         page_obj_ids: list[int] = []
         for page_idx, page_ops in enumerate(pages_content):
             # Build font resource dict for this page
-            font_resources = " ".join(
-                f"/{label} {writer.ref(obj_id)}"
-                for (_, _), (obj_id, label, _, _) in font_map.items()
-            )
+            font_resources = " ".join(f"/{label} {writer.ref(obj_id)}" for _, (obj_id, label, _, _) in font_map.items())
 
             content_stream = "\n".join(page_ops).encode("latin-1")
             content_id = writer.add_stream(PdfStream(data=content_stream, compress=True))
@@ -309,8 +266,7 @@ class Document:
             signed_stream_id = writer.add_stream(signed_stream)
             writer.set_object(
                 catalog_id,
-                f"<< /Type /Catalog /Pages {writer.ref(pages_id)}"
-                f" /EncypherSignedText {writer.ref(signed_stream_id)} >>".encode(),
+                f"<< /Type /Catalog /Pages {writer.ref(pages_id)}" f" /EncypherSignedText {writer.ref(signed_stream_id)} >>".encode(),
             )
         else:
             writer.set_object(catalog_id, f"<< /Type /Catalog /Pages {writer.ref(pages_id)} >>".encode())
@@ -321,7 +277,7 @@ class Document:
 
     def _layout(
         self,
-        font_map: dict[tuple[bool, bool], tuple[int, str, dict, FontMapping]],
+        font_map: dict[tuple[str, bool, bool, Optional[str]], tuple[int, str, dict, FontMapping]],
     ) -> list[list[str]]:
         """
         Lay out all story items into pages, returning a list of
@@ -346,7 +302,7 @@ class Document:
         def _add_footer(ops: list[str]) -> None:
             if not self._footer_text:
                 return
-            _, label, metrics, fmap = font_map[(False, False)]
+            _, label, metrics, fmap = font_map[("roboto", False, False, None)]
             footer_size = 7
             footer_y = self._margin_bottom * 0.5
             footer_text_hex = _text_to_cid_hex(self._footer_text, fmap)
@@ -368,7 +324,7 @@ class Document:
 
             block = item
             style = block.style
-            _, font_label, metrics, fmap = font_map[(style.bold, style.italic)]
+            _, font_label, metrics, fmap = font_map[(style.font_family, style.bold, style.italic, style.font_path)]
 
             effective_width = content_width - style.left_indent - style.right_indent
             leading = style.font_size * style.line_height

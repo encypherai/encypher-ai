@@ -2,7 +2,7 @@
 Configuration management for Analytics Service
 
 Environment Variables:
-- Shared: CONTENT_DATABASE_URL, REDIS_URL, ALLOWED_ORIGINS, AUTH_SERVICE_URL
+- Shared: CONTENT_DATABASE_URL, REDIS_URL, ALLOWED_ORIGINS, AUTH_SERVICE_URL, KEY_SERVICE_URL
 - Service-specific: (none currently)
 """
 
@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     # SHARED: Internal Service URLs (from shared vars)
     # ===========================================
     AUTH_SERVICE_URL: str = "http://localhost:8001"
+    KEY_SERVICE_URL: str = "http://localhost:8002"
 
     model_config = SettingsConfigDict(
         env_file=".env",
