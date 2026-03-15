@@ -83,6 +83,10 @@ router = APIRouter()
 MAX_VERIFY_BYTES = 2 * 1024 * 1024
 MAX_MANIFEST_BYTES = 50 * 1024  # 50 KB cap on serialized manifest
 
+# TTL cache for org context (whitelabel branding) -- avoids hammering auth-service
+_ORG_CONTEXT_CACHE: dict[str, tuple[float, dict]] = {}
+_ORG_CONTEXT_TTL = 300  # 5 minutes
+
 # ---------------------------------------------------------------------------
 # Template helpers (Task 1.0 - move inline HTML to template files)
 # ---------------------------------------------------------------------------
@@ -1563,27 +1567,36 @@ async def verify_by_document_id(
     org_name = org_id or "Unknown"
     signer_name = signer_id or "Unknown"
 
-    # TEAM_255: Fetch org context for whitelabel branding
+    # TEAM_255: Fetch org context for whitelabel branding (cached 5 min)
     whitelabel = False
     org_display_name = ""
     if org_id:
-        try:
-            headers = {}
-            if settings.INTERNAL_SERVICE_TOKEN:
-                headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
-            async with httpx.AsyncClient(timeout=3.0) as client:
-                resp = await client.get(
-                    f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{org_id}/context",
-                    headers=headers,
-                )
-            if resp.status_code == 200:
-                ctx = resp.json()
-                data = ctx.get("data", {}) if isinstance(ctx, dict) else {}
-                features = data.get("features", {})
-                whitelabel = bool(features.get("whitelabel"))
-                org_display_name = data.get("display_name") or data.get("name") or ""
-        except Exception:
-            pass  # Fail-open: default to showing Encypher branding
+        cached = _ORG_CONTEXT_CACHE.get(org_id)
+        if cached and (time.time() - cached[0]) < _ORG_CONTEXT_TTL:
+            data = cached[1]
+            features = data.get("features", {})
+            whitelabel = bool(features.get("whitelabel"))
+            org_display_name = data.get("display_name") or data.get("name") or ""
+        else:
+            try:
+                headers = {}
+                if settings.INTERNAL_SERVICE_TOKEN:
+                    headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
+                async with httpx.AsyncClient(timeout=3.0) as client:
+                    resp = await client.get(
+                        f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{org_id}/context",
+                        headers=headers,
+                    )
+                if resp.status_code == 200:
+                    ctx = resp.json()
+                    data = ctx.get("data", {}) if isinstance(ctx, dict) else {}
+                    _ORG_CONTEXT_CACHE[org_id] = (time.time(), data)
+                    features = data.get("features", {})
+                    whitelabel = bool(features.get("whitelabel"))
+                    org_display_name = data.get("display_name") or data.get("name") or ""
+            except Exception as exc:
+                logger = structlog.get_logger(__name__)
+                logger.warning("whitelabel_context_fetch_failed", org_id=org_id, error=str(exc))
 
     return _render_portal_result(
         document_id=document_id,

@@ -9,9 +9,20 @@ Verifies that:
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
+import pytest
 
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+
+from app.api.v1.endpoints import _ORG_CONTEXT_CACHE
+
+
+@pytest.fixture(autouse=True)
+def _clear_org_context_cache():
+    """Clear the org context cache before each test."""
+    _ORG_CONTEXT_CACHE.clear()
+    yield
+    _ORG_CONTEXT_CACHE.clear()
 
 
 def _mock_db_row(signed_text: str, title: str = "Test Doc", org_id: str = "org_wl"):

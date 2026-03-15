@@ -712,6 +712,13 @@ async def update_add_on_internal(
                 current_features[feature_key] = False
         org.features = current_features
 
+    # Deactivate custom verification domain when add-on is canceled
+    # Preserve domain/dns_token so re-subscribing restores without re-doing DNS
+    if add_on_id == "custom-verification-domain" and not payload.active:
+        if org.verification_domain_status:
+            org.verification_domain_status = None
+            logger.info("verification_domain_deactivated org=%s domain=%s", org_id, org.verification_domain)
+
     db.commit()
     db.refresh(org)
 
@@ -1743,6 +1750,17 @@ async def update_org_security_settings(
 
 _DOMAIN_PATTERN = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$")
 _CNAME_TARGET = "verify.encypherai.com"
+_BLOCKED_DOMAIN_SUFFIXES = {
+    "localhost",
+    "local",
+    "internal",
+    "invalid",
+    "test",
+    "example",
+    "railway.internal",
+    "encypherai.com",
+    "encypher.ai",
+}
 
 
 def _require_verification_domain_addon(org) -> None:
@@ -1797,6 +1815,7 @@ async def set_verification_domain(
     payload: VerificationDomainRequest,
     request: Request,
     db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("verification_domain", limit=5, window_sec=300)),
 ):
     """Set or update the custom verification domain. Returns DNS instructions."""
     import secrets
@@ -1820,12 +1839,18 @@ async def set_verification_domain(
     if domain.count(".") < 2:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Must be a subdomain (e.g., verify.example.com), not a bare domain")
 
+    # Block reserved/internal domains
+    for suffix in _BLOCKED_DOMAIN_SUFFIXES:
+        if domain == suffix or domain.endswith(f".{suffix}"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Domain '{suffix}' is reserved and cannot be used")
+
     dns_token = secrets.token_urlsafe(32)
     org.verification_domain = domain
     org.verification_domain_status = "pending_dns"
     org.verification_domain_dns_token = dns_token
     org.verification_domain_verified_at = None
     db.commit()
+    logger.info("verification_domain_set org=%s domain=%s", org_id, domain)
 
     return ok(
         {
@@ -1853,6 +1878,7 @@ async def verify_verification_domain(
     org_id: str,
     request: Request,
     db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("verification_domain_verify", limit=10, window_sec=300)),
 ):
     """Verify DNS records for the custom verification domain."""
     user_id = await get_current_user_id(request, db)
@@ -1873,9 +1899,13 @@ async def verify_verification_domain(
     dns_token = org.verification_domain_dns_token
     errors = []
 
+    resolver = dns.resolver.Resolver()
+    resolver.timeout = 5.0
+    resolver.lifetime = 5.0
+
     # Check CNAME
     try:
-        cname_answers = dns.resolver.resolve(domain, "CNAME")
+        cname_answers = resolver.resolve(domain, "CNAME")
         cname_targets = [str(rdata.target).rstrip(".").lower() for rdata in cname_answers]
         if _CNAME_TARGET not in cname_targets:
             errors.append(f"CNAME for {domain} points to {', '.join(cname_targets)} instead of {_CNAME_TARGET}")
@@ -1890,7 +1920,7 @@ async def verify_verification_domain(
     txt_host = f"_encypher-verify.{domain}"
     expected_value = f"encypher-verify={dns_token}"
     try:
-        txt_answers = dns.resolver.resolve(txt_host, "TXT")
+        txt_answers = resolver.resolve(txt_host, "TXT")
         txt_values = [str(rdata).strip('"') for rdata in txt_answers]
         if not any(expected_value in v for v in txt_values):
             errors.append(f"TXT record at {txt_host} does not contain expected value")
@@ -1902,6 +1932,7 @@ async def verify_verification_domain(
         errors.append(f"TXT lookup failed for {txt_host}: {str(exc)}")
 
     if errors:
+        logger.info("verification_domain_verify_failed org=%s domain=%s errors=%s", org_id, domain, errors)
         return ok(
             {
                 "verified": False,
@@ -1913,6 +1944,7 @@ async def verify_verification_domain(
     org.verification_domain_status = "active"
     org.verification_domain_verified_at = datetime.utcnow()
     db.commit()
+    logger.info("verification_domain_verified org=%s domain=%s", org_id, domain)
 
     return ok(
         {
@@ -1940,10 +1972,12 @@ async def remove_verification_domain(
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
+    removed_domain = org.verification_domain
     org.verification_domain = None
     org.verification_domain_status = None
     org.verification_domain_dns_token = None
     org.verification_domain_verified_at = None
     db.commit()
+    logger.info("verification_domain_removed org=%s domain=%s", org_id, removed_domain)
 
     return ok({"removed": True})

@@ -175,10 +175,13 @@ def test_verify_dns_success(monkeypatch):
             return mock_txt
         raise dns.resolver.NoAnswer()
 
+    mock_resolver_instance = MagicMock()
+    mock_resolver_instance.resolve = MagicMock(side_effect=_mock_resolve)
+
     with (
         patch.object(settings, "INTERNAL_SERVICE_TOKEN", ""),
         patch("app.api.v1.organizations.OrganizationService.get_organization", return_value=org),
-        patch("app.api.v1.organizations.dns.resolver.resolve", side_effect=_mock_resolve),
+        patch("app.api.v1.organizations.dns.resolver.Resolver", return_value=mock_resolver_instance),
     ):
         response = client.post("/api/v1/organizations/org_cvd/verification-domain/verify")
 
@@ -201,13 +204,13 @@ def test_verify_dns_fails_missing_cname(monkeypatch):
         verification_domain_dns_token="test-token-123",
     )
 
-    def _mock_resolve(name, rtype):
-        raise dns.resolver.NoAnswer()
+    mock_resolver_instance = MagicMock()
+    mock_resolver_instance.resolve = MagicMock(side_effect=dns.resolver.NoAnswer())
 
     with (
         patch.object(settings, "INTERNAL_SERVICE_TOKEN", ""),
         patch("app.api.v1.organizations.OrganizationService.get_organization", return_value=org),
-        patch("app.api.v1.organizations.dns.resolver.resolve", side_effect=_mock_resolve),
+        patch("app.api.v1.organizations.dns.resolver.Resolver", return_value=mock_resolver_instance),
     ):
         response = client.post("/api/v1/organizations/org_cvd/verification-domain/verify")
 
@@ -308,3 +311,53 @@ def test_enterprise_bypasses_addon_check(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["data"]["domain"] == "verify.enterprise.com"
+
+
+def test_addon_cancellation_deactivates_domain_status(monkeypatch):
+    """Canceling custom-verification-domain add-on sets verification_domain_status to None."""
+    mock_db = MagicMock()
+    client = _build_client(mock_db)
+
+    org = _org_fixture(
+        verification_domain="verify.acmenews.com",
+        verification_domain_status="active",
+        verification_domain_dns_token="tok-abc",
+        verification_domain_verified_at=datetime.utcnow(),
+    )
+    with (
+        patch.object(settings, "INTERNAL_SERVICE_TOKEN", "secret-token"),
+        patch("app.api.v1.organizations.OrganizationService.get_organization", return_value=org),
+    ):
+        response = client.post(
+            "/api/v1/organizations/internal/org_cvd/add-ons",
+            json={"add_on_id": "custom-verification-domain", "active": False},
+            headers={"X-Internal-Token": "secret-token"},
+        )
+
+    assert response.status_code == 200
+    # Status should be cleared so internal context returns None
+    assert org.verification_domain_status is None
+    # Domain and dns_token preserved for re-subscription
+    assert org.verification_domain == "verify.acmenews.com"
+    assert org.verification_domain_dns_token == "tok-abc"
+
+
+def test_blocked_domain_rejected(monkeypatch):
+    """Reserved domains like localhost and encypherai.com are rejected."""
+    mock_db = MagicMock()
+    client = _build_client(mock_db)
+    _mock_user_auth(monkeypatch)
+    _mock_has_permission(monkeypatch)
+
+    org = _org_fixture()
+    with (
+        patch.object(settings, "INTERNAL_SERVICE_TOKEN", ""),
+        patch("app.api.v1.organizations.OrganizationService.get_organization", return_value=org),
+    ):
+        response = client.post(
+            "/api/v1/organizations/org_cvd/verification-domain",
+            json={"domain": "verify.test.localhost"},
+        )
+
+    assert response.status_code == 400
+    assert "reserved" in response.json()["detail"].lower()

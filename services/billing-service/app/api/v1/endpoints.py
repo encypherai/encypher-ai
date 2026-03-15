@@ -540,6 +540,7 @@ async def create_add_on_checkout_session(
 _SUBSCRIPTION_ADD_ONS = {
     "custom_signing_identity",
     "white_label_verification",
+    "custom_verification_domain",
     "byok",
     "priority_support",
 }

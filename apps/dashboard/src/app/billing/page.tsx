@@ -543,7 +543,7 @@ function BillingPageContent() {
                   const orgAddOns = (activeOrganization?.add_ons || {}) as Record<string, { active?: boolean }>;
                   const addOnState = orgAddOns[addOn.id];
                   const isActive = Boolean(addOnState && addOnState.active);
-                  const isSubscriptionAddOn = ['custom-signing-identity', 'white-label-verification', 'byok', 'priority-support'].includes(addOn.id);
+                  const isSubscriptionAddOn = ['custom-signing-identity', 'white-label-verification', 'custom-verification-domain', 'byok', 'priority-support'].includes(addOn.id);
                   const canPurchase = isSubscriptionAddOn && !addOn.comingSoon && !isActive && !isEnterpriseTier;
 
                   return (

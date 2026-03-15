@@ -101,11 +101,13 @@ class Bulk
 
         $settings = get_option('encypher_provenance_settings', []);
         $tier = $settings['tier'] ?? 'free';
+        $add_ons = isset($settings['add_ons']) && is_array($settings['add_ons']) ? $settings['add_ons'] : [];
+        $has_backfill_addon = isset($add_ons['bulk-archive-backfill']['active']) && $add_ons['bulk-archive-backfill']['active'];
         $usage = $this->normalize_usage_snapshot(
             isset($settings['usage']) && is_array($settings['usage']) ? $settings['usage'] : [],
             $tier
         );
-        $pricing = $this->get_archive_pricing($tier);
+        $pricing = $this->get_archive_pricing($tier, $has_backfill_addon);
         $api_calls = isset($usage['api_calls']) && is_array($usage['api_calls']) ? $usage['api_calls'] : [];
         $remaining = isset($api_calls['remaining']) ? (int) $api_calls['remaining'] : 0;
         $post_types = get_post_types(['public' => true], 'objects');
@@ -130,12 +132,19 @@ class Bulk
 
             <?php $this->render_usage_progress_bar($usage); ?>
 
-            <?php if ('free' === $tier): ?>
+            <?php if ('free' === $tier && !$has_backfill_addon): ?>
             <div class="notice notice-info">
                 <p>
                     <strong><?php esc_html_e('Free plan:', 'encypher-provenance'); ?></strong>
                     <?php esc_html_e('Publishing workflows include 1,000 sign requests/month.', 'encypher-provenance'); ?>
                     <?php esc_html_e('Archive backfill is available as a one-time add-on at $0.01/document.', 'encypher-provenance'); ?>
+                </p>
+            </div>
+            <?php elseif ('free' === $tier && $has_backfill_addon): ?>
+            <div class="notice notice-success">
+                <p>
+                    <strong><?php esc_html_e('Archive backfill purchased:', 'encypher-provenance'); ?></strong>
+                    <?php esc_html_e('Your backfill add-on is active. Estimate the scope below and start bulk signing when ready.', 'encypher-provenance'); ?>
                 </p>
             </div>
             <?php else: ?>
@@ -449,13 +458,13 @@ class Bulk
         <?php
     }
 
-    private function get_archive_pricing(string $tier): array
+    private function get_archive_pricing(string $tier, bool $has_backfill_addon = false): array
     {
         return [
             'archive_price_per_document' => 0.01,
             'free_monthly_limit' => 1000,
             'free_overage_per_document' => 0.02,
-            'archive_backfill_included' => in_array($tier, ['enterprise', 'strategic_partner'], true),
+            'archive_backfill_included' => $has_backfill_addon || in_array($tier, ['enterprise', 'strategic_partner'], true),
         ];
     }
 
