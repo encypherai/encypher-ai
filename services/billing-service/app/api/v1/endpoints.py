@@ -61,6 +61,12 @@ class AddOnCheckoutRequest(BaseModel):
     cancel_url: Optional[str] = None
 
 
+class AddOnSubscriptionCheckoutRequest(BaseModel):
+    add_on: str
+    success_url: Optional[str] = None
+    cancel_url: Optional[str] = None
+
+
 class PaymentMethodResponse(BaseModel):
     """A saved payment method."""
 
@@ -527,6 +533,78 @@ async def create_add_on_checkout_session(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to create add-on checkout session: {type(e).__name__}. Contact support if this persists.",
+        )
+
+
+# Known subscription add-ons (not one-time, not coming-soon)
+_SUBSCRIPTION_ADD_ONS = {
+    "custom_signing_identity",
+    "white_label_verification",
+    "byok",
+    "priority_support",
+}
+
+
+@router.post("/checkout/add-on-subscription", response_model=CheckoutResponse)
+async def create_add_on_subscription_checkout(
+    request: AddOnSubscriptionCheckoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Create a Stripe Checkout session for a subscription add-on.
+
+    Supports: custom-signing-identity, white-label-verification, byok, priority-support.
+    """
+    add_on = request.add_on.replace("-", "_")
+    if add_on not in _SUBSCRIPTION_ADD_ONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Unsupported subscription add-on: {request.add_on!r}. "
+                f"Valid subscription add-ons: {', '.join(sorted(a.replace('_', '-') for a in _SUBSCRIPTION_ADD_ONS))}."
+            ),
+        )
+
+    price_id = get_add_on_stripe_price_id(add_on)
+    if not price_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Price not configured for this add-on. Contact support@encypherai.com.",
+        )
+
+    try:
+        customer = await StripeService.get_or_create_customer(
+            email=current_user.get("email"),
+            name=current_user.get("name"),
+            organization_id=current_user.get("organization_id"),
+        )
+
+        base_url = settings.DASHBOARD_URL
+        add_on_slug = add_on.replace("_", "-")
+        success_url = request.success_url or f"{base_url}/billing?success=true&addon={add_on_slug}"
+        cancel_url = request.cancel_url or f"{base_url}/billing?canceled=true&addon={add_on_slug}"
+
+        session = await StripeService.create_checkout_session(
+            customer_id=customer.id,
+            price_id=price_id,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            organization_id=current_user.get("organization_id"),
+            metadata={
+                "user_id": current_user.get("id") or "",
+                "organization_id": current_user.get("organization_id") or "",
+                "add_on": add_on,
+            },
+        )
+
+        return CheckoutResponse(checkout_url=session.url, session_id=session.id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("create_add_on_subscription_checkout_failed error=%s type=%s", e, type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create add-on subscription checkout: {type(e).__name__}. Contact support if this persists.",
         )
 
 

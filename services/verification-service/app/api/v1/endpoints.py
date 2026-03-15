@@ -130,6 +130,8 @@ def _render_portal_result(
     is_valid: bool,
     manifest: dict | None,
     accept: str,
+    whitelabel: bool = False,
+    org_display_name: str = "",
 ) -> HTMLResponse | JSONResponse:
     """Render portal result page with all user-controlled values escaped."""
     if "application/json" in accept:
@@ -151,6 +153,11 @@ def _render_portal_result(
     status_color = "#00875A" if is_valid else "#D14343"
     status_text = "Valid" if is_valid else "Invalid"
 
+    if whitelabel and org_display_name:
+        branding_footer = f"Verified by {html.escape(org_display_name)}"
+    else:
+        branding_footer = "Verified by Encypher Verification Service"
+
     template = _load_template("portal_result.html")
     content = template.format(
         document_id=html.escape(document_id),
@@ -162,6 +169,7 @@ def _render_portal_result(
         status_color=status_color,  # static value - safe
         status_text=html.escape(status_text),
         manifest_json=html.escape(manifest_json),
+        branding_footer=branding_footer,
     )
     return HTMLResponse(content=content, status_code=200)
 
@@ -1555,6 +1563,28 @@ async def verify_by_document_id(
     org_name = org_id or "Unknown"
     signer_name = signer_id or "Unknown"
 
+    # TEAM_255: Fetch org context for whitelabel branding
+    whitelabel = False
+    org_display_name = ""
+    if org_id:
+        try:
+            headers = {}
+            if settings.INTERNAL_SERVICE_TOKEN:
+                headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                resp = await client.get(
+                    f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{org_id}/context",
+                    headers=headers,
+                )
+            if resp.status_code == 200:
+                ctx = resp.json()
+                data = ctx.get("data", {}) if isinstance(ctx, dict) else {}
+                features = data.get("features", {})
+                whitelabel = bool(features.get("whitelabel"))
+                org_display_name = data.get("display_name") or data.get("name") or ""
+        except Exception:
+            pass  # Fail-open: default to showing Encypher branding
+
     return _render_portal_result(
         document_id=document_id,
         title=title,
@@ -1565,6 +1595,8 @@ async def verify_by_document_id(
         is_valid=is_valid,
         manifest=manifest if isinstance(manifest, dict) else None,
         accept=accept,
+        whitelabel=whitelabel,
+        org_display_name=org_display_name,
     )
 
 

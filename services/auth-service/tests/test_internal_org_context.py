@@ -29,6 +29,11 @@ def _org_fixture():
         coalition_member=True,
         coalition_rev_share=DEFAULT_COALITION_PUBLISHER_PERCENT,
         certificate_pem="-----BEGIN PUBLIC KEY-----\nZm9v\n-----END PUBLIC KEY-----\n",
+        add_ons={"byok": {"active": True}, "bulk-archive-backfill": {"active": True, "quantity": 500}},
+        verification_domain="verify.testpub.com",
+        verification_domain_status="active",
+        verification_domain_dns_token="tok-abc",
+        verification_domain_verified_at=datetime.utcnow(),
         created_at=datetime.utcnow(),
     )
 
@@ -66,3 +71,7 @@ def test_internal_org_context_success():
     assert payload["data"]["id"] == "org_test"
     assert payload["data"]["tier"] == "professional"
     assert payload["data"]["certificate_pem"].startswith("-----BEGIN PUBLIC KEY-----")
+    # TEAM_255: add_ons included in context response
+    assert payload["data"]["add_ons"] == {"byok": {"active": True}, "bulk-archive-backfill": {"active": True, "quantity": 500}}
+    # Custom verification domain (active)
+    assert payload["data"]["verification_domain"] == "verify.testpub.com"

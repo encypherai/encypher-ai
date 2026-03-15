@@ -222,6 +222,12 @@ class Organization(Base):
     # Team Management
     max_seats = Column(Integer, default=1)  # -1 = unlimited
 
+    # Custom Verification Domain
+    verification_domain = Column(String(255), nullable=True)
+    verification_domain_status = Column(String(32), nullable=True)  # pending_dns, active
+    verification_domain_dns_token = Column(String(255), nullable=True)
+    verification_domain_verified_at = Column(DateTime(timezone=True), nullable=True)
+
     # Overage Billing
     has_payment_method = Column(Boolean, default=False, nullable=False)
     overage_enabled = Column(Boolean, default=False, nullable=False)

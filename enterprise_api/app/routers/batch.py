@@ -60,13 +60,19 @@ async def batch_sign(
             headers=api_rate_limiter.get_headers(result),
         )
 
-    # Check monthly quota for batch operations (1 per batch request)
-    await QuotaManager.check_quota(
-        db=db,
-        organization_id=organization["organization_id"],
-        quota_type=QuotaType.BATCH_OPERATIONS,
-        increment=1,
-    )
+    # Bulk-archive-backfill add-on bypasses batch operations quota for free tier
+    add_ons = organization.get("add_ons", {})
+    backfill = add_ons.get("bulk-archive-backfill", {})
+    has_backfill = isinstance(backfill, dict) and backfill.get("active")
+
+    if not has_backfill:
+        # Check monthly quota for batch operations (1 per batch request)
+        await QuotaManager.check_quota(
+            db=db,
+            organization_id=organization["organization_id"],
+            quota_type=QuotaType.BATCH_OPERATIONS,
+            increment=1,
+        )
 
     # Also count each document against C2PA signatures quota
     await QuotaManager.check_quota(

@@ -1,286 +1,458 @@
 #!/usr/bin/env python3
 """
-Stripe Setup Script
+Stripe Product & Price Setup CLI
 
-Run this script once to create Stripe products and prices for all tiers.
-The script will output the price IDs that need to be added to your .env file.
+Creates all Stripe products and prices for the current pricing model:
+- 9 freemium add-on subscriptions
+- 1 one-time add-on (bulk archive backfill)
+- 1 usage overage product (for metered billing)
+- Billing Portal configuration
+
+Idempotent: searches for existing products by metadata before creating new ones.
 
 Usage:
+    # Test mode (default)
+    cd services/billing-service
     uv run python scripts/setup_stripe.py
 
+    # Production mode (prompts for confirmation)
+    STRIPE_API_KEY=sk_live_... uv run python scripts/setup_stripe.py
+
+    # Dry run (shows what would be created)
+    uv run python scripts/setup_stripe.py --dry-run
+
 Prerequisites:
-    - Set STRIPE_API_KEY in your environment or .env file
+    Set STRIPE_API_KEY in your environment or .env file.
 """
 
+import argparse
 import os
 import sys
 from pathlib import Path
 
-# Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import stripe
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# Initialize Stripe
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
-if not stripe.api_key:
-    print("❌ Error: STRIPE_API_KEY not set")
-    print("   Set it in your .env file or environment")
-    sys.exit(1)
+# ---------------------------------------------------------------
+# Product catalog -- single source of truth
+# ---------------------------------------------------------------
+
+ADD_ON_SUBSCRIPTIONS = [
+    {
+        "id": "attribution_analytics",
+        "name": "Encypher Attribution Analytics",
+        "description": "Full dashboard showing where your signed content appears in AI outputs.",
+        "price_monthly_cents": 29900,
+    },
+    {
+        "id": "custom_signing_identity",
+        "name": "Encypher Custom Signing Identity",
+        "description": "Sign content as your brand instead of Encypher Coalition Member.",
+        "price_monthly_cents": 2000,
+    },
+    {
+        "id": "white_label_verification",
+        "name": "Encypher White-Label Verification",
+        "description": "Verification pages hosted on your domain with your branding.",
+        "price_monthly_cents": 29900,
+    },
+    {
+        "id": "custom_verification_domain",
+        "name": "Encypher Custom Verification Domain",
+        "description": "Point a custom domain to your verification pages.",
+        "price_monthly_cents": 2900,
+    },
+    {
+        "id": "byok",
+        "name": "Encypher BYOK (Bring Your Own Keys)",
+        "description": "Use your organization's existing PKI infrastructure and signing certificates.",
+        "price_monthly_cents": 49900,
+    },
+    {
+        "id": "priority_support",
+        "name": "Encypher Priority Support",
+        "description": "Email support with 4-hour response SLA during business hours.",
+        "price_monthly_cents": 19900,
+    },
+    {
+        "id": "enforcement_bundle",
+        "name": "Encypher Enforcement Bundle",
+        "description": "Attribution Analytics + 2 Formal Notices/mo + 1 Evidence Package/mo.",
+        "price_monthly_cents": 99900,
+    },
+    {
+        "id": "publisher_identity_bundle",
+        "name": "Encypher Publisher Identity Bundle",
+        "description": "Custom Signing Identity + White-Label Verification + Custom Domain.",
+        "price_monthly_cents": 33900,
+    },
+    {
+        "id": "full_stack_bundle",
+        "name": "Encypher Full Stack Bundle",
+        "description": "Enforcement Bundle + Publisher Identity Bundle.",
+        "price_monthly_cents": 169900,
+    },
+]
+
+ONE_TIME_PRODUCTS = [
+    {
+        "id": "bulk_archive_backfill",
+        "name": "Encypher Archive Backfill",
+        "description": "One-time bulk signing of existing content archive.",
+        "price_cents": 1,  # $0.01 per document
+        "unit_label": "document",
+    },
+]
+
+OVERAGE_PRODUCT = {
+    "id": "usage_overage",
+    "name": "Encypher Usage Overage",
+    "description": "Per-unit overage charges for usage beyond plan limits ($0.02/unit).",
+    "price_cents": 2,  # $0.02 per unit
+}
 
 
-def create_products_and_prices():
-    """Create Stripe products and prices for all tiers."""
+# ---------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------
 
-    print("🚀 Setting up Stripe products and prices...\n")
 
-    tiers = [
-        {
-            "id": "professional",
-            "name": "Encypher Professional",
-            "description": (
-                "For growing publishers who need sentence-level tracking, streaming signing, BYOK, and better coalition revenue share (70/30)."
-            ),
-            "price_monthly_cents": 9900,  # $99
-            "price_annual_cents": 95000,  # $950
-            "features": [
-                "Sentence-level tracking (50K/month)",
-                "Invisible embeddings",
-                "Streaming signing (WebSocket/SSE)",
-                "10 API keys",
-                "Email support (48hr SLA)",
-                "90-day analytics",
-                "BYOK encryption",
-                "WordPress Pro (no branding)",
-                "70/30 coalition revenue share",
-            ],
-        },
-        {
-            "id": "business",
-            "name": "Encypher Business",
-            "description": (
-                "For major publishers who need Merkle infrastructure, plagiarism detection, team features, and best coalition revenue share (75/25)."
-            ),
-            "price_monthly_cents": 49900,  # $499
-            "price_annual_cents": 479000,  # $4790
-            "features": [
-                "Everything in Professional",
-                "Merkle tree encoding",
-                "Source attribution API",
-                "Plagiarism detection",
-                "Batch operations (100 docs)",
-                "50 API keys",
-                "Priority support (24hr SLA)",
-                "1-year analytics",
-                "Team management (10 users)",
-                "Audit logs",
-                "75/25 coalition revenue share",
-            ],
-        },
-    ]
+def find_product_by_metadata(key: str, value: str):
+    """Search for an existing Stripe product by metadata key/value."""
+    try:
+        results = stripe.Product.search(query=f"metadata['{key}']:'{value}'")
+        if results.data:
+            return results.data[0]
+    except stripe.error.StripeError:
+        pass
+    return None
 
+
+def find_active_price(product_id: str, recurring_interval: str = None):
+    """Find an active price on a product, optionally matching a recurring interval."""
+    prices = stripe.Price.list(product=product_id, active=True, limit=10)
+    for price in prices.data:
+        if recurring_interval:
+            if price.recurring and price.recurring.interval == recurring_interval:
+                return price
+        else:
+            # One-time price (no recurring)
+            if not price.recurring:
+                return price
+    return None
+
+
+def fmt_price(cents: int) -> str:
+    return f"${cents / 100:,.2f}"
+
+
+# ---------------------------------------------------------------
+# Setup functions
+# ---------------------------------------------------------------
+
+
+def setup_add_on_subscriptions(dry_run: bool) -> dict:
+    """Create or find monthly subscription add-on products."""
     results = {}
 
-    for tier in tiers:
-        print(f"📦 Creating {tier['name']}...")
+    for addon in ADD_ON_SUBSCRIPTIONS:
+        existing = find_product_by_metadata("add_on_id", addon["id"])
 
-        try:
-            # Check if product already exists
-            existing_products = stripe.Product.search(query=f"metadata['tier_id']:'{tier['id']}'")
-
-            if existing_products.data:
-                product = existing_products.data[0]
-                print(f"   ℹ️  Product already exists: {product.id}")
-            else:
-                # Create product
-                product = stripe.Product.create(
-                    name=tier["name"],
-                    description=tier["description"],
-                    metadata={"tier_id": tier["id"]},
-                    features=[{"name": f} for f in tier["features"][:8]],  # Stripe limits to 8
-                )
-                print(f"   ✅ Created product: {product.id}")
-
-            # Check for existing prices
-            existing_prices = stripe.Price.list(product=product.id, active=True)
-            existing_monthly = None
-            existing_annual = None
-
-            for price in existing_prices.data:
-                if price.recurring and price.recurring.interval == "month":
-                    existing_monthly = price
-                elif price.recurring and price.recurring.interval == "year":
-                    existing_annual = price
-
-            # Create monthly price if not exists
-            if existing_monthly:
-                price_monthly = existing_monthly
-                print(f"   ℹ️  Monthly price exists: {price_monthly.id}")
-            else:
-                price_monthly = stripe.Price.create(
-                    product=product.id,
-                    unit_amount=tier["price_monthly_cents"],
-                    currency="usd",
-                    recurring={"interval": "month"},
-                    metadata={"tier_id": tier["id"], "billing_cycle": "monthly"},
-                )
-                print(f"   ✅ Created monthly price: {price_monthly.id}")
-
-            # Create annual price if not exists
-            if existing_annual:
-                price_annual = existing_annual
-                print(f"   ℹ️  Annual price exists: {price_annual.id}")
-            else:
-                price_annual = stripe.Price.create(
-                    product=product.id,
-                    unit_amount=tier["price_annual_cents"],
-                    currency="usd",
-                    recurring={"interval": "year"},
-                    metadata={"tier_id": tier["id"], "billing_cycle": "annual"},
-                )
-                print(f"   ✅ Created annual price: {price_annual.id}")
-
-            results[tier["id"]] = {
-                "product_id": product.id,
-                "price_monthly": price_monthly.id,
-                "price_annual": price_annual.id,
-            }
-
-            print()
-
-        except stripe.error.StripeError as e:
-            print(f"   ❌ Error: {e}")
+        if existing:
+            product = existing
+            print(f"  [exists]  {addon['name']} -> {product.id}")
+        elif dry_run:
+            print(f"  [dry-run] Would create: {addon['name']} ({fmt_price(addon['price_monthly_cents'])}/mo)")
+            results[addon["id"]] = {"product_id": "dry_run", "price_monthly": "dry_run"}
             continue
+        else:
+            product = stripe.Product.create(
+                name=addon["name"],
+                description=addon["description"],
+                metadata={"add_on_id": addon["id"]},
+            )
+            print(f"  [created] {addon['name']} -> {product.id}")
+
+        # Find or create monthly price
+        price = find_active_price(product.id, "month")
+        if price:
+            print(f"            Monthly price exists: {price.id} ({fmt_price(price.unit_amount)})")
+        elif dry_run:
+            print(f"            Would create monthly price: {fmt_price(addon['price_monthly_cents'])}")
+            results[addon["id"]] = {"product_id": product.id, "price_monthly": "dry_run"}
+            continue
+        else:
+            price = stripe.Price.create(
+                product=product.id,
+                unit_amount=addon["price_monthly_cents"],
+                currency="usd",
+                recurring={"interval": "month"},
+                metadata={"add_on_id": addon["id"], "billing_cycle": "monthly"},
+            )
+            print(f"            Created monthly price: {price.id} ({fmt_price(price.unit_amount)})")
+
+        results[addon["id"]] = {
+            "product_id": product.id,
+            "price_monthly": price.id,
+        }
 
     return results
 
 
-def create_billing_portal_config(results):
-    """Create or update the Stripe Billing Portal configuration."""
+def setup_one_time_products(dry_run: bool) -> dict:
+    """Create or find one-time purchase products."""
+    results = {}
 
-    print("🔧 Configuring Billing Portal...")
+    for product_def in ONE_TIME_PRODUCTS:
+        existing = find_product_by_metadata("add_on_id", product_def["id"])
 
-    try:
-        # Check for existing configuration
-        configs = stripe.billing_portal.Configuration.list(limit=1)
+        if existing:
+            product = existing
+            print(f"  [exists]  {product_def['name']} -> {product.id}")
+        elif dry_run:
+            print(f"  [dry-run] Would create: {product_def['name']} ({fmt_price(product_def['price_cents'])}/unit)")
+            results[product_def["id"]] = {"product_id": "dry_run", "price_unit": "dry_run"}
+            continue
+        else:
+            product = stripe.Product.create(
+                name=product_def["name"],
+                description=product_def["description"],
+                metadata={"add_on_id": product_def["id"]},
+                unit_label=product_def.get("unit_label"),
+            )
+            print(f"  [created] {product_def['name']} -> {product.id}")
 
-        allowed_products = []
-        for tier_id, tier_data in results.items():
+        # Find or create one-time price
+        price = find_active_price(product.id, None)
+        if price:
+            print(f"            Unit price exists: {price.id} ({fmt_price(price.unit_amount)})")
+        elif dry_run:
+            print(f"            Would create unit price: {fmt_price(product_def['price_cents'])}")
+            results[product_def["id"]] = {"product_id": product.id, "price_unit": "dry_run"}
+            continue
+        else:
+            price = stripe.Price.create(
+                product=product.id,
+                unit_amount=product_def["price_cents"],
+                currency="usd",
+                metadata={"add_on_id": product_def["id"]},
+            )
+            print(f"            Created unit price: {price.id} ({fmt_price(price.unit_amount)})")
+
+        results[product_def["id"]] = {
+            "product_id": product.id,
+            "price_unit": price.id,
+        }
+
+    return results
+
+
+def setup_overage_product(dry_run: bool) -> dict:
+    """Create or find the usage overage product."""
+    existing = find_product_by_metadata("product_type", "overage")
+
+    if existing:
+        product = existing
+        print(f"  [exists]  {OVERAGE_PRODUCT['name']} -> {product.id}")
+    elif dry_run:
+        print(f"  [dry-run] Would create: {OVERAGE_PRODUCT['name']} ({fmt_price(OVERAGE_PRODUCT['price_cents'])}/unit)")
+        return {"product_id": "dry_run", "price_unit": "dry_run"}
+    else:
+        product = stripe.Product.create(
+            name=OVERAGE_PRODUCT["name"],
+            description=OVERAGE_PRODUCT["description"],
+            metadata={"product_type": "overage"},
+        )
+        print(f"  [created] {OVERAGE_PRODUCT['name']} -> {product.id}")
+
+    # Find or create unit price (one-time, not recurring)
+    price = find_active_price(product.id, None)
+    if price:
+        print(f"            Unit price exists: {price.id} ({fmt_price(price.unit_amount)})")
+    elif dry_run:
+        print(f"            Would create unit price: {fmt_price(OVERAGE_PRODUCT['price_cents'])}")
+        return {"product_id": product.id, "price_unit": "dry_run"}
+    else:
+        price = stripe.Price.create(
+            product=product.id,
+            unit_amount=OVERAGE_PRODUCT["price_cents"],
+            currency="usd",
+            metadata={"product_type": "overage"},
+        )
+        print(f"            Created unit price: {price.id} ({fmt_price(price.unit_amount)})")
+
+    return {"product_id": product.id, "price_unit": price.id}
+
+
+def setup_billing_portal(subscription_results: dict, dry_run: bool) -> str | None:
+    """Create or update the Billing Portal configuration."""
+    if dry_run:
+        print("  [dry-run] Would configure billing portal")
+        return None
+
+    allowed_products = []
+    for addon_id, data in subscription_results.items():
+        if data.get("price_monthly") and data["price_monthly"] != "dry_run":
             allowed_products.append(
                 {
-                    "product": tier_data["product_id"],
-                    "prices": [tier_data["price_monthly"], tier_data["price_annual"]],
+                    "product": data["product_id"],
+                    "prices": [data["price_monthly"]],
                 }
             )
 
-        portal_config = {
-            "business_profile": {
-                "headline": "Manage your Encypher subscription",
-            },
-            "features": {
-                "customer_update": {
-                    "enabled": True,
-                    "allowed_updates": ["email", "address", "phone", "tax_id"],
-                },
-                "invoice_history": {"enabled": True},
-                "payment_method_update": {"enabled": True},
-                "subscription_cancel": {
-                    "enabled": True,
-                    "mode": "at_period_end",
-                    "proration_behavior": "none",
-                },
-                "subscription_update": {
-                    "enabled": True,
-                    "default_allowed_updates": ["price"],
-                    "proration_behavior": "create_prorations",
-                    "products": allowed_products,
-                },
-            },
-        }
-
-        if configs.data:
-            config = stripe.billing_portal.Configuration.modify(configs.data[0].id, **portal_config)
-            print(f"   ✅ Updated portal configuration: {config.id}")
-        else:
-            config = stripe.billing_portal.Configuration.create(**portal_config)
-            print(f"   ✅ Created portal configuration: {config.id}")
-
-        return config.id
-
-    except stripe.error.StripeError as e:
-        print(f"   ❌ Error configuring portal: {e}")
+    if not allowed_products:
+        print("  [skip]    No subscription products to configure in portal")
         return None
 
+    portal_config = {
+        "business_profile": {
+            "headline": "Manage your Encypher subscription",
+        },
+        "features": {
+            "customer_update": {
+                "enabled": True,
+                "allowed_updates": ["email", "address", "phone", "tax_id"],
+            },
+            "invoice_history": {"enabled": True},
+            "payment_method_update": {"enabled": True},
+            "subscription_cancel": {
+                "enabled": True,
+                "mode": "at_period_end",
+                "proration_behavior": "none",
+            },
+            "subscription_update": {
+                "enabled": True,
+                "default_allowed_updates": ["price"],
+                "proration_behavior": "create_prorations",
+                "products": allowed_products,
+            },
+        },
+    }
 
-def print_env_config(results):
-    """Print the environment configuration to add to .env file."""
+    configs = stripe.billing_portal.Configuration.list(limit=1)
+    if configs.data:
+        config = stripe.billing_portal.Configuration.modify(configs.data[0].id, **portal_config)
+        print(f"  [updated] Portal configuration: {config.id}")
+    else:
+        config = stripe.billing_portal.Configuration.create(**portal_config)
+        print(f"  [created] Portal configuration: {config.id}")
 
-    print("\n" + "=" * 60)
-    print("📋 Add these to your .env file:")
-    print("=" * 60 + "\n")
+    return config.id
 
-    if "professional" in results:
-        print(f"STRIPE_PRICE_PROFESSIONAL_MONTHLY={results['professional']['price_monthly']}")
-        print(f"STRIPE_PRICE_PROFESSIONAL_ANNUAL={results['professional']['price_annual']}")
 
-    if "business" in results:
-        print(f"STRIPE_PRICE_BUSINESS_MONTHLY={results['business']['price_monthly']}")
-        print(f"STRIPE_PRICE_BUSINESS_ANNUAL={results['business']['price_annual']}")
+# ---------------------------------------------------------------
+# Output
+# ---------------------------------------------------------------
 
-    print("\n" + "=" * 60)
-    print("🔗 Webhook Configuration:")
-    print("=" * 60)
+
+def print_env_output(subscription_results: dict, one_time_results: dict, overage_result: dict, portal_config_id: str | None):
+    """Print .env variables for all created products."""
+    print("\n" + "=" * 64)
+    print("  Add these to your .env / Railway variables:")
+    print("=" * 64 + "\n")
+
+    env_lines = []
+
+    # Add-on subscription prices
+    for addon_id, data in subscription_results.items():
+        price_id = data.get("price_monthly", "")
+        env_name = f"STRIPE_PRICE_{addon_id.upper()}"
+        env_lines.append(f"{env_name}={price_id}")
+
+    # One-time product prices
+    for product_id, data in one_time_results.items():
+        price_id = data.get("price_unit", "")
+        env_name = f"STRIPE_PRICE_{product_id.upper()}"
+        env_lines.append(f"{env_name}={price_id}")
+
+    # Overage price
+    if overage_result.get("price_unit"):
+        env_lines.append(f"STRIPE_PRICE_USAGE_OVERAGE={overage_result['price_unit']}")
+
+    # Portal config
+    if portal_config_id:
+        env_lines.append(f"STRIPE_BILLING_PORTAL_CONFIG_ID={portal_config_id}")
+
+    for line in sorted(env_lines):
+        print(f"  {line}")
+
+    print("\n" + "=" * 64)
+    print("  Webhook events to subscribe to:")
+    print("=" * 64)
     print("""
-1. Go to https://dashboard.stripe.com/webhooks
-2. Click "Add endpoint"
-3. Enter your webhook URL:
-   - Production: https://api.encypherai.com/api/v1/webhooks/stripe
-   - Development: Use Stripe CLI or ngrok
-4. Select events to listen for:
-   - checkout.session.completed
-   - customer.subscription.created
-   - customer.subscription.updated
-   - customer.subscription.deleted
-   - invoice.paid
-   - invoice.payment_failed
-5. Copy the webhook signing secret to STRIPE_WEBHOOK_SECRET
+  checkout.session.completed
+  customer.subscription.created
+  customer.subscription.updated
+  customer.subscription.deleted
+  invoice.paid
+  invoice.payment_failed
+  payment_method.detached
+  customer.created
+
+  Endpoint URL:
+    Production:  https://api.encypherai.com/api/v1/webhooks/stripe
+    Development: Use `stripe listen --forward-to localhost:8007/api/v1/webhooks/stripe`
 """)
 
-    print("=" * 60)
-    print("🎉 Stripe setup complete!")
-    print("=" * 60)
+
+# ---------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------
 
 
 def main():
-    print("\n" + "=" * 60)
-    print("🔧 Encypher Stripe Setup")
-    print("=" * 60 + "\n")
+    parser = argparse.ArgumentParser(description="Set up Stripe products and prices for Encypher")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would be created without making changes")
+    args = parser.parse_args()
 
-    # Check if we're in test mode
-    if stripe.api_key.startswith("sk_test_"):
-        print("⚠️  Running in TEST mode\n")
-    elif stripe.api_key.startswith("sk_live_"):
-        print("🔴 Running in LIVE mode - be careful!\n")
-        response = input("Continue? (yes/no): ")
+    if not stripe.api_key:
+        print("Error: STRIPE_API_KEY not set")
+        print("Set it in your .env file or environment")
+        sys.exit(1)
+
+    is_live = stripe.api_key.startswith("sk_live_")
+
+    print("\n" + "=" * 64)
+    print("  Encypher Stripe Setup")
+    if args.dry_run:
+        print("  (DRY RUN -- no changes will be made)")
+    print("=" * 64)
+
+    if is_live:
+        print("\n  ** LIVE MODE ** -- This will create real products.\n")
+        response = input("  Continue? (yes/no): ").strip()
         if response.lower() != "yes":
-            print("Aborted.")
+            print("  Aborted.")
             sys.exit(0)
+    else:
+        print("\n  Running in TEST mode\n")
 
-    # Create products and prices
-    results = create_products_and_prices()
+    # 1. Subscription add-ons
+    print("\n-- Subscription Add-ons --")
+    subscription_results = setup_add_on_subscriptions(args.dry_run)
 
-    # Configure billing portal
-    portal_config_id = create_billing_portal_config(results)
+    # 2. One-time products
+    print("\n-- One-time Products --")
+    one_time_results = setup_one_time_products(args.dry_run)
 
-    # Print configuration
-    print_env_config(results)
-    if portal_config_id:
-        print(f"STRIPE_BILLING_PORTAL_CONFIG_ID={portal_config_id}")
+    # 3. Overage product
+    print("\n-- Usage Overage --")
+    overage_result = setup_overage_product(args.dry_run)
+
+    # 4. Billing portal
+    print("\n-- Billing Portal --")
+    portal_config_id = setup_billing_portal(subscription_results, args.dry_run)
+
+    # 5. Output
+    print_env_output(subscription_results, one_time_results, overage_result, portal_config_id)
+
+    print("Done.\n")
 
 
 if __name__ == "__main__":

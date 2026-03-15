@@ -576,7 +576,38 @@ class StripeService:
                 "organization_id": organization_id,
             }
 
-        # Extract metadata
+        # Handle payment mode (one-time add-on purchases like bulk-archive-backfill)
+        if session.get("mode") == "payment":
+            metadata = session.get("metadata", {})
+            organization_id = metadata.get("organization_id")
+            add_on = metadata.get("add_on")
+            quantity = metadata.get("quantity")
+
+            if add_on and organization_id and settings.INTERNAL_SERVICE_TOKEN:
+                try:
+                    async with httpx.AsyncClient(timeout=10) as client:
+                        await client.post(
+                            f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{organization_id}/add-ons",
+                            json={
+                                "add_on_id": add_on.replace("_", "-"),
+                                "quantity": int(quantity) if quantity else 1,
+                                "stripe_session_id": session.get("id"),
+                            },
+                            headers={"X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN},
+                        )
+                    logger.info(f"add_on_purchase_persisted: org={organization_id}, add_on={add_on}, qty={quantity}")
+                except Exception as e:
+                    logger.error(f"add_on_purchase_persist_failed: {e}")
+
+            return {
+                "status": "success",
+                "action": "add_on_purchased",
+                "organization_id": organization_id,
+                "add_on": add_on,
+                "quantity": quantity,
+            }
+
+        # Extract metadata (subscription mode)
         organization_id = session.get("metadata", {}).get("organization_id")
         subscription_id = session.get("subscription")
         customer_id = session.get("customer")
@@ -590,6 +621,25 @@ class StripeService:
                 user_id = subscription_metadata.get("user_id")
                 price_id = subscription["items"]["data"][0]["price"]["id"] if subscription.get("items") else None
                 tier = _resolve_tier_from_price_id(price_id)
+
+                # Check if this is an add-on subscription (not a tier subscription)
+                add_on = subscription_metadata.get("add_on")
+                if add_on and subscription_org_id and settings.INTERNAL_SERVICE_TOKEN:
+                    try:
+                        async with httpx.AsyncClient(timeout=10) as client:
+                            await client.post(
+                                f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{subscription_org_id}/add-ons",
+                                json={
+                                    "add_on_id": add_on.replace("_", "-"),
+                                    "stripe_subscription_id": subscription.get("id"),
+                                    "stripe_session_id": session.get("id"),
+                                },
+                                headers={"X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN},
+                            )
+                        logger.info(f"add_on_subscription_activated: org={subscription_org_id}, add_on={add_on}")
+                    except Exception as e:
+                        logger.error(f"add_on_subscription_activate_failed: {e}")
+
                 if tier:
                     await _sync_org_tier(
                         organization_id=subscription_org_id,
@@ -628,6 +678,24 @@ class StripeService:
         customer_id = subscription.get("customer")
         price_id = subscription["items"]["data"][0]["price"]["id"] if subscription.get("items") else None
         tier = _resolve_tier_from_price_id(price_id)
+
+        # Check if this is an add-on subscription
+        add_on = metadata.get("add_on")
+        if add_on and organization_id and settings.INTERNAL_SERVICE_TOKEN:
+            try:
+                async with httpx.AsyncClient(timeout=10) as client:
+                    await client.post(
+                        f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{organization_id}/add-ons",
+                        json={
+                            "add_on_id": add_on.replace("_", "-"),
+                            "stripe_subscription_id": subscription.get("id"),
+                        },
+                        headers={"X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN},
+                    )
+                logger.info(f"add_on_subscription_created: org={organization_id}, add_on={add_on}")
+            except Exception as e:
+                logger.error(f"add_on_subscription_create_failed: {e}")
+            return {"status": "success", "action": "add_on_subscription_created", "add_on": add_on}
 
         if tier:
             await _sync_org_tier(
@@ -688,6 +756,25 @@ class StripeService:
         organization_id = metadata.get("organization_id")
         user_id = metadata.get("user_id")
         customer_id = subscription.get("customer")
+
+        # Check if this is an add-on subscription cancellation
+        add_on = metadata.get("add_on")
+        if add_on and organization_id and settings.INTERNAL_SERVICE_TOKEN:
+            try:
+                async with httpx.AsyncClient(timeout=10) as client:
+                    await client.post(
+                        f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{organization_id}/add-ons",
+                        json={
+                            "add_on_id": add_on.replace("_", "-"),
+                            "active": False,
+                            "stripe_subscription_id": subscription.get("id"),
+                        },
+                        headers={"X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN},
+                    )
+                logger.info(f"add_on_subscription_canceled: org={organization_id}, add_on={add_on}")
+            except Exception as e:
+                logger.error(f"add_on_subscription_cancel_failed: {e}")
+            return {"status": "success", "action": "add_on_subscription_canceled", "add_on": add_on}
 
         await _sync_org_tier(
             organization_id=organization_id,
@@ -880,7 +967,7 @@ class StripeService:
                 "id": "custom_signing_identity",
                 "name": "Encypher Custom Signing Identity",
                 "description": "Sign content as your brand instead of Encypher Coalition Member.",
-                "price_monthly": 49900,  # $499 in cents
+                "price_monthly": 2000,  # $20 in cents
             },
             {
                 "id": "white_label_verification",
@@ -916,7 +1003,7 @@ class StripeService:
                 "id": "publisher_identity_bundle",
                 "name": "Encypher Publisher Identity Bundle",
                 "description": "Custom Signing Identity + White-Label Verification + Custom Domain.",
-                "price_monthly": 74900,  # $749 in cents
+                "price_monthly": 33900,  # $339 in cents
             },
             {
                 "id": "full_stack_bundle",

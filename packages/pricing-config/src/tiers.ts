@@ -135,7 +135,7 @@ export const ADD_ONS: AddOnConfig[] = [
     id: 'custom-signing-identity',
     name: 'Custom Signing Identity',
     category: 'infrastructure',
-    priceMonthly: 9,
+    priceMonthly: 20,
     description: 'Unlock a custom signer label for your verified organization identity in signed and verified content.',
   },
   {
@@ -210,9 +210,9 @@ export const BUNDLES: BundleConfig[] = [
   {
     id: 'publisher-identity',
     name: 'Publisher Identity',
-    priceMonthly: 329,
+    priceMonthly: 339,
     includes: [
-      'Custom Signing Identity ($9/mo value)',
+      'Custom Signing Identity ($20/mo value)',
       'White-Label Verification ($299/mo value)',
       'Custom Verification Domain ($29/mo value)',
     ],

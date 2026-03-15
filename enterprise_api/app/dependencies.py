@@ -113,6 +113,8 @@ async def _get_org_context_from_jwt_access_token(token: str) -> Optional[Dict]:
             "account_type": org_data.get("account_type"),
             "display_name": org_data.get("display_name"),
             "anonymous_publisher": org_data.get("anonymous_publisher", False),
+            "add_ons": org_data.get("add_ons", {}),
+            "verification_domain": org_data.get("verification_domain"),
         }
     )
 
@@ -134,6 +136,8 @@ def _build_composed_org_context(key_context: Dict, org_data: Dict) -> Dict:
         "account_type": org_data.get("account_type"),
         "display_name": org_data.get("display_name"),
         "anonymous_publisher": org_data.get("anonymous_publisher", False),
+        "add_ons": org_data.get("add_ons", {}),
+        "verification_domain": org_data.get("verification_domain"),
     }
 
 

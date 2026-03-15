@@ -4,6 +4,7 @@ Organization API endpoints for team management
 
 import logging
 import html
+import re
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Header
@@ -525,6 +526,10 @@ async def get_organization_context_internal(
             "account_type": org.account_type,
             "display_name": org.display_name,
             "anonymous_publisher": org.anonymous_publisher,
+            # TEAM_255: Add-on entitlements for cross-service gating
+            "add_ons": org.add_ons or {},
+            # Custom verification domain (only when DNS-verified and active)
+            "verification_domain": org.verification_domain if org.verification_domain_status == "active" else None,
         },
     )
 
@@ -623,6 +628,102 @@ async def get_billing_preferences_internal(
             "has_payment_method": org.has_payment_method,
             "overage_enabled": org.overage_enabled,
             "overage_cap_cents": org.overage_cap_cents,
+        },
+    )
+
+
+# ==========================================
+# ADD-ON MANAGEMENT (TEAM_255)
+# ==========================================
+
+# Mapping from add-on ID to feature flag key.
+# None means the add-on is tracked in add_ons JSON only (no feature flag toggle).
+ADD_ON_FEATURE_MAP = {
+    "custom-signing-identity": None,  # Uses add_ons check directly in publisher-settings
+    "white-label-verification": "whitelabel",
+    "custom-verification-domain": "custom_verification_domain",
+    "byok": "byok",
+    "priority-support": None,  # No feature flag, ops-driven
+    "bulk-archive-backfill": None,  # One-time, tracked in add_ons
+}
+
+
+class InternalAddOnRequest(BaseModel):
+    add_on_id: str
+    active: bool = True
+    quantity: Optional[int] = None
+    stripe_subscription_id: Optional[str] = None
+    stripe_session_id: Optional[str] = None
+
+
+@router.post("/internal/{org_id}/add-ons", response_model=InternalTierUpdateResponse, include_in_schema=False)
+async def update_add_on_internal(
+    org_id: str,
+    payload: InternalAddOnRequest,
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+    db: Session = Depends(get_db),
+):
+    """Activate or deactivate an add-on for an organization (internal service-to-service)."""
+    if settings.INTERNAL_SERVICE_TOKEN:
+        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+    else:
+        logger.warning("internal_service_token_missing")
+
+    org_service = OrganizationService(db)
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    add_on_id = payload.add_on_id
+    current_add_ons = dict(org.add_ons or {})
+
+    if payload.active:
+        add_on_entry = {
+            "active": True,
+            "activated_at": datetime.utcnow().isoformat(),
+        }
+        if payload.stripe_subscription_id:
+            add_on_entry["stripe_subscription_id"] = payload.stripe_subscription_id
+        if payload.stripe_session_id:
+            add_on_entry["stripe_session_id"] = payload.stripe_session_id
+        if payload.quantity is not None:
+            add_on_entry["quantity"] = payload.quantity
+        current_add_ons[add_on_id] = add_on_entry
+    else:
+        if add_on_id in current_add_ons:
+            current_add_ons[add_on_id] = {
+                "active": False,
+                "deactivated_at": datetime.utcnow().isoformat(),
+            }
+
+    org.add_ons = current_add_ons
+
+    # Wire add-on to feature flag if mapped
+    feature_key = ADD_ON_FEATURE_MAP.get(add_on_id)
+    if feature_key:
+        current_features = dict(org.features or {})
+        if payload.active:
+            current_features[feature_key] = True
+        else:
+            # Only unset if not overridden by tier (enterprise always has all features)
+            tier = (org.tier or "free").lower().replace("-", "_")
+            if tier not in {"enterprise", "strategic_partner"}:
+                current_features[feature_key] = False
+        org.features = current_features
+
+    db.commit()
+    db.refresh(org)
+
+    logger.info(f"add_on_updated: org={org_id}, add_on={add_on_id}, " f"active={payload.active}, feature={feature_key}")
+
+    return InternalTierUpdateResponse(
+        success=True,
+        data={
+            "add_on_id": add_on_id,
+            "active": payload.active,
+            "add_ons": org.add_ons,
+            "features": org.features,
         },
     )
 
@@ -1634,3 +1735,215 @@ async def update_org_security_settings(
             "enforce_mfa": bool(features.get("enforce_mfa", False)),
         }
     )
+
+
+# ---------------------------------------------------------------------------
+# Custom Verification Domain Management
+# ---------------------------------------------------------------------------
+
+_DOMAIN_PATTERN = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$")
+_CNAME_TARGET = "verify.encypherai.com"
+
+
+def _require_verification_domain_addon(org) -> None:
+    """Raise 403 if org lacks the custom-verification-domain add-on."""
+    features = org.features or {}
+    add_ons = org.add_ons or {}
+    cvd_addon = add_ons.get("custom-verification-domain", {})
+    has_addon = features.get("custom_verification_domain") or (isinstance(cvd_addon, dict) and cvd_addon.get("active"))
+    tier = (org.tier or "free").lower().replace("-", "_")
+    if not has_addon and tier not in {"enterprise", "strategic_partner"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Custom Verification Domain add-on required",
+        )
+
+
+class VerificationDomainRequest(BaseModel):
+    domain: str = Field(..., min_length=4, max_length=255)
+
+
+@router.get("/{org_id}/verification-domain")
+async def get_verification_domain(
+    org_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Get the current custom verification domain configuration."""
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+    if not org_service._has_permission(org_id, user_id, "member"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a member of this organization")
+
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    return ok(
+        {
+            "domain": org.verification_domain,
+            "status": org.verification_domain_status,
+            "verified_at": org.verification_domain_verified_at.isoformat() if org.verification_domain_verified_at else None,
+            "cname_target": _CNAME_TARGET if org.verification_domain else None,
+            "txt_record": f"encypher-verify={org.verification_domain_dns_token}" if org.verification_domain_dns_token else None,
+            "txt_host": f"_encypher-verify.{org.verification_domain}" if org.verification_domain else None,
+        }
+    )
+
+
+@router.post("/{org_id}/verification-domain")
+async def set_verification_domain(
+    org_id: str,
+    payload: VerificationDomainRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Set or update the custom verification domain. Returns DNS instructions."""
+    import secrets
+
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+    if not org_service._has_permission(org_id, user_id, "admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    _require_verification_domain_addon(org)
+
+    domain = payload.domain.strip().lower()
+    if not _DOMAIN_PATTERN.match(domain):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid domain format. Use a subdomain like verify.example.com")
+
+    # Must have at least two dots (subdomain.domain.tld)
+    if domain.count(".") < 2:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Must be a subdomain (e.g., verify.example.com), not a bare domain")
+
+    dns_token = secrets.token_urlsafe(32)
+    org.verification_domain = domain
+    org.verification_domain_status = "pending_dns"
+    org.verification_domain_dns_token = dns_token
+    org.verification_domain_verified_at = None
+    db.commit()
+
+    return ok(
+        {
+            "domain": domain,
+            "status": "pending_dns",
+            "instructions": {
+                "cname": {
+                    "host": domain,
+                    "target": _CNAME_TARGET,
+                    "type": "CNAME",
+                },
+                "txt": {
+                    "host": f"_encypher-verify.{domain}",
+                    "value": f"encypher-verify={dns_token}",
+                    "type": "TXT",
+                },
+            },
+            "note": "Add both DNS records, then call POST /verification-domain/verify. DNS changes can take up to 48 hours to propagate.",
+        }
+    )
+
+
+@router.post("/{org_id}/verification-domain/verify")
+async def verify_verification_domain(
+    org_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Verify DNS records for the custom verification domain."""
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+    if not org_service._has_permission(org_id, user_id, "admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    if not org.verification_domain or not org.verification_domain_dns_token:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No verification domain configured. Set one first.")
+
+    _require_verification_domain_addon(org)
+
+    domain = org.verification_domain
+    dns_token = org.verification_domain_dns_token
+    errors = []
+
+    # Check CNAME
+    try:
+        cname_answers = dns.resolver.resolve(domain, "CNAME")
+        cname_targets = [str(rdata.target).rstrip(".").lower() for rdata in cname_answers]
+        if _CNAME_TARGET not in cname_targets:
+            errors.append(f"CNAME for {domain} points to {', '.join(cname_targets)} instead of {_CNAME_TARGET}")
+    except dns.resolver.NoAnswer:
+        errors.append(f"No CNAME record found for {domain}")
+    except dns.resolver.NXDOMAIN:
+        errors.append(f"Domain {domain} does not exist in DNS")
+    except Exception as exc:
+        errors.append(f"DNS lookup failed for {domain}: {str(exc)}")
+
+    # Check TXT
+    txt_host = f"_encypher-verify.{domain}"
+    expected_value = f"encypher-verify={dns_token}"
+    try:
+        txt_answers = dns.resolver.resolve(txt_host, "TXT")
+        txt_values = [str(rdata).strip('"') for rdata in txt_answers]
+        if not any(expected_value in v for v in txt_values):
+            errors.append(f"TXT record at {txt_host} does not contain expected value")
+    except dns.resolver.NoAnswer:
+        errors.append(f"No TXT record found at {txt_host}")
+    except dns.resolver.NXDOMAIN:
+        errors.append(f"DNS name {txt_host} does not exist")
+    except Exception as exc:
+        errors.append(f"TXT lookup failed for {txt_host}: {str(exc)}")
+
+    if errors:
+        return ok(
+            {
+                "verified": False,
+                "status": "pending_dns",
+                "errors": errors,
+            }
+        )
+
+    org.verification_domain_status = "active"
+    org.verification_domain_verified_at = datetime.utcnow()
+    db.commit()
+
+    return ok(
+        {
+            "verified": True,
+            "status": "active",
+            "domain": domain,
+            "verified_at": org.verification_domain_verified_at.isoformat(),
+        }
+    )
+
+
+@router.delete("/{org_id}/verification-domain")
+async def remove_verification_domain(
+    org_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Remove the custom verification domain."""
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+    if not org_service._has_permission(org_id, user_id, "admin"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    org.verification_domain = None
+    org.verification_domain_status = None
+    org.verification_domain_dns_token = None
+    org.verification_domain_verified_at = None
+    db.commit()
+
+    return ok({"removed": True})

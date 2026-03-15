@@ -112,6 +112,14 @@ function IconQuote({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
+function IconAddOns({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+    </svg>
+  );
+}
+
 function IconPrint({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,6 +200,14 @@ const guides: GuideItem[] = [
     icon: IconPrint,
     iconBg: 'bg-gradient-to-br from-[#1B2F50] to-[#00CED1]',
     tags: ['Enterprise', 'Print', 'Forensics'],
+  },
+  {
+    title: 'Add-Ons',
+    description: 'Overview of all purchasable add-ons: Custom Signing Identity, White-Label Verification, BYOK, Priority Support, and Bulk Archive Backfill.',
+    href: '/docs/add-ons',
+    icon: IconAddOns,
+    iconBg: 'bg-gradient-to-br from-[#2A87C4] to-[#00CED1]',
+    tags: ['Billing', 'Add-ons', 'Self-service'],
   },
 ];
 
