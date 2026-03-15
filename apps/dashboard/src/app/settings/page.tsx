@@ -117,6 +117,147 @@ const normalizeProfile = (raw: any): Profile => ({
   },
 });
 
+function CustomVerificationDomainCard({ orgId }: { orgId: string | null }) {
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
+  const [newDomain, setNewDomain] = useState('');
+
+  const { data: domainInfo, isLoading } = useQuery({
+    queryKey: ['verification-domain', orgId],
+    queryFn: () => apiClient.getVerificationDomain(session!.accessToken, orgId!),
+    enabled: !!session?.accessToken && !!orgId,
+  });
+
+  const setDomainMutation = useMutation({
+    mutationFn: (domain: string) => apiClient.setVerificationDomain(session!.accessToken, orgId!, domain),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['verification-domain', orgId] });
+      toast.success('Domain configured. Add the DNS records shown below.');
+      setNewDomain('');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const verifyMutation = useMutation({
+    mutationFn: () => apiClient.verifyVerificationDomain(session!.accessToken, orgId!),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['verification-domain', orgId] });
+      if (data.verified) {
+        toast.success('Domain verified and active!');
+      } else {
+        toast.error(`DNS verification failed: ${(data.errors || []).join(', ')}`);
+      }
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: () => apiClient.removeVerificationDomain(session!.accessToken, orgId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['verification-domain', orgId] });
+      toast.success('Custom domain removed.');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  if (!orgId) return null;
+
+  const domain = domainInfo?.domain;
+  const domainStatus = domainInfo?.status;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Custom Verification Domain</CardTitle>
+        <CardDescription>
+          Point your own subdomain to Encypher verification pages (e.g., verify.yoursite.com).
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isLoading ? (
+          <div className="text-muted-foreground text-sm">Loading...</div>
+        ) : domainStatus === 'active' ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">Active</Badge>
+              <span className="text-sm font-mono">{domain}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Verified {domainInfo?.verified_at ? new Date(domainInfo.verified_at).toLocaleDateString() : ''}. New signed documents will use this domain in verification URLs.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { if (confirm('Remove custom verification domain? Existing verification links will still work as long as the CNAME stays pointed.')) removeMutation.mutate(); }}
+              disabled={removeMutation.isPending}
+            >
+              {removeMutation.isPending ? 'Removing...' : 'Remove domain'}
+            </Button>
+          </div>
+        ) : domainStatus === 'pending_dns' ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">Pending DNS</Badge>
+              <span className="text-sm font-mono">{domain}</span>
+            </div>
+            <div className="rounded-lg border border-border p-4 space-y-3 text-sm">
+              <p className="font-semibold">Add these DNS records:</p>
+              <div>
+                <p className="text-xs text-muted-foreground">CNAME Record</p>
+                <p className="font-mono text-xs bg-muted px-2 py-1 rounded">{domain} -&gt; {domainInfo?.cname_target}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">TXT Record</p>
+                <p className="font-mono text-xs bg-muted px-2 py-1 rounded">{domainInfo?.txt_host} = {domainInfo?.txt_record}</p>
+              </div>
+              <p className="text-xs text-muted-foreground">DNS changes can take up to 48 hours to propagate.</p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => verifyMutation.mutate()}
+                disabled={verifyMutation.isPending}
+              >
+                {verifyMutation.isPending ? 'Checking DNS...' : 'Verify DNS'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => removeMutation.mutate()}
+                disabled={removeMutation.isPending}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (newDomain.trim()) setDomainMutation.mutate(newDomain.trim().toLowerCase());
+            }}
+          >
+            <Input
+              value={newDomain}
+              onChange={(e) => setNewDomain(e.target.value)}
+              placeholder="verify.yoursite.com"
+              className="flex-1"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={setDomainMutation.isPending || !newDomain.trim()}
+            >
+              {setDomainMutation.isPending ? 'Saving...' : 'Set domain'}
+            </Button>
+          </form>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
@@ -1476,6 +1617,9 @@ export default function SettingsPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Custom Verification Domain */}
+              <CustomVerificationDomainCard orgId={orgId} />
             )}
 
             {activeTab === 'billing' && (

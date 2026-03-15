@@ -14,6 +14,14 @@ http:
         - web
       priority: 20
 
+    # Custom verification domains (catch-all for local dev testing)
+    verify-portal-custom-router:
+      rule: "HostRegexp(`{subdomain:[a-z0-9-]+}.localhost`)"
+      service: verification-service
+      entryPoints:
+        - web
+      priority: 5
+
     # ============================================
     # API KEY MANAGEMENT -> Key Service (8003)
     # ============================================

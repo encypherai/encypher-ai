@@ -219,6 +219,33 @@ interface DomainClaimResponse {
   error: { code: string; message: string } | null;
 }
 
+interface VerificationDomainInfo {
+  domain: string | null;
+  status: string | null;
+  verified_at: string | null;
+  cname_target: string | null;
+  txt_record: string | null;
+  txt_host: string | null;
+}
+
+interface VerificationDomainSetResponse {
+  domain: string;
+  status: string;
+  instructions: {
+    cname: { host: string; target: string; type: string };
+    txt: { host: string; value: string; type: string };
+  };
+  note: string;
+}
+
+interface VerificationDomainVerifyResponse {
+  verified: boolean;
+  status: string;
+  domain?: string;
+  verified_at?: string;
+  errors?: string[];
+}
+
 interface AnalyticsReport {
   user_id: string;
   period_start: string;
@@ -310,6 +337,12 @@ interface UpgradeResponse {
 interface AddOnCheckoutRequest {
   add_on: string;
   quantity: number;
+  success_url?: string;
+  cancel_url?: string;
+}
+
+interface AddOnSubscriptionCheckoutRequest {
+  add_on: string;
   success_url?: string;
   cancel_url?: string;
 }
@@ -668,6 +701,56 @@ const apiClient = {
   ): Promise<DomainClaimResponse> {
     const response = await fetchWithAuth<DomainClaimResponse>(
       `${API_BASE_URL}/organizations/${organizationId}/domain-claims/${claimId}`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+    return response;
+  },
+
+  // ── Custom Verification Domain ──
+
+  async getVerificationDomain(
+    accessToken: string,
+    organizationId: string
+  ): Promise<VerificationDomainInfo> {
+    const response = await fetchWithAuth<VerificationDomainInfo>(
+      `${API_BASE_URL}/organizations/${organizationId}/verification-domain`,
+      accessToken,
+    );
+    return response;
+  },
+
+  async setVerificationDomain(
+    accessToken: string,
+    organizationId: string,
+    domain: string
+  ): Promise<VerificationDomainSetResponse> {
+    const response = await fetchWithAuth<VerificationDomainSetResponse>(
+      `${API_BASE_URL}/organizations/${organizationId}/verification-domain`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify({ domain }) }
+    );
+    return response;
+  },
+
+  async verifyVerificationDomain(
+    accessToken: string,
+    organizationId: string
+  ): Promise<VerificationDomainVerifyResponse> {
+    const response = await fetchWithAuth<VerificationDomainVerifyResponse>(
+      `${API_BASE_URL}/organizations/${organizationId}/verification-domain/verify`,
+      accessToken,
+      { method: 'POST' }
+    );
+    return response;
+  },
+
+  async removeVerificationDomain(
+    accessToken: string,
+    organizationId: string
+  ): Promise<{ removed: boolean }> {
+    const response = await fetchWithAuth<{ removed: boolean }>(
+      `${API_BASE_URL}/organizations/${organizationId}/verification-domain`,
       accessToken,
       { method: 'DELETE' }
     );
@@ -1424,6 +1507,20 @@ const apiClient = {
   ): Promise<CheckoutResponse> {
     return fetchWithAuth<CheckoutResponse>(
       `${API_BASE_URL}/billing/checkout/add-on`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+
+  async createAddOnSubscriptionCheckout(
+    accessToken: string,
+    payload: AddOnSubscriptionCheckoutRequest
+  ): Promise<CheckoutResponse> {
+    return fetchWithAuth<CheckoutResponse>(
+      `${API_BASE_URL}/billing/checkout/add-on-subscription`,
       accessToken,
       {
         method: 'POST',
@@ -2454,4 +2551,8 @@ export type {
   // Payment Methods
   PaymentMethod,
   OveragePreferences,
+  // Custom Verification Domain
+  VerificationDomainInfo,
+  VerificationDomainSetResponse,
+  VerificationDomainVerifyResponse,
 };

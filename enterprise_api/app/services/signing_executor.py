@@ -425,7 +425,7 @@ async def execute_signing(
     except Exception as exc:
         logger.warning("Coalition indexing failed (non-critical): %s", exc)
 
-    verification_url = _build_verification_url(document_id=document_id, is_demo_org=is_demo_org)
+    verification_url = _build_verification_url(document_id=document_id, is_demo_org=is_demo_org, organization=organization)
 
     return SignResponse(
         success=True,
@@ -437,11 +437,14 @@ async def execute_signing(
     )
 
 
-def _build_verification_url(*, document_id: str, is_demo_org: bool) -> str:
+def _build_verification_url(*, document_id: str, is_demo_org: bool, organization: dict) -> str:
     if settings.is_development:
         return f"http://localhost:9000/api/v1/verify/{document_id}"
     if is_demo_org:
         return f"https://verify.{settings.infrastructure_domain}/demo/{document_id}"
+    custom_domain = organization.get("verification_domain")
+    if custom_domain:
+        return f"https://{custom_domain}/{document_id}"
     return f"https://verify.{settings.infrastructure_domain}/{document_id}"
 
 
