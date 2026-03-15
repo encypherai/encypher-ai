@@ -86,6 +86,7 @@ MAX_MANIFEST_BYTES = 50 * 1024  # 50 KB cap on serialized manifest
 # TTL cache for org context (whitelabel branding) -- avoids hammering auth-service
 _ORG_CONTEXT_CACHE: dict[str, tuple[float, dict]] = {}
 _ORG_CONTEXT_TTL = 300  # 5 minutes
+_ORG_CONTEXT_CACHE_MAX = 1000  # evict all if exceeded
 
 # ---------------------------------------------------------------------------
 # Template helpers (Task 1.0 - move inline HTML to template files)
@@ -1590,6 +1591,8 @@ async def verify_by_document_id(
                 if resp.status_code == 200:
                     ctx = resp.json()
                     data = ctx.get("data", {}) if isinstance(ctx, dict) else {}
+                    if len(_ORG_CONTEXT_CACHE) >= _ORG_CONTEXT_CACHE_MAX:
+                        _ORG_CONTEXT_CACHE.clear()
                     _ORG_CONTEXT_CACHE[org_id] = (time.time(), data)
                     features = data.get("features", {})
                     whitelabel = bool(features.get("whitelabel"))

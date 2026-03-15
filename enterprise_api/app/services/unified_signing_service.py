@@ -28,6 +28,7 @@ from app.schemas.sign_schemas import (
     validate_sign_options_for_tier,
 )
 from app.services.embedding_plan import build_embedding_plan
+from app.services.signing_executor import _build_verification_url
 
 logger = logging.getLogger(__name__)
 
@@ -369,7 +370,7 @@ async def _execute_advanced_signing(
     return SignedDocumentResult(
         document_id=result.document_id,
         signed_text=result.embedded_content or document.text,
-        verification_url=f"https://{organization.get('verification_domain') or f'verify.{settings.infrastructure_domain}'}/{result.document_id}",
+        verification_url=_build_verification_url(document_id=result.document_id, is_demo_org=False, organization=organization),
         total_segments=len(result.embeddings),
         merkle_root=merkle_root,
         instance_id=instance_id,

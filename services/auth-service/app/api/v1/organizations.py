@@ -2,9 +2,11 @@
 Organization API endpoints for team management
 """
 
+import asyncio
 import logging
 import html
 import re
+import secrets
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Header
@@ -1818,7 +1820,6 @@ async def set_verification_domain(
     _: None = Depends(rate_limiter("verification_domain", limit=5, window_sec=300)),
 ):
     """Set or update the custom verification domain. Returns DNS instructions."""
-    import secrets
 
     user_id = await get_current_user_id(request, db)
     org_service = OrganizationService(db)
@@ -1903,9 +1904,9 @@ async def verify_verification_domain(
     resolver.timeout = 5.0
     resolver.lifetime = 5.0
 
-    # Check CNAME
+    # Check CNAME (run in thread to avoid blocking the event loop)
     try:
-        cname_answers = resolver.resolve(domain, "CNAME")
+        cname_answers = await asyncio.to_thread(resolver.resolve, domain, "CNAME")
         cname_targets = [str(rdata.target).rstrip(".").lower() for rdata in cname_answers]
         if _CNAME_TARGET not in cname_targets:
             errors.append(f"CNAME for {domain} points to {', '.join(cname_targets)} instead of {_CNAME_TARGET}")
@@ -1916,11 +1917,11 @@ async def verify_verification_domain(
     except Exception as exc:
         errors.append(f"DNS lookup failed for {domain}: {str(exc)}")
 
-    # Check TXT
+    # Check TXT (run in thread to avoid blocking the event loop)
     txt_host = f"_encypher-verify.{domain}"
     expected_value = f"encypher-verify={dns_token}"
     try:
-        txt_answers = resolver.resolve(txt_host, "TXT")
+        txt_answers = await asyncio.to_thread(resolver.resolve, txt_host, "TXT")
         txt_values = [str(rdata).strip('"') for rdata in txt_answers]
         if not any(expected_value in v for v in txt_values):
             errors.append(f"TXT record at {txt_host} does not contain expected value")
