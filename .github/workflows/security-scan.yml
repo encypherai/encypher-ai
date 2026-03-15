@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Run dependency audit
         run: python scripts/audit_dependencies.py
         continue-on-error: true
@@ -30,11 +30,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Build auth-service image
         run: |
           docker build -t encypherai-commercial-auth-service services/auth-service
-      
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -43,7 +43,7 @@ jobs:
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-      
+
       - name: Display Trivy scan results
         uses: aquasecurity/trivy-action@master
         with:
@@ -64,15 +64,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install ruff
         run: pip install ruff
-      
+
       - name: Run ruff
         run: ruff check services/ enterprise_api/app/ --output-format=github
 
@@ -83,7 +83,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: TruffleHog Secret Scan
         uses: trufflesecurity/trufflehog@main
         with:
@@ -94,19 +94,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install mypy
         run: pip install mypy types-requests types-PyYAML types-redis
-      
+
       - name: Run mypy on auth-service
         run: mypy services/auth-service/app/ --config-file mypy.ini || true
         continue-on-error: true
-      
+
       - name: Run mypy on enterprise-api
         run: mypy enterprise_api/app/ --config-file mypy.ini || true
         continue-on-error: true
@@ -134,20 +134,25 @@ jobs:
           - 6379:6379
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libcairo2-dev pkg-config libpq-dev
+
       - name: Install uv
         uses: astral-sh/setup-uv@v4
-      
+
       - name: Install enterprise-api dependencies
         run: |
           cd enterprise_api
           uv sync
-      
+
       - name: Run enterprise-api tests with coverage
         run: |
           cd enterprise_api
@@ -156,7 +161,7 @@ jobs:
           DATABASE_URL: postgresql://test:test@localhost:5432/test
           REDIS_URL: redis://localhost:6379/0
         continue-on-error: true
-      
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
