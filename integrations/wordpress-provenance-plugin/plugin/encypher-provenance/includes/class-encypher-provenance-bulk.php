@@ -77,6 +77,8 @@ class Bulk
                 'tier' => $tier,
                 'pricing' => $pricing,
                 'billingUrlBase' => 'https://dashboard.encypherai.com/billing',
+                'paymentStatusUrl' => esc_url_raw(rest_url('encypher-provenance/v1/payment-status')),
+                'paymentSetupUrl' => esc_url_raw(rest_url('encypher-provenance/v1/payment-setup')),
             ]
         );
 
@@ -255,6 +257,32 @@ class Bulk
                         <?php esc_html_e('Included with your plan.', 'encypher-provenance'); ?>
                     </p>
                     <?php endif; ?>
+                </div>
+
+                <div class="encypher-payment-status" id="encypher-payment-status">
+                    <div class="encypher-payment-loading">
+                        <p class="description"><?php esc_html_e('Checking payment status...', 'encypher-provenance'); ?></p>
+                    </div>
+                    <div class="encypher-payment-missing" style="display:none;">
+                        <div class="notice notice-warning inline">
+                            <p>
+                                <strong><?php esc_html_e('Payment method required:', 'encypher-provenance'); ?></strong>
+                                <?php esc_html_e('Add a payment method before purchasing archive backfill ($0.01/document).', 'encypher-provenance'); ?>
+                            </p>
+                            <p>
+                                <button type="button" id="encypher-setup-payment" class="button button-secondary">
+                                    <?php esc_html_e('Set Up Payment Method', 'encypher-provenance'); ?>
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="encypher-payment-active" style="display:none;">
+                        <p class="encypher-payment-on-file">
+                            <span class="dashicons dashicons-yes-alt" style="color:#46b450;"></span>
+                            <strong><?php esc_html_e('Payment method on file', 'encypher-provenance'); ?></strong>
+                            <span id="encypher-card-last4"></span>
+                        </p>
+                    </div>
                 </div>
 
                 <p class="submit">

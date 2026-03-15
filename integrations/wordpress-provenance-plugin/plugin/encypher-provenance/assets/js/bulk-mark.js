@@ -56,8 +56,14 @@
             $('.encypher-error-log').toggle();
         });
 
+        // Payment setup button
+        $('#encypher-setup-payment').on('click', openPaymentSetup);
+
         // Initial count update
         updateTotalCount();
+
+        // Check payment status on load
+        checkPaymentStatus();
     }
 
     /**
@@ -351,6 +357,107 @@
 
         // Update count
         updateTotalCount();
+    }
+
+    /**
+     * Check payment status from REST endpoint.
+     */
+    function checkPaymentStatus() {
+        if (!EncypherBulkMark.paymentStatusUrl) {
+            // No payment URL configured, hide the section
+            $('#encypher-payment-status').hide();
+            return;
+        }
+
+        $.ajax({
+            url: EncypherBulkMark.paymentStatusUrl,
+            type: 'GET',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-WP-Nonce', EncypherBulkMark.restNonce);
+            },
+            success: function(response) {
+                updatePaymentStatus(response);
+            },
+            error: function() {
+                // On error, hide loading and don't block
+                $('.encypher-payment-loading').hide();
+            }
+        });
+    }
+
+    /**
+     * Update payment status UI based on response data.
+     */
+    function updatePaymentStatus(data) {
+        $('.encypher-payment-loading').hide();
+
+        if (data.has_payment_method) {
+            $('.encypher-payment-active').show();
+            $('.encypher-payment-missing').hide();
+            if (data.default_card_last4) {
+                $('#encypher-card-last4').text('(****' + data.default_card_last4 + ')');
+            }
+            // Enable buttons
+            $('#encypher-start-bulk-mark').prop('disabled', false);
+            $('#encypher-buy-archive-backfill').css('pointer-events', '');
+        } else if (bulkMarkState.tier === 'free') {
+            $('.encypher-payment-missing').show();
+            $('.encypher-payment-active').hide();
+            // Disable start and buy buttons for free tier without payment
+            $('#encypher-start-bulk-mark').prop('disabled', true);
+            $('#encypher-buy-archive-backfill').css('pointer-events', 'none');
+        } else {
+            // Enterprise/paid tiers without card -- don't block
+            $('.encypher-payment-missing').hide();
+            $('.encypher-payment-active').hide();
+            $('#encypher-start-bulk-mark').prop('disabled', false);
+        }
+    }
+
+    /**
+     * Open payment setup in a popup and poll for completion.
+     */
+    function openPaymentSetup() {
+        if (!EncypherBulkMark.paymentSetupUrl) {
+            return;
+        }
+
+        var $btn = $('#encypher-setup-payment');
+        $btn.prop('disabled', true).text('Opening...');
+
+        $.ajax({
+            url: EncypherBulkMark.paymentSetupUrl,
+            type: 'POST',
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-WP-Nonce', EncypherBulkMark.restNonce);
+            },
+            success: function(response) {
+                var checkoutUrl = response.checkout_url;
+                if (!checkoutUrl) {
+                    $btn.prop('disabled', false).text('Set Up Payment Method');
+                    return;
+                }
+
+                var popup = window.open(checkoutUrl, 'encypher-payment', 'width=600,height=700');
+
+                // Poll for popup close
+                var pollTimer = setInterval(function() {
+                    if (!popup || popup.closed) {
+                        clearInterval(pollTimer);
+                        $btn.prop('disabled', false).text('Set Up Payment Method');
+                        // Re-check payment status after popup closes
+                        $('.encypher-payment-loading').show();
+                        $('.encypher-payment-missing').hide();
+                        $('.encypher-payment-active').hide();
+                        checkPaymentStatus();
+                    }
+                }, 1000);
+            },
+            error: function() {
+                $btn.prop('disabled', false).text('Set Up Payment Method');
+                alert('Failed to create payment setup session. Please try again.');
+            }
+        });
     }
 
     // Initialize on document ready

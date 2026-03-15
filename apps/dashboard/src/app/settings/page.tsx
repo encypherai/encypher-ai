@@ -10,15 +10,16 @@ import {
   Input,
   Badge,
 } from '@encypher/design-system';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Copy, Check, CreditCard } from 'lucide-react';
 import QRCode from 'qrcode';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
-import type { DashboardLayoutPreference, DomainClaimInfo, PublisherPlatform } from '../../lib/api';
+import type { DashboardLayoutPreference, DomainClaimInfo, PublisherPlatform, PaymentMethod, OveragePreferences } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { useOrganization } from '../../contexts/OrganizationContext';
 
@@ -119,7 +120,9 @@ const normalizeProfile = (raw: any): Profile => ({
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'organization'>('profile');
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'organization' | 'billing'>('profile');
   const { activeOrganization, isLoading: orgLoading, refetch: refetchOrganizations } = useOrganization();
   const orgId = activeOrganization?.id;
   const [profile, setProfile] = useState<Profile>({
@@ -153,6 +156,117 @@ export default function SettingsPage() {
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [passkeyName, setPasskeyName] = useState('Primary device');
   const [enforceMfa, setEnforceMfa] = useState(false);
+  const [overageEnabled, setOverageEnabled] = useState(false);
+  const [overageCapDollars, setOverageCapDollars] = useState('');
+  const [overageNoCap, setOverageNoCap] = useState(true);
+  const [removeConfirmPmId, setRemoveConfirmPmId] = useState<string | null>(null);
+
+  // Handle ?tab=billing&setup=success URL param
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'billing') {
+      setActiveTab('billing');
+      const setup = searchParams.get('setup');
+      if (setup === 'success') {
+        toast.success('Payment method added successfully.');
+        queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
+      }
+    }
+  }, [searchParams, queryClient]);
+
+  const paymentMethodsQuery = useQuery({
+    queryKey: ['payment-methods'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.getPaymentMethods(accessToken);
+    },
+    enabled: Boolean(accessToken && activeTab === 'billing'),
+    refetchOnWindowFocus: false,
+  });
+
+  const overagePrefsQuery = useQuery({
+    queryKey: ['overage-preferences'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.getOveragePreferences(accessToken);
+    },
+    enabled: Boolean(accessToken && activeTab === 'billing'),
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (overagePrefsQuery.data) {
+      setOverageEnabled(overagePrefsQuery.data.overage_enabled);
+      if (overagePrefsQuery.data.overage_cap_cents != null) {
+        setOverageNoCap(false);
+        setOverageCapDollars(String(overagePrefsQuery.data.overage_cap_cents / 100));
+      } else {
+        setOverageNoCap(true);
+        setOverageCapDollars('');
+      }
+    }
+  }, [overagePrefsQuery.data]);
+
+  const addPaymentMethodMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.createPaymentMethodSetup(accessToken);
+    },
+    onSuccess: (result) => {
+      window.location.href = result.checkout_url;
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to start payment method setup.');
+    },
+  });
+
+  const removePaymentMethodMutation = useMutation({
+    mutationFn: async (pmId: string) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.deletePaymentMethod(accessToken, pmId);
+    },
+    onSuccess: () => {
+      setRemoveConfirmPmId(null);
+      paymentMethodsQuery.refetch();
+      overagePrefsQuery.refetch();
+      toast.success('Payment method removed.');
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to remove payment method.');
+    },
+  });
+
+  const setDefaultPmMutation = useMutation({
+    mutationFn: async (pmId: string) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.setDefaultPaymentMethod(accessToken, pmId);
+    },
+    onSuccess: () => {
+      paymentMethodsQuery.refetch();
+      toast.success('Default payment method updated.');
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to set default payment method.');
+    },
+  });
+
+  const updateOverageMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      const capCents = overageNoCap ? null : Math.round(parseFloat(overageCapDollars || '0') * 100);
+      return apiClient.updateOveragePreferences(accessToken, {
+        overage_enabled: overageEnabled,
+        overage_cap_cents: capCents,
+      });
+    },
+    onSuccess: () => {
+      overagePrefsQuery.refetch();
+      toast.success('Overage preferences saved.');
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to update overage preferences.');
+    },
+  });
 
   const mfaStatusQuery = useQuery({
     queryKey: ['mfa-status'],
@@ -662,7 +776,7 @@ export default function SettingsPage() {
             <Card>
               <CardContent className="p-4">
                 <nav className="space-y-1">
-                  {['profile', 'security', 'notifications', 'organization'].map((tab) => (
+                  {['profile', 'security', 'notifications', 'organization', 'billing'].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab as typeof activeTab)}
@@ -1362,6 +1476,173 @@ export default function SettingsPage() {
                   )}
                 </CardContent>
               </Card>
+            )}
+
+            {activeTab === 'billing' && (
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Payment methods</CardTitle>
+                    <CardDescription>
+                      Manage saved payment methods for subscriptions and overage billing.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {paymentMethodsQuery.isLoading ? (
+                      <div className="text-muted-foreground">Loading payment methods...</div>
+                    ) : (paymentMethodsQuery.data ?? []).length === 0 ? (
+                      <div className="text-center py-6 text-muted-foreground text-sm">
+                        No payment methods on file.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {(paymentMethodsQuery.data ?? []).map((pm: PaymentMethod) => (
+                          <div key={pm.id} className="flex items-center justify-between border border-border rounded-lg p-3">
+                            <div className="flex items-center gap-3">
+                              <CreditCard className="w-5 h-5 text-muted-foreground" />
+                              <div>
+                                <span className="text-sm font-medium capitalize">{pm.brand}</span>
+                                <span className="text-sm text-muted-foreground ml-2">****{pm.last4}</span>
+                                <span className="text-xs text-muted-foreground ml-2">
+                                  {pm.exp_month}/{pm.exp_year}
+                                </span>
+                              </div>
+                              {pm.is_default && (
+                                <Badge variant="secondary">Default</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {!pm.is_default && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setDefaultPmMutation.mutate(pm.id)}
+                                  disabled={setDefaultPmMutation.isPending}
+                                >
+                                  Set as default
+                                </Button>
+                              )}
+                              {removeConfirmPmId === pm.id ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-muted-foreground">Remove?</span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => removePaymentMethodMutation.mutate(pm.id)}
+                                    disabled={removePaymentMethodMutation.isPending}
+                                  >
+                                    Yes
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setRemoveConfirmPmId(null)}
+                                  >
+                                    No
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setRemoveConfirmPmId(pm.id)}
+                                >
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <Button
+                      variant="primary"
+                      onClick={() => addPaymentMethodMutation.mutate()}
+                      disabled={addPaymentMethodMutation.isPending}
+                    >
+                      {addPaymentMethodMutation.isPending ? 'Redirecting...' : 'Add payment method'}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Overage preferences</CardTitle>
+                    <CardDescription>
+                      Control whether usage can exceed your plan limits with pay-as-you-go billing.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Allow usage beyond plan limits</p>
+                        {!(overagePrefsQuery.data?.has_payment_method) && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Add a payment method above to enable overage billing.
+                          </p>
+                        )}
+                      </div>
+                      <ToggleSwitch
+                        checked={overageEnabled}
+                        onChange={setOverageEnabled}
+                      />
+                    </div>
+
+                    {overageEnabled && (
+                      <div className="space-y-3 pl-0">
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={overageNoCap}
+                              onChange={(e) => setOverageNoCap(e.target.checked)}
+                              className="rounded border-input"
+                            />
+                            No cap
+                          </label>
+                        </div>
+                        {!overageNoCap && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">$</span>
+                            <Input
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={overageCapDollars}
+                              onChange={(e) => setOverageCapDollars(e.target.value)}
+                              placeholder="50"
+                              className="w-32"
+                            />
+                            <span className="text-sm text-muted-foreground">monthly cap</span>
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          $0.02 per unit over your monthly limits.
+                        </p>
+                      </div>
+                    )}
+
+                    <Button
+                      variant="primary"
+                      onClick={() => updateOverageMutation.mutate()}
+                      disabled={updateOverageMutation.isPending}
+                    >
+                      {updateOverageMutation.isPending ? 'Saving...' : 'Save preferences'}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <Link
+                      href="/billing"
+                      className="text-sm text-blue-ncs hover:underline"
+                    >
+                      View full billing details -&gt;
+                    </Link>
+                  </CardContent>
+                </Card>
+              </>
             )}
           </div>
         </div>

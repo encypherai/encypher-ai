@@ -542,6 +542,7 @@ class StripeService:
             "invoice.paid": StripeService._handle_invoice_paid,
             "invoice.payment_failed": StripeService._handle_invoice_payment_failed,
             "customer.created": StripeService._handle_customer_created,
+            "payment_method.detached": StripeService._handle_payment_method_detached,
         }
 
         handler = handlers.get(event_type)
@@ -555,6 +556,25 @@ class StripeService:
     async def _handle_checkout_completed(session: Dict) -> Dict[str, Any]:
         """Handle successful checkout completion."""
         logger.info(f"Checkout completed: {session.get('id')}")
+
+        # Handle setup mode (payment method added, no subscription)
+        if session.get("mode") == "setup":
+            organization_id = session.get("metadata", {}).get("organization_id")
+            if organization_id and settings.INTERNAL_SERVICE_TOKEN:
+                try:
+                    async with httpx.AsyncClient(timeout=10) as client:
+                        await client.post(
+                            f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{organization_id}/billing-preferences",
+                            json={"has_payment_method": True},
+                            headers={"X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN},
+                        )
+                except Exception as e:
+                    logger.error(f"setup_mode_billing_prefs_update_failed: {e}")
+            return {
+                "status": "success",
+                "action": "payment_method_added",
+                "organization_id": organization_id,
+            }
 
         # Extract metadata
         organization_id = session.get("metadata", {}).get("organization_id")
@@ -714,6 +734,34 @@ class StripeService:
         """Handle new customer creation."""
         logger.info(f"Customer created: {customer.get('id')}")
         return {"status": "success", "action": "customer_created"}
+
+    @staticmethod
+    async def _handle_payment_method_detached(payment_method: Dict) -> Dict[str, Any]:
+        """Handle payment method detachment -- check if any remain."""
+        customer_id = payment_method.get("customer")
+        if not customer_id:
+            return {"status": "ignored", "action": "payment_method_detached", "reason": "no_customer"}
+
+        logger.info(f"Payment method detached from customer {customer_id}")
+
+        try:
+            remaining = stripe.PaymentMethod.list(customer=customer_id, type="card")
+            if not remaining.data:
+                # Find org_id from customer metadata
+                customer = stripe.Customer.retrieve(customer_id)
+                org_id = customer.get("metadata", {}).get("organization_id")
+                if org_id and settings.INTERNAL_SERVICE_TOKEN:
+                    async with httpx.AsyncClient(timeout=10) as client:
+                        await client.post(
+                            f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{org_id}/billing-preferences",
+                            json={"has_payment_method": False},
+                            headers={"X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN},
+                        )
+                    logger.info(f"Cleared has_payment_method for org {org_id}")
+        except Exception as e:
+            logger.error(f"payment_method_detached_handler_failed: {e}")
+
+        return {"status": "success", "action": "payment_method_detached"}
 
     # =========================================================================
     # Stripe Connect (Publisher Payouts)
@@ -900,6 +948,25 @@ class StripeService:
                 }
 
                 logger.info(f"Created Stripe product for {add_on['id']}: {product.id}")
+
+            # Overage billing product
+            overage_product = stripe.Product.create(
+                name="Encypher Usage Overage",
+                description="Per-unit overage charges for usage beyond plan limits.",
+                metadata={"product_type": "overage"},
+            )
+            overage_price = stripe.Price.create(
+                product=overage_product.id,
+                unit_amount=2,  # $0.02
+                currency="usd",
+                metadata={"product_type": "overage"},
+            )
+            products_created["usage_overage"] = {
+                "product_id": overage_product.id,
+                "price_unit": overage_price.id,
+            }
+
+            logger.info(f"Created Stripe overage product: {overage_product.id}")
 
             return products_created
 

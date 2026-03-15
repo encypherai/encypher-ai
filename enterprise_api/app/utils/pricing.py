@@ -163,3 +163,22 @@ def get_all_tiers() -> List[Dict[str, Any]]:
 def get_public_tiers() -> List[Dict[str, Any]]:
     """Get tiers that should be shown on public pricing page (excludes strategic partner)"""
     return [tier_dict for tier_dict in get_all_tiers() if tier_dict["id"] != "strategic_partner"]
+
+
+# Overage rates in cents per unit, keyed by QuotaType.
+# A rate of 0 means the feature is hard-limited (no overage allowed).
+from app.utils.quota import QuotaType
+
+OVERAGE_RATES_CENTS = {
+    QuotaType.C2PA_SIGNATURES: 2,  # $0.02/doc
+    QuotaType.API_CALLS: 2,  # $0.02/call
+    QuotaType.SENTENCES_TRACKED: 2,  # $0.02/unit
+    QuotaType.MERKLE_ENCODING: 2,  # $0.02/call
+    QuotaType.MERKLE_ATTRIBUTION: 2,  # $0.02/call
+    QuotaType.BATCH_OPERATIONS: 2,  # $0.02/op
+    # Hard-limited (Enterprise-only features, no overage):
+    QuotaType.MERKLE_PLAGIARISM: 0,
+    QuotaType.FUZZY_INDEX: 0,
+    QuotaType.FUZZY_SEARCH: 0,
+    QuotaType.CDN_IMAGE_REGISTRATIONS: 0,
+}

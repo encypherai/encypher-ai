@@ -141,6 +141,11 @@ class Organization(Base):
     cdn_provenance_enabled = Column(Boolean, default=False)
     cdn_image_registrations_this_month = Column(Integer, default=0)
 
+    # Overage Billing
+    has_payment_method = Column(Boolean, default=False, nullable=False)
+    overage_enabled = Column(Boolean, default=False, nullable=False)
+    overage_cap_cents = Column(Integer, nullable=True)  # NULL = no cap
+
     # Timestamps
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)
     updated_at = Column(

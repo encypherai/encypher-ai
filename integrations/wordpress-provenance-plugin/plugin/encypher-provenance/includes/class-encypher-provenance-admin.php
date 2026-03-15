@@ -1521,6 +1521,24 @@ class Admin
                             <?php esc_html_e('Manage Subscription', 'encypher-provenance'); ?>
                         </a>
                     </p>
+                    <?php
+                    $payment_status = get_transient('encypher_payment_status');
+                    if (is_array($payment_status) && !empty($payment_status['has_payment_method'])): ?>
+                        <p class="encypher-payment-info" style="margin-top:10px;">
+                            <span class="dashicons dashicons-yes-alt" style="color:#46b450;"></span>
+                            <strong><?php esc_html_e('Payment method:', 'encypher-provenance'); ?></strong>
+                            <?php if (!empty($payment_status['default_card_last4'])): ?>
+                                ****<?php echo esc_html($payment_status['default_card_last4']); ?>
+                            <?php else: ?>
+                                <?php esc_html_e('On file', 'encypher-provenance'); ?>
+                            <?php endif; ?>
+                        </p>
+                    <?php endif; ?>
+                    <p style="margin-top:6px;">
+                        <a href="https://dashboard.encypherai.com/settings?tab=billing" class="button button-link" target="_blank" rel="noopener noreferrer">
+                            <?php esc_html_e('Manage Payment Methods', 'encypher-provenance'); ?>
+                        </a>
+                    </p>
                 </div>
 
                 <!-- API Key Card -->

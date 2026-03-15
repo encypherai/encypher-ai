@@ -227,6 +227,22 @@ interface AnalyticsReport {
   time_series: TimeSeriesData[];
 }
 
+// Payment method types
+interface PaymentMethod {
+  id: string;
+  brand: string;
+  last4: string;
+  exp_month: number;
+  exp_year: number;
+  is_default: boolean;
+}
+
+interface OveragePreferences {
+  overage_enabled: boolean;
+  overage_cap_cents: number | null;
+  has_payment_method: boolean;
+}
+
 // Billing types
 interface PlanInfo {
   id: string;
@@ -1466,6 +1482,60 @@ const apiClient = {
 
     return this.upgradeSubscription(accessToken, tier, billingCycle);
   },
+
+  // ============================================
+  // Payment Methods (billing-service)
+  // ============================================
+
+  async getPaymentMethods(accessToken: string): Promise<PaymentMethod[]> {
+    return fetchWithAuth<PaymentMethod[]>(
+      `${API_BASE_URL}/billing/payment-methods`,
+      accessToken
+    );
+  },
+
+  async createPaymentMethodSetup(accessToken: string): Promise<{ checkout_url: string }> {
+    return fetchWithAuth<{ checkout_url: string }>(
+      `${API_BASE_URL}/billing/payment-methods/setup`,
+      accessToken,
+      { method: 'POST' }
+    );
+  },
+
+  async deletePaymentMethod(accessToken: string, pmId: string): Promise<void> {
+    await fetchWithAuth(
+      `${API_BASE_URL}/billing/payment-methods/${pmId}`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+  },
+
+  async setDefaultPaymentMethod(accessToken: string, pmId: string): Promise<void> {
+    await fetchWithAuth(
+      `${API_BASE_URL}/billing/payment-methods/${pmId}/default`,
+      accessToken,
+      { method: 'POST' }
+    );
+  },
+
+  async getOveragePreferences(accessToken: string): Promise<OveragePreferences> {
+    return fetchWithAuth<OveragePreferences>(
+      `${API_BASE_URL}/billing/overage-preferences`,
+      accessToken
+    );
+  },
+
+  async updateOveragePreferences(accessToken: string, prefs: Partial<OveragePreferences>): Promise<void> {
+    await fetchWithAuth(
+      `${API_BASE_URL}/billing/overage-preferences`,
+      accessToken,
+      {
+        method: 'PUT',
+        body: JSON.stringify(prefs),
+      }
+    );
+  },
+
   // ============================================
   // Ghost Integration (enterprise-api)
   // ============================================
@@ -1848,6 +1918,50 @@ const apiClient = {
     );
   },
 
+  async getDiscoveryEvents(
+    accessToken: string,
+    opts: { days?: number; externalOnly?: boolean; limit?: number; offset?: number } = {}
+  ): Promise<ContentDiscoveryListResponse> {
+    const params = new URLSearchParams({
+      days: String(opts.days ?? 30),
+      external_only: String(Boolean(opts.externalOnly)),
+      limit: String(opts.limit ?? 50),
+      offset: String(opts.offset ?? 0),
+    });
+    return fetchWithAuth<ContentDiscoveryListResponse>(
+      `${API_BASE_URL}/analytics/discovery/events?${params.toString()}`,
+      accessToken
+    );
+  },
+
+  async getDiscoveryDomains(
+    accessToken: string,
+    opts: { externalOnly?: boolean } = {}
+  ): Promise<DomainSummaryResponse> {
+    const params = new URLSearchParams({
+      external_only: String(Boolean(opts.externalOnly)),
+    });
+    return fetchWithAuth<DomainSummaryResponse>(
+      `${API_BASE_URL}/analytics/discovery/domains?${params.toString()}`,
+      accessToken
+    );
+  },
+
+  async getDiscoveryAlerts(accessToken: string): Promise<DomainAlertsResponse> {
+    return fetchWithAuth<DomainAlertsResponse>(
+      `${API_BASE_URL}/analytics/discovery/alerts`,
+      accessToken
+    );
+  },
+
+  async acknowledgeDiscoveryAlert(accessToken: string, alertId: string): Promise<DiscoveryResponse> {
+    return fetchWithAuth<DiscoveryResponse>(
+      `${API_BASE_URL}/analytics/discovery/alerts/${encodeURIComponent(alertId)}/ack`,
+      accessToken,
+      { method: 'POST' }
+    );
+  },
+
   async getCdnIntegration(accessToken: string): Promise<CdnIntegrationResponse | null> {
     try {
       return await fetchWithAuth<CdnIntegrationResponse>(
@@ -2085,6 +2199,69 @@ interface CrawlerTimeseries {
   total_by_date: number[];
 }
 
+interface DiscoveryResponse {
+  success: boolean;
+  data?: {
+    message?: string;
+    events_recorded?: number;
+  } | null;
+  error?: string | null;
+}
+
+interface DomainSummaryItem {
+  id: string;
+  page_domain: string;
+  discovery_count: number;
+  verified_count: number;
+  invalid_count: number;
+  is_owned_domain: boolean;
+  first_seen_at: string;
+  last_seen_at: string;
+}
+
+interface DomainSummaryResponse {
+  success: boolean;
+  data: DomainSummaryItem[];
+  total: number;
+}
+
+interface DomainAlertItem {
+  id: string;
+  page_domain: string;
+  discovery_count: number;
+  first_seen_at: string;
+  last_seen_at: string;
+}
+
+interface DomainAlertsResponse {
+  success: boolean;
+  data: DomainAlertItem[];
+  total: number;
+}
+
+interface ContentDiscoveryItem {
+  id: string;
+  page_url: string;
+  page_domain: string;
+  page_title?: string | null;
+  signer_name?: string | null;
+  document_id?: string | null;
+  original_domain?: string | null;
+  verified: boolean;
+  verification_status?: string | null;
+  marker_type?: string | null;
+  is_external_domain: boolean;
+  discovered_at: string;
+}
+
+interface ContentDiscoveryListResponse {
+  success: boolean;
+  data: ContentDiscoveryItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 interface FormalNotice {
   id: string;
   organization_id: string;
@@ -2263,9 +2440,18 @@ export type {
   DetectionSummary,
   CrawlerSummaryEntry,
   CrawlerAnalytics,
+  ContentDiscoveryItem,
+  ContentDiscoveryListResponse,
+  DomainAlertItem,
+  DomainAlertsResponse,
+  DomainSummaryItem,
+  DomainSummaryResponse,
   FormalNotice,
   LicensingRequest,
   LicensingAgreement,
   RightsProfileVersion,
   EvidencePackage,
+  // Payment Methods
+  PaymentMethod,
+  OveragePreferences,
 };

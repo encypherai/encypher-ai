@@ -6,7 +6,7 @@ Combines all v1 endpoints into a single router.
 
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import evidence, fingerprint, merkle, multi_source, provisioning, streaming_merkle
+from app.api.v1.endpoints import evidence, fingerprint, internal_usage, merkle, multi_source, provisioning, streaming_merkle
 from app.api.v1.enterprise import c2pa, image_attribution
 from app.api.v1.image_verify import router as image_verify_router
 from app.api.v1.public import c2pa as public_c2pa
@@ -20,6 +20,9 @@ api_router.include_router(merkle.router)
 
 # Include provisioning endpoints
 api_router.include_router(provisioning.router)
+
+# Include internal usage/overage billing endpoints
+api_router.include_router(internal_usage.router)
 
 # Include C2PA custom assertions endpoints (enterprise)
 api_router.include_router(c2pa.router, prefix="/enterprise/c2pa", tags=["C2PA Custom Assertions"])

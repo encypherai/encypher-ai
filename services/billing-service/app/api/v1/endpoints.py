@@ -61,6 +61,32 @@ class AddOnCheckoutRequest(BaseModel):
     cancel_url: Optional[str] = None
 
 
+class PaymentMethodResponse(BaseModel):
+    """A saved payment method."""
+
+    id: str
+    brand: str
+    last4: str
+    exp_month: int
+    exp_year: int
+    is_default: bool
+
+
+class OveragePreferencesResponse(BaseModel):
+    """Overage billing preferences."""
+
+    overage_enabled: bool = False
+    overage_cap_cents: Optional[int] = None
+    has_payment_method: bool = False
+
+
+class OveragePreferencesUpdate(BaseModel):
+    """Request to update overage preferences."""
+
+    overage_enabled: Optional[bool] = None
+    overage_cap_cents: Optional[int] = None
+
+
 class InternalTrialRequest(BaseModel):
     """Internal request to provision a trial subscription."""
 
@@ -217,6 +243,149 @@ async def create_trial_subscription_internal(
         )
 
     return InternalTrialResponse(success=True, data=_build_subscription_response(subscription))
+
+
+class PaymentStatusResponse(BaseModel):
+    """Response with payment method status"""
+
+    has_payment_method: bool
+    overage_enabled: bool
+    default_card_last4: Optional[str] = None
+
+
+class PaymentSetupRequest(BaseModel):
+    """Request to create a payment method setup session"""
+
+    success_url: Optional[str] = None
+    cancel_url: Optional[str] = None
+
+
+class PaymentSetupResponse(BaseModel):
+    """Response with setup session URL"""
+
+    checkout_url: str
+    session_id: str
+
+
+@router.get("/payment-status", response_model=PaymentStatusResponse)
+async def get_payment_status(
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get payment method status for the current user's organization.
+
+    Returns whether a payment method is on file, overage billing is enabled,
+    and the last 4 digits of the default card.
+    """
+    try:
+        customer = await StripeService.get_or_create_customer(
+            email=current_user.get("email"),
+            name=current_user.get("name"),
+            organization_id=current_user.get("organization_id"),
+        )
+
+        import stripe
+
+        has_payment_method = False
+        default_card_last4 = None
+
+        stripe_customer = stripe.Customer.retrieve(customer.id)
+        default_pm_id = None
+        if hasattr(stripe_customer, "invoice_settings") and stripe_customer.invoice_settings:
+            default_pm_id = stripe_customer.invoice_settings.get("default_payment_method")
+        if not default_pm_id and hasattr(stripe_customer, "default_source"):
+            default_pm_id = stripe_customer.default_source
+
+        if default_pm_id:
+            has_payment_method = True
+            try:
+                if isinstance(default_pm_id, str) and default_pm_id.startswith("pm_"):
+                    pm = stripe.PaymentMethod.retrieve(default_pm_id)
+                    if pm.card:
+                        default_card_last4 = pm.card.last4
+                elif isinstance(default_pm_id, str) and default_pm_id.startswith("card_"):
+                    card = stripe.Customer.retrieve_source(customer.id, default_pm_id)
+                    default_card_last4 = card.get("last4")
+            except Exception:
+                pass
+
+        overage_enabled = False
+        org_id = current_user.get("organization_id")
+        if org_id:
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    resp = await client.get(
+                        f"{settings.AUTH_SERVICE_URL}/api/v1/internal/organizations/{org_id}/billing-preferences",
+                    )
+                    if resp.status_code == 200:
+                        prefs = resp.json()
+                        overage_enabled = prefs.get("overage_enabled", False)
+            except Exception as exc:
+                logger.warning("billing_preferences_fetch_failed error=%s", exc)
+
+        return PaymentStatusResponse(
+            has_payment_method=has_payment_method,
+            overage_enabled=overage_enabled,
+            default_card_last4=default_card_last4,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("get_payment_status_failed error=%s type=%s", e, type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to retrieve payment status: {type(e).__name__}. Contact support if this persists.",
+        )
+
+
+@router.post("/payment-methods/setup", response_model=PaymentSetupResponse)
+async def create_payment_setup_session(
+    request: PaymentSetupRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Create a Stripe Checkout session in setup mode to collect a payment method.
+
+    Returns a URL to redirect the user to Stripe's hosted page.
+    """
+    try:
+        customer = await StripeService.get_or_create_customer(
+            email=current_user.get("email"),
+            name=current_user.get("name"),
+            organization_id=current_user.get("organization_id"),
+        )
+
+        import stripe
+
+        base_url = settings.DASHBOARD_URL
+        success_url = request.success_url or f"{base_url}/settings?tab=billing&setup=success"
+        cancel_url = request.cancel_url or f"{base_url}/settings?tab=billing&setup=canceled"
+
+        session = stripe.checkout.Session.create(
+            customer=customer.id,
+            mode="setup",
+            payment_method_types=["card"],
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "user_id": current_user.get("id") or "",
+                "organization_id": current_user.get("organization_id") or "",
+                "purpose": "payment_method_setup",
+            },
+        )
+
+        return PaymentSetupResponse(
+            checkout_url=session.url,
+            session_id=session.id,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("create_payment_setup_failed error=%s type=%s", e, type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create payment setup session: {type(e).__name__}. Contact support if this persists.",
+        )
 
 
 @router.get("/health")
@@ -759,6 +928,225 @@ async def get_coalition_earnings(
                 "note": "no earnings data available",
             },
         }
+
+
+# =========================================================================
+# Payment Methods
+# =========================================================================
+
+
+@router.get("/payment-methods", response_model=List[PaymentMethodResponse])
+async def list_payment_methods(
+    current_user: dict = Depends(get_current_user),
+):
+    """List saved payment methods for the current user."""
+    try:
+        customer = await StripeService.get_or_create_customer(
+            email=current_user.get("email"),
+            name=current_user.get("name"),
+            organization_id=current_user.get("organization_id"),
+        )
+
+        import stripe
+
+        payment_methods = stripe.PaymentMethod.list(customer=customer.id, type="card")
+        default_pm_id = customer.get("invoice_settings", {}).get("default_payment_method")
+
+        result = []
+        for pm in payment_methods.data:
+            card = pm.get("card", {})
+            result.append(
+                PaymentMethodResponse(
+                    id=pm.id,
+                    brand=card.get("brand", "unknown"),
+                    last4=card.get("last4", "0000"),
+                    exp_month=card.get("exp_month", 0),
+                    exp_year=card.get("exp_year", 0),
+                    is_default=(pm.id == default_pm_id),
+                )
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("list_payment_methods_failed error=%s type=%s", e, type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list payment methods: {type(e).__name__}. Contact support if this persists.",
+        )
+
+
+@router.delete("/payment-methods/{pm_id}", response_model=MessageResponse)
+async def delete_payment_method(
+    pm_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Detach a payment method. If none remain, disable overage billing."""
+    try:
+        import stripe
+
+        stripe.PaymentMethod.detach(pm_id)
+
+        # Check remaining methods
+        customer = await StripeService.get_or_create_customer(
+            email=current_user.get("email"),
+            name=current_user.get("name"),
+            organization_id=current_user.get("organization_id"),
+        )
+        remaining = stripe.PaymentMethod.list(customer=customer.id, type="card")
+
+        if not remaining.data:
+            org_id = current_user.get("organization_id")
+            if org_id and settings.INTERNAL_SERVICE_TOKEN:
+                async with httpx.AsyncClient(timeout=10) as client:
+                    await client.post(
+                        f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{org_id}/billing-preferences",
+                        json={"has_payment_method": False, "overage_enabled": False},
+                        headers={"X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN},
+                    )
+
+        return {"message": "Payment method removed"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("delete_payment_method_failed error=%s type=%s", e, type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to remove payment method: {type(e).__name__}. Contact support if this persists.",
+        )
+
+
+@router.post("/payment-methods/{pm_id}/default", response_model=MessageResponse)
+async def set_default_payment_method(
+    pm_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Set a payment method as the default for invoices."""
+    try:
+        import stripe
+
+        customer = await StripeService.get_or_create_customer(
+            email=current_user.get("email"),
+            name=current_user.get("name"),
+            organization_id=current_user.get("organization_id"),
+        )
+        stripe.Customer.modify(
+            customer.id,
+            invoice_settings={"default_payment_method": pm_id},
+        )
+        return {"message": "Default payment method updated"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("set_default_payment_method_failed error=%s type=%s", e, type(e).__name__)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to set default payment method: {type(e).__name__}. Contact support if this persists.",
+        )
+
+
+# =========================================================================
+# Overage Preferences
+# =========================================================================
+
+
+@router.get("/overage-preferences", response_model=OveragePreferencesResponse)
+async def get_overage_preferences(
+    current_user: dict = Depends(get_current_user),
+):
+    """Get overage billing preferences from auth-service."""
+    org_id = current_user.get("organization_id")
+    if not org_id:
+        return OveragePreferencesResponse()
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(
+                f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{org_id}/billing-preferences",
+                headers={"X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN} if settings.INTERNAL_SERVICE_TOKEN else {},
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                return OveragePreferencesResponse(
+                    overage_enabled=data.get("overage_enabled", False),
+                    overage_cap_cents=data.get("overage_cap_cents"),
+                    has_payment_method=data.get("has_payment_method", False),
+                )
+    except Exception as e:
+        logger.warning("get_overage_preferences_failed error=%s", e)
+
+    return OveragePreferencesResponse()
+
+
+@router.put("/overage-preferences", response_model=MessageResponse)
+async def update_overage_preferences(
+    request: OveragePreferencesUpdate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update overage billing preferences via auth-service."""
+    org_id = current_user.get("organization_id")
+    if not org_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No organization found for this user.",
+        )
+
+    payload = {}
+    if request.overage_enabled is not None:
+        payload["overage_enabled"] = request.overage_enabled
+    if request.overage_cap_cents is not None:
+        payload["overage_cap_cents"] = request.overage_cap_cents
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{org_id}/billing-preferences",
+                json=payload,
+                headers={"X-Internal-Token": settings.INTERNAL_SERVICE_TOKEN} if settings.INTERNAL_SERVICE_TOKEN else {},
+            )
+            if resp.status_code >= 400:
+                logger.error("update_overage_preferences_failed status=%s body=%s", resp.status_code, resp.text)
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Failed to update preferences in auth service.",
+                )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("update_overage_preferences_failed error=%s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update overage preferences: {type(e).__name__}.",
+        )
+
+    return {"message": "Overage preferences updated"}
+
+
+# =========================================================================
+# Internal: Overage Reconciliation
+# =========================================================================
+
+
+@router.post("/internal/billing/reconcile", include_in_schema=False)
+async def reconcile_overage(
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+):
+    """Trigger monthly overage reconciliation. Protected by X-Internal-Token."""
+    if not settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Internal endpoint not configured",
+        )
+    if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid internal token",
+        )
+
+    from ...tasks.reconcile_overage import reconcile_monthly_overage
+
+    result = await reconcile_monthly_overage()
+    return {"success": True, "data": result}
 
 
 # =========================================================================

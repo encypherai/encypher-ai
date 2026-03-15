@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     # SHARED: Internal Service URLs (from shared vars)
     # ===========================================
     AUTH_SERVICE_URL: str = "http://localhost:8001"
+    ENTERPRISE_API_URL: str = "http://localhost:8000"
     ANALYTICS_SERVICE_URL: str = "http://localhost:8006"
     COALITION_SERVICE_URL: str = "http://localhost:8009"
     DASHBOARD_URL: str = "http://localhost:3001"

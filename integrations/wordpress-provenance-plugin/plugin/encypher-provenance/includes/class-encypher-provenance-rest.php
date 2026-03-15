@@ -231,6 +231,22 @@ class Rest
             },
             'callback' => [$this, 'handle_connect_poll_request'],
         ]);
+
+        register_rest_route('encypher-provenance/v1', '/payment-status', [
+            'methods' => WP_REST_Server::READABLE,
+            'permission_callback' => function () {
+                return current_user_can('manage_options');
+            },
+            'callback' => [$this, 'handle_payment_status'],
+        ]);
+
+        register_rest_route('encypher-provenance/v1', '/payment-setup', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'permission_callback' => function () {
+                return current_user_can('manage_options');
+            },
+            'callback' => [$this, 'handle_payment_setup'],
+        ]);
     }
 
     public function can_edit_post(WP_REST_Request $request): bool
@@ -1567,6 +1583,106 @@ class Rest
             'items' => array_slice($items, 0, 50),
             'total' => count($items),
         ];
+    }
+
+    /**
+     * Handle GET /payment-status: return cached payment method status from billing-service.
+     */
+    public function handle_payment_status(WP_REST_Request $request)
+    {
+        $cached = get_transient('encypher_payment_status');
+        if (false !== $cached && is_array($cached)) {
+            return new WP_REST_Response($cached);
+        }
+
+        $settings = get_option('encypher_provenance_settings', []);
+        $api_base_url = isset($settings['api_base_url']) ? rtrim($settings['api_base_url'], '/') : '';
+        $api_key = isset($settings['api_key']) ? trim((string) $settings['api_key']) : '';
+
+        if ('' === $api_base_url || '' === $api_key) {
+            return new WP_Error(
+                'missing_configuration',
+                __('API key and base URL must be configured.', 'encypher-provenance'),
+                ['status' => 400]
+            );
+        }
+
+        $url = $api_base_url . '/billing/payment-status';
+        $response = wp_remote_get($url, [
+            'timeout' => 15,
+            'headers' => [
+                'Accept'        => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+        ]);
+
+        if (is_wp_error($response)) {
+            return new WP_Error('http_error', $response->get_error_message(), ['status' => 502]);
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+
+        if ($status_code >= 400 || ! is_array($data)) {
+            $detail = is_array($data) && isset($data['detail']) ? $data['detail'] : __('Unable to fetch payment status.', 'encypher-provenance');
+            return new WP_Error('backend_error', $detail, ['status' => $status_code ?: 502]);
+        }
+
+        set_transient('encypher_payment_status', $data, 5 * MINUTE_IN_SECONDS);
+
+        return new WP_REST_Response($data);
+    }
+
+    /**
+     * Handle POST /payment-setup: create a Stripe setup session via billing-service.
+     */
+    public function handle_payment_setup(WP_REST_Request $request)
+    {
+        $settings = get_option('encypher_provenance_settings', []);
+        $api_base_url = isset($settings['api_base_url']) ? rtrim($settings['api_base_url'], '/') : '';
+        $api_key = isset($settings['api_key']) ? trim((string) $settings['api_key']) : '';
+
+        if ('' === $api_base_url || '' === $api_key) {
+            return new WP_Error(
+                'missing_configuration',
+                __('API key and base URL must be configured.', 'encypher-provenance'),
+                ['status' => 400]
+            );
+        }
+
+        $success_url = admin_url('admin.php?page=encypher-bulk-mark&payment_setup=success');
+
+        $url = $api_base_url . '/billing/payment-methods/setup';
+        $response = wp_remote_post($url, [
+            'timeout' => 15,
+            'headers' => [
+                'Content-Type'  => 'application/json',
+                'Accept'        => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+            'body' => wp_json_encode([
+                'success_url' => $success_url,
+            ]),
+        ]);
+
+        if (is_wp_error($response)) {
+            return new WP_Error('http_error', $response->get_error_message(), ['status' => 502]);
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+
+        if ($status_code >= 400 || ! is_array($data) || empty($data['checkout_url'])) {
+            $detail = is_array($data) && isset($data['detail']) ? $data['detail'] : __('Unable to create payment setup session.', 'encypher-provenance');
+            return new WP_Error('backend_error', $detail, ['status' => $status_code ?: 502]);
+        }
+
+        // Clear payment status cache so it refreshes after setup
+        delete_transient('encypher_payment_status');
+
+        return new WP_REST_Response(['checkout_url' => $data['checkout_url']]);
     }
 
     /**

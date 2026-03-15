@@ -283,6 +283,73 @@ class QuotaManager:
 
         # Check if quota exceeded
         if current_usage + increment > quota_limit:
+            # Check if overage billing is enabled for this org
+            if org.has_payment_method and org.overage_enabled:
+                from app.utils.pricing import OVERAGE_RATES_CENTS
+                from app.services.usage_record_service import UsageRecordService
+
+                rate_cents = OVERAGE_RATES_CENTS.get(quota_type, 0)
+                if rate_cents == 0:
+                    # Hard-limited feature, no overage allowed
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail={
+                            "error": "QuotaExceeded",
+                            "message": f"Monthly quota exceeded for {quota_type.value}. This feature does not support overage billing.",
+                            "quota_limit": quota_limit,
+                            "current_usage": current_usage,
+                            "reset_date": QuotaManager._get_reset_date().isoformat(),
+                        },
+                    )
+
+                # Calculate overage units and cost
+                overage_units = (current_usage + increment) - quota_limit
+                overage_cost_cents = overage_units * rate_cents
+
+                # Check overage cap
+                if org.overage_cap_cents is not None:
+                    current_overage = await UsageRecordService.get_current_period_overage(db, organization_id)
+                    if current_overage + overage_cost_cents > org.overage_cap_cents:
+                        raise HTTPException(
+                            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                            detail={
+                                "error": "OverageCapReached",
+                                "message": f"Overage cap reached for {quota_type.value}. Increase your cap or wait for the next billing period.",
+                                "quota_limit": quota_limit,
+                                "current_usage": current_usage,
+                                "overage_cap_cents": org.overage_cap_cents,
+                                "current_overage_cents": current_overage,
+                                "reset_date": QuotaManager._get_reset_date().isoformat(),
+                            },
+                        )
+
+                # Allow the request -- increment usage normally
+                await QuotaManager._increment_usage(db, org, quota_type, increment)
+
+                # Record overage
+                new_total = current_usage + increment
+                await UsageRecordService.record_overage(
+                    db=db,
+                    org_id=organization_id,
+                    metric=quota_type.value,
+                    count=new_total,
+                    rate_cents=rate_cents,
+                    included_in_plan=quota_limit,
+                )
+
+                logger.info(
+                    "quota_overage_allowed",
+                    extra={
+                        "org_id": organization_id,
+                        "quota_type": quota_type.value,
+                        "current_usage": current_usage,
+                        "quota_limit": quota_limit,
+                        "overage_units": overage_units,
+                        "overage_cost_cents": overage_cost_cents,
+                    },
+                )
+                return True
+
             logger.warning(
                 "quota_exceeded",
                 extra={
@@ -404,12 +471,20 @@ class QuotaManager:
             }
 
         remaining = max(0, limit - used)
-        return {
+        headers = {
             "X-Quota-Limit": str(limit),
             "X-Quota-Used": str(used),
             "X-Quota-Remaining": str(remaining),
             "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
         }
+
+        # Add overage headers when usage exceeds the plan limit
+        if used > limit and org.has_payment_method and org.overage_enabled:
+            overage_units = used - limit
+            headers["X-Quota-Overage"] = "true"
+            headers["X-Quota-Overage-Units"] = str(overage_units)
+
+        return headers
 
     @staticmethod
     def _get_reset_date() -> datetime:

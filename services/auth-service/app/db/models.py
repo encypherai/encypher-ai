@@ -222,6 +222,11 @@ class Organization(Base):
     # Team Management
     max_seats = Column(Integer, default=1)  # -1 = unlimited
 
+    # Overage Billing
+    has_payment_method = Column(Boolean, default=False, nullable=False)
+    overage_enabled = Column(Boolean, default=False, nullable=False)
+    overage_cap_cents = Column(Integer, nullable=True)  # NULL = no cap
+
     # Coalition Revenue Sharing
     coalition_member = Column(Boolean, default=True)
     coalition_rev_share = Column(Integer, default=DEFAULT_COALITION_PUBLISHER_PERCENT)

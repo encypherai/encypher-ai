@@ -556,6 +556,77 @@ async def update_organization_tier_internal(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+class InternalBillingPreferencesRequest(BaseModel):
+    has_payment_method: Optional[bool] = None
+    overage_enabled: Optional[bool] = None
+    overage_cap_cents: Optional[int] = None
+
+
+@router.post("/internal/{org_id}/billing-preferences", response_model=InternalTierUpdateResponse, include_in_schema=False)
+async def update_billing_preferences_internal(
+    org_id: str,
+    payload: InternalBillingPreferencesRequest,
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+    db: Session = Depends(get_db),
+):
+    """Update billing preferences for an organization (internal service-to-service)."""
+    if settings.INTERNAL_SERVICE_TOKEN:
+        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+    else:
+        logger.warning("internal_service_token_missing")
+
+    org_service = OrganizationService(db)
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    if payload.has_payment_method is not None:
+        org.has_payment_method = payload.has_payment_method
+    if payload.overage_enabled is not None:
+        # Cannot enable overage without a payment method
+        if payload.overage_enabled and not (payload.has_payment_method if payload.has_payment_method is not None else org.has_payment_method):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot enable overage billing without a payment method on file",
+            )
+        org.overage_enabled = payload.overage_enabled
+    if payload.overage_cap_cents is not None:
+        org.overage_cap_cents = payload.overage_cap_cents
+
+    db.commit()
+    db.refresh(org)
+    return InternalTierUpdateResponse(success=True, data=OrganizationResponse.model_validate(org).model_dump())
+
+
+@router.get("/internal/{org_id}/billing-preferences", response_model=InternalTierUpdateResponse, include_in_schema=False)
+async def get_billing_preferences_internal(
+    org_id: str,
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+    db: Session = Depends(get_db),
+):
+    """Get billing preferences for an organization (internal service-to-service)."""
+    if settings.INTERNAL_SERVICE_TOKEN:
+        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+    else:
+        logger.warning("internal_service_token_missing")
+
+    org_service = OrganizationService(db)
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    return InternalTierUpdateResponse(
+        success=True,
+        data={
+            "has_payment_method": org.has_payment_method,
+            "overage_enabled": org.overage_enabled,
+            "overage_cap_cents": org.overage_cap_cents,
+        },
+    )
+
+
 # ==========================================
 # BULK PROVISION SCHEMAS (TEAM_222)
 # ==========================================
