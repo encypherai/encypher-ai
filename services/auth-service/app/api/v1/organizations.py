@@ -30,6 +30,20 @@ from encypher_commercial_shared.email import EmailConfig
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 logger = logging.getLogger(__name__)
+
+
+def _require_internal_token(internal_token: Optional[str]) -> None:
+    """Fail-closed internal service token validation.
+
+    Rejects the request if INTERNAL_SERVICE_TOKEN is not configured or
+    the provided token does not match. Never allows unauthenticated access.
+    """
+    if not settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Internal service token not configured")
+    if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+
+
 SIGNING_IDENTITY_MODE_ORGANIZATION_NAME = "organization_name"
 SIGNING_IDENTITY_MODE_ORGANIZATION_AND_AUTHOR = "organization_and_author"
 SIGNING_IDENTITY_MODE_CUSTOM = "custom"
@@ -501,11 +515,7 @@ async def get_organization_context_internal(
     internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
     db: Session = Depends(get_db),
 ):
-    if settings.INTERNAL_SERVICE_TOKEN:
-        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
-    else:
-        logger.warning("internal_service_token_missing")
+    _require_internal_token(internal_token)
 
     org_service = OrganizationService(db)
     org = org_service.get_organization(org_id)
@@ -543,11 +553,7 @@ async def update_organization_tier_internal(
     internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
     db: Session = Depends(get_db),
 ):
-    if settings.INTERNAL_SERVICE_TOKEN:
-        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
-    else:
-        logger.warning("internal_service_token_missing")
+    _require_internal_token(internal_token)
 
     org_service = OrganizationService(db)
     try:
@@ -577,11 +583,7 @@ async def update_billing_preferences_internal(
     db: Session = Depends(get_db),
 ):
     """Update billing preferences for an organization (internal service-to-service)."""
-    if settings.INTERNAL_SERVICE_TOKEN:
-        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
-    else:
-        logger.warning("internal_service_token_missing")
+    _require_internal_token(internal_token)
 
     org_service = OrganizationService(db)
     org = org_service.get_organization(org_id)
@@ -613,11 +615,7 @@ async def get_billing_preferences_internal(
     db: Session = Depends(get_db),
 ):
     """Get billing preferences for an organization (internal service-to-service)."""
-    if settings.INTERNAL_SERVICE_TOKEN:
-        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
-    else:
-        logger.warning("internal_service_token_missing")
+    _require_internal_token(internal_token)
 
     org_service = OrganizationService(db)
     org = org_service.get_organization(org_id)
@@ -666,11 +664,7 @@ async def update_add_on_internal(
     db: Session = Depends(get_db),
 ):
     """Activate or deactivate an add-on for an organization (internal service-to-service)."""
-    if settings.INTERNAL_SERVICE_TOKEN:
-        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
-    else:
-        logger.warning("internal_service_token_missing")
+    _require_internal_token(internal_token)
 
     org_service = OrganizationService(db)
     org = org_service.get_organization(org_id)
@@ -776,11 +770,7 @@ async def update_organization_certificate_internal(
     internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
     db: Session = Depends(get_db),
 ):
-    if settings.INTERNAL_SERVICE_TOKEN:
-        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
-    else:
-        logger.warning("internal_service_token_missing")
+    _require_internal_token(internal_token)
 
     org_service = OrganizationService(db)
     org = org_service.get_organization(org_id)
@@ -807,9 +797,7 @@ async def bulk_provision_publishers(
     Creates org + invitation for each publisher. Domain claims are attempted but
     failures do not fail the overall provisioning.
     """
-    if settings.INTERNAL_SERVICE_TOKEN:
-        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    _require_internal_token(internal_token)
 
     org_service = OrganizationService(db)
     provisioned: list[BulkProvisionedResult] = []

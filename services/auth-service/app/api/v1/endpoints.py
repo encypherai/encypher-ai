@@ -1940,9 +1940,10 @@ async def create_user_internal(
 
     Returns 409 if the email is already registered.
     """
-    if settings.INTERNAL_SERVICE_TOKEN:
-        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    if not settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Internal service token not configured")
+    if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
 
     existing = db.query(User).filter(User.email == payload.email).first()
     if existing:
