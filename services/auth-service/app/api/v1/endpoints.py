@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
 import httpx
+from sqlalchemy import literal, select, update
 from sqlalchemy.orm import Session
 from typing import Literal, Optional
 
@@ -80,8 +81,7 @@ class NewsletterSubscriberStatusUpdateRequest(BaseModel):
 # TEAM_006: Super admin check helper
 def verify_super_admin(db: Session, user_id: str) -> bool:
     """Check if a user is a super admin"""
-    user = db.query(User).filter(User.id == user_id).first()
-    return user is not None and user.is_super_admin
+    return AdminService.is_super_admin(db, user_id)
 
 
 def require_super_admin(db: Session, user_id: str) -> None:
@@ -861,7 +861,7 @@ async def verify_token(
         )
 
     # Get user
-    user = AuthService.get_user_by_id(db, payload["sub"])
+    user = AdminService.get_basic_user_profile(db, payload["sub"])
 
     if not user:
         raise HTTPException(
@@ -869,7 +869,7 @@ async def verify_token(
             detail="User not found",
         )
 
-    return ok(UserResponse.model_validate(user).model_dump())
+    return ok(user)
 
 
 @router.get("/health")
@@ -1813,27 +1813,11 @@ async def get_setup_status(
         )
 
     user_id = payload["sub"]
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
+    result = AdminService.get_setup_status(db=db, user_id=user_id)
+    if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    # Look up org for account_type / display_name
-    org = None
-    if user.default_organization_id:
-        org = db.query(Organization).filter(Organization.id == user.default_organization_id).first()
-
-    return ok(
-        {
-            "setup_completed": user.setup_completed_at is not None,
-            "setup_completed_at": user.setup_completed_at.isoformat() if user.setup_completed_at else None,
-            "account_type": org.account_type if org else None,
-            "display_name": org.display_name if org else None,
-            "workflow_category": org.workflow_category if org else None,
-            "dashboard_layout": org.dashboard_layout if org else None,
-            "publisher_platform": org.publisher_platform if org else None,
-            "publisher_platform_custom": org.publisher_platform_custom if org else None,
-        }
-    )
+    return ok(result)
 
 
 @router.post("/setup/complete", response_model=None)
@@ -1858,58 +1842,120 @@ async def complete_setup(
         )
 
     user_id = payload["sub"]
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    if not user.default_organization_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User has no organization",
+        if not user.default_organization_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User has no organization",
+            )
+
+        org = db.query(Organization).filter(Organization.id == user.default_organization_id).first()
+        if not org:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Organization not found",
+            )
+
+        from datetime import datetime as dt
+        from datetime import timezone as tz
+
+        org.account_type = request.account_type.value
+        org.display_name = request.display_name
+        org.dashboard_layout = request.dashboard_layout.value
+        org.workflow_category = request.workflow_category.value
+        org.publisher_platform = request.publisher_platform
+        org.publisher_platform_custom = request.publisher_platform_custom
+        if not org.name:
+            org.name = request.display_name
+
+        user.setup_completed_at = dt.now(tz.utc)
+
+        service = OnboardingService(db)
+        service.complete_step(user_id, "publisher_identity_set")
+
+        db.commit()
+
+        return ok(
+            {
+                "setup_completed": True,
+                "setup_completed_at": user.setup_completed_at.isoformat(),
+                "account_type": org.account_type,
+                "display_name": org.display_name,
+                "workflow_category": org.workflow_category,
+                "dashboard_layout": org.dashboard_layout,
+                "publisher_platform": org.publisher_platform,
+                "publisher_platform_custom": org.publisher_platform_custom,
+            }
         )
+    except HTTPException:
+        raise
+    except Exception:
+        user_columns = AdminService._table_columns(db, User.__tablename__)
+        org_columns = AdminService._table_columns(db, Organization.__tablename__)
 
-    org = db.query(Organization).filter(Organization.id == user.default_organization_id).first()
-    if not org:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Organization not found",
+        user_query = select(
+            User.id.label("id"),
+            (User.default_organization_id if "default_organization_id" in user_columns else literal(None)).label("default_organization_id"),
+        ).where(User.id == user_id)
+        user_row = db.execute(user_query).mappings().first()
+        if not user_row:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        if not user_row["default_organization_id"]:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User has no organization")
+
+        org_query = select(
+            Organization.id.label("id"),
+            (Organization.name if "name" in org_columns else literal(None)).label("name"),
+        ).where(Organization.id == user_row["default_organization_id"])
+        org_row = db.execute(org_query).mappings().first()
+        if not org_row:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization not found")
+
+        org_update_values = {}
+        if "account_type" in org_columns:
+            org_update_values["account_type"] = request.account_type.value
+        if "display_name" in org_columns:
+            org_update_values["display_name"] = request.display_name
+        if "dashboard_layout" in org_columns:
+            org_update_values["dashboard_layout"] = request.dashboard_layout.value
+        if "workflow_category" in org_columns:
+            org_update_values["workflow_category"] = request.workflow_category.value
+        if "publisher_platform" in org_columns:
+            org_update_values["publisher_platform"] = request.publisher_platform
+        if "publisher_platform_custom" in org_columns:
+            org_update_values["publisher_platform_custom"] = request.publisher_platform_custom
+        if "name" in org_columns and not org_row["name"]:
+            org_update_values["name"] = request.display_name
+        if org_update_values:
+            db.execute(update(Organization).where(Organization.id == user_row["default_organization_id"]).values(**org_update_values))
+
+        from datetime import datetime as dt
+        from datetime import timezone as tz
+
+        setup_completed_at = dt.now(tz.utc)
+        if "setup_completed_at" in user_columns:
+            db.execute(update(User).where(User.id == user_id).values(setup_completed_at=setup_completed_at))
+
+        service = OnboardingService(db)
+        service.complete_step(user_id, "publisher_identity_set")
+        db.commit()
+
+        return ok(
+            {
+                "setup_completed": True,
+                "setup_completed_at": setup_completed_at.isoformat(),
+                "account_type": request.account_type.value if "account_type" in org_columns else None,
+                "display_name": request.display_name if "display_name" in org_columns else None,
+                "workflow_category": request.workflow_category.value if "workflow_category" in org_columns else None,
+                "dashboard_layout": request.dashboard_layout.value if "dashboard_layout" in org_columns else None,
+                "publisher_platform": request.publisher_platform if "publisher_platform" in org_columns else None,
+                "publisher_platform_custom": request.publisher_platform_custom if "publisher_platform_custom" in org_columns else None,
+            }
         )
-
-    from datetime import datetime as dt
-    from datetime import timezone as tz
-
-    # Update organization identity
-    org.account_type = request.account_type.value
-    org.display_name = request.display_name
-    org.dashboard_layout = request.dashboard_layout.value
-    org.workflow_category = request.workflow_category.value
-    org.publisher_platform = request.publisher_platform
-    org.publisher_platform_custom = request.publisher_platform_custom
-    # Also set the org name if it's still blank (personal orgs start with name="")
-    if not org.name:
-        org.name = request.display_name
-
-    # Mark user setup as complete
-    user.setup_completed_at = dt.now(tz.utc)
-
-    # Mark the onboarding step
-    service = OnboardingService(db)
-    service.complete_step(user_id, "publisher_identity_set")
-
-    db.commit()
-
-    return ok(
-        {
-            "setup_completed": True,
-            "setup_completed_at": user.setup_completed_at.isoformat(),
-            "account_type": org.account_type,
-            "display_name": org.display_name,
-            "workflow_category": org.workflow_category,
-            "dashboard_layout": org.dashboard_layout,
-            "publisher_platform": org.publisher_platform,
-            "publisher_platform_custom": org.publisher_platform_custom,
-        }
-    )
 
 
 # ============================================================

@@ -12,6 +12,7 @@ import logging
 from datetime import datetime, timezone
 from typing import List, Optional
 
+from sqlalchemy import inspect, literal, select
 from sqlalchemy.orm import Session
 
 from app.db.models import User, ApiAccessStatus
@@ -58,6 +59,166 @@ class ApiAccessService:
     def __init__(self, db: Session):
         self.db = db
 
+    def _table_columns(self, table_name: str) -> set[str]:
+        return {column["name"] for column in inspect(self.db.get_bind()).get_columns(table_name)}
+
+    async def get_api_access_status(self, user_id: str) -> ApiAccessStatusResponse:
+        """
+        Get the current API access status for a user.
+
+        Args:
+            user_id: The user's ID
+
+        Returns:
+            ApiAccessStatusResponse with current status and details
+
+        Raises:
+            ValueError: If user not found
+        """
+        query_failed = False
+        try:
+            user = self.db.query(User).filter(User.id == user_id).first()
+        except Exception:
+            query_failed = True
+            user = None
+
+        if not query_failed:
+            if not user:
+                raise ValueError("User not found")
+
+            status = ApiAccessStatusEnum(user.api_access_status)
+
+            messages = {
+                ApiAccessStatusEnum.NOT_REQUESTED: "You have not requested API access yet.",
+                ApiAccessStatusEnum.PENDING: "Your API access request is pending review.",
+                ApiAccessStatusEnum.APPROVED: "Your API access has been approved. You can now generate API keys.",
+                ApiAccessStatusEnum.DENIED: "Your API access request was denied. You may submit a new request with more details.",
+                ApiAccessStatusEnum.SUSPENDED: (
+                    "Your API access has been suspended. If you believe this is an error, please contact support at support@encypherai.com."
+                ),
+            }
+
+            return ApiAccessStatusResponse(
+                status=status,
+                requested_at=user.api_access_requested_at,
+                decided_at=user.api_access_decided_at,
+                use_case=user.api_access_use_case,
+                denial_reason=user.api_access_denial_reason,
+                message=messages.get(status),
+            )
+
+        user_columns = self._table_columns(User.__tablename__)
+        user_query = select(
+            User.id.label("id"),
+            (User.api_access_status if "api_access_status" in user_columns else literal(ApiAccessStatusEnum.APPROVED.value)).label(
+                "api_access_status"
+            ),
+            (User.api_access_requested_at if "api_access_requested_at" in user_columns else literal(None)).label("api_access_requested_at"),
+            (User.api_access_decided_at if "api_access_decided_at" in user_columns else literal(None)).label("api_access_decided_at"),
+            (User.api_access_use_case if "api_access_use_case" in user_columns else literal(None)).label("api_access_use_case"),
+            (User.api_access_denial_reason if "api_access_denial_reason" in user_columns else literal(None)).label("api_access_denial_reason"),
+        ).where(User.id == user_id)
+        user_row = self.db.execute(user_query).mappings().first()
+
+        if not user_row:
+            raise ValueError("User not found")
+
+        status = ApiAccessStatusEnum(user_row["api_access_status"] or ApiAccessStatusEnum.APPROVED.value)
+
+        messages = {
+            ApiAccessStatusEnum.NOT_REQUESTED: "You have not requested API access yet.",
+            ApiAccessStatusEnum.PENDING: "Your API access request is pending review.",
+            ApiAccessStatusEnum.APPROVED: "Your API access has been approved. You can now generate API keys.",
+            ApiAccessStatusEnum.DENIED: "Your API access request was denied. You may submit a new request with more details.",
+            ApiAccessStatusEnum.SUSPENDED: (
+                "Your API access has been suspended. If you believe this is an error, please contact support at support@encypherai.com."
+            ),
+        }
+
+        return ApiAccessStatusResponse(
+            status=status,
+            requested_at=user_row["api_access_requested_at"],
+            decided_at=user_row["api_access_decided_at"],
+            use_case=user_row["api_access_use_case"],
+            denial_reason=user_row["api_access_denial_reason"],
+            message=messages.get(status),
+        )
+
+    async def list_pending_requests(self) -> List[PendingAccessRequest]:
+        """
+        List all pending API access requests for admin review.
+
+        Returns:
+            List of PendingAccessRequest objects, ordered by request date
+        """
+        query_failed = False
+        try:
+            pending_users = (
+                self.db.query(User).filter(User.api_access_status == ApiAccessStatus.PENDING.value).order_by(User.api_access_requested_at.asc()).all()
+            )
+        except Exception:
+            query_failed = True
+            pending_users = []
+
+        if not query_failed:
+            return [
+                PendingAccessRequest(
+                    user_id=user.id,
+                    email=user.email,
+                    name=user.name,
+                    use_case=user.api_access_use_case or "",
+                    requested_at=user.api_access_requested_at or datetime.now(timezone.utc),
+                )
+                for user in pending_users
+            ]
+
+        user_columns = self._table_columns(User.__tablename__)
+        required_columns = {"id", "email", "name", "api_access_status"}
+        if not required_columns.issubset(user_columns):
+            return []
+
+        query = select(
+            User.id.label("id"),
+            User.email.label("email"),
+            User.name.label("name"),
+            (User.api_access_use_case if "api_access_use_case" in user_columns else literal(None)).label("api_access_use_case"),
+            (User.api_access_requested_at if "api_access_requested_at" in user_columns else literal(None)).label("api_access_requested_at"),
+        ).where(User.api_access_status == ApiAccessStatus.PENDING.value)
+        if "api_access_requested_at" in user_columns:
+            query = query.order_by(User.api_access_requested_at.asc())
+
+        rows = self.db.execute(query).mappings().all()
+
+        return [
+            PendingAccessRequest(
+                user_id=row["id"],
+                email=row["email"],
+                name=row["name"],
+                use_case=row["api_access_use_case"] or "",
+                requested_at=row["api_access_requested_at"] or datetime.now(timezone.utc),
+            )
+            for row in rows
+        ]
+
+    async def is_api_access_approved(self, user_id: str) -> bool:
+        """
+        Quick check if a user has approved API access.
+
+        Used by key-service to gate API key generation.
+
+        Args:
+            user_id: The user's ID
+
+        Returns:
+            True if approved, False otherwise
+        """
+        user = self.db.query(User).filter(User.id == user_id).first()
+
+        if not user:
+            return False
+
+        return user.api_access_status == ApiAccessStatus.APPROVED.value
+
     async def set_api_access_status(self, user_id: str, new_status: str, admin_user_id: str, reason: Optional[str] = None) -> ApiAccessStatusResponse:
         """
         TEAM_164: Admin directly sets a user's API access status.
@@ -81,7 +242,6 @@ class ApiAccessService:
         if not user:
             raise ValueError("User not found")
 
-        # Validate the status value
         try:
             status_enum = ApiAccessStatus(new_status)
         except ValueError:
@@ -104,7 +264,6 @@ class ApiAccessService:
 
         logger.info(f"TEAM_164: Admin {admin_user_id} set API access status for user {user_id}: {previous_status} -> {new_status} (reason: {reason})")
 
-        # Build message based on new status
         messages = {
             ApiAccessStatusEnum.NOT_REQUESTED: "API access status reset.",
             ApiAccessStatusEnum.PENDING: "API access status set to pending.",
@@ -143,33 +302,24 @@ class ApiAccessService:
 
         current_status = user.api_access_status
 
-        # TEAM_164: Suspended users cannot request API access
         if current_status == ApiAccessStatus.SUSPENDED.value:
             raise ValueError("Your API access has been suspended. If you believe this is an error, please contact support at support@encypherai.com.")
 
-        # Check if already pending
         if current_status == ApiAccessStatus.PENDING.value:
             raise ValueError("API access request is already pending review")
 
-        # Check if already approved
         if current_status == ApiAccessStatus.APPROVED.value:
             raise ValueError("API access is already approved")
 
-        # Allow re-request if denied (user can try again with better use case)
-        # or if not_requested (first time)
-
-        # Update user record
         user.api_access_status = ApiAccessStatus.PENDING.value
         user.api_access_use_case = use_case
         user.api_access_requested_at = datetime.now(timezone.utc)
-        # Clear any previous denial
         user.api_access_decided_at = None
         user.api_access_decided_by = None
         user.api_access_denial_reason = None
 
         self.db.commit()
 
-        # TEAM_006: Notify super admins of new request
         self._notify_admins_of_new_request(user)
 
         return ApiAccessStatusResponse(
@@ -189,12 +339,10 @@ class ApiAccessService:
             config = _get_email_config()
             requested_at = user.api_access_requested_at.strftime("%B %d, %Y at %I:%M %p UTC") if user.api_access_requested_at else "Just now"
 
-            # Always send to support email if configured
             recipients = []
             if config.support_email:
                 recipients.append(config.support_email)
 
-            # Also send to super admins if any exist
             super_admins = self.db.query(User).filter(User.is_super_admin == True).all()
             for admin in super_admins:
                 if admin.email not in recipients:
@@ -221,47 +369,6 @@ class ApiAccessService:
         except Exception as e:
             logger.error(f"Failed to notify admins of new request: {e}")
 
-    async def get_api_access_status(self, user_id: str) -> ApiAccessStatusResponse:
-        """
-        Get the current API access status for a user.
-
-        Args:
-            user_id: The user's ID
-
-        Returns:
-            ApiAccessStatusResponse with current status and details
-
-        Raises:
-            ValueError: If user not found
-        """
-        user = self.db.query(User).filter(User.id == user_id).first()
-
-        if not user:
-            raise ValueError("User not found")
-
-        status = ApiAccessStatusEnum(user.api_access_status)
-
-        # Build appropriate message based on status
-        messages = {
-            ApiAccessStatusEnum.NOT_REQUESTED: "You have not requested API access yet.",
-            ApiAccessStatusEnum.PENDING: "Your API access request is pending review.",
-            ApiAccessStatusEnum.APPROVED: "Your API access has been approved. You can now generate API keys.",
-            ApiAccessStatusEnum.DENIED: "Your API access request was denied. You may submit a new request with more details.",
-            # TEAM_164: Suspended users see a contact-support message
-            ApiAccessStatusEnum.SUSPENDED: (
-                "Your API access has been suspended. If you believe this is an error, please contact support at support@encypherai.com."
-            ),
-        }
-
-        return ApiAccessStatusResponse(
-            status=status,
-            requested_at=user.api_access_requested_at,
-            decided_at=user.api_access_decided_at,
-            use_case=user.api_access_use_case,
-            denial_reason=user.api_access_denial_reason,
-            message=messages.get(status),
-        )
-
     async def approve_api_access(self, user_id: str, admin_user_id: str) -> ApiAccessStatusResponse:
         """
         Admin approves a user's API access request.
@@ -287,11 +394,10 @@ class ApiAccessService:
         user.api_access_status = ApiAccessStatus.APPROVED.value
         user.api_access_decided_at = datetime.now(timezone.utc)
         user.api_access_decided_by = admin_user_id
-        user.api_access_denial_reason = None  # Clear any previous denial reason
+        user.api_access_denial_reason = None
 
         self.db.commit()
 
-        # TEAM_006: Send approval email to user
         self._send_approval_email(user)
 
         return ApiAccessStatusResponse(
@@ -350,7 +456,6 @@ class ApiAccessService:
 
         self.db.commit()
 
-        # TEAM_006: Send denial email to user
         self._send_denial_email(user, reason)
 
         return ApiAccessStatusResponse(
@@ -380,44 +485,3 @@ class ApiAccessService:
             logger.info(f"Sent denial email to {user.email}")
         except Exception as e:
             logger.error(f"Failed to send denial email to {user.email}: {e}")
-
-    async def list_pending_requests(self) -> List[PendingAccessRequest]:
-        """
-        List all pending API access requests for admin review.
-
-        Returns:
-            List of PendingAccessRequest objects, ordered by request date
-        """
-        pending_users = (
-            self.db.query(User).filter(User.api_access_status == ApiAccessStatus.PENDING.value).order_by(User.api_access_requested_at.asc()).all()
-        )
-
-        return [
-            PendingAccessRequest(
-                user_id=user.id,
-                email=user.email,
-                name=user.name,
-                use_case=user.api_access_use_case or "",
-                requested_at=user.api_access_requested_at or datetime.now(timezone.utc),
-            )
-            for user in pending_users
-        ]
-
-    async def is_api_access_approved(self, user_id: str) -> bool:
-        """
-        Quick check if a user has approved API access.
-
-        Used by key-service to gate API key generation.
-
-        Args:
-            user_id: The user's ID
-
-        Returns:
-            True if approved, False otherwise
-        """
-        user = self.db.query(User).filter(User.id == user_id).first()
-
-        if not user:
-            return False
-
-        return user.api_access_status == ApiAccessStatus.APPROVED.value

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 import httpx
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, inspect, literal, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -17,6 +17,10 @@ ANALYTICS_SERVICE_URL = "http://analytics-service:8003"
 
 class AdminService:
     """Service for admin dashboard data."""
+
+    @staticmethod
+    def _table_columns(db: Session, table_name: str) -> set[str]:
+        return {column["name"] for column in inspect(db.get_bind()).get_columns(table_name)}
 
     @staticmethod
     def get_platform_stats(db: Session) -> Dict[str, Any]:
@@ -65,8 +69,37 @@ class AdminService:
         page: int = 1,
         page_size: int = 50,
     ) -> Dict[str, Any]:
-        query = select(User, Organization).join(Organization, Organization.id == User.default_organization_id, isouter=True)
-        count_query = select(func.count(User.id))
+        user_columns = AdminService._table_columns(db, User.__tablename__)
+        org_columns = AdminService._table_columns(db, Organization.__tablename__)
+        has_default_organization = "default_organization_id" in user_columns
+
+        query = select(
+            User.id.label("id"),
+            User.email.label("email"),
+            User.name.label("name"),
+            User.is_active.label("is_active"),
+            User.created_at.label("created_at"),
+            User.last_login_at.label("last_login_at"),
+            (User.default_organization_id if has_default_organization else literal(None)).label("default_organization_id"),
+            (User.api_access_status if "api_access_status" in user_columns else literal("not_requested")).label("api_access_status"),
+            (Organization.id if has_default_organization else literal(None)).label("organization_id"),
+            ((Organization.name if "name" in org_columns else literal(None)) if has_default_organization else literal(None)).label(
+                "organization_name"
+            ),
+            ((Organization.tier if "tier" in org_columns else literal("starter")) if has_default_organization else literal("starter")).label("tier"),
+            (
+                (Organization.monthly_api_usage if "monthly_api_usage" in org_columns else literal(0)) if has_default_organization else literal(0)
+            ).label("api_calls_this_month"),
+            (
+                (Organization.monthly_api_limit if "monthly_api_limit" in org_columns else literal(10000))
+                if has_default_organization
+                else literal(10000)
+            ).label("monthly_quota"),
+        ).select_from(User)
+        if has_default_organization:
+            query = query.join(Organization, Organization.id == User.default_organization_id, isouter=True)
+
+        count_query = select(func.count(User.id)).select_from(User)
 
         if search:
             search_filter = or_(
@@ -77,8 +110,9 @@ class AdminService:
             query = query.where(search_filter)
             count_query = count_query.where(search_filter)
 
-        if tier:
+        if tier and has_default_organization and "tier" in org_columns:
             query = query.where(Organization.tier == tier)
+            count_query = count_query.join(Organization, Organization.id == User.default_organization_id, isouter=True)
             count_query = count_query.where(Organization.tier == tier)
 
         total = db.execute(count_query).scalar() or 0
@@ -86,24 +120,24 @@ class AdminService:
         offset = (page - 1) * page_size
         query = query.order_by(User.created_at.desc()).offset(offset).limit(page_size)
 
-        rows = db.execute(query).all()
+        rows = db.execute(query).mappings().all()
         users = []
-        for user, org in rows:
+        for row in rows:
             users.append(
                 {
-                    "id": user.id,
-                    "email": user.email,
-                    "name": user.name or "",
+                    "id": row["id"],
+                    "email": row["email"],
+                    "name": row["name"] or "",
                     "role": "member",
-                    "tier": org.tier if org else "starter",
-                    "status": "active" if user.is_active else "suspended",
-                    "organization_id": org.id if org else None,
-                    "organization_name": org.name if org else None,
-                    "api_access_status": user.api_access_status or "not_requested",  # TEAM_164
-                    "api_calls_this_month": org.monthly_api_usage if org else 0,
-                    "monthly_quota": org.monthly_api_limit if org else 10000,
-                    "created_at": user.created_at.isoformat() if user.created_at else None,
-                    "last_active_at": user.last_login_at.isoformat() if user.last_login_at else None,
+                    "tier": row["tier"] or "starter",
+                    "status": "active" if row["is_active"] else "suspended",
+                    "organization_id": row["organization_id"],
+                    "organization_name": row["organization_name"],
+                    "api_access_status": row["api_access_status"] or "not_requested",
+                    "api_calls_this_month": row["api_calls_this_month"] or 0,
+                    "monthly_quota": row["monthly_quota"] or 10000,
+                    "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+                    "last_active_at": row["last_login_at"].isoformat() if row["last_login_at"] else None,
                 }
             )
 
@@ -116,28 +150,138 @@ class AdminService:
         }
 
     @staticmethod
+    def get_setup_status(db: Session, user_id: str) -> Dict[str, Any] | None:
+        user_columns = AdminService._table_columns(db, User.__tablename__)
+        org_columns = AdminService._table_columns(db, Organization.__tablename__)
+        has_default_organization = "default_organization_id" in user_columns
+        has_setup_completed_at = "setup_completed_at" in user_columns
+
+        user_query = select(
+            User.id.label("id"),
+            (User.default_organization_id if has_default_organization else literal(None)).label("default_organization_id"),
+            (User.setup_completed_at if has_setup_completed_at else literal(None)).label("setup_completed_at"),
+        ).where(User.id == user_id)
+
+        user_row = db.execute(user_query).mappings().first()
+        if not user_row:
+            return None
+
+        org_row = None
+        if user_row["default_organization_id"]:
+            org_query = select(
+                (Organization.account_type if "account_type" in org_columns else literal(None)).label("account_type"),
+                (Organization.display_name if "display_name" in org_columns else literal(None)).label("display_name"),
+                (Organization.workflow_category if "workflow_category" in org_columns else literal(None)).label("workflow_category"),
+                (Organization.dashboard_layout if "dashboard_layout" in org_columns else literal(None)).label("dashboard_layout"),
+                (Organization.publisher_platform if "publisher_platform" in org_columns else literal(None)).label("publisher_platform"),
+                (Organization.publisher_platform_custom if "publisher_platform_custom" in org_columns else literal(None)).label(
+                    "publisher_platform_custom"
+                ),
+            ).where(Organization.id == user_row["default_organization_id"])
+            org_row = db.execute(org_query).mappings().first()
+
+        return {
+            "setup_completed": user_row["setup_completed_at"] is not None,
+            "setup_completed_at": user_row["setup_completed_at"].isoformat() if user_row["setup_completed_at"] else None,
+            "account_type": org_row["account_type"] if org_row else None,
+            "display_name": org_row["display_name"] if org_row else None,
+            "workflow_category": org_row["workflow_category"] if org_row else None,
+            "dashboard_layout": org_row["dashboard_layout"] if org_row else None,
+            "publisher_platform": org_row["publisher_platform"] if org_row else None,
+            "publisher_platform_custom": org_row["publisher_platform_custom"] if org_row else None,
+        }
+
+    @staticmethod
+    def is_super_admin(db: Session, user_id: str) -> bool:
+        user_columns = AdminService._table_columns(db, User.__tablename__)
+        if "is_super_admin" not in user_columns:
+            return False
+
+        query = select(
+            User.id.label("id"),
+            User.is_super_admin.label("is_super_admin"),
+        ).where(User.id == user_id)
+        row = db.execute(query).mappings().first()
+        return bool(row and row["is_super_admin"])
+
+    @staticmethod
+    def get_basic_user_profile(db: Session, user_id: str) -> Dict[str, Any] | None:
+        user_columns = AdminService._table_columns(db, User.__tablename__)
+        query = select(
+            User.id.label("id"),
+            User.email.label("email"),
+            User.name.label("name"),
+            User.created_at.label("created_at"),
+            User.is_active.label("is_active"),
+            (User.email_verified if "email_verified" in user_columns else literal(False)).label("email_verified"),
+            (User.is_super_admin if "is_super_admin" in user_columns else literal(False)).label("is_super_admin"),
+            (User.default_organization_id if "default_organization_id" in user_columns else literal(None)).label("default_organization_id"),
+        ).where(User.id == user_id)
+        row = db.execute(query).mappings().first()
+        if not row:
+            return None
+
+        return {
+            "id": row["id"],
+            "email": row["email"],
+            "name": row["name"],
+            "created_at": row["created_at"],
+            "is_active": bool(row["is_active"]),
+            "email_verified": bool(row["email_verified"]),
+            "is_super_admin": bool(row["is_super_admin"]),
+            "default_organization_id": row["default_organization_id"],
+        }
+
+    @staticmethod
     def search_organizations(
         db: Session,
         query: str,
         limit: int = 10,
     ) -> list[Dict[str, Any]]:
+        org_columns = AdminService._table_columns(db, Organization.__tablename__)
+        selectable_columns = {
+            "id",
+            "name",
+            "email",
+            "tier",
+            "slug",
+            "created_at",
+        }
+        if not {"id", "name", "email"}.issubset(org_columns):
+            return []
+
         search_filter = or_(
             Organization.name.ilike(f"%{query}%"),
             Organization.email.ilike(f"%{query}%"),
             Organization.id.ilike(f"%{query}%"),
-            Organization.slug.ilike(f"%{query}%"),
+            (Organization.slug.ilike(f"%{query}%") if "slug" in org_columns else literal(False)),
         )
-        orgs = db.query(Organization).filter(search_filter).order_by(Organization.created_at.desc()).limit(limit).all()
+        order_column = (
+            Organization.created_at.desc() if "created_at" in selectable_columns and "created_at" in org_columns else Organization.name.asc()
+        )
+        org_query = (
+            select(
+                Organization.id.label("id"),
+                Organization.name.label("name"),
+                Organization.email.label("email"),
+                (Organization.tier if "tier" in org_columns else literal("free")).label("tier"),
+                (Organization.slug if "slug" in org_columns else literal(None)).label("slug"),
+            )
+            .where(search_filter)
+            .order_by(order_column)
+            .limit(limit)
+        )
+        rows = db.execute(org_query).mappings().all()
 
         return [
             {
-                "id": org.id,
-                "name": org.name,
-                "email": org.email,
-                "tier": org.tier,
-                "slug": org.slug,
+                "id": row["id"],
+                "name": row["name"],
+                "email": row["email"],
+                "tier": row["tier"],
+                "slug": row["slug"],
             }
-            for org in orgs
+            for row in rows
         ]
 
     @staticmethod

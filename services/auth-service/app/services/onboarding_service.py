@@ -8,8 +8,10 @@ milestone tracking stored in the database.
 
 import logging
 from datetime import datetime, timezone
+from types import SimpleNamespace
 from typing import Dict, List, Optional
 
+from sqlalchemy import inspect, literal, select, update
 from sqlalchemy.orm import Session
 
 from app.db.models import Organization, User
@@ -76,12 +78,51 @@ class OnboardingService:
     def __init__(self, db: Session):
         self.db = db
 
-    def _get_organization(self, user: User) -> Optional[Organization]:
-        if not user.default_organization_id:
-            return None
-        return self.db.query(Organization).filter(Organization.id == user.default_organization_id).first()
+    def _table_columns(self, table_name: str) -> set[str]:
+        return {column["name"] for column in inspect(self.db.get_bind()).get_columns(table_name)}
 
-    def _tailor_step_definition(self, step_def: Dict, user: User, org: Optional[Organization]) -> Dict:
+    def _get_organization_context(self, organization_id: Optional[str]) -> Optional[SimpleNamespace]:
+        if not organization_id:
+            return None
+
+        org_columns = self._table_columns(Organization.__tablename__)
+        org_query = select(
+            (Organization.account_type if "account_type" in org_columns else literal(None)).label("account_type"),
+            (Organization.workflow_category if "workflow_category" in org_columns else literal(None)).label("workflow_category"),
+            (Organization.dashboard_layout if "dashboard_layout" in org_columns else literal(None)).label("dashboard_layout"),
+            (Organization.publisher_platform if "publisher_platform" in org_columns else literal(None)).label("publisher_platform"),
+        ).where(Organization.id == organization_id)
+        org_row = self.db.execute(org_query).mappings().first()
+        if not org_row:
+            return None
+
+        return SimpleNamespace(
+            account_type=org_row["account_type"],
+            workflow_category=org_row["workflow_category"],
+            dashboard_layout=org_row["dashboard_layout"],
+            publisher_platform=org_row["publisher_platform"],
+        )
+
+    def _get_status_user(self, user_id: str) -> Optional[SimpleNamespace]:
+        user_columns = self._table_columns(User.__tablename__)
+        user_query = select(
+            User.id.label("id"),
+            (User.default_organization_id if "default_organization_id" in user_columns else literal(None)).label("default_organization_id"),
+            (User.onboarding_checklist if "onboarding_checklist" in user_columns else literal(None)).label("onboarding_checklist"),
+            (User.onboarding_completed_at if "onboarding_completed_at" in user_columns else literal(None)).label("onboarding_completed_at"),
+        ).where(User.id == user_id)
+        user_row = self.db.execute(user_query).mappings().first()
+        if not user_row:
+            return None
+
+        return SimpleNamespace(
+            id=user_row["id"],
+            default_organization_id=user_row["default_organization_id"],
+            onboarding_checklist=user_row["onboarding_checklist"] or {},
+            onboarding_completed_at=user_row["onboarding_completed_at"],
+        )
+
+    def _tailor_step_definition(self, step_def: Dict, user: SimpleNamespace, org: Optional[SimpleNamespace]) -> Dict:
         tailored = dict(step_def)
 
         workflow = None
@@ -170,13 +211,22 @@ class OnboardingService:
 
     def get_onboarding_status(self, user_id: str) -> OnboardingStatusResponse:
         """Get the full onboarding checklist status for a user."""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        query_failed = False
+        try:
+            user = self.db.query(User).filter(User.id == user_id).first()
+        except Exception:
+            query_failed = True
+            user = None
+
+        if query_failed:
+            user = self._get_status_user(user_id)
+
         if not user:
             raise ValueError("User not found")
 
         checklist: Dict = user.onboarding_checklist or {}
         dismissed = checklist.get("_dismissed", False)
-        org = self._get_organization(user)
+        org = self._get_organization_context(user.default_organization_id)
 
         steps: List[OnboardingStepStatus] = []
         completed_count = 0
@@ -224,39 +274,89 @@ class OnboardingService:
         if step_id not in VALID_STEP_IDS:
             raise ValueError(f"Invalid onboarding step: {step_id}")
 
-        user = self.db.query(User).filter(User.id == user_id).first()
+        query_failed = False
+        try:
+            user = self.db.query(User).filter(User.id == user_id).first()
+        except Exception:
+            query_failed = True
+            user = None
+
+        if not query_failed:
+            if not user:
+                raise ValueError("User not found")
+
+            checklist: Dict = dict(user.onboarding_checklist or {})
+
+            if not checklist.get(step_id, {}).get("completed_at"):
+                checklist[step_id] = {
+                    "completed_at": datetime.now(timezone.utc).isoformat(),
+                }
+                user.onboarding_checklist = checklist
+
+                completed_steps = sum(1 for s in ONBOARDING_STEPS if checklist.get(s["step_id"], {}).get("completed_at"))
+                if completed_steps == len(ONBOARDING_STEPS) and not user.onboarding_completed_at:
+                    user.onboarding_completed_at = datetime.now(timezone.utc)
+
+                self.db.commit()
+                logger.info(f"TEAM_191: User {user_id} completed onboarding step: {step_id}")
+
+            return self.get_onboarding_status(user_id)
+
+        user = self._get_status_user(user_id)
         if not user:
             raise ValueError("User not found")
 
-        checklist: Dict = dict(user.onboarding_checklist or {})
-
-        # Only set if not already completed (idempotent)
+        user_columns = self._table_columns(User.__tablename__)
+        checklist = dict(user.onboarding_checklist or {})
         if not checklist.get(step_id, {}).get("completed_at"):
-            checklist[step_id] = {
-                "completed_at": datetime.now(timezone.utc).isoformat(),
-            }
-            user.onboarding_checklist = checklist
-
-            # Check if all steps are now complete
+            now = datetime.now(timezone.utc)
+            checklist[step_id] = {"completed_at": now.isoformat()}
             completed_steps = sum(1 for s in ONBOARDING_STEPS if checklist.get(s["step_id"], {}).get("completed_at"))
-            if completed_steps == len(ONBOARDING_STEPS) and not user.onboarding_completed_at:
-                user.onboarding_completed_at = datetime.now(timezone.utc)
 
-            self.db.commit()
-            logger.info(f"TEAM_191: User {user_id} completed onboarding step: {step_id}")
+            update_values: Dict[str, object] = {}
+            if "onboarding_checklist" in user_columns:
+                update_values["onboarding_checklist"] = checklist
+            if "onboarding_completed_at" in user_columns and completed_steps == len(ONBOARDING_STEPS) and not user.onboarding_completed_at:
+                update_values["onboarding_completed_at"] = now
+
+            if update_values:
+                self.db.execute(update(User).where(User.id == user_id).values(**update_values))
+                self.db.commit()
+                logger.info(f"TEAM_191: User {user_id} completed onboarding step: {step_id}")
 
         return self.get_onboarding_status(user_id)
 
     def dismiss_checklist(self, user_id: str) -> OnboardingStatusResponse:
         """Dismiss the onboarding checklist (user chose to hide it)."""
-        user = self.db.query(User).filter(User.id == user_id).first()
+        query_failed = False
+        try:
+            user = self.db.query(User).filter(User.id == user_id).first()
+        except Exception:
+            query_failed = True
+            user = None
+
+        if not query_failed:
+            if not user:
+                raise ValueError("User not found")
+
+            checklist: Dict = dict(user.onboarding_checklist or {})
+            checklist["_dismissed"] = True
+            user.onboarding_checklist = checklist
+            self.db.commit()
+
+            logger.info(f"TEAM_191: User {user_id} dismissed onboarding checklist")
+            return self.get_onboarding_status(user_id)
+
+        user = self._get_status_user(user_id)
         if not user:
             raise ValueError("User not found")
 
-        checklist: Dict = dict(user.onboarding_checklist or {})
+        user_columns = self._table_columns(User.__tablename__)
+        checklist = dict(user.onboarding_checklist or {})
         checklist["_dismissed"] = True
-        user.onboarding_checklist = checklist
-        self.db.commit()
+        if "onboarding_checklist" in user_columns:
+            self.db.execute(update(User).where(User.id == user_id).values(onboarding_checklist=checklist))
+            self.db.commit()
 
         logger.info(f"TEAM_191: User {user_id} dismissed onboarding checklist")
         return self.get_onboarding_status(user_id)
