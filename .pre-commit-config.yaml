@@ -35,7 +35,7 @@ repos:
     # ── Pre-push: Next.js builds (catches SSG errors, type errors, lint errors) ──
     -   id: nextjs-build-dashboard
         name: nextjs-build-dashboard
-        entry: bash -lc 'cd apps/dashboard && (rm -rf .next || sudo rm -rf .next) 2>/dev/null; npm run build'
+        entry: bash -lc 'docker stop encypher-dashboard 2>/dev/null; cd apps/dashboard && (rm -rf .next || sudo rm -rf .next) 2>/dev/null; npm run build; EXIT=$?; docker start encypher-dashboard 2>/dev/null; exit $EXIT'
         language: system
         files: ^apps/dashboard/
         pass_filenames: false

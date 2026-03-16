@@ -5,16 +5,16 @@ FROM node:20-alpine
 RUN apk add --no-cache python3 make g++ pkgconfig \
     cairo-dev pango-dev libjpeg-turbo-dev giflib-dev pixman-dev
 
-# Run as non-root to avoid bind-mount ownership conflicts with host
-RUN addgroup -g 1000 -S appuser || true && \
-    adduser -u 1000 -S appuser -G appuser || true
-USER 1000
-
 WORKDIR /app
+RUN chown node:node /app
+
+# Install dependencies as non-root (uid 1000 = node user)
+# Prevents bind-mount ownership conflicts with the host
+USER node
 
 # Install dependencies first (cached layer)
-COPY package.json package-lock.json* .npmrc* ./
-COPY design-system ./design-system/
+COPY --chown=node:node package.json package-lock.json* .npmrc* ./
+COPY --chown=node:node design-system ./design-system/
 
 RUN npm install
 
