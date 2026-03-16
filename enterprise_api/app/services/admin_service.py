@@ -151,7 +151,7 @@ class AdminService:
                         "email": org.email,
                         "name": org.name,
                         "tier": org.tier,
-                        "status": "active",  # TODO: Add status field to Organization
+                        "status": getattr(org, "status", "active"),
                         "organization_id": org.id,
                         "organization_name": org.name,
                         "api_calls_this_month": org.api_calls_this_month or 0,
@@ -280,9 +280,9 @@ class AdminService:
         """
         Update a user's status (suspend/activate).
 
-        Note: This requires adding a 'status' column to organizations table.
-        For now, we'll log the action but the actual suspension logic
-        would need to be implemented in the auth flow.
+        Persists the status, suspended_at, and suspension_reason to the
+        Organization model. Suspended orgs are blocked at the auth layer
+        via dependencies.py.
         """
         try:
             # Get current organization
@@ -293,13 +293,27 @@ class AdminService:
             if not org:
                 return {"success": False, "error": f"User/Organization not found: {user_id}"}
 
-            # TODO: Add status column to Organization model
-            # For now, just log the action
-            logger.info(f"Admin {admin_id} changed user {user_id} status to: {status}. Reason: {reason}")
+            previous_status = getattr(org, "status", "active")
+            org_any = cast(Any, org)
+            org_any.status = status
+
+            if status == "suspended":
+                org_any.suspended_at = datetime.utcnow()
+                org_any.suspension_reason = reason
+            else:
+                # Activating or setting to pending -- clear suspension metadata
+                org_any.suspended_at = None
+                org_any.suspension_reason = None
+
+            org_any.updated_at = datetime.utcnow()
+            await db.commit()
+
+            logger.info(f"Admin {admin_id} changed user {user_id} status: " f"{previous_status} -> {status}. Reason: {reason}")
 
             return {
                 "success": True,
                 "user_id": user_id,
+                "previous_status": previous_status,
                 "new_status": status,
                 "updated_at": datetime.utcnow().isoformat(),
             }

@@ -11,6 +11,7 @@ from sqlalchemy import (
     TIMESTAMP,
     Boolean,
     Column,
+    ForeignKey,
     Integer,
     String,
     Text,
@@ -40,6 +41,14 @@ class OrganizationTier(str, Enum):
     STARTER = "free"
     PROFESSIONAL = "free"
     BUSINESS = "free"
+
+
+class OrganizationStatus(str, Enum):
+    """Organization account status."""
+
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    PENDING = "pending"
 
 
 class OrganizationCertificateStatus(str, Enum):
@@ -75,6 +84,19 @@ class Organization(Base):
     slug = Column(String(100), nullable=True, unique=True)
     email = Column(String(255), nullable=False, unique=True)
     tier = Column(String(32), nullable=False, default="free")
+
+    # Partner hierarchy
+    parent_org_id = Column(
+        String(64),
+        ForeignKey("organizations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # Organization status (suspension/activation)
+    status = Column(String(32), nullable=False, default="active", index=True)
+    suspended_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    suspension_reason = Column(Text, nullable=True)
 
     # Certificate metadata
     certificate_pem = Column(Text, nullable=True)
@@ -214,6 +236,11 @@ class Organization(Base):
         limit = TIER_QUOTAS.get(self.tier, {}).get(quota_enum, 0)
 
         return max(0, limit - current_usage)
+
+    @property
+    def is_suspended(self) -> bool:
+        """Return True if the organization is suspended."""
+        return self.status == "suspended"
 
     @property
     def certificate_is_active(self) -> bool:

@@ -195,6 +195,12 @@ class Organization(Base):
 
     # Subscription & Tier
     tier = Column(String(32), nullable=False, default="free")
+    parent_org_id = Column(String(64), nullable=True, index=True)
+
+    # Organization status (suspension/activation)
+    status = Column(String(32), nullable=False, default="active")
+    suspended_at = Column(DateTime(timezone=True), nullable=True)
+    suspension_reason = Column(Text, nullable=True)
 
     # Trial metadata
     trial_tier = Column(String(32), nullable=True)

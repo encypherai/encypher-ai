@@ -170,13 +170,16 @@ export default function TeamPage() {
     refetch: refetchOrganizations,
     setActiveOrganization,
   } = useOrganization();
-  
+
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
   const [showInviteForm, setShowInviteForm] = useState(Boolean(process.env.NEXT_PUBLIC_E2E_TEST));
   const [showCreateOrgForm, setShowCreateOrgForm] = useState(false);
   const [orgName, setOrgName] = useState('');
   const [orgEmail, setOrgEmail] = useState('');
+  const [showBulkInvite, setShowBulkInvite] = useState(false);
+  const [bulkInviteText, setBulkInviteText] = useState('');
+  const [bulkInviteParsed, setBulkInviteParsed] = useState<Array<{ email: string; role: string }>>([]);
 
   // Use active organization from context
   const orgId = activeOrganization?.id;
@@ -306,6 +309,50 @@ export default function TeamPage() {
       role: inviteRole,
     });
   };
+
+  const handleBulkInviteParse = (text: string) => {
+    setBulkInviteText(text);
+    const lines = text.split(/[\n,]+/).map((l) => l.trim()).filter(Boolean);
+    const parsed: Array<{ email: string; role: string }> = [];
+    for (const line of lines) {
+      const parts = line.split(/[,\t;]+/).map((p) => p.trim());
+      const email = parts[0] || '';
+      const role = parts[1] || 'member';
+      if (email && email.includes('@')) {
+        parsed.push({ email, role: ['admin', 'member', 'viewer', 'manager'].includes(role) ? role : 'member' });
+      }
+    }
+    setBulkInviteParsed(parsed);
+  };
+
+  const handleBulkInviteFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      if (text) handleBulkInviteParse(text);
+    };
+    reader.readAsText(file);
+  };
+
+  const bulkInviteMutation = useMutation({
+    mutationFn: async (invitations: Array<{ email: string; role: string }>) => {
+      if (!accessToken || !orgId) throw new Error('Not authenticated');
+      return apiClient.bulkInviteMembers(accessToken, orgId, invitations);
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['org-invitations'] });
+      queryClient.invalidateQueries({ queryKey: ['org-seats'] });
+      setBulkInviteText('');
+      setBulkInviteParsed([]);
+      setShowBulkInvite(false);
+      toast.success(`Bulk invite complete: ${data.succeeded} sent, ${data.failed} failed`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Bulk invite failed');
+    },
+  });
 
   // Cancel invitation mutation
   const cancelInviteMutation = useMutation({
@@ -437,6 +484,17 @@ export default function TeamPage() {
               </svg>
               Invite Member
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowBulkInvite(!showBulkInvite)}
+              disabled={!canInvite}
+              data-testid="bulk-invite-toggle"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Bulk Invite
+            </Button>
           </div>
         </div>
 
@@ -556,6 +614,72 @@ export default function TeamPage() {
           </Card>
         )}
 
+        {/* Bulk Invite */}
+        {showBulkInvite && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Bulk Invite Team Members</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Paste emails (one per line) or upload a CSV file. Optionally include a role after a comma (admin, member, viewer). Default role is member.
+                </p>
+                <textarea
+                  value={bulkInviteText}
+                  onChange={(e) => handleBulkInviteParse(e.target.value)}
+                  placeholder={"alice@company.com, admin\nbob@company.com\ncarol@company.com, viewer"}
+                  className="w-full h-32 px-3 py-2 border border-border rounded-lg bg-background text-foreground font-mono text-sm resize-y"
+                  data-testid="bulk-invite-textarea"
+                />
+                <div className="flex items-center gap-4">
+                  <label className="cursor-pointer text-sm text-blue-ncs hover:underline">
+                    Upload CSV
+                    <input
+                      type="file"
+                      accept=".csv,.txt"
+                      onChange={handleBulkInviteFile}
+                      className="hidden"
+                    />
+                  </label>
+                  {bulkInviteParsed.length > 0 && (
+                    <span className="text-sm text-muted-foreground">
+                      {bulkInviteParsed.length} email{bulkInviteParsed.length !== 1 ? 's' : ''} parsed
+                    </span>
+                  )}
+                </div>
+                {bulkInviteParsed.length > 0 && (
+                  <div className="border border-border rounded-lg p-3 max-h-48 overflow-y-auto">
+                    <div className="space-y-1">
+                      {bulkInviteParsed.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-sm">
+                          <span className="font-mono">{item.email}</span>
+                          <Badge variant="secondary">{item.role}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-3">
+                  <Button
+                    variant="primary"
+                    onClick={() => bulkInviteMutation.mutate(bulkInviteParsed)}
+                    disabled={bulkInviteParsed.length === 0 || bulkInviteMutation.isPending}
+                    data-testid="bulk-invite-submit"
+                  >
+                    {bulkInviteMutation.isPending
+                      ? 'Sending...'
+                      : `Send ${bulkInviteParsed.length} Invite${bulkInviteParsed.length !== 1 ? 's' : ''}`}
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowBulkInvite(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Pending Invitations */}
         {invitations.length > 0 && (
           <Card>
@@ -634,7 +758,7 @@ export default function TeamPage() {
                 {members.map((member) => {
                   const roleConfig = ROLE_CONFIG[member.role] || ROLE_CONFIG.member;
                   const isOwner = member.role === 'owner';
-                  
+
                   return (
                     <div key={member.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
                       <div className="flex items-center gap-4">
@@ -695,4 +819,3 @@ export default function TeamPage() {
     </DashboardLayout>
   );
 }
-

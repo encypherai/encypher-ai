@@ -84,6 +84,10 @@ FREE_FEATURES: Dict[str, Any] = {
     # image enterprise features
     "image_fuzzy_search": False,  # pHash cross-org search (Enterprise only)
     "trustmark_watermark": False,  # TrustMark neural watermark (Enterprise only)
+    # enforcement gating (March 2026 decision)
+    "content_spread_analytics": True,  # ungated for all tiers
+    "formal_notice_creation": False,
+    "evidence_generation": False,
 }
 
 ENTERPRISE_FEATURES: Dict[str, Any] = {
@@ -107,6 +111,10 @@ ENTERPRISE_FEATURES: Dict[str, Any] = {
     # image enterprise features
     "image_fuzzy_search": True,  # pHash cross-org search
     "trustmark_watermark": True,  # TrustMark neural watermark
+    # enforcement gating
+    "content_spread_analytics": True,
+    "formal_notice_creation": True,
+    "evidence_generation": True,
 }
 
 # Strategic partners get the same features as enterprise

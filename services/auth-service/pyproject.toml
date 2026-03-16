@@ -32,6 +32,8 @@ dependencies = [
     "dnspython>=2.8.0",
     "pyotp>=2.9.0",
     "webauthn>=2.7.1",
+    "defusedxml>=0.7.1",
+    "signxml>=4.4.0",
 ]
 
 [project.optional-dependencies]

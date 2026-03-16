@@ -4,6 +4,7 @@ from app.api.v1.api import api_router as api_v1_router
 from app.routers import (
     account,
     admin,
+    attestation_policies,
     audit,
     batch,
     byok,
@@ -12,6 +13,7 @@ from app.routers import (
     cdn_provenance,
     chat,
     coalition,
+    compliance,
     discovery,
     documents,
     integrations,
@@ -22,6 +24,7 @@ from app.routers import (
     onboarding,
     organizations_proxy,
     partner,
+    partner_portal,
     rich_signing,
     rights,
     rights_licensing,
@@ -68,6 +71,9 @@ ROUTER_SPECS = [
     (notices.router, "/api/v1", ["Formal Notices"]),
     (rights_licensing.router, "/api/v1", ["Rights Licensing Transactions"]),
     (partner.router, "/api/v1", ["Partner"]),
+    (partner_portal.router, "/api/v1", ["Partner Portal"]),
+    (compliance.router, "/api/v1", ["Compliance"]),
+    (attestation_policies.router, "/api/v1", ["Attestation Policies"]),
     (discovery.router, None, ["Discovery"]),
     (api_v1_router, "/api/v1", None),
 ]

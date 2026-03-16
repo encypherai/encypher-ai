@@ -101,7 +101,7 @@ class UpdateRoleRequest(BaseModel):
     role: TeamRole
 
 
-from app.core.tier_config import get_team_member_limit
+from app.core.tier_config import get_team_member_limit, is_enterprise_tier
 
 
 async def check_team_management_enabled(
@@ -150,7 +150,7 @@ async def require_admin_role(
     # assume owner role for testing purposes
     if role is None:
         tier = organization.get("tier", "free")
-        if tier in ["enterprise", "strategic_partner"]:
+        if is_enterprise_tier(tier):
             # For demo keys with team_management enabled, assume owner role
             role = TeamRole.OWNER
         else:
@@ -181,12 +181,12 @@ async def list_team_members(
             FROM organization_members om
             LEFT JOIN users u ON om.user_id = u.id
             WHERE om.organization_id = :org_id
-            ORDER BY 
-                CASE om.role 
-                    WHEN 'owner' THEN 1 
-                    WHEN 'admin' THEN 2 
-                    WHEN 'member' THEN 3 
-                    WHEN 'viewer' THEN 4 
+            ORDER BY
+                CASE om.role
+                    WHEN 'owner' THEN 1
+                    WHEN 'admin' THEN 2
+                    WHEN 'member' THEN 3
+                    WHEN 'viewer' THEN 4
                 END,
                 om.joined_at
         """),
@@ -299,7 +299,7 @@ async def invite_member(
     # Check for pending invite
     pending = await db.execute(
         text("""
-            SELECT id FROM organization_invites 
+            SELECT id FROM organization_invites
             WHERE organization_id = :org_id AND email = :email AND status = 'pending'
         """),
         {"org_id": org_id, "email": request.email},
@@ -541,7 +541,7 @@ async def remove_member(
     # Get target member
     result = await db.execute(
         text("""
-            SELECT om.user_id, u.email, om.role 
+            SELECT om.user_id, u.email, om.role
             FROM organization_members om
             JOIN users u ON om.user_id = u.id
             WHERE om.id = :id AND om.organization_id = :org_id
@@ -807,4 +807,209 @@ async def accept_invite_new_user(
             "organization_id": str(invite.organization_id),
             "role": invite.role,
         },
+    }
+
+
+# ============================================================
+# BULK INVITE ENDPOINT
+# ============================================================
+
+
+class BulkInviteItem(BaseModel):
+    """Single invitation in a bulk invite request."""
+
+    email: EmailStr
+    role: str = "member"
+
+
+class BulkInviteRequest(BaseModel):
+    """Request body for bulk invite."""
+
+    invitations: List[BulkInviteItem]
+
+
+class BulkInviteResultItem(BaseModel):
+    """Result for a single invitation in the bulk response."""
+
+    email: str
+    success: bool
+    invite_id: Optional[str] = None
+    error: Optional[str] = None
+
+
+@router.post("/invite/bulk")
+async def bulk_invite_members(
+    request: BulkInviteRequest,
+    background_tasks: BackgroundTasks,
+    organization: dict = Depends(require_admin_role),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Invite multiple members to the organization in one request.
+
+    - Limited to 50 invitations per request
+    - Enterprise tier gated (via require_admin_role -> check_team_management_enabled)
+    - Partial success: each invitation is processed individually
+    - Returns per-item results with total/succeeded/failed counts
+    """
+    if not request.invitations:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one invitation is required",
+        )
+
+    if len(request.invitations) > 50:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum 50 invitations per request",
+        )
+
+    org_id = organization["organization_id"]
+    inviter_id = organization.get("user_id") or organization.get("api_key_owner_id")
+    if not inviter_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inviter ID missing")
+
+    org_name = organization.get("organization_name", org_id)
+    inviter_name = organization.get("user_name") or organization.get("organization_name") or "Your team admin"
+
+    # Pre-fetch existing member emails for efficiency
+    existing_members_result = await db.execute(
+        text("""
+            SELECT u.email FROM organization_members om
+            JOIN users u ON om.user_id = u.id
+            WHERE om.organization_id = :org_id
+        """),
+        {"org_id": org_id},
+    )
+    existing_member_emails = {row.email.lower() for row in existing_members_result.fetchall()}
+
+    # Pre-fetch pending invite emails for efficiency
+    pending_invites_result = await db.execute(
+        text("""
+            SELECT email FROM organization_invites
+            WHERE organization_id = :org_id AND status = 'pending'
+        """),
+        {"org_id": org_id},
+    )
+    pending_invite_emails = {row.email.lower() for row in pending_invites_result.fetchall()}
+
+    results: List[BulkInviteResultItem] = []
+    succeeded = 0
+    failed = 0
+
+    # Track emails already invited in this batch to catch duplicates
+    batch_emails: set = set()
+
+    for item in request.invitations:
+        email_lower = item.email.lower()
+
+        # Reject owner role
+        if item.role == TeamRole.OWNER or item.role == "owner":
+            results.append(
+                BulkInviteResultItem(
+                    email=item.email,
+                    success=False,
+                    error="Cannot invite as owner. Use transfer ownership instead.",
+                )
+            )
+            failed += 1
+            continue
+
+        # Check duplicate within this batch
+        if email_lower in batch_emails:
+            results.append(
+                BulkInviteResultItem(
+                    email=item.email,
+                    success=False,
+                    error="Duplicate email in this batch",
+                )
+            )
+            failed += 1
+            continue
+
+        # Check existing member
+        if email_lower in existing_member_emails:
+            results.append(
+                BulkInviteResultItem(
+                    email=item.email,
+                    success=False,
+                    error="This email is already a team member",
+                )
+            )
+            failed += 1
+            continue
+
+        # Check pending invite
+        if email_lower in pending_invite_emails:
+            results.append(
+                BulkInviteResultItem(
+                    email=item.email,
+                    success=False,
+                    error="An invitation is already pending for this email",
+                )
+            )
+            failed += 1
+            continue
+
+        # Create invite
+        invite_id = f"inv_{uuid4().hex[:16]}"
+        invite_token = secrets.token_urlsafe(32)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+
+        try:
+            role_value = TeamRole(item.role).value
+        except ValueError:
+            role_value = TeamRole.MEMBER.value
+
+        await db.execute(
+            text("""
+                INSERT INTO organization_invites (
+                    id, organization_id, email, role, invited_by,
+                    token, status, expires_at
+                )
+                VALUES (
+                    :id, :org_id, :email, :role, :invited_by,
+                    :token, 'pending', :expires_at
+                )
+            """),
+            {
+                "id": invite_id,
+                "org_id": org_id,
+                "email": item.email,
+                "role": role_value,
+                "invited_by": inviter_id,
+                "token": invite_token,
+                "expires_at": expires_at,
+            },
+        )
+
+        batch_emails.add(email_lower)
+        pending_invite_emails.add(email_lower)
+
+        # Queue invitation email as background task
+        background_tasks.add_task(
+            _send_team_invite_email,
+            recipient_email=item.email,
+            inviter_name=inviter_name,
+            org_name=org_name,
+            role=role_value,
+            invite_token=invite_token,
+        )
+
+        results.append(
+            BulkInviteResultItem(
+                email=item.email,
+                success=True,
+                invite_id=invite_id,
+            )
+        )
+        succeeded += 1
+
+    await db.commit()
+
+    return {
+        "total": len(request.invitations),
+        "succeeded": succeeded,
+        "failed": failed,
+        "results": [r.model_dump() for r in results],
     }

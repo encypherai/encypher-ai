@@ -542,6 +542,8 @@ async def get_organization_context_internal(
             "add_ons": org.add_ons or {},
             # Custom verification domain (only when DNS-verified and active)
             "verification_domain": org.verification_domain if org.verification_domain_status == "active" else None,
+            # Organization suspension status
+            "status": getattr(org, "status", "active"),
         },
     )
 

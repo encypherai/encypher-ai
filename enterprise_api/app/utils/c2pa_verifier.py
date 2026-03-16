@@ -66,6 +66,7 @@ class C2PAVerificationResult:
     signatures: List[C2PASignature] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
+    _verified_payload: Optional[Dict[str, Any]] = field(default=None, repr=False)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API responses."""
@@ -517,6 +518,9 @@ class C2PAVerifier:
             # Extract and verify signatures
             self._extract_signatures(manifest_data, result)
 
+            # Bind assertion verification from COSE signature
+            self._bind_assertion_verification(manifest_data, result)
+
             # Overall validation
             if result.errors:
                 result.valid = False
@@ -586,10 +590,10 @@ class C2PAVerifier:
             label = assertion.get("label", "unknown")
             data = assertion.get("data", {})
 
-            # Basic assertion validation
-            verified = self._verify_assertion(assertion)
+            # Structural check only; cryptographic binding happens in _bind_assertion_verification
+            self._verify_assertion(assertion)
 
-            result.assertions.append(C2PAAssertion(label=label, data=data, verified=verified))
+            result.assertions.append(C2PAAssertion(label=label, data=data, verified=False))
 
     def _verify_assertion(self, assertion: Dict[str, Any]) -> bool:
         """
@@ -601,12 +605,9 @@ class C2PAVerifier:
         Returns:
             True if assertion is valid
         """
-        # Basic validation - check for required fields
+        # Structural validation -- check for required fields
         if "label" not in assertion:
             return False
-
-        # TODO: Add cryptographic verification of assertion signatures
-        # For now, we do basic structural validation
 
         return True
 
@@ -645,6 +646,20 @@ class C2PAVerifier:
         verified = self._verify_signature(signature_info, manifest_data, result)
 
         result.signatures.append(C2PASignature(issuer=issuer, time=time, algorithm=algorithm, verified=verified))
+
+    def _bind_assertion_verification(self, manifest_data: Dict[str, Any], result: C2PAVerificationResult) -> None:
+        """Upgrade assertion verified flags if covered by a valid COSE signature."""
+        if not any(s.verified for s in result.signatures):
+            return
+        if result._verified_payload is None:
+            return
+        signed_assertions = result._verified_payload.get("assertions", [])
+        manifest_assertions = manifest_data.get("assertions", [])
+        if signed_assertions != manifest_assertions:
+            result.warnings.append("Signed payload assertions do not match manifest assertions; " "assertion-level verification skipped")
+            return
+        for assertion in result.assertions:
+            assertion.verified = True
 
     def _verify_signature(
         self,
@@ -723,6 +738,7 @@ class C2PAVerifier:
             if "assertions" in manifest_data and payload.get("assertions") != manifest_data.get("assertions"):
                 result.errors.append("Manifest assertions mismatch with COSE payload")
                 return False
+            result._verified_payload = payload
 
         return True
 

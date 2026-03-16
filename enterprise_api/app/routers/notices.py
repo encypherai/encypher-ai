@@ -14,12 +14,29 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.tier_config import is_enterprise_tier
 from app.database import get_db
 from app.dependencies import get_current_organization_dep
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/notices", tags=["Formal Notices"])
+
+
+def _require_enterprise_notice(org_context: Dict) -> str:
+    """Validate org has enterprise tier for notice operations. Returns org_id."""
+    org_id: str = org_context["organization_id"]
+    tier = (org_context.get("tier") or "free").lower()
+    if not is_enterprise_tier(tier):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "FEATURE_NOT_AVAILABLE",
+                "message": "Formal notices require Enterprise plan.",
+                "required_tier": "enterprise",
+            },
+        )
+    return org_id
 
 
 def _notice_service():
@@ -67,7 +84,7 @@ async def create_formal_notice(
     db: AsyncSession = Depends(get_db),
     org_context: Dict = Depends(get_current_organization_dep),
 ) -> Dict[str, Any]:
-    org_id: str = org_context["organization_id"]
+    org_id = _require_enterprise_notice(org_context)
     svc = _notice_service()
 
     # Normalise dashboard-friendly field names to service field names.
@@ -117,7 +134,7 @@ async def get_formal_notice(
     db: AsyncSession = Depends(get_db),
     org_context: Dict = Depends(get_current_organization_dep),
 ) -> Dict[str, Any]:
-    org_id: str = org_context["organization_id"]
+    org_id = _require_enterprise_notice(org_context)
     svc = _notice_service()
 
     notice = await svc.get_notice(db=db, notice_id=notice_id)
@@ -187,7 +204,7 @@ async def deliver_notice(
 ) -> Dict[str, Any]:
     if delivery_data is None:
         delivery_data = {}
-    org_id: str = org_context["organization_id"]
+    org_id = _require_enterprise_notice(org_context)
     svc = _notice_service()
 
     notice = await svc.get_notice(db=db, notice_id=notice_id)
@@ -259,7 +276,7 @@ async def get_evidence_package(
     db: AsyncSession = Depends(get_db),
     org_context: Dict = Depends(get_current_organization_dep),
 ) -> Dict[str, Any]:
-    org_id: str = org_context["organization_id"]
+    org_id = _require_enterprise_notice(org_context)
     svc = _notice_service()
 
     notice = await svc.get_notice(db=db, notice_id=notice_id)
@@ -303,7 +320,7 @@ async def get_evidence_package_pdf(
     db: AsyncSession = Depends(get_db),
     org_context: Dict = Depends(get_current_organization_dep),
 ) -> Response:
-    org_id: str = org_context["organization_id"]
+    org_id = _require_enterprise_notice(org_context)
     svc = _notice_service()
 
     notice = await svc.get_notice(db=db, notice_id=notice_id)

@@ -115,6 +115,7 @@ async def _get_org_context_from_jwt_access_token(token: str) -> Optional[Dict]:
             "anonymous_publisher": org_data.get("anonymous_publisher", False),
             "add_ons": org_data.get("add_ons", {}),
             "verification_domain": org_data.get("verification_domain"),
+            "status": org_data.get("status", "active"),
         }
     )
 
@@ -138,6 +139,7 @@ def _build_composed_org_context(key_context: Dict, org_data: Dict) -> Dict:
         "anonymous_publisher": org_data.get("anonymous_publisher", False),
         "add_ons": org_data.get("add_ons", {}),
         "verification_domain": org_data.get("verification_domain"),
+        "status": org_data.get("status", "active"),
     }
 
 
@@ -355,6 +357,17 @@ async def get_current_organization(
         org_context = _resolve_demo_org_context(api_key)
         if org_context is None:
             raise _unauthorized_http_exception()
+
+    # Enforce organization suspension
+    org_status = org_context.get("status", "active")
+    if org_status == "suspended":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "ORGANIZATION_SUSPENDED",
+                "message": "This organization has been suspended. Contact support for assistance.",
+            },
+        )
 
     _set_request_auth_state(request, org_context, api_key)
 

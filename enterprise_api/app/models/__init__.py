@@ -2,6 +2,7 @@
 SQLAlchemy models for the Enterprise API.
 """
 
+from app.models.attestation import Attestation, AttestationPolicy
 from app.models.article_image import ArticleImage
 from app.models.batch import BatchItem, BatchRequest
 from app.models.composite_manifest import CompositeManifest
@@ -17,6 +18,8 @@ from app.models.usage_record import UsageRecord
 from app.models.webhook import Webhook, WebhookDelivery, WebhookEvent
 
 __all__ = [
+    "Attestation",
+    "AttestationPolicy",
     "ArticleImage",
     "CompositeManifest",
     "Organization",

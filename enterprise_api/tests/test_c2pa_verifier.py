@@ -458,6 +458,100 @@ class TestC2PAVerifier:
         assert fake_redis.sorted_sets[verifier._distributed_limit_key("global")] == {}
         assert fake_redis.sorted_sets[verifier._distributed_limit_key("host:example.com")] == {}
 
+    def test_assertions_unverified_without_cose(self):
+        """Assertions stay verified=False when no COSE signature is present."""
+        verifier = C2PAVerifier()
+        manifest = {
+            "claim_generator": "Test Generator 1.0",
+            "assertions": [
+                {"label": "c2pa.actions", "data": {"actions": ["created"]}},
+                {"label": "c2pa.hash.data", "data": {"hash": "abc123"}},
+            ],
+            "signature_info": {"issuer": "Test CA", "alg": "RS256"},
+        }
+        result = verifier.verify_manifest_data(manifest)
+        assert len(result.assertions) == 2
+        for a in result.assertions:
+            assert a.verified is False
+
+    def test_assertions_verified_with_valid_cose(self):
+        """Assertions are upgraded to verified=True when a valid COSE signature covers them."""
+        private_key, public_key = generate_ed25519_key_pair()
+        manifest_payload = {
+            "claim_generator": "Test Generator",
+            "assertions": [{"label": "c2pa.actions", "data": {"actions": ["created"]}}],
+        }
+        payload_bytes = serialize_c2pa_payload_to_cbor(manifest_payload)
+        cose_bytes = sign_c2pa_cose(private_key, payload_bytes)
+        cose_b64 = base64.b64encode(cose_bytes).decode("utf-8")
+        public_key_pem = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode("utf-8")
+
+        manifest_data = {
+            "claim_generator": manifest_payload["claim_generator"],
+            "assertions": manifest_payload["assertions"],
+            "signature_info": {
+                "issuer": "Test Issuer",
+                "alg": "EdDSA",
+                "cose_sign1": cose_b64,
+                "public_key_pem": public_key_pem,
+            },
+        }
+        verifier = C2PAVerifier()
+        result = verifier.verify_manifest_data(manifest_data)
+
+        assert result.valid is True
+        assert result.signatures[0].verified is True
+        assert len(result.assertions) == 1
+        assert result.assertions[0].verified is True
+
+    def test_assertions_unverified_on_tampered_manifest(self):
+        """Assertions stay verified=False when manifest assertions are tampered after signing."""
+        private_key, public_key = generate_ed25519_key_pair()
+        original_assertions = [{"label": "c2pa.actions", "data": {"actions": ["created"]}}]
+        manifest_payload = {
+            "claim_generator": "Test Generator",
+            "assertions": original_assertions,
+        }
+        payload_bytes = serialize_c2pa_payload_to_cbor(manifest_payload)
+        cose_bytes = sign_c2pa_cose(private_key, payload_bytes)
+        cose_b64 = base64.b64encode(cose_bytes).decode("utf-8")
+        public_key_pem = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode("utf-8")
+
+        # Tamper: change the assertion label in the manifest but not in the signed payload
+        tampered_assertions = [{"label": "c2pa.TAMPERED", "data": {"actions": ["created"]}}]
+        manifest_data = {
+            "claim_generator": manifest_payload["claim_generator"],
+            "assertions": tampered_assertions,
+            "signature_info": {
+                "issuer": "Test Issuer",
+                "alg": "EdDSA",
+                "cose_sign1": cose_b64,
+                "public_key_pem": public_key_pem,
+            },
+        }
+        verifier = C2PAVerifier()
+        result = verifier.verify_manifest_data(manifest_data)
+
+        # The COSE verification itself should catch the mismatch
+        assert result.valid is False
+        # Assertions should not be verified
+        for a in result.assertions:
+            assert a.verified is False
+
+    def test_verified_payload_not_in_to_dict(self):
+        """The _verified_payload field must not appear in to_dict() output."""
+        result = C2PAVerificationResult(valid=True)
+        result._verified_payload = {"claim_generator": "test", "assertions": []}
+        data = result.to_dict()
+        assert "_verified_payload" not in data
+        assert "verified_payload" not in data
+
     @pytest.mark.asyncio
     async def test_convenience_function(self):
         """Test convenience function."""
