@@ -48,6 +48,7 @@ class KeySummary(BaseModel):
     expires_at: Optional[str] = Field(None, description="Expiration timestamp")
     is_active: bool = Field(True, description="Whether key is active")
     usage_count: int = Field(0, description="Total usage count")
+    created_by: Optional[str] = Field(None, description="User ID of the key creator")
 
 
 class KeyCreateRequest(BaseModel):
@@ -108,6 +109,19 @@ class KeyRotateResponse(BaseModel):
     success: bool = True
     data: dict
     warning: str = "Store this key securely. It will not be shown again."
+
+
+class KeyRevokeByUserRequest(BaseModel):
+    """Request to revoke all keys for a specific user."""
+
+    user_id: str = Field(..., description="User ID whose keys should be revoked")
+
+
+class KeyUsageResponse(BaseModel):
+    """Response with key usage statistics."""
+
+    success: bool = True
+    data: dict
 
 
 # =============================================================================
@@ -177,7 +191,7 @@ async def list_keys(
             SELECT
                 id, name, key_prefix, scopes,
                 created_at, last_used_at, expires_at,
-                is_active, revoked_at
+                is_active, revoked_at, created_by, usage_count
             FROM api_keys
             WHERE {where_clause}
             ORDER BY created_at DESC
@@ -204,7 +218,8 @@ async def list_keys(
                 last_used_at=row.last_used_at.isoformat() if row.last_used_at else None,
                 expires_at=row.expires_at.isoformat() if row.expires_at else None,
                 is_active=row.is_active and row.revoked_at is None,
-                usage_count=0,
+                usage_count=row.usage_count or 0,
+                created_by=row.created_by,
             ).model_dump()
         )
 
@@ -285,14 +300,15 @@ async def create_key(
         permissions = ["sign", "verify"]
 
     # Insert key - use scopes column (JSONB)
+    user_id = organization.get("user_id")
     await db.execute(
         text("""
             INSERT INTO api_keys (
                 id, organization_id, name, key_hash, key_prefix,
-                scopes, created_at, expires_at, is_active
+                scopes, created_at, expires_at, is_active, created_by
             ) VALUES (
                 :id, :org_id, :name, :key_hash, :key_prefix,
-                CAST(:scopes AS jsonb), :created_at, :expires_at, true
+                CAST(:scopes AS jsonb), :created_at, :expires_at, true, :created_by
             )
         """),
         {
@@ -304,6 +320,7 @@ async def create_key(
             "scopes": json.dumps(permissions),
             "created_at": datetime.now(timezone.utc),
             "expires_at": expires_at,
+            "created_by": user_id,
         },
     )
     await db.commit()
@@ -437,6 +454,70 @@ async def revoke_key(
             "revoked": True,
             "revoked_at": datetime.now(timezone.utc).isoformat(),
         }
+    )
+
+
+@router.post("/revoke-by-user", response_model=KeyRevokeResponse)
+async def revoke_keys_by_user(
+    request: KeyRevokeByUserRequest,
+    organization: dict = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db),
+) -> KeyRevokeResponse:
+    """Revoke all API keys created by a specific user in an organization."""
+    org_id = organization.get("organization_id")
+
+    result = await db.execute(
+        text("""
+            UPDATE api_keys
+            SET is_active = false, revoked_at = :revoked_at
+            WHERE organization_id = :org_id
+              AND created_by = :user_id
+              AND revoked_at IS NULL
+        """),
+        {"org_id": org_id, "user_id": request.user_id, "revoked_at": datetime.now(timezone.utc)},
+    )
+    await db.commit()
+
+    revoked_count = result.rowcount
+    logger.info(f"Revoked {revoked_count} key(s) for user {request.user_id} in org {org_id}")
+
+    return KeyRevokeResponse(data={"revoked": True, "revoked_count": revoked_count})
+
+
+@router.get("/{key_id}/usage", response_model=KeyUsageResponse)
+async def get_key_usage(
+    key_id: str,
+    organization: dict = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db),
+) -> KeyUsageResponse:
+    """Get usage statistics for a specific API key."""
+    org_id = organization.get("organization_id")
+
+    result = await db.execute(
+        text("""
+            SELECT id, name, key_prefix, usage_count, last_used_at, created_at
+            FROM api_keys
+            WHERE id = :key_id AND organization_id = :org_id
+        """),
+        {"key_id": key_id, "org_id": org_id},
+    )
+    row = result.fetchone()
+
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "KEY_NOT_FOUND", "message": "API key not found"},
+        )
+
+    return KeyUsageResponse(
+        data={
+            "key_id": row.id,
+            "name": row.name,
+            "prefix": row.key_prefix,
+            "usage_count": row.usage_count or 0,
+            "last_used_at": row.last_used_at.isoformat() if row.last_used_at else None,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+        },
     )
 
 

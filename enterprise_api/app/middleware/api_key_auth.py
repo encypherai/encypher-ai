@@ -285,7 +285,7 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
         await db.execute(
             text(
                 """
-                UPDATE api_keys SET last_used_at = :last_used_at WHERE id = :api_key_id;
+                UPDATE api_keys SET last_used_at = :last_used_at, usage_count = usage_count + 1 WHERE id = :api_key_id;
                 UPDATE organizations SET monthly_api_usage = monthly_api_usage + 1
                 WHERE id = :organization_id;
                 """

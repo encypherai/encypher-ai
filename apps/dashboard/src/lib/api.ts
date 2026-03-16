@@ -774,7 +774,7 @@ const apiClient = {
       payload.organization_id = organizationId;
     }
     const response = await fetchWithAuth<ApiKeyCreateResponse>(
-      `${API_BASE_URL}/keys/generate`,
+      `${API_BASE_URL}/keys`,
       accessToken,
       {
         method: 'POST',
@@ -2173,19 +2173,19 @@ const apiClient = {
     payload: { name: string; enforcement: string; scope?: string; rules: Array<{ field: string; operator: string; value: unknown; action: string }> }
   ): Promise<any> {
     return fetchWithAuth<any>(
-      `${API_BASE_URL}/governance/policies`,
+      `${API_BASE_URL}/attestation-policies/`,
       accessToken,
       { method: 'POST', body: JSON.stringify(payload) }
     );
   },
 
   async listAttestationPolicies(accessToken: string): Promise<any> {
-    return fetchWithAuth<any>(`${API_BASE_URL}/governance/policies`, accessToken);
+    return fetchWithAuth<any>(`${API_BASE_URL}/attestation-policies/`, accessToken);
   },
 
   async deleteAttestationPolicy(accessToken: string, policyId: string): Promise<any> {
     return fetchWithAuth<any>(
-      `${API_BASE_URL}/governance/policies/${encodeURIComponent(policyId)}`,
+      `${API_BASE_URL}/attestation-policies/${encodeURIComponent(policyId)}`,
       accessToken,
       { method: 'DELETE' }
     );
@@ -2193,17 +2193,17 @@ const apiClient = {
 
   async listAttestations(accessToken: string, params?: { limit?: number }): Promise<any> {
     const query = params?.limit ? `?limit=${params.limit}` : '';
-    return fetchWithAuth<any>(`${API_BASE_URL}/governance/attestations${query}`, accessToken);
+    return fetchWithAuth<any>(`${API_BASE_URL}/attestations/${query}`, accessToken);
   },
 
   // ── Partners ───────────────────────────────────────────────────────────────
 
   async getPartnerAggregate(accessToken: string): Promise<any> {
-    return fetchWithAuth<any>(`${API_BASE_URL}/partners/aggregate`, accessToken);
+    return fetchWithAuth<any>(`${API_BASE_URL}/partner/portal/aggregate`, accessToken);
   },
 
   async getPartnerPublishers(accessToken: string): Promise<any> {
-    return fetchWithAuth<any>(`${API_BASE_URL}/partners/publishers`, accessToken);
+    return fetchWithAuth<any>(`${API_BASE_URL}/partner/portal/publishers`, accessToken);
   },
 
   // ── Compliance ─────────────────────────────────────────────────────────────
@@ -2231,7 +2231,7 @@ const apiClient = {
     fuzzy_threshold?: number;
   }): Promise<any> {
     return fetchWithAuth<any>(
-      `${API_BASE_URL}/quote-integrity/verify`,
+      `${API_BASE_URL}/verify/quote-integrity`,
       '',
       { method: 'POST', body: JSON.stringify(params) }
     );
