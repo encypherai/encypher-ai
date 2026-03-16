@@ -1,7 +1,7 @@
 """Add saml_configs table for SSO
 
-Revision ID: 006
-Revises: 005
+Revision ID: 019
+Revises: 018
 Create Date: 2026-03-16
 
 Adds saml_configs table to store per-organization SAML IdP configuration
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
-revision = "006"
-down_revision = "005"
+revision = "019"
+down_revision = "018"
 branch_labels = None
 depends_on = None
 
