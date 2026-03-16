@@ -32,6 +32,7 @@ export interface EncodeResponse {
   embedded_content: string;
   verification_url?: string;
   total_sentences?: number;
+  merkle_root?: string;
   merkle_tree?: MerkleTreeInfo;
   embeddings?: EmbeddingInfo[];
   metadata?: Record<string, unknown>;
@@ -88,10 +89,10 @@ export async function encodeContent(request: EncodeRequest): Promise<EncodeRespo
   }
 
   const data = await response.json();
-  
+
   // Handle new unified response format
   const result = data.data?.document || data.data || data;
-  
+
   return {
     success: data.success,
     document_id: result.document_id,
@@ -125,7 +126,7 @@ export async function verifyContent(text: string): Promise<VerifyResponse> {
 
   const data = await response.json();
   const verdict = data.data || {};
-  
+
   return {
     valid: verdict.valid || false,
     tampered: verdict.tampered || false,

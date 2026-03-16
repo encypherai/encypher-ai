@@ -129,7 +129,6 @@ function SsoConfigCard({ orgId, accessToken }: { orgId: string | null | undefine
 
   const { data: samlConfig, isLoading } = useQuery({
     queryKey: ['saml-config', orgId],
-    // @ts-ignore -- stub API method
     queryFn: () => apiClient.getSamlConfig(accessToken!, orgId!),
     enabled: !!accessToken && !!orgId,
     staleTime: 5 * 60_000,
@@ -157,8 +156,7 @@ function SsoConfigCard({ orgId, accessToken }: { orgId: string | null | undefine
       if (idpCertificate.trim()) {
         payload.idp_certificate = idpCertificate;
       }
-      // @ts-ignore -- stub API method
-      return apiClient.updateSamlConfig(accessToken!, orgId!, payload as any);
+      return apiClient.updateSamlConfig(accessToken!, orgId!, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['saml-config', orgId] });

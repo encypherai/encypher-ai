@@ -2166,6 +2166,77 @@ const apiClient = {
     return typed.data ?? [];
   },
 
+  // ── Governance: Attestation Policies & Attestations ──────────────────────
+
+  async createAttestationPolicy(
+    accessToken: string,
+    payload: { name: string; enforcement: string; scope?: string; rules: Array<{ field: string; operator: string; value: unknown; action: string }> }
+  ): Promise<any> {
+    return fetchWithAuth<any>(
+      `${API_BASE_URL}/governance/policies`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify(payload) }
+    );
+  },
+
+  async listAttestationPolicies(accessToken: string): Promise<any> {
+    return fetchWithAuth<any>(`${API_BASE_URL}/governance/policies`, accessToken);
+  },
+
+  async deleteAttestationPolicy(accessToken: string, policyId: string): Promise<any> {
+    return fetchWithAuth<any>(
+      `${API_BASE_URL}/governance/policies/${encodeURIComponent(policyId)}`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+  },
+
+  async listAttestations(accessToken: string, params?: { limit?: number }): Promise<any> {
+    const query = params?.limit ? `?limit=${params.limit}` : '';
+    return fetchWithAuth<any>(`${API_BASE_URL}/governance/attestations${query}`, accessToken);
+  },
+
+  // ── Partners ───────────────────────────────────────────────────────────────
+
+  async getPartnerAggregate(accessToken: string): Promise<any> {
+    return fetchWithAuth<any>(`${API_BASE_URL}/partners/aggregate`, accessToken);
+  },
+
+  async getPartnerPublishers(accessToken: string): Promise<any> {
+    return fetchWithAuth<any>(`${API_BASE_URL}/partners/publishers`, accessToken);
+  },
+
+  // ── Compliance ─────────────────────────────────────────────────────────────
+
+  async getComplianceReadiness(accessToken: string): Promise<any> {
+    return fetchWithAuth<any>(`${API_BASE_URL}/compliance/readiness`, accessToken);
+  },
+
+  // ── Enforcement: Notice Detail ─────────────────────────────────────────────
+
+  async getNoticeDetail(accessToken: string, noticeId: string): Promise<any> {
+    return fetchWithAuth<any>(
+      `${API_BASE_URL}/notices/${encodeURIComponent(noticeId)}`,
+      accessToken
+    );
+  },
+
+  // ── Quote Integrity ────────────────────────────────────────────────────────
+
+  async verifyQuoteIntegrity(params: {
+    quote: string;
+    attribution: string;
+    org_id?: string;
+    doc_id?: string;
+    fuzzy_threshold?: number;
+  }): Promise<any> {
+    return fetchWithAuth<any>(
+      `${API_BASE_URL}/quote-integrity/verify`,
+      '',
+      { method: 'POST', body: JSON.stringify(params) }
+    );
+  },
+
   async getNoticeEvidence(accessToken: string, noticeId: string): Promise<EvidencePackage> {
     return fetchWithAuth<EvidencePackage>(
       `${API_BASE_URL}/notices/${encodeURIComponent(noticeId)}/evidence`,
@@ -2186,6 +2257,37 @@ const apiClient = {
     a.download = `notice-${noticeId}-evidence.pdf`;
     a.click();
     URL.revokeObjectURL(url);
+  },
+
+  // ── SAML SSO Config ──────────────────────────────────────────────────────
+
+  async getSamlConfig(accessToken: string, orgId: string): Promise<any> {
+    return fetchWithAuth<any>(
+      `${API_BASE_URL}/auth/saml/config/${encodeURIComponent(orgId)}`,
+      accessToken
+    );
+  },
+
+  async updateSamlConfig(accessToken: string, orgId: string, config: Record<string, unknown>): Promise<any> {
+    return fetchWithAuth<any>(
+      `${API_BASE_URL}/auth/saml/config/${encodeURIComponent(orgId)}`,
+      accessToken,
+      { method: 'PUT', body: JSON.stringify(config) }
+    );
+  },
+
+  // ── Bulk Invite ───────────────────────────────────────────────────────────
+
+  async bulkInviteMembers(
+    accessToken: string,
+    orgId: string,
+    invitations: Array<{ email: string; role: string }>
+  ): Promise<any> {
+    return fetchWithAuth<any>(
+      `${API_BASE_URL}/org/members/invite/bulk`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify({ invitations }) }
+    );
   },
 };
 
@@ -2366,6 +2468,9 @@ interface FormalNotice {
   recipient_contact?: string | null;
   violation_type?: string | null;
   notice_text?: string | null;
+  notice_type?: string | null;
+  target_entity_name?: string | null;
+  target_contact_email?: string | null;
   status: string;
   delivered_at?: string | null;
   content_hash?: string | null;

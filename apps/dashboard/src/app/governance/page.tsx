@@ -91,7 +91,6 @@ function CreatePolicyForm({ onClose, onCreated }: { onClose: () => void; onCreat
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!accessToken) throw new Error('Not authenticated');
-      // @ts-ignore -- stub API method
       return apiClient.createAttestationPolicy(accessToken, {
         name,
         enforcement,
@@ -230,7 +229,6 @@ function PoliciesTab() {
     queryKey: ['attestation-policies'],
     queryFn: () => {
       if (!accessToken) throw new Error('Not authenticated');
-      // @ts-ignore -- stub API method
       return apiClient.listAttestationPolicies(accessToken);
     },
     enabled: Boolean(accessToken),
@@ -239,7 +237,6 @@ function PoliciesTab() {
   const deleteMutation = useMutation({
     mutationFn: async (policyId: string) => {
       if (!accessToken) throw new Error('Not authenticated');
-      // @ts-ignore -- stub API method
       return apiClient.deleteAttestationPolicy(accessToken, policyId);
     },
     onSuccess: () => {
@@ -340,7 +337,6 @@ function AttestationsTab() {
     queryKey: ['attestations'],
     queryFn: () => {
       if (!accessToken) throw new Error('Not authenticated');
-      // @ts-ignore -- stub API method
       return apiClient.listAttestations(accessToken, { limit: 100 });
     },
     enabled: Boolean(accessToken),
