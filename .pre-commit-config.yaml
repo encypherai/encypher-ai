@@ -35,21 +35,21 @@ repos:
     # ── Pre-push: Next.js builds (catches SSG errors, type errors, lint errors) ──
     -   id: nextjs-build-dashboard
         name: nextjs-build-dashboard
-        entry: bash -lc 'cd apps/dashboard && npm run build'
+        entry: bash -lc 'cd apps/dashboard && (rm -rf .next 2>/dev/null; true) && npm run build'
         language: system
         files: ^apps/dashboard/
         pass_filenames: false
         stages: [pre-push]
     -   id: nextjs-build-marketing
         name: nextjs-build-marketing
-        entry: bash -lc 'cd apps/marketing-site && npm run build'
+        entry: bash -lc 'cd apps/marketing-site && rm -rf .next && npm run build'
         language: system
         files: ^apps/marketing-site/
         pass_filenames: false
         stages: [pre-push]
     -   id: nextjs-build-ap-demo
         name: nextjs-build-ap-demo
-        entry: bash -lc 'cd apps/ap-demo && npm run build'
+        entry: bash -lc 'cd apps/ap-demo && rm -rf .next && npm run build'
         language: system
         files: ^apps/ap-demo/
         pass_filenames: false
