@@ -13,7 +13,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Copy, Check, CreditCard } from 'lucide-react';
 import QRCode from 'qrcode';
@@ -129,7 +129,7 @@ function SsoConfigCard({ orgId, accessToken }: { orgId: string | null | undefine
 
   const { data: samlConfig, isLoading } = useQuery({
     queryKey: ['saml-config', orgId],
-    // @ts-expect-error -- getSamlConfig not yet in api client
+    // @ts-ignore -- stub API method
     queryFn: () => apiClient.getSamlConfig(accessToken!, orgId!),
     enabled: !!accessToken && !!orgId,
     staleTime: 5 * 60_000,
@@ -157,7 +157,7 @@ function SsoConfigCard({ orgId, accessToken }: { orgId: string | null | undefine
       if (idpCertificate.trim()) {
         payload.idp_certificate = idpCertificate;
       }
-      // @ts-expect-error -- updateSamlConfig not yet in api client
+      // @ts-ignore -- stub API method
       return apiClient.updateSamlConfig(accessToken!, orgId!, payload as any);
     },
     onSuccess: () => {
@@ -452,6 +452,14 @@ function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefi
 }
 
 export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-muted-foreground">Loading settings...</div>}>
+      <SettingsPageInner />
+    </Suspense>
+  );
+}
+
+function SettingsPageInner() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const searchParams = useSearchParams();

@@ -55,7 +55,7 @@ export default function PartnersPage() {
     isLoading: aggLoading,
   } = useQuery({
     queryKey: ['partner-aggregate'],
-    // @ts-expect-error -- not yet in api client
+    // @ts-ignore -- stub API method
     queryFn: () => apiClient.getPartnerAggregate(accessToken!),
     enabled: Boolean(accessToken),
     staleTime: 30_000,
@@ -66,7 +66,7 @@ export default function PartnersPage() {
     isLoading: pubLoading,
   } = useQuery({
     queryKey: ['partner-publishers'],
-    // @ts-expect-error -- not yet in api client
+    // @ts-ignore -- stub API method
     queryFn: () => apiClient.getPartnerPublishers(accessToken!),
     enabled: Boolean(accessToken),
     staleTime: 30_000,
