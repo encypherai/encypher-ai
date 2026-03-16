@@ -32,6 +32,14 @@ repos:
 
 -   repo: local
     hooks:
+    -   id: dashboard-typecheck
+        name: dashboard-typecheck
+        entry: bash -c 'cd apps/dashboard && errors=$(npx tsc --noEmit 2>&1 | grep "error TS"); [ -z "$errors" ] && exit 0; matched=""; for f in "$@"; do rel=${f#apps/dashboard/}; hits=$(echo "$errors" | grep "^${rel}("); [ -n "$hits" ] && matched="${matched}${hits}\n"; done; [ -z "$matched" ] && exit 0; printf "$matched"; exit 1' --
+        language: system
+        files: ^apps/dashboard/src/
+        types_or: [ts, tsx]
+        pass_filenames: true
+        stages: [pre-commit]
     -   id: enterprise-api-ruff-pre-push
         name: enterprise-api-ruff-pre-push
         entry: bash -lc 'cd enterprise_api && uv run ruff check app tests'
