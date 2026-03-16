@@ -117,7 +117,197 @@ const normalizeProfile = (raw: any): Profile => ({
   },
 });
 
-function CustomVerificationDomainCard({ orgId }: { orgId: string | null }) {
+function SsoConfigCard({ orgId, accessToken }: { orgId: string | null | undefined; accessToken: string | undefined }) {
+  const queryClient = useQueryClient();
+  const [idpEntityId, setIdpEntityId] = useState('');
+  const [idpSsoUrl, setIdpSsoUrl] = useState('');
+  const [idpCertificate, setIdpCertificate] = useState('');
+  const [emailAttr, setEmailAttr] = useState('email');
+  const [nameAttr, setNameAttr] = useState('displayName');
+  const [ssoEnabled, setSsoEnabled] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const { data: samlConfig, isLoading } = useQuery({
+    queryKey: ['saml-config', orgId],
+    queryFn: () => apiClient.getSamlConfig(accessToken!, orgId!),
+    enabled: !!accessToken && !!orgId,
+    staleTime: 5 * 60_000,
+  });
+
+  // Sync form state when config loads
+  useEffect(() => {
+    if (samlConfig && samlConfig.configured) {
+      setIdpEntityId(samlConfig.idp_entity_id || '');
+      setIdpSsoUrl(samlConfig.idp_sso_url || '');
+      setEmailAttr(samlConfig.attribute_mapping?.email || 'email');
+      setNameAttr(samlConfig.attribute_mapping?.name || 'displayName');
+      setSsoEnabled(samlConfig.enabled || false);
+    }
+  }, [samlConfig]);
+
+  const saveMutation = useMutation({
+    mutationFn: () => {
+      const payload: Record<string, unknown> = {
+        idp_entity_id: idpEntityId,
+        idp_sso_url: idpSsoUrl,
+        attribute_mapping: { email: emailAttr, name: nameAttr },
+        enabled: ssoEnabled,
+      };
+      if (idpCertificate.trim()) {
+        payload.idp_certificate = idpCertificate;
+      }
+      return apiClient.updateSamlConfig(accessToken!, orgId!, payload as any);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['saml-config', orgId] });
+      toast.success('SSO configuration saved.');
+      setIdpCertificate('');
+    },
+    onError: (err: Error) => toast.error(err.message || 'Failed to save SSO configuration'),
+  });
+
+  const handleCopy = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  if (!orgId) return null;
+
+  const entityId = `urn:encypher:auth:${orgId}`;
+  const acsUrl = `${API_BASE.replace('/api/v1', '')}/api/v1/auth/saml/acs`;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Single Sign-On (SSO)</CardTitle>
+        <CardDescription>
+          Configure SAML 2.0 SSO for your organization. Enterprise plan required.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {isLoading ? (
+          <div className="text-muted-foreground">Loading SSO configuration...</div>
+        ) : (
+          <>
+            {/* SP Metadata */}
+            <div className="rounded-lg border border-border p-4 space-y-3">
+              <h4 className="text-sm font-semibold">Service Provider (SP) Metadata</h4>
+              <p className="text-xs text-muted-foreground">
+                Provide these values to your Identity Provider when configuring the SAML integration.
+              </p>
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">SP Entity ID</label>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-muted px-3 py-2 rounded font-mono break-all">{entityId}</code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopy(entityId, 'entityId')}
+                    >
+                      {copiedField === 'entityId' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">ACS URL</label>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 text-xs bg-muted px-3 py-2 rounded font-mono break-all">{acsUrl}</code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopy(acsUrl, 'acsUrl')}
+                    >
+                      {copiedField === 'acsUrl' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* IdP Configuration Form */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold">Identity Provider (IdP) Configuration</h4>
+              <div>
+                <label className="block text-sm font-medium mb-1">IdP Entity ID</label>
+                <Input
+                  value={idpEntityId}
+                  onChange={(e) => setIdpEntityId(e.target.value)}
+                  placeholder="https://idp.example.com/saml/metadata"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">IdP SSO URL</label>
+                <Input
+                  value={idpSsoUrl}
+                  onChange={(e) => setIdpSsoUrl(e.target.value)}
+                  placeholder="https://idp.example.com/saml/sso"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  IdP Certificate (PEM)
+                  {samlConfig?.has_certificate && (
+                    <span className="ml-2 text-xs text-muted-foreground font-normal">
+                      -- certificate on file; paste new to replace
+                    </span>
+                  )}
+                </label>
+                <textarea
+                  value={idpCertificate}
+                  onChange={(e) => setIdpCertificate(e.target.value)}
+                  placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+                  rows={4}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground font-mono text-xs resize-y"
+                />
+              </div>
+
+              {/* Attribute Mapping */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <h4 className="text-sm font-semibold">Attribute Mapping</h4>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Email attribute</label>
+                    <Input
+                      value={emailAttr}
+                      onChange={(e) => setEmailAttr(e.target.value)}
+                      placeholder="email"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Name attribute</label>
+                    <Input
+                      value={nameAttr}
+                      onChange={(e) => setNameAttr(e.target.value)}
+                      placeholder="displayName"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Enable toggle */}
+              <div className="flex items-center gap-3">
+                <ToggleSwitch checked={ssoEnabled} onChange={setSsoEnabled} />
+                <span className="text-sm font-medium">Enable SSO</span>
+              </div>
+
+              <Button
+                variant="primary"
+                onClick={() => saveMutation.mutate()}
+                disabled={saveMutation.isPending || !idpEntityId || !idpSsoUrl}
+              >
+                {saveMutation.isPending ? 'Saving...' : 'Save SSO Configuration'}
+              </Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefined }) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [newDomain, setNewDomain] = useState('');
@@ -1308,6 +1498,7 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'organization' && (
+              <>
               <Card>
                 <CardHeader>
                   <CardTitle>Organization domains</CardTitle>
@@ -1620,6 +1811,10 @@ export default function SettingsPage() {
 
               {/* Custom Verification Domain */}
               <CustomVerificationDomainCard orgId={orgId} />
+
+              {/* SSO Configuration (Enterprise only) */}
+              <SsoConfigCard orgId={orgId} accessToken={accessToken} />
+              </>
             )}
 
             {activeTab === 'billing' && (

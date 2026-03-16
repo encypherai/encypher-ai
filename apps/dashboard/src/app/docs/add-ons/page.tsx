@@ -114,7 +114,7 @@ If you use the Encypher WordPress plugin, the backfill can be triggered from **W
 export default function AddOnsDocsPage() {
   return (
     <DashboardLayout>
-      <PublisherIntegrationGuideClient content={GUIDE_CONTENT} />
+      <PublisherIntegrationGuideClient markdown={GUIDE_CONTENT} />
     </DashboardLayout>
   );
 }
