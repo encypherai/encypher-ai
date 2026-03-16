@@ -104,12 +104,10 @@ jobs:
         run: pip install mypy types-requests types-PyYAML types-redis
 
       - name: Run mypy on auth-service
-        run: mypy services/auth-service/app/ --config-file mypy.ini || true
-        continue-on-error: true
+        run: mypy services/auth-service/app/ --config-file mypy.ini
 
       - name: Run mypy on enterprise-api
-        run: mypy enterprise_api/app/ --config-file mypy.ini || true
-        continue-on-error: true
+        run: mypy enterprise_api/app/ --config-file mypy.ini
 
   test-coverage:
     name: Test Coverage
@@ -160,7 +158,6 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/test
           REDIS_URL: redis://localhost:6379/0
-        continue-on-error: true
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
