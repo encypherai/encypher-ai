@@ -5,6 +5,11 @@ FROM node:20-alpine
 RUN apk add --no-cache python3 make g++ pkgconfig \
     cairo-dev pango-dev libjpeg-turbo-dev giflib-dev pixman-dev
 
+# Run as non-root to avoid bind-mount ownership conflicts with host
+RUN addgroup -g 1000 -S appuser || true && \
+    adduser -u 1000 -S appuser -G appuser || true
+USER 1000
+
 WORKDIR /app
 
 # Install dependencies first (cached layer)
