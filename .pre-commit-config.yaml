@@ -42,7 +42,7 @@ repos:
         stages: [pre-push]
     -   id: nextjs-build-marketing
         name: nextjs-build-marketing
-        entry: bash -lc 'cd apps/marketing-site && (sudo rm -rf .next || rm -rf .next) 2>/dev/null; npm run build'
+        entry: bash -lc 'docker stop encypher-marketing-site 2>/dev/null; cd apps/marketing-site && (sudo rm -rf .next || rm -rf .next) 2>/dev/null; npm run build; EXIT=$?; docker start encypher-marketing-site 2>/dev/null; exit $EXIT'
         language: system
         files: ^apps/marketing-site/
         pass_filenames: false
