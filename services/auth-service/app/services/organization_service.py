@@ -318,7 +318,11 @@ class OrganizationService:
     def _should_expire_trial(self, org: Organization) -> bool:
         if org.subscription_status != "trialing":
             return False
-        if not org.trial_ends_at or org.trial_ends_at > datetime.utcnow():
+        trial_ends_at = org.trial_ends_at
+        if not trial_ends_at:
+            return False
+        comparison_now = datetime.now(timezone.utc) if trial_ends_at.tzinfo else datetime.utcnow()
+        if trial_ends_at > comparison_now:
             return False
         if not org.trial_tier:
             return False

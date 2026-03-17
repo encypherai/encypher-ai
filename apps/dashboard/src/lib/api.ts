@@ -774,7 +774,7 @@ const apiClient = {
       payload.organization_id = organizationId;
     }
     const response = await fetchWithAuth<ApiKeyCreateResponse>(
-      `${API_BASE_URL}/keys`,
+      `${API_BASE_URL}/keys/generate`,
       accessToken,
       {
         method: 'POST',
