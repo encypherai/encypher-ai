@@ -435,7 +435,7 @@ else
 fi
 
 # Clean .next caches so the pre-push build hook doesn't hit permission errors
-(chmod -R u+rwx "$REPO_ROOT/apps/marketing-site/.next" 2>/dev/null; rm -rf "$REPO_ROOT/apps/marketing-site/.next") 2>/dev/null
+(sudo rm -rf "$REPO_ROOT/apps/marketing-site/.next" || rm -rf "$REPO_ROOT/apps/marketing-site/.next") 2>/dev/null
 
 git push origin "$BRANCH_NAME"
 
