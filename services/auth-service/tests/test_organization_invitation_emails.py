@@ -10,7 +10,19 @@ from sqlalchemy.orm import Session
 from app.api.v1 import organizations as org_api
 
 
+def _render_invitation_template(template_name: str, **context) -> str:
+    assert template_name == "invitation.html"
+    return "\n".join(
+        [
+            f"<h1>{context['subject']}</h1>",
+            f"<p>{context['inviter_display']}</p>",
+            f"<a href=\"{context['invitation_url']}\">Accept Invitation</a>",
+        ]
+    )
+
+
 def test_build_invitation_email_uses_dashboard_invite_route():
+    org_api.render_template = _render_invitation_template
     config = org_api.EmailConfig(frontend_url="https://dashboard.encypherai.test", dashboard_url="")
 
     _, html_content, plain_content = org_api._build_invitation_email(
@@ -36,6 +48,7 @@ def test_build_invitation_email_uses_dashboard_invite_route():
 
 @pytest.mark.asyncio
 async def test_send_invitation_email_uses_direct_email_sender(monkeypatch):
+    monkeypatch.setattr(org_api, "render_template", _render_invitation_template)
     config = org_api.EmailConfig(
         frontend_url="https://dashboard.encypherai.test",
         dashboard_url="",

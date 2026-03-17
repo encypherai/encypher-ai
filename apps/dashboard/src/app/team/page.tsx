@@ -374,6 +374,28 @@ export default function TeamPage() {
     },
   });
 
+  const resendInviteMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/invitations/${invitationId}/resend`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.detail || 'Failed to resend invitation');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['org-invitations'] });
+      queryClient.invalidateQueries({ queryKey: ['org-seats'] });
+      toast.success('Invitation resent');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to resend invitation');
+    },
+  });
+
   // Remove member mutation
   const removeMemberMutation = useMutation({
     mutationFn: async (userId: string) => {
@@ -712,9 +734,18 @@ export default function TeamPage() {
                     <div className="flex items-center gap-3">
                       <Badge variant="secondary">{inv.role}</Badge>
                       <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => resendInviteMutation.mutate(inv.id)}
+                        disabled={resendInviteMutation.isPending}
+                      >
+                        Resend
+                      </Button>
+                      <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => cancelInviteMutation.mutate(inv.id)}
+                        disabled={cancelInviteMutation.isPending}
                       >
                         Cancel
                       </Button>

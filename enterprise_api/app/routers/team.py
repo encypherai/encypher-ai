@@ -4,10 +4,12 @@ import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 from enum import Enum
+from pathlib import Path
 from typing import List, Optional
 from uuid import uuid4
 
 import httpx
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import text
@@ -21,6 +23,24 @@ from app.services.auth_service_client import auth_service_client
 
 router = APIRouter(prefix="/org/members", tags=["Team Management"])
 invite_router = APIRouter(prefix="/org/invites", tags=["Team Invites"])
+
+_TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+_jinja_env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=select_autoescape(["html", "xml"]))
+
+
+def _render_team_invite_email(
+    *, subject: str, inviter_name: str, organization_name: str, role: str, invitation_url: str, expires_at: datetime
+) -> str:
+    template = _jinja_env.get_template("team_invitation.html")
+    return template.render(
+        subject=subject,
+        inviter_name=inviter_name,
+        organization_name=organization_name,
+        role=role.capitalize(),
+        invitation_url=invitation_url,
+        expires_at_label=expires_at.strftime("%B %-d, %Y at %-I:%M %p UTC"),
+        year=datetime.now(timezone.utc).year,
+    )
 
 
 class TeamRole(str, Enum):
@@ -209,12 +229,71 @@ async def list_team_members(
         for row in rows
     ]
 
-    return TeamMemberListResponse(
-        organization_id=org_id,
-        members=members,
-        total=len(members),
-        max_members=max_members if max_members > 0 else 999999,
+
+@router.post("/invites/{invite_id}/resend")
+async def resend_invite(
+    invite_id: str,
+    background_tasks: BackgroundTasks,
+    organization: dict = Depends(require_admin_role),
+    db: AsyncSession = Depends(get_db),
+):
+    """Resend a pending invitation and refresh its token and expiry."""
+    org_id = organization["organization_id"]
+    inviter_name = organization.get("user_name") or organization.get("organization_name") or "Your team admin"
+    org_name = organization.get("organization_name", org_id)
+    refreshed_token = secrets.token_urlsafe(32)
+    refreshed_expiry = datetime.now(timezone.utc) + timedelta(days=7)
+
+    result = await db.execute(
+        text("""
+            UPDATE organization_invites
+            SET token = :token, expires_at = :expires_at
+            WHERE id = :invite_id AND organization_id = :org_id AND status = 'pending'
+            RETURNING email, role, token, expires_at
+        """),
+        {
+            "invite_id": invite_id,
+            "org_id": org_id,
+            "token": refreshed_token,
+            "expires_at": refreshed_expiry,
+        },
     )
+    row = result.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found or already processed")
+
+    actor_id = organization.get("user_id") or organization.get("api_key_owner_id")
+    if actor_id:
+        await log_audit_event(
+            db=db,
+            organization_id=org_id,
+            action=AuditAction.ORG_MEMBER_ADDED,
+            actor_id=actor_id,
+            actor_type="user",
+            resource_type="team_invite",
+            resource_id=invite_id,
+            details={"email": row.email, "role": row.role, "event": "resent"},
+        )
+
+    await db.commit()
+
+    background_tasks.add_task(
+        _send_team_invite_email,
+        recipient_email=row.email,
+        inviter_name=inviter_name,
+        org_name=org_name,
+        role=row.role,
+        invite_token=row.token,
+        expires_at=row.expires_at,
+    )
+
+    return {
+        "success": True,
+        "message": f"Invitation resent to {row.email}",
+        "invite_id": invite_id,
+        "expires_at": row.expires_at.isoformat() if row.expires_at else None,
+    }
 
 
 async def _send_team_invite_email(
@@ -224,18 +303,19 @@ async def _send_team_invite_email(
     org_name: str,
     role: str,
     invite_token: str,
+    expires_at: Optional[datetime] = None,
 ) -> None:
     """Send team invitation email via notification service. Non-fatal on failure."""
     claim_url = f"{settings.dashboard_url}/invite/team/{invite_token}"
     subject = f"You've been invited to join {org_name} on Encypher"
-    html_body = f"""
-    <p>Hi,</p>
-    <p><strong>{inviter_name}</strong> has invited you to join <strong>{org_name}</strong> on Encypher as a <strong>{role}</strong>.</p>
-    <p>Encypher provides cryptographic content provenance and rights management for publishers.</p>
-    <p><a href="{claim_url}" style="background:#2563eb;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;">Accept Invitation</a></p>
-    <p>This invitation expires in 7 days. If you did not expect this invitation, you can ignore this email.</p>
-    <p>Powered by <a href="https://encypherai.com">Encypher</a></p>
-    """.strip()
+    html_body = _render_team_invite_email(
+        subject=subject,
+        inviter_name=inviter_name,
+        organization_name=org_name,
+        role=role,
+        invitation_url=claim_url,
+        expires_at=expires_at or (datetime.now(timezone.utc) + timedelta(days=7)),
+    )
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             await client.post(
@@ -361,6 +441,7 @@ async def invite_member(
         org_name=org_name,
         role=request.role.value,
         invite_token=invite_token,
+        expires_at=expires_at,
     )
 
     return InviteResponse(
@@ -994,6 +1075,7 @@ async def bulk_invite_members(
             org_name=org_name,
             role=role_value,
             invite_token=invite_token,
+            expires_at=expires_at,
         )
 
         results.append(
