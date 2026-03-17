@@ -2,7 +2,7 @@
 Organization Service - Business logic for team management
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 import logging
 
@@ -79,6 +79,20 @@ def normalize_domain(domain: str) -> str:
     if cleaned.startswith("@"):
         cleaned = cleaned[1:]
     return cleaned.split("/")[0]
+
+
+def utc_now() -> datetime:
+    """Return the current UTC time as a timezone-aware datetime."""
+    return datetime.now(timezone.utc)
+
+
+def is_expired(expires_at: Optional[datetime]) -> bool:
+    """Safely compare expiration timestamps across naive and aware datetimes."""
+    if expires_at is None:
+        return False
+    if expires_at.tzinfo is None:
+        return expires_at < datetime.utcnow()
+    return expires_at < utc_now()
 
 
 class OrganizationService:
@@ -898,7 +912,7 @@ class OrganizationService:
         if invitation.status != "pending":
             return {"status": invitation.status, "valid": False}
 
-        if invitation.expires_at < datetime.utcnow():
+        if is_expired(invitation.expires_at):
             return {"status": "expired", "valid": False}
 
         # Get organization name
@@ -938,7 +952,7 @@ class OrganizationService:
         if invitation.status != "pending":
             raise ValueError(f"Invitation is {invitation.status}")
 
-        if invitation.expires_at < datetime.utcnow():
+        if is_expired(invitation.expires_at):
             invitation.status = "expired"
             self.db.commit()
             raise ValueError("Invitation has expired")
@@ -1010,7 +1024,7 @@ class OrganizationService:
         if invitation.status != "pending":
             raise ValueError(f"Invitation is {invitation.status}")
 
-        if invitation.expires_at < datetime.utcnow():
+        if is_expired(invitation.expires_at):
             invitation.status = "expired"
             self.db.commit()
             raise ValueError("Invitation has expired")

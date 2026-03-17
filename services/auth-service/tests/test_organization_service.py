@@ -3,7 +3,7 @@ Unit tests for OrganizationService
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 from sqlalchemy.orm import Session
 
@@ -131,6 +131,46 @@ class TestCreateOrganization(TestOrganizationService):
         add_calls = mock_db.add.call_args_list
         org_call = [c for c in add_calls if isinstance(c[0][0], Organization)]
         # Note: In a real test, we'd verify the actual max_seats value
+
+    def test_normalizes_org_email_and_checks_exact_duplicates(self, service, mock_db):
+        """New org creation should normalize email and only block exact duplicates."""
+        with patch.object(service, "_organization_slug_exists", side_effect=[False]) as slug_exists:
+            with patch.object(service, "_organization_email_exists", return_value=False) as email_exists:
+                org = service._create_organization_record(name="New Org", email=" Sales@Example.COM ", tier="free")
+
+        assert org.email == "sales@example.com"
+        slug_exists.assert_called_once_with("new-org")
+        email_exists.assert_called_once_with("sales@example.com")
+
+    def test_rejects_exact_existing_org_email(self, service):
+        with patch.object(service, "_organization_slug_exists", side_effect=[False]):
+            with patch.object(service, "_organization_email_exists", return_value=True):
+                with pytest.raises(ValueError, match="organization with this email already exists"):
+                    service._create_organization_record(name="New Org", email="sales@example.com", tier="free")
+
+    def test_organization_query_only_loads_columns_present_in_db(self, service, mock_db):
+        query = MagicMock()
+        query.options.return_value = query
+        mock_db.query.return_value = query
+
+        with patch("app.services.organization_service.inspect") as inspect_db:
+            with patch("app.services.organization_service.load_only", return_value="loader") as load_only_mock:
+                inspect_db.return_value.get_columns.return_value = [
+                    {"name": "id"},
+                    {"name": "name"},
+                    {"name": "slug"},
+                    {"name": "email"},
+                    {"name": "tier"},
+                ]
+
+                result = service._organization_query()
+
+        assert result == query
+        query.options.assert_called_once_with("loader")
+        load_only_args = load_only_mock.call_args[0]
+        assert Organization.id in load_only_args
+        assert Organization.email in load_only_args
+        assert Organization.parent_org_id not in load_only_args
 
 
 class TestTierConfig(TestOrganizationService):
@@ -350,6 +390,73 @@ class TestCreateTrialInvitationForNewOrg(TestOrganizationService):
             )
 
 
+class TestCreateEnterpriseEvaluationInvitation(TestOrganizationService):
+    """Tests for create_enterprise_evaluation_invitation."""
+
+    def test_uses_fixed_enterprise_60_day_trial(self, service):
+        invitation = MagicMock(spec=OrganizationInvitation)
+
+        with patch.object(service, "create_trial_invitation_for_new_org", return_value=invitation) as create_trial_invitation:
+            result = service.create_enterprise_evaluation_invitation(
+                organization_name="Acme Labs",
+                email="prospect@acme.test",
+                first_name="Jane",
+                last_name="Doe",
+                inviter_user_id="admin_user",
+            )
+
+        assert result == invitation
+        create_trial_invitation.assert_called_once_with(
+            organization_name="Acme Labs",
+            email="prospect@acme.test",
+            first_name="Jane",
+            last_name="Doe",
+            tier="enterprise",
+            trial_months=2,
+            inviter_user_id="admin_user",
+        )
+
+
+class TestTrialExpiryRefresh(TestOrganizationService):
+    """Tests for lazy trial expiry downgrade behavior."""
+
+    def test_refresh_trial_state_downgrades_expired_trialing_org(self, service, mock_db):
+        org = MagicMock(spec=Organization)
+        org.id = "org_eval"
+        org.tier = "enterprise"
+        org.trial_tier = "enterprise"
+        org.trial_months = 2
+        org.trial_ends_at = datetime.utcnow() - timedelta(days=1)
+        org.subscription_status = "trialing"
+
+        with patch.object(service, "_log_action"):
+            result = service.refresh_trial_state(org)
+
+        assert result == org
+        assert org.tier == "free"
+        assert org.subscription_status == "expired"
+        assert org.max_seats == 1
+        assert org.monthly_api_limit == 10000
+        mock_db.commit.assert_called_once()
+        mock_db.refresh.assert_called_once_with(org)
+
+    def test_refresh_trial_state_skips_manually_upgraded_enterprise_org(self, service, mock_db):
+        org = MagicMock(spec=Organization)
+        org.id = "org_custom"
+        org.tier = "enterprise"
+        org.trial_tier = "enterprise"
+        org.trial_months = 2
+        org.trial_ends_at = datetime.utcnow() - timedelta(days=1)
+        org.subscription_status = "active"
+
+        with patch.object(service, "_expire_trial_to_free") as expire_trial:
+            result = service.refresh_trial_state(org)
+
+        assert result == org
+        expire_trial.assert_not_called()
+        mock_db.commit.assert_not_called()
+
+
 class TestDomainClaims(TestOrganizationService):
     """Tests for domain claim logic"""
 
@@ -503,6 +610,39 @@ class TestDomainClaims(TestOrganizationService):
 class TestAcceptInvitation(TestOrganizationService):
     """Tests for accept_invitation"""
 
+    def test_get_invitation_details_allows_timezone_aware_future_expiry(self, service, mock_db):
+        invitation = MagicMock(spec=OrganizationInvitation)
+        invitation.status = "pending"
+        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.organization_id = "org_123"
+        invitation.organization_name = "Acme Labs"
+        invitation.invited_by = "user_123"
+        invitation.email = "invitee@example.com"
+        invitation.first_name = "Jane"
+        invitation.last_name = "Doe"
+        invitation.role = "member"
+        invitation.message = None
+        invitation.tier = "enterprise"
+        invitation.trial_months = 2
+
+        inviter = MagicMock(spec=User)
+        inviter.name = "Admin User"
+        inviter.email = "admin@example.com"
+
+        existing_user = MagicMock(spec=User)
+
+        mock_db.query.return_value.filter.return_value.first.side_effect = [inviter, existing_user]
+
+        with patch.object(service, "get_invitation_by_token", return_value=invitation):
+            with patch.object(service, "get_organization", return_value=None):
+                details = service.get_invitation_details("token_123")
+
+        assert details is not None
+        assert details["valid"] is True
+        assert details["status"] == "pending"
+        assert details["organization_name"] == "Acme Labs"
+        assert details["user_exists"] is True
+
     def test_rejects_expired_invitation(self, service, mock_db):
         """Test that expired invitations are rejected"""
         expired_invite = MagicMock(spec=OrganizationInvitation)
@@ -607,11 +747,7 @@ class TestAcceptInvitationNewUser(TestOrganizationService):
                 with patch.object(service, "update_tier_internal", return_value=org) as update_tier:
                     with patch.object(service, "_apply_trial_metadata") as apply_trial:
                         with patch.object(service, "_sync_trial_to_billing") as sync_trial:
-                            user, member = service.accept_invitation_new_user(
-                                token="token_123",
-                                name=None,
-                                password_hash="hash",
-                            )
+                            user, member = service.accept_invitation_new_user("token_123", None, "placeholder-password-hash")
 
         update_tier.assert_called_once_with(
             org_id="org_123",

@@ -66,12 +66,14 @@ async def test_send_invitation_email_uses_direct_email_sender(monkeypatch):
 
     to_thread_mock.assert_awaited_once()
     args = to_thread_mock.await_args.args
+    kwargs = to_thread_mock.await_args.kwargs
     assert args[0] is org_api.send_email
     assert args[1] is config
     assert args[2] == "invitee@example.com"
     assert args[3] == "You're invited to join Acme Labs on Encypher"
     assert "https://dashboard.encypherai.test/invite/token_123" in args[4]
     assert "Accept invitation: https://dashboard.encypherai.test/invite/token_123" in args[5]
+    assert kwargs == {}
 
 
 @pytest.mark.asyncio
@@ -103,12 +105,14 @@ async def test_send_domain_claim_email_uses_direct_email_sender(monkeypatch):
 
     to_thread_mock.assert_awaited_once()
     args = to_thread_mock.await_args.args
+    kwargs = to_thread_mock.await_args.kwargs
     assert args[0] is org_api.send_email
     assert args[1] is config
     assert args[2] == "admin@example.com"
     assert args[3] == "Set up DNS verification for acme.test"
     assert "encypher-domain-claim=dns-token" in args[4]
     assert "Optional audit confirmation" in args[5]
+    assert kwargs == {}
 
 
 @pytest.mark.asyncio

@@ -163,7 +163,6 @@ async def _send_invitation_email(
             subject,
             html_content,
             plain_content,
-            logger=logger,
         )
         if not sent:
             logger.warning("invitation_email_failed recipient=%s", recipient_email)
@@ -219,7 +218,6 @@ async def _send_domain_claim_email(
             subject,
             html_content,
             plain_content,
-            logger=logger,
         )
         if not sent:
             logger.warning("domain_claim_email_failed recipient=%s domain=%s", recipient_email, domain)
