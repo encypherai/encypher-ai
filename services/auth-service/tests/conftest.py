@@ -55,6 +55,7 @@ def _render_template_stub(*_args, **_kwargs):
 shared_email_module.EmailConfig = _EmailConfig
 shared_email_module.render_template = _render_template_stub
 shared_email_module.generate_token = _generate_token
+shared_email_module.send_email = _send_email_stub
 shared_email_module.send_verification_email = _send_email_stub
 shared_email_module.send_welcome_email = _send_email_stub
 shared_email_module.send_password_reset_email = _send_email_stub

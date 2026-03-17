@@ -8,7 +8,6 @@ import html
 import re
 import secrets
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -20,13 +19,17 @@ from ...db.session import get_db
 from ...core.config import settings
 from ...core.auth import get_email_config as _get_email_config
 from ...core.responses import ok
-from ...services.organization_service import OrganizationService
+from ...services.organization_service import (
+    ENTERPRISE_EVALUATION_TIER,
+    ENTERPRISE_EVALUATION_TRIAL_MONTHS,
+    OrganizationService,
+)
 from ...models.schemas import UserTier
 import dns.resolver
 from ...services.auth_service import AuthService
 from .endpoints import require_super_admin
 from ...deps.rate_limit import rate_limiter
-from encypher_commercial_shared.email import EmailConfig
+from encypher_commercial_shared.email import EmailConfig, send_email
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 logger = logging.getLogger(__name__)
@@ -72,7 +75,7 @@ def _build_invitation_email(
     trial_months: Optional[int],
 ) -> tuple[str, str, str]:
     base_url = config.dashboard_url or config.frontend_url
-    invitation_url = f"{base_url}/invitations/accept?token={invitation_token}"
+    invitation_url = f"{base_url}/invite/{invitation_token}"
 
     safe_inviter_name = html.escape(inviter_name, quote=True) if inviter_name else None
     safe_inviter_email = html.escape(inviter_email, quote=True)
@@ -152,32 +155,18 @@ async def _send_invitation_email(
         trial_months=trial_months,
     )
 
-    payload = {
-        "notification_type": "email",
-        "recipient": recipient_email,
-        "subject": subject,
-        "content": html_content,
-        "metadata": {
-            "plain_content": plain_content,
-            "organization_name": organization_name,
-            "role": role,
-            "tier": tier,
-            "trial_months": trial_months,
-            "recipient_name": recipient_name,
-        },
-    }
-
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.post(
-                f"{settings.NOTIFICATION_SERVICE_URL}/api/v1/notifications/send",
-                json=payload,
-                headers={"Authorization": authorization},
-            )
-            if response.status_code >= 400:
-                logger.warning("invitation_email_failed status=%s response=%s", response.status_code, response.text)
-    except httpx.RequestError as exc:
-        logger.warning("invitation_email_request_failed error=%s", str(exc))
+        sent = await asyncio.to_thread(
+            send_email,
+            config,
+            recipient_email,
+            subject,
+            html_content,
+            plain_content,
+            logger=logger,
+        )
+        if not sent:
+            logger.warning("invitation_email_failed recipient=%s", recipient_email)
     except Exception as exc:
         logger.exception("invitation_email_unexpected_error error=%s", str(exc))
 
@@ -222,29 +211,18 @@ async def _send_domain_claim_email(
         f"Optional audit confirmation: {audit_url}"
     )
 
-    payload = {
-        "notification_type": "email",
-        "recipient": recipient_email,
-        "subject": subject,
-        "content": html_content,
-        "metadata": {
-            "plain_content": plain_content,
-            "organization_name": organization_name,
-            "domain": domain,
-        },
-    }
-
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.post(
-                f"{settings.NOTIFICATION_SERVICE_URL}/api/v1/notifications/send",
-                json=payload,
-                headers={"Authorization": authorization},
-            )
-            if response.status_code >= 400:
-                logger.warning("domain_claim_email_failed status=%s response=%s", response.status_code, response.text)
-    except httpx.RequestError as exc:
-        logger.warning("domain_claim_email_request_failed error=%s", str(exc))
+        sent = await asyncio.to_thread(
+            send_email,
+            config,
+            recipient_email,
+            subject,
+            html_content,
+            plain_content,
+            logger=logger,
+        )
+        if not sent:
+            logger.warning("domain_claim_email_failed recipient=%s domain=%s", recipient_email, domain)
     except Exception as exc:
         logger.exception("domain_claim_email_unexpected_error error=%s", str(exc))
 
@@ -368,6 +346,13 @@ class TrialInvitationCreate(BaseModel):
     organization_name: str
     tier: UserTier
     trial_months: int = Field(..., ge=1, le=24)
+
+
+class EnterpriseEvaluationInvitationCreate(BaseModel):
+    email: EmailStr
+    first_name: str
+    last_name: str
+    organization_name: str
 
 
 class InvitationResponse(BaseModel):
@@ -500,6 +485,53 @@ async def create_trial_invitation_for_new_org(
                 expires_at=invitation.expires_at,
                 tier=invitation.tier,
                 trial_months=invitation.trial_months,
+            )
+
+        return ok(InvitationResponse.model_validate(invitation).model_dump())
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/invitations/enterprise-evaluation")
+async def create_enterprise_evaluation_invitation(
+    invitation_data: EnterpriseEvaluationInvitationCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("org_invite", limit=20, window_sec=60)),
+):
+    """Send a fixed 60-day enterprise evaluation invitation for a new organization."""
+    user_id = await get_current_user_id(request, db)
+
+    try:
+        require_super_admin(db, user_id)
+
+        org_service = OrganizationService(db)
+        invitation = org_service.create_enterprise_evaluation_invitation(
+            organization_name=invitation_data.organization_name,
+            email=invitation_data.email,
+            first_name=invitation_data.first_name,
+            last_name=invitation_data.last_name,
+            inviter_user_id=user_id,
+        )
+
+        inviter = db.query(User).filter(User.id == user_id).first()
+        recipient_name = " ".join([invitation_data.first_name, invitation_data.last_name]).strip()
+        if inviter:
+            await _send_invitation_email(
+                authorization=request.headers.get("Authorization", ""),
+                recipient_email=invitation.email,
+                recipient_name=recipient_name,
+                inviter_name=inviter.name,
+                inviter_email=inviter.email,
+                organization_name=invitation.organization_name or invitation_data.organization_name,
+                role=invitation.role,
+                invitation_token=invitation.token,
+                message=invitation.message,
+                expires_at=invitation.expires_at,
+                tier=invitation.tier or ENTERPRISE_EVALUATION_TIER,
+                trial_months=invitation.trial_months or ENTERPRISE_EVALUATION_TRIAL_MONTHS,
             )
 
         return ok(InvitationResponse.model_validate(invitation).model_dump())
