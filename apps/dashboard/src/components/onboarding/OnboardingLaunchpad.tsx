@@ -219,29 +219,29 @@ export function OnboardingLaunchpad({
     ];
   } else {
     eyebrow = 'Enterprise rollout';
-    title = 'Launch provenance infrastructure for your team';
-    description = 'We tailored the dashboard for implementation teams. Start with credentials, validate a first workflow, then expand the rollout with confidence.';
+    title = 'Launch your enterprise provenance workspace';
+    description = 'Start with credentials for your implementation team, test the WordPress plugin or API path, validate a signing workflow in Playground, then verify domain ownership and configure signing identity.';
 
     if (!hasApiKeys) {
       primaryHref = '/api-keys';
       primaryLabel = 'Generate your first API key';
-      secondaryHref = '/docs';
-      secondaryLabel = 'Open implementation docs';
+      secondaryHref = '/docs/wordpress-integration';
+      secondaryLabel = 'Test the WordPress plugin';
     } else if (documentsSigned === 0) {
       primaryHref = '/playground';
       primaryLabel = 'Run your first signing workflow';
-      secondaryHref = '/docs';
-      secondaryLabel = 'Review implementation steps';
+      secondaryHref = '/docs/wordpress-integration';
+      secondaryLabel = 'Test the WordPress plugin';
     } else if (verifications === 0) {
       primaryHref = '/playground';
       primaryLabel = 'Verify signed output';
-      secondaryHref = '/settings';
-      secondaryLabel = 'Review workspace settings';
+      secondaryHref = '/settings?tab=organization';
+      secondaryLabel = 'Verify domain & signing setup';
     } else {
-      primaryHref = '/settings';
-      primaryLabel = 'Prepare team rollout';
-      secondaryHref = '/docs';
-      secondaryLabel = 'Continue implementation';
+      primaryHref = '/settings?tab=organization';
+      primaryLabel = 'Configure domain & signing identity';
+      secondaryHref = '/docs/wordpress-integration';
+      secondaryLabel = 'Expand plugin rollout';
     }
 
     steps = [
@@ -252,15 +252,21 @@ export function OnboardingLaunchpad({
         completed: hasApiKeys,
       },
       {
+        title: 'Test the WordPress plugin or integration path',
+        description: 'Use the WordPress guide or your preferred integration path to prove the implementation works end to end.',
+        href: '/docs/wordpress-integration',
+        completed: hasApiKeys,
+      },
+      {
         title: 'Run a first signing workflow',
-        description: 'Validate the happy path before broadening the rollout.',
+        description: 'Validate the happy path in Playground before broadening the rollout.',
         href: '/playground',
         completed: documentsSigned > 0,
       },
       {
-        title: 'Verify output and prepare rollout',
-        description: 'Confirm trust signals and move toward broader team adoption.',
-        href: '/playground',
+        title: 'Verify domain ownership and signing identity',
+        description: 'Prepare custom trust signals by verifying your domain and configuring organization-level signing identity settings.',
+        href: '/settings?tab=organization',
         completed: verifications > 0,
       },
     ];

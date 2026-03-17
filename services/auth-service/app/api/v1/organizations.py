@@ -17,6 +17,7 @@ from datetime import datetime
 from ...db.models import User, OrganizationDomainClaim
 from ...db.session import get_db
 from ...core.config import settings
+from ...core.security import get_password_hash
 from ...core.auth import get_email_config as _get_email_config
 from ...core.responses import ok
 from ...services.organization_service import (
@@ -1421,11 +1422,7 @@ async def accept_invitation_new_user(
     _: None = Depends(rate_limiter("signup", limit=5, window_sec=60)),
 ):
     """Accept an invitation and create a new account"""
-    from passlib.context import CryptContext
-
-    # Hash password
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    password_hash = pwd_context.hash(data.password)
+    password_hash = get_password_hash(data.password)
 
     try:
         org_service = OrganizationService(db)

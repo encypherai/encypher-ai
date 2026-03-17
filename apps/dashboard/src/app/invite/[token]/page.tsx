@@ -32,7 +32,7 @@ export default function InvitationPage() {
   const [invitation, setInvitation] = useState<InvitationDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // New account form state
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
@@ -47,12 +47,12 @@ export default function InvitationPage() {
           `${process.env.NEXT_PUBLIC_API_URL}/organizations/invitations/${token}`
         );
         const data = await response.json();
-        
+
         if (!response.ok) {
           setError(data.detail || 'Invitation not found');
           return;
         }
-        
+
         setInvitation(data.data);
       } catch (err) {
         setError('Failed to load invitation');
@@ -60,7 +60,7 @@ export default function InvitationPage() {
         setLoading(false);
       }
     }
-    
+
     if (token) {
       fetchInvitation();
     }
@@ -69,9 +69,9 @@ export default function InvitationPage() {
   // Handle accepting invitation for logged-in users
   const handleAcceptLoggedIn = async () => {
     if (!session?.user) return;
-    
+
     const accessToken = (session.user as any).accessToken;
-    
+
     setSubmitting(true);
     try {
       const response = await fetch(
@@ -84,16 +84,16 @@ export default function InvitationPage() {
           },
         }
       );
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         toast.error(data.detail || 'Failed to accept invitation');
         return;
       }
-      
+
       toast.success('Successfully joined the organization!');
-      router.push('/team');
+      router.push('/');
     } catch (err) {
       toast.error('Failed to accept invitation');
     } finally {
@@ -104,17 +104,17 @@ export default function InvitationPage() {
   // Handle creating new account and accepting
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
-    
+
     if (password.length < 8) {
       toast.error('Password must be at least 8 characters');
       return;
     }
-    
+
     setSubmitting(true);
     try {
       const response = await fetch(
@@ -127,25 +127,25 @@ export default function InvitationPage() {
           body: JSON.stringify({ name, password }),
         }
       );
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         toast.error(data.detail || 'Failed to create account');
         return;
       }
-      
+
       toast.success('Account created! Signing you in...');
-      
+
       // Sign in with the new credentials
       const result = await signIn('credentials', {
         email: invitation?.email,
         password: password,
         redirect: false,
       });
-      
+
       if (result?.ok) {
-        router.push('/team');
+        router.push('/');
       } else {
         // If auto-login fails, redirect to login page
         router.push('/auth/login?message=Account created. Please sign in.');
@@ -204,7 +204,7 @@ export default function InvitationPage() {
             </div>
             <h2 className="text-xl font-bold text-foreground mb-2">Invitation {invitation.status}</h2>
             <p className="text-muted-foreground mb-6">
-              {invitation.status === 'expired' 
+              {invitation.status === 'expired'
                 ? 'This invitation has expired. Please ask the team admin to send a new one.'
                 : invitation.status === 'accepted'
                 ? 'This invitation has already been accepted.'
@@ -304,7 +304,7 @@ export default function InvitationPage() {
                 <div className="space-y-4">
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <p className="text-sm text-yellow-800">
-                      You're signed in as <span className="font-medium">{session.user.email}</span>, 
+                      You're signed in as <span className="font-medium">{session.user.email}</span>,
                       but this invitation was sent to <span className="font-medium">{invitation.email}</span>.
                     </p>
                   </div>
@@ -340,7 +340,7 @@ export default function InvitationPage() {
                   <p className="text-sm text-muted-foreground text-center">
                     Create your account to join
                   </p>
-                  
+
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Email</label>
                     <Input
@@ -350,7 +350,7 @@ export default function InvitationPage() {
                       className="bg-muted"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Your Name</label>
                     <Input
@@ -361,7 +361,7 @@ export default function InvitationPage() {
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Password</label>
                     <Input
@@ -373,7 +373,7 @@ export default function InvitationPage() {
                       minLength={8}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Confirm Password</label>
                     <Input
@@ -384,7 +384,7 @@ export default function InvitationPage() {
                       required
                     />
                   </div>
-                  
+
                   <Button
                     type="submit"
                     variant="primary"
@@ -393,7 +393,7 @@ export default function InvitationPage() {
                   >
                     {submitting ? 'Creating Account...' : 'Create Account & Join'}
                   </Button>
-                  
+
                   <p className="text-xs text-muted-foreground text-center">
                     By creating an account, you agree to our{' '}
                     <a href="https://encypherai.com/terms" className="text-blue-ncs hover:underline">Terms of Service</a>

@@ -942,6 +942,25 @@ class OrganizationService:
             "user_exists": existing_user is not None,
         }
 
+    def _seed_enterprise_invite_onboarding(self, invitation: OrganizationInvitation, user: User) -> None:
+        if invitation.tier != "enterprise":
+            return
+        if invitation.role != "owner":
+            return
+
+        org = self.db.query(Organization).filter(Organization.id == invitation.organization_id).first()
+        if not org:
+            return
+
+        user.default_organization_id = invitation.organization_id
+        if not user.setup_completed_at:
+            user.setup_completed_at = datetime.utcnow()
+
+        org.account_type = org.account_type or "organization"
+        org.display_name = org.display_name or invitation.organization_name or org.name
+        org.dashboard_layout = "enterprise"
+        org.workflow_category = org.workflow_category or "enterprise"
+
     def accept_invitation(self, token: str, user_id: str) -> OrganizationMember:
         """Accept an invitation and become a member (for existing users)"""
         invitation = self.get_invitation_by_token(token)
@@ -982,6 +1001,8 @@ class OrganizationService:
         # Update invitation status
         invitation.status = "accepted"
         invitation.accepted_at = datetime.utcnow()
+
+        self._seed_enterprise_invite_onboarding(invitation, user)
 
         if invitation.tier:
             subscription_status = "trialing" if invitation.trial_months else None
@@ -1066,6 +1087,8 @@ class OrganizationService:
         # Update invitation status
         invitation.status = "accepted"
         invitation.accepted_at = datetime.utcnow()
+
+        self._seed_enterprise_invite_onboarding(invitation, user)
 
         if invitation.tier:
             subscription_status = "trialing" if invitation.trial_months else None
