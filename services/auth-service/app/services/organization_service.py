@@ -7,8 +7,8 @@ from typing import Optional, List
 import logging
 
 import httpx
-from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy.orm import Session, load_only
+from sqlalchemy import and_, inspect
 
 from encypher_commercial_shared.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
 
@@ -55,6 +55,9 @@ DOMAIN_LIMITS_BY_TIER = {
 
 DOMAIN_REGEX = re.compile(r"^[a-z0-9.-]+\.[a-z]{2,}$")
 
+ENTERPRISE_EVALUATION_TIER = "enterprise"
+ENTERPRISE_EVALUATION_TRIAL_MONTHS = 2
+
 logger = logging.getLogger(__name__)
 
 
@@ -83,6 +86,29 @@ class OrganizationService:
 
     def __init__(self, db: Session):
         self.db = db
+        self._organization_columns: Optional[set[str]] = None
+
+    def _table_columns(self, table_name: str) -> set[str]:
+        return {column["name"] for column in inspect(self.db.get_bind()).get_columns(table_name)}
+
+    def _organization_columns_in_db(self) -> set[str]:
+        if self._organization_columns is None:
+            self._organization_columns = self._table_columns(Organization.__tablename__)
+        return self._organization_columns
+
+    def _organization_query(self):
+        query = self.db.query(Organization)
+        organization_columns = self._organization_columns_in_db()
+        loadable_columns = [getattr(Organization, column.name) for column in Organization.__table__.columns if column.name in organization_columns]
+        if loadable_columns:
+            query = query.options(load_only(*loadable_columns))
+        return query
+
+    def _organization_slug_exists(self, slug: str) -> bool:
+        return self.db.query(Organization.id).filter(Organization.slug == slug).first() is not None
+
+    def _organization_email_exists(self, email: str) -> bool:
+        return self.db.query(Organization.id).filter(Organization.email == email).first() is not None
 
     # ==========================================
     # ORGANIZATION CRUD
@@ -111,13 +137,19 @@ class OrganizationService:
         return org
 
     def _create_organization_record(self, *, name: str, email: str, tier: str) -> Organization:
+        name = name.strip()
+        email = email.strip().lower()
+
         # Generate unique slug
         base_slug = generate_slug(name)
         slug = base_slug
         counter = 1
-        while self.db.query(Organization).filter(Organization.slug == slug).first():
+        while self._organization_slug_exists(slug):
             slug = f"{base_slug}-{counter}"
             counter += 1
+
+        if self._organization_email_exists(email):
+            raise ValueError("An organization with this email already exists")
 
         # Set max_seats based on tier
         max_seats = {
@@ -239,11 +271,12 @@ class OrganizationService:
 
     def get_organization(self, org_id: str) -> Optional[Organization]:
         """Get organization by ID"""
-        return self.db.query(Organization).filter(Organization.id == org_id).first()
+        org = self._organization_query().filter(Organization.id == org_id).first()
+        return self.refresh_trial_state(org)
 
     def get_organization_by_slug(self, slug: str) -> Optional[Organization]:
         """Get organization by slug"""
-        return self.db.query(Organization).filter(Organization.slug == slug).first()
+        return self._organization_query().filter(Organization.slug == slug).first()
 
     def get_user_organizations(self, user_id: str) -> List[Organization]:
         """Get all organizations a user belongs to"""
@@ -255,7 +288,60 @@ class OrganizationService:
         if not org_ids:
             return []
 
-        return self.db.query(Organization).filter(Organization.id.in_(org_ids)).all()
+        orgs = self._organization_query().filter(Organization.id.in_(org_ids)).all()
+        return [self.refresh_trial_state(org) for org in orgs]
+
+    def refresh_trial_state(self, org: Optional[Organization]) -> Optional[Organization]:
+        """Downgrade expired evaluation trials to free when org state is read."""
+        if not org:
+            return None
+
+        if not self._should_expire_trial(org):
+            return org
+
+        return self._expire_trial_to_free(org)
+
+    def _should_expire_trial(self, org: Organization) -> bool:
+        if org.subscription_status != "trialing":
+            return False
+        if not org.trial_ends_at or org.trial_ends_at > datetime.utcnow():
+            return False
+        if not org.trial_tier:
+            return False
+        if org.tier != org.trial_tier:
+            return False
+        return True
+
+    def _expire_trial_to_free(self, org: Organization) -> Organization:
+        config = self._get_tier_config("free")
+        if not config:
+            raise ValueError("Invalid tier: free")
+
+        previous_tier = org.tier
+        org.tier = "free"
+        org.max_seats = config["max_seats"]
+        org.monthly_api_limit = config["monthly_api_limit"]
+        org.features = config["features"]
+        org.coalition_rev_share = config["coalition_rev_share"]
+        org.subscription_status = "expired"
+
+        self._log_action(
+            org_id=org.id,
+            user_id=None,
+            action="subscription.trial_expired_downgraded",
+            resource_type="organization",
+            resource_id=org.id,
+            details={
+                "previous_tier": previous_tier,
+                "new_tier": "free",
+                "trial_tier": org.trial_tier,
+                "trial_ends_at": org.trial_ends_at.isoformat() if org.trial_ends_at else None,
+            },
+        )
+
+        self.db.commit()
+        self.db.refresh(org)
+        return org
 
     def update_organization(self, org_id: str, user_id: str, **updates) -> Optional[Organization]:
         """Update organization settings"""
@@ -763,6 +849,25 @@ class OrganizationService:
             allow_owner=True,
             skip_permission=True,
             skip_seat_check=True,
+        )
+
+    def create_enterprise_evaluation_invitation(
+        self,
+        *,
+        organization_name: Optional[str],
+        email: str,
+        first_name: Optional[str],
+        last_name: Optional[str],
+        inviter_user_id: str,
+    ) -> OrganizationInvitation:
+        return self.create_trial_invitation_for_new_org(
+            organization_name=organization_name,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            tier=ENTERPRISE_EVALUATION_TIER,
+            trial_months=ENTERPRISE_EVALUATION_TRIAL_MONTHS,
+            inviter_user_id=inviter_user_id,
         )
 
     def get_pending_invitations(self, org_id: str) -> List[OrganizationInvitation]:

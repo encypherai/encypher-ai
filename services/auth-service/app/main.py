@@ -104,6 +104,7 @@ async def lifespan(app: FastAPI):
         service_name=settings.SERVICE_NAME,
         alembic_config_path="alembic.ini",
         run_migrations=True,
+        model_metadata=Base.metadata,
         exit_on_failure=True,
     )
 
