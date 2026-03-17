@@ -1154,12 +1154,12 @@ class OrganizationService:
                 )
                 if response.status_code >= 400:
                     logger.warning(
-                        "billing_trial_sync_failed",
-                        status=response.status_code,
-                        response=response.text,
+                        "billing_trial_sync_failed status=%s response=%s",
+                        response.status_code,
+                        response.text,
                     )
         except httpx.RequestError as exc:
-            logger.warning("billing_trial_sync_request_failed", error=str(exc))
+            logger.warning("billing_trial_sync_request_failed error=%s", exc)
 
     def _apply_trial_metadata(self, *, org: Organization, tier: str, trial_months: int) -> None:
         now = datetime.utcnow()

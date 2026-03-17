@@ -12,6 +12,8 @@ interface InvitationDetails {
   valid: boolean;
   status: string;
   email: string;
+  first_name?: string | null;
+  last_name?: string | null;
   role: string;
   organization_name: string;
   organization_id: string;
@@ -54,6 +56,14 @@ export default function InvitationPage() {
         }
 
         setInvitation(data.data);
+
+        const invitedName = [data.data?.first_name, data.data?.last_name]
+          .filter((part?: string | null) => Boolean(part && part.trim()))
+          .join(' ');
+
+        if (invitedName) {
+          setName((currentName) => currentName || invitedName);
+        }
       } catch (err) {
         setError('Failed to load invitation');
       } finally {

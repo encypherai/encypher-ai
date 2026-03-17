@@ -17,7 +17,7 @@ from datetime import datetime
 from ...db.models import User, OrganizationDomainClaim
 from ...db.session import get_db
 from ...core.config import settings
-from ...core.security import get_password_hash
+from ...core.security import create_access_token, create_refresh_token, get_password_hash
 from ...core.auth import get_email_config as _get_email_config
 from ...core.responses import ok
 from ...services.organization_service import (
@@ -1429,10 +1429,12 @@ async def accept_invitation_new_user(
         user, member = org_service.accept_invitation_new_user(token=token, name=data.name, password_hash=password_hash)
 
         # Generate tokens for auto-login
-        from ...services.auth_service import AuthService
-
-        access_token = AuthService.create_access_token(user)
-        refresh_token_obj = AuthService.create_refresh_token(db, user)
+        token_data = {
+            "sub": str(user.id),
+            "email": user.email,
+        }
+        access_token = create_access_token(token_data)
+        refresh_token = create_refresh_token(token_data)
 
         return ok(
             {
@@ -1444,7 +1446,7 @@ async def accept_invitation_new_user(
                 "organization_id": member.organization_id,
                 "role": member.role,
                 "access_token": access_token,
-                "refresh_token": refresh_token_obj.token,
+                "refresh_token": refresh_token,
                 "message": "Account created and joined the organization",
             }
         )
