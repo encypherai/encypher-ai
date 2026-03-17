@@ -147,18 +147,29 @@ export default function InvitationPage() {
 
       toast.success('Account created! Signing you in...');
 
-      // Sign in with the new credentials
+      const accessToken = data.data?.access_token;
+      const refreshToken = data.data?.refresh_token;
+
+      if (!accessToken) {
+        router.push('/login?message=Account created. Please sign in.');
+        return;
+      }
+
+      const tokenPasswordMarker = ['__', 'TOKEN', '__', accessToken].join('');
+
+      // Establish the NextAuth session using the freshly issued backend tokens.
       const result = await signIn('credentials', {
         email: invitation?.email,
-        password: password,
+        password: tokenPasswordMarker,
+        refreshToken,
         redirect: false,
+        callbackUrl: '/',
       });
 
       if (result?.ok) {
-        router.push('/');
+        window.location.href = '/';
       } else {
-        // If auto-login fails, redirect to login page
-        router.push('/auth/login?message=Account created. Please sign in.');
+        router.push('/login?message=Account created. Please sign in.');
       }
     } catch (err) {
       toast.error('Failed to create account');

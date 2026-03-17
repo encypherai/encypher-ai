@@ -1068,6 +1068,10 @@ class OrganizationService:
             email_verified=True,  # Email is verified via invitation
             email_verified_at=datetime.utcnow(),
             is_active=True,
+            totp_enabled=False,
+            totp_secret_encrypted=None,
+            totp_enabled_at=None,
+            totp_backup_code_hashes=[],
         )
         self.db.add(user)
         self.db.flush()  # Get user.id

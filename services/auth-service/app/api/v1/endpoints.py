@@ -2007,6 +2007,10 @@ async def create_user_internal(
         email_verified=True,
         email_verified_at=_dt.utcnow(),
         api_access_status=_ApiAccessStatus.APPROVED.value,
+        totp_enabled=False,
+        totp_secret_encrypted=None,
+        totp_enabled_at=None,
+        totp_backup_code_hashes=[],
     )
     db.add(user)
     db.commit()
