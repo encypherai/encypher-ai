@@ -184,9 +184,9 @@ export default function TeamPage() {
   // Use active organization from context
   const orgId = activeOrganization?.id;
 
-  // Check if user has Enterprise tier
-  const userTier = (session?.user as any)?.tier || 'free';
-  const hasTeamFeature = userTier === 'enterprise';
+  // Check if the active organization supports team management
+  const activeOrgTier = activeOrganization?.tier || (session?.user as any)?.tier || 'free';
+  const hasTeamFeature = activeOrgTier === 'enterprise' || activeOrgTier === 'strategic_partner';
 
   const createOrgMutation = useMutation({
     mutationFn: async ({ name, email }: { name: string; email: string }) => {
@@ -444,6 +444,84 @@ export default function TeamPage() {
   const seats = seatsQuery.data;
   const canInvite = seats ? (seats.unlimited || seats.available > 0) : false;
   const isLoadingTeam = membersQuery.isLoading || orgLoading;
+
+  if (orgLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-ncs"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!orgId) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center gap-6">
+          <div>
+            <div className="w-20 h-20 mb-6 rounded-full bg-blue-ncs/10 flex items-center justify-center mx-auto">
+              <svg className="w-10 h-10 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Select an Organization</h2>
+            <p className="text-muted-foreground text-center max-w-md mb-6">
+              Choose an organization from the switcher to manage members and invitations, or create a new organization to get started.
+            </p>
+            <Button variant="outline" onClick={() => setShowCreateOrgForm((current) => !current)}>
+              {showCreateOrgForm ? 'Hide Form' : 'Create Organization'}
+            </Button>
+          </div>
+          {showCreateOrgForm && (
+            <Card className="w-full max-w-2xl text-left">
+              <CardHeader>
+                <CardTitle>Create Organization</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1">
+                      <Input
+                        type="text"
+                        placeholder="Organization name"
+                        value={orgName}
+                        onChange={(e) => setOrgName(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Input
+                        type="email"
+                        placeholder="Billing contact email"
+                        value={orgEmail}
+                        onChange={(e) => setOrgEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      variant="primary"
+                      onClick={() => createOrgMutation.mutate({ name: orgName, email: orgEmail })}
+                      disabled={!orgName || !orgEmail || createOrgMutation.isPending}
+                    >
+                      {createOrgMutation.isPending ? 'Creating...' : 'Create Organization'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowCreateOrgForm(false)}
+                      disabled={createOrgMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   // Show upgrade prompt for non-Enterprise users
   if (!hasTeamFeature) {

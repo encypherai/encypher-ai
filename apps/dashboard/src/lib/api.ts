@@ -113,6 +113,43 @@ interface OrganizationInfo {
   created_at: string;
 }
 
+interface OrganizationMemberInfo {
+  id: string;
+  user_id: string;
+  user_email?: string | null;
+  user_name?: string | null;
+  role: string;
+  status: string;
+  invited_at?: string | null;
+  accepted_at?: string | null;
+  last_active_at?: string | null;
+}
+
+interface OrganizationInvitationInfo {
+  id: string;
+  email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  organization_name?: string | null;
+  tier?: string | null;
+  trial_months?: number | null;
+  role: string;
+  status: string;
+  message?: string | null;
+  invited_by: string;
+  created_at: string;
+  expires_at: string;
+}
+
+interface OrganizationSeatInfo {
+  used: number;
+  active: number;
+  pending: number;
+  max: number;
+  available: number;
+  unlimited: boolean;
+}
+
 interface WordPressIntegrationStatus {
   install_id?: string;
   connection_status?: string;
@@ -1012,6 +1049,106 @@ const apiClient = {
         method: 'POST',
         body: JSON.stringify({ use_case: useCase }),
       }
+    );
+    return response.data;
+  },
+
+  async getOrganization(accessToken: string, organizationId: string): Promise<OrganizationInfo> {
+    const response = await fetchWithAuth<{ success: boolean; data: OrganizationInfo }>(
+      `${API_BASE_URL}/organizations/${organizationId}`,
+      accessToken
+    );
+    return response.data;
+  },
+
+  async getOrganizationSeatInfo(accessToken: string, organizationId: string): Promise<OrganizationSeatInfo> {
+    const response = await fetchWithAuth<{ success: boolean; data: OrganizationSeatInfo }>(
+      `${API_BASE_URL}/organizations/${organizationId}/seats`,
+      accessToken
+    );
+    return response.data;
+  },
+
+  async listOrganizationMembers(accessToken: string, organizationId: string): Promise<OrganizationMemberInfo[]> {
+    const response = await fetchWithAuth<{ success: boolean; data: OrganizationMemberInfo[] }>(
+      `${API_BASE_URL}/organizations/${organizationId}/members`,
+      accessToken
+    );
+    return response.data ?? [];
+  },
+
+  async updateOrganizationMemberRole(
+    accessToken: string,
+    organizationId: string,
+    userId: string,
+    role: string
+  ): Promise<OrganizationMemberInfo> {
+    const response = await fetchWithAuth<{ success: boolean; data: OrganizationMemberInfo }>(
+      `${API_BASE_URL}/organizations/${organizationId}/members/${userId}`,
+      accessToken,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ role }),
+      }
+    );
+    return response.data;
+  },
+
+  async removeOrganizationMember(accessToken: string, organizationId: string, userId: string): Promise<{ removed: boolean }> {
+    const response = await fetchWithAuth<{ success: boolean; data: { removed: boolean } }>(
+      `${API_BASE_URL}/organizations/${organizationId}/members/${userId}`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+    return response.data;
+  },
+
+  async listOrganizationInvitations(accessToken: string, organizationId: string): Promise<OrganizationInvitationInfo[]> {
+    const response = await fetchWithAuth<{ success: boolean; data: OrganizationInvitationInfo[] }>(
+      `${API_BASE_URL}/organizations/${organizationId}/invitations`,
+      accessToken
+    );
+    return response.data ?? [];
+  },
+
+  async createOrganizationInvitation(
+    accessToken: string,
+    organizationId: string,
+    payload: { email: string; role: string }
+  ): Promise<OrganizationInvitationInfo> {
+    const response = await fetchWithAuth<{ success: boolean; data: OrganizationInvitationInfo }>(
+      `${API_BASE_URL}/organizations/${organizationId}/invitations`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return response.data;
+  },
+
+  async resendOrganizationInvitation(
+    accessToken: string,
+    organizationId: string,
+    invitationId: string
+  ): Promise<OrganizationInvitationInfo> {
+    const response = await fetchWithAuth<{ success: boolean; data: OrganizationInvitationInfo }>(
+      `${API_BASE_URL}/organizations/${organizationId}/invitations/${invitationId}/resend`,
+      accessToken,
+      { method: 'POST' }
+    );
+    return response.data;
+  },
+
+  async cancelOrganizationInvitation(
+    accessToken: string,
+    organizationId: string,
+    invitationId: string
+  ): Promise<{ cancelled: boolean }> {
+    const response = await fetchWithAuth<{ success: boolean; data: { cancelled: boolean } }>(
+      `${API_BASE_URL}/organizations/${organizationId}/invitations/${invitationId}`,
+      accessToken,
+      { method: 'DELETE' }
     );
     return response.data;
   },
@@ -2588,6 +2725,9 @@ export type {
   ApiKeyInfo,
   ApiKeyCreateResponse,
   OrganizationInfo,
+  OrganizationMemberInfo,
+  OrganizationInvitationInfo,
+  OrganizationSeatInfo,
   OrganizationCreateResponse,
   DomainClaimInfo,
   DomainClaimResponse,

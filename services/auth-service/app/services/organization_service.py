@@ -1290,13 +1290,32 @@ class OrganizationService:
     # PERMISSION HELPERS
     # ==========================================
 
+    def is_super_admin(self, user_id: str) -> bool:
+        """Check if the actor has global super admin privileges."""
+        user_columns = self._table_columns(User.__tablename__)
+        if "is_super_admin" not in user_columns:
+            return False
+
+        return bool(
+            self.db.query(User.id)
+            .filter(
+                User.id == user_id,
+                User.is_super_admin == True,
+            )
+            .first()
+        )
+
     def _has_permission(self, org_id: str, user_id: str, allowed_roles: set) -> bool:
         """Check if user has one of the allowed roles"""
+        if self.is_super_admin(user_id):
+            return True
         role = self.get_user_role(org_id, user_id)
         return role in allowed_roles if role else False
 
     def can_user_access_org(self, org_id: str, user_id: str) -> bool:
         """Check if user can access the organization"""
+        if self.is_super_admin(user_id):
+            return True
         member = self.get_member(org_id, user_id)
         return member is not None and member.status == "active"
 

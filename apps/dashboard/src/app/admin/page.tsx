@@ -443,7 +443,7 @@ export default function AdminPage() {
           <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">
             You need super admin privileges to access this page. Contact erik.svilich@encypherai.com if you believe this is an error.
           </p>
-          <Link 
+          <Link
             href="/"
             className="inline-flex items-center px-4 py-2 bg-blue-ncs text-white rounded-lg hover:bg-delft-blue transition-colors font-medium"
           >
@@ -591,6 +591,12 @@ export default function AdminPage() {
           >
             Newsletter
           </button>
+          <Link
+            href="/admin/organizations"
+            className="px-3 py-1.5 text-sm rounded-md transition-colors text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+          >
+            Organizations
+          </Link>
         </div>
 
         {adminView === 'overview' && (
@@ -1327,4 +1333,3 @@ export default function AdminPage() {
     </DashboardLayout>
   );
 }
-

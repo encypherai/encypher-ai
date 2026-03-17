@@ -207,6 +207,16 @@ class TestGetUserRole(TestOrganizationService):
 
         assert role is None
 
+    def test_super_admin_can_access_org_without_membership(self, service, mock_db, mock_org):
+        mock_db.query.return_value.filter.return_value.first.return_value = None
+
+        with patch.object(service, "is_super_admin", return_value=True):
+            assert service.can_user_access_org(mock_org.id, "super_admin") is True
+
+    def test_super_admin_has_permission_without_membership(self, service, mock_org):
+        with patch.object(service, "is_super_admin", return_value=True):
+            assert service.can_user_invite(mock_org.id, "super_admin") is True
+
 
 class TestUpdateMemberRole(TestOrganizationService):
     """Tests for update_member_role"""

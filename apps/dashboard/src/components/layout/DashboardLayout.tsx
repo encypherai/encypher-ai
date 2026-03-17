@@ -259,9 +259,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const { activeOrganization } = useOrganization();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
-  const userTier = (session?.user as any)?.tier || 'free';
+  const activeOrgTier = activeOrganization?.tier || (session?.user as any)?.tier || 'free';
   const sessionError = (session?.user as any)?.error as string | undefined;
-  const isEnterprise = userTier === 'enterprise';
+  const isEnterpriseWorkspace = activeOrgTier === 'enterprise' || activeOrgTier === 'strategic_partner';
   const userName = session?.user?.name || session?.user?.email || 'User';
   const userInitial = userName.charAt(0).toUpperCase();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -343,7 +343,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const visibleGroups = navGroupsByLayout[dashboardLayoutPreference]
     .map(group => ({
       ...group,
-      items: group.items.filter(item => !item.enterpriseOnly || isEnterprise || isAdmin),
+      items: group.items.filter(item => !item.enterpriseOnly || isEnterpriseWorkspace || isAdmin),
     }))
     .filter(group => group.items.length > 0);
 
@@ -429,7 +429,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         {/* Org switcher (enterprise) */}
-        {isEnterprise && !sidebarCollapsed && (
+        {!sidebarCollapsed && (
           <div className="px-3 py-3 border-b border-white/10">
             <OrganizationSwitcher />
           </div>
