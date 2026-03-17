@@ -1,9 +1,9 @@
 /**
  * AUTO-GENERATED FILE - DO NOT MODIFY
- * 
+ *
  * Source: packages/pricing-config/src/
  * Changes here will be overwritten on next build.
- * 
+ *
  * To update: edit the source file, then run npm run build.
  */
 
