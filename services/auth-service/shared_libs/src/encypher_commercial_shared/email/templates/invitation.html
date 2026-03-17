@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>You're invited to join {{ organization_name }}</h1>
+
+<p>{{ greeting_name if greeting_name else 'Hello' }},</p>
+
+<p><strong>{{ inviter_display }}</strong> invited you to join <strong>{{ organization_name }}</strong> on Encypher as a <strong>{{ role }}</strong>.</p>
+
+{% if tier or trial_months %}
+<p>
+  This workspace is configured for
+  {% if tier %}<strong>{{ tier_label }}</strong>{% endif %}
+  {% if tier and trial_months %} with {% endif %}
+  {% if trial_months %}<strong>{{ trial_months }} month{% if trial_months != 1 %}s{% endif %}</strong> of trial access{% endif %}.
+</p>
+{% endif %}
+
+{% if message %}
+<p style="padding: 16px; background-color: #f8fafc; border-left: 4px solid #2a87c4; font-size: 14px; color: #64748b; margin: 20px 0;">
+  <strong style="color: #1b2f50;">Personal note</strong><br>
+  {{ message }}
+</p>
+{% endif %}
+
+<div class="cta-container">
+  <a href="{{ invitation_url }}" class="cta-button">Accept Invitation</a>
+</div>
+
+{% if expires_at_label %}
+<p>This invitation expires on <strong>{{ expires_at_label }}</strong>.</p>
+{% endif %}
+
+<div class="divider"></div>
+
+<p style="font-size: 14px; color: #64748b;">
+  If the button doesn't work, copy and paste this link into your browser:
+</p>
+<div class="link-fallback">
+  <a href="{{ invitation_url }}">{{ invitation_url }}</a>
+</div>
+
+<div class="divider"></div>
+
+<p style="font-size: 14px; color: #94a3b8;">
+  If you weren't expecting this invitation, you can safely ignore this email.
+</p>
+
+<p style="margin-top: 24px;">
+  — The Encypher Team
+</p>
+{% endblock %}

@@ -29,6 +29,9 @@ def test_build_invitation_email_uses_dashboard_invite_route():
 
     assert "https://dashboard.encypherai.test/invite/token_123" in html_content
     assert "https://dashboard.encypherai.test/invite/token_123" in plain_content
+    assert "You're invited to join Acme Labs" in html_content
+    assert "Admin User (admin@example.com)" in html_content
+    assert "Accept Invitation" in html_content
 
 
 @pytest.mark.asyncio
@@ -72,6 +75,8 @@ async def test_send_invitation_email_uses_direct_email_sender(monkeypatch):
     assert args[2] == "invitee@example.com"
     assert args[3] == "You're invited to join Acme Labs on Encypher"
     assert "https://dashboard.encypherai.test/invite/token_123" in args[4]
+    assert "Accept Invitation" in args[4]
+    assert "Admin User (admin@example.com)" in args[4]
     assert "Accept invitation: https://dashboard.encypherai.test/invite/token_123" in args[5]
     assert kwargs == {}
 

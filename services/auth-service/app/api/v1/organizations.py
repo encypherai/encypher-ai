@@ -4,7 +4,6 @@ Organization API endpoints for team management
 
 import asyncio
 import logging
-import html
 import re
 import secrets
 
@@ -30,7 +29,7 @@ import dns.resolver
 from ...services.auth_service import AuthService
 from .endpoints import require_super_admin
 from ...deps.rate_limit import rate_limiter
-from encypher_commercial_shared.email import EmailConfig, send_email
+from encypher_commercial_shared.email import EmailConfig, render_template, send_email
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 logger = logging.getLogger(__name__)
@@ -78,33 +77,22 @@ def _build_invitation_email(
     base_url = config.dashboard_url or config.frontend_url
     invitation_url = f"{base_url}/invite/{invitation_token}"
 
-    safe_inviter_name = html.escape(inviter_name, quote=True) if inviter_name else None
-    safe_inviter_email = html.escape(inviter_email, quote=True)
-    safe_org_name = html.escape(organization_name, quote=True)
-    safe_role = html.escape(role, quote=True)
-    safe_message = html.escape(message, quote=True) if message else None
-    safe_recipient_name = html.escape(recipient_name, quote=True) if recipient_name else None
-
     subject = f"You're invited to join {organization_name} on Encypher"
-    html_lines: list[str] = [
-        f"<p>{'Hi ' + safe_recipient_name + ',' if safe_recipient_name else 'Hello,'}</p>",
-        f"<p>You have been invited to join <strong>{safe_org_name}</strong>.</p>",
-        f"<p>Role: <strong>{safe_role}</strong></p>",
-    ]
-    if tier:
-        html_lines.append(f"<p>Tier: <strong>{html.escape(tier, quote=True)}</strong></p>")
-    if trial_months:
-        html_lines.append(f"<p>Trial: <strong>{trial_months} month(s)</strong></p>")
-    if safe_inviter_name:
-        html_lines.append(f"<p>Invited by: {safe_inviter_name} ({safe_inviter_email})</p>")
-    else:
-        html_lines.append(f"<p>Invited by: {safe_inviter_email}</p>")
-    if safe_message:
-        html_lines.append(f"<p>Message: {safe_message}</p>")
-    html_lines.append(f'<p><a href="{invitation_url}">Accept invitation</a></p>')
-    if expires_at:
-        html_lines.append(f"<p>Expires at: {expires_at.isoformat()} UTC</p>")
-    html_content = "\n".join(html_lines)
+    inviter_display = f"{inviter_name} ({inviter_email})" if inviter_name else inviter_email
+    html_content = render_template(
+        "invitation.html",
+        subject=subject,
+        greeting_name=recipient_name,
+        inviter_display=inviter_display,
+        organization_name=organization_name,
+        role=role,
+        tier=tier,
+        tier_label=tier.capitalize() if tier else None,
+        trial_months=trial_months,
+        message=message,
+        invitation_url=invitation_url,
+        expires_at_label=expires_at.strftime("%B %-d, %Y at %-I:%M %p UTC") if expires_at else None,
+    )
 
     plain_lines: list[str] = [
         f"{f'Hi {recipient_name},' if recipient_name else 'Hello,'}",
