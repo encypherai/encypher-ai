@@ -3,8 +3,10 @@ repos:
     rev: v4.4.0
     hooks:
     -   id: trailing-whitespace
+        exclude: ^apps/marketing-site/src/content/blog/
         stages: [pre-commit]
     -   id: end-of-file-fixer
+        exclude: ^apps/marketing-site/src/content/blog/
         stages: [pre-commit]
     -   id: check-yaml
         exclude: ^mkdocs\.yml$  # Exclude mkdocs.yml due to PyYAML tags
