@@ -56,6 +56,11 @@ class SessionService:
             except Exception as e:
                 logger.error(f"Failed to connect to Redis: {e}", exc_info=True)
                 # Fallback to in-memory mode
+                if not settings.is_development:
+                    logger.error(
+                        "Redis connection failed in %s mode. In-memory fallback is not safe for multi-replica deployments.",
+                        settings.environment,
+                    )
                 logger.warning("Running in in-memory mode (no Redis)")
                 self.redis_client = None
 

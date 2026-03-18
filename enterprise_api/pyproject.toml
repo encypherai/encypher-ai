@@ -51,6 +51,7 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-http>=1.39.1",
     "opentelemetry-instrumentation-fastapi>=0.60b1",
     "opentelemetry-instrumentation-httpx>=0.60b1",
+    "gunicorn>=25.1.0",
 ]
 
 [project.optional-dependencies]

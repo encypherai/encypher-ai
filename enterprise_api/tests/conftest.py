@@ -324,6 +324,35 @@ def owner_member_id() -> str:
     return os.getenv("OWNER_MEMBER_ID", "mem_owner123")
 
 
+# ── Shared test fakes ──────────────────────────────────────────────────────────
+
+
+class FakeRedis:
+    """Minimal in-memory Redis stand-in for unit tests.
+
+    Supports the subset of commands used by OrgCacheService, BatchService,
+    and other components that need a key-value store with TTL semantics.
+    """
+
+    def __init__(self) -> None:
+        self._store: dict[str, str] = {}
+
+    async def get(self, key: str):
+        return self._store.get(key)
+
+    async def setex(self, key: str, ttl: int, value: str) -> None:
+        self._store[key] = value
+
+    async def delete(self, *keys: str) -> None:
+        for k in keys:
+            self._store.pop(k, None)
+
+    async def scan(self, cursor: int = 0, match: str = "*", count: int = 100):
+        prefix = match.replace("*", "")
+        matched = [k for k in self._store if k.startswith(prefix)]
+        return (0, matched)
+
+
 # Configure pytest-asyncio
 def pytest_configure(config):
     """Configure pytest with custom markers."""

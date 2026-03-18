@@ -12,26 +12,10 @@ import {
   CardDescription,
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import apiClient from '../../lib/api';
+import apiClient, { type ComplianceReadinessResponse, type ComplianceReadinessItem } from '../../lib/api';
 
-interface ComplianceItem {
-  id: string;
-  label: string;
-  description: string;
-  status: 'compliant' | 'action_needed' | 'unknown';
-  eu_ai_act_article: string;
-  recommendation?: string | null;
-  action_href: string;
-  category: string;
-}
-
-interface ComplianceReadiness {
-  readiness_score: number;
-  compliant_count: number;
-  total_count: number;
-  items: ComplianceItem[];
-  eu_ai_act_deadline: string;
-}
+type ComplianceItem = ComplianceReadinessItem;
+type ComplianceReadiness = ComplianceReadinessResponse;
 
 function ReadinessCircle({ score }: { score: number }) {
   const radius = 54;

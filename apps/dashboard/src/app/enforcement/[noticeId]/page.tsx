@@ -361,10 +361,10 @@ export default function NoticeDetailPage() {
                     <td className="py-2 pr-4 font-medium text-muted-foreground">Evidence Events</td>
                     <td className="py-2">{detectionCount}</td>
                   </tr>
-                  {notice.acknowledged_at && (
+                  {Boolean(notice.acknowledged_at) && (
                     <tr className="border-b border-slate-200 dark:border-slate-700">
                       <td className="py-2 pr-4 font-medium text-muted-foreground">Acknowledged</td>
-                      <td className="py-2">{formatDate(notice.acknowledged_at)}</td>
+                      <td className="py-2">{formatDate(notice.acknowledged_at as string)}</td>
                     </tr>
                   )}
                 </tbody>

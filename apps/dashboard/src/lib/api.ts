@@ -1269,23 +1269,15 @@ const apiClient = {
       securityAlerts?: boolean;
       marketingEmails?: boolean;
     };
-  }): Promise<unknown> {
-    // Note: This endpoint may need to be implemented in auth-service
-    // For now, we'll make the call and handle gracefully if it doesn't exist
-    try {
-      return await fetchWithAuth(
-        `${API_BASE_URL}/auth/profile`,
-        accessToken,
-        {
-          method: 'PUT',
-          body: JSON.stringify(data),
-        }
-      );
-    } catch (error) {
-      // If profile update endpoint doesn't exist, return success silently
-      console.warn('Profile update endpoint not available:', error);
-      return { success: true, data: null };
-    }
+  }): Promise<{ success: boolean; data: Record<string, unknown> | null }> {
+    return fetchWithAuth<{ success: boolean; data: Record<string, unknown> | null }>(
+      `${API_BASE_URL}/auth/profile`,
+      accessToken,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    );
   },
   // ============================================
   // Admin (Enterprise API /api/v1/admin/*)
@@ -2308,51 +2300,51 @@ const apiClient = {
   async createAttestationPolicy(
     accessToken: string,
     payload: { name: string; enforcement: string; scope?: string; rules: Array<{ field: string; operator: string; value: unknown; action: string }> }
-  ): Promise<any> {
-    return fetchWithAuth<any>(
+  ): Promise<{ success: boolean; data: AttestationPolicyResponse }> {
+    return fetchWithAuth<{ success: boolean; data: AttestationPolicyResponse }>(
       `${API_BASE_URL}/attestation-policies/`,
       accessToken,
       { method: 'POST', body: JSON.stringify(payload) }
     );
   },
 
-  async listAttestationPolicies(accessToken: string): Promise<any> {
-    return fetchWithAuth<any>(`${API_BASE_URL}/attestation-policies/`, accessToken);
+  async listAttestationPolicies(accessToken: string): Promise<{ policies: AttestationPolicyResponse[]; total?: number }> {
+    return fetchWithAuth<{ policies: AttestationPolicyResponse[]; total?: number }>(`${API_BASE_URL}/attestation-policies/`, accessToken);
   },
 
-  async deleteAttestationPolicy(accessToken: string, policyId: string): Promise<any> {
-    return fetchWithAuth<any>(
+  async deleteAttestationPolicy(accessToken: string, policyId: string): Promise<{ success: boolean }> {
+    return fetchWithAuth<{ success: boolean }>(
       `${API_BASE_URL}/attestation-policies/${encodeURIComponent(policyId)}`,
       accessToken,
       { method: 'DELETE' }
     );
   },
 
-  async listAttestations(accessToken: string, params?: { limit?: number }): Promise<any> {
+  async listAttestations(accessToken: string, params?: { limit?: number }): Promise<{ attestations: AttestationRecordResponse[]; total?: number }> {
     const query = params?.limit ? `?limit=${params.limit}` : '';
-    return fetchWithAuth<any>(`${API_BASE_URL}/attestations/${query}`, accessToken);
+    return fetchWithAuth<{ attestations: AttestationRecordResponse[]; total?: number }>(`${API_BASE_URL}/attestations/${query}`, accessToken);
   },
 
   // ── Partners ───────────────────────────────────────────────────────────────
 
-  async getPartnerAggregate(accessToken: string): Promise<any> {
-    return fetchWithAuth<any>(`${API_BASE_URL}/partner/portal/aggregate`, accessToken);
+  async getPartnerAggregate(accessToken: string): Promise<PartnerAggregateData> {
+    return fetchWithAuth<PartnerAggregateData>(`${API_BASE_URL}/partner/portal/aggregate`, accessToken);
   },
 
-  async getPartnerPublishers(accessToken: string): Promise<any> {
-    return fetchWithAuth<any>(`${API_BASE_URL}/partner/portal/publishers`, accessToken);
+  async getPartnerPublishers(accessToken: string): Promise<{ publishers: PartnerPublisher[] }> {
+    return fetchWithAuth<{ publishers: PartnerPublisher[] }>(`${API_BASE_URL}/partner/portal/publishers`, accessToken);
   },
 
   // ── Compliance ─────────────────────────────────────────────────────────────
 
-  async getComplianceReadiness(accessToken: string): Promise<any> {
-    return fetchWithAuth<any>(`${API_BASE_URL}/compliance/readiness`, accessToken);
+  async getComplianceReadiness(accessToken: string): Promise<ComplianceReadinessResponse> {
+    return fetchWithAuth<ComplianceReadinessResponse>(`${API_BASE_URL}/compliance/readiness`, accessToken);
   },
 
   // ── Enforcement: Notice Detail ─────────────────────────────────────────────
 
-  async getNoticeDetail(accessToken: string, noticeId: string): Promise<any> {
-    return fetchWithAuth<any>(
+  async getNoticeDetail(accessToken: string, noticeId: string): Promise<NoticeDetailResponse> {
+    return fetchWithAuth<NoticeDetailResponse>(
       `${API_BASE_URL}/notices/${encodeURIComponent(noticeId)}`,
       accessToken
     );
@@ -2366,8 +2358,8 @@ const apiClient = {
     org_id?: string;
     doc_id?: string;
     fuzzy_threshold?: number;
-  }): Promise<any> {
-    return fetchWithAuth<any>(
+  }): Promise<QuoteIntegrityResponse> {
+    return fetchWithAuth<QuoteIntegrityResponse>(
       `${API_BASE_URL}/verify/quote-integrity`,
       '',
       { method: 'POST', body: JSON.stringify(params) }
@@ -2398,15 +2390,15 @@ const apiClient = {
 
   // ── SAML SSO Config ──────────────────────────────────────────────────────
 
-  async getSamlConfig(accessToken: string, orgId: string): Promise<any> {
-    return fetchWithAuth<any>(
+  async getSamlConfig(accessToken: string, orgId: string): Promise<SamlConfigResponse> {
+    return fetchWithAuth<SamlConfigResponse>(
       `${API_BASE_URL}/auth/saml/config/${encodeURIComponent(orgId)}`,
       accessToken
     );
   },
 
-  async updateSamlConfig(accessToken: string, orgId: string, config: Record<string, unknown>): Promise<any> {
-    return fetchWithAuth<any>(
+  async updateSamlConfig(accessToken: string, orgId: string, config: Record<string, unknown>): Promise<SamlConfigResponse> {
+    return fetchWithAuth<SamlConfigResponse>(
       `${API_BASE_URL}/auth/saml/config/${encodeURIComponent(orgId)}`,
       accessToken,
       { method: 'PUT', body: JSON.stringify(config) }
@@ -2419,12 +2411,72 @@ const apiClient = {
     accessToken: string,
     orgId: string,
     invitations: Array<{ email: string; role: string }>
-  ): Promise<any> {
-    return fetchWithAuth<any>(
+  ): Promise<BulkInviteResult> {
+    return fetchWithAuth<BulkInviteResult>(
       `${API_BASE_URL}/org/members/invite/bulk`,
       accessToken,
       { method: 'POST', body: JSON.stringify({ invitations }) }
     );
+  },
+
+  // ── Webhooks ─────────────────────────────────────────────────────────────
+
+  async listWebhooks(accessToken: string): Promise<{ webhooks: WebhookSummary[]; total: number }> {
+    const response = await fetchWithAuth<{ success: boolean; data: { webhooks: WebhookSummary[]; total: number } }>(
+      `${API_BASE_URL}/webhooks`,
+      accessToken
+    );
+    return response.data;
+  },
+
+  async createWebhook(accessToken: string, data: WebhookCreateRequest): Promise<WebhookCreateResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: WebhookCreateResponse }>(
+      `${API_BASE_URL}/webhooks`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify(data) }
+    );
+    return response.data;
+  },
+
+  async updateWebhook(accessToken: string, webhookId: string, data: WebhookUpdateRequest): Promise<{ id: string; updated: boolean }> {
+    const response = await fetchWithAuth<{ success: boolean; data: { id: string; updated: boolean; updated_at: string } }>(
+      `${API_BASE_URL}/webhooks/${encodeURIComponent(webhookId)}`,
+      accessToken,
+      { method: 'PATCH', body: JSON.stringify(data) }
+    );
+    return response.data;
+  },
+
+  async deleteWebhook(accessToken: string, webhookId: string): Promise<{ id: string; deleted: boolean }> {
+    const response = await fetchWithAuth<{ success: boolean; data: { id: string; deleted: boolean; deleted_at: string } }>(
+      `${API_BASE_URL}/webhooks/${encodeURIComponent(webhookId)}`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+    return response.data;
+  },
+
+  async testWebhook(accessToken: string, webhookId: string): Promise<WebhookTestResult> {
+    const response = await fetchWithAuth<{ success: boolean; data: WebhookTestResult }>(
+      `${API_BASE_URL}/webhooks/${encodeURIComponent(webhookId)}/test`,
+      accessToken,
+      { method: 'POST' }
+    );
+    return response.data;
+  },
+
+  // -- Support ----------------------------------------------------------------
+
+  async submitSupportTicket(
+    accessToken: string,
+    data: { subject: string; message: string; category?: string }
+  ): Promise<{ message: string; sent_at: string }> {
+    const response = await fetchWithAuth<{ success: boolean; data: { message: string; sent_at: string } }>(
+      `${API_BASE_URL}/support/contact`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify(data) }
+    );
+    return response.data;
   },
 };
 
@@ -2642,6 +2694,149 @@ interface RightsProfileVersion {
   gold_tier?: RightsTier | null;
 }
 
+// -- Governance: Attestation types ---------------------------------------------
+
+interface AttestationPolicyRule {
+  field: string;
+  operator: string;
+  value: unknown;
+  action: string;
+}
+
+interface AttestationPolicyResponse {
+  id: string;
+  name: string;
+  enforcement: string;
+  scope?: string;
+  rules: AttestationPolicyRule[];
+  active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+interface AttestationRecordResponse {
+  id: string;
+  document_id: string;
+  policy_id?: string;
+  reviewer?: string;
+  model_provider?: string;
+  verdict: string;
+  confidence_score?: number;
+  created_at: string;
+}
+
+// -- Partner types --------------------------------------------------------------
+
+interface PartnerAggregateData {
+  total_publishers: number;
+  total_documents: number;
+  total_documents_signed: number;
+  total_verifications: number;
+  total_spread_detections: number;
+  active_publishers: number;
+  [key: string]: unknown;
+}
+
+interface PartnerPublisher {
+  id: string;
+  name: string;
+  domain?: string;
+  status: string;
+  documents_signed: number;
+  [key: string]: unknown;
+}
+
+// -- Compliance types -----------------------------------------------------------
+
+interface ComplianceReadinessItem {
+  id: string;
+  label: string;
+  description: string;
+  status: 'compliant' | 'action_needed' | 'unknown';
+  eu_ai_act_article: string;
+  recommendation?: string | null;
+  action_href: string;
+  category: string;
+}
+
+interface ComplianceReadinessResponse {
+  readiness_score: number;
+  compliant_count: number;
+  total_count: number;
+  items: ComplianceReadinessItem[];
+  eu_ai_act_deadline: string;
+}
+
+// -- Enforcement: Notice types --------------------------------------------------
+
+interface NoticeDetailResponse {
+  id: string;
+  organization_id?: string;
+  target_entity_name?: string | null;
+  target_contact_email?: string | null;
+  recipient_entity?: string | null;
+  recipient_contact?: string | null;
+  notice_type?: string | null;
+  violation_type?: string | null;
+  status: string;
+  notice_text?: string | null;
+  notice_hash?: string | null;
+  content_hash?: string | null;
+  delivered_at?: string | null;
+  delivery_method?: string | null;
+  created_at: string;
+  acknowledged_at?: string | null;
+  evidence_chain?: Array<{
+    id: string;
+    event_type: string;
+    event_hash: string;
+    previous_hash: string | null;
+    created_at: string;
+    event_data?: Record<string, unknown> | null;
+  }>;
+  [key: string]: unknown;
+}
+
+// -- Quote Integrity types ------------------------------------------------------
+
+type QuoteVerdict = 'accurate' | 'approximate' | 'hallucinated' | 'unverifiable';
+type QuoteConfidence = 'high' | 'medium' | 'low';
+
+interface QuoteIntegrityResponse {
+  verdict: QuoteVerdict;
+  similarity_score: number;
+  matched_document?: { id: string; title?: string; org_id: string; signed_at?: string } | null;
+  matched_excerpt?: string | null;
+  confidence: QuoteConfidence;
+  merkle_proof?: Record<string, unknown> | null;
+  explanation: string;
+}
+
+// -- SAML SSO types -------------------------------------------------------------
+
+interface SamlConfigResponse {
+  configured: boolean;
+  enabled: boolean;
+  entity_id?: string;
+  sp_entity_id?: string;
+  sp_acs_url?: string;
+  idp_entity_id?: string;
+  idp_sso_url?: string;
+  certificate?: string;
+  has_certificate?: boolean;
+  metadata_url?: string;
+  attribute_mapping?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+// -- Bulk Invite types ----------------------------------------------------------
+
+interface BulkInviteResult {
+  succeeded: number;
+  failed: number;
+  errors?: Array<{ email: string; reason: string }>;
+}
+
 interface EvidencePackage {
   notice: {
     id: string;
@@ -2717,6 +2912,50 @@ interface GhostIntegrationResponse {
 interface GhostTokenRegenerateResponse {
   webhook_url: string;
   webhook_token: string;
+}
+
+// ── Webhook types ─────────────────────────────────────────────────────────────
+
+interface WebhookSummary {
+  id: string;
+  url: string;
+  events: string[];
+  is_active: boolean;
+  is_verified: boolean;
+  created_at: string;
+  last_triggered_at: string | null;
+  success_count: number;
+  failure_count: number;
+}
+
+interface WebhookCreateRequest {
+  url: string;
+  events: string[];
+  secret?: string;
+}
+
+interface WebhookCreateResponse {
+  id: string;
+  url: string;
+  events: string[];
+  is_active: boolean;
+  created_at: string;
+}
+
+interface WebhookUpdateRequest {
+  url?: string;
+  events?: string[];
+  is_active?: boolean;
+}
+
+interface WebhookTestResult {
+  webhook_id: string;
+  url: string;
+  success: boolean;
+  status_code?: number;
+  response_time_ms?: number;
+  error?: string;
+  message?: string;
 }
 
 export default apiClient;
@@ -2800,4 +3039,30 @@ export type {
   VerificationDomainInfo,
   VerificationDomainSetResponse,
   VerificationDomainVerifyResponse,
+  // Webhooks
+  WebhookSummary,
+  WebhookCreateRequest,
+  WebhookCreateResponse,
+  WebhookUpdateRequest,
+  WebhookTestResult,
+  // Governance / Attestation
+  AttestationPolicyRule,
+  AttestationPolicyResponse,
+  AttestationRecordResponse,
+  // Partners
+  PartnerAggregateData,
+  PartnerPublisher,
+  // Compliance
+  ComplianceReadinessItem,
+  ComplianceReadinessResponse,
+  // Enforcement
+  NoticeDetailResponse,
+  // Quote Integrity
+  QuoteVerdict,
+  QuoteConfidence,
+  QuoteIntegrityResponse,
+  // SAML SSO
+  SamlConfigResponse,
+  // Bulk Invite
+  BulkInviteResult,
 };

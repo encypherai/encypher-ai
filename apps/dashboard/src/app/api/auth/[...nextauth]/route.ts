@@ -3,6 +3,13 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
 
+if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_SECRET) {
+  throw new Error(
+    'NEXTAUTH_SECRET must be set in production. Without a stable secret, ' +
+    'all user sessions are invalidated on every deploy.'
+  );
+}
+
 // Server-side API base: prefer Docker-internal URL over public URL for server-side fetches
 const API_BASE =
   (process.env.API_BASE_INTERNAL || process.env.API_BASE || process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');

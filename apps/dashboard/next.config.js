@@ -5,6 +5,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const nextConfig = {
+  output: 'standalone',
   reactStrictMode: true,
   webpack(config) {
     config.resolve.alias = {
@@ -19,10 +20,10 @@ const nextConfig = {
     "http://127.0.0.1:3001"
   ],
   transpilePackages: ['@encypher/design-system'],
-  
+
   // Optimize for production
-  
-  
+
+
   // Image optimization
   images: {
     remotePatterns: [
@@ -35,13 +36,13 @@ const nextConfig = {
     ],
     formats: ['image/avif', 'image/webp'],
   },
-  
+
   // Environment variables
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1',
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://encypherai.com',
   },
-  
+
   // Headers for security
   async headers() {
     return [

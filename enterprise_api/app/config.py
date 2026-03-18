@@ -82,6 +82,12 @@ class Settings(BaseSettings):
     internal_service_token: Optional[str] = None
     compose_org_context_via_auth_service: bool = False
 
+    # Database pool sizes (per replica)
+    core_db_pool_size: int = 100
+    core_db_max_overflow: int = 50
+    content_db_pool_size: int = 200
+    content_db_max_overflow: int = 100
+
     # Rate limiting
     rate_limit_per_minute: int = 60
     batch_worker_limit: int = 8

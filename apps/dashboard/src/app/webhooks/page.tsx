@@ -15,27 +15,31 @@ import {
   Badge,
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-
-interface Webhook {
-  id: string;
-  url: string;
-  events: string[];
-  active: boolean;
-  createdAt: string;
-  lastTriggered?: string;
-  failureCount: number;
-}
+import apiClient from '../../lib/api';
+import type { WebhookSummary } from '../../lib/api';
 
 const availableEvents = [
-  { id: 'content.signed', label: 'Content Signed', description: 'When content is signed via API' },
-  { id: 'content.verified', label: 'Content Verified', description: 'When content verification is requested' },
-  { id: 'key.created', label: 'API Key Created', description: 'When a new API key is generated' },
-  { id: 'key.revoked', label: 'API Key Revoked', description: 'When an API key is deleted' },
-  { id: 'usage.threshold', label: 'Usage Threshold', description: 'When usage reaches 80% of limit' },
+  // Document events
+  { id: 'document.signed', label: 'Document Signed', description: 'When content is signed via API', group: 'Document' },
+  { id: 'document.verified', label: 'Document Verified', description: 'When content verification is requested', group: 'Document' },
+  { id: 'document.revoked', label: 'Document Revoked', description: 'When a signed document is revoked', group: 'Document' },
+  { id: 'document.reinstated', label: 'Document Reinstated', description: 'When a revoked document is reinstated', group: 'Document' },
+  // Quota events
+  { id: 'quota.warning', label: 'Quota Warning', description: 'When usage approaches the plan limit', group: 'Quota' },
+  { id: 'quota.exceeded', label: 'Quota Exceeded', description: 'When usage exceeds the plan limit', group: 'Quota' },
+  // Key events
+  { id: 'key.created', label: 'Key Created', description: 'When a new API key is generated', group: 'API Keys' },
+  { id: 'key.revoked', label: 'Key Revoked', description: 'When an API key is revoked', group: 'API Keys' },
+  { id: 'key.rotated', label: 'Key Rotated', description: 'When an API key is rotated', group: 'API Keys' },
+  // Rights events
+  { id: 'rights.profile.updated', label: 'Rights Profile Updated', description: 'When a rights profile is modified', group: 'Rights' },
+  { id: 'rights.notice.delivered', label: 'Rights Notice Delivered', description: 'When a formal notice is sent', group: 'Rights' },
+  { id: 'rights.licensing.request_received', label: 'Licensing Request Received', description: 'When a new licensing request arrives', group: 'Rights' },
+  { id: 'rights.licensing.agreement_created', label: 'Licensing Agreement Created', description: 'When a licensing agreement is finalized', group: 'Rights' },
+  { id: 'rights.detection.event', label: 'Detection Event', description: 'When unauthorized content use is detected', group: 'Rights' },
 ];
 
-// Mock data - replace with actual API calls
-const mockWebhooks: Webhook[] = [];
+const eventGroups = ['Document', 'Quota', 'API Keys', 'Rights'] as const;
 
 export default function WebhooksPage() {
   const { data: session, status } = useSession();
@@ -44,75 +48,89 @@ export default function WebhooksPage() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [newUrl, setNewUrl] = useState('');
+  const [newSecret, setNewSecret] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
+  const [testingId, setTestingId] = useState<string | null>(null);
 
   const webhooksQuery = useQuery({
     queryKey: ['webhooks'],
     queryFn: async () => {
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockWebhooks;
+      if (!accessToken) throw new Error('No access token');
+      const result = await apiClient.listWebhooks(accessToken);
+      return result.webhooks;
     },
     enabled: Boolean(accessToken),
   });
 
   const createWebhookMutation = useMutation({
-    mutationFn: async (data: { url: string; events: string[] }) => {
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const newWebhook: Webhook = {
-        id: `wh_${Date.now()}`,
-        url: data.url,
-        events: data.events,
-        active: true,
-        createdAt: new Date().toISOString(),
-        failureCount: 0,
-      };
-      mockWebhooks.push(newWebhook);
-      return newWebhook;
+    mutationFn: async (data: { url: string; events: string[]; secret?: string }) => {
+      if (!accessToken) throw new Error('No access token');
+      return apiClient.createWebhook(accessToken, data);
     },
     onSuccess: () => {
       toast.success('Webhook created successfully');
       setIsCreating(false);
       setNewUrl('');
+      setNewSecret('');
       setSelectedEvents([]);
       queryClient.invalidateQueries({ queryKey: ['webhooks'] });
     },
-    onError: () => {
-      toast.error('Failed to create webhook');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to create webhook');
     },
   });
 
   const deleteWebhookMutation = useMutation({
     mutationFn: async (id: string) => {
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const index = mockWebhooks.findIndex(w => w.id === id);
-      if (index > -1) mockWebhooks.splice(index, 1);
+      if (!accessToken) throw new Error('No access token');
+      return apiClient.deleteWebhook(accessToken, id);
     },
     onSuccess: () => {
       toast.success('Webhook deleted');
       queryClient.invalidateQueries({ queryKey: ['webhooks'] });
     },
-    onError: () => {
-      toast.error('Failed to delete webhook');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to delete webhook');
     },
   });
 
   const toggleWebhookMutation = useMutation({
-    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const webhook = mockWebhooks.find(w => w.id === id);
-      if (webhook) webhook.active = active;
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      if (!accessToken) throw new Error('No access token');
+      return apiClient.updateWebhook(accessToken, id, { is_active });
     },
-    onSuccess: (_, { active }) => {
-      toast.success(`Webhook ${active ? 'enabled' : 'disabled'}`);
+    onSuccess: (_, { is_active }) => {
+      toast.success(`Webhook ${is_active ? 'enabled' : 'disabled'}`);
       queryClient.invalidateQueries({ queryKey: ['webhooks'] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update webhook');
     },
   });
 
-  const webhooks = webhooksQuery.data ?? [];
+  const testWebhookMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!accessToken) throw new Error('No access token');
+      return apiClient.testWebhook(accessToken, id);
+    },
+    onMutate: (id: string) => {
+      setTestingId(id);
+    },
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(`Test successful (${result.status_code || 'OK'}, ${result.response_time_ms ?? '?'}ms)`);
+      } else {
+        toast.error(`Test failed: ${result.error || 'Unknown error'}`);
+      }
+      setTestingId(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to send test');
+      setTestingId(null);
+    },
+  });
+
+  const webhooks: WebhookSummary[] = webhooksQuery.data ?? [];
   const isLoading = status === 'loading' || webhooksQuery.isLoading;
 
   const handleCreateWebhook = () => {
@@ -130,7 +148,14 @@ export default function WebhooksPage() {
       toast.error('Please enter a valid URL');
       return;
     }
-    createWebhookMutation.mutate({ url: newUrl, events: selectedEvents });
+    const payload: { url: string; events: string[]; secret?: string } = {
+      url: newUrl,
+      events: selectedEvents,
+    };
+    if (newSecret.trim()) {
+      payload.secret = newSecret.trim();
+    }
+    createWebhookMutation.mutate(payload);
   };
 
   const toggleEvent = (eventId: string) => {
@@ -186,31 +211,58 @@ export default function WebhooksPage() {
                 </p>
               </div>
 
+              {/* Secret Input */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Signing Secret <span className="text-muted-foreground font-normal">(optional)</span>
+                </label>
+                <Input
+                  type="password"
+                  placeholder="whsec_..."
+                  value={newSecret}
+                  onChange={(e) => setNewSecret(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Used to sign webhook payloads with HMAC-SHA256 so you can verify authenticity.
+                  Leave blank to auto-generate.
+                </p>
+              </div>
+
               {/* Event Selection */}
               <div>
                 <label className="block text-sm font-medium mb-3">Events to Subscribe</label>
-                <div className="space-y-2">
-                  {availableEvents.map((event) => (
-                    <label
-                      key={event.id}
-                      className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                        selectedEvents.includes(event.id)
-                          ? 'border-blue-ncs bg-blue-ncs/5'
-                          : 'border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedEvents.includes(event.id)}
-                        onChange={() => toggleEvent(event.id)}
-                        className="mt-1"
-                      />
-                      <div>
-                        <p className="font-medium text-sm">{event.label}</p>
-                        <p className="text-xs text-muted-foreground">{event.description}</p>
+                <div className="space-y-4">
+                  {eventGroups.map((group) => {
+                    const groupEvents = availableEvents.filter(e => e.group === group);
+                    return (
+                      <div key={group}>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">{group}</p>
+                        <div className="space-y-2">
+                          {groupEvents.map((event) => (
+                            <label
+                              key={event.id}
+                              className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                                selectedEvents.includes(event.id)
+                                  ? 'border-blue-ncs bg-blue-ncs/5'
+                                  : 'border-slate-200 hover:border-slate-300'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedEvents.includes(event.id)}
+                                onChange={() => toggleEvent(event.id)}
+                                className="mt-1"
+                              />
+                              <div>
+                                <p className="font-medium text-sm">{event.label}</p>
+                                <p className="text-xs text-muted-foreground">{event.description}</p>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
                       </div>
-                    </label>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -228,6 +280,7 @@ export default function WebhooksPage() {
                   onClick={() => {
                     setIsCreating(false);
                     setNewUrl('');
+                    setNewSecret('');
                     setSelectedEvents([]);
                   }}
                 >
@@ -276,17 +329,22 @@ export default function WebhooksPage() {
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      {/* URL */}
-                      <div className="flex items-center gap-2 mb-2">
+                      {/* URL and badges */}
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <code className="text-sm font-mono text-slate-700 truncate">
                           {webhook.url}
                         </code>
-                        <Badge variant={webhook.active ? 'success' : 'secondary'} size="sm">
-                          {webhook.active ? 'Active' : 'Inactive'}
+                        <Badge variant={webhook.is_active ? 'success' : 'secondary'} size="sm">
+                          {webhook.is_active ? 'Active' : 'Inactive'}
                         </Badge>
-                        {webhook.failureCount > 0 && (
+                        {webhook.is_verified && (
+                          <Badge variant="default" size="sm">
+                            Verified
+                          </Badge>
+                        )}
+                        {webhook.failure_count > 0 && (
                           <Badge variant="destructive" size="sm">
-                            {webhook.failureCount} failures
+                            {webhook.failure_count} {webhook.failure_count === 1 ? 'failure' : 'failures'}
                           </Badge>
                         )}
                       </div>
@@ -304,22 +362,33 @@ export default function WebhooksPage() {
                       </div>
 
                       {/* Metadata */}
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Created {new Date(webhook.createdAt).toLocaleDateString()}</span>
-                        {webhook.lastTriggered && (
-                          <span>Last triggered {new Date(webhook.lastTriggered).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+                        <span>Created {new Date(webhook.created_at).toLocaleDateString()}</span>
+                        {webhook.last_triggered_at && (
+                          <span>Last triggered {new Date(webhook.last_triggered_at).toLocaleDateString()}</span>
                         )}
+                        <span>
+                          {webhook.success_count} succeeded / {webhook.failure_count} failed
+                        </span>
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => toggleWebhookMutation.mutate({ id: webhook.id, active: !webhook.active })}
+                        onClick={() => testWebhookMutation.mutate(webhook.id)}
+                        disabled={testingId === webhook.id}
                       >
-                        {webhook.active ? 'Disable' : 'Enable'}
+                        {testingId === webhook.id ? 'Testing...' : 'Test'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleWebhookMutation.mutate({ id: webhook.id, is_active: !webhook.is_active })}
+                      >
+                        {webhook.is_active ? 'Disable' : 'Enable'}
                       </Button>
                       <Button
                         variant="outline"
@@ -358,7 +427,7 @@ export default function WebhooksPage() {
                 rel="noopener noreferrer"
                 className="text-sm text-blue-ncs hover:underline mt-2 inline-block"
               >
-                View documentation &rarr;
+                View documentation -&gt;
               </a>
             </div>
           </div>
@@ -367,4 +436,3 @@ export default function WebhooksPage() {
     </DashboardLayout>
   );
 }
-

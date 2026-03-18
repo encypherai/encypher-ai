@@ -51,7 +51,14 @@ def setup_tracing(app=None) -> None:
         except Exception as exc:
             logger.warning("Failed to configure OTLP exporter: %s -- tracing disabled", exc)
     else:
-        logger.info("OpenTelemetry tracing: OTEL_EXPORTER_OTLP_ENDPOINT not set, spans discarded (no-op)")
+        environment = os.getenv("ENVIRONMENT", "development")
+        if environment == "production":
+            logger.warning(
+                "OpenTelemetry tracing: OTEL_EXPORTER_OTLP_ENDPOINT not set in production. "
+                "Distributed tracing is strongly recommended for production deployments."
+            )
+        else:
+            logger.info("OpenTelemetry tracing: OTEL_EXPORTER_OTLP_ENDPOINT not set, spans discarded (no-op)")
 
     trace.set_tracer_provider(provider)
     _tracer_provider = provider

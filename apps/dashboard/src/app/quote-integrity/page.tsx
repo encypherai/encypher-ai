@@ -13,20 +13,11 @@ import {
   Input,
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import apiClient from '../../lib/api';
+import apiClient, { type QuoteIntegrityResponse, type QuoteVerdict, type QuoteConfidence } from '../../lib/api';
 
-type Verdict = 'accurate' | 'approximate' | 'hallucinated' | 'unverifiable';
-type Confidence = 'high' | 'medium' | 'low';
-
-interface QuoteIntegrityResult {
-  verdict: Verdict;
-  similarity_score: number;
-  matched_document?: { id: string; title?: string; org_id: string; signed_at?: string } | null;
-  matched_excerpt?: string | null;
-  confidence: Confidence;
-  merkle_proof?: Record<string, unknown> | null;
-  explanation: string;
-}
+type Verdict = QuoteVerdict;
+type Confidence = QuoteConfidence;
+type QuoteIntegrityResult = QuoteIntegrityResponse;
 
 const VERDICT_STYLES: Record<Verdict, { label: string; className: string }> = {
   accurate: { label: 'Accurate', className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },

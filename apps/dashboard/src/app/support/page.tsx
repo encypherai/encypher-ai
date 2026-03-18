@@ -1,8 +1,12 @@
 'use client';
 
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Input } from '@encypher/design-system';
+import { useSession } from 'next-auth/react';
 import { ReactNode, useState } from 'react';
 import { toast } from 'sonner';
+
+import apiClient from '@/lib/api';
+
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 function IconApi({ className = 'w-5 h-5' }: { className?: string }) {
@@ -37,9 +41,22 @@ function IconStatus({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
+const CATEGORY_OPTIONS = [
+  { value: 'general', label: 'General' },
+  { value: 'technical', label: 'Technical' },
+  { value: 'billing', label: 'Billing' },
+  { value: 'security', label: 'Security' },
+  { value: 'bug_report', label: 'Bug Report' },
+  { value: 'feature_request', label: 'Feature Request' },
+];
+
 export default function SupportPage() {
+  const { data: session } = useSession();
+  const accessToken = (session?.user as Record<string, unknown>)?.accessToken as string | undefined;
+
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [category, setCategory] = useState('general');
   const [sending, setSending] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,14 +65,29 @@ export default function SupportPage() {
       toast.error('Please fill in all fields');
       return;
     }
-    
+
+    if (!accessToken) {
+      toast.error('You must be signed in to submit a support request.');
+      return;
+    }
+
     setSending(true);
-    // Simulate sending - in production this would call an API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success('Message sent! We\'ll get back to you within 24 hours.');
-    setSubject('');
-    setMessage('');
-    setSending(false);
+    try {
+      await apiClient.submitSupportTicket(accessToken, {
+        subject: subject.trim(),
+        message: message.trim(),
+        category,
+      });
+      toast.success('Message sent! We will get back to you within 24 hours.');
+      setSubject('');
+      setMessage('');
+      setCategory('general');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to send message. Please try again.';
+      toast.error(msg);
+    } finally {
+      setSending(false);
+    }
   };
 
   const faqs = [
@@ -100,10 +132,24 @@ export default function SupportPage() {
           <Card>
             <CardHeader>
               <CardTitle>Contact Support</CardTitle>
-              <CardDescription>Send us a message and we'll get back to you within 24 hours</CardDescription>
+              <CardDescription>Send us a message and we will get back to you within 24 hours</CardDescription>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Category</label>
+                  <select
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-columbia-blue"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
+                    {CATEGORY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Subject</label>
                   <Input
@@ -121,7 +167,9 @@ export default function SupportPage() {
                     onChange={(e) => setMessage(e.target.value)}
                   />
                 </div>
-                <Button variant="primary" fullWidth>Send Message</Button>
+                <Button type="submit" variant="primary" fullWidth disabled={sending}>
+                  {sending ? 'Sending...' : 'Send Message'}
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -176,4 +224,3 @@ export default function SupportPage() {
     </DashboardLayout>
   );
 }
-

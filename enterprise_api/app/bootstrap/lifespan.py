@@ -35,6 +35,9 @@ def validate_startup_config() -> None:
     if settings.is_production and "localhost" in settings.allowed_origins:
         warnings.append("ALLOWED_ORIGINS contains localhost in production mode")
 
+    if not settings.is_development and settings.redis_url == "redis://localhost:6379/0":
+        errors.append("REDIS_URL must be configured for non-development environments (not the default localhost)")
+
     if errors:
         logger.error("=" * 60)
         logger.error("STARTUP CONFIGURATION ERRORS:")
@@ -155,6 +158,25 @@ async def lifespan(app: FastAPI):
         await session_service.connect()
     except Exception as exc:
         logger.warning("Failed to connect to Redis: %s. Running without session persistence.", exc)
+
+    # Wire Redis into the org cache and job queue when available
+    from app.services.cache_service import org_cache
+    from app.services.job_queue import job_queue
+
+    if session_service.redis_client:
+        await org_cache.connect(session_service.redis_client)
+        await job_queue.connect(session_service.redis_client)
+        logger.info("Redis-backed org cache and job queue connected")
+
+    # Recover incomplete batch state from Redis
+    from app.services.batch_service import batch_service
+
+    if session_service.redis_client:
+        recovered = await batch_service.recover_incomplete_batches(
+            session_service.redis_client,
+        )
+        if recovered:
+            logger.info("Recovered %d incomplete batch state entries from Redis", recovered)
 
     try:
         await init_metrics_service()

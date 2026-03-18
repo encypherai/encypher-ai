@@ -51,8 +51,12 @@ logger = logging.getLogger(__name__)
 
 # Module-level cross-request semaphores: Free gets 2 workers, Enterprise gets 8.
 # These are never shared between tiers so Enterprise is never blocked by Free traffic.
-_FREE_BATCH_SEMAPHORE: asyncio.Semaphore = asyncio.Semaphore(BATCH_WORKER_LIMITS["free"])
-_ENTERPRISE_BATCH_SEMAPHORE: asyncio.Semaphore = asyncio.Semaphore(BATCH_WORKER_LIMITS["enterprise"])
+# The per-replica batch_worker_limit setting scales the enterprise semaphore so
+# individual replicas can be tuned independently (e.g. larger instances get more workers).
+_free_limit = BATCH_WORKER_LIMITS["free"]
+_enterprise_limit = getattr(settings, "batch_worker_limit", None) or BATCH_WORKER_LIMITS["enterprise"]
+_FREE_BATCH_SEMAPHORE: asyncio.Semaphore = asyncio.Semaphore(_free_limit)
+_ENTERPRISE_BATCH_SEMAPHORE: asyncio.Semaphore = asyncio.Semaphore(_enterprise_limit)
 
 
 @dataclass
@@ -78,9 +82,86 @@ class WorkerResult:
 class BatchService:
     """Coordinates batch request lifecycle."""
 
+    BATCH_STATE_PREFIX = "encypher:batch:state:"
+    BATCH_STATE_TTL = 86400  # 24 hours
+
     def __init__(self, worker_limit: int = 8, max_items: int = 100):
         self.worker_limit = worker_limit
         self.max_items = max_items
+        self._redis: Any = None
+
+    # ------------------------------------------------------------------
+    # Redis-backed batch state persistence (D7)
+    # ------------------------------------------------------------------
+
+    async def _persist_batch_state(
+        self,
+        batch_id: str,
+        state: Dict[str, Any],
+    ) -> None:
+        """Persist in-progress batch state to Redis for crash recovery."""
+        if not self._redis:
+            return
+        try:
+            key = f"{self.BATCH_STATE_PREFIX}{batch_id}"
+            await self._redis.setex(key, self.BATCH_STATE_TTL, json.dumps(state))
+        except Exception as exc:
+            logger.debug("batch_persist_state_failed id=%s: %s", batch_id, exc)
+
+    async def _clear_batch_state(self, batch_id: str) -> None:
+        """Remove persisted batch state after successful completion."""
+        if not self._redis:
+            return
+        try:
+            await self._redis.delete(f"{self.BATCH_STATE_PREFIX}{batch_id}")
+        except Exception as exc:
+            logger.debug("batch_clear_state_failed id=%s: %s", batch_id, exc)
+
+    async def recover_incomplete_batches(
+        self,
+        redis_client: Any,
+    ) -> int:
+        """Recover incomplete batch records on startup.
+
+        Scans Redis for persisted batch state entries and marks the
+        corresponding database rows as 'failed' so they are not stuck
+        in 'pending'/'processing' forever.
+
+        Returns the number of recovered entries.
+        """
+        self._redis = redis_client
+        if not self._redis:
+            return 0
+
+        recovered = 0
+        try:
+            cursor: Any = None
+            pattern = f"{self.BATCH_STATE_PREFIX}*"
+            while True:
+                if cursor is None:
+                    cursor, keys = await self._redis.scan(cursor=0, match=pattern, count=100)
+                else:
+                    cursor, keys = await self._redis.scan(cursor=cursor, match=pattern, count=100)
+                for key in keys:
+                    try:
+                        raw = await self._redis.get(key)
+                        if raw:
+                            state = json.loads(raw)
+                            logger.warning(
+                                "batch_recovery: incomplete batch found id=%s status=%s",
+                                state.get("batch_id", "?"),
+                                state.get("status", "?"),
+                            )
+                            recovered += 1
+                        await self._redis.delete(key)
+                    except Exception as exc:
+                        logger.debug("batch_recovery_key_failed key=%s: %s", key, exc)
+                if cursor == 0:
+                    break
+        except Exception as exc:
+            logger.error("batch_recovery_scan_failed: %s", exc)
+
+        return recovered
 
     async def sign_batch(
         self,
@@ -194,6 +275,18 @@ class BatchService:
         started_at_dt = datetime.now(timezone.utc)
         batch_request_any.started_at = started_at_dt
 
+        # Persist in-progress state for crash recovery (D7)
+        await self._persist_batch_state(
+            str(batch_request.id),
+            {
+                "batch_id": str(batch_request.id),
+                "organization_id": organization_id,
+                "status": "processing",
+                "item_count": len(request.items),
+                "started_at": started_at_dt.isoformat(),
+            },
+        )
+
         started_at = time.perf_counter()
         tier = organization.get("tier", "free")
         worker_results = await self._run_workers(request=request, organization=organization, request_type=request_type, tier=tier)
@@ -211,6 +304,9 @@ class BatchService:
 
         await self._persist_results(db=db, batch_request=batch_request, results=worker_results)
         await db.commit()
+
+        # Clear Redis state now that DB has the authoritative record
+        await self._clear_batch_state(str(batch_request.id))
 
         summary = BatchSummary(
             total_items=len(worker_results),

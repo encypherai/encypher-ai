@@ -28,8 +28,10 @@ def _normalize_url(url: str) -> str:
 core_engine = create_async_engine(
     _normalize_url(settings.core_database_url_resolved),
     echo=settings.is_development,
-    pool_size=50,
-    max_overflow=25,
+    pool_size=settings.core_db_pool_size,
+    max_overflow=settings.core_db_max_overflow,
+    pool_recycle=1800,
+    pool_timeout=30,
     pool_pre_ping=True,
     future=True,
 )
@@ -49,8 +51,10 @@ core_session_factory = async_sessionmaker(
 content_engine = create_async_engine(
     _normalize_url(settings.content_database_url_resolved),
     echo=settings.is_development,
-    pool_size=100,  # Higher pool for verification workloads
-    max_overflow=50,
+    pool_size=settings.content_db_pool_size,
+    max_overflow=settings.content_db_max_overflow,
+    pool_recycle=1800,
+    pool_timeout=30,
     pool_pre_ping=True,
     future=True,
 )

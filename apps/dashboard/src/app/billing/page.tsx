@@ -388,12 +388,9 @@ function BillingPageContent() {
                     <Button
                       variant="outline"
                       fullWidth
-                      onClick={() => {
-                        // TODO: Redirect to Stripe Connect onboarding
-                        toast.info('Stripe Connect onboarding coming soon');
-                      }}
+                      disabled
                     >
-                      Connect Payout Account
+                      Connect Payout Account (Coming Soon)
                     </Button>
                   )}
                 </>
