@@ -88,10 +88,10 @@ function DeliveryHistoryPanel({
 
   if (deliveriesQuery.isLoading) {
     return (
-      <div className="mt-3 pt-3 border-t border-slate-100">
+      <div className="mt-3 pt-3 border-t border-border">
         <div className="animate-pulse space-y-2">
-          <div className="h-4 w-1/3 bg-slate-200 rounded" />
-          <div className="h-4 w-1/2 bg-slate-200 rounded" />
+          <div className="h-4 w-1/3 bg-muted rounded" />
+          <div className="h-4 w-1/2 bg-muted rounded" />
         </div>
       </div>
     );
@@ -99,14 +99,14 @@ function DeliveryHistoryPanel({
 
   if (deliveries.length === 0) {
     return (
-      <div className="mt-3 pt-3 border-t border-slate-100">
+      <div className="mt-3 pt-3 border-t border-border">
         <p className="text-xs text-muted-foreground">No deliveries yet</p>
       </div>
     );
   }
 
   return (
-    <div className="mt-3 pt-3 border-t border-slate-100">
+    <div className="mt-3 pt-3 border-t border-border">
       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
         Recent Deliveries ({deliveriesQuery.data?.total ?? 0} total)
       </p>
@@ -114,13 +114,13 @@ function DeliveryHistoryPanel({
         {deliveries.map((d) => (
           <div
             key={d.id}
-            className="flex items-center justify-between gap-3 p-2 rounded border border-slate-100 bg-slate-50/50 text-xs"
+            className="flex items-center justify-between gap-3 p-2 rounded border border-border bg-muted/50 text-xs"
           >
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <Badge variant={statusBadgeVariant(d.status)} size="sm">
                 {statusLabel(d.status)}
               </Badge>
-              <span className="font-mono text-slate-600 truncate">{d.event_type}</span>
+              <span className="font-mono text-muted-foreground truncate">{d.event_type}</span>
               {d.response_status_code != null && (
                 <span className="text-muted-foreground">HTTP {d.response_status_code}</span>
               )}
@@ -360,7 +360,7 @@ export default function WebhooksPage() {
                               className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                                 selectedEvents.includes(event.id)
                                   ? 'border-blue-ncs bg-blue-ncs/5'
-                                  : 'border-slate-200 hover:border-slate-300'
+                                  : 'border-border hover:border-muted-foreground/50'
                               }`}
                             >
                               <input
@@ -413,8 +413,8 @@ export default function WebhooksPage() {
             {[1, 2].map((i) => (
               <Card key={i} className="animate-pulse">
                 <CardContent className="pt-6">
-                  <div className="h-5 w-1/2 bg-slate-200 rounded mb-3" />
-                  <div className="h-4 w-1/3 bg-slate-200 rounded" />
+                  <div className="h-5 w-1/2 bg-muted rounded mb-3" />
+                  <div className="h-4 w-1/3 bg-muted rounded" />
                 </CardContent>
               </Card>
             ))}
@@ -422,12 +422,12 @@ export default function WebhooksPage() {
         ) : webhooks.length === 0 ? (
           <Card>
             <CardContent className="py-16 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
-                <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-slate-700 mb-2">No webhooks configured</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">No webhooks configured</h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 Webhooks allow you to receive real-time notifications when events occur in your account.
               </p>
@@ -455,14 +455,14 @@ export default function WebhooksPage() {
                             className="flex items-center gap-1 hover:opacity-80"
                           >
                             <svg
-                              className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                              className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
                             >
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
-                            <code className="text-sm font-mono text-slate-700 truncate">
+                            <code className="text-sm font-mono text-foreground truncate">
                               {webhook.url}
                             </code>
                           </button>
@@ -486,7 +486,7 @@ export default function WebhooksPage() {
                           {webhook.events.map((event) => (
                             <span
                               key={event}
-                              className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded"
+                              className="text-xs px-2 py-0.5 bg-muted text-muted-foreground rounded"
                             >
                               {event}
                             </span>
@@ -530,7 +530,7 @@ export default function WebhooksPage() {
                               deleteWebhookMutation.mutate(webhook.id);
                             }
                           }}
-                          className="text-red-600 hover:bg-red-50"
+                          className="text-destructive hover:bg-destructive/10"
                         >
                           Delete
                         </Button>
@@ -549,13 +549,13 @@ export default function WebhooksPage() {
         )}
 
         {/* Documentation Link */}
-        <div className="mt-8 p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="mt-8 p-4 bg-muted/50 rounded-lg border border-border">
           <div className="flex items-start gap-3">
             <svg className="w-5 h-5 text-blue-ncs mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <p className="font-medium text-sm text-slate-700">Webhook Documentation</p>
+              <p className="font-medium text-sm text-foreground">Webhook Documentation</p>
               <p className="text-sm text-muted-foreground mt-1">
                 Learn how to handle webhook payloads, verify signatures, and implement retry logic.
               </p>

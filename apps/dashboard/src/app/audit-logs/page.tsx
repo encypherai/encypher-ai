@@ -93,19 +93,19 @@ function formatDate(dateStr: string): string {
 }
 
 function getStatusBadgeClass(status?: number): string {
-  if (!status) return 'bg-slate-100 text-slate-700';
-  if (status >= 200 && status < 300) return 'bg-green-100 text-green-800';
-  if (status >= 400 && status < 500) return 'bg-amber-100 text-amber-800';
-  if (status >= 500) return 'bg-red-100 text-red-800';
-  return 'bg-gray-100 text-gray-800';
+  if (!status) return 'bg-muted text-muted-foreground';
+  if (status >= 200 && status < 300) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
+  if (status >= 400 && status < 500) return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
+  if (status >= 500) return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+  return 'bg-muted text-muted-foreground';
 }
 
 function getSeverityBadgeClass(severity?: string): string {
-  if (severity === 'critical') return 'bg-red-200 text-red-900';
-  if (severity === 'high') return 'bg-orange-100 text-orange-900';
-  if (severity === 'medium') return 'bg-amber-100 text-amber-900';
-  if (severity === 'low') return 'bg-emerald-100 text-emerald-900';
-  return 'bg-slate-100 text-slate-700';
+  if (severity === 'critical') return 'bg-red-200 text-red-900 dark:bg-red-900/30 dark:text-red-400';
+  if (severity === 'high') return 'bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-400';
+  if (severity === 'medium') return 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-400';
+  if (severity === 'low') return 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-400';
+  return 'bg-muted text-muted-foreground';
 }
 
 export default function AuditLogsPage() {
