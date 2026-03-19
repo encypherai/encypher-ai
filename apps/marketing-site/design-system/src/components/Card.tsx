@@ -11,7 +11,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
    * Card variant
    */
   variant?: 'default' | 'bordered' | 'elevated';
-  
+
   /**
    * Padding size
    */
@@ -26,9 +26,9 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         className={cn(
           'rounded-lg bg-card text-card-foreground',
           {
-            'shadow-sm': variant === 'default',
+            'border border-border shadow-sm': variant === 'default',
             'border border-border': variant === 'bordered',
-            'shadow-lg': variant === 'elevated',
+            'border border-border shadow-lg': variant === 'elevated',
           },
           {
             'p-0': padding === 'none',
