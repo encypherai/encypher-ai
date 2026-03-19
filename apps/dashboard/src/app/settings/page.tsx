@@ -1977,9 +1977,9 @@ function SettingsPageInner() {
                         Security policies, signing defaults, and feature overview for admins.
                       </p>
                     </div>
-                    <span className="text-muted-foreground group-hover:text-blue-ncs transition-colors">
-                      -&gt;
-                    </span>
+                    <svg className="w-5 h-5 text-muted-foreground group-hover:text-blue-ncs transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                 </CardContent>
               </Card>

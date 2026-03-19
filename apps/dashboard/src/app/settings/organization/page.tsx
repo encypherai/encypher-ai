@@ -308,7 +308,7 @@ function FeatureOverviewCard() {
             <div className="grid gap-2">
               {tierFeatures.map((feature, i) => (
                 <div key={i} className="flex items-start gap-2 text-sm">
-                  <span className="text-emerald-500 mt-0.5 shrink-0">[+]</span>
+                  <svg className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                   <span className="text-muted-foreground">{feature}</span>
                 </div>
               ))}
@@ -322,7 +322,7 @@ function FeatureOverviewCard() {
               <div className="grid gap-2">
                 {exclusiveFeatures.map((feature, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm">
-                    <span className="text-purple-500 mt-0.5 shrink-0">[*]</span>
+                    <svg className="w-4 h-4 text-purple-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                     <span className="text-muted-foreground">{feature}</span>
                   </div>
                 ))}
@@ -369,7 +369,7 @@ function FeatureOverviewCard() {
                 Need more features? Explore add-ons or upgrade to Enterprise.
               </p>
               <Link href="/billing" className="text-sm text-blue-ncs hover:underline">
-                View plans and add-ons -&gt;
+                View plans and add-ons <svg className="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </Link>
             </div>
           )}

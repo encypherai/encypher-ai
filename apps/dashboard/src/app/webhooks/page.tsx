@@ -565,7 +565,7 @@ export default function WebhooksPage() {
                 rel="noopener noreferrer"
                 className="text-sm text-blue-ncs hover:underline mt-2 inline-block"
               >
-                View documentation -&gt;
+                View documentation <svg className="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </a>
             </div>
           </div>
