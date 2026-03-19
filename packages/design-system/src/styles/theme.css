@@ -19,7 +19,7 @@
   --white: #ffffff;
 
   /* ===== SEMANTIC COLORS (Light Mode) ===== */
-  --background: #eef1f5;
+  --background: var(--white);
   --foreground: var(--delft-blue);
 
   /* Primary action color - HIGH CONTRAST for CTAs */
@@ -47,8 +47,8 @@
   --popover-foreground: var(--delft-blue);
 
   /* Borders and inputs */
-  --border: #d4dbe6;
-  --input: #d4dbe6;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
 
   /* Focus rings */
   --ring: var(--columbia-blue);

@@ -157,9 +157,16 @@ textarea::-moz-selection {
 
 /* ===== LIGHT MODE CONTRAST OVERRIDES ===== */
 /* Override design-system theme.css to give cards clear contrast against the page.
-   Uses html:not(.dark) for higher specificity than theme.css :root block. */
+   Uses html:not(.dark) for higher specificity than theme.css :root block.
+   Values MUST be HSL space-separated (Tailwind wraps them in hsl()). */
 html:not(.dark) {
-  --background: #eef1f5;
-  --border: #d4dbe6;
-  --input: #d4dbe6;
+  --background: 216 18% 94%;
+  --card: 0 0% 100%;
+  --card-foreground: 213 49% 21%;
+  --border: 217 22% 82%;
+  --input: 217 22% 82%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 213 49% 21%;
+  --muted: 210 40% 96%;
+  --secondary: 210 40% 96%;
 }
