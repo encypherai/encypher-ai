@@ -55,6 +55,7 @@ export function TemplateSelector({
     },
     enabled: Boolean(accessToken),
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: false, // 403 is expected for non-enterprise orgs
   });
 
   const templates = templatesQuery.data?.templates || [];
@@ -73,9 +74,10 @@ export function TemplateSelector({
   const selectedTemplate = templates.find((t) => t.id === value);
 
   if (isError) {
+    const is403 = templatesQuery.error && 'statusCode' in templatesQuery.error && (templatesQuery.error as any).statusCode === 403;
     return (
       <div className={`text-sm text-muted-foreground ${className}`}>
-        No rights templates configured
+        {is403 ? 'Rights templates require Enterprise tier' : 'No rights templates configured'}
       </div>
     );
   }
