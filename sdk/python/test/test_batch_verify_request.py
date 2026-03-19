@@ -35,18 +35,32 @@ class TestBatchVerifyRequest(unittest.TestCase):
         model = BatchVerifyRequest()
         if include_optional:
             return BatchVerifyRequest(
-                references = [
-                    encypher.models.verify_embedding_request.VerifyEmbeddingRequest(
-                        ref_id = '', 
-                        signature = '', )
-                    ]
+                mode = 'c2pa',
+                segmentation_level = 'document',
+                idempotency_key = '01234567',
+                items = [
+                    encypher.models.batch_item_payload.BatchItemPayload(
+                        document_id = '0',
+                        text = '0',
+                        title = '',
+                        metadata = {
+                            'key' : null
+                            }, )
+                    ],
+                fail_fast = True
             )
         else:
             return BatchVerifyRequest(
-                references = [
-                    encypher.models.verify_embedding_request.VerifyEmbeddingRequest(
-                        ref_id = '', 
-                        signature = '', )
+                mode = 'c2pa',
+                idempotency_key = '01234567',
+                items = [
+                    encypher.models.batch_item_payload.BatchItemPayload(
+                        document_id = '0',
+                        text = '0',
+                        title = '',
+                        metadata = {
+                            'key' : null
+                            }, )
                     ],
         )
         """

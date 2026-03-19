@@ -6,19 +6,23 @@ Core verification result.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**valid** | **bool** |  | 
-**tampered** | **bool** |  | 
-**reason_code** | **str** |  | 
-**signer_id** | **str** |  | [optional] 
-**signer_name** | **str** |  | [optional] 
-**organization_id** | **str** |  | [optional] 
-**organization_name** | **str** |  | [optional] 
-**timestamp** | **datetime** |  | [optional] 
-**document** | [**DocumentInfo**](DocumentInfo.md) |  | [optional] 
-**c2pa** | [**C2PAInfo**](C2PAInfo.md) |  | [optional] 
-**licensing** | [**LicensingInfo**](LicensingInfo.md) |  | [optional] 
-**merkle_proof** | [**MerkleProofInfo**](MerkleProofInfo.md) |  | [optional] 
-**details** | **Dict[str, object]** |  | [optional] 
+**valid** | **bool** |  |
+**tampered** | **bool** |  |
+**reason_code** | **str** |  |
+**signer_id** | **str** |  | [optional]
+**signer_name** | **str** |  | [optional]
+**publisher_name** | **str** |  | [optional]
+**organization_id** | **str** |  | [optional]
+**organization_name** | **str** |  | [optional]
+**timestamp** | **datetime** |  | [optional]
+**document** | [**VerificationServiceDocumentInfo**](VerificationServiceDocumentInfo.md) |  | [optional]
+**c2pa** | [**VerificationServiceC2PAInfo**](VerificationServiceC2PAInfo.md) |  | [optional]
+**licensing** | [**VerificationServiceLicensingInfo**](VerificationServiceLicensingInfo.md) |  | [optional]
+**embeddings** | [**List[EmbeddingDetail]**](EmbeddingDetail.md) |  | [optional]
+**total_embeddings** | **int** |  | [optional]
+**total_segments_in_document** | **int** |  | [optional]
+**merkle_proof** | [**VerificationServiceMerkleProofInfo**](VerificationServiceMerkleProofInfo.md) |  | [optional]
+**details** | **Dict[str, object]** |  | [optional]
 
 ## Example
 
@@ -38,5 +42,3 @@ verification_service_verify_verdict_dict = verification_service_verify_verdict_i
 verification_service_verify_verdict_from_dict = VerificationServiceVerifyVerdict.from_dict(verification_service_verify_verdict_dict)
 ```
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

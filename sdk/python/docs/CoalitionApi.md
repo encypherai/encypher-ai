@@ -10,6 +10,8 @@ Method | HTTP request | Description
 [**get_content_stats_api_v1_coalition_content_stats_get_0**](CoalitionApi.md#get_content_stats_api_v1_coalition_content_stats_get_0) | **GET** /api/v1/coalition/content-stats | Get Content Stats
 [**get_earnings_history_api_v1_coalition_earnings_get**](CoalitionApi.md#get_earnings_history_api_v1_coalition_earnings_get) | **GET** /api/v1/coalition/earnings | Get Earnings History
 [**get_earnings_history_api_v1_coalition_earnings_get_0**](CoalitionApi.md#get_earnings_history_api_v1_coalition_earnings_get_0) | **GET** /api/v1/coalition/earnings | Get Earnings History
+[**get_public_coalition_stats_api_v1_coalition_public_stats_get**](CoalitionApi.md#get_public_coalition_stats_api_v1_coalition_public_stats_get) | **GET** /api/v1/coalition/public/stats | Public coalition aggregate statistics
+[**get_public_coalition_stats_api_v1_coalition_public_stats_get_0**](CoalitionApi.md#get_public_coalition_stats_api_v1_coalition_public_stats_get_0) | **GET** /api/v1/coalition/public/stats | Public coalition aggregate statistics
 [**opt_in_to_coalition_api_v1_coalition_opt_in_post**](CoalitionApi.md#opt_in_to_coalition_api_v1_coalition_opt_in_post) | **POST** /api/v1/coalition/opt-in | Opt In To Coalition
 [**opt_in_to_coalition_api_v1_coalition_opt_in_post_0**](CoalitionApi.md#opt_in_to_coalition_api_v1_coalition_opt_in_post_0) | **POST** /api/v1/coalition/opt-in | Opt In To Coalition
 [**opt_out_of_coalition_api_v1_coalition_opt_out_post**](CoalitionApi.md#opt_out_of_coalition_api_v1_coalition_opt_out_post) | **POST** /api/v1/coalition/opt-out | Opt Out Of Coalition
@@ -480,6 +482,132 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **get_public_coalition_stats_api_v1_coalition_public_stats_get**
+> Dict[str, object] get_public_coalition_stats_api_v1_coalition_public_stats_get()
+
+Public coalition aggregate statistics
+
+Returns aggregate-only coalition statistics for public display. No authentication required. Individual member data is never exposed. Used by the marketing site to show coalition scale.
+
+### Example
+
+
+```python
+import encypher
+from encypher.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://api.encypherai.com
+# See configuration.py for a list of all supported configuration parameters.
+configuration = encypher.Configuration(
+    host = "https://api.encypherai.com"
+)
+
+
+# Enter a context with an instance of the API client
+with encypher.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = encypher.CoalitionApi(api_client)
+
+    try:
+        # Public coalition aggregate statistics
+        api_response = api_instance.get_public_coalition_stats_api_v1_coalition_public_stats_get()
+        print("The response of CoalitionApi->get_public_coalition_stats_api_v1_coalition_public_stats_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling CoalitionApi->get_public_coalition_stats_api_v1_coalition_public_stats_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**Dict[str, object]**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_public_coalition_stats_api_v1_coalition_public_stats_get_0**
+> Dict[str, object] get_public_coalition_stats_api_v1_coalition_public_stats_get_0()
+
+Public coalition aggregate statistics
+
+Returns aggregate-only coalition statistics for public display. No authentication required. Individual member data is never exposed. Used by the marketing site to show coalition scale.
+
+### Example
+
+
+```python
+import encypher
+from encypher.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://api.encypherai.com
+# See configuration.py for a list of all supported configuration parameters.
+configuration = encypher.Configuration(
+    host = "https://api.encypherai.com"
+)
+
+
+# Enter a context with an instance of the API client
+with encypher.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = encypher.CoalitionApi(api_client)
+
+    try:
+        # Public coalition aggregate statistics
+        api_response = api_instance.get_public_coalition_stats_api_v1_coalition_public_stats_get_0()
+        print("The response of CoalitionApi->get_public_coalition_stats_api_v1_coalition_public_stats_get_0:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling CoalitionApi->get_public_coalition_stats_api_v1_coalition_public_stats_get_0: %s\n" % e)
+```
+
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**Dict[str, object]**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **opt_in_to_coalition_api_v1_coalition_opt_in_post**
 > object opt_in_to_coalition_api_v1_coalition_opt_in_post()
 
@@ -775,4 +903,3 @@ This endpoint does not need any parameter.
 **200** | Successful Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

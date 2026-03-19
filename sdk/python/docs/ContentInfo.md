@@ -6,9 +6,10 @@ Content information from verification.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**text_preview** | **str** |  | [optional] 
-**leaf_hash** | **str** | Cryptographic hash of full content | 
-**leaf_index** | **int** | Position in document | 
+**text_preview** | **str** |  | [optional]
+**leaf_hash** | **str** | Cryptographic hash of full content |
+**leaf_index** | **int** | Position in document |
+**segment_location** | [**SegmentLocation**](SegmentLocation.md) |  | [optional]
 
 ## Example
 
@@ -28,5 +29,3 @@ content_info_dict = content_info_instance.to_dict()
 content_info_from_dict = ContentInfo.from_dict(content_info_dict)
 ```
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

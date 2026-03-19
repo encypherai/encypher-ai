@@ -19,6 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from encypher.models.tsa_trust_list_value import TsaTrustListValue
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -33,7 +34,12 @@ class TrustListResponse(BaseModel):
     trust_list_loaded_at: Optional[StrictStr] = None
     trust_list_source: Optional[StrictStr] = None
     trust_list_count: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["success", "trusted_cas", "trust_list_url", "trust_list_fingerprint", "trust_list_loaded_at", "trust_list_source", "trust_list_count"]
+    required_signer_eku_oids: Optional[List[StrictStr]] = None
+    revocation_denylist: Optional[Dict[str, StrictStr]] = None
+    tsa_trust_list: Optional[Dict[str, Optional[TsaTrustListValue]]] = None
+    default_signing_mode: Optional[StrictStr] = 'organization'
+    managed_signer_id: Optional[StrictStr] = 'encypher_managed'
+    __properties: ClassVar[List[str]] = ["success", "trusted_cas", "trust_list_url", "trust_list_fingerprint", "trust_list_loaded_at", "trust_list_source", "trust_list_count", "required_signer_eku_oids", "revocation_denylist", "tsa_trust_list", "default_signing_mode", "managed_signer_id"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -74,6 +80,13 @@ class TrustListResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each value in tsa_trust_list (dict)
+        _field_dict = {}
+        if self.tsa_trust_list:
+            for _key_tsa_trust_list in self.tsa_trust_list:
+                if self.tsa_trust_list[_key_tsa_trust_list]:
+                    _field_dict[_key_tsa_trust_list] = self.tsa_trust_list[_key_tsa_trust_list].to_dict()
+            _dict['tsa_trust_list'] = _field_dict
         # set to None if trust_list_fingerprint (nullable) is None
         # and model_fields_set contains the field
         if self.trust_list_fingerprint is None and "trust_list_fingerprint" in self.model_fields_set:
@@ -112,8 +125,16 @@ class TrustListResponse(BaseModel):
             "trust_list_fingerprint": obj.get("trust_list_fingerprint"),
             "trust_list_loaded_at": obj.get("trust_list_loaded_at"),
             "trust_list_source": obj.get("trust_list_source"),
-            "trust_list_count": obj.get("trust_list_count")
+            "trust_list_count": obj.get("trust_list_count"),
+            "required_signer_eku_oids": obj.get("required_signer_eku_oids"),
+            "revocation_denylist": obj.get("revocation_denylist"),
+            "tsa_trust_list": dict(
+                (_k, TsaTrustListValue.from_dict(_v))
+                for _k, _v in obj["tsa_trust_list"].items()
+            )
+            if obj.get("tsa_trust_list") is not None
+            else None,
+            "default_signing_mode": obj.get("default_signing_mode") if obj.get("default_signing_mode") is not None else 'organization',
+            "managed_signer_id": obj.get("managed_signer_id") if obj.get("managed_signer_id") is not None else 'encypher_managed'
         })
         return _obj
-
-

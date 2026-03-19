@@ -16,7 +16,7 @@ import {
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient from '../../lib/api';
-import type { WebhookSummary } from '../../lib/api';
+import type { WebhookSummary, WebhookDeliveryLog } from '../../lib/api';
 
 const availableEvents = [
   // Document events
@@ -41,6 +41,121 @@ const availableEvents = [
 
 const eventGroups = ['Document', 'Quota', 'API Keys', 'Rights'] as const;
 
+function statusBadgeVariant(status: string): 'success' | 'secondary' | 'destructive' {
+  if (status === 'success') return 'success';
+  if (status === 'retrying' || status === 'pending') return 'secondary';
+  return 'destructive';
+}
+
+function statusLabel(status: string): string {
+  if (status === 'permanently_failed') return 'Dead Letter';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function DeliveryHistoryPanel({
+  webhookId,
+  accessToken,
+}: {
+  webhookId: string;
+  accessToken: string;
+}) {
+  const queryClient = useQueryClient();
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+
+  const deliveriesQuery = useQuery({
+    queryKey: ['webhook-deliveries', webhookId],
+    queryFn: () => apiClient.getWebhookDeliveries(accessToken, webhookId, 1, 20),
+    enabled: Boolean(accessToken),
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: (deliveryId: string) =>
+      apiClient.retryWebhookDelivery(accessToken, webhookId, deliveryId),
+    onMutate: (deliveryId: string) => setRetryingId(deliveryId),
+    onSuccess: () => {
+      toast.success('Delivery retried');
+      queryClient.invalidateQueries({ queryKey: ['webhook-deliveries', webhookId] });
+      queryClient.invalidateQueries({ queryKey: ['webhooks'] });
+      setRetryingId(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Retry failed');
+      setRetryingId(null);
+    },
+  });
+
+  const deliveries: WebhookDeliveryLog[] = deliveriesQuery.data?.deliveries ?? [];
+
+  if (deliveriesQuery.isLoading) {
+    return (
+      <div className="mt-3 pt-3 border-t border-slate-100">
+        <div className="animate-pulse space-y-2">
+          <div className="h-4 w-1/3 bg-slate-200 rounded" />
+          <div className="h-4 w-1/2 bg-slate-200 rounded" />
+        </div>
+      </div>
+    );
+  }
+
+  if (deliveries.length === 0) {
+    return (
+      <div className="mt-3 pt-3 border-t border-slate-100">
+        <p className="text-xs text-muted-foreground">No deliveries yet</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-slate-100">
+      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+        Recent Deliveries ({deliveriesQuery.data?.total ?? 0} total)
+      </p>
+      <div className="space-y-2">
+        {deliveries.map((d) => (
+          <div
+            key={d.id}
+            className="flex items-center justify-between gap-3 p-2 rounded border border-slate-100 bg-slate-50/50 text-xs"
+          >
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Badge variant={statusBadgeVariant(d.status)} size="sm">
+                {statusLabel(d.status)}
+              </Badge>
+              <span className="font-mono text-slate-600 truncate">{d.event_type}</span>
+              {d.response_status_code != null && (
+                <span className="text-muted-foreground">HTTP {d.response_status_code}</span>
+              )}
+              <span className="text-muted-foreground">
+                {d.attempts} attempt{d.attempts !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {d.error_message && (
+                <span className="text-red-500 truncate max-w-[200px]" title={d.error_message}>
+                  {d.error_message}
+                </span>
+              )}
+              <span className="text-muted-foreground whitespace-nowrap">
+                {new Date(d.created_at).toLocaleString()}
+              </span>
+              {(d.status === 'permanently_failed' || d.status === 'failed') && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => retryMutation.mutate(d.id)}
+                  disabled={retryingId === d.id}
+                  className="text-xs h-6 px-2"
+                >
+                  {retryingId === d.id ? 'Retrying...' : 'Retry'}
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function WebhooksPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as Record<string, unknown>)?.accessToken as string | undefined;
@@ -51,6 +166,7 @@ export default function WebhooksPage() {
   const [newSecret, setNewSecret] = useState('');
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const webhooksQuery = useQuery({
     queryKey: ['webhooks'],
@@ -324,89 +440,111 @@ export default function WebhooksPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {webhooks.map((webhook) => (
-              <Card key={webhook.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      {/* URL and badges */}
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <code className="text-sm font-mono text-slate-700 truncate">
-                          {webhook.url}
-                        </code>
-                        <Badge variant={webhook.is_active ? 'success' : 'secondary'} size="sm">
-                          {webhook.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                        {webhook.is_verified && (
-                          <Badge variant="default" size="sm">
-                            Verified
-                          </Badge>
-                        )}
-                        {webhook.failure_count > 0 && (
-                          <Badge variant="destructive" size="sm">
-                            {webhook.failure_count} {webhook.failure_count === 1 ? 'failure' : 'failures'}
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Events */}
-                      <div className="flex flex-wrap gap-1.5 mb-3">
-                        {webhook.events.map((event) => (
-                          <span
-                            key={event}
-                            className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded"
+            {webhooks.map((webhook) => {
+              const isExpanded = expandedId === webhook.id;
+              return (
+                <Card key={webhook.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        {/* URL and badges */}
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedId(isExpanded ? null : webhook.id)}
+                            className="flex items-center gap-1 hover:opacity-80"
                           >
-                            {event}
+                            <svg
+                              className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                            <code className="text-sm font-mono text-slate-700 truncate">
+                              {webhook.url}
+                            </code>
+                          </button>
+                          <Badge variant={webhook.is_active ? 'success' : 'secondary'} size="sm">
+                            {webhook.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                          {webhook.is_verified && (
+                            <Badge variant="default" size="sm">
+                              Verified
+                            </Badge>
+                          )}
+                          {webhook.failure_count > 0 && (
+                            <Badge variant="destructive" size="sm">
+                              {webhook.failure_count} {webhook.failure_count === 1 ? 'failure' : 'failures'}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Events */}
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {webhook.events.map((event) => (
+                            <span
+                              key={event}
+                              className="text-xs px-2 py-0.5 bg-slate-100 text-slate-600 rounded"
+                            >
+                              {event}
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* Metadata */}
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+                          <span>Created {new Date(webhook.created_at).toLocaleDateString()}</span>
+                          {webhook.last_triggered_at && (
+                            <span>Last triggered {new Date(webhook.last_triggered_at).toLocaleDateString()}</span>
+                          )}
+                          <span>
+                            {webhook.success_count} succeeded / {webhook.failure_count} failed
                           </span>
-                        ))}
+                        </div>
                       </div>
 
-                      {/* Metadata */}
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                        <span>Created {new Date(webhook.created_at).toLocaleDateString()}</span>
-                        {webhook.last_triggered_at && (
-                          <span>Last triggered {new Date(webhook.last_triggered_at).toLocaleDateString()}</span>
-                        )}
-                        <span>
-                          {webhook.success_count} succeeded / {webhook.failure_count} failed
-                        </span>
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => testWebhookMutation.mutate(webhook.id)}
+                          disabled={testingId === webhook.id}
+                        >
+                          {testingId === webhook.id ? 'Testing...' : 'Test'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleWebhookMutation.mutate({ id: webhook.id, is_active: !webhook.is_active })}
+                        >
+                          {webhook.is_active ? 'Disable' : 'Enable'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this webhook?')) {
+                              deleteWebhookMutation.mutate(webhook.id);
+                            }
+                          }}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          Delete
+                        </Button>
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => testWebhookMutation.mutate(webhook.id)}
-                        disabled={testingId === webhook.id}
-                      >
-                        {testingId === webhook.id ? 'Testing...' : 'Test'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => toggleWebhookMutation.mutate({ id: webhook.id, is_active: !webhook.is_active })}
-                      >
-                        {webhook.is_active ? 'Disable' : 'Enable'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this webhook?')) {
-                            deleteWebhookMutation.mutate(webhook.id);
-                          }
-                        }}
-                        className="text-red-600 hover:bg-red-50"
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    {/* Delivery History (expandable) */}
+                    {isExpanded && accessToken && (
+                      <DeliveryHistoryPanel webhookId={webhook.id} accessToken={accessToken} />
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
 

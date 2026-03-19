@@ -54,7 +54,6 @@ class InfoApi:
     ) -> object:
         """Root
 
-        API root endpoint with basic information.  Returns:     dict: API information
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -117,7 +116,6 @@ class InfoApi:
     ) -> ApiResponse[object]:
         """Root
 
-        API root endpoint with basic information.  Returns:     dict: API information
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -180,7 +178,6 @@ class InfoApi:
     ) -> RESTResponseType:
         """Root
 
-        API root endpoint with basic information.  Returns:     dict: API information
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -277,5 +274,3 @@ class InfoApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

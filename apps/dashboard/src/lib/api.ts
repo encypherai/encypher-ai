@@ -2505,11 +2505,44 @@ const apiClient = {
     return response.data;
   },
 
+  async getWebhookDeliveries(
+    accessToken: string,
+    webhookId: string,
+    page = 1,
+    limit = 20,
+  ): Promise<{ deliveries: WebhookDeliveryLog[]; total: number; page: number; page_size: number }> {
+    const params = new URLSearchParams({ page: String(page), page_size: String(limit) });
+    const response = await fetchWithAuth<{
+      success: boolean;
+      data: { deliveries: WebhookDeliveryLog[]; total: number; page: number; page_size: number };
+    }>(
+      `${API_BASE_URL}/webhooks/${encodeURIComponent(webhookId)}/deliveries?${params.toString()}`,
+      accessToken,
+    );
+    return response.data;
+  },
+
+  async retryWebhookDelivery(
+    accessToken: string,
+    webhookId: string,
+    deliveryId: string,
+  ): Promise<{ delivery: WebhookDeliveryLog; retried: boolean }> {
+    const response = await fetchWithAuth<{
+      success: boolean;
+      data: { delivery: WebhookDeliveryLog; retried: boolean };
+    }>(
+      `${API_BASE_URL}/webhooks/${encodeURIComponent(webhookId)}/deliveries/${encodeURIComponent(deliveryId)}/retry`,
+      accessToken,
+      { method: 'POST' },
+    );
+    return response.data;
+  },
+
   // -- Support ----------------------------------------------------------------
 
   async submitSupportTicket(
     accessToken: string,
-    data: { subject: string; message: string; category?: string }
+    data: { subject: string; message: string; category?: string },
   ): Promise<{ message: string; sent_at: string }> {
     const response = await fetchWithAuth<{ success: boolean; data: { message: string; sent_at: string } }>(
       `${API_BASE_URL}/support/contact`,
@@ -2635,6 +2668,29 @@ const apiClient = {
       },
     );
   },
+
+  // ============================================
+  // CDN Provenance Analytics
+  // ============================================
+
+  async getCdnAnalyticsSummary(
+    accessToken: string,
+  ): Promise<CdnAnalyticsSummary> {
+    return fetchWithAuth<CdnAnalyticsSummary>(
+      `${API_BASE_URL}/cdn/analytics/summary`,
+      accessToken,
+    );
+  },
+
+  async getCdnAnalyticsTimeline(
+    accessToken: string,
+    days: number = 30,
+  ): Promise<CdnAnalyticsTimeline> {
+    return fetchWithAuth<CdnAnalyticsTimeline>(
+      `${API_BASE_URL}/cdn/analytics/timeline?days=${days}`,
+      accessToken,
+    );
+  },
 };
 
 // ── Print Leak Detection types ────────────────────────────────────────────────
@@ -2666,6 +2722,27 @@ interface PrintDetectionResult {
   best_match: PrintFingerprintMatch | null;
   processing_time_ms: number;
   message: string;
+}
+
+// ── CDN Provenance Analytics types ────────────────────────────────────────────
+
+interface CdnAnalyticsSummary {
+  organization_id: string;
+  assets_protected: number;
+  variants_registered: number;
+  image_requests_tracked: number;
+  recoverable_percent: number;
+}
+
+interface CdnAnalyticsTimelineDay {
+  date: string;
+  images_signed: number;
+  image_requests: number;
+}
+
+interface CdnAnalyticsTimeline {
+  days: number;
+  data: CdnAnalyticsTimelineDay[];
 }
 
 // ── Image / Rich Signing types ────────────────────────────────────────────────
@@ -3241,6 +3318,18 @@ interface WebhookTestResult {
   message?: string;
 }
 
+interface WebhookDeliveryLog {
+  id: string;
+  event_type: string;
+  status: string;
+  attempts: number;
+  response_status_code: number | null;
+  response_time_ms: number | null;
+  error_message: string | null;
+  created_at: string;
+  delivered_at: string | null;
+}
+
 // -- BYOK types -----------------------------------------------------------------
 
 interface ByokPublicKeyInfo {
@@ -3365,6 +3454,7 @@ export type {
   WebhookCreateResponse,
   WebhookUpdateRequest,
   WebhookTestResult,
+  WebhookDeliveryLog,
   // Governance / Attestation
   AttestationPolicyRule,
   AttestationPolicyResponse,
@@ -3405,4 +3495,8 @@ export type {
   DeletionRequestInfo,
   AdminPurgeResponseInfo,
   DeletionReceiptInfo,
+  // CDN Provenance Analytics
+  CdnAnalyticsSummary,
+  CdnAnalyticsTimelineDay,
+  CdnAnalyticsTimeline,
 };

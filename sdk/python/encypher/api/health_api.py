@@ -54,7 +54,6 @@ class HealthApi:
     ) -> object:
         """Health Check
 
-        Health check endpoint for monitoring.  Returns:     dict: Status and environment information
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -117,7 +116,6 @@ class HealthApi:
     ) -> ApiResponse[object]:
         """Health Check
 
-        Health check endpoint for monitoring.  Returns:     dict: Status and environment information
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -180,7 +178,6 @@ class HealthApi:
     ) -> RESTResponseType:
         """Health Check
 
-        Health check endpoint for monitoring.  Returns:     dict: Status and environment information
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -299,7 +296,6 @@ class HealthApi:
     ) -> object:
         """Readiness Check
 
-        Lightweight readiness probe.
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -362,7 +358,6 @@ class HealthApi:
     ) -> ApiResponse[object]:
         """Readiness Check
 
-        Lightweight readiness probe.
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -425,7 +420,6 @@ class HealthApi:
     ) -> RESTResponseType:
         """Readiness Check
 
-        Lightweight readiness probe.
 
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -522,5 +516,3 @@ class HealthApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

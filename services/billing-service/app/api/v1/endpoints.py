@@ -1023,6 +1023,7 @@ class ConnectOnboardingResponse(BaseModel):
 @router.post("/connect/onboarding", response_model=ConnectOnboardingResponse)
 async def create_connect_onboarding(
     current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Create a Stripe Connect onboarding link for publisher payouts.
@@ -1030,7 +1031,7 @@ async def create_connect_onboarding(
     If the organization does not yet have a Connect account, one is created
     first. The user is then redirected to Stripe to complete onboarding.
     """
-    import stripe as stripe_mod
+    from ...db.models import StripeConnectAccount
 
     org_id = current_user.get("organization_id") or current_user.get("default_organization_id")
     email = current_user.get("email", "")
@@ -1041,18 +1042,13 @@ async def create_connect_onboarding(
             detail="No organization associated with this account.",
         )
 
-    # Check if a Connect account already exists for this org via metadata lookup
+    # O(1) lookup from local DB instead of iterating all Stripe accounts
     connect_account_id: Optional[str] = None
-    try:
-        accounts = stripe_mod.Account.list(limit=100)
-        for acct in accounts.auto_paging_iter():
-            if acct.metadata.get("organization_id") == org_id:
-                connect_account_id = acct.id
-                break
-    except Exception as exc:
-        logger.warning("connect_account_lookup_failed error=%s", exc)
+    existing = db.query(StripeConnectAccount).filter(StripeConnectAccount.organization_id == org_id).first()
+    if existing:
+        connect_account_id = existing.stripe_account_id
 
-    # Create a new Connect account if none exists
+    # Create a new Connect account if none exists locally
     if not connect_account_id:
         try:
             account = await StripeService.create_connect_account(
@@ -1060,7 +1056,16 @@ async def create_connect_onboarding(
                 organization_id=org_id,
             )
             connect_account_id = account.id
+            # Persist to local DB for future O(1) lookups
+            record = StripeConnectAccount(
+                organization_id=org_id,
+                stripe_account_id=account.id,
+                email=email,
+            )
+            db.add(record)
+            db.commit()
         except Exception as e:
+            db.rollback()
             logger.error("create_connect_account_failed error=%s", e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

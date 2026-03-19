@@ -37,38 +37,39 @@ class TestVerifyResponse(unittest.TestCase):
             return VerifyResponse(
                 success = True,
                 data = encypher.models.verify_verdict.VerifyVerdict(
-                    valid = True, 
-                    tampered = True, 
-                    reason_code = '', 
-                    signer_id = '', 
-                    signer_name = '', 
-                    timestamp = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                    valid = True,
+                    tampered = True,
+                    reason_code = '',
+                    signer_id = '',
+                    signer_name = '',
+                    timestamp = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
                     details = {
                         'key' : null
-                        }, 
-                    embeddings_found = 56, 
+                        },
+                    embeddings_found = 56,
                     all_embeddings = [
                         encypher.models.embedding_verdict.EmbeddingVerdict(
-                            index = 56, 
-                            valid = True, 
-                            tampered = True, 
-                            reason_code = '', 
-                            signer_id = '', 
-                            signer_name = '', 
-                            timestamp = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                            index = 56,
+                            valid = True,
+                            tampered = True,
+                            reason_code = '',
+                            signer_id = '',
+                            signer_name = '',
+                            timestamp = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
                             text_span = [
                                 null
-                                ], 
-                            clean_text = '', 
+                                ],
+                            clean_text = '',
                             manifest = {
                                 'key' : null
                                 }, )
                         ], ),
                 error = encypher.models.error_detail.ErrorDetail(
-                    code = '', 
-                    message = '', 
+                    code = '',
+                    message = '',
                     hint = '', ),
-                correlation_id = ''
+                correlation_id = '',
+                duration_ms = 56
             )
         else:
             return VerifyResponse(

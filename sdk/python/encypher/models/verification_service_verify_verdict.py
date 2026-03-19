@@ -18,12 +18,13 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from encypher.models.c2_pa_info import C2PAInfo
-from encypher.models.document_info import DocumentInfo
-from encypher.models.licensing_info import LicensingInfo
-from encypher.models.merkle_proof_info import MerkleProofInfo
+from encypher.models.embedding_detail import EmbeddingDetail
+from encypher.models.verification_service_c2_pa_info import VerificationServiceC2PAInfo
+from encypher.models.verification_service_document_info import VerificationServiceDocumentInfo
+from encypher.models.verification_service_licensing_info import VerificationServiceLicensingInfo
+from encypher.models.verification_service_merkle_proof_info import VerificationServiceMerkleProofInfo
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -36,15 +37,19 @@ class VerificationServiceVerifyVerdict(BaseModel):
     reason_code: StrictStr
     signer_id: Optional[StrictStr] = None
     signer_name: Optional[StrictStr] = None
+    publisher_name: Optional[StrictStr] = None
     organization_id: Optional[StrictStr] = None
     organization_name: Optional[StrictStr] = None
     timestamp: Optional[datetime] = None
-    document: Optional[DocumentInfo] = None
-    c2pa: Optional[C2PAInfo] = None
-    licensing: Optional[LicensingInfo] = None
-    merkle_proof: Optional[MerkleProofInfo] = None
+    document: Optional[VerificationServiceDocumentInfo] = None
+    c2pa: Optional[VerificationServiceC2PAInfo] = None
+    licensing: Optional[VerificationServiceLicensingInfo] = None
+    embeddings: Optional[List[EmbeddingDetail]] = None
+    total_embeddings: Optional[StrictInt] = None
+    total_segments_in_document: Optional[StrictInt] = None
+    merkle_proof: Optional[VerificationServiceMerkleProofInfo] = None
     details: Optional[Dict[str, Any]] = None
-    __properties: ClassVar[List[str]] = ["valid", "tampered", "reason_code", "signer_id", "signer_name", "organization_id", "organization_name", "timestamp", "document", "c2pa", "licensing", "merkle_proof", "details"]
+    __properties: ClassVar[List[str]] = ["valid", "tampered", "reason_code", "signer_id", "signer_name", "publisher_name", "organization_id", "organization_name", "timestamp", "document", "c2pa", "licensing", "embeddings", "total_embeddings", "total_segments_in_document", "merkle_proof", "details"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -94,6 +99,13 @@ class VerificationServiceVerifyVerdict(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of licensing
         if self.licensing:
             _dict['licensing'] = self.licensing.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in embeddings (list)
+        _items = []
+        if self.embeddings:
+            for _item_embeddings in self.embeddings:
+                if _item_embeddings:
+                    _items.append(_item_embeddings.to_dict())
+            _dict['embeddings'] = _items
         # override the default output from pydantic by calling `to_dict()` of merkle_proof
         if self.merkle_proof:
             _dict['merkle_proof'] = self.merkle_proof.to_dict()
@@ -106,6 +118,11 @@ class VerificationServiceVerifyVerdict(BaseModel):
         # and model_fields_set contains the field
         if self.signer_name is None and "signer_name" in self.model_fields_set:
             _dict['signer_name'] = None
+
+        # set to None if publisher_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.publisher_name is None and "publisher_name" in self.model_fields_set:
+            _dict['publisher_name'] = None
 
         # set to None if organization_id (nullable) is None
         # and model_fields_set contains the field
@@ -137,6 +154,21 @@ class VerificationServiceVerifyVerdict(BaseModel):
         if self.licensing is None and "licensing" in self.model_fields_set:
             _dict['licensing'] = None
 
+        # set to None if embeddings (nullable) is None
+        # and model_fields_set contains the field
+        if self.embeddings is None and "embeddings" in self.model_fields_set:
+            _dict['embeddings'] = None
+
+        # set to None if total_embeddings (nullable) is None
+        # and model_fields_set contains the field
+        if self.total_embeddings is None and "total_embeddings" in self.model_fields_set:
+            _dict['total_embeddings'] = None
+
+        # set to None if total_segments_in_document (nullable) is None
+        # and model_fields_set contains the field
+        if self.total_segments_in_document is None and "total_segments_in_document" in self.model_fields_set:
+            _dict['total_segments_in_document'] = None
+
         # set to None if merkle_proof (nullable) is None
         # and model_fields_set contains the field
         if self.merkle_proof is None and "merkle_proof" in self.model_fields_set:
@@ -159,15 +191,17 @@ class VerificationServiceVerifyVerdict(BaseModel):
             "reason_code": obj.get("reason_code"),
             "signer_id": obj.get("signer_id"),
             "signer_name": obj.get("signer_name"),
+            "publisher_name": obj.get("publisher_name"),
             "organization_id": obj.get("organization_id"),
             "organization_name": obj.get("organization_name"),
             "timestamp": obj.get("timestamp"),
-            "document": DocumentInfo.from_dict(obj["document"]) if obj.get("document") is not None else None,
-            "c2pa": C2PAInfo.from_dict(obj["c2pa"]) if obj.get("c2pa") is not None else None,
-            "licensing": LicensingInfo.from_dict(obj["licensing"]) if obj.get("licensing") is not None else None,
-            "merkle_proof": MerkleProofInfo.from_dict(obj["merkle_proof"]) if obj.get("merkle_proof") is not None else None,
+            "document": VerificationServiceDocumentInfo.from_dict(obj["document"]) if obj.get("document") is not None else None,
+            "c2pa": VerificationServiceC2PAInfo.from_dict(obj["c2pa"]) if obj.get("c2pa") is not None else None,
+            "licensing": VerificationServiceLicensingInfo.from_dict(obj["licensing"]) if obj.get("licensing") is not None else None,
+            "embeddings": [EmbeddingDetail.from_dict(_item) for _item in obj["embeddings"]] if obj.get("embeddings") is not None else None,
+            "total_embeddings": obj.get("total_embeddings"),
+            "total_segments_in_document": obj.get("total_segments_in_document"),
+            "merkle_proof": VerificationServiceMerkleProofInfo.from_dict(obj["merkle_proof"]) if obj.get("merkle_proof") is not None else None,
             "details": obj.get("details")
         })
         return _obj
-
-

@@ -16,8 +16,9 @@ from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
-from pydantic import StrictInt, StrictStr
+from pydantic import StrictStr
 from typing import Any
+from uuid import UUID
 from encypher.models.document_status_response import DocumentStatusResponse
 from encypher.models.revocation_response import RevocationResponse
 from encypher.models.revoke_request import RevokeRequest
@@ -569,10 +570,9 @@ class StatusRevocationApi:
 
 
     @validate_call
-    def get_status_list_api_v1_status_list_organization_id_list_index_get(
+    def get_status_list_by_id_api_v1_status_lists_list_id_get(
         self,
-        organization_id: StrictStr,
-        list_index: StrictInt,
+        list_id: UUID,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -586,14 +586,12 @@ class StatusRevocationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> object:
-        """Get Status List
+        """Get Status List By Id
 
-        Get a status list credential (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
+        Get a status list credential by its opaque UUID (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
 
-        :param organization_id: (required)
-        :type organization_id: str
-        :param list_index: (required)
-        :type list_index: int
+        :param list_id: (required)
+        :type list_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -616,9 +614,8 @@ class StatusRevocationApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_status_list_api_v1_status_list_organization_id_list_index_get_serialize(
-            organization_id=organization_id,
-            list_index=list_index,
+        _param = self._get_status_list_by_id_api_v1_status_lists_list_id_get_serialize(
+            list_id=list_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -641,10 +638,9 @@ class StatusRevocationApi:
 
 
     @validate_call
-    def get_status_list_api_v1_status_list_organization_id_list_index_get_with_http_info(
+    def get_status_list_by_id_api_v1_status_lists_list_id_get_with_http_info(
         self,
-        organization_id: StrictStr,
-        list_index: StrictInt,
+        list_id: UUID,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -658,14 +654,12 @@ class StatusRevocationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[object]:
-        """Get Status List
+        """Get Status List By Id
 
-        Get a status list credential (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
+        Get a status list credential by its opaque UUID (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
 
-        :param organization_id: (required)
-        :type organization_id: str
-        :param list_index: (required)
-        :type list_index: int
+        :param list_id: (required)
+        :type list_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -688,9 +682,8 @@ class StatusRevocationApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_status_list_api_v1_status_list_organization_id_list_index_get_serialize(
-            organization_id=organization_id,
-            list_index=list_index,
+        _param = self._get_status_list_by_id_api_v1_status_lists_list_id_get_serialize(
+            list_id=list_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -713,10 +706,9 @@ class StatusRevocationApi:
 
 
     @validate_call
-    def get_status_list_api_v1_status_list_organization_id_list_index_get_without_preload_content(
+    def get_status_list_by_id_api_v1_status_lists_list_id_get_without_preload_content(
         self,
-        organization_id: StrictStr,
-        list_index: StrictInt,
+        list_id: UUID,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -730,14 +722,12 @@ class StatusRevocationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Get Status List
+        """Get Status List By Id
 
-        Get a status list credential (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
+        Get a status list credential by its opaque UUID (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
 
-        :param organization_id: (required)
-        :type organization_id: str
-        :param list_index: (required)
-        :type list_index: int
+        :param list_id: (required)
+        :type list_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -760,9 +750,8 @@ class StatusRevocationApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_status_list_api_v1_status_list_organization_id_list_index_get_serialize(
-            organization_id=organization_id,
-            list_index=list_index,
+        _param = self._get_status_list_by_id_api_v1_status_lists_list_id_get_serialize(
+            list_id=list_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -780,10 +769,9 @@ class StatusRevocationApi:
         return response_data.response
 
 
-    def _get_status_list_api_v1_status_list_organization_id_list_index_get_serialize(
+    def _get_status_list_by_id_api_v1_status_lists_list_id_get_serialize(
         self,
-        organization_id,
-        list_index,
+        list_id,
         _request_auth,
         _content_type,
         _headers,
@@ -805,10 +793,8 @@ class StatusRevocationApi:
         _body_params: Optional[bytes] = None
 
         # process the path parameters
-        if organization_id is not None:
-            _path_params['organization_id'] = organization_id
-        if list_index is not None:
-            _path_params['list_index'] = list_index
+        if list_id is not None:
+            _path_params['list_id'] = list_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -830,7 +816,7 @@ class StatusRevocationApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/api/v1/status/list/{organization_id}/{list_index}',
+            resource_path='/api/v1/status/lists/{list_id}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -847,10 +833,9 @@ class StatusRevocationApi:
 
 
     @validate_call
-    def get_status_list_api_v1_status_list_organization_id_list_index_get_0(
+    def get_status_list_by_id_api_v1_status_lists_list_id_get_0(
         self,
-        organization_id: StrictStr,
-        list_index: StrictInt,
+        list_id: UUID,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -864,14 +849,12 @@ class StatusRevocationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> object:
-        """Get Status List
+        """Get Status List By Id
 
-        Get a status list credential (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
+        Get a status list credential by its opaque UUID (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
 
-        :param organization_id: (required)
-        :type organization_id: str
-        :param list_index: (required)
-        :type list_index: int
+        :param list_id: (required)
+        :type list_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -894,9 +877,8 @@ class StatusRevocationApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_status_list_api_v1_status_list_organization_id_list_index_get_0_serialize(
-            organization_id=organization_id,
-            list_index=list_index,
+        _param = self._get_status_list_by_id_api_v1_status_lists_list_id_get_0_serialize(
+            list_id=list_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -919,10 +901,9 @@ class StatusRevocationApi:
 
 
     @validate_call
-    def get_status_list_api_v1_status_list_organization_id_list_index_get_0_with_http_info(
+    def get_status_list_by_id_api_v1_status_lists_list_id_get_0_with_http_info(
         self,
-        organization_id: StrictStr,
-        list_index: StrictInt,
+        list_id: UUID,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -936,14 +917,12 @@ class StatusRevocationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[object]:
-        """Get Status List
+        """Get Status List By Id
 
-        Get a status list credential (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
+        Get a status list credential by its opaque UUID (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
 
-        :param organization_id: (required)
-        :type organization_id: str
-        :param list_index: (required)
-        :type list_index: int
+        :param list_id: (required)
+        :type list_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -966,9 +945,8 @@ class StatusRevocationApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_status_list_api_v1_status_list_organization_id_list_index_get_0_serialize(
-            organization_id=organization_id,
-            list_index=list_index,
+        _param = self._get_status_list_by_id_api_v1_status_lists_list_id_get_0_serialize(
+            list_id=list_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -991,10 +969,9 @@ class StatusRevocationApi:
 
 
     @validate_call
-    def get_status_list_api_v1_status_list_organization_id_list_index_get_0_without_preload_content(
+    def get_status_list_by_id_api_v1_status_lists_list_id_get_0_without_preload_content(
         self,
-        organization_id: StrictStr,
-        list_index: StrictInt,
+        list_id: UUID,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1008,14 +985,12 @@ class StatusRevocationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Get Status List
+        """Get Status List By Id
 
-        Get a status list credential (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
+        Get a status list credential by its opaque UUID (public, no auth required).  This endpoint serves W3C StatusList2021 credentials for verification. Responses are designed to be cached by CDN with 5-minute TTL.  **Response Format:** W3C StatusList2021Credential (JSON-LD)
 
-        :param organization_id: (required)
-        :type organization_id: str
-        :param list_index: (required)
-        :type list_index: int
+        :param list_id: (required)
+        :type list_id: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1038,9 +1013,8 @@ class StatusRevocationApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._get_status_list_api_v1_status_list_organization_id_list_index_get_0_serialize(
-            organization_id=organization_id,
-            list_index=list_index,
+        _param = self._get_status_list_by_id_api_v1_status_lists_list_id_get_0_serialize(
+            list_id=list_id,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1058,10 +1032,9 @@ class StatusRevocationApi:
         return response_data.response
 
 
-    def _get_status_list_api_v1_status_list_organization_id_list_index_get_0_serialize(
+    def _get_status_list_by_id_api_v1_status_lists_list_id_get_0_serialize(
         self,
-        organization_id,
-        list_index,
+        list_id,
         _request_auth,
         _content_type,
         _headers,
@@ -1083,10 +1056,8 @@ class StatusRevocationApi:
         _body_params: Optional[bytes] = None
 
         # process the path parameters
-        if organization_id is not None:
-            _path_params['organization_id'] = organization_id
-        if list_index is not None:
-            _path_params['list_index'] = list_index
+        if list_id is not None:
+            _path_params['list_id'] = list_id
         # process the query parameters
         # process the header parameters
         # process the form parameters
@@ -1108,7 +1079,7 @@ class StatusRevocationApi:
 
         return self.api_client.param_serialize(
             method='GET',
-            resource_path='/api/v1/status/list/{organization_id}/{list_index}',
+            resource_path='/api/v1/status/lists/{list_id}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -2724,5 +2695,3 @@ class StatusRevocationApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

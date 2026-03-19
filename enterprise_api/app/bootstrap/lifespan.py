@@ -194,10 +194,16 @@ async def lifespan(app: FastAPI):
             raise
         logger.warning("Failed to load C2PA trust list: %s. BYOK certificate validation may not work.", exc)
 
+    # Start webhook retry background loop
+    from app.services.webhook_dispatcher import webhook_dispatcher
+
+    webhook_dispatcher.start_retry_loop()
+
     try:
         yield
     finally:
         logger.info("Encypher Enterprise API shutting down...")
+        await webhook_dispatcher.close()
         shutdown_tracing()
         try:
             await shutdown_metrics_service()

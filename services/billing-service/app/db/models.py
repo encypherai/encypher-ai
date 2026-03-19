@@ -102,3 +102,21 @@ class Payment(Base):
 
     def __repr__(self):
         return f"<Payment(id={self.id}, amount={self.amount}, status={self.status})>"
+
+
+class StripeConnectAccount(Base):
+    """Stripe Connect account linked to an organization."""
+
+    __tablename__ = "connect_accounts"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    organization_id = Column(String, nullable=False, unique=True, index=True)
+    stripe_account_id = Column(String, nullable=False, unique=True, index=True)
+    email = Column(String, nullable=True)
+    charges_enabled = Column(Boolean, default=False)
+    payouts_enabled = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    def __repr__(self):
+        return f"<StripeConnectAccount(org={self.organization_id}, stripe={self.stripe_account_id})>"

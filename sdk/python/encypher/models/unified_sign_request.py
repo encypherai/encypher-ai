@@ -27,7 +27,7 @@ from typing_extensions import Self
 
 class UnifiedSignRequest(BaseModel):
     """
-    Unified sign request supporting single document or batch.  For single document signing: ```json {     \"text\": \"Content to sign...\",     \"document_title\": \"My Article\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  For batch signing (Professional+): ```json {     \"documents\": [         {\"text\": \"First document...\", \"document_title\": \"Doc 1\"},         {\"text\": \"Second document...\", \"document_title\": \"Doc 2\"}     ],     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```
+    Unified sign request supporting single document or batch.  For single document signing: ```json {     \"text\": \"Content to sign...\",     \"document_title\": \"My Article\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  For batch signing (up to 10 documents Free, up to 100 Enterprise): ```json {     \"documents\": [         {\"text\": \"First document...\", \"document_title\": \"Doc 1\"},         {\"text\": \"Second document...\", \"document_title\": \"Doc 2\"}     ],     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```
     """ # noqa: E501
     text: Optional[Annotated[str, Field(min_length=1, strict=True, max_length=1000000)]] = None
     document_id: Optional[Annotated[str, Field(min_length=1, strict=True, max_length=255)]] = None
@@ -36,7 +36,8 @@ class UnifiedSignRequest(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
     documents: Optional[List[SignDocument]] = None
     options: Optional[SignOptions] = Field(default=None, description="Signing options - features gated by tier")
-    __properties: ClassVar[List[str]] = ["text", "document_id", "document_title", "document_url", "metadata", "documents", "options"]
+    publisher_org_id: Optional[Annotated[str, Field(strict=True, max_length=128)]] = None
+    __properties: ClassVar[List[str]] = ["text", "document_id", "document_title", "document_url", "metadata", "documents", "options", "publisher_org_id"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -117,6 +118,11 @@ class UnifiedSignRequest(BaseModel):
         if self.documents is None and "documents" in self.model_fields_set:
             _dict['documents'] = None
 
+        # set to None if publisher_org_id (nullable) is None
+        # and model_fields_set contains the field
+        if self.publisher_org_id is None and "publisher_org_id" in self.model_fields_set:
+            _dict['publisher_org_id'] = None
+
         return _dict
 
     @classmethod
@@ -135,8 +141,7 @@ class UnifiedSignRequest(BaseModel):
             "document_url": obj.get("document_url"),
             "metadata": obj.get("metadata"),
             "documents": [SignDocument.from_dict(_item) for _item in obj["documents"]] if obj.get("documents") is not None else None,
-            "options": SignOptions.from_dict(obj["options"]) if obj.get("options") is not None else None
+            "options": SignOptions.from_dict(obj["options"]) if obj.get("options") is not None else None,
+            "publisher_org_id": obj.get("publisher_org_id")
         })
         return _obj
-
-

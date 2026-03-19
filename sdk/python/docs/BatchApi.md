@@ -46,7 +46,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.BatchApi(api_client)
-    batch_sign_request = encypher.BatchSignRequest() # BatchSignRequest | 
+    batch_sign_request = encypher.BatchSignRequest() # BatchSignRequest |
 
     try:
         # Batch Sign
@@ -64,7 +64,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **batch_sign_request** | [**BatchSignRequest**](BatchSignRequest.md)|  | 
+ **batch_sign_request** | [**BatchSignRequest**](BatchSignRequest.md)|  |
 
 ### Return type
 
@@ -89,7 +89,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **batch_verify_api_v1_batch_verify_post**
-> BatchResponseEnvelope batch_verify_api_v1_batch_verify_post(app_schemas_batch_batch_verify_request)
+> BatchResponseEnvelope batch_verify_api_v1_batch_verify_post(batch_verify_request)
 
 Batch Verify
 
@@ -101,8 +101,8 @@ Verify multiple documents in a single request.
 
 ```python
 import encypher
-from encypher.models.app_schemas_batch_batch_verify_request import AppSchemasBatchBatchVerifyRequest
 from encypher.models.batch_response_envelope import BatchResponseEnvelope
+from encypher.models.batch_verify_request import BatchVerifyRequest
 from encypher.rest import ApiException
 from pprint import pprint
 
@@ -126,11 +126,11 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.BatchApi(api_client)
-    app_schemas_batch_batch_verify_request = encypher.AppSchemasBatchBatchVerifyRequest() # AppSchemasBatchBatchVerifyRequest | 
+    batch_verify_request = encypher.BatchVerifyRequest() # BatchVerifyRequest |
 
     try:
         # Batch Verify
-        api_response = api_instance.batch_verify_api_v1_batch_verify_post(app_schemas_batch_batch_verify_request)
+        api_response = api_instance.batch_verify_api_v1_batch_verify_post(batch_verify_request)
         print("The response of BatchApi->batch_verify_api_v1_batch_verify_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -144,7 +144,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **app_schemas_batch_batch_verify_request** | [**AppSchemasBatchBatchVerifyRequest**](AppSchemasBatchBatchVerifyRequest.md)|  | 
+ **batch_verify_request** | [**BatchVerifyRequest**](BatchVerifyRequest.md)|  |
 
 ### Return type
 
@@ -167,4 +167,3 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

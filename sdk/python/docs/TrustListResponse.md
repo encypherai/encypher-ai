@@ -7,12 +7,17 @@ Response listing trusted CAs.
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **success** | **bool** |  | [optional] [default to True]
-**trusted_cas** | **List[str]** |  | [optional] 
+**trusted_cas** | **List[str]** |  | [optional]
 **trust_list_url** | **str** |  | [optional] [default to 'https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem']
-**trust_list_fingerprint** | **str** |  | [optional] 
-**trust_list_loaded_at** | **str** |  | [optional] 
-**trust_list_source** | **str** |  | [optional] 
-**trust_list_count** | **str** |  | [optional] 
+**trust_list_fingerprint** | **str** |  | [optional]
+**trust_list_loaded_at** | **str** |  | [optional]
+**trust_list_source** | **str** |  | [optional]
+**trust_list_count** | **str** |  | [optional]
+**required_signer_eku_oids** | **List[str]** |  | [optional]
+**revocation_denylist** | **Dict[str, str]** |  | [optional]
+**tsa_trust_list** | [**Dict[str, TsaTrustListValue]**](TsaTrustListValue.md) |  | [optional]
+**default_signing_mode** | **str** |  | [optional] [default to 'organization']
+**managed_signer_id** | **str** |  | [optional] [default to 'encypher_managed']
 
 ## Example
 
@@ -32,5 +37,3 @@ trust_list_response_dict = trust_list_response_instance.to_dict()
 trust_list_response_from_dict = TrustListResponse.from_dict(trust_list_response_dict)
 ```
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

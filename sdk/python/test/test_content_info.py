@@ -37,7 +37,11 @@ class TestContentInfo(unittest.TestCase):
             return ContentInfo(
                 text_preview = '',
                 leaf_hash = '',
-                leaf_index = 56
+                leaf_index = 56,
+                segment_location = encypher.models.segment_location.SegmentLocation(
+                    paragraph_index = 56,
+                    sentence_in_paragraph = 56,
+                    total_segments = 56, )
             )
         else:
             return ContentInfo(

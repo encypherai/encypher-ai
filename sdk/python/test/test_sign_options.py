@@ -45,6 +45,9 @@ class TestSignOptions(unittest.TestCase):
                     ''
                     ],
                 manifest_mode = 'full',
+                ecc = True,
+                legacy_safe = True,
+                embed_c2pa = True,
                 embedding_strategy = 'single_point',
                 distribution_target = '',
                 index_for_attribution = True,
@@ -56,15 +59,16 @@ class TestSignOptions(unittest.TestCase):
                 template_id = '',
                 validate_assertions = True,
                 rights = encypher.models.rights_metadata.RightsMetadata(
-                    copyright_holder = '', 
-                    license_url = '', 
-                    usage_terms = '', 
-                    syndication_allowed = True, 
-                    embargo_until = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                    copyright_holder = '',
+                    license_url = '',
+                    usage_terms = '',
+                    syndication_allowed = True,
+                    embargo_until = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
                     contact_email = '', ),
+                use_rights_profile = True,
                 license = encypher.models.license_info.LicenseInfo(
-                    type = '', 
-                    url = '', 
+                    type = '',
+                    url = '',
                     contact_email = '', ),
                 actions = [
                     {
@@ -73,11 +77,14 @@ class TestSignOptions(unittest.TestCase):
                     ],
                 add_dual_binding = True,
                 include_fingerprint = True,
+                enable_print_fingerprint = True,
                 disable_c2pa = True,
+                store_c2pa_manifest = True,
                 embedding_options = encypher.models.embedding_options.EmbeddingOptions(
-                    format = 'plain', 
-                    method = 'invisible', 
+                    format = 'plain',
+                    method = 'invisible',
                     include_text = True, ),
+                return_embedding_plan = True,
                 expires_at = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f')
             )
         else:

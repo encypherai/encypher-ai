@@ -40,17 +40,7 @@ class TestDocumentEncodeResponse(unittest.TestCase):
                 document_id = '',
                 organization_id = '',
                 roots = {
-                    'key' : encypher.models.merkle_root_response.MerkleRootResponse(
-                        root_id = '', 
-                        document_id = '', 
-                        root_hash = '', 
-                        tree_depth = 56, 
-                        total_leaves = 56, 
-                        segmentation_level = '', 
-                        created_at = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
-                        metadata = {
-                            'key' : null
-                            }, )
+                    'key' : {created_at=2024-10-28T12:00:00Z, document_id=doc_2024_article_001, metadata={title=Test Article}, root_hash=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, root_id=550e8400-e29b-41d4-a716-446655440000, segmentation_level=sentence, total_leaves=32, tree_depth=5}
                     },
                 total_segments = {
                     'key' : 56
@@ -67,17 +57,7 @@ class TestDocumentEncodeResponse(unittest.TestCase):
                 document_id = '',
                 organization_id = '',
                 roots = {
-                    'key' : encypher.models.merkle_root_response.MerkleRootResponse(
-                        root_id = '', 
-                        document_id = '', 
-                        root_hash = '', 
-                        tree_depth = 56, 
-                        total_leaves = 56, 
-                        segmentation_level = '', 
-                        created_at = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
-                        metadata = {
-                            'key' : null
-                            }, )
+                    'key' : {created_at=2024-10-28T12:00:00Z, document_id=doc_2024_article_001, metadata={title=Test Article}, root_hash=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, root_id=550e8400-e29b-41d4-a716-446655440000, segmentation_level=sentence, total_leaves=32, tree_depth=5}
                     },
                 total_segments = {
                     'key' : 56

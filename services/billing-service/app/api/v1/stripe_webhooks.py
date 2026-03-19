@@ -6,8 +6,11 @@ payment events, and Connect account events.
 """
 
 import logging
-from fastapi import APIRouter, Request, HTTPException, status, Header
+from fastapi import APIRouter, Depends, Request, HTTPException, status, Header
+from sqlalchemy.orm import Session
 
+from ...db.models import StripeConnectAccount
+from ...db.session import get_db
 from ...services.stripe_service import StripeService
 
 logger = logging.getLogger(__name__)
@@ -47,7 +50,11 @@ async def handle_stripe_webhook(request: Request, stripe_signature: str = Header
 
 
 @router.post("/webhooks/stripe/connect")
-async def handle_stripe_connect_webhook(request: Request, stripe_signature: str = Header(None, alias="Stripe-Signature")):
+async def handle_stripe_connect_webhook(
+    request: Request,
+    stripe_signature: str = Header(None, alias="Stripe-Signature"),
+    db: Session = Depends(get_db),
+):
     """
     Handle Stripe Connect webhooks.
 
@@ -75,7 +82,13 @@ async def handle_stripe_connect_webhook(request: Request, stripe_signature: str 
 
             logger.info(f"Connect account {account_id} updated: charges={charges_enabled}, payouts={payouts_enabled}")
 
-            # TODO: Update organization's payout status in database
+            # Update local DB record with payout/charges status
+            record = db.query(StripeConnectAccount).filter(StripeConnectAccount.stripe_account_id == account_id).first()
+            if record:
+                record.charges_enabled = charges_enabled
+                record.payouts_enabled = payouts_enabled
+                db.commit()
+                logger.info(f"Updated local Connect record for {account_id}")
 
             return {"status": "success", "account_id": account_id, "payouts_enabled": payouts_enabled}
 

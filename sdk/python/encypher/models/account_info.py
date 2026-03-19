@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from encypher.models.feature_flags import FeatureFlags
 from typing import Optional, Set
@@ -32,9 +32,11 @@ class AccountInfo(BaseModel):
     email: Optional[StrictStr] = None
     tier: StrictStr = Field(description="Subscription tier")
     features: FeatureFlags = Field(description="Enabled features")
+    publisher_display_name: Optional[StrictStr] = None
+    anonymous_publisher: Optional[StrictBool] = Field(default=False, description="Whether publisher identity is anonymized in verification")
     created_at: Optional[StrictStr] = None
     subscription_status: Optional[StrictStr] = Field(default='active', description="Subscription status")
-    __properties: ClassVar[List[str]] = ["organization_id", "name", "email", "tier", "features", "created_at", "subscription_status"]
+    __properties: ClassVar[List[str]] = ["organization_id", "name", "email", "tier", "features", "publisher_display_name", "anonymous_publisher", "created_at", "subscription_status"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -83,6 +85,11 @@ class AccountInfo(BaseModel):
         if self.email is None and "email" in self.model_fields_set:
             _dict['email'] = None
 
+        # set to None if publisher_display_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.publisher_display_name is None and "publisher_display_name" in self.model_fields_set:
+            _dict['publisher_display_name'] = None
+
         # set to None if created_at (nullable) is None
         # and model_fields_set contains the field
         if self.created_at is None and "created_at" in self.model_fields_set:
@@ -105,9 +112,9 @@ class AccountInfo(BaseModel):
             "email": obj.get("email"),
             "tier": obj.get("tier"),
             "features": FeatureFlags.from_dict(obj["features"]) if obj.get("features") is not None else None,
+            "publisher_display_name": obj.get("publisher_display_name"),
+            "anonymous_publisher": obj.get("anonymous_publisher") if obj.get("anonymous_publisher") is not None else False,
             "created_at": obj.get("created_at"),
             "subscription_status": obj.get("subscription_status") if obj.get("subscription_status") is not None else 'active'
         })
         return _obj
-
-

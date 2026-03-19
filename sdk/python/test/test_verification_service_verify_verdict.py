@@ -40,32 +40,53 @@ class TestVerificationServiceVerifyVerdict(unittest.TestCase):
                 reason_code = '',
                 signer_id = '',
                 signer_name = '',
+                publisher_name = '',
                 organization_id = '',
                 organization_name = '',
                 timestamp = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
                 document = encypher.models.document_info.DocumentInfo(
-                    document_id = '', 
-                    title = '', 
-                    published_at = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
-                    author = '', 
-                    organization = '', ),
+                    document_id = '',
+                    title = '',
+                    author = '',
+                    published_at = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
+                    document_type = '', ),
                 c2pa = encypher.models.c2_pa_info.C2PAInfo(
-                    manifest_url = '', 
-                    manifest_hash = '', 
-                    validated = True, 
-                    validation_type = '', 
-                    validation_details = {
-                        'key' : null
-                        }, ),
+                    manifest_url = '',
+                    manifest_hash = '',
+                    validated = True,
+                    validation_type = '',
+                    assertions = [
+                        {
+                            'key' : null
+                            }
+                        ],
+                    certificate_chain = [
+                        ''
+                        ], ),
                 licensing = encypher.models.licensing_info.LicensingInfo(
-                    license_type = '', 
-                    license_url = '', 
-                    usage_terms = '', 
-                    contact_email = '', ),
+                    license_type = '',
+                    license_url = '',
+                    usage_terms = '',
+                    attribution_required = True, ),
+                embeddings = [
+                    encypher.models.embedding_detail.EmbeddingDetail(
+                        segment_uuid = '',
+                        leaf_index = 56,
+                        segment_location = encypher.models.segment_location_info.SegmentLocationInfo(
+                            paragraph_index = 56,
+                            sentence_in_paragraph = 56, ),
+                        manifest_mode = '', )
+                    ],
+                total_embeddings = 56,
+                total_segments_in_document = 56,
                 merkle_proof = encypher.models.merkle_proof_info.MerkleProofInfo(
-                    root_hash = '', 
-                    verified = True, 
-                    proof_url = '', ),
+                    root_hash = '',
+                    leaf_hash = '',
+                    leaf_index = 56,
+                    proof_path = [
+                        ''
+                        ],
+                    verified = True, ),
                 details = {
                     'key' : null
                     }

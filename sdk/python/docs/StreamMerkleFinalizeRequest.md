@@ -6,9 +6,9 @@ Request to finalize a streaming Merkle session and compute the final root.  This
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**session_id** | **str** | Session ID to finalize | 
+**session_id** | **str** | Session ID to finalize |
 **embed_manifest** | **bool** | Whether to embed C2PA manifest into the final document | [optional] [default to True]
-**manifest_mode** | **str** | Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid | [optional] [default to 'full']
+**manifest_mode** | **str** | Manifest mode: full or micro | [optional] [default to 'full']
 **action** | **str** | C2PA action type: c2pa.created or c2pa.edited | [optional] [default to 'c2pa.created']
 
 ## Example
@@ -29,5 +29,3 @@ stream_merkle_finalize_request_dict = stream_merkle_finalize_request_instance.to
 stream_merkle_finalize_request_from_dict = StreamMerkleFinalizeRequest.from_dict(stream_merkle_finalize_request_dict)
 ```
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

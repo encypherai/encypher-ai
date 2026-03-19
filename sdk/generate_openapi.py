@@ -54,7 +54,8 @@ def patched_init(self, **kwargs):
 
 BaseSettings.__init__ = patched_init
 
-from app.main import _filter_openapi_for_public, app
+from app.bootstrap.docs import _filter_openapi_for_public
+from app.main import app
 
 
 def _load_verification_service_openapi(*, api_base_url: str) -> dict:
@@ -102,10 +103,13 @@ def _merge_openapi_specs(*, base: dict, extra: dict) -> dict:
     merged = copy.deepcopy(base)
 
     merged.setdefault("paths", {})
+    added_paths: dict[str, object] = {}
     for path, methods in (extra.get("paths") or {}).items():
         if path in merged["paths"]:
-            raise RuntimeError(f"OpenAPI merge conflict: path already exists: {path}")
+            # Skip paths already present in the base spec (base is authoritative)
+            continue
         merged["paths"][path] = methods
+        added_paths[path] = methods
 
     merged.setdefault("tags", [])
     seen_tags = {t.get("name") for t in merged["tags"] if isinstance(t, dict)}
@@ -134,7 +138,16 @@ def _merge_openapi_specs(*, base: dict, extra: dict) -> dict:
         base_schemas[new_name] = schema
 
     if schema_map:
-        merged["paths"] = _rewrite_refs(merged["paths"], schema_map)
+        # Only rewrite $ref pointers in the newly-added extra paths
+        for path in added_paths:
+            merged["paths"][path] = _rewrite_refs(merged["paths"][path], schema_map)
+        # Also rewrite refs inside the renamed schemas themselves
+        for new_ref in schema_map.values():
+            ref_name = new_ref.split("/")[-1]
+            if ref_name in base_schemas:
+                base_schemas[ref_name] = _rewrite_refs(
+                    base_schemas[ref_name], schema_map
+                )
 
     return merged
 

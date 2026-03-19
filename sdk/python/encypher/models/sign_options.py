@@ -28,31 +28,38 @@ from typing_extensions import Self
 
 class SignOptions(BaseModel):
     """
-    Options for signing - features are gated by tier.  Tier Feature Matrix:  | Feature                  | Free/Starter | Professional | Business | Enterprise | |--------------------------|--------------|--------------|----------|------------| | document_type            | ✅           | ✅           | ✅       | ✅         | | claim_generator          | ✅           | ✅           | ✅       | ✅         | | segmentation_level       | document     | all          | all      | all        | | manifest_mode            | full         | all          | all      | all        | | embedding_strategy       | single_point | all          | all      | all        | | index_for_attribution    | ❌           | ✅           | ✅       | ✅         | | custom_assertions        | ❌           | ❌           | ✅       | ✅         | | template_id              | ❌           | ❌           | ✅       | ✅         | | rights                   | ❌           | ❌           | ✅       | ✅         | | add_dual_binding         | ❌           | ❌           | ❌       | ✅         | | include_fingerprint      | ❌           | ❌           | ❌       | ✅         | | batch (documents array)  | 1            | 10           | 50       | 100        |
+    Options for signing - features are gated by tier.  Tier Feature Matrix:  | Feature                  | Free | Enterprise | |--------------------------|:----:|:----------:| | document_type            | yes  | yes        | | claim_generator          | yes  | yes        | | segmentation_level       | all except word | all | | manifest_mode            | all  | all        | | embedding_strategy       | all  | all        | | index_for_attribution    | yes  | yes        | | custom_assertions        | yes  | yes        | | template_id              | yes  | yes        | | rights / use_rights_profile | yes | yes     | | add_dual_binding         | no   | yes        | | include_fingerprint      | no   | yes        | | enable_print_fingerprint | no   | yes        | | word segmentation        | no   | yes        | | batch (documents array)  | 10   | 100        |
     """ # noqa: E501
     document_type: Optional[StrictStr] = Field(default='article', description="Document type: article, legal_brief, contract, ai_output")
     claim_generator: Optional[StrictStr] = None
     action: Optional[StrictStr] = Field(default='c2pa.created', description="C2PA action type: c2pa.created (new) or c2pa.edited (modified)")
     previous_instance_id: Optional[StrictStr] = None
     digital_source_type: Optional[StrictStr] = None
-    segmentation_level: Optional[StrictStr] = Field(default='document', description="Segmentation level: document (free), sentence, paragraph, section (Professional+), word (Enterprise)")
+    segmentation_level: Optional[StrictStr] = Field(default='document', description="Segmentation level: document, sentence, paragraph, section (all Free); word (Enterprise only)")
     segmentation_levels: Optional[List[StrictStr]] = None
-    manifest_mode: Optional[StrictStr] = Field(default='full', description="Manifest mode: full (free), lightweight_uuid, minimal_uuid, hybrid, zw_embedding (Professional+)")
-    embedding_strategy: Optional[StrictStr] = Field(default='single_point', description="Embedding strategy: single_point (free), distributed, distributed_redundant (Professional+)")
+    manifest_mode: Optional[StrictStr] = Field(default='full', description="Manifest mode: full or micro. micro uses ultra-compact per-segment markers; behaviour controlled by ecc, embed_c2pa, and legacy_safe flags.")
+    ecc: Optional[StrictBool] = Field(default=True, description="Enable Reed-Solomon error correction for micro mode (44 chars/segment vs 36). Ignored for non-micro modes.")
+    legacy_safe: Optional[StrictBool] = Field(default=False, description="Use Word-safe/terminal-safe base-6 encoding for micro mode instead of VS256. ecc=False -> 100 chars/segment; ecc=True -> 112 chars/segment (RS parity). Ignored for non-micro modes.")
+    embed_c2pa: Optional[StrictBool] = Field(default=True, description="Embed full C2PA document manifest into signed content for micro mode. When false, per-sentence markers only; C2PA manifest is still generated and stored in DB. Ignored for non-micro modes.")
+    embedding_strategy: Optional[StrictStr] = Field(default='single_point', description="Embedding strategy: single_point, distributed, distributed_redundant (all Free)")
     distribution_target: Optional[StrictStr] = None
-    index_for_attribution: Optional[StrictBool] = Field(default=False, description="Index content for attribution/plagiarism detection (Professional+)")
+    index_for_attribution: Optional[StrictBool] = Field(default=False, description="Index content for attribution and plagiarism detection (Free)")
     custom_assertions: Optional[List[Dict[str, Any]]] = None
     template_id: Optional[StrictStr] = None
-    validate_assertions: Optional[StrictBool] = Field(default=True, description="Whether to validate custom assertions against registered schemas (Business+)")
+    validate_assertions: Optional[StrictBool] = Field(default=True, description="Whether to validate custom assertions against registered schemas (Free)")
     rights: Optional[RightsMetadata] = None
+    use_rights_profile: Optional[StrictBool] = Field(default=False, description="When True, fetches the publisher's active rights profile, stores a snapshot on the content reference, and adds rights_resolution_url to the response (Free)")
     license: Optional[LicenseInfo] = None
     actions: Optional[List[Dict[str, Any]]] = None
     add_dual_binding: Optional[StrictBool] = Field(default=False, description="Enable additional integrity binding (Enterprise)")
     include_fingerprint: Optional[StrictBool] = Field(default=False, description="Include robust fingerprint that survives modifications (Enterprise)")
-    disable_c2pa: Optional[StrictBool] = Field(default=False, description="Opt-out of C2PA embedding, only basic metadata (Enterprise)")
+    enable_print_fingerprint: Optional[StrictBool] = Field(default=False, description="Print Leak Detection - embed imperceptible spacing patterns that survive printing and scanning, enabling source identification from physical or PDF copies (Enterprise)")
+    disable_c2pa: Optional[StrictBool] = Field(default=False, description="Opt-out of C2PA embedding for non-micro modes, only basic metadata (Enterprise). For micro mode use embed_c2pa instead.")
+    store_c2pa_manifest: Optional[StrictBool] = Field(default=True, description="Persist generated C2PA manifest in content DB for DB-backed verification. Applies to all modes that generate a manifest.")
     embedding_options: Optional[EmbeddingOptions] = Field(default=None, description="Embedding output format options")
+    return_embedding_plan: Optional[StrictBool] = Field(default=False, description="When true, include an embedding_plan with index-based marker insertion operations in the response.")
     expires_at: Optional[datetime] = None
-    __properties: ClassVar[List[str]] = ["document_type", "claim_generator", "action", "previous_instance_id", "digital_source_type", "segmentation_level", "segmentation_levels", "manifest_mode", "embedding_strategy", "distribution_target", "index_for_attribution", "custom_assertions", "template_id", "validate_assertions", "rights", "license", "actions", "add_dual_binding", "include_fingerprint", "disable_c2pa", "embedding_options", "expires_at"]
+    __properties: ClassVar[List[str]] = ["document_type", "claim_generator", "action", "previous_instance_id", "digital_source_type", "segmentation_level", "segmentation_levels", "manifest_mode", "ecc", "legacy_safe", "embed_c2pa", "embedding_strategy", "distribution_target", "index_for_attribution", "custom_assertions", "template_id", "validate_assertions", "rights", "use_rights_profile", "license", "actions", "add_dual_binding", "include_fingerprint", "enable_print_fingerprint", "disable_c2pa", "store_c2pa_manifest", "embedding_options", "return_embedding_plan", "expires_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -177,6 +184,9 @@ class SignOptions(BaseModel):
             "segmentation_level": obj.get("segmentation_level") if obj.get("segmentation_level") is not None else 'document',
             "segmentation_levels": obj.get("segmentation_levels"),
             "manifest_mode": obj.get("manifest_mode") if obj.get("manifest_mode") is not None else 'full',
+            "ecc": obj.get("ecc") if obj.get("ecc") is not None else True,
+            "legacy_safe": obj.get("legacy_safe") if obj.get("legacy_safe") is not None else False,
+            "embed_c2pa": obj.get("embed_c2pa") if obj.get("embed_c2pa") is not None else True,
             "embedding_strategy": obj.get("embedding_strategy") if obj.get("embedding_strategy") is not None else 'single_point',
             "distribution_target": obj.get("distribution_target"),
             "index_for_attribution": obj.get("index_for_attribution") if obj.get("index_for_attribution") is not None else False,
@@ -184,14 +194,16 @@ class SignOptions(BaseModel):
             "template_id": obj.get("template_id"),
             "validate_assertions": obj.get("validate_assertions") if obj.get("validate_assertions") is not None else True,
             "rights": RightsMetadata.from_dict(obj["rights"]) if obj.get("rights") is not None else None,
+            "use_rights_profile": obj.get("use_rights_profile") if obj.get("use_rights_profile") is not None else False,
             "license": LicenseInfo.from_dict(obj["license"]) if obj.get("license") is not None else None,
             "actions": obj.get("actions"),
             "add_dual_binding": obj.get("add_dual_binding") if obj.get("add_dual_binding") is not None else False,
             "include_fingerprint": obj.get("include_fingerprint") if obj.get("include_fingerprint") is not None else False,
+            "enable_print_fingerprint": obj.get("enable_print_fingerprint") if obj.get("enable_print_fingerprint") is not None else False,
             "disable_c2pa": obj.get("disable_c2pa") if obj.get("disable_c2pa") is not None else False,
+            "store_c2pa_manifest": obj.get("store_c2pa_manifest") if obj.get("store_c2pa_manifest") is not None else True,
             "embedding_options": EmbeddingOptions.from_dict(obj["embedding_options"]) if obj.get("embedding_options") is not None else None,
+            "return_embedding_plan": obj.get("return_embedding_plan") if obj.get("return_embedding_plan") is not None else False,
             "expires_at": obj.get("expires_at")
         })
         return _obj
-
-

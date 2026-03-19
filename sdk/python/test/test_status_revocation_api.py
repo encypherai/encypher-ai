@@ -40,17 +40,17 @@ class TestStatusRevocationApi(unittest.TestCase):
         """
         pass
 
-    def test_get_status_list_api_v1_status_list_organization_id_list_index_get(self) -> None:
-        """Test case for get_status_list_api_v1_status_list_organization_id_list_index_get
+    def test_get_status_list_by_id_api_v1_status_lists_list_id_get(self) -> None:
+        """Test case for get_status_list_by_id_api_v1_status_lists_list_id_get
 
-        Get Status List
+        Get Status List By Id
         """
         pass
 
-    def test_get_status_list_api_v1_status_list_organization_id_list_index_get_0(self) -> None:
-        """Test case for get_status_list_api_v1_status_list_organization_id_list_index_get_0
+    def test_get_status_list_by_id_api_v1_status_lists_list_id_get_0(self) -> None:
+        """Test case for get_status_list_by_id_api_v1_status_lists_list_id_get_0
 
-        Get Status List
+        Get Status List By Id
         """
         pass
 

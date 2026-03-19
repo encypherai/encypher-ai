@@ -17,18 +17,40 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, ClassVar, Dict, List
-from encypher.models.verify_embedding_request import VerifyEmbeddingRequest
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
+from encypher.models.batch_item_payload import BatchItemPayload
 from typing import Optional, Set
 from typing_extensions import Self
 
 class BatchVerifyRequest(BaseModel):
     """
-    Request to verify multiple embeddings.
+    Batch verification request (shares schema for now).
     """ # noqa: E501
-    references: List[VerifyEmbeddingRequest] = Field(description="List of embeddings to verify")
-    __properties: ClassVar[List[str]] = ["references"]
+    mode: StrictStr = Field(description="Processing mode: 'c2pa' or 'embeddings'")
+    segmentation_level: Optional[StrictStr] = None
+    idempotency_key: Annotated[str, Field(min_length=8, strict=True, max_length=128)] = Field(description="Caller-supplied key used to deduplicate retries")
+    items: Annotated[List[BatchItemPayload], Field(min_length=1, max_length=100)] = Field(description="Documents to process (max 100)")
+    fail_fast: Optional[StrictBool] = Field(default=False, description="Abort remaining items upon the first error when set to true")
+    __properties: ClassVar[List[str]] = ["mode", "segmentation_level", "idempotency_key", "items", "fail_fast"]
+
+    @field_validator('mode')
+    def mode_validate_enum(cls, value):
+        """Validates the enum"""
+        if value not in set(['c2pa', 'embeddings']):
+            raise ValueError("must be one of enum values ('c2pa', 'embeddings')")
+        return value
+
+    @field_validator('segmentation_level')
+    def segmentation_level_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(['document', 'paragraph', 'sentence']):
+            raise ValueError("must be one of enum values ('document', 'paragraph', 'sentence')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -69,13 +91,18 @@ class BatchVerifyRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in references (list)
+        # override the default output from pydantic by calling `to_dict()` of each item in items (list)
         _items = []
-        if self.references:
-            for _item_references in self.references:
-                if _item_references:
-                    _items.append(_item_references.to_dict())
-            _dict['references'] = _items
+        if self.items:
+            for _item_items in self.items:
+                if _item_items:
+                    _items.append(_item_items.to_dict())
+            _dict['items'] = _items
+        # set to None if segmentation_level (nullable) is None
+        # and model_fields_set contains the field
+        if self.segmentation_level is None and "segmentation_level" in self.model_fields_set:
+            _dict['segmentation_level'] = None
+
         return _dict
 
     @classmethod
@@ -88,8 +115,10 @@ class BatchVerifyRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "references": [VerifyEmbeddingRequest.from_dict(_item) for _item in obj["references"]] if obj.get("references") is not None else None
+            "mode": obj.get("mode"),
+            "segmentation_level": obj.get("segmentation_level"),
+            "idempotency_key": obj.get("idempotency_key"),
+            "items": [BatchItemPayload.from_dict(_item) for _item in obj["items"]] if obj.get("items") is not None else None,
+            "fail_fast": obj.get("fail_fast") if obj.get("fail_fast") is not None else False
         })
         return _obj
-
-

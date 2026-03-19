@@ -5,10 +5,11 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**success** | **bool** |  | 
-**data** | [**VerifyVerdict**](VerifyVerdict.md) |  | [optional] 
-**error** | [**ErrorDetail**](ErrorDetail.md) |  | [optional] 
-**correlation_id** | **str** |  | 
+**success** | **bool** |  |
+**data** | [**VerifyVerdict**](VerifyVerdict.md) |  | [optional]
+**error** | [**ErrorDetail**](ErrorDetail.md) |  | [optional]
+**correlation_id** | **str** |  |
+**duration_ms** | **int** |  | [optional]
 
 ## Example
 
@@ -28,5 +29,3 @@ verify_response_dict = verify_response_instance.to_dict()
 verify_response_from_dict = VerifyResponse.from_dict(verify_response_dict)
 ```
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-
-

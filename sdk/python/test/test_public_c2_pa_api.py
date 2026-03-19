@@ -26,6 +26,13 @@ class TestPublicC2PAApi(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
+    def test_bulk_resolve_segment_uuids_api_v1_public_c2pa_zw_resolve_post(self) -> None:
+        """Test case for bulk_resolve_segment_uuids_api_v1_public_c2pa_zw_resolve_post
+
+        Bulk resolve segment UUIDs (Public, internal)
+        """
+        pass
+
     def test_create_manifest_api_v1_public_c2pa_create_manifest_post(self) -> None:
         """Test case for create_manifest_api_v1_public_c2pa_create_manifest_post
 
@@ -37,6 +44,13 @@ class TestPublicC2PAApi(unittest.TestCase):
         """Test case for get_trust_anchor_api_v1_public_c2pa_trust_anchors_signer_id_get
 
         Lookup trust anchor for C2PA verification (Public)
+        """
+        pass
+
+    def test_resolve_zw_segment_uuid_api_v1_public_c2pa_zw_resolve_segment_uuid_get(self) -> None:
+        """Test case for resolve_zw_segment_uuid_api_v1_public_c2pa_zw_resolve_segment_uuid_get
+
+        Resolve ZW segment UUID (Public, internal)
         """
         pass
 

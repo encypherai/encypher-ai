@@ -6,10 +6,14 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**create_key_api_v1_keys_post**](APIKeysApi.md#create_key_api_v1_keys_post) | **POST** /api/v1/keys | Create Key
 [**create_key_api_v1_keys_post_0**](APIKeysApi.md#create_key_api_v1_keys_post_0) | **POST** /api/v1/keys | Create Key
+[**get_key_usage_api_v1_keys_key_id_usage_get**](APIKeysApi.md#get_key_usage_api_v1_keys_key_id_usage_get) | **GET** /api/v1/keys/{key_id}/usage | Get Key Usage
+[**get_key_usage_api_v1_keys_key_id_usage_get_0**](APIKeysApi.md#get_key_usage_api_v1_keys_key_id_usage_get_0) | **GET** /api/v1/keys/{key_id}/usage | Get Key Usage
 [**list_keys_api_v1_keys_get**](APIKeysApi.md#list_keys_api_v1_keys_get) | **GET** /api/v1/keys | List Keys
 [**list_keys_api_v1_keys_get_0**](APIKeysApi.md#list_keys_api_v1_keys_get_0) | **GET** /api/v1/keys | List Keys
 [**revoke_key_api_v1_keys_key_id_delete**](APIKeysApi.md#revoke_key_api_v1_keys_key_id_delete) | **DELETE** /api/v1/keys/{key_id} | Revoke Key
 [**revoke_key_api_v1_keys_key_id_delete_0**](APIKeysApi.md#revoke_key_api_v1_keys_key_id_delete_0) | **DELETE** /api/v1/keys/{key_id} | Revoke Key
+[**revoke_keys_by_user_api_v1_keys_revoke_by_user_post**](APIKeysApi.md#revoke_keys_by_user_api_v1_keys_revoke_by_user_post) | **POST** /api/v1/keys/revoke-by-user | Revoke Keys By User
+[**revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0**](APIKeysApi.md#revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0) | **POST** /api/v1/keys/revoke-by-user | Revoke Keys By User
 [**rotate_key_api_v1_keys_key_id_rotate_post**](APIKeysApi.md#rotate_key_api_v1_keys_key_id_rotate_post) | **POST** /api/v1/keys/{key_id}/rotate | Rotate Key
 [**rotate_key_api_v1_keys_key_id_rotate_post_0**](APIKeysApi.md#rotate_key_api_v1_keys_key_id_rotate_post_0) | **POST** /api/v1/keys/{key_id}/rotate | Rotate Key
 [**update_key_api_v1_keys_key_id_patch**](APIKeysApi.md#update_key_api_v1_keys_key_id_patch) | **PATCH** /api/v1/keys/{key_id} | Update Key
@@ -56,7 +60,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.APIKeysApi(api_client)
-    key_create_request = encypher.KeyCreateRequest() # KeyCreateRequest | 
+    key_create_request = encypher.KeyCreateRequest() # KeyCreateRequest |
 
     try:
         # Create Key
@@ -74,7 +78,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key_create_request** | [**KeyCreateRequest**](KeyCreateRequest.md)|  | 
+ **key_create_request** | [**KeyCreateRequest**](KeyCreateRequest.md)|  |
 
 ### Return type
 
@@ -138,7 +142,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.APIKeysApi(api_client)
-    key_create_request = encypher.KeyCreateRequest() # KeyCreateRequest | 
+    key_create_request = encypher.KeyCreateRequest() # KeyCreateRequest |
 
     try:
         # Create Key
@@ -156,7 +160,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key_create_request** | [**KeyCreateRequest**](KeyCreateRequest.md)|  | 
+ **key_create_request** | [**KeyCreateRequest**](KeyCreateRequest.md)|  |
 
 ### Return type
 
@@ -176,6 +180,164 @@ Name | Type | Description  | Notes
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 **201** | Successful Response |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_key_usage_api_v1_keys_key_id_usage_get**
+> KeyUsageResponse get_key_usage_api_v1_keys_key_id_usage_get(key_id)
+
+Get Key Usage
+
+Get usage statistics for a specific API key.
+
+### Example
+
+* Bearer Authentication (HTTPBearer):
+
+```python
+import encypher
+from encypher.models.key_usage_response import KeyUsageResponse
+from encypher.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://api.encypherai.com
+# See configuration.py for a list of all supported configuration parameters.
+configuration = encypher.Configuration(
+    host = "https://api.encypherai.com"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure Bearer authorization: HTTPBearer
+configuration = encypher.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+with encypher.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = encypher.APIKeysApi(api_client)
+    key_id = 'key_id_example' # str |
+
+    try:
+        # Get Key Usage
+        api_response = api_instance.get_key_usage_api_v1_keys_key_id_usage_get(key_id)
+        print("The response of APIKeysApi->get_key_usage_api_v1_keys_key_id_usage_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling APIKeysApi->get_key_usage_api_v1_keys_key_id_usage_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **key_id** | **str**|  |
+
+### Return type
+
+[**KeyUsageResponse**](KeyUsageResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_key_usage_api_v1_keys_key_id_usage_get_0**
+> KeyUsageResponse get_key_usage_api_v1_keys_key_id_usage_get_0(key_id)
+
+Get Key Usage
+
+Get usage statistics for a specific API key.
+
+### Example
+
+* Bearer Authentication (HTTPBearer):
+
+```python
+import encypher
+from encypher.models.key_usage_response import KeyUsageResponse
+from encypher.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://api.encypherai.com
+# See configuration.py for a list of all supported configuration parameters.
+configuration = encypher.Configuration(
+    host = "https://api.encypherai.com"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure Bearer authorization: HTTPBearer
+configuration = encypher.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+with encypher.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = encypher.APIKeysApi(api_client)
+    key_id = 'key_id_example' # str |
+
+    try:
+        # Get Key Usage
+        api_response = api_instance.get_key_usage_api_v1_keys_key_id_usage_get_0(key_id)
+        print("The response of APIKeysApi->get_key_usage_api_v1_keys_key_id_usage_get_0:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling APIKeysApi->get_key_usage_api_v1_keys_key_id_usage_get_0: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **key_id** | **str**|  |
+
+### Return type
+
+[**KeyUsageResponse**](KeyUsageResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -381,7 +543,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.APIKeysApi(api_client)
-    key_id = 'key_id_example' # str | 
+    key_id = 'key_id_example' # str |
 
     try:
         # Revoke Key
@@ -399,7 +561,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key_id** | **str**|  | 
+ **key_id** | **str**|  |
 
 ### Return type
 
@@ -462,7 +624,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.APIKeysApi(api_client)
-    key_id = 'key_id_example' # str | 
+    key_id = 'key_id_example' # str |
 
     try:
         # Revoke Key
@@ -480,7 +642,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key_id** | **str**|  | 
+ **key_id** | **str**|  |
 
 ### Return type
 
@@ -493,6 +655,166 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **revoke_keys_by_user_api_v1_keys_revoke_by_user_post**
+> KeyRevokeResponse revoke_keys_by_user_api_v1_keys_revoke_by_user_post(key_revoke_by_user_request)
+
+Revoke Keys By User
+
+Revoke all API keys created by a specific user in an organization.
+
+### Example
+
+* Bearer Authentication (HTTPBearer):
+
+```python
+import encypher
+from encypher.models.key_revoke_by_user_request import KeyRevokeByUserRequest
+from encypher.models.key_revoke_response import KeyRevokeResponse
+from encypher.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://api.encypherai.com
+# See configuration.py for a list of all supported configuration parameters.
+configuration = encypher.Configuration(
+    host = "https://api.encypherai.com"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure Bearer authorization: HTTPBearer
+configuration = encypher.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+with encypher.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = encypher.APIKeysApi(api_client)
+    key_revoke_by_user_request = encypher.KeyRevokeByUserRequest() # KeyRevokeByUserRequest |
+
+    try:
+        # Revoke Keys By User
+        api_response = api_instance.revoke_keys_by_user_api_v1_keys_revoke_by_user_post(key_revoke_by_user_request)
+        print("The response of APIKeysApi->revoke_keys_by_user_api_v1_keys_revoke_by_user_post:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling APIKeysApi->revoke_keys_by_user_api_v1_keys_revoke_by_user_post: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **key_revoke_by_user_request** | [**KeyRevokeByUserRequest**](KeyRevokeByUserRequest.md)|  |
+
+### Return type
+
+[**KeyRevokeResponse**](KeyRevokeResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0**
+> KeyRevokeResponse revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0(key_revoke_by_user_request)
+
+Revoke Keys By User
+
+Revoke all API keys created by a specific user in an organization.
+
+### Example
+
+* Bearer Authentication (HTTPBearer):
+
+```python
+import encypher
+from encypher.models.key_revoke_by_user_request import KeyRevokeByUserRequest
+from encypher.models.key_revoke_response import KeyRevokeResponse
+from encypher.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://api.encypherai.com
+# See configuration.py for a list of all supported configuration parameters.
+configuration = encypher.Configuration(
+    host = "https://api.encypherai.com"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure Bearer authorization: HTTPBearer
+configuration = encypher.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+with encypher.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = encypher.APIKeysApi(api_client)
+    key_revoke_by_user_request = encypher.KeyRevokeByUserRequest() # KeyRevokeByUserRequest |
+
+    try:
+        # Revoke Keys By User
+        api_response = api_instance.revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0(key_revoke_by_user_request)
+        print("The response of APIKeysApi->revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling APIKeysApi->revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **key_revoke_by_user_request** | [**KeyRevokeByUserRequest**](KeyRevokeByUserRequest.md)|  |
+
+### Return type
+
+[**KeyRevokeResponse**](KeyRevokeResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 ### HTTP response details
@@ -544,7 +866,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.APIKeysApi(api_client)
-    key_id = 'key_id_example' # str | 
+    key_id = 'key_id_example' # str |
 
     try:
         # Rotate Key
@@ -562,7 +884,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key_id** | **str**|  | 
+ **key_id** | **str**|  |
 
 ### Return type
 
@@ -626,7 +948,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.APIKeysApi(api_client)
-    key_id = 'key_id_example' # str | 
+    key_id = 'key_id_example' # str |
 
     try:
         # Rotate Key
@@ -644,7 +966,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key_id** | **str**|  | 
+ **key_id** | **str**|  |
 
 ### Return type
 
@@ -706,8 +1028,8 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.APIKeysApi(api_client)
-    key_id = 'key_id_example' # str | 
-    key_update_request = encypher.KeyUpdateRequest() # KeyUpdateRequest | 
+    key_id = 'key_id_example' # str |
+    key_update_request = encypher.KeyUpdateRequest() # KeyUpdateRequest |
 
     try:
         # Update Key
@@ -725,8 +1047,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key_id** | **str**|  | 
- **key_update_request** | [**KeyUpdateRequest**](KeyUpdateRequest.md)|  | 
+ **key_id** | **str**|  |
+ **key_update_request** | [**KeyUpdateRequest**](KeyUpdateRequest.md)|  |
 
 ### Return type
 
@@ -788,8 +1110,8 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.APIKeysApi(api_client)
-    key_id = 'key_id_example' # str | 
-    key_update_request = encypher.KeyUpdateRequest() # KeyUpdateRequest | 
+    key_id = 'key_id_example' # str |
+    key_update_request = encypher.KeyUpdateRequest() # KeyUpdateRequest |
 
     try:
         # Update Key
@@ -807,8 +1129,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key_id** | **str**|  | 
- **key_update_request** | [**KeyUpdateRequest**](KeyUpdateRequest.md)|  | 
+ **key_id** | **str**|  |
+ **key_update_request** | [**KeyUpdateRequest**](KeyUpdateRequest.md)|  |
 
 ### Return type
 
@@ -831,4 +1153,3 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

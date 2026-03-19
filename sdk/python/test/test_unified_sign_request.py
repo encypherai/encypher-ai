@@ -44,59 +44,67 @@ class TestUnifiedSignRequest(unittest.TestCase):
                     },
                 documents = [
                     encypher.models.sign_document.SignDocument(
-                        text = '0', 
-                        document_id = '0', 
-                        document_title = '', 
-                        document_url = '', 
+                        text = '0',
+                        document_id = '0',
+                        document_title = '',
+                        document_url = '',
                         metadata = {
                             'key' : null
                             }, )
                     ],
                 options = encypher.models.sign_options.SignOptions(
-                    document_type = 'article', 
-                    claim_generator = '', 
-                    action = 'c2pa.created', 
-                    previous_instance_id = '', 
-                    digital_source_type = '', 
-                    segmentation_level = 'document', 
+                    document_type = 'article',
+                    claim_generator = '',
+                    action = 'c2pa.created',
+                    previous_instance_id = '',
+                    digital_source_type = '',
+                    segmentation_level = 'document',
                     segmentation_levels = [
                         ''
-                        ], 
-                    manifest_mode = 'full', 
-                    embedding_strategy = 'single_point', 
-                    distribution_target = '', 
-                    index_for_attribution = True, 
+                        ],
+                    manifest_mode = 'full',
+                    ecc = True,
+                    legacy_safe = True,
+                    embed_c2pa = True,
+                    embedding_strategy = 'single_point',
+                    distribution_target = '',
+                    index_for_attribution = True,
                     custom_assertions = [
                         {
                             'key' : null
                             }
-                        ], 
-                    template_id = '', 
-                    validate_assertions = True, 
+                        ],
+                    template_id = '',
+                    validate_assertions = True,
                     rights = encypher.models.rights_metadata.RightsMetadata(
-                        copyright_holder = '', 
-                        license_url = '', 
-                        usage_terms = '', 
-                        syndication_allowed = True, 
-                        embargo_until = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
-                        contact_email = '', ), 
+                        copyright_holder = '',
+                        license_url = '',
+                        usage_terms = '',
+                        syndication_allowed = True,
+                        embargo_until = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
+                        contact_email = '', ),
+                    use_rights_profile = True,
                     license = encypher.models.license_info.LicenseInfo(
-                        type = '', 
-                        url = '', 
-                        contact_email = '', ), 
+                        type = '',
+                        url = '',
+                        contact_email = '', ),
                     actions = [
                         {
                             'key' : null
                             }
-                        ], 
-                    add_dual_binding = True, 
-                    include_fingerprint = True, 
-                    disable_c2pa = True, 
+                        ],
+                    add_dual_binding = True,
+                    include_fingerprint = True,
+                    enable_print_fingerprint = True,
+                    disable_c2pa = True,
+                    store_c2pa_manifest = True,
                     embedding_options = encypher.models.embedding_options.EmbeddingOptions(
-                        format = 'plain', 
-                        method = 'invisible', 
-                        include_text = True, ), 
-                    expires_at = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), )
+                        format = 'plain',
+                        method = 'invisible',
+                        include_text = True, ),
+                    return_embedding_plan = True,
+                    expires_at = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), ),
+                publisher_org_id = ''
             )
         else:
             return UnifiedSignRequest(

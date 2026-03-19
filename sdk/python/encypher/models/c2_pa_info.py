@@ -26,12 +26,13 @@ class C2PAInfo(BaseModel):
     """
     C2PA manifest information with verification details.
     """ # noqa: E501
-    manifest_url: StrictStr = Field(description="C2PA manifest URL")
+    manifest_url: Optional[StrictStr] = None
     manifest_hash: Optional[StrictStr] = None
     validated: StrictBool = Field(description="Whether the manifest passed validation")
     validation_type: StrictStr = Field(description="Validation semantics.")
     validation_details: Optional[Dict[str, Any]] = None
-    __properties: ClassVar[List[str]] = ["manifest_url", "manifest_hash", "validated", "validation_type", "validation_details"]
+    manifest_data: Optional[Dict[str, Any]] = None
+    __properties: ClassVar[List[str]] = ["manifest_url", "manifest_hash", "validated", "validation_type", "validation_details", "manifest_data"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -72,6 +73,11 @@ class C2PAInfo(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if manifest_url (nullable) is None
+        # and model_fields_set contains the field
+        if self.manifest_url is None and "manifest_url" in self.model_fields_set:
+            _dict['manifest_url'] = None
+
         # set to None if manifest_hash (nullable) is None
         # and model_fields_set contains the field
         if self.manifest_hash is None and "manifest_hash" in self.model_fields_set:
@@ -81,6 +87,11 @@ class C2PAInfo(BaseModel):
         # and model_fields_set contains the field
         if self.validation_details is None and "validation_details" in self.model_fields_set:
             _dict['validation_details'] = None
+
+        # set to None if manifest_data (nullable) is None
+        # and model_fields_set contains the field
+        if self.manifest_data is None and "manifest_data" in self.model_fields_set:
+            _dict['manifest_data'] = None
 
         return _dict
 
@@ -98,8 +109,7 @@ class C2PAInfo(BaseModel):
             "manifest_hash": obj.get("manifest_hash"),
             "validated": obj.get("validated"),
             "validation_type": obj.get("validation_type"),
-            "validation_details": obj.get("validation_details")
+            "validation_details": obj.get("validation_details"),
+            "manifest_data": obj.get("manifest_data")
         })
         return _obj
-
-

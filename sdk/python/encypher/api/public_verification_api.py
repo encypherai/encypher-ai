@@ -19,7 +19,7 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictStr
 from typing import Any, Optional
 from typing_extensions import Annotated
-from encypher.models.batch_verify_request import BatchVerifyRequest
+from encypher.models.app_schemas_embeddings_batch_verify_request import AppSchemasEmbeddingsBatchVerifyRequest
 from encypher.models.batch_verify_response import BatchVerifyResponse
 from encypher.models.extract_and_verify_request import ExtractAndVerifyRequest
 from encypher.models.verify_embedding_response import VerifyEmbeddingResponse
@@ -45,7 +45,7 @@ class PublicVerificationApi:
     @validate_call
     def batch_verify_embeddings_api_v1_public_verify_batch_post(
         self,
-        batch_verify_request: BatchVerifyRequest,
+        app_schemas_embeddings_batch_verify_request: AppSchemasEmbeddingsBatchVerifyRequest,
         authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
@@ -62,10 +62,10 @@ class PublicVerificationApi:
     ) -> BatchVerifyResponse:
         """Batch Verify Embeddings (Public - No Auth Required)
 
-        Verify multiple embeddings in a single request.          **This endpoint is PUBLIC and does NOT require authentication.**          Useful for:     - Verifying all embeddings on a page at once     - Bulk verification by web scrapers     - Browser extensions checking multiple paragraphs          **Rate Limiting:**     - 100 requests/hour per IP address     - Maximum 50 embeddings per request
+        Verify multiple embeddings in a single request.      **This endpoint is PUBLIC and does NOT require authentication.**      Useful for:     - Verifying all embeddings on a page at once     - Bulk verification by web scrapers     - Browser extensions checking multiple paragraphs      **Rate Limiting:**     - 100 requests/hour per IP address     - Maximum 50 embeddings per request
 
-        :param batch_verify_request: (required)
-        :type batch_verify_request: BatchVerifyRequest
+        :param app_schemas_embeddings_batch_verify_request: (required)
+        :type app_schemas_embeddings_batch_verify_request: AppSchemasEmbeddingsBatchVerifyRequest
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -91,7 +91,7 @@ class PublicVerificationApi:
         """ # noqa: E501
 
         _param = self._batch_verify_embeddings_api_v1_public_verify_batch_post_serialize(
-            batch_verify_request=batch_verify_request,
+            app_schemas_embeddings_batch_verify_request=app_schemas_embeddings_batch_verify_request,
             authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -119,7 +119,7 @@ class PublicVerificationApi:
     @validate_call
     def batch_verify_embeddings_api_v1_public_verify_batch_post_with_http_info(
         self,
-        batch_verify_request: BatchVerifyRequest,
+        app_schemas_embeddings_batch_verify_request: AppSchemasEmbeddingsBatchVerifyRequest,
         authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
@@ -136,10 +136,10 @@ class PublicVerificationApi:
     ) -> ApiResponse[BatchVerifyResponse]:
         """Batch Verify Embeddings (Public - No Auth Required)
 
-        Verify multiple embeddings in a single request.          **This endpoint is PUBLIC and does NOT require authentication.**          Useful for:     - Verifying all embeddings on a page at once     - Bulk verification by web scrapers     - Browser extensions checking multiple paragraphs          **Rate Limiting:**     - 100 requests/hour per IP address     - Maximum 50 embeddings per request
+        Verify multiple embeddings in a single request.      **This endpoint is PUBLIC and does NOT require authentication.**      Useful for:     - Verifying all embeddings on a page at once     - Bulk verification by web scrapers     - Browser extensions checking multiple paragraphs      **Rate Limiting:**     - 100 requests/hour per IP address     - Maximum 50 embeddings per request
 
-        :param batch_verify_request: (required)
-        :type batch_verify_request: BatchVerifyRequest
+        :param app_schemas_embeddings_batch_verify_request: (required)
+        :type app_schemas_embeddings_batch_verify_request: AppSchemasEmbeddingsBatchVerifyRequest
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -165,7 +165,7 @@ class PublicVerificationApi:
         """ # noqa: E501
 
         _param = self._batch_verify_embeddings_api_v1_public_verify_batch_post_serialize(
-            batch_verify_request=batch_verify_request,
+            app_schemas_embeddings_batch_verify_request=app_schemas_embeddings_batch_verify_request,
             authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -193,7 +193,7 @@ class PublicVerificationApi:
     @validate_call
     def batch_verify_embeddings_api_v1_public_verify_batch_post_without_preload_content(
         self,
-        batch_verify_request: BatchVerifyRequest,
+        app_schemas_embeddings_batch_verify_request: AppSchemasEmbeddingsBatchVerifyRequest,
         authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
@@ -210,10 +210,10 @@ class PublicVerificationApi:
     ) -> RESTResponseType:
         """Batch Verify Embeddings (Public - No Auth Required)
 
-        Verify multiple embeddings in a single request.          **This endpoint is PUBLIC and does NOT require authentication.**          Useful for:     - Verifying all embeddings on a page at once     - Bulk verification by web scrapers     - Browser extensions checking multiple paragraphs          **Rate Limiting:**     - 100 requests/hour per IP address     - Maximum 50 embeddings per request
+        Verify multiple embeddings in a single request.      **This endpoint is PUBLIC and does NOT require authentication.**      Useful for:     - Verifying all embeddings on a page at once     - Bulk verification by web scrapers     - Browser extensions checking multiple paragraphs      **Rate Limiting:**     - 100 requests/hour per IP address     - Maximum 50 embeddings per request
 
-        :param batch_verify_request: (required)
-        :type batch_verify_request: BatchVerifyRequest
+        :param app_schemas_embeddings_batch_verify_request: (required)
+        :type app_schemas_embeddings_batch_verify_request: AppSchemasEmbeddingsBatchVerifyRequest
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -239,7 +239,7 @@ class PublicVerificationApi:
         """ # noqa: E501
 
         _param = self._batch_verify_embeddings_api_v1_public_verify_batch_post_serialize(
-            batch_verify_request=batch_verify_request,
+            app_schemas_embeddings_batch_verify_request=app_schemas_embeddings_batch_verify_request,
             authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -262,7 +262,7 @@ class PublicVerificationApi:
 
     def _batch_verify_embeddings_api_v1_public_verify_batch_post_serialize(
         self,
-        batch_verify_request,
+        app_schemas_embeddings_batch_verify_request,
         authorization,
         _request_auth,
         _content_type,
@@ -291,8 +291,8 @@ class PublicVerificationApi:
             _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
-        if batch_verify_request is not None:
-            _body_params = batch_verify_request
+        if app_schemas_embeddings_batch_verify_request is not None:
+            _body_params = app_schemas_embeddings_batch_verify_request
 
 
         # set the HTTP header `Accept`
@@ -358,7 +358,7 @@ class PublicVerificationApi:
     ) -> object:
         """(Deprecated) DEPRECATED - Use POST /api/v1/verify instead
 
-        **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**          Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
+        **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**      Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
 
         :param extract_and_verify_request: (required)
         :type extract_and_verify_request: ExtractAndVerifyRequest
@@ -428,7 +428,7 @@ class PublicVerificationApi:
     ) -> ApiResponse[object]:
         """(Deprecated) DEPRECATED - Use POST /api/v1/verify instead
 
-        **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**          Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
+        **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**      Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
 
         :param extract_and_verify_request: (required)
         :type extract_and_verify_request: ExtractAndVerifyRequest
@@ -498,7 +498,7 @@ class PublicVerificationApi:
     ) -> RESTResponseType:
         """(Deprecated) DEPRECATED - Use POST /api/v1/verify instead
 
-        **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**          Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
+        **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**      Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
 
         :param extract_and_verify_request: (required)
         :type extract_and_verify_request: ExtractAndVerifyRequest
@@ -642,7 +642,7 @@ class PublicVerificationApi:
     ) -> VerifyEmbeddingResponse:
         """Verify Embedding (Public - No Auth Required)
 
-        Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
+        Verify a minimal signed embedding and retrieve associated metadata.      **This endpoint is PUBLIC and does NOT require authentication.**      Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification      **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures      **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs      **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
 
         :param ref_id: (required)
         :type ref_id: str
@@ -721,7 +721,7 @@ class PublicVerificationApi:
     ) -> ApiResponse[VerifyEmbeddingResponse]:
         """Verify Embedding (Public - No Auth Required)
 
-        Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
+        Verify a minimal signed embedding and retrieve associated metadata.      **This endpoint is PUBLIC and does NOT require authentication.**      Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification      **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures      **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs      **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
 
         :param ref_id: (required)
         :type ref_id: str
@@ -800,7 +800,7 @@ class PublicVerificationApi:
     ) -> RESTResponseType:
         """Verify Embedding (Public - No Auth Required)
 
-        Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
+        Verify a minimal signed embedding and retrieve associated metadata.      **This endpoint is PUBLIC and does NOT require authentication.**      Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification      **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures      **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs      **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
 
         :param ref_id: (required)
         :type ref_id: str
@@ -884,9 +884,9 @@ class PublicVerificationApi:
             _path_params['ref_id'] = ref_id
         # process the query parameters
         if signature is not None:
-            
+
             _query_params.append(('signature', signature))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -921,5 +921,3 @@ class PublicVerificationApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

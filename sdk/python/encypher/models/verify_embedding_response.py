@@ -20,6 +20,7 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from encypher.models.app_schemas_embeddings_signer_identity import AppSchemasEmbeddingsSignerIdentity
 from encypher.models.c2_pa_info import C2PAInfo
 from encypher.models.content_info import ContentInfo
 from encypher.models.document_info import DocumentInfo
@@ -39,10 +40,11 @@ class VerifyEmbeddingResponse(BaseModel):
     document: Optional[DocumentInfo] = None
     merkle_proof: Optional[MerkleProofInfo] = None
     c2pa: Optional[C2PAInfo] = None
+    signer_identity: Optional[AppSchemasEmbeddingsSignerIdentity] = None
     licensing: Optional[LicensingInfo] = None
     verification_url: Optional[StrictStr] = None
     error: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["valid", "ref_id", "verified_at", "content", "document", "merkle_proof", "c2pa", "licensing", "verification_url", "error"]
+    __properties: ClassVar[List[str]] = ["valid", "ref_id", "verified_at", "content", "document", "merkle_proof", "c2pa", "signer_identity", "licensing", "verification_url", "error"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -95,6 +97,9 @@ class VerifyEmbeddingResponse(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of c2pa
         if self.c2pa:
             _dict['c2pa'] = self.c2pa.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of signer_identity
+        if self.signer_identity:
+            _dict['signer_identity'] = self.signer_identity.to_dict()
         # override the default output from pydantic by calling `to_dict()` of licensing
         if self.licensing:
             _dict['licensing'] = self.licensing.to_dict()
@@ -122,6 +127,11 @@ class VerifyEmbeddingResponse(BaseModel):
         # and model_fields_set contains the field
         if self.c2pa is None and "c2pa" in self.model_fields_set:
             _dict['c2pa'] = None
+
+        # set to None if signer_identity (nullable) is None
+        # and model_fields_set contains the field
+        if self.signer_identity is None and "signer_identity" in self.model_fields_set:
+            _dict['signer_identity'] = None
 
         # set to None if licensing (nullable) is None
         # and model_fields_set contains the field
@@ -157,10 +167,9 @@ class VerifyEmbeddingResponse(BaseModel):
             "document": DocumentInfo.from_dict(obj["document"]) if obj.get("document") is not None else None,
             "merkle_proof": MerkleProofInfo.from_dict(obj["merkle_proof"]) if obj.get("merkle_proof") is not None else None,
             "c2pa": C2PAInfo.from_dict(obj["c2pa"]) if obj.get("c2pa") is not None else None,
+            "signer_identity": AppSchemasEmbeddingsSignerIdentity.from_dict(obj["signer_identity"]) if obj.get("signer_identity") is not None else None,
             "licensing": LicensingInfo.from_dict(obj["licensing"]) if obj.get("licensing") is not None else None,
             "verification_url": obj.get("verification_url"),
             "error": obj.get("error")
         })
         return _obj
-
-

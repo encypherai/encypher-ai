@@ -548,9 +548,9 @@ class VerificationApi:
             _path_params['document_id'] = document_id
         # process the query parameters
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         # process the header parameters
         # process the form parameters
         # process the body parameter
@@ -851,7 +851,7 @@ class VerificationApi:
     ) -> object:
         """Verify By Document Id
 
-        Verify a document by its ID (for clickable verification links).  Returns an HTML page so users can preview verification state in a browser. This endpoint queries the content database for the signed document.
+        Verify a document by its ID (for clickable verification links).  Returns HTML or JSON depending on the Accept header.
 
         :param document_id: (required)
         :type document_id: str
@@ -919,7 +919,7 @@ class VerificationApi:
     ) -> ApiResponse[object]:
         """Verify By Document Id
 
-        Verify a document by its ID (for clickable verification links).  Returns an HTML page so users can preview verification state in a browser. This endpoint queries the content database for the signed document.
+        Verify a document by its ID (for clickable verification links).  Returns HTML or JSON depending on the Accept header.
 
         :param document_id: (required)
         :type document_id: str
@@ -987,7 +987,7 @@ class VerificationApi:
     ) -> RESTResponseType:
         """Verify By Document Id
 
-        Verify a document by its ID (for clickable verification links).  Returns an HTML page so users can preview verification state in a browser. This endpoint queries the content database for the signed document.
+        Verify a document by its ID (for clickable verification links).  Returns HTML or JSON depending on the Accept header.
 
         :param document_id: (required)
         :type document_id: str
@@ -1115,9 +1115,9 @@ class VerificationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> VerificationResponse:
-        """Verify Document
+        """(Deprecated) [DEPRECATED] Verify a document
 
-        Complete document verification (public endpoint)  - **document_id**: Document ID from encoding service - **content**: Current content to verify
+        **Deprecated.** Use `POST /api/v1/verify` instead. This endpoint will be removed in a future release.
 
         :param document_verify: (required)
         :type document_verify: DocumentVerify
@@ -1148,6 +1148,7 @@ class VerificationApi:
         :type _host_index: int, optional
         :return: Returns the result object.
         """ # noqa: E501
+        warnings.warn("POST /api/v1/verify/document is deprecated.", DeprecationWarning)
 
         _param = self._verify_document_api_v1_verify_document_post_serialize(
             document_verify=document_verify,
@@ -1195,9 +1196,9 @@ class VerificationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[VerificationResponse]:
-        """Verify Document
+        """(Deprecated) [DEPRECATED] Verify a document
 
-        Complete document verification (public endpoint)  - **document_id**: Document ID from encoding service - **content**: Current content to verify
+        **Deprecated.** Use `POST /api/v1/verify` instead. This endpoint will be removed in a future release.
 
         :param document_verify: (required)
         :type document_verify: DocumentVerify
@@ -1228,6 +1229,7 @@ class VerificationApi:
         :type _host_index: int, optional
         :return: Returns the result object.
         """ # noqa: E501
+        warnings.warn("POST /api/v1/verify/document is deprecated.", DeprecationWarning)
 
         _param = self._verify_document_api_v1_verify_document_post_serialize(
             document_verify=document_verify,
@@ -1275,9 +1277,9 @@ class VerificationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Verify Document
+        """(Deprecated) [DEPRECATED] Verify a document
 
-        Complete document verification (public endpoint)  - **document_id**: Document ID from encoding service - **content**: Current content to verify
+        **Deprecated.** Use `POST /api/v1/verify` instead. This endpoint will be removed in a future release.
 
         :param document_verify: (required)
         :type document_verify: DocumentVerify
@@ -1308,6 +1310,7 @@ class VerificationApi:
         :type _host_index: int, optional
         :return: Returns the result object.
         """ # noqa: E501
+        warnings.warn("POST /api/v1/verify/document is deprecated.", DeprecationWarning)
 
         _param = self._verify_document_api_v1_verify_document_post_serialize(
             document_verify=document_verify,
@@ -1436,9 +1439,9 @@ class VerificationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> VerificationResponse:
-        """Verify Signature
+        """(Deprecated) [DEPRECATED] Verify a signature
 
-        Verify a signature (public endpoint)  - **content**: Original content - **signature**: Hex-encoded signature - **public_key_pem**: PEM-encoded public key
+        **Deprecated.** Use `POST /api/v1/verify` instead. This endpoint will be removed in a future release.
 
         :param signature_verify: (required)
         :type signature_verify: SignatureVerify
@@ -1469,6 +1472,7 @@ class VerificationApi:
         :type _host_index: int, optional
         :return: Returns the result object.
         """ # noqa: E501
+        warnings.warn("POST /api/v1/verify/signature is deprecated.", DeprecationWarning)
 
         _param = self._verify_signature_api_v1_verify_signature_post_serialize(
             signature_verify=signature_verify,
@@ -1516,9 +1520,9 @@ class VerificationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> ApiResponse[VerificationResponse]:
-        """Verify Signature
+        """(Deprecated) [DEPRECATED] Verify a signature
 
-        Verify a signature (public endpoint)  - **content**: Original content - **signature**: Hex-encoded signature - **public_key_pem**: PEM-encoded public key
+        **Deprecated.** Use `POST /api/v1/verify` instead. This endpoint will be removed in a future release.
 
         :param signature_verify: (required)
         :type signature_verify: SignatureVerify
@@ -1549,6 +1553,7 @@ class VerificationApi:
         :type _host_index: int, optional
         :return: Returns the result object.
         """ # noqa: E501
+        warnings.warn("POST /api/v1/verify/signature is deprecated.", DeprecationWarning)
 
         _param = self._verify_signature_api_v1_verify_signature_post_serialize(
             signature_verify=signature_verify,
@@ -1596,9 +1601,9 @@ class VerificationApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Verify Signature
+        """(Deprecated) [DEPRECATED] Verify a signature
 
-        Verify a signature (public endpoint)  - **content**: Original content - **signature**: Hex-encoded signature - **public_key_pem**: PEM-encoded public key
+        **Deprecated.** Use `POST /api/v1/verify` instead. This endpoint will be removed in a future release.
 
         :param signature_verify: (required)
         :type signature_verify: SignatureVerify
@@ -1629,6 +1634,7 @@ class VerificationApi:
         :type _host_index: int, optional
         :return: Returns the result object.
         """ # noqa: E501
+        warnings.warn("POST /api/v1/verify/signature is deprecated.", DeprecationWarning)
 
         _param = self._verify_signature_api_v1_verify_signature_post_serialize(
             signature_verify=signature_verify,
@@ -2024,5 +2030,3 @@ class VerificationApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

@@ -68,6 +68,20 @@ class TestCoalitionApi(unittest.TestCase):
         """
         pass
 
+    def test_get_public_coalition_stats_api_v1_coalition_public_stats_get(self) -> None:
+        """Test case for get_public_coalition_stats_api_v1_coalition_public_stats_get
+
+        Public coalition aggregate statistics
+        """
+        pass
+
+    def test_get_public_coalition_stats_api_v1_coalition_public_stats_get_0(self) -> None:
+        """Test case for get_public_coalition_stats_api_v1_coalition_public_stats_get_0
+
+        Public coalition aggregate statistics
+        """
+        pass
+
     def test_opt_in_to_coalition_api_v1_coalition_opt_in_post(self) -> None:
         """Test case for opt_in_to_coalition_api_v1_coalition_opt_in_post
 

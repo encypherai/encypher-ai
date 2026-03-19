@@ -8,7 +8,8 @@ import pytest
 from fastapi.encoders import jsonable_encoder
 from fastapi.openapi.utils import get_openapi
 
-from app.main import _filter_openapi_for_public, app
+from app.bootstrap.docs import _filter_openapi_for_public
+from app.main import app
 
 
 def _load_public_openapi_artifact() -> dict:

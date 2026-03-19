@@ -40,6 +40,20 @@ class TestAPIKeysApi(unittest.TestCase):
         """
         pass
 
+    def test_get_key_usage_api_v1_keys_key_id_usage_get(self) -> None:
+        """Test case for get_key_usage_api_v1_keys_key_id_usage_get
+
+        Get Key Usage
+        """
+        pass
+
+    def test_get_key_usage_api_v1_keys_key_id_usage_get_0(self) -> None:
+        """Test case for get_key_usage_api_v1_keys_key_id_usage_get_0
+
+        Get Key Usage
+        """
+        pass
+
     def test_list_keys_api_v1_keys_get(self) -> None:
         """Test case for list_keys_api_v1_keys_get
 
@@ -65,6 +79,20 @@ class TestAPIKeysApi(unittest.TestCase):
         """Test case for revoke_key_api_v1_keys_key_id_delete_0
 
         Revoke Key
+        """
+        pass
+
+    def test_revoke_keys_by_user_api_v1_keys_revoke_by_user_post(self) -> None:
+        """Test case for revoke_keys_by_user_api_v1_keys_revoke_by_user_post
+
+        Revoke Keys By User
+        """
+        pass
+
+    def test_revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0(self) -> None:
+        """Test case for revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0
+
+        Revoke Keys By User
         """
         pass
 

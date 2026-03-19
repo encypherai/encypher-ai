@@ -33,6 +33,13 @@ class TestOnboardingApi(unittest.TestCase):
         """
         pass
 
+    def test_get_progression_status_api_v1_onboarding_progression_status_get(self) -> None:
+        """Test case for get_progression_status_api_v1_onboarding_progression_status_get
+
+        Get publisher value journey progression status
+        """
+        pass
+
     def test_request_certificate_api_v1_onboarding_request_certificate_post(self) -> None:
         """Test case for request_certificate_api_v1_onboarding_request_certificate_post
 

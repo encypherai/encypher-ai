@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from encypher.models.error_detail import ErrorDetail
 from encypher.models.verify_verdict import VerifyVerdict
@@ -32,7 +32,8 @@ class VerifyResponse(BaseModel):
     data: Optional[VerifyVerdict] = None
     error: Optional[ErrorDetail] = None
     correlation_id: StrictStr
-    __properties: ClassVar[List[str]] = ["success", "data", "error", "correlation_id"]
+    duration_ms: Optional[StrictInt] = None
+    __properties: ClassVar[List[str]] = ["success", "data", "error", "correlation_id", "duration_ms"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -89,6 +90,11 @@ class VerifyResponse(BaseModel):
         if self.error is None and "error" in self.model_fields_set:
             _dict['error'] = None
 
+        # set to None if duration_ms (nullable) is None
+        # and model_fields_set contains the field
+        if self.duration_ms is None and "duration_ms" in self.model_fields_set:
+            _dict['duration_ms'] = None
+
         return _dict
 
     @classmethod
@@ -104,8 +110,7 @@ class VerifyResponse(BaseModel):
             "success": obj.get("success"),
             "data": VerifyVerdict.from_dict(obj["data"]) if obj.get("data") is not None else None,
             "error": ErrorDetail.from_dict(obj["error"]) if obj.get("error") is not None else None,
-            "correlation_id": obj.get("correlation_id")
+            "correlation_id": obj.get("correlation_id"),
+            "duration_ms": obj.get("duration_ms")
         })
         return _obj
-
-

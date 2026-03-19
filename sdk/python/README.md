@@ -76,7 +76,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.APIKeysApi(api_client)
-    key_create_request = encypher.KeyCreateRequest() # KeyCreateRequest | 
+    key_create_request = encypher.KeyCreateRequest() # KeyCreateRequest |
 
     try:
         # Create Key
@@ -96,10 +96,14 @@ Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *APIKeysApi* | [**create_key_api_v1_keys_post**](docs/APIKeysApi.md#create_key_api_v1_keys_post) | **POST** /api/v1/keys | Create Key
 *APIKeysApi* | [**create_key_api_v1_keys_post_0**](docs/APIKeysApi.md#create_key_api_v1_keys_post_0) | **POST** /api/v1/keys | Create Key
+*APIKeysApi* | [**get_key_usage_api_v1_keys_key_id_usage_get**](docs/APIKeysApi.md#get_key_usage_api_v1_keys_key_id_usage_get) | **GET** /api/v1/keys/{key_id}/usage | Get Key Usage
+*APIKeysApi* | [**get_key_usage_api_v1_keys_key_id_usage_get_0**](docs/APIKeysApi.md#get_key_usage_api_v1_keys_key_id_usage_get_0) | **GET** /api/v1/keys/{key_id}/usage | Get Key Usage
 *APIKeysApi* | [**list_keys_api_v1_keys_get**](docs/APIKeysApi.md#list_keys_api_v1_keys_get) | **GET** /api/v1/keys | List Keys
 *APIKeysApi* | [**list_keys_api_v1_keys_get_0**](docs/APIKeysApi.md#list_keys_api_v1_keys_get_0) | **GET** /api/v1/keys | List Keys
 *APIKeysApi* | [**revoke_key_api_v1_keys_key_id_delete**](docs/APIKeysApi.md#revoke_key_api_v1_keys_key_id_delete) | **DELETE** /api/v1/keys/{key_id} | Revoke Key
 *APIKeysApi* | [**revoke_key_api_v1_keys_key_id_delete_0**](docs/APIKeysApi.md#revoke_key_api_v1_keys_key_id_delete_0) | **DELETE** /api/v1/keys/{key_id} | Revoke Key
+*APIKeysApi* | [**revoke_keys_by_user_api_v1_keys_revoke_by_user_post**](docs/APIKeysApi.md#revoke_keys_by_user_api_v1_keys_revoke_by_user_post) | **POST** /api/v1/keys/revoke-by-user | Revoke Keys By User
+*APIKeysApi* | [**revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0**](docs/APIKeysApi.md#revoke_keys_by_user_api_v1_keys_revoke_by_user_post_0) | **POST** /api/v1/keys/revoke-by-user | Revoke Keys By User
 *APIKeysApi* | [**rotate_key_api_v1_keys_key_id_rotate_post**](docs/APIKeysApi.md#rotate_key_api_v1_keys_key_id_rotate_post) | **POST** /api/v1/keys/{key_id}/rotate | Rotate Key
 *APIKeysApi* | [**rotate_key_api_v1_keys_key_id_rotate_post_0**](docs/APIKeysApi.md#rotate_key_api_v1_keys_key_id_rotate_post_0) | **POST** /api/v1/keys/{key_id}/rotate | Rotate Key
 *APIKeysApi* | [**update_key_api_v1_keys_key_id_patch**](docs/APIKeysApi.md#update_key_api_v1_keys_key_id_patch) | **PATCH** /api/v1/keys/{key_id} | Update Key
@@ -108,6 +112,18 @@ Class | Method | HTTP request | Description
 *AccountApi* | [**get_account_info_api_v1_account_get_0**](docs/AccountApi.md#get_account_info_api_v1_account_get_0) | **GET** /api/v1/account | Get Account Info
 *AccountApi* | [**get_account_quota_api_v1_account_quota_get**](docs/AccountApi.md#get_account_quota_api_v1_account_quota_get) | **GET** /api/v1/account/quota | Get Account Quota
 *AccountApi* | [**get_account_quota_api_v1_account_quota_get_0**](docs/AccountApi.md#get_account_quota_api_v1_account_quota_get_0) | **GET** /api/v1/account/quota | Get Account Quota
+*AttestationPoliciesApi* | [**create_policy_api_v1_attestation_policies_post**](docs/AttestationPoliciesApi.md#create_policy_api_v1_attestation_policies_post) | **POST** /api/v1/attestation-policies/ | Create Policy
+*AttestationPoliciesApi* | [**create_policy_api_v1_attestation_policies_post_0**](docs/AttestationPoliciesApi.md#create_policy_api_v1_attestation_policies_post_0) | **POST** /api/v1/attestation-policies/ | Create Policy
+*AttestationPoliciesApi* | [**delete_policy_api_v1_attestation_policies_policy_id_delete**](docs/AttestationPoliciesApi.md#delete_policy_api_v1_attestation_policies_policy_id_delete) | **DELETE** /api/v1/attestation-policies/{policy_id} | Delete Policy
+*AttestationPoliciesApi* | [**delete_policy_api_v1_attestation_policies_policy_id_delete_0**](docs/AttestationPoliciesApi.md#delete_policy_api_v1_attestation_policies_policy_id_delete_0) | **DELETE** /api/v1/attestation-policies/{policy_id} | Delete Policy
+*AttestationPoliciesApi* | [**get_policy_api_v1_attestation_policies_policy_id_get**](docs/AttestationPoliciesApi.md#get_policy_api_v1_attestation_policies_policy_id_get) | **GET** /api/v1/attestation-policies/{policy_id} | Get Policy
+*AttestationPoliciesApi* | [**get_policy_api_v1_attestation_policies_policy_id_get_0**](docs/AttestationPoliciesApi.md#get_policy_api_v1_attestation_policies_policy_id_get_0) | **GET** /api/v1/attestation-policies/{policy_id} | Get Policy
+*AttestationPoliciesApi* | [**list_attestations_api_v1_attestations_get**](docs/AttestationPoliciesApi.md#list_attestations_api_v1_attestations_get) | **GET** /api/v1/attestations/ | List Attestations
+*AttestationPoliciesApi* | [**list_attestations_api_v1_attestations_get_0**](docs/AttestationPoliciesApi.md#list_attestations_api_v1_attestations_get_0) | **GET** /api/v1/attestations/ | List Attestations
+*AttestationPoliciesApi* | [**list_policies_api_v1_attestation_policies_get**](docs/AttestationPoliciesApi.md#list_policies_api_v1_attestation_policies_get) | **GET** /api/v1/attestation-policies/ | List Policies
+*AttestationPoliciesApi* | [**list_policies_api_v1_attestation_policies_get_0**](docs/AttestationPoliciesApi.md#list_policies_api_v1_attestation_policies_get_0) | **GET** /api/v1/attestation-policies/ | List Policies
+*AttestationPoliciesApi* | [**update_policy_api_v1_attestation_policies_policy_id_put**](docs/AttestationPoliciesApi.md#update_policy_api_v1_attestation_policies_policy_id_put) | **PUT** /api/v1/attestation-policies/{policy_id} | Update Policy
+*AttestationPoliciesApi* | [**update_policy_api_v1_attestation_policies_policy_id_put_0**](docs/AttestationPoliciesApi.md#update_policy_api_v1_attestation_policies_policy_id_put_0) | **PUT** /api/v1/attestation-policies/{policy_id} | Update Policy
 *BYOKApi* | [**list_public_keys_api_v1_byok_public_keys_get**](docs/BYOKApi.md#list_public_keys_api_v1_byok_public_keys_get) | **GET** /api/v1/byok/public-keys | List public keys
 *BYOKApi* | [**list_public_keys_api_v1_byok_public_keys_get_0**](docs/BYOKApi.md#list_public_keys_api_v1_byok_public_keys_get_0) | **GET** /api/v1/byok/public-keys | List public keys
 *BYOKApi* | [**list_trusted_cas_api_v1_byok_trusted_cas_get**](docs/BYOKApi.md#list_trusted_cas_api_v1_byok_trusted_cas_get) | **GET** /api/v1/byok/trusted-cas | List trusted Certificate Authorities
@@ -131,6 +147,34 @@ Class | Method | HTTP request | Description
 *C2PACustomAssertionsApi* | [**update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put**](docs/C2PACustomAssertionsApi.md#update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put) | **PUT** /api/v1/enterprise/c2pa/schemas/{schema_id} | Update Schema
 *C2PACustomAssertionsApi* | [**update_template_api_v1_enterprise_c2pa_templates_template_id_put**](docs/C2PACustomAssertionsApi.md#update_template_api_v1_enterprise_c2pa_templates_template_id_put) | **PUT** /api/v1/enterprise/c2pa/templates/{template_id} | Update Template
 *C2PACustomAssertionsApi* | [**validate_assertion_api_v1_enterprise_c2pa_validate_post**](docs/C2PACustomAssertionsApi.md#validate_assertion_api_v1_enterprise_c2pa_validate_post) | **POST** /api/v1/enterprise/c2pa/validate | Validate Assertion
+*CDNAnalyticsApi* | [**get_analytics_summary_api_v1_cdn_analytics_summary_get**](docs/CDNAnalyticsApi.md#get_analytics_summary_api_v1_cdn_analytics_summary_get) | **GET** /api/v1/cdn/analytics/summary | CDN provenance analytics summary
+*CDNAnalyticsApi* | [**get_analytics_summary_api_v1_cdn_analytics_summary_get_0**](docs/CDNAnalyticsApi.md#get_analytics_summary_api_v1_cdn_analytics_summary_get_0) | **GET** /api/v1/cdn/analytics/summary | CDN provenance analytics summary
+*CDNAnalyticsApi* | [**get_analytics_timeline_api_v1_cdn_analytics_timeline_get**](docs/CDNAnalyticsApi.md#get_analytics_timeline_api_v1_cdn_analytics_timeline_get) | **GET** /api/v1/cdn/analytics/timeline | CDN provenance analytics day-by-day timeline
+*CDNAnalyticsApi* | [**get_analytics_timeline_api_v1_cdn_analytics_timeline_get_0**](docs/CDNAnalyticsApi.md#get_analytics_timeline_api_v1_cdn_analytics_timeline_get_0) | **GET** /api/v1/cdn/analytics/timeline | CDN provenance analytics day-by-day timeline
+*CDNIntegrationsApi* | [**delete_cdn_integration_api_v1_cdn_cloudflare_delete**](docs/CDNIntegrationsApi.md#delete_cdn_integration_api_v1_cdn_cloudflare_delete) | **DELETE** /api/v1/cdn/cloudflare | Remove Cloudflare Logpush integration
+*CDNIntegrationsApi* | [**delete_cdn_integration_api_v1_cdn_cloudflare_delete_0**](docs/CDNIntegrationsApi.md#delete_cdn_integration_api_v1_cdn_cloudflare_delete_0) | **DELETE** /api/v1/cdn/cloudflare | Remove Cloudflare Logpush integration
+*CDNIntegrationsApi* | [**generate_worker_config_api_v1_cdn_integrations_integration_id_generate_worker_config_post**](docs/CDNIntegrationsApi.md#generate_worker_config_api_v1_cdn_integrations_integration_id_generate_worker_config_post) | **POST** /api/v1/cdn/integrations/{integration_id}/generate-worker-config | Generate Cloudflare Worker config for CDN provenance
+*CDNIntegrationsApi* | [**generate_worker_config_api_v1_cdn_integrations_integration_id_generate_worker_config_post_0**](docs/CDNIntegrationsApi.md#generate_worker_config_api_v1_cdn_integrations_integration_id_generate_worker_config_post_0) | **POST** /api/v1/cdn/integrations/{integration_id}/generate-worker-config | Generate Cloudflare Worker config for CDN provenance
+*CDNIntegrationsApi* | [**get_cdn_integration_api_v1_cdn_cloudflare_get**](docs/CDNIntegrationsApi.md#get_cdn_integration_api_v1_cdn_cloudflare_get) | **GET** /api/v1/cdn/cloudflare | Get current Cloudflare Logpush integration config
+*CDNIntegrationsApi* | [**get_cdn_integration_api_v1_cdn_cloudflare_get_0**](docs/CDNIntegrationsApi.md#get_cdn_integration_api_v1_cdn_cloudflare_get_0) | **GET** /api/v1/cdn/cloudflare | Get current Cloudflare Logpush integration config
+*CDNIntegrationsApi* | [**save_cdn_integration_api_v1_cdn_cloudflare_post**](docs/CDNIntegrationsApi.md#save_cdn_integration_api_v1_cdn_cloudflare_post) | **POST** /api/v1/cdn/cloudflare | Create or update Cloudflare Logpush integration
+*CDNIntegrationsApi* | [**save_cdn_integration_api_v1_cdn_cloudflare_post_0**](docs/CDNIntegrationsApi.md#save_cdn_integration_api_v1_cdn_cloudflare_post_0) | **POST** /api/v1/cdn/cloudflare | Create or update Cloudflare Logpush integration
+*CDNProvenanceApi* | [**get_manifest_api_v1_cdn_manifests_record_id_get**](docs/CDNProvenanceApi.md#get_manifest_api_v1_cdn_manifests_record_id_get) | **GET** /api/v1/cdn/manifests/{record_id} | Fetch C2PA manifest for a CDN image record
+*CDNProvenanceApi* | [**get_manifest_api_v1_cdn_manifests_record_id_get_0**](docs/CDNProvenanceApi.md#get_manifest_api_v1_cdn_manifests_record_id_get_0) | **GET** /api/v1/cdn/manifests/{record_id} | Fetch C2PA manifest for a CDN image record
+*CDNProvenanceApi* | [**lookup_manifest_by_url_api_v1_cdn_manifests_lookup_get**](docs/CDNProvenanceApi.md#lookup_manifest_by_url_api_v1_cdn_manifests_lookup_get) | **GET** /api/v1/cdn/manifests/lookup | Lookup manifest by canonical URL
+*CDNProvenanceApi* | [**lookup_manifest_by_url_api_v1_cdn_manifests_lookup_get_0**](docs/CDNProvenanceApi.md#lookup_manifest_by_url_api_v1_cdn_manifests_lookup_get_0) | **GET** /api/v1/cdn/manifests/lookup | Lookup manifest by canonical URL
+*CDNProvenanceApi* | [**pre_register_variants_api_v1_cdn_images_record_id_variants_post**](docs/CDNProvenanceApi.md#pre_register_variants_api_v1_cdn_images_record_id_variants_post) | **POST** /api/v1/cdn/images/{record_id}/variants | Pre-register expected CDN derivative variants
+*CDNProvenanceApi* | [**pre_register_variants_api_v1_cdn_images_record_id_variants_post_0**](docs/CDNProvenanceApi.md#pre_register_variants_api_v1_cdn_images_record_id_variants_post_0) | **POST** /api/v1/cdn/images/{record_id}/variants | Pre-register expected CDN derivative variants
+*CDNProvenanceApi* | [**register_image_endpoint_api_v1_cdn_images_register_post**](docs/CDNProvenanceApi.md#register_image_endpoint_api_v1_cdn_images_register_post) | **POST** /api/v1/cdn/images/register | Register a pre-signed image for CDN tracking
+*CDNProvenanceApi* | [**register_image_endpoint_api_v1_cdn_images_register_post_0**](docs/CDNProvenanceApi.md#register_image_endpoint_api_v1_cdn_images_register_post_0) | **POST** /api/v1/cdn/images/register | Register a pre-signed image for CDN tracking
+*CDNProvenanceApi* | [**sign_image_endpoint_api_v1_cdn_images_sign_post**](docs/CDNProvenanceApi.md#sign_image_endpoint_api_v1_cdn_images_sign_post) | **POST** /api/v1/cdn/images/sign | Sign image and store provenance manifest
+*CDNProvenanceApi* | [**sign_image_endpoint_api_v1_cdn_images_sign_post_0**](docs/CDNProvenanceApi.md#sign_image_endpoint_api_v1_cdn_images_sign_post_0) | **POST** /api/v1/cdn/images/sign | Sign image and store provenance manifest
+*CDNProvenanceApi* | [**verify_image_api_v1_cdn_verify_post**](docs/CDNProvenanceApi.md#verify_image_api_v1_cdn_verify_post) | **POST** /api/v1/cdn/verify | Verify image provenance by upload
+*CDNProvenanceApi* | [**verify_image_api_v1_cdn_verify_post_0**](docs/CDNProvenanceApi.md#verify_image_api_v1_cdn_verify_post_0) | **POST** /api/v1/cdn/verify | Verify image provenance by upload
+*CDNProvenanceApi* | [**verify_image_url_api_v1_cdn_verify_url_post**](docs/CDNProvenanceApi.md#verify_image_url_api_v1_cdn_verify_url_post) | **POST** /api/v1/cdn/verify/url | Verify image provenance by URL
+*CDNProvenanceApi* | [**verify_image_url_api_v1_cdn_verify_url_post_0**](docs/CDNProvenanceApi.md#verify_image_url_api_v1_cdn_verify_url_post_0) | **POST** /api/v1/cdn/verify/url | Verify image provenance by URL
+*CDNProvenanceApi* | [**well_known_manifest_well_known_c2pa_manifests_record_id_get**](docs/CDNProvenanceApi.md#well_known_manifest_well_known_c2pa_manifests_record_id_get) | **GET** /.well-known/c2pa/manifests/{record_id} | Well-known C2PA manifest discovery
+*CDNProvenanceApi* | [**well_known_manifest_well_known_c2pa_manifests_record_id_get_0**](docs/CDNProvenanceApi.md#well_known_manifest_well_known_c2pa_manifests_record_id_get_0) | **GET** /.well-known/c2pa/manifests/{record_id} | Well-known C2PA manifest discovery
 *ChatApi* | [**chat_health_check_api_v1_chat_health_get**](docs/ChatApi.md#chat_health_check_api_v1_chat_health_get) | **GET** /api/v1/chat/health | Chat Health Check
 *ChatApi* | [**openai_compatible_chat_api_v1_chat_completions_post**](docs/ChatApi.md#openai_compatible_chat_api_v1_chat_completions_post) | **POST** /api/v1/chat/completions | Openai Compatible Chat
 *CoalitionApi* | [**get_coalition_dashboard_api_v1_coalition_dashboard_get**](docs/CoalitionApi.md#get_coalition_dashboard_api_v1_coalition_dashboard_get) | **GET** /api/v1/coalition/dashboard | Get Coalition Dashboard
@@ -139,10 +183,28 @@ Class | Method | HTTP request | Description
 *CoalitionApi* | [**get_content_stats_api_v1_coalition_content_stats_get_0**](docs/CoalitionApi.md#get_content_stats_api_v1_coalition_content_stats_get_0) | **GET** /api/v1/coalition/content-stats | Get Content Stats
 *CoalitionApi* | [**get_earnings_history_api_v1_coalition_earnings_get**](docs/CoalitionApi.md#get_earnings_history_api_v1_coalition_earnings_get) | **GET** /api/v1/coalition/earnings | Get Earnings History
 *CoalitionApi* | [**get_earnings_history_api_v1_coalition_earnings_get_0**](docs/CoalitionApi.md#get_earnings_history_api_v1_coalition_earnings_get_0) | **GET** /api/v1/coalition/earnings | Get Earnings History
+*CoalitionApi* | [**get_public_coalition_stats_api_v1_coalition_public_stats_get**](docs/CoalitionApi.md#get_public_coalition_stats_api_v1_coalition_public_stats_get) | **GET** /api/v1/coalition/public/stats | Public coalition aggregate statistics
+*CoalitionApi* | [**get_public_coalition_stats_api_v1_coalition_public_stats_get_0**](docs/CoalitionApi.md#get_public_coalition_stats_api_v1_coalition_public_stats_get_0) | **GET** /api/v1/coalition/public/stats | Public coalition aggregate statistics
 *CoalitionApi* | [**opt_in_to_coalition_api_v1_coalition_opt_in_post**](docs/CoalitionApi.md#opt_in_to_coalition_api_v1_coalition_opt_in_post) | **POST** /api/v1/coalition/opt-in | Opt In To Coalition
 *CoalitionApi* | [**opt_in_to_coalition_api_v1_coalition_opt_in_post_0**](docs/CoalitionApi.md#opt_in_to_coalition_api_v1_coalition_opt_in_post_0) | **POST** /api/v1/coalition/opt-in | Opt In To Coalition
 *CoalitionApi* | [**opt_out_of_coalition_api_v1_coalition_opt_out_post**](docs/CoalitionApi.md#opt_out_of_coalition_api_v1_coalition_opt_out_post) | **POST** /api/v1/coalition/opt-out | Opt Out Of Coalition
 *CoalitionApi* | [**opt_out_of_coalition_api_v1_coalition_opt_out_post_0**](docs/CoalitionApi.md#opt_out_of_coalition_api_v1_coalition_opt_out_post_0) | **POST** /api/v1/coalition/opt-out | Opt Out Of Coalition
+*ComplianceApi* | [**get_compliance_readiness_api_v1_compliance_readiness_get**](docs/ComplianceApi.md#get_compliance_readiness_api_v1_compliance_readiness_get) | **GET** /api/v1/compliance/readiness | Get Compliance Readiness
+*ComplianceApi* | [**get_compliance_readiness_api_v1_compliance_readiness_get_0**](docs/ComplianceApi.md#get_compliance_readiness_api_v1_compliance_readiness_get_0) | **GET** /api/v1/compliance/readiness | Get Compliance Readiness
+*DataManagementApi* | [**admin_purge_user_api_v1_data_admin_purge_user_post**](docs/DataManagementApi.md#admin_purge_user_api_v1_data_admin_purge_user_post) | **POST** /api/v1/data/admin/purge-user | Admin: purge a user&#39;s data
+*DataManagementApi* | [**admin_purge_user_api_v1_data_admin_purge_user_post_0**](docs/DataManagementApi.md#admin_purge_user_api_v1_data_admin_purge_user_post_0) | **POST** /api/v1/data/admin/purge-user | Admin: purge a user&#39;s data
+*DataManagementApi* | [**cancel_deletion_request_api_v1_data_deletion_request_request_id_cancel_post**](docs/DataManagementApi.md#cancel_deletion_request_api_v1_data_deletion_request_request_id_cancel_post) | **POST** /api/v1/data/deletion-request/{request_id}/cancel | Cancel a pending deletion request
+*DataManagementApi* | [**cancel_deletion_request_api_v1_data_deletion_request_request_id_cancel_post_0**](docs/DataManagementApi.md#cancel_deletion_request_api_v1_data_deletion_request_request_id_cancel_post_0) | **POST** /api/v1/data/deletion-request/{request_id}/cancel | Cancel a pending deletion request
+*DataManagementApi* | [**confirm_deletion_request_api_v1_data_deletion_request_request_id_confirm_delete**](docs/DataManagementApi.md#confirm_deletion_request_api_v1_data_deletion_request_request_id_confirm_delete) | **DELETE** /api/v1/data/deletion-request/{request_id}/confirm | Confirm and execute a deletion request
+*DataManagementApi* | [**confirm_deletion_request_api_v1_data_deletion_request_request_id_confirm_delete_0**](docs/DataManagementApi.md#confirm_deletion_request_api_v1_data_deletion_request_request_id_confirm_delete_0) | **DELETE** /api/v1/data/deletion-request/{request_id}/confirm | Confirm and execute a deletion request
+*DataManagementApi* | [**create_deletion_request_api_v1_data_deletion_request_post**](docs/DataManagementApi.md#create_deletion_request_api_v1_data_deletion_request_post) | **POST** /api/v1/data/deletion-request | Request data deletion (GDPR Art. 17)
+*DataManagementApi* | [**create_deletion_request_api_v1_data_deletion_request_post_0**](docs/DataManagementApi.md#create_deletion_request_api_v1_data_deletion_request_post_0) | **POST** /api/v1/data/deletion-request | Request data deletion (GDPR Art. 17)
+*DataManagementApi* | [**get_deletion_receipt_api_v1_data_deletion_request_request_id_receipt_get**](docs/DataManagementApi.md#get_deletion_receipt_api_v1_data_deletion_request_request_id_receipt_get) | **GET** /api/v1/data/deletion-request/{request_id}/receipt | Get deletion receipt
+*DataManagementApi* | [**get_deletion_receipt_api_v1_data_deletion_request_request_id_receipt_get_0**](docs/DataManagementApi.md#get_deletion_receipt_api_v1_data_deletion_request_request_id_receipt_get_0) | **GET** /api/v1/data/deletion-request/{request_id}/receipt | Get deletion receipt
+*DataManagementApi* | [**list_deletion_requests_api_v1_data_deletion_requests_get**](docs/DataManagementApi.md#list_deletion_requests_api_v1_data_deletion_requests_get) | **GET** /api/v1/data/deletion-requests | List deletion requests
+*DataManagementApi* | [**list_deletion_requests_api_v1_data_deletion_requests_get_0**](docs/DataManagementApi.md#list_deletion_requests_api_v1_data_deletion_requests_get_0) | **GET** /api/v1/data/deletion-requests | List deletion requests
+*DiscoveryApi* | [**api_discovery_api_v1_get**](docs/DiscoveryApi.md#api_discovery_api_v1_get) | **GET** /api/v1/ | API Discovery
+*DiscoveryApi* | [**api_discovery_api_v1_get_0**](docs/DiscoveryApi.md#api_discovery_api_v1_get_0) | **GET** /api/v1/ | API Discovery
 *DocumentsApi* | [**delete_document_api_v1_documents_document_id_delete**](docs/DocumentsApi.md#delete_document_api_v1_documents_document_id_delete) | **DELETE** /api/v1/documents/{document_id} | Delete Document
 *DocumentsApi* | [**delete_document_api_v1_documents_document_id_delete_0**](docs/DocumentsApi.md#delete_document_api_v1_documents_document_id_delete_0) | **DELETE** /api/v1/documents/{document_id} | Delete Document
 *DocumentsApi* | [**get_document_api_v1_documents_document_id_get**](docs/DocumentsApi.md#get_document_api_v1_documents_document_id_get) | **GET** /api/v1/documents/{document_id} | Get Document
@@ -155,26 +217,138 @@ Class | Method | HTTP request | Description
 *EvidenceGenerationApi* | [**generate_evidence_api_v1_enterprise_evidence_generate_post**](docs/EvidenceGenerationApi.md#generate_evidence_api_v1_enterprise_evidence_generate_post) | **POST** /api/v1/enterprise/evidence/generate | Generate Evidence
 *FingerprintApi* | [**detect_fingerprint_api_v1_enterprise_fingerprint_detect_post**](docs/FingerprintApi.md#detect_fingerprint_api_v1_enterprise_fingerprint_detect_post) | **POST** /api/v1/enterprise/fingerprint/detect | Detect Fingerprint
 *FingerprintApi* | [**encode_fingerprint_api_v1_enterprise_fingerprint_encode_post**](docs/FingerprintApi.md#encode_fingerprint_api_v1_enterprise_fingerprint_encode_post) | **POST** /api/v1/enterprise/fingerprint/encode | Encode Fingerprint
+*FormalNoticesApi* | [**create_formal_notice_api_v1_notices_create_post**](docs/FormalNoticesApi.md#create_formal_notice_api_v1_notices_create_post) | **POST** /api/v1/notices/create | Create a formal notice
+*FormalNoticesApi* | [**create_formal_notice_api_v1_notices_create_post_0**](docs/FormalNoticesApi.md#create_formal_notice_api_v1_notices_create_post_0) | **POST** /api/v1/notices/create | Create a formal notice
+*FormalNoticesApi* | [**deliver_notice_api_v1_notices_notice_id_deliver_post**](docs/FormalNoticesApi.md#deliver_notice_api_v1_notices_notice_id_deliver_post) | **POST** /api/v1/notices/{notice_id}/deliver | Deliver a formal notice
+*FormalNoticesApi* | [**deliver_notice_api_v1_notices_notice_id_deliver_post_0**](docs/FormalNoticesApi.md#deliver_notice_api_v1_notices_notice_id_deliver_post_0) | **POST** /api/v1/notices/{notice_id}/deliver | Deliver a formal notice
+*FormalNoticesApi* | [**get_evidence_package_api_v1_notices_notice_id_evidence_get**](docs/FormalNoticesApi.md#get_evidence_package_api_v1_notices_notice_id_evidence_get) | **GET** /api/v1/notices/{notice_id}/evidence | Generate court-ready evidence package
+*FormalNoticesApi* | [**get_evidence_package_api_v1_notices_notice_id_evidence_get_0**](docs/FormalNoticesApi.md#get_evidence_package_api_v1_notices_notice_id_evidence_get_0) | **GET** /api/v1/notices/{notice_id}/evidence | Generate court-ready evidence package
+*FormalNoticesApi* | [**get_evidence_package_pdf_api_v1_notices_notice_id_evidence_pdf_get**](docs/FormalNoticesApi.md#get_evidence_package_pdf_api_v1_notices_notice_id_evidence_pdf_get) | **GET** /api/v1/notices/{notice_id}/evidence/pdf | Download court-ready evidence package as PDF
+*FormalNoticesApi* | [**get_evidence_package_pdf_api_v1_notices_notice_id_evidence_pdf_get_0**](docs/FormalNoticesApi.md#get_evidence_package_pdf_api_v1_notices_notice_id_evidence_pdf_get_0) | **GET** /api/v1/notices/{notice_id}/evidence/pdf | Download court-ready evidence package as PDF
+*FormalNoticesApi* | [**get_formal_notice_api_v1_notices_notice_id_get**](docs/FormalNoticesApi.md#get_formal_notice_api_v1_notices_notice_id_get) | **GET** /api/v1/notices/{notice_id} | Get notice details and delivery status
+*FormalNoticesApi* | [**get_formal_notice_api_v1_notices_notice_id_get_0**](docs/FormalNoticesApi.md#get_formal_notice_api_v1_notices_notice_id_get_0) | **GET** /api/v1/notices/{notice_id} | Get notice details and delivery status
+*FormalNoticesApi* | [**list_notices_api_v1_notices_get**](docs/FormalNoticesApi.md#list_notices_api_v1_notices_get) | **GET** /api/v1/notices/ | List formal notices for the organization
+*FormalNoticesApi* | [**list_notices_api_v1_notices_get_0**](docs/FormalNoticesApi.md#list_notices_api_v1_notices_get_0) | **GET** /api/v1/notices/ | List formal notices for the organization
 *HealthApi* | [**health_check_health_get**](docs/HealthApi.md#health_check_health_get) | **GET** /health | Health Check
 *HealthApi* | [**readiness_check_readyz_get**](docs/HealthApi.md#readiness_check_readyz_get) | **GET** /readyz | Readiness Check
+*ImageAttributionApi* | [**image_attribution_api_v1_enterprise_images_attribution_post**](docs/ImageAttributionApi.md#image_attribution_api_v1_enterprise_images_attribution_post) | **POST** /api/v1/enterprise/images/attribution | Find images by perceptual similarity (Enterprise: cross-org)
+*ImageAttributionApi* | [**image_attribution_api_v1_enterprise_images_attribution_post_0**](docs/ImageAttributionApi.md#image_attribution_api_v1_enterprise_images_attribution_post_0) | **POST** /api/v1/enterprise/images/attribution | Find images by perceptual similarity (Enterprise: cross-org)
+*ImageVerificationApi* | [**verify_image_api_v1_verify_image_post**](docs/ImageVerificationApi.md#verify_image_api_v1_verify_image_post) | **POST** /api/v1/verify/image | Verify a C2PA-signed image
+*ImageVerificationApi* | [**verify_rich_api_v1_verify_rich_post**](docs/ImageVerificationApi.md#verify_rich_api_v1_verify_rich_post) | **POST** /api/v1/verify/rich | Verify a signed rich article (text + images)
 *InfoApi* | [**root_get**](docs/InfoApi.md#root_get) | **GET** / | Root
+*IntegrationsApi* | [**ack_wordpress_install_action_api_v1_integrations_wordpress_install_id_actions_action_id_ack_post**](docs/IntegrationsApi.md#ack_wordpress_install_action_api_v1_integrations_wordpress_install_id_actions_action_id_ack_post) | **POST** /api/v1/integrations/wordpress/{install_id}/actions/{action_id}/ack | Acknowledge a WordPress remote action result
+*IntegrationsApi* | [**ack_wordpress_install_action_api_v1_integrations_wordpress_install_id_actions_action_id_ack_post_0**](docs/IntegrationsApi.md#ack_wordpress_install_action_api_v1_integrations_wordpress_install_id_actions_action_id_ack_post_0) | **POST** /api/v1/integrations/wordpress/{install_id}/actions/{action_id}/ack | Acknowledge a WordPress remote action result
+*IntegrationsApi* | [**complete_wordpress_connect_session_api_v1_integrations_wordpress_connect_complete_post**](docs/IntegrationsApi.md#complete_wordpress_connect_session_api_v1_integrations_wordpress_connect_complete_post) | **POST** /api/v1/integrations/wordpress/connect/complete | Complete a WordPress magic-link connect session
+*IntegrationsApi* | [**complete_wordpress_connect_session_api_v1_integrations_wordpress_connect_complete_post_0**](docs/IntegrationsApi.md#complete_wordpress_connect_session_api_v1_integrations_wordpress_connect_complete_post_0) | **POST** /api/v1/integrations/wordpress/connect/complete | Complete a WordPress magic-link connect session
+*IntegrationsApi* | [**create_ghost_integration_api_v1_integrations_ghost_post**](docs/IntegrationsApi.md#create_ghost_integration_api_v1_integrations_ghost_post) | **POST** /api/v1/integrations/ghost | Configure Ghost integration
+*IntegrationsApi* | [**create_ghost_integration_api_v1_integrations_ghost_post_0**](docs/IntegrationsApi.md#create_ghost_integration_api_v1_integrations_ghost_post_0) | **POST** /api/v1/integrations/ghost | Configure Ghost integration
+*IntegrationsApi* | [**delete_ghost_integration_api_v1_integrations_ghost_delete**](docs/IntegrationsApi.md#delete_ghost_integration_api_v1_integrations_ghost_delete) | **DELETE** /api/v1/integrations/ghost | Remove Ghost integration
+*IntegrationsApi* | [**delete_ghost_integration_api_v1_integrations_ghost_delete_0**](docs/IntegrationsApi.md#delete_ghost_integration_api_v1_integrations_ghost_delete_0) | **DELETE** /api/v1/integrations/ghost | Remove Ghost integration
+*IntegrationsApi* | [**get_ghost_integration_api_v1_integrations_ghost_get**](docs/IntegrationsApi.md#get_ghost_integration_api_v1_integrations_ghost_get) | **GET** /api/v1/integrations/ghost | Get Ghost integration config
+*IntegrationsApi* | [**get_ghost_integration_api_v1_integrations_ghost_get_0**](docs/IntegrationsApi.md#get_ghost_integration_api_v1_integrations_ghost_get_0) | **GET** /api/v1/integrations/ghost | Get Ghost integration config
+*IntegrationsApi* | [**get_wordpress_integration_status_api_v1_integrations_wordpress_status_get**](docs/IntegrationsApi.md#get_wordpress_integration_status_api_v1_integrations_wordpress_status_get) | **GET** /api/v1/integrations/wordpress/status | Get WordPress integration status
+*IntegrationsApi* | [**get_wordpress_integration_status_api_v1_integrations_wordpress_status_get_0**](docs/IntegrationsApi.md#get_wordpress_integration_status_api_v1_integrations_wordpress_status_get_0) | **GET** /api/v1/integrations/wordpress/status | Get WordPress integration status
+*IntegrationsApi* | [**ghost_webhook_api_v1_integrations_ghost_webhook_post**](docs/IntegrationsApi.md#ghost_webhook_api_v1_integrations_ghost_webhook_post) | **POST** /api/v1/integrations/ghost/webhook | Receive Ghost CMS webhooks
+*IntegrationsApi* | [**ghost_webhook_api_v1_integrations_ghost_webhook_post_0**](docs/IntegrationsApi.md#ghost_webhook_api_v1_integrations_ghost_webhook_post_0) | **POST** /api/v1/integrations/ghost/webhook | Receive Ghost CMS webhooks
+*IntegrationsApi* | [**manual_sign_ghost_post_api_v1_integrations_ghost_sign_post_id_post**](docs/IntegrationsApi.md#manual_sign_ghost_post_api_v1_integrations_ghost_sign_post_id_post) | **POST** /api/v1/integrations/ghost/sign/{post_id} | Manually sign a Ghost post
+*IntegrationsApi* | [**manual_sign_ghost_post_api_v1_integrations_ghost_sign_post_id_post_0**](docs/IntegrationsApi.md#manual_sign_ghost_post_api_v1_integrations_ghost_sign_post_id_post_0) | **POST** /api/v1/integrations/ghost/sign/{post_id} | Manually sign a Ghost post
+*IntegrationsApi* | [**poll_wordpress_connect_session_api_v1_integrations_wordpress_connect_session_session_id_get**](docs/IntegrationsApi.md#poll_wordpress_connect_session_api_v1_integrations_wordpress_connect_session_session_id_get) | **GET** /api/v1/integrations/wordpress/connect/session/{session_id} | Poll a WordPress magic-link connect session
+*IntegrationsApi* | [**poll_wordpress_connect_session_api_v1_integrations_wordpress_connect_session_session_id_get_0**](docs/IntegrationsApi.md#poll_wordpress_connect_session_api_v1_integrations_wordpress_connect_session_session_id_get_0) | **GET** /api/v1/integrations/wordpress/connect/session/{session_id} | Poll a WordPress magic-link connect session
+*IntegrationsApi* | [**pull_wordpress_install_actions_api_v1_integrations_wordpress_install_id_actions_pull_post**](docs/IntegrationsApi.md#pull_wordpress_install_actions_api_v1_integrations_wordpress_install_id_actions_pull_post) | **POST** /api/v1/integrations/wordpress/{install_id}/actions/pull | Pull queued remote actions for a WordPress install
+*IntegrationsApi* | [**pull_wordpress_install_actions_api_v1_integrations_wordpress_install_id_actions_pull_post_0**](docs/IntegrationsApi.md#pull_wordpress_install_actions_api_v1_integrations_wordpress_install_id_actions_pull_post_0) | **POST** /api/v1/integrations/wordpress/{install_id}/actions/pull | Pull queued remote actions for a WordPress install
+*IntegrationsApi* | [**queue_wordpress_install_action_api_v1_integrations_wordpress_install_id_actions_post**](docs/IntegrationsApi.md#queue_wordpress_install_action_api_v1_integrations_wordpress_install_id_actions_post) | **POST** /api/v1/integrations/wordpress/{install_id}/actions | Queue a remote action for a WordPress install
+*IntegrationsApi* | [**queue_wordpress_install_action_api_v1_integrations_wordpress_install_id_actions_post_0**](docs/IntegrationsApi.md#queue_wordpress_install_action_api_v1_integrations_wordpress_install_id_actions_post_0) | **POST** /api/v1/integrations/wordpress/{install_id}/actions | Queue a remote action for a WordPress install
+*IntegrationsApi* | [**record_wordpress_verification_event_api_v1_integrations_wordpress_verification_event_post**](docs/IntegrationsApi.md#record_wordpress_verification_event_api_v1_integrations_wordpress_verification_event_post) | **POST** /api/v1/integrations/wordpress/verification-event | Record a WordPress verification event
+*IntegrationsApi* | [**record_wordpress_verification_event_api_v1_integrations_wordpress_verification_event_post_0**](docs/IntegrationsApi.md#record_wordpress_verification_event_api_v1_integrations_wordpress_verification_event_post_0) | **POST** /api/v1/integrations/wordpress/verification-event | Record a WordPress verification event
+*IntegrationsApi* | [**regenerate_ghost_token_api_v1_integrations_ghost_regenerate_token_post**](docs/IntegrationsApi.md#regenerate_ghost_token_api_v1_integrations_ghost_regenerate_token_post) | **POST** /api/v1/integrations/ghost/regenerate-token | Regenerate webhook token
+*IntegrationsApi* | [**regenerate_ghost_token_api_v1_integrations_ghost_regenerate_token_post_0**](docs/IntegrationsApi.md#regenerate_ghost_token_api_v1_integrations_ghost_regenerate_token_post_0) | **POST** /api/v1/integrations/ghost/regenerate-token | Regenerate webhook token
+*IntegrationsApi* | [**register_wordpress_install_api_v1_integrations_wordpress_register_install_post**](docs/IntegrationsApi.md#register_wordpress_install_api_v1_integrations_wordpress_register_install_post) | **POST** /api/v1/integrations/wordpress/register-install | Register or update a WordPress install
+*IntegrationsApi* | [**register_wordpress_install_api_v1_integrations_wordpress_register_install_post_0**](docs/IntegrationsApi.md#register_wordpress_install_api_v1_integrations_wordpress_register_install_post_0) | **POST** /api/v1/integrations/wordpress/register-install | Register or update a WordPress install
+*IntegrationsApi* | [**start_wordpress_connect_session_api_v1_integrations_wordpress_connect_start_post**](docs/IntegrationsApi.md#start_wordpress_connect_session_api_v1_integrations_wordpress_connect_start_post) | **POST** /api/v1/integrations/wordpress/connect/start | Start a WordPress magic-link connect session
+*IntegrationsApi* | [**start_wordpress_connect_session_api_v1_integrations_wordpress_connect_start_post_0**](docs/IntegrationsApi.md#start_wordpress_connect_session_api_v1_integrations_wordpress_connect_start_post_0) | **POST** /api/v1/integrations/wordpress/connect/start | Start a WordPress magic-link connect session
+*IntegrationsApi* | [**sync_wordpress_integration_status_api_v1_integrations_wordpress_status_sync_post**](docs/IntegrationsApi.md#sync_wordpress_integration_status_api_v1_integrations_wordpress_status_sync_post) | **POST** /api/v1/integrations/wordpress/status-sync | Sync WordPress integration status
+*IntegrationsApi* | [**sync_wordpress_integration_status_api_v1_integrations_wordpress_status_sync_post_0**](docs/IntegrationsApi.md#sync_wordpress_integration_status_api_v1_integrations_wordpress_status_sync_post_0) | **POST** /api/v1/integrations/wordpress/status-sync | Sync WordPress integration status
 *LookupApi* | [**lookup_sentence_api_v1_lookup_post**](docs/LookupApi.md#lookup_sentence_api_v1_lookup_post) | **POST** /api/v1/lookup | Lookup Sentence
 *LookupApi* | [**provenance_lookup_api_v1_provenance_lookup_post**](docs/LookupApi.md#provenance_lookup_api_v1_provenance_lookup_post) | **POST** /api/v1/provenance/lookup | Provenance Lookup
 *MultiSourceAttributionApi* | [**multi_source_lookup_api_v1_enterprise_attribution_multi_source_post**](docs/MultiSourceAttributionApi.md#multi_source_lookup_api_v1_enterprise_attribution_multi_source_post) | **POST** /api/v1/enterprise/attribution/multi-source | Multi Source Lookup
 *OnboardingApi* | [**get_certificate_status_api_v1_onboarding_certificate_status_get**](docs/OnboardingApi.md#get_certificate_status_api_v1_onboarding_certificate_status_get) | **GET** /api/v1/onboarding/certificate-status | Get Certificate Status
+*OnboardingApi* | [**get_progression_status_api_v1_onboarding_progression_status_get**](docs/OnboardingApi.md#get_progression_status_api_v1_onboarding_progression_status_get) | **GET** /api/v1/onboarding/progression-status | Get publisher value journey progression status
 *OnboardingApi* | [**request_certificate_api_v1_onboarding_request_certificate_post**](docs/OnboardingApi.md#request_certificate_api_v1_onboarding_request_certificate_post) | **POST** /api/v1/onboarding/request-certificate | Request Certificate
+*PartnerApi* | [**bulk_provision_publishers_api_v1_partner_publishers_provision_post**](docs/PartnerApi.md#bulk_provision_publishers_api_v1_partner_publishers_provision_post) | **POST** /api/v1/partner/publishers/provision | Bulk-provision publisher organizations
+*PartnerApi* | [**bulk_provision_publishers_api_v1_partner_publishers_provision_post_0**](docs/PartnerApi.md#bulk_provision_publishers_api_v1_partner_publishers_provision_post_0) | **POST** /api/v1/partner/publishers/provision | Bulk-provision publisher organizations
+*PartnerPortalApi* | [**get_partner_aggregate_api_v1_partner_portal_aggregate_get**](docs/PartnerPortalApi.md#get_partner_aggregate_api_v1_partner_portal_aggregate_get) | **GET** /api/v1/partner/portal/aggregate | Get Partner Aggregate
+*PartnerPortalApi* | [**get_partner_aggregate_api_v1_partner_portal_aggregate_get_0**](docs/PartnerPortalApi.md#get_partner_aggregate_api_v1_partner_portal_aggregate_get_0) | **GET** /api/v1/partner/portal/aggregate | Get Partner Aggregate
+*PartnerPortalApi* | [**get_partner_publisher_detail_api_v1_partner_portal_publishers_pub_org_id_get**](docs/PartnerPortalApi.md#get_partner_publisher_detail_api_v1_partner_portal_publishers_pub_org_id_get) | **GET** /api/v1/partner/portal/publishers/{pub_org_id} | Get Partner Publisher Detail
+*PartnerPortalApi* | [**get_partner_publisher_detail_api_v1_partner_portal_publishers_pub_org_id_get_0**](docs/PartnerPortalApi.md#get_partner_publisher_detail_api_v1_partner_portal_publishers_pub_org_id_get_0) | **GET** /api/v1/partner/portal/publishers/{pub_org_id} | Get Partner Publisher Detail
+*PartnerPortalApi* | [**list_partner_publishers_api_v1_partner_portal_publishers_get**](docs/PartnerPortalApi.md#list_partner_publishers_api_v1_partner_portal_publishers_get) | **GET** /api/v1/partner/portal/publishers | List Partner Publishers
+*PartnerPortalApi* | [**list_partner_publishers_api_v1_partner_portal_publishers_get_0**](docs/PartnerPortalApi.md#list_partner_publishers_api_v1_partner_portal_publishers_get_0) | **GET** /api/v1/partner/portal/publishers | List Partner Publishers
+*PublicC2PAApi* | [**bulk_resolve_segment_uuids_api_v1_public_c2pa_zw_resolve_post**](docs/PublicC2PAApi.md#bulk_resolve_segment_uuids_api_v1_public_c2pa_zw_resolve_post) | **POST** /api/v1/public/c2pa/zw/resolve | Bulk resolve segment UUIDs (Public, internal)
 *PublicC2PAApi* | [**create_manifest_api_v1_public_c2pa_create_manifest_post**](docs/PublicC2PAApi.md#create_manifest_api_v1_public_c2pa_create_manifest_post) | **POST** /api/v1/public/c2pa/create-manifest | Create C2PA-like manifest JSON from plaintext (Public - Non-Cryptographic)
 *PublicC2PAApi* | [**get_trust_anchor_api_v1_public_c2pa_trust_anchors_signer_id_get**](docs/PublicC2PAApi.md#get_trust_anchor_api_v1_public_c2pa_trust_anchors_signer_id_get) | **GET** /api/v1/public/c2pa/trust-anchors/{signer_id} | Lookup trust anchor for C2PA verification (Public)
+*PublicC2PAApi* | [**resolve_zw_segment_uuid_api_v1_public_c2pa_zw_resolve_segment_uuid_get**](docs/PublicC2PAApi.md#resolve_zw_segment_uuid_api_v1_public_c2pa_zw_resolve_segment_uuid_get) | **GET** /api/v1/public/c2pa/zw/resolve/{segment_uuid} | Resolve ZW segment UUID (Public, internal)
 *PublicC2PAApi* | [**validate_manifest_api_v1_public_c2pa_validate_manifest_post**](docs/PublicC2PAApi.md#validate_manifest_api_v1_public_c2pa_validate_manifest_post) | **POST** /api/v1/public/c2pa/validate-manifest | Validate C2PA-like manifest JSON (Public - Non-Cryptographic)
+*PublicRightsApi* | [**get_document_rights_api_v1_public_rights_document_id_get**](docs/PublicRightsApi.md#get_document_rights_api_v1_public_rights_document_id_get) | **GET** /api/v1/public/rights/{document_id} | Resolve rights for a specific document
+*PublicRightsApi* | [**get_document_rights_json_ld_api_v1_public_rights_document_id_json_ld_get**](docs/PublicRightsApi.md#get_document_rights_json_ld_api_v1_public_rights_document_id_json_ld_get) | **GET** /api/v1/public/rights/{document_id}/json-ld | Rights as JSON-LD (Schema.org compatible)
+*PublicRightsApi* | [**get_document_rights_odrl_api_v1_public_rights_document_id_odrl_get**](docs/PublicRightsApi.md#get_document_rights_odrl_api_v1_public_rights_document_id_odrl_get) | **GET** /api/v1/public/rights/{document_id}/odrl | Rights as ODRL (W3C Open Digital Rights Language)
+*PublicRightsApi* | [**get_org_rights_profile_api_v1_public_rights_organization_org_id_get**](docs/PublicRightsApi.md#get_org_rights_profile_api_v1_public_rights_organization_org_id_get) | **GET** /api/v1/public/rights/organization/{org_id} | Get default rights profile for a publisher organization
+*PublicRightsApi* | [**get_robots_meta_api_v1_public_rights_organization_org_id_robots_meta_get**](docs/PublicRightsApi.md#get_robots_meta_api_v1_public_rights_organization_org_id_robots_meta_get) | **GET** /api/v1/public/rights/organization/{org_id}/robots-meta | Generate AI-specific robots meta directives
+*PublicRightsApi* | [**get_robots_txt_additions_api_v1_public_rights_organization_org_id_robots_txt_get**](docs/PublicRightsApi.md#get_robots_txt_additions_api_v1_public_rights_organization_org_id_robots_txt_get) | **GET** /api/v1/public/rights/organization/{org_id}/robots-txt | Generate robots.txt additions with RSL directives
+*PublicRightsApi* | [**get_rsl_xml_api_v1_public_rights_organization_org_id_rsl_get**](docs/PublicRightsApi.md#get_rsl_xml_api_v1_public_rights_organization_org_id_rsl_get) | **GET** /api/v1/public/rights/organization/{org_id}/rsl | Generate RSL 1.0 XML document
+*PublicRightsApi* | [**resolve_rights_from_text_api_v1_public_rights_resolve_post**](docs/PublicRightsApi.md#resolve_rights_from_text_api_v1_public_rights_resolve_post) | **POST** /api/v1/public/rights/resolve | Resolve rights from raw text with embedded markers
+*PublicRightsApi* | [**rsl_olp_token_api_v1_public_rights_rsl_olp_token_post**](docs/PublicRightsApi.md#rsl_olp_token_api_v1_public_rights_rsl_olp_token_post) | **POST** /api/v1/public/rights/rsl/olp/token | RSL Open License Protocol token endpoint
+*PublicRightsApi* | [**validate_olp_token_api_v1_public_rights_rsl_olp_validate_token_get**](docs/PublicRightsApi.md#validate_olp_token_api_v1_public_rights_rsl_olp_validate_token_get) | **GET** /api/v1/public/rights/rsl/olp/validate/{token} | Validate an OLP token
 *PublicVerificationApi* | [**batch_verify_embeddings_api_v1_public_verify_batch_post**](docs/PublicVerificationApi.md#batch_verify_embeddings_api_v1_public_verify_batch_post) | **POST** /api/v1/public/verify/batch | Batch Verify Embeddings (Public - No Auth Required)
 *PublicVerificationApi* | [**extract_and_verify_embedding_api_v1_public_extract_and_verify_post**](docs/PublicVerificationApi.md#extract_and_verify_embedding_api_v1_public_extract_and_verify_post) | **POST** /api/v1/public/extract-and-verify | DEPRECATED - Use POST /api/v1/verify instead
 *PublicVerificationApi* | [**verify_embedding_api_v1_public_verify_ref_id_get**](docs/PublicVerificationApi.md#verify_embedding_api_v1_public_verify_ref_id_get) | **GET** /api/v1/public/verify/{ref_id} | Verify Embedding (Public - No Auth Required)
+*RichSigningApi* | [**sign_rich_content_api_v1_sign_rich_post**](docs/RichSigningApi.md#sign_rich_content_api_v1_sign_rich_post) | **POST** /api/v1/sign/rich | Sign rich article (text + images) with C2PA
+*RightsLicensingTransactionsApi* | [**create_licensing_request_api_v1_rights_licensing_request_post**](docs/RightsLicensingTransactionsApi.md#create_licensing_request_api_v1_rights_licensing_request_post) | **POST** /api/v1/rights-licensing/request | Submit a licensing request
+*RightsLicensingTransactionsApi* | [**create_licensing_request_api_v1_rights_licensing_request_post_0**](docs/RightsLicensingTransactionsApi.md#create_licensing_request_api_v1_rights_licensing_request_post_0) | **POST** /api/v1/rights-licensing/request | Submit a licensing request
+*RightsLicensingTransactionsApi* | [**get_agreement_api_v1_rights_licensing_agreements_agreement_id_get**](docs/RightsLicensingTransactionsApi.md#get_agreement_api_v1_rights_licensing_agreements_agreement_id_get) | **GET** /api/v1/rights-licensing/agreements/{agreement_id} | Get specific agreement details
+*RightsLicensingTransactionsApi* | [**get_agreement_api_v1_rights_licensing_agreements_agreement_id_get_0**](docs/RightsLicensingTransactionsApi.md#get_agreement_api_v1_rights_licensing_agreements_agreement_id_get_0) | **GET** /api/v1/rights-licensing/agreements/{agreement_id} | Get specific agreement details
+*RightsLicensingTransactionsApi* | [**get_agreement_usage_api_v1_rights_licensing_agreements_agreement_id_usage_get**](docs/RightsLicensingTransactionsApi.md#get_agreement_usage_api_v1_rights_licensing_agreements_agreement_id_usage_get) | **GET** /api/v1/rights-licensing/agreements/{agreement_id}/usage | Get usage metrics for an active agreement
+*RightsLicensingTransactionsApi* | [**get_agreement_usage_api_v1_rights_licensing_agreements_agreement_id_usage_get_0**](docs/RightsLicensingTransactionsApi.md#get_agreement_usage_api_v1_rights_licensing_agreements_agreement_id_usage_get_0) | **GET** /api/v1/rights-licensing/agreements/{agreement_id}/usage | Get usage metrics for an active agreement
+*RightsLicensingTransactionsApi* | [**list_agreements_api_v1_rights_licensing_agreements_get**](docs/RightsLicensingTransactionsApi.md#list_agreements_api_v1_rights_licensing_agreements_get) | **GET** /api/v1/rights-licensing/agreements | List active licensing agreements
+*RightsLicensingTransactionsApi* | [**list_agreements_api_v1_rights_licensing_agreements_get_0**](docs/RightsLicensingTransactionsApi.md#list_agreements_api_v1_rights_licensing_agreements_get_0) | **GET** /api/v1/rights-licensing/agreements | List active licensing agreements
+*RightsLicensingTransactionsApi* | [**list_licensing_requests_api_v1_rights_licensing_requests_get**](docs/RightsLicensingTransactionsApi.md#list_licensing_requests_api_v1_rights_licensing_requests_get) | **GET** /api/v1/rights-licensing/requests | List licensing requests
+*RightsLicensingTransactionsApi* | [**list_licensing_requests_api_v1_rights_licensing_requests_get_0**](docs/RightsLicensingTransactionsApi.md#list_licensing_requests_api_v1_rights_licensing_requests_get_0) | **GET** /api/v1/rights-licensing/requests | List licensing requests
+*RightsLicensingTransactionsApi* | [**respond_to_licensing_request_api_v1_rights_licensing_requests_request_id_respond_put**](docs/RightsLicensingTransactionsApi.md#respond_to_licensing_request_api_v1_rights_licensing_requests_request_id_respond_put) | **PUT** /api/v1/rights-licensing/requests/{request_id}/respond | Publisher responds to a licensing request
+*RightsLicensingTransactionsApi* | [**respond_to_licensing_request_api_v1_rights_licensing_requests_request_id_respond_put_0**](docs/RightsLicensingTransactionsApi.md#respond_to_licensing_request_api_v1_rights_licensing_requests_request_id_respond_put_0) | **PUT** /api/v1/rights-licensing/requests/{request_id}/respond | Publisher responds to a licensing request
+*RightsManagementApi* | [**bulk_update_rights_api_v1_rights_bulk_update_post**](docs/RightsManagementApi.md#bulk_update_rights_api_v1_rights_bulk_update_post) | **POST** /api/v1/rights/bulk-update | Bulk update rights for multiple documents/collections
+*RightsManagementApi* | [**bulk_update_rights_api_v1_rights_bulk_update_post_0**](docs/RightsManagementApi.md#bulk_update_rights_api_v1_rights_bulk_update_post_0) | **POST** /api/v1/rights/bulk-update | Bulk update rights for multiple documents/collections
+*RightsManagementApi* | [**delegated_publisher_setup_api_v1_rights_profile_delegated_setup_post**](docs/RightsManagementApi.md#delegated_publisher_setup_api_v1_rights_profile_delegated_setup_post) | **POST** /api/v1/rights/profile/delegated-setup | Platform partner: onboard publisher with rights profile
+*RightsManagementApi* | [**delegated_publisher_setup_api_v1_rights_profile_delegated_setup_post_0**](docs/RightsManagementApi.md#delegated_publisher_setup_api_v1_rights_profile_delegated_setup_post_0) | **POST** /api/v1/rights/profile/delegated-setup | Platform partner: onboard publisher with rights profile
+*RightsManagementApi* | [**get_content_spread_api_v1_rights_analytics_content_spread_get**](docs/RightsManagementApi.md#get_content_spread_api_v1_rights_analytics_content_spread_get) | **GET** /api/v1/rights/analytics/content-spread | Content spread analytics
+*RightsManagementApi* | [**get_content_spread_api_v1_rights_analytics_content_spread_get_0**](docs/RightsManagementApi.md#get_content_spread_api_v1_rights_analytics_content_spread_get_0) | **GET** /api/v1/rights/analytics/content-spread | Content spread analytics
+*RightsManagementApi* | [**get_crawler_analytics_api_v1_rights_analytics_crawlers_get**](docs/RightsManagementApi.md#get_crawler_analytics_api_v1_rights_analytics_crawlers_get) | **GET** /api/v1/rights/analytics/crawlers | Get AI crawler activity for org content
+*RightsManagementApi* | [**get_crawler_analytics_api_v1_rights_analytics_crawlers_get_0**](docs/RightsManagementApi.md#get_crawler_analytics_api_v1_rights_analytics_crawlers_get_0) | **GET** /api/v1/rights/analytics/crawlers | Get AI crawler activity for org content
+*RightsManagementApi* | [**get_crawler_timeseries_api_v1_rights_analytics_crawlers_timeseries_get**](docs/RightsManagementApi.md#get_crawler_timeseries_api_v1_rights_analytics_crawlers_timeseries_get) | **GET** /api/v1/rights/analytics/crawlers/timeseries | Get AI crawler activity timeseries
+*RightsManagementApi* | [**get_crawler_timeseries_api_v1_rights_analytics_crawlers_timeseries_get_0**](docs/RightsManagementApi.md#get_crawler_timeseries_api_v1_rights_analytics_crawlers_timeseries_get_0) | **GET** /api/v1/rights/analytics/crawlers/timeseries | Get AI crawler activity timeseries
+*RightsManagementApi* | [**get_detection_analytics_api_v1_rights_analytics_detections_get**](docs/RightsManagementApi.md#get_detection_analytics_api_v1_rights_analytics_detections_get) | **GET** /api/v1/rights/analytics/detections | Get content detection analytics
+*RightsManagementApi* | [**get_detection_analytics_api_v1_rights_analytics_detections_get_0**](docs/RightsManagementApi.md#get_detection_analytics_api_v1_rights_analytics_detections_get_0) | **GET** /api/v1/rights/analytics/detections | Get content detection analytics
+*RightsManagementApi* | [**get_rights_profile_api_v1_rights_profile_get**](docs/RightsManagementApi.md#get_rights_profile_api_v1_rights_profile_get) | **GET** /api/v1/rights/profile | Get current rights profile
+*RightsManagementApi* | [**get_rights_profile_api_v1_rights_profile_get_0**](docs/RightsManagementApi.md#get_rights_profile_api_v1_rights_profile_get_0) | **GET** /api/v1/rights/profile | Get current rights profile
+*RightsManagementApi* | [**get_rights_profile_history_api_v1_rights_profile_history_get**](docs/RightsManagementApi.md#get_rights_profile_history_api_v1_rights_profile_history_get) | **GET** /api/v1/rights/profile/history | Rights profile version history
+*RightsManagementApi* | [**get_rights_profile_history_api_v1_rights_profile_history_get_0**](docs/RightsManagementApi.md#get_rights_profile_history_api_v1_rights_profile_history_get_0) | **GET** /api/v1/rights/profile/history | Rights profile version history
+*RightsManagementApi* | [**import_rsl_document_api_v1_rights_rsl_import_post**](docs/RightsManagementApi.md#import_rsl_document_api_v1_rights_rsl_import_post) | **POST** /api/v1/rights/rsl/import | Import existing RSL document as rights profile
+*RightsManagementApi* | [**import_rsl_document_api_v1_rights_rsl_import_post_0**](docs/RightsManagementApi.md#import_rsl_document_api_v1_rights_rsl_import_post_0) | **POST** /api/v1/rights/rsl/import | Import existing RSL document as rights profile
+*RightsManagementApi* | [**init_profile_from_template_api_v1_rights_profile_from_template_template_id_post**](docs/RightsManagementApi.md#init_profile_from_template_api_v1_rights_profile_from_template_template_id_post) | **POST** /api/v1/rights/profile/from-template/{template_id} | Initialize rights profile from a template
+*RightsManagementApi* | [**init_profile_from_template_api_v1_rights_profile_from_template_template_id_post_0**](docs/RightsManagementApi.md#init_profile_from_template_api_v1_rights_profile_from_template_template_id_post_0) | **POST** /api/v1/rights/profile/from-template/{template_id} | Initialize rights profile from a template
+*RightsManagementApi* | [**list_rights_templates_api_v1_rights_templates_get**](docs/RightsManagementApi.md#list_rights_templates_api_v1_rights_templates_get) | **GET** /api/v1/rights/templates | List available rights profile templates
+*RightsManagementApi* | [**list_rights_templates_api_v1_rights_templates_get_0**](docs/RightsManagementApi.md#list_rights_templates_api_v1_rights_templates_get_0) | **GET** /api/v1/rights/templates | List available rights profile templates
+*RightsManagementApi* | [**set_collection_rights_override_api_v1_rights_collections_collection_id_put**](docs/RightsManagementApi.md#set_collection_rights_override_api_v1_rights_collections_collection_id_put) | **PUT** /api/v1/rights/collections/{collection_id} | Set rights override for a collection of documents
+*RightsManagementApi* | [**set_collection_rights_override_api_v1_rights_collections_collection_id_put_0**](docs/RightsManagementApi.md#set_collection_rights_override_api_v1_rights_collections_collection_id_put_0) | **PUT** /api/v1/rights/collections/{collection_id} | Set rights override for a collection of documents
+*RightsManagementApi* | [**set_content_type_rights_override_api_v1_rights_content_types_content_type_put**](docs/RightsManagementApi.md#set_content_type_rights_override_api_v1_rights_content_types_content_type_put) | **PUT** /api/v1/rights/content-types/{content_type} | Set rights override for a content type
+*RightsManagementApi* | [**set_content_type_rights_override_api_v1_rights_content_types_content_type_put_0**](docs/RightsManagementApi.md#set_content_type_rights_override_api_v1_rights_content_types_content_type_put_0) | **PUT** /api/v1/rights/content-types/{content_type} | Set rights override for a content type
+*RightsManagementApi* | [**set_document_rights_override_api_v1_rights_documents_document_id_put**](docs/RightsManagementApi.md#set_document_rights_override_api_v1_rights_documents_document_id_put) | **PUT** /api/v1/rights/documents/{document_id} | Set rights override for a specific document
+*RightsManagementApi* | [**set_document_rights_override_api_v1_rights_documents_document_id_put_0**](docs/RightsManagementApi.md#set_document_rights_override_api_v1_rights_documents_document_id_put_0) | **PUT** /api/v1/rights/documents/{document_id} | Set rights override for a specific document
+*RightsManagementApi* | [**upsert_rights_profile_api_v1_rights_profile_put**](docs/RightsManagementApi.md#upsert_rights_profile_api_v1_rights_profile_put) | **PUT** /api/v1/rights/profile | Set or update default rights profile
+*RightsManagementApi* | [**upsert_rights_profile_api_v1_rights_profile_put_0**](docs/RightsManagementApi.md#upsert_rights_profile_api_v1_rights_profile_put_0) | **PUT** /api/v1/rights/profile | Set or update default rights profile
 *SigningApi* | [**sign_advanced_api_v1_sign_advanced_post**](docs/SigningApi.md#sign_advanced_api_v1_sign_advanced_post) | **POST** /api/v1/sign/advanced | REMOVED - Use POST /sign with options instead
 *SigningApi* | [**sign_content_api_v1_sign_post**](docs/SigningApi.md#sign_content_api_v1_sign_post) | **POST** /api/v1/sign | Sign content with C2PA manifest
 *StatusRevocationApi* | [**get_document_status_api_v1_status_documents_document_id_get**](docs/StatusRevocationApi.md#get_document_status_api_v1_status_documents_document_id_get) | **GET** /api/v1/status/documents/{document_id} | Get Document Status
 *StatusRevocationApi* | [**get_document_status_api_v1_status_documents_document_id_get_0**](docs/StatusRevocationApi.md#get_document_status_api_v1_status_documents_document_id_get_0) | **GET** /api/v1/status/documents/{document_id} | Get Document Status
-*StatusRevocationApi* | [**get_status_list_api_v1_status_list_organization_id_list_index_get**](docs/StatusRevocationApi.md#get_status_list_api_v1_status_list_organization_id_list_index_get) | **GET** /api/v1/status/list/{organization_id}/{list_index} | Get Status List
-*StatusRevocationApi* | [**get_status_list_api_v1_status_list_organization_id_list_index_get_0**](docs/StatusRevocationApi.md#get_status_list_api_v1_status_list_organization_id_list_index_get_0) | **GET** /api/v1/status/list/{organization_id}/{list_index} | Get Status List
+*StatusRevocationApi* | [**get_status_list_by_id_api_v1_status_lists_list_id_get**](docs/StatusRevocationApi.md#get_status_list_by_id_api_v1_status_lists_list_id_get) | **GET** /api/v1/status/lists/{list_id} | Get Status List By Id
+*StatusRevocationApi* | [**get_status_list_by_id_api_v1_status_lists_list_id_get_0**](docs/StatusRevocationApi.md#get_status_list_by_id_api_v1_status_lists_list_id_get_0) | **GET** /api/v1/status/lists/{list_id} | Get Status List By Id
 *StatusRevocationApi* | [**get_status_stats_api_v1_status_stats_get**](docs/StatusRevocationApi.md#get_status_stats_api_v1_status_stats_get) | **GET** /api/v1/status/stats | Get Status Stats
 *StatusRevocationApi* | [**get_status_stats_api_v1_status_stats_get_0**](docs/StatusRevocationApi.md#get_status_stats_api_v1_status_stats_get_0) | **GET** /api/v1/status/stats | Get Status Stats
 *StatusRevocationApi* | [**reinstate_document_api_v1_status_documents_document_id_reinstate_post**](docs/StatusRevocationApi.md#reinstate_document_api_v1_status_documents_document_id_reinstate_post) | **POST** /api/v1/status/documents/{document_id}/reinstate | Reinstate Document
@@ -191,9 +365,16 @@ Class | Method | HTTP request | Description
 *StreamingMerkleApi* | [**finalize_streaming_session_api_v1_enterprise_stream_merkle_finalize_post**](docs/StreamingMerkleApi.md#finalize_streaming_session_api_v1_enterprise_stream_merkle_finalize_post) | **POST** /api/v1/enterprise/stream/merkle/finalize | Finalize Streaming Session
 *StreamingMerkleApi* | [**get_session_status_api_v1_enterprise_stream_merkle_status_post**](docs/StreamingMerkleApi.md#get_session_status_api_v1_enterprise_stream_merkle_status_post) | **POST** /api/v1/enterprise/stream/merkle/status | Get Session Status
 *StreamingMerkleApi* | [**start_streaming_merkle_session_api_v1_enterprise_stream_merkle_start_post**](docs/StreamingMerkleApi.md#start_streaming_merkle_session_api_v1_enterprise_stream_merkle_start_post) | **POST** /api/v1/enterprise/stream/merkle/start | Start Streaming Merkle Session
+*SupportApi* | [**submit_support_contact_api_v1_support_contact_post**](docs/SupportApi.md#submit_support_contact_api_v1_support_contact_post) | **POST** /api/v1/support/contact | Submit Support Contact
+*SupportApi* | [**submit_support_contact_api_v1_support_contact_post_0**](docs/SupportApi.md#submit_support_contact_api_v1_support_contact_post_0) | **POST** /api/v1/support/contact | Submit Support Contact
+*TeamInvitesApi* | [**accept_invite_new_user_api_v1_org_invites_public_token_accept_new_post**](docs/TeamInvitesApi.md#accept_invite_new_user_api_v1_org_invites_public_token_accept_new_post) | **POST** /api/v1/org/invites/public/{token}/accept-new | Accept Invite New User
+*TeamInvitesApi* | [**accept_invite_new_user_api_v1_org_invites_public_token_accept_new_post_0**](docs/TeamInvitesApi.md#accept_invite_new_user_api_v1_org_invites_public_token_accept_new_post_0) | **POST** /api/v1/org/invites/public/{token}/accept-new | Accept Invite New User
+*TeamInvitesApi* | [**get_public_invite_api_v1_org_invites_public_token_get**](docs/TeamInvitesApi.md#get_public_invite_api_v1_org_invites_public_token_get) | **GET** /api/v1/org/invites/public/{token} | Get Public Invite
+*TeamInvitesApi* | [**get_public_invite_api_v1_org_invites_public_token_get_0**](docs/TeamInvitesApi.md#get_public_invite_api_v1_org_invites_public_token_get_0) | **GET** /api/v1/org/invites/public/{token} | Get Public Invite
 *UsageApi* | [**get_usage_history_api_v1_usage_history_get**](docs/UsageApi.md#get_usage_history_api_v1_usage_history_get) | **GET** /api/v1/usage/history | Get Usage History
 *UsageApi* | [**get_usage_stats_api_v1_usage_get**](docs/UsageApi.md#get_usage_stats_api_v1_usage_get) | **GET** /api/v1/usage | Get Usage Stats
 *VerificationApi* | [**verify_advanced_api_v1_verify_advanced_post**](docs/VerificationApi.md#verify_advanced_api_v1_verify_advanced_post) | **POST** /api/v1/verify/advanced | Advanced verification
+*VerificationApi* | [**verify_quote_integrity_api_v1_verify_quote_integrity_post**](docs/VerificationApi.md#verify_quote_integrity_api_v1_verify_quote_integrity_post) | **POST** /api/v1/verify/quote-integrity | Quote Integrity Verification
 *WebhooksApi* | [**create_webhook_api_v1_webhooks_post**](docs/WebhooksApi.md#create_webhook_api_v1_webhooks_post) | **POST** /api/v1/webhooks | Create Webhook
 *WebhooksApi* | [**create_webhook_api_v1_webhooks_post_0**](docs/WebhooksApi.md#create_webhook_api_v1_webhooks_post_0) | **POST** /api/v1/webhooks | Create Webhook
 *WebhooksApi* | [**delete_webhook_api_v1_webhooks_webhook_id_delete**](docs/WebhooksApi.md#delete_webhook_api_v1_webhooks_webhook_id_delete) | **DELETE** /api/v1/webhooks/{webhook_id} | Delete Webhook
@@ -212,16 +393,20 @@ Class | Method | HTTP request | Description
 *VerificationApi* | [**get_verification_history_api_v1_verify_history_document_id_get**](docs/VerificationApi.md#get_verification_history_api_v1_verify_history_document_id_get) | **GET** /api/v1/verify/history/{document_id} | Get Verification History
 *VerificationApi* | [**health_check_api_v1_verify_health_get**](docs/VerificationApi.md#health_check_api_v1_verify_health_get) | **GET** /api/v1/verify/health | Health Check
 *VerificationApi* | [**verify_by_document_id_api_v1_verify_document_id_get**](docs/VerificationApi.md#verify_by_document_id_api_v1_verify_document_id_get) | **GET** /api/v1/verify/{document_id} | Verify By Document Id
-*VerificationApi* | [**verify_document_api_v1_verify_document_post**](docs/VerificationApi.md#verify_document_api_v1_verify_document_post) | **POST** /api/v1/verify/document | Verify Document
-*VerificationApi* | [**verify_signature_api_v1_verify_signature_post**](docs/VerificationApi.md#verify_signature_api_v1_verify_signature_post) | **POST** /api/v1/verify/signature | Verify Signature
+*VerificationApi* | [**verify_document_api_v1_verify_document_post**](docs/VerificationApi.md#verify_document_api_v1_verify_document_post) | **POST** /api/v1/verify/document | [DEPRECATED] Verify a document
+*VerificationApi* | [**verify_signature_api_v1_verify_signature_post**](docs/VerificationApi.md#verify_signature_api_v1_verify_signature_post) | **POST** /api/v1/verify/signature | [DEPRECATED] Verify a signature
 *VerificationApi* | [**verify_text_api_v1_verify_post**](docs/VerificationApi.md#verify_text_api_v1_verify_post) | **POST** /api/v1/verify | Verify Text
 
 
 ## Documentation For Models
 
+ - [AcceptInviteNewUserRequest](docs/AcceptInviteNewUserRequest.md)
  - [AccountInfo](docs/AccountInfo.md)
  - [AccountResponse](docs/AccountResponse.md)
- - [AppSchemasBatchBatchVerifyRequest](docs/AppSchemasBatchBatchVerifyRequest.md)
+ - [AdminPurgeRequest](docs/AdminPurgeRequest.md)
+ - [AdminPurgeResponse](docs/AdminPurgeResponse.md)
+ - [AppSchemasEmbeddingsBatchVerifyRequest](docs/AppSchemasEmbeddingsBatchVerifyRequest.md)
+ - [AppSchemasEmbeddingsSignerIdentity](docs/AppSchemasEmbeddingsSignerIdentity.md)
  - [AppSchemasMerkleErrorResponse](docs/AppSchemasMerkleErrorResponse.md)
  - [BatchItemPayload](docs/BatchItemPayload.md)
  - [BatchItemResult](docs/BatchItemResult.md)
@@ -233,6 +418,8 @@ Class | Method | HTTP request | Description
  - [BatchVerifyResponse](docs/BatchVerifyResponse.md)
  - [BatchVerifyResult](docs/BatchVerifyResult.md)
  - [BodyCreateStreamingSessionApiV1SignStreamSessionsPost](docs/BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md)
+ - [BulkResolveRequest](docs/BulkResolveRequest.md)
+ - [BulkResolveResponse](docs/BulkResolveResponse.md)
  - [C2PAAssertionValidateRequest](docs/C2PAAssertionValidateRequest.md)
  - [C2PAAssertionValidateResponse](docs/C2PAAssertionValidateResponse.md)
  - [C2PAAssertionValidationResult](docs/C2PAAssertionValidationResult.md)
@@ -245,6 +432,18 @@ Class | Method | HTTP request | Description
  - [C2PATemplateListResponse](docs/C2PATemplateListResponse.md)
  - [C2PATemplateResponse](docs/C2PATemplateResponse.md)
  - [C2PATemplateUpdate](docs/C2PATemplateUpdate.md)
+ - [CdnAnalyticsSummary](docs/CdnAnalyticsSummary.md)
+ - [CdnAnalyticsTimeline](docs/CdnAnalyticsTimeline.md)
+ - [CdnAnalyticsTimelineDay](docs/CdnAnalyticsTimelineDay.md)
+ - [CdnImageRegisterResponse](docs/CdnImageRegisterResponse.md)
+ - [CdnImageSignResponse](docs/CdnImageSignResponse.md)
+ - [CdnIntegrationCreate](docs/CdnIntegrationCreate.md)
+ - [CdnIntegrationResponse](docs/CdnIntegrationResponse.md)
+ - [CdnManifestLookupResponse](docs/CdnManifestLookupResponse.md)
+ - [CdnVariantsRequest](docs/CdnVariantsRequest.md)
+ - [CdnVariantsResponse](docs/CdnVariantsResponse.md)
+ - [CdnVerifyResponse](docs/CdnVerifyResponse.md)
+ - [CdnWorkerConfigResponse](docs/CdnWorkerConfigResponse.md)
  - [CertificateUploadRequest](docs/CertificateUploadRequest.md)
  - [CertificateUploadResponse](docs/CertificateUploadResponse.md)
  - [ChatCompletionRequest](docs/ChatCompletionRequest.md)
@@ -256,6 +455,12 @@ Class | Method | HTTP request | Description
  - [CreateManifestRequest](docs/CreateManifestRequest.md)
  - [CreateManifestResponse](docs/CreateManifestResponse.md)
  - [CreateManifestSigningPayload](docs/CreateManifestSigningPayload.md)
+ - [CreatePolicyRequest](docs/CreatePolicyRequest.md)
+ - [DeletionConfirmResponse](docs/DeletionConfirmResponse.md)
+ - [DeletionReceiptResponse](docs/DeletionReceiptResponse.md)
+ - [DeletionRequestCreate](docs/DeletionRequestCreate.md)
+ - [DeletionRequestListResponse](docs/DeletionRequestListResponse.md)
+ - [DeletionRequestResponse](docs/DeletionRequestResponse.md)
  - [DocumentDeleteResponse](docs/DocumentDeleteResponse.md)
  - [DocumentDetail](docs/DocumentDetail.md)
  - [DocumentDetailResponse](docs/DocumentDetailResponse.md)
@@ -267,6 +472,7 @@ Class | Method | HTTP request | Description
  - [DocumentStatusResponse](docs/DocumentStatusResponse.md)
  - [DocumentVerify](docs/DocumentVerify.md)
  - [EarningsSummary](docs/EarningsSummary.md)
+ - [EmbeddingDetail](docs/EmbeddingDetail.md)
  - [EmbeddingOptions](docs/EmbeddingOptions.md)
  - [EmbeddingVerdict](docs/EmbeddingVerdict.md)
  - [ErrorDetail](docs/ErrorDetail.md)
@@ -283,14 +489,26 @@ Class | Method | HTTP request | Description
  - [FingerprintMatch](docs/FingerprintMatch.md)
  - [FuzzyFingerprintConfig](docs/FuzzyFingerprintConfig.md)
  - [FuzzySearchConfig](docs/FuzzySearchConfig.md)
+ - [GhostIntegrationCreate](docs/GhostIntegrationCreate.md)
+ - [GhostIntegrationResponse](docs/GhostIntegrationResponse.md)
+ - [GhostManualSignRequest](docs/GhostManualSignRequest.md)
+ - [GhostTokenRegenerateResponse](docs/GhostTokenRegenerateResponse.md)
  - [HTTPValidationError](docs/HTTPValidationError.md)
+ - [ImageAttributionMatchResponse](docs/ImageAttributionMatchResponse.md)
+ - [ImageAttributionRequest](docs/ImageAttributionRequest.md)
+ - [ImageAttributionResponse](docs/ImageAttributionResponse.md)
+ - [ImageVerificationResult](docs/ImageVerificationResult.md)
+ - [ImageVerifyRequest](docs/ImageVerifyRequest.md)
+ - [ImageVerifyResponse](docs/ImageVerifyResponse.md)
  - [KeyCreateRequest](docs/KeyCreateRequest.md)
  - [KeyCreateResponse](docs/KeyCreateResponse.md)
  - [KeyListResponse](docs/KeyListResponse.md)
+ - [KeyRevokeByUserRequest](docs/KeyRevokeByUserRequest.md)
  - [KeyRevokeResponse](docs/KeyRevokeResponse.md)
  - [KeyRotateResponse](docs/KeyRotateResponse.md)
  - [KeyUpdateRequest](docs/KeyUpdateRequest.md)
  - [KeyUpdateResponse](docs/KeyUpdateResponse.md)
+ - [KeyUsageResponse](docs/KeyUsageResponse.md)
  - [LicenseInfo](docs/LicenseInfo.md)
  - [LicensingInfo](docs/LicensingInfo.md)
  - [LookupRequest](docs/LookupRequest.md)
@@ -300,7 +518,12 @@ Class | Method | HTTP request | Description
  - [MerkleRootResponse](docs/MerkleRootResponse.md)
  - [MultiSourceLookupRequest](docs/MultiSourceLookupRequest.md)
  - [MultiSourceLookupResponse](docs/MultiSourceLookupResponse.md)
+ - [PartnerBulkProvisionRequest](docs/PartnerBulkProvisionRequest.md)
+ - [PartnerPublisherSpec](docs/PartnerPublisherSpec.md)
  - [PayoutSummary](docs/PayoutSummary.md)
+ - [PolicyRule](docs/PolicyRule.md)
+ - [ProgressionStage](docs/ProgressionStage.md)
+ - [ProgressionStatusResponse](docs/ProgressionStatusResponse.md)
  - [PublicKeyInfo](docs/PublicKeyInfo.md)
  - [PublicKeyListResponse](docs/PublicKeyListResponse.md)
  - [PublicKeyRegisterRequest](docs/PublicKeyRegisterRequest.md)
@@ -308,14 +531,24 @@ Class | Method | HTTP request | Description
  - [QuotaInfo](docs/QuotaInfo.md)
  - [QuotaMetric](docs/QuotaMetric.md)
  - [QuotaResponse](docs/QuotaResponse.md)
+ - [QuoteIntegrityRequest](docs/QuoteIntegrityRequest.md)
  - [RevocationReason](docs/RevocationReason.md)
  - [RevocationResponse](docs/RevocationResponse.md)
  - [RevokeRequest](docs/RevokeRequest.md)
+ - [RichArticleSignRequest](docs/RichArticleSignRequest.md)
+ - [RichContentImage](docs/RichContentImage.md)
+ - [RichSignOptions](docs/RichSignOptions.md)
+ - [RichVerifyRequest](docs/RichVerifyRequest.md)
+ - [RichVerifyResponse](docs/RichVerifyResponse.md)
  - [RightsMetadata](docs/RightsMetadata.md)
+ - [SegmentLocation](docs/SegmentLocation.md)
+ - [SegmentLocationInfo](docs/SegmentLocationInfo.md)
+ - [SegmentLocationResponse](docs/SegmentLocationResponse.md)
  - [SignDocument](docs/SignDocument.md)
  - [SignOptions](docs/SignOptions.md)
  - [SignatureVerification](docs/SignatureVerification.md)
  - [SignatureVerify](docs/SignatureVerify.md)
+ - [SignerIdentity](docs/SignerIdentity.md)
  - [SourceRecord](docs/SourceRecord.md)
  - [StreamMerkleFinalizeRequest](docs/StreamMerkleFinalizeRequest.md)
  - [StreamMerkleFinalizeResponse](docs/StreamMerkleFinalizeResponse.md)
@@ -326,9 +559,15 @@ Class | Method | HTTP request | Description
  - [StreamMerkleStatusRequest](docs/StreamMerkleStatusRequest.md)
  - [StreamMerkleStatusResponse](docs/StreamMerkleStatusResponse.md)
  - [StreamSignRequest](docs/StreamSignRequest.md)
+ - [SupportContactRequest](docs/SupportContactRequest.md)
+ - [SupportContactResponse](docs/SupportContactResponse.md)
+ - [SupportResponseData](docs/SupportResponseData.md)
+ - [TextVerificationResult](docs/TextVerificationResult.md)
  - [TrustAnchorResponse](docs/TrustAnchorResponse.md)
  - [TrustListResponse](docs/TrustListResponse.md)
+ - [TsaTrustListValue](docs/TsaTrustListValue.md)
  - [UnifiedSignRequest](docs/UnifiedSignRequest.md)
+ - [UpdatePolicyRequest](docs/UpdatePolicyRequest.md)
  - [UsageMetric](docs/UsageMetric.md)
  - [UsageResponse](docs/UsageResponse.md)
  - [ValidateManifestRequest](docs/ValidateManifestRequest.md)
@@ -359,6 +598,16 @@ Class | Method | HTTP request | Description
  - [WebhookTestResponse](docs/WebhookTestResponse.md)
  - [WebhookUpdateRequest](docs/WebhookUpdateRequest.md)
  - [WebhookUpdateResponse](docs/WebhookUpdateResponse.md)
+ - [WordPressActionAckPayload](docs/WordPressActionAckPayload.md)
+ - [WordPressActionQueuePayload](docs/WordPressActionQueuePayload.md)
+ - [WordPressConnectCompletePayload](docs/WordPressConnectCompletePayload.md)
+ - [WordPressConnectPollResponse](docs/WordPressConnectPollResponse.md)
+ - [WordPressConnectStartPayload](docs/WordPressConnectStartPayload.md)
+ - [WordPressInstallRegistrationPayload](docs/WordPressInstallRegistrationPayload.md)
+ - [WordPressIntegrationStatusPayload](docs/WordPressIntegrationStatusPayload.md)
+ - [WordPressIntegrationStatusResponse](docs/WordPressIntegrationStatusResponse.md)
+ - [WordPressVerificationEventPayload](docs/WordPressVerificationEventPayload.md)
+ - [ZWResolveResponse](docs/ZWResolveResponse.md)
 
 
 <a id="documentation-for-authorization"></a>
@@ -373,7 +622,3 @@ Authentication schemes defined for the API:
 
 
 ## Author
-
-
-
-

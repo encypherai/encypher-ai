@@ -8,8 +8,8 @@ Method | HTTP request | Description
 [**get_verification_history_api_v1_verify_history_document_id_get**](VerificationApi.md#get_verification_history_api_v1_verify_history_document_id_get) | **GET** /api/v1/verify/history/{document_id} | Get Verification History
 [**health_check_api_v1_verify_health_get**](VerificationApi.md#health_check_api_v1_verify_health_get) | **GET** /api/v1/verify/health | Health Check
 [**verify_by_document_id_api_v1_verify_document_id_get**](VerificationApi.md#verify_by_document_id_api_v1_verify_document_id_get) | **GET** /api/v1/verify/{document_id} | Verify By Document Id
-[**verify_document_api_v1_verify_document_post**](VerificationApi.md#verify_document_api_v1_verify_document_post) | **POST** /api/v1/verify/document | Verify Document
-[**verify_signature_api_v1_verify_signature_post**](VerificationApi.md#verify_signature_api_v1_verify_signature_post) | **POST** /api/v1/verify/signature | Verify Signature
+[**verify_document_api_v1_verify_document_post**](VerificationApi.md#verify_document_api_v1_verify_document_post) | **POST** /api/v1/verify/document | [DEPRECATED] Verify a document
+[**verify_signature_api_v1_verify_signature_post**](VerificationApi.md#verify_signature_api_v1_verify_signature_post) | **POST** /api/v1/verify/signature | [DEPRECATED] Verify a signature
 [**verify_text_api_v1_verify_post**](VerificationApi.md#verify_text_api_v1_verify_post) | **POST** /api/v1/verify | Verify Text
 
 
@@ -58,7 +58,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **authorization** | **str**|  | [optional] 
+ **authorization** | **str**|  | [optional]
 
 ### Return type
 
@@ -112,7 +112,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.VerificationApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
     limit = 100 # int |  (optional) (default to 100)
 
     try:
@@ -131,7 +131,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
  **limit** | **int**|  | [optional] [default to 100]
 
 ### Return type
@@ -226,8 +226,7 @@ Verify By Document Id
 
 Verify a document by its ID (for clickable verification links).
 
-Returns an HTML page so users can preview verification state in a browser.
-This endpoint queries the content database for the signed document.
+Returns HTML or JSON depending on the Accept header.
 
 ### Example
 
@@ -248,7 +247,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.VerificationApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
 
     try:
         # Verify By Document Id
@@ -266,7 +265,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
 
 ### Return type
 
@@ -293,12 +292,9 @@ No authorization required
 # **verify_document_api_v1_verify_document_post**
 > VerificationResponse verify_document_api_v1_verify_document_post(document_verify, x_forwarded_for=x_forwarded_for, user_agent=user_agent, authorization=authorization)
 
-Verify Document
+[DEPRECATED] Verify a document
 
-Complete document verification (public endpoint)
-
-- **document_id**: Document ID from encoding service
-- **content**: Current content to verify
+**Deprecated.** Use `POST /api/v1/verify` instead. This endpoint will be removed in a future release.
 
 ### Example
 
@@ -321,13 +317,13 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.VerificationApi(api_client)
-    document_verify = encypher.DocumentVerify() # DocumentVerify | 
+    document_verify = encypher.DocumentVerify() # DocumentVerify |
     x_forwarded_for = 'x_forwarded_for_example' # str |  (optional)
     user_agent = 'user_agent_example' # str |  (optional)
     authorization = 'authorization_example' # str |  (optional)
 
     try:
-        # Verify Document
+        # [DEPRECATED] Verify a document
         api_response = api_instance.verify_document_api_v1_verify_document_post(document_verify, x_forwarded_for=x_forwarded_for, user_agent=user_agent, authorization=authorization)
         print("The response of VerificationApi->verify_document_api_v1_verify_document_post:\n")
         pprint(api_response)
@@ -342,10 +338,10 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_verify** | [**DocumentVerify**](DocumentVerify.md)|  | 
- **x_forwarded_for** | **str**|  | [optional] 
- **user_agent** | **str**|  | [optional] 
- **authorization** | **str**|  | [optional] 
+ **document_verify** | [**DocumentVerify**](DocumentVerify.md)|  |
+ **x_forwarded_for** | **str**|  | [optional]
+ **user_agent** | **str**|  | [optional]
+ **authorization** | **str**|  | [optional]
 
 ### Return type
 
@@ -372,13 +368,9 @@ No authorization required
 # **verify_signature_api_v1_verify_signature_post**
 > VerificationResponse verify_signature_api_v1_verify_signature_post(signature_verify, x_forwarded_for=x_forwarded_for, user_agent=user_agent, authorization=authorization)
 
-Verify Signature
+[DEPRECATED] Verify a signature
 
-Verify a signature (public endpoint)
-
-- **content**: Original content
-- **signature**: Hex-encoded signature
-- **public_key_pem**: PEM-encoded public key
+**Deprecated.** Use `POST /api/v1/verify` instead. This endpoint will be removed in a future release.
 
 ### Example
 
@@ -401,13 +393,13 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.VerificationApi(api_client)
-    signature_verify = encypher.SignatureVerify() # SignatureVerify | 
+    signature_verify = encypher.SignatureVerify() # SignatureVerify |
     x_forwarded_for = 'x_forwarded_for_example' # str |  (optional)
     user_agent = 'user_agent_example' # str |  (optional)
     authorization = 'authorization_example' # str |  (optional)
 
     try:
-        # Verify Signature
+        # [DEPRECATED] Verify a signature
         api_response = api_instance.verify_signature_api_v1_verify_signature_post(signature_verify, x_forwarded_for=x_forwarded_for, user_agent=user_agent, authorization=authorization)
         print("The response of VerificationApi->verify_signature_api_v1_verify_signature_post:\n")
         pprint(api_response)
@@ -422,10 +414,10 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **signature_verify** | [**SignatureVerify**](SignatureVerify.md)|  | 
- **x_forwarded_for** | **str**|  | [optional] 
- **user_agent** | **str**|  | [optional] 
- **authorization** | **str**|  | [optional] 
+ **signature_verify** | [**SignatureVerify**](SignatureVerify.md)|  |
+ **x_forwarded_for** | **str**|  | [optional]
+ **user_agent** | **str**|  | [optional]
+ **authorization** | **str**|  | [optional]
 
 ### Return type
 
@@ -477,7 +469,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.VerificationApi(api_client)
-    verify_request = encypher.VerifyRequest() # VerifyRequest | 
+    verify_request = encypher.VerifyRequest() # VerifyRequest |
     authorization = 'authorization_example' # str |  (optional)
 
     try:
@@ -496,8 +488,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **verify_request** | [**VerifyRequest**](VerifyRequest.md)|  | 
- **authorization** | **str**|  | [optional] 
+ **verify_request** | [**VerifyRequest**](VerifyRequest.md)|  |
+ **authorization** | **str**|  | [optional]
 
 ### Return type
 
@@ -520,4 +512,3 @@ No authorization required
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

@@ -41,11 +41,13 @@ class TestC2PAInfo(unittest.TestCase):
                 validation_type = '',
                 validation_details = {
                     'key' : null
+                    },
+                manifest_data = {
+                    'key' : null
                     }
             )
         else:
             return C2PAInfo(
-                manifest_url = '',
                 validated = True,
                 validation_type = '',
         )

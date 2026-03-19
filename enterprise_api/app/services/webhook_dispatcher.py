@@ -10,7 +10,7 @@ import hmac
 import json
 import logging
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 import httpx
@@ -38,9 +38,11 @@ class WebhookDispatcher:
     RETRY_DELAYS = [60, 300, 900]  # 1 min, 5 min, 15 min
     TIMEOUT_SECONDS = 10
     MAX_ATTEMPTS = 3
+    RETRY_POLL_INTERVAL = 30  # seconds between retry sweeps
 
     def __init__(self):
         self._client: Optional[httpx.AsyncClient] = None
+        self._retry_task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
 
     async def get_client(self) -> httpx.AsyncClient:
         """Get or create HTTP client."""
@@ -52,9 +54,39 @@ class WebhookDispatcher:
         return self._client
 
     async def close(self):
-        """Close HTTP client."""
+        """Close HTTP client and stop retry loop."""
+        await self.stop_retry_loop()
         if self._client and not self._client.is_closed:
             await self._client.aclose()
+
+    def start_retry_loop(self) -> None:
+        """Start the background retry processing loop."""
+        if self._retry_task is None or self._retry_task.done():
+            self._retry_task = asyncio.create_task(self._retry_loop())
+            logger.info("Webhook retry loop started")
+
+    async def stop_retry_loop(self) -> None:
+        """Stop the background retry processing loop."""
+        if self._retry_task and not self._retry_task.done():
+            self._retry_task.cancel()
+            try:
+                await self._retry_task
+            except asyncio.CancelledError:
+                pass
+            self._retry_task = None
+            logger.info("Webhook retry loop stopped")
+
+    async def _retry_loop(self) -> None:
+        """Background loop that periodically processes pending retries."""
+        while True:
+            try:
+                await asyncio.sleep(self.RETRY_POLL_INTERVAL)
+                await self.process_pending_retries()
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.error(f"Webhook retry loop error: {e}")
+                await asyncio.sleep(self.RETRY_POLL_INTERVAL)
 
     def generate_signature(self, payload: str, secret: str) -> str:
         """
@@ -245,6 +277,10 @@ class WebhookDispatcher:
             event_type=event_type,
         )
 
+        # Schedule retry if first attempt failed
+        if not success:
+            await self._schedule_retry(db, delivery_id)
+
         return success
 
     async def _attempt_delivery(
@@ -417,6 +453,156 @@ class WebhookDispatcher:
 
         await db.commit()
         logger.error(f"Webhook delivery failed: {delivery_id} - {error_message}")
+
+    async def _schedule_retry(
+        self,
+        db: AsyncSession,
+        delivery_id: str,
+    ) -> None:
+        """Schedule a retry or mark as permanently failed after max attempts."""
+        result = await db.execute(
+            text("SELECT attempts, max_attempts FROM webhook_deliveries WHERE id = :id"),
+            {"id": delivery_id},
+        )
+        row = result.fetchone()
+        if not row:
+            return
+
+        if row.attempts >= row.max_attempts:
+            await db.execute(
+                text("UPDATE webhook_deliveries" " SET status = 'permanently_failed', next_retry_at = NULL" " WHERE id = :id"),
+                {"id": delivery_id},
+            )
+            await db.commit()
+            logger.warning(f"Webhook delivery permanently failed (DLQ): {delivery_id}")
+        else:
+            delay_index = min(row.attempts - 1, len(self.RETRY_DELAYS) - 1)
+            delay_seconds = self.RETRY_DELAYS[delay_index]
+            next_retry = datetime.now(timezone.utc) + timedelta(seconds=delay_seconds)
+            await db.execute(
+                text("UPDATE webhook_deliveries" " SET status = 'retrying', next_retry_at = :next_retry" " WHERE id = :id"),
+                {"id": delivery_id, "next_retry": next_retry},
+            )
+            await db.commit()
+            logger.info(f"Webhook delivery {delivery_id} scheduled for retry " f"at {next_retry.isoformat()}")
+
+    async def process_pending_retries(self) -> int:
+        """Process all deliveries due for retry. Returns count processed."""
+        db = async_session_factory()
+        processed = 0
+        try:
+            result = await db.execute(
+                text(
+                    "SELECT d.id, d.webhook_id, d.payload, d.event_type,"
+                    " w.url, w.secret_encrypted"
+                    " FROM webhook_deliveries d"
+                    " JOIN webhooks w ON w.id = d.webhook_id"
+                    " WHERE d.status = 'retrying'"
+                    " AND d.next_retry_at <= :now"
+                    " ORDER BY d.next_retry_at ASC"
+                    " LIMIT 50"
+                ),
+                {"now": datetime.now(timezone.utc)},
+            )
+            rows = result.fetchall()
+
+            for row in rows:
+                secret = None
+                if row.secret_encrypted:
+                    try:
+                        secret = decrypt_sensitive_value(bytes(row.secret_encrypted))
+                    except ValueError as exc:
+                        logger.warning(
+                            "webhook_secret_decrypt_failed",
+                            extra={"webhook_id": row.webhook_id, "error": str(exc)},
+                        )
+
+                payload_json = json.dumps(row.payload)
+                success = await self._attempt_delivery(
+                    db=db,
+                    delivery_id=row.id,
+                    webhook_id=row.webhook_id,
+                    url=row.url,
+                    secret=secret,
+                    payload_json=payload_json,
+                    event_type=row.event_type,
+                )
+
+                if not success:
+                    await self._schedule_retry(db, row.id)
+
+                processed += 1
+
+        except Exception as e:
+            logger.error(f"Error processing webhook retries: {e}")
+        finally:
+            await db.close()
+
+        if processed:
+            logger.info(f"Processed {processed} webhook retries")
+        return processed
+
+    async def retry_delivery(
+        self,
+        db: AsyncSession,
+        delivery_id: str,
+    ) -> bool:
+        """
+        Manually retry a failed or permanently_failed delivery.
+
+        Resets the delivery for another attempt and tries immediately.
+        Returns True if the delivery was found and retried.
+        """
+        result = await db.execute(
+            text(
+                "SELECT d.id, d.webhook_id, d.payload, d.event_type, d.status,"
+                " w.url, w.secret_encrypted"
+                " FROM webhook_deliveries d"
+                " JOIN webhooks w ON w.id = d.webhook_id"
+                " WHERE d.id = :id"
+            ),
+            {"id": delivery_id},
+        )
+        row = result.fetchone()
+        if not row or row.status not in ("failed", "permanently_failed"):
+            return False
+
+        # Reset for retry
+        await db.execute(
+            text(
+                "UPDATE webhook_deliveries"
+                " SET status = 'retrying',"
+                " next_retry_at = :now,"
+                " attempts = GREATEST(attempts - 1, 0)"
+                " WHERE id = :id"
+            ),
+            {"id": delivery_id, "now": datetime.now(timezone.utc)},
+        )
+        await db.commit()
+
+        # Attempt immediately
+        secret = None
+        if row.secret_encrypted:
+            try:
+                secret = decrypt_sensitive_value(bytes(row.secret_encrypted))
+            except ValueError:
+                pass
+
+        payload_json = json.dumps(row.payload)
+        success = await self._attempt_delivery(
+            db=db,
+            delivery_id=row.id,
+            webhook_id=row.webhook_id,
+            url=row.url,
+            secret=secret,
+            payload_json=payload_json,
+            event_type=row.event_type,
+        )
+
+        if not success:
+            await self._schedule_retry(db, row.id)
+
+        return True
 
 
 # Singleton instance

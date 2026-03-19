@@ -19,6 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from encypher.models.segment_location import SegmentLocation
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -29,7 +30,8 @@ class ContentInfo(BaseModel):
     text_preview: Optional[StrictStr] = None
     leaf_hash: StrictStr = Field(description="Cryptographic hash of full content")
     leaf_index: StrictInt = Field(description="Position in document")
-    __properties: ClassVar[List[str]] = ["text_preview", "leaf_hash", "leaf_index"]
+    segment_location: Optional[SegmentLocation] = None
+    __properties: ClassVar[List[str]] = ["text_preview", "leaf_hash", "leaf_index", "segment_location"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -70,10 +72,18 @@ class ContentInfo(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of segment_location
+        if self.segment_location:
+            _dict['segment_location'] = self.segment_location.to_dict()
         # set to None if text_preview (nullable) is None
         # and model_fields_set contains the field
         if self.text_preview is None and "text_preview" in self.model_fields_set:
             _dict['text_preview'] = None
+
+        # set to None if segment_location (nullable) is None
+        # and model_fields_set contains the field
+        if self.segment_location is None and "segment_location" in self.model_fields_set:
+            _dict['segment_location'] = None
 
         return _dict
 
@@ -89,8 +99,7 @@ class ContentInfo(BaseModel):
         _obj = cls.model_validate({
             "text_preview": obj.get("text_preview"),
             "leaf_hash": obj.get("leaf_hash"),
-            "leaf_index": obj.get("leaf_index")
+            "leaf_index": obj.get("leaf_index"),
+            "segment_location": SegmentLocation.from_dict(obj["segment_location"]) if obj.get("segment_location") is not None else None
         })
         return _obj
-
-

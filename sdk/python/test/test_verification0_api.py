@@ -57,14 +57,14 @@ class TestVerificationApi(unittest.TestCase):
     def test_verify_document_api_v1_verify_document_post(self) -> None:
         """Test case for verify_document_api_v1_verify_document_post
 
-        Verify Document
+        [DEPRECATED] Verify a document
         """
         pass
 
     def test_verify_signature_api_v1_verify_signature_post(self) -> None:
         """Test case for verify_signature_api_v1_verify_signature_post
 
-        Verify Signature
+        [DEPRECATED] Verify a signature
         """
         pass
 

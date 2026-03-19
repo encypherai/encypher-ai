@@ -43,7 +43,18 @@ class TestTrustListResponse(unittest.TestCase):
                 trust_list_fingerprint = '',
                 trust_list_loaded_at = '',
                 trust_list_source = '',
-                trust_list_count = ''
+                trust_list_count = '',
+                required_signer_eku_oids = [
+                    ''
+                    ],
+                revocation_denylist = {
+                    'key' : ''
+                    },
+                tsa_trust_list = {
+                    'key' : null
+                    },
+                default_signing_mode = 'organization',
+                managed_signer_id = 'encypher_managed'
             )
         else:
             return TrustListResponse(

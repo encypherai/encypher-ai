@@ -33,6 +33,13 @@ class TestVerificationApi(unittest.TestCase):
         """
         pass
 
+    def test_verify_quote_integrity_api_v1_verify_quote_integrity_post(self) -> None:
+        """Test case for verify_quote_integrity_api_v1_verify_quote_integrity_post
+
+        Quote Integrity Verification
+        """
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

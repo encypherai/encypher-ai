@@ -6,8 +6,8 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**get_document_status_api_v1_status_documents_document_id_get**](StatusRevocationApi.md#get_document_status_api_v1_status_documents_document_id_get) | **GET** /api/v1/status/documents/{document_id} | Get Document Status
 [**get_document_status_api_v1_status_documents_document_id_get_0**](StatusRevocationApi.md#get_document_status_api_v1_status_documents_document_id_get_0) | **GET** /api/v1/status/documents/{document_id} | Get Document Status
-[**get_status_list_api_v1_status_list_organization_id_list_index_get**](StatusRevocationApi.md#get_status_list_api_v1_status_list_organization_id_list_index_get) | **GET** /api/v1/status/list/{organization_id}/{list_index} | Get Status List
-[**get_status_list_api_v1_status_list_organization_id_list_index_get_0**](StatusRevocationApi.md#get_status_list_api_v1_status_list_organization_id_list_index_get_0) | **GET** /api/v1/status/list/{organization_id}/{list_index} | Get Status List
+[**get_status_list_by_id_api_v1_status_lists_list_id_get**](StatusRevocationApi.md#get_status_list_by_id_api_v1_status_lists_list_id_get) | **GET** /api/v1/status/lists/{list_id} | Get Status List By Id
+[**get_status_list_by_id_api_v1_status_lists_list_id_get_0**](StatusRevocationApi.md#get_status_list_by_id_api_v1_status_lists_list_id_get_0) | **GET** /api/v1/status/lists/{list_id} | Get Status List By Id
 [**get_status_stats_api_v1_status_stats_get**](StatusRevocationApi.md#get_status_stats_api_v1_status_stats_get) | **GET** /api/v1/status/stats | Get Status Stats
 [**get_status_stats_api_v1_status_stats_get_0**](StatusRevocationApi.md#get_status_stats_api_v1_status_stats_get_0) | **GET** /api/v1/status/stats | Get Status Stats
 [**reinstate_document_api_v1_status_documents_document_id_reinstate_post**](StatusRevocationApi.md#reinstate_document_api_v1_status_documents_document_id_reinstate_post) | **POST** /api/v1/status/documents/{document_id}/reinstate | Reinstate Document
@@ -53,7 +53,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StatusRevocationApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
 
     try:
         # Get Document Status
@@ -71,7 +71,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
 
 ### Return type
 
@@ -132,7 +132,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StatusRevocationApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
 
     try:
         # Get Document Status
@@ -150,7 +150,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
 
 ### Return type
 
@@ -174,12 +174,12 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **get_status_list_api_v1_status_list_organization_id_list_index_get**
-> object get_status_list_api_v1_status_list_organization_id_list_index_get(organization_id, list_index)
+# **get_status_list_by_id_api_v1_status_lists_list_id_get**
+> object get_status_list_by_id_api_v1_status_lists_list_id_get(list_id)
 
-Get Status List
+Get Status List By Id
 
-Get a status list credential (public, no auth required).
+Get a status list credential by its opaque UUID (public, no auth required).
 
 This endpoint serves W3C StatusList2021 credentials for verification.
 Responses are designed to be cached by CDN with 5-minute TTL.
@@ -205,16 +205,15 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StatusRevocationApi(api_client)
-    organization_id = 'organization_id_example' # str | 
-    list_index = 56 # int | 
+    list_id = 'list_id_example' # str |
 
     try:
-        # Get Status List
-        api_response = api_instance.get_status_list_api_v1_status_list_organization_id_list_index_get(organization_id, list_index)
-        print("The response of StatusRevocationApi->get_status_list_api_v1_status_list_organization_id_list_index_get:\n")
+        # Get Status List By Id
+        api_response = api_instance.get_status_list_by_id_api_v1_status_lists_list_id_get(list_id)
+        print("The response of StatusRevocationApi->get_status_list_by_id_api_v1_status_lists_list_id_get:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling StatusRevocationApi->get_status_list_api_v1_status_list_organization_id_list_index_get: %s\n" % e)
+        print("Exception when calling StatusRevocationApi->get_status_list_by_id_api_v1_status_lists_list_id_get: %s\n" % e)
 ```
 
 
@@ -224,8 +223,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **organization_id** | **str**|  | 
- **list_index** | **int**|  | 
+ **list_id** | **str**|  |
 
 ### Return type
 
@@ -249,12 +247,12 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **get_status_list_api_v1_status_list_organization_id_list_index_get_0**
-> object get_status_list_api_v1_status_list_organization_id_list_index_get_0(organization_id, list_index)
+# **get_status_list_by_id_api_v1_status_lists_list_id_get_0**
+> object get_status_list_by_id_api_v1_status_lists_list_id_get_0(list_id)
 
-Get Status List
+Get Status List By Id
 
-Get a status list credential (public, no auth required).
+Get a status list credential by its opaque UUID (public, no auth required).
 
 This endpoint serves W3C StatusList2021 credentials for verification.
 Responses are designed to be cached by CDN with 5-minute TTL.
@@ -280,16 +278,15 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StatusRevocationApi(api_client)
-    organization_id = 'organization_id_example' # str | 
-    list_index = 56 # int | 
+    list_id = 'list_id_example' # str |
 
     try:
-        # Get Status List
-        api_response = api_instance.get_status_list_api_v1_status_list_organization_id_list_index_get_0(organization_id, list_index)
-        print("The response of StatusRevocationApi->get_status_list_api_v1_status_list_organization_id_list_index_get_0:\n")
+        # Get Status List By Id
+        api_response = api_instance.get_status_list_by_id_api_v1_status_lists_list_id_get_0(list_id)
+        print("The response of StatusRevocationApi->get_status_list_by_id_api_v1_status_lists_list_id_get_0:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling StatusRevocationApi->get_status_list_api_v1_status_list_organization_id_list_index_get_0: %s\n" % e)
+        print("Exception when calling StatusRevocationApi->get_status_list_by_id_api_v1_status_lists_list_id_get_0: %s\n" % e)
 ```
 
 
@@ -299,8 +296,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **organization_id** | **str**|  | 
- **list_index** | **int**|  | 
+ **list_id** | **str**|  |
 
 ### Return type
 
@@ -509,7 +505,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StatusRevocationApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
 
     try:
         # Reinstate Document
@@ -527,7 +523,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
 
 ### Return type
 
@@ -590,7 +586,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StatusRevocationApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
 
     try:
         # Reinstate Document
@@ -608,7 +604,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
 
 ### Return type
 
@@ -683,8 +679,8 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StatusRevocationApi(api_client)
-    document_id = 'document_id_example' # str | 
-    revoke_request = encypher.RevokeRequest() # RevokeRequest | 
+    document_id = 'document_id_example' # str |
+    revoke_request = encypher.RevokeRequest() # RevokeRequest |
 
     try:
         # Revoke Document
@@ -702,8 +698,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
- **revoke_request** | [**RevokeRequest**](RevokeRequest.md)|  | 
+ **document_id** | **str**|  |
+ **revoke_request** | [**RevokeRequest**](RevokeRequest.md)|  |
 
 ### Return type
 
@@ -778,8 +774,8 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StatusRevocationApi(api_client)
-    document_id = 'document_id_example' # str | 
-    revoke_request = encypher.RevokeRequest() # RevokeRequest | 
+    document_id = 'document_id_example' # str |
+    revoke_request = encypher.RevokeRequest() # RevokeRequest |
 
     try:
         # Revoke Document
@@ -797,8 +793,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
- **revoke_request** | [**RevokeRequest**](RevokeRequest.md)|  | 
+ **document_id** | **str**|  |
+ **revoke_request** | [**RevokeRequest**](RevokeRequest.md)|  |
 
 ### Return type
 
@@ -821,4 +817,3 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

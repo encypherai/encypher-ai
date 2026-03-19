@@ -110,6 +110,14 @@ function IconBilling({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
+function IconCdnAnalytics({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+    </svg>
+  );
+}
+
 function IconAICrawlers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -208,6 +216,7 @@ const navGroupsByLayout: Record<'publisher' | 'enterprise', NavGroup[]> = {
       label: 'Insights',
       items: [
         { href: '/analytics', label: 'Content Performance', icon: IconAnalytics },
+        { href: '/cdn-analytics', label: 'CDN Analytics', icon: IconCdnAnalytics, enterpriseOnly: true },
         { href: '/ai-crawlers', label: 'AI Crawlers', icon: IconAICrawlers },
         { href: '/docs', label: 'Docs', icon: IconDocs },
       ],
@@ -250,6 +259,7 @@ const navGroupsByLayout: Record<'publisher' | 'enterprise', NavGroup[]> = {
       label: 'Insights',
       items: [
         { href: '/analytics', label: 'Content Performance', icon: IconAnalytics },
+        { href: '/cdn-analytics', label: 'CDN Analytics', icon: IconCdnAnalytics, enterpriseOnly: true },
         { href: '/ai-crawlers', label: 'AI Crawlers', icon: IconAICrawlers },
         { href: '/docs', label: 'Docs', icon: IconDocs },
       ],

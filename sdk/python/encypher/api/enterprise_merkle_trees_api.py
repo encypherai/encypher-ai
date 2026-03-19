@@ -56,7 +56,7 @@ class EnterpriseMerkleTreesApi:
     ) -> DocumentEncodeResponse:
         """Encode Document into Merkle Trees
 
-        Encode a document into Merkle trees at specified segmentation levels.          This endpoint:     1. Segments the document text at multiple levels (word/sentence/paragraph/section)     2. Builds Merkle trees for each segmentation level     3. Stores all tree data in the database for future attribution queries     4. Returns root hashes and tree metadata          **Enterprise Tier Only** - Requires valid organization with Merkle features enabled.          **Rate Limits:**     - Free tier: Not available     - Enterprise tier: 1000 documents/month          **Processing Time:**     - Small documents (<1000 words): ~100-200ms     - Medium documents (1000-10000 words): ~500ms-2s     - Large documents (>10000 words): ~2-10s
+        Encode a document into Merkle trees at specified segmentation levels.      This endpoint:     1. Segments the document text at multiple levels (word/sentence/paragraph/section)     2. Builds Merkle trees for each segmentation level     3. Stores all tree data in the database for future attribution queries     4. Returns root hashes and tree metadata      **Enterprise Tier Only** - Requires valid organization with Merkle features enabled.      **Rate Limits:**     - Free tier: Not available     - Enterprise tier: 1000 documents/month      **Processing Time:**     - Small documents (<1000 words): ~100-200ms     - Medium documents (1000-10000 words): ~500ms-2s     - Large documents (>10000 words): ~2-10s
 
         :param document_encode_request: (required)
         :type document_encode_request: DocumentEncodeRequest
@@ -128,7 +128,7 @@ class EnterpriseMerkleTreesApi:
     ) -> ApiResponse[DocumentEncodeResponse]:
         """Encode Document into Merkle Trees
 
-        Encode a document into Merkle trees at specified segmentation levels.          This endpoint:     1. Segments the document text at multiple levels (word/sentence/paragraph/section)     2. Builds Merkle trees for each segmentation level     3. Stores all tree data in the database for future attribution queries     4. Returns root hashes and tree metadata          **Enterprise Tier Only** - Requires valid organization with Merkle features enabled.          **Rate Limits:**     - Free tier: Not available     - Enterprise tier: 1000 documents/month          **Processing Time:**     - Small documents (<1000 words): ~100-200ms     - Medium documents (1000-10000 words): ~500ms-2s     - Large documents (>10000 words): ~2-10s
+        Encode a document into Merkle trees at specified segmentation levels.      This endpoint:     1. Segments the document text at multiple levels (word/sentence/paragraph/section)     2. Builds Merkle trees for each segmentation level     3. Stores all tree data in the database for future attribution queries     4. Returns root hashes and tree metadata      **Enterprise Tier Only** - Requires valid organization with Merkle features enabled.      **Rate Limits:**     - Free tier: Not available     - Enterprise tier: 1000 documents/month      **Processing Time:**     - Small documents (<1000 words): ~100-200ms     - Medium documents (1000-10000 words): ~500ms-2s     - Large documents (>10000 words): ~2-10s
 
         :param document_encode_request: (required)
         :type document_encode_request: DocumentEncodeRequest
@@ -200,7 +200,7 @@ class EnterpriseMerkleTreesApi:
     ) -> RESTResponseType:
         """Encode Document into Merkle Trees
 
-        Encode a document into Merkle trees at specified segmentation levels.          This endpoint:     1. Segments the document text at multiple levels (word/sentence/paragraph/section)     2. Builds Merkle trees for each segmentation level     3. Stores all tree data in the database for future attribution queries     4. Returns root hashes and tree metadata          **Enterprise Tier Only** - Requires valid organization with Merkle features enabled.          **Rate Limits:**     - Free tier: Not available     - Enterprise tier: 1000 documents/month          **Processing Time:**     - Small documents (<1000 words): ~100-200ms     - Medium documents (1000-10000 words): ~500ms-2s     - Large documents (>10000 words): ~2-10s
+        Encode a document into Merkle trees at specified segmentation levels.      This endpoint:     1. Segments the document text at multiple levels (word/sentence/paragraph/section)     2. Builds Merkle trees for each segmentation level     3. Stores all tree data in the database for future attribution queries     4. Returns root hashes and tree metadata      **Enterprise Tier Only** - Requires valid organization with Merkle features enabled.      **Rate Limits:**     - Free tier: Not available     - Enterprise tier: 1000 documents/month      **Processing Time:**     - Small documents (<1000 words): ~100-200ms     - Medium documents (1000-10000 words): ~500ms-2s     - Large documents (>10000 words): ~2-10s
 
         :param document_encode_request: (required)
         :type document_encode_request: DocumentEncodeRequest
@@ -322,5 +322,3 @@ class EnterpriseMerkleTreesApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

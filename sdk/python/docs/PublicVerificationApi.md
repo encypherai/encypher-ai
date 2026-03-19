@@ -10,19 +10,19 @@ Method | HTTP request | Description
 
 
 # **batch_verify_embeddings_api_v1_public_verify_batch_post**
-> BatchVerifyResponse batch_verify_embeddings_api_v1_public_verify_batch_post(batch_verify_request, authorization=authorization)
+> BatchVerifyResponse batch_verify_embeddings_api_v1_public_verify_batch_post(app_schemas_embeddings_batch_verify_request, authorization=authorization)
 
 Batch Verify Embeddings (Public - No Auth Required)
 
 Verify multiple embeddings in a single request.
-    
+
     **This endpoint is PUBLIC and does NOT require authentication.**
-    
+
     Useful for:
     - Verifying all embeddings on a page at once
     - Bulk verification by web scrapers
     - Browser extensions checking multiple paragraphs
-    
+
     **Rate Limiting:**
     - 100 requests/hour per IP address
     - Maximum 50 embeddings per request
@@ -32,7 +32,7 @@ Verify multiple embeddings in a single request.
 
 ```python
 import encypher
-from encypher.models.batch_verify_request import BatchVerifyRequest
+from encypher.models.app_schemas_embeddings_batch_verify_request import AppSchemasEmbeddingsBatchVerifyRequest
 from encypher.models.batch_verify_response import BatchVerifyResponse
 from encypher.rest import ApiException
 from pprint import pprint
@@ -48,12 +48,12 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.PublicVerificationApi(api_client)
-    batch_verify_request = encypher.BatchVerifyRequest() # BatchVerifyRequest | 
+    app_schemas_embeddings_batch_verify_request = encypher.AppSchemasEmbeddingsBatchVerifyRequest() # AppSchemasEmbeddingsBatchVerifyRequest |
     authorization = 'authorization_example' # str |  (optional)
 
     try:
         # Batch Verify Embeddings (Public - No Auth Required)
-        api_response = api_instance.batch_verify_embeddings_api_v1_public_verify_batch_post(batch_verify_request, authorization=authorization)
+        api_response = api_instance.batch_verify_embeddings_api_v1_public_verify_batch_post(app_schemas_embeddings_batch_verify_request, authorization=authorization)
         print("The response of PublicVerificationApi->batch_verify_embeddings_api_v1_public_verify_batch_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -67,8 +67,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **batch_verify_request** | [**BatchVerifyRequest**](BatchVerifyRequest.md)|  | 
- **authorization** | **str**|  | [optional] 
+ **app_schemas_embeddings_batch_verify_request** | [**AppSchemasEmbeddingsBatchVerifyRequest**](AppSchemasEmbeddingsBatchVerifyRequest.md)|  |
+ **authorization** | **str**|  | [optional]
 
 ### Return type
 
@@ -100,7 +100,7 @@ No authorization required
 DEPRECATED - Use POST /api/v1/verify instead
 
 **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**
-    
+
     Please use `POST /api/v1/verify` instead, which provides:
     - Full C2PA trust chain validation
     - Document info, licensing, and C2PA details (all free)
@@ -127,7 +127,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.PublicVerificationApi(api_client)
-    extract_and_verify_request = encypher.ExtractAndVerifyRequest() # ExtractAndVerifyRequest | 
+    extract_and_verify_request = encypher.ExtractAndVerifyRequest() # ExtractAndVerifyRequest |
 
     try:
         # DEPRECATED - Use POST /api/v1/verify instead
@@ -145,7 +145,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **extract_and_verify_request** | [**ExtractAndVerifyRequest**](ExtractAndVerifyRequest.md)|  | 
+ **extract_and_verify_request** | [**ExtractAndVerifyRequest**](ExtractAndVerifyRequest.md)|  |
 
 ### Return type
 
@@ -176,25 +176,25 @@ No authorization required
 Verify Embedding (Public - No Auth Required)
 
 Verify a minimal signed embedding and retrieve associated metadata.
-    
+
     **This endpoint is PUBLIC and does NOT require authentication.**
-    
+
     Third parties can use this endpoint to:
     - Verify authenticity of content with embedded markers
     - Retrieve document metadata (title, author, organization)
     - Access C2PA manifest information
     - View licensing terms
     - Get Merkle proof for cryptographic verification
-    
+
     **Rate Limiting:**
     - 1000 requests/hour per IP address
     - CAPTCHA required after repeated failures
-    
+
     **Privacy:**
     - Does not return DB-stored text
     - Full text content is NOT exposed
     - Internal document IDs are mapped to public IDs
-    
+
     **Example Usage:**
     ```
     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ
@@ -220,7 +220,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.PublicVerificationApi(api_client)
-    ref_id = 'ref_id_example' # str | 
+    ref_id = 'ref_id_example' # str |
     signature = 'signature_example' # str | HMAC signature (8+ hex characters)
     authorization = 'authorization_example' # str |  (optional)
 
@@ -240,9 +240,9 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **ref_id** | **str**|  | 
- **signature** | **str**| HMAC signature (8+ hex characters) | 
- **authorization** | **str**|  | [optional] 
+ **ref_id** | **str**|  |
+ **signature** | **str**| HMAC signature (8+ hex characters) |
+ **authorization** | **str**|  | [optional]
 
 ### Return type
 
@@ -268,4 +268,3 @@ No authorization required
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
