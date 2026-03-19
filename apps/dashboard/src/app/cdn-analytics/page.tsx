@@ -14,6 +14,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { Loader } from '../../components/ui/Loader';
 import { useOrganization } from '../../contexts/OrganizationContext';
 import apiClient from '../../lib/api';
 import type { CdnAnalyticsTimelineDay } from '../../lib/api';
@@ -269,7 +270,7 @@ export default function CdnAnalyticsPage() {
         {isLoading || summaryQuery.isLoading ? (
           <div className="flex items-center justify-center py-16">
             <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-blue-ncs dark:border-slate-700 dark:border-t-columbia-blue" />
+              <Loader size="lg" />
               <span>Loading CDN analytics...</span>
             </div>
           </div>
@@ -340,7 +341,7 @@ export default function CdnAnalyticsPage() {
               <CardContent>
                 {timelineQuery.isLoading ? (
                   <div className="flex items-center justify-center py-12">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-blue-ncs dark:border-slate-700 dark:border-t-columbia-blue" />
+                    <Loader size="md" />
                   </div>
                 ) : timelineQuery.isError ? (
                   <p className="text-muted-foreground text-sm text-center py-8">
