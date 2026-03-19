@@ -600,12 +600,13 @@ function OrganizationAdminPageInner() {
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
-    if (roleLoading || orgLoading) return;
+    // Wait for all data to be loaded before making redirect decision
+    if (roleLoading || orgLoading || !orgId) return;
     if (!isAdmin && !redirecting) {
       setRedirecting(true);
       router.replace('/settings');
     }
-  }, [isAdmin, roleLoading, orgLoading, router, redirecting]);
+  }, [isAdmin, roleLoading, orgLoading, orgId, router, redirecting]);
 
   if (orgLoading || roleLoading) {
     return (

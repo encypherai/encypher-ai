@@ -119,6 +119,8 @@ const normalizeProfile = (raw: any): Profile => ({
 
 function SsoConfigCard({ orgId, accessToken }: { orgId: string | null | undefined; accessToken: string | undefined }) {
   const queryClient = useQueryClient();
+  const { activeOrganization } = useOrganization();
+  const isEnterpriseTier = activeOrganization?.tier === 'enterprise' || activeOrganization?.tier === 'strategic_partner';
   const [idpEntityId, setIdpEntityId] = useState('');
   const [idpSsoUrl, setIdpSsoUrl] = useState('');
   const [idpCertificate, setIdpCertificate] = useState('');
@@ -130,8 +132,9 @@ function SsoConfigCard({ orgId, accessToken }: { orgId: string | null | undefine
   const { data: samlConfig, isLoading } = useQuery({
     queryKey: ['saml-config', orgId],
     queryFn: () => apiClient.getSamlConfig(accessToken!, orgId!),
-    enabled: !!accessToken && !!orgId,
+    enabled: !!accessToken && !!orgId && isEnterpriseTier,
     staleTime: 5 * 60_000,
+    retry: false,
   });
 
   // Sync form state when config loads
@@ -318,18 +321,23 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
   const [revokeReason, setRevokeReason] = useState('');
   const [showTrustedCas, setShowTrustedCas] = useState(false);
 
+  const { activeOrganization } = useOrganization();
+  const isEnterpriseTier = activeOrganization?.tier === 'enterprise' || activeOrganization?.tier === 'strategic_partner';
+
   const keysQuery = useQuery({
     queryKey: ['byok-keys', orgId, showRevoked],
     queryFn: () => apiClient.listPublicKeys(accessToken!, showRevoked),
-    enabled: !!accessToken && !!orgId,
+    enabled: !!accessToken && !!orgId && isEnterpriseTier,
     staleTime: 30_000,
+    retry: false,
   });
 
   const trustedCasQuery = useQuery({
     queryKey: ['byok-trusted-cas'],
     queryFn: () => apiClient.getTrustedCas(accessToken!),
-    enabled: !!accessToken && showTrustedCas,
+    enabled: !!accessToken && showTrustedCas && isEnterpriseTier,
     staleTime: 10 * 60_000,
+    retry: false,
   });
 
   const registerMutation = useMutation({
@@ -926,7 +934,7 @@ function SettingsPageInner() {
   const [overageNoCap, setOverageNoCap] = useState(true);
   const [removeConfirmPmId, setRemoveConfirmPmId] = useState<string | null>(null);
 
-  // Handle ?tab=billing&setup=success URL param
+  // Handle ?tab=<name> URL params
   useEffect(() => {
     const tab = searchParams.get('tab');
     if (tab === 'billing') {
@@ -936,6 +944,12 @@ function SettingsPageInner() {
         toast.success('Payment method added successfully.');
         queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
       }
+    } else if (tab === 'organization') {
+      setActiveTab('organization');
+    } else if (tab === 'security') {
+      setActiveTab('security');
+    } else if (tab === 'notifications') {
+      setActiveTab('notifications');
     }
   }, [searchParams, queryClient]);
 
