@@ -30,7 +30,7 @@ module.exports = {
         'columbia-blue': '#b7d5ed',
         'cyber-teal': '#00ced1',  // Replaced rosy-brown per brand guidelines
         'neutral-gray': '#a7afbc',
-        
+
         // Semantic colors
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -110,6 +110,18 @@ module.exports = {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(100%)' },
         },
+        'fade-in-up': {
+          from: { opacity: '0', transform: 'translateY(12px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'count-up': {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'slide-in-right': {
+          from: { opacity: '0', transform: 'translateX(-8px)' },
+          to: { opacity: '1', transform: 'translateX(0)' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.3s ease-out',
@@ -117,6 +129,9 @@ module.exports = {
         'slide-down': 'slide-down 0.3s ease-out',
         'pulse-slow': 'pulse-slow 4s ease-in-out infinite',
         shine: 'shine 3s ease-in-out infinite',
+        'fade-in-up': 'fade-in-up 0.5s ease-out both',
+        'count-up': 'count-up 0.6s ease-out both',
+        'slide-in-right': 'slide-in-right 0.4s ease-out both',
       },
     },
   },

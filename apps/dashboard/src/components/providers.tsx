@@ -1,12 +1,13 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, Suspense, useState } from 'react';
 import { SessionProvider, signOut } from 'next-auth/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster, toast } from 'sonner';
 import { OrganizationProvider } from '../contexts/OrganizationContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
+import { DemoModeProvider } from '../contexts/DemoModeContext';
 import { CommandPalette } from './CommandPalette';
 import { ApiError } from '../lib/api';
 import { isSessionExpiredError } from '../lib/session-errors';
@@ -80,7 +81,11 @@ export function Providers({ children }: ProvidersProps) {
         <ThemeProvider>
           <NotificationProvider>
             <OrganizationProvider>
-              {children}
+              <Suspense fallback={null}>
+                <DemoModeProvider>
+                  {children}
+                </DemoModeProvider>
+              </Suspense>
               <CommandPalette />
               <Toaster richColors position="top-right" />
             </OrganizationProvider>

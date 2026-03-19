@@ -3,51 +3,87 @@
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@encypher/design-system';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { OnboardingChecklist } from '../components/onboarding/OnboardingChecklist';
 import { OnboardingLaunchpad } from '../components/onboarding/OnboardingLaunchpad';
-import apiClient from '../lib/api';
+import apiClient, { TimeSeriesData } from '../lib/api';
 import { useOrganization } from '../contexts/OrganizationContext';
+import { useDemoMode, DEMO_STATS, DEMO_STATS_60D, DEMO_SPARKLINE, DEMO_DOCS_SPARKLINE, DEMO_API_KEYS, DEMO_SETUP_STATUS, DEMO_ACTIVITY } from '../contexts/DemoModeContext';
 
-// Icons as components for cleaner code
-const IconKey = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+// ---- Custom Provenance Icons ----
+// Domain-specific SVGs for signing, verification, provenance, and content protection.
+// Generic UI actions (arrows, plus) remain simple stroked icons.
+
+// Signing quill -- represents document signing / content attestation
+const IconSign = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 3l4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+    <path d="M15 5l4 4" />
+    <path d="M2 22c2-2 4-3.5 8-3.5" />
   </svg>
 );
 
-const IconChart = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+// Verification lens -- magnifier with checkmark, represents proof verification
+const IconVerify = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="10.5" cy="10.5" r="7" />
+    <path d="M21 21l-4.35-4.35" />
+    <path d="M7.5 10.5l2 2 4-4" />
   </svg>
 );
 
-const IconShield = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+// Provenance shield -- shield with chain link, represents content provenance
+const IconProvenance = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2l8 4v6c0 5.25-3.5 9.74-8 11-4.5-1.26-8-5.75-8-11V6l8-4z" />
+    <circle cx="10" cy="12" r="2" />
+    <circle cx="14" cy="12" r="2" />
+    <path d="M12 12h0" />
   </svg>
 );
 
-const IconDocument = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+// Signed document -- document with embedded seal/stamp
+const IconSignedDoc = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" />
+    <path d="M14 2v6h6" />
+    <circle cx="12" cy="15" r="3" />
+    <path d="M10.5 13.5l1.5 1.5 2-2" />
   </svg>
 );
 
-const IconCheck = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+// Formal notice -- gavel / legal stamp
+const IconFormalNotice = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="18" width="20" height="3" rx="1" />
+    <path d="M10 18V8l-3 3" />
+    <path d="M14 18V8l3 3" />
+    <rect x="8" y="4" width="8" height="4" rx="1" />
   </svg>
 );
 
-const IconBook = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+// Content protection funnel -- layered shield with flow
+const IconContentProtection = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2l8 4v6c0 5.25-3.5 9.74-8 11-4.5-1.26-8-5.75-8-11V6l8-4z" />
+    <path d="M8 10h8M8 13h6M8 16h4" />
   </svg>
 );
 
+// API key -- key with circuit/digital pattern
+const IconApiKey = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="8" cy="15" r="5" />
+    <path d="M11.5 11.5L21 2" />
+    <path d="M18 5l3-1" />
+    <path d="M17 8l3-1" />
+    <circle cx="8" cy="15" r="1.5" fill="currentColor" />
+  </svg>
+);
+
+// Generic UI icons (kept simple -- these are navigation/action affordances, not domain concepts)
 const IconArrowRight = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -59,6 +95,49 @@ const IconPlus = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
   </svg>
 );
+
+const IconBook = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+  </svg>
+);
+
+const IconLink = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+  </svg>
+);
+
+const IconChart = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+  </svg>
+);
+
+// ---- Animated number counter ----
+function useCountUp(target: number, duration = 800) {
+  const [value, setValue] = useState(0);
+  const prevTarget = useRef(0);
+
+  useEffect(() => {
+    if (target === prevTarget.current) return;
+    const start = prevTarget.current;
+    prevTarget.current = target;
+    const startTime = performance.now();
+
+    function tick(now: number) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(start + (target - start) * eased));
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+
+  return value;
+}
 
 // Skeleton loader component
 function StatCardSkeleton() {
@@ -73,6 +152,75 @@ function StatCardSkeleton() {
         <div className="w-12 h-12 bg-muted rounded-xl" />
       </div>
     </div>
+  );
+}
+
+const VERIFICATION_THRESHOLD = 500;
+
+function ProgressRing({ value, max, size = 48, strokeWidth = 4, color = '#2a87c4' }: {
+  value: number; max: number; size?: number; strokeWidth?: number; color?: string;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const pct = Math.min(1, value / max);
+  const offset = circumference * (1 - pct);
+  return (
+    <svg width={size} height={size} className="transform -rotate-90">
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none"
+        stroke="currentColor" className="text-muted/30" strokeWidth={strokeWidth} />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none"
+        stroke={color} strokeWidth={strokeWidth} strokeLinecap="round"
+        strokeDasharray={circumference} strokeDashoffset={offset}
+        style={{ transition: 'stroke-dashoffset 600ms ease-out' }} />
+    </svg>
+  );
+}
+
+function MiniSparkline({ data, color = '#2a87c4' }: { data: number[]; color?: string }) {
+  if (!data || data.length < 2) return null;
+  const max = Math.max(...data, 1);
+  const width = 80;
+  const height = 24;
+  const points = data.map((v, i) => `${(i / (data.length - 1)) * width},${height - (v / max) * height}`).join(' ');
+  const areaPoints = `0,${height} ${points} ${width},${height}`;
+  return (
+    <svg width={width} height={height} className="mt-1 sparkline-draw">
+      <polyline points={areaPoints} fill={`${color}20`} stroke="none" />
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TrendBadge({ current, prior }: { current: number; prior: number }) {
+  if (prior === 0 && current === 0) {
+    return <span className="text-xs text-muted-foreground">No activity</span>;
+  }
+  if (prior === 0) {
+    return (
+      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-medium">
+        +{current} new
+      </span>
+    );
+  }
+  const pctChange = Math.round(((current - prior) / prior) * 100);
+  if (Math.abs(pctChange) <= 2) {
+    return (
+      <span className="inline-flex items-center gap-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
+        </svg>
+        Steady
+      </span>
+    );
+  }
+  const isUp = pctChange > 0;
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-xs font-medium ${isUp ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isUp ? 'M5 10l7-7m0 0l7 7m-7-7v18' : 'M19 14l-7 7m0 0l-7-7m7 7V3'} />
+      </svg>
+      {Math.abs(pctChange)}%
+    </span>
   );
 }
 
@@ -105,122 +253,97 @@ interface UsageStats {
   period_end: string;
 }
 
-// Value Proof Card -- answers "what has Encypher done for me this month?"
-function ValueProofCard({ stats, isLoading }: { stats?: UsageStats; isLoading: boolean }) {
+// Content Protection Funnel -- three-step visual journey
+function ContentProtectionFunnel({ stats, isLoading }: { stats?: UsageStats; isLoading: boolean }) {
   const docsSigned = stats?.total_documents_signed || 0;
   const verifications = stats?.total_verifications || 0;
-  const NOTICE_THRESHOLD = 500;
-  const pct = Math.min(100, Math.round((verifications / NOTICE_THRESHOLD) * 100));
+  const pct = Math.min(100, Math.round((verifications / VERIFICATION_THRESHOLD) * 100));
+  const noticeReady = verifications >= VERIFICATION_THRESHOLD;
+
+  const steps = [
+    {
+      label: 'Signed',
+      value: `${docsSigned.toLocaleString()} articles`,
+      done: docsSigned > 0,
+      href: '/analytics',
+      color: 'text-blue-ncs',
+      bgColor: 'bg-blue-ncs',
+    },
+    {
+      label: 'Verified',
+      value: verifications > 0 ? `${verifications.toLocaleString()} external` : 'No verifications yet',
+      done: verifications > 0,
+      href: '/docs',
+      color: 'text-[#00CED1]',
+      bgColor: 'bg-[#00CED1]',
+    },
+    {
+      label: 'Notice Ready',
+      value: noticeReady ? 'Eligible' : `${pct}% -- ${(VERIFICATION_THRESHOLD - verifications).toLocaleString()} more`,
+      done: noticeReady,
+      href: '/rights',
+      color: noticeReady ? 'text-green-600' : 'text-muted-foreground',
+      bgColor: noticeReady ? 'bg-green-500' : 'bg-muted-foreground/30',
+    },
+  ];
 
   return (
     <div className="bg-gradient-to-br from-delft-blue/5 to-blue-ncs/5 dark:from-delft-blue/20 dark:to-blue-ncs/10 rounded-xl border border-blue-ncs/20 p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-7 h-7 bg-gradient-to-br from-blue-ncs to-columbia-blue rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
+      <div className="flex items-center gap-2 mb-5">
+        <div className="w-7 h-7 bg-gradient-to-br from-blue-ncs to-columbia-blue rounded-lg flex items-center justify-center text-white">
+          <IconContentProtection />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-delft-blue dark:text-white">Your Content Protection</h3>
-          <p className="text-xs text-muted-foreground">Last 30 days</p>
+          <h3 className="text-sm font-semibold tracking-tight text-delft-blue dark:text-white">Content Protection Journey</h3>
+          <p className="text-xs text-muted-foreground">Your path to formal notice</p>
         </div>
       </div>
       {isLoading ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map(i => <div key={i} className="h-8 bg-muted rounded animate-pulse" />)}
-        </div>
-      ) : verifications === 0 ? (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Content protected</span>
-            <span className="text-sm font-bold text-delft-blue dark:text-white">
-              {docsSigned.toLocaleString()} articles
-            </span>
-          </div>
-          <div className="rounded-lg border border-dashed border-blue-ncs/30 bg-blue-ncs/5 p-3">
-            <p className="text-xs font-semibold text-delft-blue dark:text-white mb-1">
-              No external verifications yet
-            </p>
-            <p className="text-[11px] text-muted-foreground mb-2">
-              Share your verification page to start collecting verifications from readers and partners.
-            </p>
-            <Link href="/docs" className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-ncs hover:underline">
-              Learn how to share verification
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground">Formal Notice progress</span>
-                <span className="relative group">
-                  <svg className="w-3.5 h-3.5 text-muted-foreground cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-48 p-2 text-[11px] text-white bg-delft-blue rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                    A Formal Notice is a legal rights enforcement tool. Reaching {NOTICE_THRESHOLD.toLocaleString()} external verifications qualifies your content for automated notice generation.
-                  </span>
-                </span>
-              </div>
-              <span className="text-xs font-medium text-blue-ncs">{pct}%</span>
-            </div>
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-blue-ncs to-columbia-blue rounded-full"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <p className="text-[11px] text-muted-foreground mt-1.5">
-              {NOTICE_THRESHOLD.toLocaleString()} verifications needed to qualify -- verifications prove third-party awareness of your signed content
-            </p>
-          </div>
+          {[1, 2, 3].map(i => <div key={i} className="h-12 bg-muted rounded-lg animate-pulse" />)}
         </div>
       ) : (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Content protected</span>
-            <span className="text-sm font-bold text-delft-blue dark:text-white">
-              {docsSigned.toLocaleString()} articles
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">External verifications</span>
-            <span className="text-sm font-bold text-delft-blue dark:text-white">
-              {verifications.toLocaleString()}
-            </span>
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground">Formal Notice progress</span>
-                <span className="relative group">
-                  <svg className="w-3.5 h-3.5 text-muted-foreground cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-48 p-2 text-[11px] text-white bg-delft-blue rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                    A Formal Notice is a legal rights enforcement tool. Reaching {NOTICE_THRESHOLD.toLocaleString()} external verifications qualifies your content for automated notice generation.
-                  </span>
-                </span>
-              </div>
-              <span className="text-xs font-medium text-blue-ncs">{pct}%</span>
+        <div className="space-y-0">
+          {steps.map((step, i) => (
+            <div key={step.label}>
+              <Link href={step.href} className="group flex items-start gap-3 py-2.5 hover:bg-white/50 dark:hover:bg-white/5 rounded-lg px-2 -mx-2 transition-colors">
+                <div className="flex flex-col items-center mt-0.5">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${step.done ? step.bgColor + ' text-white' : 'border-2 border-muted-foreground/30 text-muted-foreground'}`}>
+                    {step.done ? (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <span className="text-[10px] font-bold">{i + 1}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className={`text-xs font-semibold ${step.done ? step.color : 'text-muted-foreground'}`}>{step.label}</p>
+                    <span className="text-xs text-muted-foreground group-hover:text-blue-ncs transition-colors"><IconArrowRight /></span>
+                  </div>
+                  <p className={`text-[13px] font-medium ${step.done ? 'text-delft-blue dark:text-white' : 'text-muted-foreground'}`}>
+                    {step.value}
+                  </p>
+                </div>
+              </Link>
+              {i < steps.length - 1 && (
+                <div className="ml-[22px] h-3 border-l-2 border-dashed border-muted-foreground/20" />
+              )}
             </div>
-            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-blue-ncs to-columbia-blue rounded-full"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            {pct < 100 ? (
-              <p className="text-[11px] text-muted-foreground mt-1.5">
-                {(NOTICE_THRESHOLD - verifications).toLocaleString()} more verifications to qualify
-              </p>
-            ) : (
-              <p className="text-[11px] text-emerald-600 mt-1.5 font-medium">
-                Qualified for Formal Notice -- take action in Rights
-              </p>
-            )}
+          ))}
+        </div>
+      )}
+      {/* Progress bar for formal notice */}
+      {!isLoading && !noticeReady && (
+        <div className="mt-3 pt-3 border-t border-blue-ncs/10">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[11px] text-muted-foreground">Formal Notice progress</span>
+            <span className="text-[11px] font-medium text-blue-ncs">{pct}%</span>
+          </div>
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-blue-ncs to-columbia-blue rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
           </div>
         </div>
       )}
@@ -233,11 +356,26 @@ function ValueProofCard({ stats, isLoading }: { stats?: UsageStats; isLoading: b
   );
 }
 
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return '1 day ago';
+  return `${days} days ago`;
+}
+
 export default function DashboardPage() {
   const { data: session } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const { activeOrganization } = useOrganization();
   const orgId = activeOrganization?.id;
+  const { isDemoMode, setDemoMode } = useDemoMode();
 
   const [greeting, setGreeting] = useState('Hello');
 
@@ -268,6 +406,45 @@ export default function DashboardPage() {
     },
   });
 
+  // Fetch prior 60-day stats (subtract 30d to get prior 30-day period)
+  const priorStatsQuery = useQuery({
+    queryKey: ['usage-stats-prior'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('Not authenticated');
+      return apiClient.getUsageStats(accessToken, 60);
+    },
+    enabled: Boolean(accessToken),
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+
+  // Fetch 30-day daily API call sparkline
+  const sparklineQuery = useQuery({
+    queryKey: ['api-calls-sparkline'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('Not authenticated');
+      return apiClient.getTimeSeries(accessToken, 'api_calls', 30, 'day');
+    },
+    enabled: Boolean(accessToken),
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+
+  // Fetch 30-day daily documents signed sparkline
+  const docsSparklineQuery = useQuery({
+    queryKey: ['docs-signed-sparkline'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('Not authenticated');
+      return apiClient.getTimeSeries(accessToken, 'documents_signed', 30, 'day');
+    },
+    enabled: Boolean(accessToken),
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+
   // Fetch API keys
   const keysQuery = useQuery({
     queryKey: ['api-keys-summary', orgId],
@@ -290,17 +467,54 @@ export default function DashboardPage() {
     staleTime: 60_000,
   });
 
-  const stats = statsQuery.data;
-  const apiKeys = keysQuery.data || [];
-  const setupStatus = setupQuery.data;
-  const isLoadingStats = statsQuery.isLoading;
-  const isLoadingKeys = keysQuery.isLoading || !orgId;
+  // Demo mode overrides
+  const stats = isDemoMode ? DEMO_STATS : statsQuery.data;
+  const apiKeys = isDemoMode ? DEMO_API_KEYS : (keysQuery.data || []);
+  const setupStatus = isDemoMode ? DEMO_SETUP_STATUS : setupQuery.data;
+  const isLoadingStats = isDemoMode ? false : statsQuery.isLoading;
+  const isLoadingKeys = isDemoMode ? false : (keysQuery.isLoading || !orgId);
   const hasApiKeys = apiKeys.length > 0;
 
   // Format numbers with commas
   const formatNumber = (num: number) => num?.toLocaleString() ?? '0';
 
-  const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'there';
+  // Compute prior period values (60d total - 30d total = prior 30d)
+  const priorStats = isDemoMode ? DEMO_STATS_60D : priorStatsQuery.data;
+  const priorApiCalls = (priorStats?.total_api_calls || 0) - (stats?.total_api_calls || 0);
+  const priorDocsSigned = (priorStats?.total_documents_signed || 0) - (stats?.total_documents_signed || 0);
+  const priorVerifications = (priorStats?.total_verifications || 0) - (stats?.total_verifications || 0);
+  const sparklineData = isDemoMode
+    ? DEMO_SPARKLINE.map(d => d.count)
+    : (sparklineQuery.data?.map((d: TimeSeriesData) => d.count) || []);
+  const docsSparklineData = isDemoMode
+    ? DEMO_DOCS_SPARKLINE.map(d => d.count)
+    : (docsSparklineQuery.data?.map((d: TimeSeriesData) => d.count) || []);
+  // Activity feed with real-time polling (30s interval)
+  const activityQuery = useQuery({
+    queryKey: ['activity-feed', orgId],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('Not authenticated');
+      const response = await apiClient.getDiscoveryEvents(accessToken, { days: 7, limit: 8 });
+      return (response?.data || []).map((item) => ({
+        type: item.is_external_domain ? 'verify' : 'sign',
+        title: `${item.is_external_domain ? 'Verification from' : 'Content signed:'} ${item.page_domain || item.page_title || 'unknown'}`,
+        time: formatRelativeTime(item.discovered_at),
+      }));
+    },
+    enabled: Boolean(accessToken && !isDemoMode),
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+    retry: false,
+  });
+  const activityFeed = isDemoMode ? DEMO_ACTIVITY : (activityQuery.data || []);
+
+  // Animated count-up values for metric cards
+  const animApiCalls = useCountUp(stats?.total_api_calls || 0);
+  const animDocsSigned = useCountUp(stats?.total_documents_signed || 0);
+  const animVerifications = useCountUp(stats?.total_verifications || 0);
+
+  const userName = isDemoMode ? 'Demo Publisher' : (session?.user?.name || session?.user?.email?.split('@')[0] || 'there');
   const workflowCategory = setupStatus?.workflow_category || (setupStatus?.dashboard_layout === 'publisher' ? 'media_publishing' : 'enterprise');
   const heroContent = workflowCategory === 'media_publishing'
     ? {
@@ -333,6 +547,25 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
+      {/* Demo Mode Banner */}
+      {isDemoMode && (
+        <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm font-medium text-amber-800 dark:text-amber-300">Demo Mode</span>
+            <span className="text-xs text-amber-600 dark:text-amber-400">Sample data for demonstration purposes</span>
+          </div>
+          <button
+            onClick={() => setDemoMode(false)}
+            className="text-xs font-medium text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 underline"
+          >
+            Exit Demo
+          </button>
+        </div>
+      )}
+
       {/* Welcome Hero Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-delft-blue via-delft-blue to-blue-ncs p-8 mb-8">
         {/* Background Pattern */}
@@ -344,13 +577,13 @@ export default function DashboardPage() {
         <div className="relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
+              <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2 tracking-tight">
                 {greeting}, {userName}
               </h1>
-              <p className="text-columbia-blue text-lg">
+              <p className="text-columbia-blue text-lg font-medium">
                 {heroContent.title}
               </p>
-              <p className="text-columbia-blue/80 text-sm mt-2 max-w-2xl">
+              <p className="text-columbia-blue/80 text-sm mt-2 max-w-2xl leading-relaxed">
                 {heroContent.description}
               </p>
               <div className="flex items-center gap-2 mt-3">
@@ -381,12 +614,57 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <OnboardingLaunchpad
-        className="mb-8"
-        hasApiKeys={hasApiKeys}
-        documentsSigned={stats?.total_documents_signed || 0}
-        verifications={stats?.total_verifications || 0}
-      />
+      {/* Hide onboarding in demo mode (post-onboarding state) */}
+      {!isDemoMode && (
+        <OnboardingLaunchpad
+          className="mb-8"
+          hasApiKeys={hasApiKeys}
+          documentsSigned={stats?.total_documents_signed || 0}
+          verifications={stats?.total_verifications || 0}
+        />
+      )}
+
+      {/* Recommended Next Action -- contextual single-line banner */}
+      {!isLoadingStats && (() => {
+        const vCount = stats?.total_verifications || 0;
+        const docCount = stats?.total_documents_signed || 0;
+        let actionText = '';
+        let actionHref = '';
+        let actionCta = '';
+
+        if (docCount === 0) {
+          actionText = 'Sign your first document to start building your provenance record.';
+          actionHref = '/playground';
+          actionCta = 'Try Signing';
+        } else if (vCount === 0) {
+          actionText = 'Share your verification page to start building toward formal notice eligibility.';
+          actionHref = '/docs';
+          actionCta = 'Learn How';
+        } else if (vCount < VERIFICATION_THRESHOLD) {
+          const pct = Math.round((vCount / VERIFICATION_THRESHOLD) * 100);
+          actionText = `You're ${pct}% toward formal notice eligibility. Share your verification page with partners to accelerate.`;
+          actionHref = '/analytics';
+          actionCta = 'View Progress';
+        } else {
+          actionText = 'You\'re eligible for formal notice. Start your first notice package.';
+          actionHref = '/rights';
+          actionCta = 'Start Notice';
+        }
+
+        return (
+          <div className="mb-6 flex items-center gap-3 rounded-lg bg-gradient-to-r from-blue-ncs/5 to-transparent dark:from-blue-ncs/10 border border-blue-ncs/15 px-4 py-3">
+            <div className="w-6 h-6 rounded-full bg-blue-ncs/10 flex items-center justify-center flex-shrink-0">
+              <svg className="w-3.5 h-3.5 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </div>
+            <p className="text-sm text-foreground flex-1">{actionText}</p>
+            <Link href={actionHref} className="text-xs font-medium text-blue-ncs hover:underline whitespace-nowrap flex-shrink-0">
+              {actionCta} &rarr;
+            </Link>
+          </div>
+        );
+      })()}
 
       {/* Stats Overview - Enhanced Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
@@ -400,36 +678,30 @@ export default function DashboardPage() {
         ) : (
           <>
             {/* API Calls Card */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">API Calls</p>
-                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
-                    {formatNumber(stats?.total_api_calls || 0)}
-                  </p>
-                  <p className="text-xs mt-2 flex items-center gap-1.5">
-                    {(stats?.total_api_calls || 0) > 0 ? (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
-                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-muted-foreground text-xs font-medium">
-                        No activity
-                      </span>
-                    )}
-                    <span className="text-muted-foreground">Last 30 days</span>
-                  </p>
-                </div>
-                <div className="w-11 h-11 bg-gradient-to-br from-blue-ncs to-columbia-blue rounded-xl flex items-center justify-center text-white">
-                  <IconChart />
+            <Link href="/analytics" className="block group animate-fade-in-up" style={{ animationDelay: '0ms' }}>
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md hover:border-blue-ncs/30 transition-all duration-200 cursor-pointer group-hover:scale-[1.02]">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">API Calls</p>
+                    <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
+                      {formatNumber(animApiCalls)}
+                    </p>
+                    <MiniSparkline data={sparklineData} />
+                    <p className="text-xs mt-2 flex items-center gap-1.5">
+                      <TrendBadge current={stats?.total_api_calls || 0} prior={Math.max(0, priorApiCalls)} />
+                      <span className="text-muted-foreground">vs prior 30 days</span>
+                    </p>
+                  </div>
+                  <div className="w-11 h-11 bg-gradient-to-br from-blue-ncs to-columbia-blue rounded-xl flex items-center justify-center text-white">
+                    <IconChart />
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
 
             {/* Documents Signed Card */}
             {(stats?.total_documents_signed || 0) === 0 ? (
-              <Link href="/playground" className="block">
+              <Link href="/playground" className="block animate-fade-in-up" style={{ animationDelay: '80ms' }}>
                 <div className="bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-ncs/30 p-5 lg:p-6 hover:shadow-md transition-shadow ring-2 ring-blue-ncs/20 animate-pulse-slow">
                   <div className="flex items-start justify-between">
                     <div>
@@ -446,81 +718,135 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <div className="w-11 h-11 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
-                      <IconDocument />
+                      <IconSign />
                     </div>
                   </div>
                 </div>
               </Link>
             ) : (
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Documents Signed</p>
-                    <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
-                      {formatNumber(stats?.total_documents_signed || 0)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {formatNumber(stats?.total_documents_signed || 0)} articles protected
-                    </p>
-                  </div>
-                  <div className="w-11 h-11 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
-                    <IconDocument />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Verifications Card */}
-            {(stats?.total_verifications || 0) === 0 ? (
-              <Link href="/playground" className="block">
-                <div className="bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-ncs/30 p-5 lg:p-6 hover:shadow-md transition-shadow ring-2 ring-blue-ncs/20 animate-pulse-slow">
+              <Link href="/analytics" className="block group animate-fade-in-up" style={{ animationDelay: '80ms' }}>
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md hover:border-blue-ncs/30 transition-all duration-200 cursor-pointer group-hover:scale-[1.02]">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Verifications</p>
-                      <p className="text-sm font-semibold text-delft-blue dark:text-white mb-1">
-                        Verify your first signed document
+                      <p className="text-sm font-medium text-muted-foreground mb-1">Documents Signed</p>
+                      <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
+                        {formatNumber(animDocsSigned)}
                       </p>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        Confirm your content is authentically signed
+                      <MiniSparkline data={docsSparklineData} color="#1b2f50" />
+                      <p className="text-xs mt-2 flex items-center gap-1.5">
+                        <TrendBadge current={stats?.total_documents_signed || 0} prior={Math.max(0, priorDocsSigned)} />
+                        <span className="text-muted-foreground">vs prior 30 days</span>
                       </p>
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-ncs">
-                        Try Verification
-                        <IconArrowRight />
-                      </span>
                     </div>
-                    <div className="w-11 h-11 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
-                      <IconShield />
+                    <div className="w-11 h-11 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
+                      <IconSignedDoc />
                     </div>
                   </div>
                 </div>
               </Link>
-            ) : (
-              <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-1">Verifications</p>
-                    <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
-                      {formatNumber(stats?.total_verifications || 0)}
-                    </p>
-                    <p className="text-xs mt-2 flex items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                        </svg>
-                        Verified
-                      </span>
-                      <span className="text-muted-foreground">Last 30 days</span>
-                    </p>
-                  </div>
-                  <div className="w-11 h-11 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
-                    <IconShield />
-                  </div>
-                </div>
-              </div>
             )}
 
+            {/* Verifications Card -- 4-state progression */}
+            {(() => {
+              const vCount = stats?.total_verifications || 0;
+              const pct = Math.round((vCount / VERIFICATION_THRESHOLD) * 100);
+
+              // Zero state -- CTA to try verification
+              if (vCount === 0) return (
+                <Link href="/playground" className="block animate-fade-in-up" style={{ animationDelay: '160ms' }}>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-ncs/30 p-5 lg:p-6 hover:shadow-md transition-shadow ring-2 ring-blue-ncs/20 animate-pulse-slow">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Verifications</p>
+                        <p className="text-sm font-semibold text-delft-blue dark:text-white mb-1">
+                          Verify your first signed document
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Confirm your content is authentically signed
+                        </p>
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-ncs">
+                          Try Verification
+                          <IconArrowRight />
+                        </span>
+                      </div>
+                      <div className="w-11 h-11 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
+                        <IconVerify />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+
+              // Qualified state (500+) -- green checkmark
+              if (vCount >= VERIFICATION_THRESHOLD) return (
+                <Link href="/rights" className="block group animate-fade-in-up" style={{ animationDelay: '160ms' }}>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-green-300 dark:border-green-700 p-5 lg:p-6 hover:shadow-md transition-all duration-200 cursor-pointer group-hover:scale-[1.02]">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-1">Verifications</p>
+                        <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
+                          {formatNumber(animVerifications)}
+                        </p>
+                        <p className="text-xs mt-2">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
+                            Formal Notice eligible
+                          </span>
+                        </p>
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 mt-1.5">
+                          Start Formal Notice <IconArrowRight />
+                        </span>
+                      </div>
+                      <div className="w-11 h-11 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-white">
+                        <IconFormalNotice />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+
+              // Early (1-99) / Momentum (100-499) states -- progress ring
+              const isMomentum = vCount >= 100;
+              return (
+                <Link href="/analytics" className="block group animate-fade-in-up" style={{ animationDelay: '160ms' }}>
+                  <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md hover:border-blue-ncs/30 transition-all duration-200 cursor-pointer group-hover:scale-[1.02]">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-muted-foreground mb-1">Verifications</p>
+                        <div className="flex items-center gap-3">
+                          <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
+                            {formatNumber(animVerifications)}
+                          </p>
+                          <ProgressRing
+                            value={vCount}
+                            max={VERIFICATION_THRESHOLD}
+                            size={40}
+                            strokeWidth={3.5}
+                            color={isMomentum ? '#2a87c4' : '#00CED1'}
+                          />
+                        </div>
+                        <p className="text-xs mt-2 flex items-center gap-1.5">
+                          <span className={`font-medium ${isMomentum ? 'text-blue-ncs' : 'text-muted-foreground'}`}>
+                            {pct}% toward formal notice
+                          </span>
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {isMomentum
+                            ? `${formatNumber(VERIFICATION_THRESHOLD - vCount)} more to qualify`
+                            : 'Share your verification page to grow'}
+                        </p>
+                      </div>
+                      <div className="w-11 h-11 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
+                        <IconVerify />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })()}
+
             {/* Success Rate Card */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
+            <Link href="/analytics" className="block group animate-fade-in-up" style={{ animationDelay: '240ms' }}>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md hover:border-blue-ncs/30 transition-all duration-200 cursor-pointer group-hover:scale-[1.02]">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Success Rate</p>
@@ -530,30 +856,46 @@ export default function DashboardPage() {
                   <p className="text-xs mt-2 flex items-center gap-1.5">
                     {(() => {
                       const rate = stats?.success_rate ?? 100;
+                      const priorRate = priorStats ? (priorStats.success_rate ?? 100) : rate;
+                      const rateDelta = rate - priorRate;
                       if (rate >= 95) return (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
-                          Excellent
-                        </span>
+                        <>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
+                            Excellent
+                          </span>
+                          {Math.abs(rateDelta) <= 2
+                            ? <span className="text-muted-foreground">Consistent</span>
+                            : rateDelta > 0
+                              ? <span className="text-green-600 dark:text-green-400">Up from {priorRate.toFixed(1)}%</span>
+                              : <span className="text-amber-600 dark:text-amber-400">from {priorRate.toFixed(1)}%</span>
+                          }
+                        </>
                       );
                       if (rate >= 80) return (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium">
-                          Needs attention
-                        </span>
+                        <>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium">
+                            Needs attention
+                          </span>
+                          <span className="text-muted-foreground">{rateDelta > 0 ? 'Improving' : 'Declining'}</span>
+                        </>
                       );
                       return (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-medium">
-                          Critical
-                        </span>
+                        <>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-medium">
+                            Critical
+                          </span>
+                          <span className="text-muted-foreground">Investigate errors</span>
+                        </>
                       );
                     })()}
-                    <span className="text-muted-foreground">Last 30 days</span>
                   </p>
                 </div>
                 <div className="w-11 h-11 bg-gradient-to-br from-[#00CED1] to-[#2A87C4] rounded-xl flex items-center justify-center text-white">
-                  <IconCheck />
+                  <IconProvenance />
                 </div>
               </div>
             </div>
+            </Link>
           </>
         )}
       </div>
@@ -566,8 +908,8 @@ export default function DashboardPage() {
             <div className="p-6 border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-delft-blue dark:text-white">API Keys</h2>
-                  <p className="text-sm text-muted-foreground mt-1">Manage your authentication credentials</p>
+                  <h2 className="text-lg font-semibold tracking-tight text-delft-blue dark:text-white uppercase">API Keys</h2>
+                  <p className="text-[13px] text-muted-foreground mt-0.5">Manage your authentication credentials</p>
                 </div>
                 <Link href="/api-keys">
                   <button className="inline-flex items-center gap-2 px-4 py-2 bg-blue-ncs text-white font-medium rounded-lg hover:bg-blue-ncs/90 transition-colors text-sm">
@@ -585,7 +927,7 @@ export default function DashboardPage() {
                 <div className="text-center py-12">
                   <div className="w-20 h-20 bg-gradient-to-br from-columbia-blue/20 to-blue-ncs/20 rounded-2xl flex items-center justify-center mx-auto mb-5">
                     <div className="w-12 h-12 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
-                      <IconKey />
+                      <IconApiKey />
                     </div>
                   </div>
                   <h3 className="text-lg font-semibold text-delft-blue dark:text-white mb-2">No API Keys Yet</h3>
@@ -608,7 +950,7 @@ export default function DashboardPage() {
                       className="group flex items-center gap-4 p-4 rounded-xl border border-border hover:border-blue-ncs/30 hover:bg-gradient-to-r hover:from-columbia-blue/5 hover:to-transparent transition-all cursor-pointer"
                     >
                       <div className="w-10 h-10 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-lg flex items-center justify-center text-white flex-shrink-0">
-                        <IconKey />
+                        <IconApiKey />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
@@ -644,22 +986,53 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Onboarding Checklist - Full width */}
-        <OnboardingChecklist />
+        {/* Recent Activity Feed -- shows when activity data exists (demo mode or real) */}
+        {activityFeed.length > 0 && (
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-border overflow-hidden">
+            <div className="p-5 border-b border-border">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-semibold tracking-tight text-delft-blue dark:text-white uppercase">Recent Activity</h2>
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-[10px] font-medium text-green-700 dark:text-green-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                    Live
+                  </span>
+                </div>
+                <Link href="/settings?tab=security" className="text-xs font-medium text-blue-ncs hover:underline">
+                  View all activity &rarr;
+                </Link>
+              </div>
+            </div>
+            <div className="divide-y divide-border">
+              {activityFeed.slice(0, 6).map((event, i) => {
+                const borderColor = event.type === 'sign' ? 'border-l-blue-ncs' : event.type === 'verify' ? 'border-l-green-500' : event.type === 'detection' ? 'border-l-amber-500' : 'border-l-slate-400';
+                const dotColor = event.type === 'sign' ? 'bg-blue-ncs' : event.type === 'verify' ? 'bg-green-500' : event.type === 'detection' ? 'bg-amber-500' : 'bg-slate-400';
+                return (
+                  <div key={i} className={`flex items-center gap-3 px-5 py-3 border-l-2 ${borderColor} animate-slide-in-right`} style={{ animationDelay: `${i * 60}ms` }}>
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
+                    <p className="text-sm text-foreground flex-1 truncate">{event.title}</p>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0">{event.time}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-        {/* Two-column grid: Value Proof + Quick Links */}
+        {/* Onboarding Checklist - Full width (hidden in demo mode) */}
+        {!isDemoMode && <OnboardingChecklist />}
+
+        {/* Two-column grid: Content Protection Funnel + Quick Links */}
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
-          <ValueProofCard stats={stats} isLoading={isLoadingStats} />
+          <ContentProtectionFunnel stats={stats} isLoading={isLoadingStats} />
 
           {/* Quick Links */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5">
-            <h3 className="font-bold text-delft-blue dark:text-white mb-4">Quick Links</h3>
+            <h3 className="text-sm font-semibold tracking-tight text-delft-blue dark:text-white uppercase mb-4">Quick Links</h3>
             <div className="space-y-2">
               <Link href="/integrations" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
                 <div className="w-9 h-9 bg-[#00CED1]/10 rounded-lg flex items-center justify-center text-[#00CED1]">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                  </svg>
+                  <IconLink />
                 </div>
                 <div className="flex-1">
                   <p className="font-medium text-delft-blue dark:text-white text-sm">Integrations</p>
