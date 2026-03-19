@@ -560,12 +560,12 @@ export default function WebhooksPage() {
                 Learn how to handle webhook payloads, verify signatures, and implement retry logic.
               </p>
               <a
-                href="https://api.encypherai.com/docs"
+                href="https://api.encypherai.com/docs#/Webhooks"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-blue-ncs hover:underline mt-2 inline-block"
               >
-                View documentation <svg className="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                View webhook documentation <svg className="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </a>
             </div>
           </div>
