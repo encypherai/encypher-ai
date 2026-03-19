@@ -36,14 +36,13 @@ function formatNumber(n: number): string {
   return n.toLocaleString();
 }
 
+const dateFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
+
 function formatDate(dateString: string): string {
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString;
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-    }).format(date);
+    return dateFormatter.format(date);
   } catch {
     return dateString;
   }
@@ -217,7 +216,7 @@ function TimelineChart({ data }: { data: CdnAnalyticsTimelineDay[] }) {
 
 export default function CdnAnalyticsPage() {
   const { data: session, status } = useSession();
-  const accessToken = (session?.user as any)?.accessToken as string | undefined;
+  const accessToken = (session?.user as Record<string, unknown> | undefined)?.accessToken as string | undefined;
   const { activeOrganization, isLoading: orgLoading } = useOrganization();
   const isEnterprise =
     activeOrganization?.tier === 'enterprise' ||

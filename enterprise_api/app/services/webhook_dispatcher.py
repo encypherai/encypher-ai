@@ -501,6 +501,7 @@ class WebhookDispatcher:
                     " AND d.next_retry_at <= :now"
                     " ORDER BY d.next_retry_at ASC"
                     " LIMIT 50"
+                    " FOR UPDATE OF d SKIP LOCKED"
                 ),
                 {"now": datetime.now(timezone.utc)},
             )
@@ -546,23 +547,28 @@ class WebhookDispatcher:
         self,
         db: AsyncSession,
         delivery_id: str,
+        organization_id: str | None = None,
     ) -> bool:
         """
         Manually retry a failed or permanently_failed delivery.
 
         Resets the delivery for another attempt and tries immediately.
         Returns True if the delivery was found and retried.
+        If organization_id is provided, enforces ownership check.
         """
-        result = await db.execute(
-            text(
-                "SELECT d.id, d.webhook_id, d.payload, d.event_type, d.status,"
-                " w.url, w.secret_encrypted"
-                " FROM webhook_deliveries d"
-                " JOIN webhooks w ON w.id = d.webhook_id"
-                " WHERE d.id = :id"
-            ),
-            {"id": delivery_id},
+        query = (
+            "SELECT d.id, d.webhook_id, d.payload, d.event_type, d.status,"
+            " w.url, w.secret_encrypted"
+            " FROM webhook_deliveries d"
+            " JOIN webhooks w ON w.id = d.webhook_id"
+            " WHERE d.id = :id"
         )
+        params: dict = {"id": delivery_id}
+        if organization_id:
+            query += " AND w.organization_id = :org_id"
+            params["org_id"] = organization_id
+
+        result = await db.execute(text(query), params)
         row = result.fetchone()
         if not row or row.status not in ("failed", "permanently_failed"):
             return False

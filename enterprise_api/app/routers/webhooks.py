@@ -715,3 +715,41 @@ async def get_webhook_deliveries(
             "page_size": page_size,
         }
     )
+
+
+@router.post(
+    "/{webhook_id}/deliveries/{delivery_id}/retry",
+    summary="Retry a failed webhook delivery",
+    description="Manually retry a failed or permanently_failed delivery. Only works for deliveries belonging to webhooks owned by the requesting organization.",
+)
+async def retry_webhook_delivery(
+    webhook_id: str,
+    delivery_id: str,
+    organization: dict = Depends(require_webhooks_business_tier),
+    db: AsyncSession = Depends(get_db),
+):
+    org_id = organization["organization_id"]
+
+    # Verify webhook belongs to this org
+    result = await db.execute(
+        text("SELECT id FROM webhooks WHERE id = :webhook_id AND organization_id = :org_id"),
+        {"webhook_id": webhook_id, "org_id": org_id},
+    )
+    if not result.fetchone():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "WEBHOOK_NOT_FOUND", "message": "Webhook not found"},
+        )
+
+    success = await webhook_dispatcher.retry_delivery(
+        db=db,
+        delivery_id=delivery_id,
+        organization_id=org_id,
+    )
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "DELIVERY_NOT_FOUND", "message": "Delivery not found or not in a retriable state"},
+        )
+
+    return {"status": "retrying", "delivery_id": delivery_id}
