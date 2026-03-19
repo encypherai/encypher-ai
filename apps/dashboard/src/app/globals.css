@@ -17,7 +17,7 @@
   --white: #ffffff;
 
   /* Light mode semantic colors */
-  --background: 216 18% 94%;
+  --background: 0 0% 100%;
   --foreground: 213 49% 21%;
   --heading: 213 49% 21%; /* delft-blue in light mode */
 
@@ -39,8 +39,8 @@
   --popover: 0 0% 100%;
   --popover-foreground: 213 49% 21%;
 
-  --border: 214 32% 85%;
-  --input: 214 32% 85%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
   --ring: 205 62% 82%;
 
   --destructive: 0 84% 60%;
@@ -153,4 +153,13 @@ code::-moz-selection, code *::-moz-selection,
 textarea::-moz-selection {
   background-color: rgba(59, 130, 246, 0.5);
   color: inherit;
+}
+
+/* ===== LIGHT MODE CONTRAST OVERRIDES ===== */
+/* Override design-system theme.css to give cards clear contrast against the page.
+   Uses html:not(.dark) for higher specificity than theme.css :root block. */
+html:not(.dark) {
+  --background: #eef1f5;
+  --border: #d4dbe6;
+  --input: #d4dbe6;
 }
