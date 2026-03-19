@@ -10,7 +10,7 @@ import {
 } from '@encypher/design-system';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { useEffect, useRef, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import apiClient, {
@@ -44,6 +44,14 @@ function BillingPageContent() {
   const archiveQuantity = Number.isFinite(requestedQuantity) && requestedQuantity > 0 ? requestedQuantity : 0;
   const isArchiveBackfillRequested = requestedAddOn === 'bulk-archive-backfill';
   const archiveEstimatedTotal = archiveQuantity * 0.01;
+  const isSeatUpgradeRequested = searchParams.get('upgrade') === 'seats';
+  const seatCurrent = Number(searchParams.get('current') || '0');
+  const seatMax = Number(searchParams.get('max') || '0');
+  const seatQuantityParam = Number(searchParams.get('quantity') || '5');
+  const [seatQuantity, setSeatQuantity] = useState(
+    Number.isFinite(seatQuantityParam) && seatQuantityParam > 0 ? seatQuantityParam : 5
+  );
+  const seatUpgradeRef = useRef<HTMLDivElement>(null);
 
   // Fetch subscription, invoices, usage, and coalition data
   const billingQuery = useQuery<{
@@ -70,6 +78,8 @@ function BillingPageContent() {
     if (!accessToken) return;
     const success = searchParams.get('success');
     const upgrade = searchParams.get('upgrade');
+    const connectReturn = searchParams.get('connect_return');
+    const connectRefresh = searchParams.get('connect_refresh');
     const isCheckoutSuccess = success === 'true' || upgrade === 'success';
     if (isCheckoutSuccess && !hasRefetchedAfterCheckout.current) {
       billingQuery.refetch();
@@ -79,7 +89,20 @@ function BillingPageContent() {
     if (!isCheckoutSuccess) {
       hasRefetchedAfterCheckout.current = false;
     }
+    if (connectReturn === 'true') {
+      toast.success('Payout account setup submitted. It may take a moment for Stripe to verify your details.');
+      billingQuery.refetch();
+    }
+    if (connectRefresh === 'true') {
+      toast.info('Payout account setup incomplete. Please try again to finish onboarding.');
+    }
   }, [accessToken, billingQuery, refetchOrganization, searchParams]);
+
+  useEffect(() => {
+    if (isSeatUpgradeRequested && seatUpgradeRef.current) {
+      seatUpgradeRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [isSeatUpgradeRequested]);
 
   // Manage billing portal
   const portalMutation = useMutation({
@@ -109,6 +132,19 @@ function BillingPageContent() {
     },
     onError: (err: Error) => {
       toast.error(err.message || 'Failed to start archive checkout.');
+    },
+  });
+
+  const connectOnboardingMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.createConnectOnboardingLink(accessToken);
+    },
+    onSuccess: (response) => {
+      window.location.href = response.url;
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to start payout account setup.');
     },
   });
 
@@ -266,6 +302,80 @@ function BillingPageContent() {
           )}
         </Card>
 
+        {/* Seat Upgrade Request */}
+        {isSeatUpgradeRequested && (
+          <div ref={seatUpgradeRef} className="scroll-mt-8">
+            <Card className="border-blue-ncs bg-blue-ncs/5">
+              <CardHeader>
+                <CardTitle>Seat Upgrade Requested</CardTitle>
+                <CardDescription>
+                  Your team has reached the seat limit. Select how many additional seats you need and contact sales.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-6">
+                  <div className="grid grid-cols-3 gap-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Current Seats</p>
+                      <p className="text-2xl font-bold text-delft-blue dark:text-white">
+                        {seatCurrent > 0 ? seatCurrent : '--'} / {seatMax > 0 ? seatMax : '--'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">used / maximum</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Available</p>
+                      <p className="text-2xl font-bold text-red-600">0</p>
+                      <p className="text-xs text-muted-foreground mt-1">no seats remaining</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">After Upgrade</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {seatMax > 0 ? seatMax + seatQuantity : seatQuantity}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">total seats</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <label className="text-sm font-medium text-foreground">Additional seats needed</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSeatQuantity(Math.max(1, seatQuantity - 1))}
+                          disabled={seatQuantity <= 1}
+                        >
+                          -
+                        </Button>
+                        <span className="w-12 text-center text-lg font-bold text-delft-blue dark:text-white">
+                          {seatQuantity}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSeatQuantity(Math.min(100, seatQuantity + 1))}
+                          disabled={seatQuantity >= 100}
+                        >
+                          +
+                        </Button>
+                      </div>
+                    </div>
+                    <Button
+                      variant="primary"
+                      onClick={() => {
+                        const newTotal = seatMax > 0 ? seatMax + seatQuantity : seatQuantity;
+                        window.location.href = `mailto:sales@encypherai.com?subject=${encodeURIComponent('Seat Upgrade Request')}&body=${encodeURIComponent(`We have reached our seat limit (${seatCurrent}/${seatMax}) and would like to add ${seatQuantity} more seat(s) for a total of ${newTotal} on our Enterprise plan.`)}`;
+                      }}
+                    >
+                      Contact Sales for {seatQuantity} More Seat{seatQuantity !== 1 ? 's' : ''}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Usage Statistics */}
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
@@ -384,13 +494,21 @@ function BillingPageContent() {
                       </span>
                     </div>
                   </div>
-                  {!coalition.payout_account_connected && (
+                  {coalition.payout_account_connected ? (
+                    <div className="flex items-center gap-2 text-sm font-medium text-green-600">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Payout Account Connected
+                    </div>
+                  ) : (
                     <Button
                       variant="outline"
                       fullWidth
-                      disabled
+                      onClick={() => connectOnboardingMutation.mutate()}
+                      disabled={connectOnboardingMutation.isPending}
                     >
-                      Connect Payout Account (Coming Soon)
+                      {connectOnboardingMutation.isPending ? 'Setting up...' : 'Connect Payout Account'}
                     </Button>
                   )}
                 </>

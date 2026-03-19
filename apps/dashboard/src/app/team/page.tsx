@@ -659,7 +659,18 @@ export default function TeamPage() {
                   </p>
                 </div>
                 {!seats.unlimited && seats.available === 0 && (
-                  <Badge variant="warning">Seat limit reached</Badge>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="warning">Seat limit reached</Badge>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        window.location.href = `/billing?upgrade=seats&quantity=5&current=${seats.used}&max=${seats.max}`;
+                      }}
+                    >
+                      Upgrade Seats
+                    </Button>
+                  </div>
                 )}
               </div>
             </CardContent>

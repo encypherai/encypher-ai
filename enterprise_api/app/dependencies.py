@@ -9,6 +9,7 @@ Unified Authentication Architecture:
 """
 
 import inspect
+import ipaddress
 import logging
 from typing import Dict, Optional
 
@@ -38,6 +39,59 @@ def _build_api_key_prefix(raw_key: str) -> str:
     if not trimmed:
         return ""
     return trimmed[:12]
+
+
+def check_ip_allowlist(allowlist: list[str], client_ip: str) -> bool:
+    """Check if a client IP is within any of the CIDR ranges in the allowlist.
+
+    Returns True if the allowlist is empty (no restriction) or if the IP
+    matches at least one entry. Returns False otherwise.
+
+    Handles IPv4-mapped IPv6 addresses (e.g. ::ffff:10.0.0.1) by normalizing
+    them to plain IPv4 before comparison.
+    """
+    if not allowlist:
+        return True
+
+    try:
+        addr = ipaddress.ip_address(client_ip)
+        # Normalize IPv4-mapped IPv6 to plain IPv4 for consistent matching
+        if isinstance(addr, ipaddress.IPv6Address) and addr.ipv4_mapped:
+            addr = addr.ipv4_mapped
+    except ValueError:
+        return False
+
+    for cidr in allowlist:
+        try:
+            network = ipaddress.ip_network(cidr, strict=False)
+            if addr in network:
+                return True
+        except ValueError:
+            continue
+
+    return False
+
+
+def _get_client_ip(request: Request) -> str:
+    """Extract the real client IP using rightmost-untrusted-IP from X-Forwarded-For.
+
+    Walks the X-Forwarded-For chain from right to left, skipping trusted proxies,
+    and returns the first untrusted IP. This prevents spoofing via prepended headers.
+    Falls back to the direct peer IP.
+    """
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for and settings.trusted_proxy_ips_set:
+        peer = request.client.host if request.client else ""
+        if peer in settings.trusted_proxy_ips_set:
+            # Walk from right to left, skip trusted proxies
+            ips = [ip.strip() for ip in forwarded_for.split(",")]
+            for ip in reversed(ips):
+                if ip and ip not in settings.trusted_proxy_ips_set:
+                    return ip
+            # All IPs in chain are trusted; use the leftmost
+            if ips:
+                return ips[0]
+    return request.client.host if request.client else ""
 
 
 def _normalize_permissions(raw_permissions: object) -> list[str]:
@@ -369,6 +423,25 @@ async def get_current_organization(
             },
         )
 
+    # Enforce IP allowlist (if set on the API key context)
+    ip_allowlist = org_context.get("ip_allowlist")
+    if ip_allowlist:
+        client_ip = _get_client_ip(request)
+        if not check_ip_allowlist(ip_allowlist, client_ip):
+            logger.warning(
+                "IP allowlist denied: ip=%s key_id=%s org=%s",
+                client_ip,
+                org_context.get("api_key_id", "unknown"),
+                org_context.get("organization_id", "unknown"),
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "IP_NOT_ALLOWED",
+                    "message": "Request denied: your IP address is not in this key's allowlist.",
+                },
+            )
+
     _set_request_auth_state(request, org_context, api_key)
 
     return org_context
@@ -414,6 +487,8 @@ def _normalize_org_context(org_context: Dict) -> Dict:
         "account_type": org_context.get("account_type"),
         "display_name": org_context.get("display_name"),
         "anonymous_publisher": org_context.get("anonymous_publisher", False),
+        # IP allowlist for key-level restriction
+        "ip_allowlist": org_context.get("ip_allowlist", []),
     }
     # TEAM_191: Build publisher identity + attribution strings
     from app.utils.publisher_attribution import build_publisher_attribution_from_org_context, build_publisher_identity_base_from_org_context

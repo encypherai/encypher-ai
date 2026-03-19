@@ -19,6 +19,59 @@ import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { exportApiKeys } from '../../lib/exportCsv';
 import { useOrganization } from '../../contexts/OrganizationContext';
 
+// CIDR validation regexes (hoisted for perf)
+const IPV4_CIDR_RE = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
+const IPV6_CIDR_RE = /^[0-9a-fA-F:]+(\/\d{1,3})?$/;
+
+/**
+ * Validate a single CIDR notation string (IPv4 or IPv6).
+ */
+function isValidCidr(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+
+  // IPv4 CIDR
+  if (IPV4_CIDR_RE.test(trimmed)) {
+    const parts = trimmed.split('/');
+    const octets = parts[0].split('.').map(Number);
+    if (!octets.every((o) => o >= 0 && o <= 255)) return false;
+    if (parts[1] !== undefined) {
+      const prefix = parseInt(parts[1], 10);
+      if (prefix < 0 || prefix > 32) return false;
+    }
+    return true;
+  }
+
+  // IPv6 CIDR
+  if (IPV6_CIDR_RE.test(trimmed)) {
+    const parts = trimmed.split('/');
+    if (parts[1] !== undefined) {
+      const prefix = parseInt(parts[1], 10);
+      if (prefix < 0 || prefix > 128) return false;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Parse comma/newline-separated CIDR ranges.
+ */
+function parseCidrInput(raw: string): { entries: string[]; errors: string[] } {
+  const entries: string[] = [];
+  const errors: string[] = [];
+  const parts = raw.split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
+  for (const part of parts) {
+    if (isValidCidr(part)) {
+      entries.push(part);
+    } else {
+      errors.push(part);
+    }
+  }
+  return { entries, errors };
+}
+
 // Modal component for creating API keys
 function CreateKeyModal({
   isOpen,
@@ -28,25 +81,34 @@ function CreateKeyModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (name: string) => void;
+  onSubmit: (name: string, ipAllowlist: string[]) => void;
   isLoading: boolean;
 }) {
   const [keyName, setKeyName] = useState('');
+  const [ipAllowlistRaw, setIpAllowlistRaw] = useState('');
+  const [ipErrors, setIpErrors] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setKeyName('');
-      // Focus input after modal opens
+      setIpAllowlistRaw('');
+      setIpErrors([]);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (keyName.trim()) {
-      onSubmit(keyName.trim());
+    if (!keyName.trim()) return;
+
+    const { entries, errors } = parseCidrInput(ipAllowlistRaw);
+    if (errors.length > 0) {
+      setIpErrors(errors);
+      return;
     }
+    setIpErrors([]);
+    onSubmit(keyName.trim(), entries);
   };
 
   if (!isOpen) return null;
@@ -54,18 +116,18 @@ function CreateKeyModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      
+
       {/* Modal */}
       <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
         <h3 className="text-xl font-semibold text-foreground mb-2">Create New API Key</h3>
         <p className="text-sm text-muted-foreground mb-6">
           Give your API key a descriptive name to help you identify it later.
         </p>
-        
+
         <form onSubmit={handleSubmit}>
           <Input
             ref={inputRef}
@@ -73,9 +135,34 @@ function CreateKeyModal({
             value={keyName}
             onChange={(e) => setKeyName(e.target.value)}
             disabled={isLoading}
-            className="mb-6"
+            className="mb-4"
           />
-          
+
+          {/* IP Allowlist */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-foreground mb-1">
+              IP Allowlist (optional)
+            </label>
+            <textarea
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[72px] font-mono"
+              placeholder={"10.0.0.0/8\n192.168.1.0/24\n2001:db8::/32"}
+              value={ipAllowlistRaw}
+              onChange={(e) => {
+                setIpAllowlistRaw(e.target.value);
+                if (ipErrors.length > 0) setIpErrors([]);
+              }}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Restrict this key to specific IP ranges (comma or newline separated CIDR notation). Leave empty to allow all IPs.
+            </p>
+            {ipErrors.length > 0 && (
+              <p className="text-xs text-destructive mt-1">
+                Invalid CIDR entries: {ipErrors.join(', ')}
+              </p>
+            )}
+          </div>
+
           <div className="flex justify-end gap-3">
             <Button
               type="button"
@@ -106,6 +193,7 @@ type ApiKeyRecord = {
   createdAt: string;
   lastUsedAt?: string;
   permissions: string[];
+  ipAllowlist: string[];
 };
 
 const normalizeApiKeys = (payload: any): ApiKeyRecord[] => {
@@ -137,6 +225,7 @@ const normalizeApiKeys = (payload: any): ApiKeyRecord[] => {
     createdAt: key.created_at ?? key.created ?? key.inserted_at ?? '',
     lastUsedAt: key.last_used_at ?? key.last_used ?? key.last_accessed_at ?? '—',
     permissions: key.permissions ?? key.scopes ?? ['sign', 'verify'],
+    ipAllowlist: Array.isArray(key.ip_allowlist) ? key.ip_allowlist : [],
   }));
 };
 
@@ -192,14 +281,15 @@ export default function ApiKeysPage() {
   });
 
   const createKeyMutation = useMutation({
-    mutationFn: async (keyName: string) => {
+    mutationFn: async ({ name, ipAllowlist }: { name: string; ipAllowlist: string[] }) => {
       if (!accessToken) throw new Error('You must be signed in to create API keys.');
-      const response = await apiClient.createApiKey(accessToken, keyName, [
-        'sign',
-        'verify',
-        'read',
-      ],
-      orgId);
+      const response = await apiClient.createApiKey(
+        accessToken,
+        name,
+        ['sign', 'verify', 'read'],
+        orgId,
+        ipAllowlist.length > 0 ? ipAllowlist : undefined,
+      );
       return response;
     },
     onSuccess: (data) => {
@@ -219,8 +309,8 @@ export default function ApiKeysPage() {
     },
   });
 
-  const handleCreateKey = (name: string) => {
-    createKeyMutation.mutate(name);
+  const handleCreateKey = (name: string, ipAllowlist: string[]) => {
+    createKeyMutation.mutate({ name, ipAllowlist });
   };
 
   const deleteKeyMutation = useMutation({
@@ -359,7 +449,7 @@ export default function ApiKeysPage() {
                       <Badge key={perm} variant="primary" size="sm">
                         {perm}
                       </Badge>
-                    )) || <span className="text-muted-foreground">—</span>}
+                    )) || <span className="text-muted-foreground">--</span>}
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -367,6 +457,20 @@ export default function ApiKeysPage() {
                   {formatDate(key.lastUsedAt)}
                 </div>
               </div>
+
+              {/* IP Allowlist */}
+              {key.ipAllowlist.length > 0 && (
+                <div className="flex items-start gap-2 pt-2 border-t border-border">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap mt-0.5">IP Allowlist:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {key.ipAllowlist.map((cidr) => (
+                      <Badge key={cidr} variant="secondary" size="sm">
+                        {cidr}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}
@@ -468,4 +572,3 @@ export default function ApiKeysPage() {
     </DashboardLayout>
   );
 }
-

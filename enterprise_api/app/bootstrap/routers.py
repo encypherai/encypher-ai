@@ -8,6 +8,7 @@ from app.routers import (
     audit,
     batch,
     byok,
+    data_management,
     cdn_analytics,
     cdn_integrations,
     cdn_provenance,
@@ -76,6 +77,7 @@ ROUTER_SPECS = [
     (partner_portal.router, "/api/v1", ["Partner Portal"]),
     (compliance.router, "/api/v1", ["Compliance"]),
     (attestation_policies.router, "/api/v1", ["Attestation Policies"]),
+    (data_management.router, "/api/v1", ["Data Management"]),
     (discovery.router, None, ["Discovery"]),
     (api_v1_router, "/api/v1", None),
 ]

@@ -363,6 +363,10 @@ interface PortalResponse {
   portal_url: string;
 }
 
+interface ConnectOnboardingResponse {
+  url: string;
+}
+
 interface UpgradeResponse {
   success: boolean;
   checkout_url?: string;
@@ -801,14 +805,18 @@ const apiClient = {
     accessToken: string,
     name: string,
     permissions: string[] = ['sign', 'verify', 'read'],
-    organizationId?: string | null
+    organizationId?: string | null,
+    ipAllowlist?: string[],
   ): Promise<ApiResponse<ApiKeyCreateResponse>> {
-    const payload: { name: string; permissions: string[]; organization_id?: string } = {
+    const payload: { name: string; permissions: string[]; organization_id?: string; ip_allowlist?: string[] } = {
       name,
       permissions,
     };
     if (organizationId) {
       payload.organization_id = organizationId;
+    }
+    if (ipAllowlist && ipAllowlist.length > 0) {
+      payload.ip_allowlist = ipAllowlist;
     }
     const response = await fetchWithAuth<ApiKeyCreateResponse>(
       `${API_BASE_URL}/keys/generate`,
@@ -1101,6 +1109,18 @@ const apiClient = {
       { method: 'DELETE' }
     );
     return response.data;
+  },
+
+  async getOrganizationSecurity(accessToken: string, organizationId: string): Promise<{ enforce_mfa: boolean } | null> {
+    try {
+      const response = await fetchWithAuth<{ success: boolean; data: { enforce_mfa: boolean } }>(
+        `${API_BASE_URL}/organizations/${organizationId}/security`,
+        accessToken
+      );
+      return response.data ?? null;
+    } catch {
+      return null;
+    }
   },
 
   async listOrganizationInvitations(accessToken: string, organizationId: string): Promise<OrganizationInvitationInfo[]> {
@@ -1447,33 +1467,32 @@ const apiClient = {
   /**
    * Register a public key for BYOK verification (enterprise tier)
    */
-  async registerPublicKey(accessToken: string, publicKeyPem: string, keyName?: string, keyAlgorithm?: string): Promise<unknown> {
-    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${API_BASE_URL}/admin/public-keys`,
+  async registerPublicKey(accessToken: string, publicKeyPem: string, keyName?: string, keyAlgorithm?: string): Promise<ByokRegisterResponse> {
+    return fetchWithAuth<ByokRegisterResponse>(
+      `${API_BASE_URL}/byok/public-keys`,
       accessToken,
       {
         method: 'POST',
         body: JSON.stringify({
           public_key_pem: publicKeyPem,
           key_name: keyName,
-          key_algorithm: keyAlgorithm || 'Ed25519'
+          key_algorithm: keyAlgorithm || 'Ed25519',
         }),
       }
     );
-    return response;
   },
 
   /**
    * List organization's public keys
    */
-  async listPublicKeys(accessToken: string, includeRevoked?: boolean): Promise<unknown> {
+  async listPublicKeys(accessToken: string, includeRevoked?: boolean): Promise<ByokKeyListData> {
     const params = new URLSearchParams();
     if (includeRevoked) params.append('include_revoked', 'true');
 
     const queryString = params.toString();
-    const url = `${API_BASE_URL}/admin/public-keys${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_BASE_URL}/byok/public-keys${queryString ? `?${queryString}` : ''}`;
 
-    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+    const response = await fetchWithAuth<{ success: boolean; data: ByokKeyListData }>(
       url,
       accessToken
     );
@@ -1483,17 +1502,27 @@ const apiClient = {
   /**
    * Revoke a public key
    */
-  async revokePublicKey(accessToken: string, keyId: string, reason?: string): Promise<unknown> {
+  async revokePublicKey(accessToken: string, keyId: string, reason?: string): Promise<{ success: boolean }> {
     const params = new URLSearchParams();
     if (reason) params.append('reason', reason);
 
     const queryString = params.toString();
-    const url = `${API_BASE_URL}/admin/public-keys/${keyId}${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_BASE_URL}/byok/public-keys/${keyId}${queryString ? `?${queryString}` : ''}`;
 
-    return fetchWithAuth(
+    return fetchWithAuth<{ success: boolean }>(
       url,
       accessToken,
       { method: 'DELETE' }
+    );
+  },
+
+  /**
+   * Get trusted Certificate Authorities for BYOK
+   */
+  async getTrustedCas(accessToken: string): Promise<ByokTrustedCasResponse> {
+    return fetchWithAuth<ByokTrustedCasResponse>(
+      `${API_BASE_URL}/byok/trusted-cas`,
+      accessToken
     );
   },
 
@@ -1576,6 +1605,17 @@ const apiClient = {
     return fetchWithAuth<CoalitionSummary>(
       `${API_BASE_URL}/billing/coalition`,
       accessToken
+    );
+  },
+
+  /**
+   * Create a Stripe Connect onboarding link for publisher payouts
+   */
+  async createConnectOnboardingLink(accessToken: string): Promise<ConnectOnboardingResponse> {
+    return fetchWithAuth<ConnectOnboardingResponse>(
+      `${API_BASE_URL}/billing/connect/onboarding`,
+      accessToken,
+      { method: 'POST' }
     );
   },
 
@@ -2478,7 +2518,250 @@ const apiClient = {
     );
     return response.data;
   },
+
+  // ── Image / Rich Signing ─────────────────────────────────────────────────
+
+  async signRichContent(
+    accessToken: string,
+    payload: RichArticleSignPayload
+  ): Promise<RichSignResponseData> {
+    const response = await fetchWithAuth<{ success: boolean; data: RichSignResponseData }>(
+      `${API_BASE_URL}/sign/rich`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify(payload) }
+    );
+    return response.data;
+  },
+
+  // ── GDPR Data Management ───────────────────────────────────────────────
+
+  async createDeletionRequest(
+    accessToken: string,
+    payload: { scope: string; reason?: string; confirm: boolean }
+  ): Promise<DeletionRequestInfo> {
+    return fetchWithAuth<DeletionRequestInfo>(
+      `${API_BASE_URL}/data/deletion-request`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify(payload) }
+    );
+  },
+
+  async listDeletionRequests(
+    accessToken: string,
+    status?: string
+  ): Promise<{ requests: DeletionRequestInfo[]; total: number }> {
+    const params = status ? `?status=${status}` : '';
+    return fetchWithAuth<{ requests: DeletionRequestInfo[]; total: number }>(
+      `${API_BASE_URL}/data/deletion-requests${params}`,
+      accessToken
+    );
+  },
+
+  async confirmDeletionRequest(
+    accessToken: string,
+    requestId: string
+  ): Promise<{ request_id: string; status: string; message: string }> {
+    return fetchWithAuth<{ request_id: string; status: string; message: string }>(
+      `${API_BASE_URL}/data/deletion-request/${requestId}/confirm`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+  },
+
+  async cancelDeletionRequest(
+    accessToken: string,
+    requestId: string
+  ): Promise<{ request_id: string; status: string; message: string }> {
+    return fetchWithAuth<{ request_id: string; status: string; message: string }>(
+      `${API_BASE_URL}/data/deletion-request/${requestId}/cancel`,
+      accessToken,
+      { method: 'POST' }
+    );
+  },
+
+  async adminPurgeUser(
+    accessToken: string,
+    payload: { user_email: string; reason: string; confirm: boolean }
+  ): Promise<AdminPurgeResponseInfo> {
+    return fetchWithAuth<AdminPurgeResponseInfo>(
+      `${API_BASE_URL}/data/admin/purge-user`,
+      accessToken,
+      { method: 'POST', body: JSON.stringify(payload) }
+    );
+  },
+
+  async getDeletionReceipt(
+    accessToken: string,
+    requestId: string
+  ): Promise<DeletionReceiptInfo> {
+    return fetchWithAuth<DeletionReceiptInfo>(
+      `${API_BASE_URL}/data/deletion-request/${requestId}/receipt`,
+      accessToken
+    );
+  },
+
+  // ============================================
+  // Print Leak Detection (fingerprint-service)
+  // ============================================
+
+  async listFingerprintedDocuments(
+    accessToken: string,
+    organizationId?: string | null,
+  ): Promise<PrintFingerprintDocument[]> {
+    const params = new URLSearchParams();
+    if (organizationId) params.append('organization_id', organizationId);
+    const query = params.toString();
+    const response = await fetchWithAuth<{ success: boolean; data: PrintFingerprintDocument[] }>(
+      `${API_BASE_URL}/fingerprint/documents${query ? `?${query}` : ''}`,
+      accessToken,
+    );
+    return response.data ?? [];
+  },
+
+  async detectPrintLeak(
+    accessToken: string,
+    text: string,
+    confidenceThreshold: number = 0.6,
+  ): Promise<PrintDetectionResult> {
+    return fetchWithAuth<PrintDetectionResult>(
+      `${API_BASE_URL}/fingerprint/detect`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          text,
+          confidence_threshold: confidenceThreshold,
+        }),
+      },
+    );
+  },
 };
+
+// ── Print Leak Detection types ────────────────────────────────────────────────
+
+interface PrintFingerprintDocument {
+  fingerprint_id: string;
+  document_id: string;
+  document_name?: string;
+  organization_id: string;
+  markers_count: number;
+  created_at: string;
+  status: string;
+}
+
+interface PrintFingerprintMatch {
+  fingerprint_id: string;
+  document_id: string;
+  organization_id: string;
+  confidence: number;
+  markers_found: number;
+  markers_expected: number;
+  created_at: string;
+}
+
+interface PrintDetectionResult {
+  success: boolean;
+  fingerprint_detected: boolean;
+  matches: PrintFingerprintMatch[];
+  best_match: PrintFingerprintMatch | null;
+  processing_time_ms: number;
+  message: string;
+}
+
+// ── Image / Rich Signing types ────────────────────────────────────────────────
+
+interface RichContentImagePayload {
+  data: string;
+  filename: string;
+  mime_type: string;
+  position: number;
+  alt_text?: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface RichSignOptionsPayload {
+  segmentation_level?: string;
+  manifest_mode?: string;
+  action?: string;
+  enable_trustmark?: boolean;
+  image_quality?: number;
+  use_rights_profile?: boolean;
+  index_for_attribution?: boolean;
+}
+
+interface RichArticleSignPayload {
+  content: string;
+  content_format?: 'html' | 'markdown' | 'plain';
+  document_id?: string;
+  document_title?: string;
+  document_url?: string;
+  metadata?: Record<string, unknown>;
+  images: RichContentImagePayload[];
+  options?: RichSignOptionsPayload;
+}
+
+interface SignedImageResult {
+  image_id: string;
+  filename: string;
+  position: number;
+  signed_image_b64: string;
+  signed_image_hash: string;
+  c2pa_manifest_instance_id: string;
+  size_bytes: number;
+  phash?: string;
+  trustmark_applied: boolean;
+  mime_type: string;
+  c2pa_signed: boolean;
+}
+
+interface CompositeManifestSummary {
+  instance_id: string;
+  ingredient_count: number;
+  manifest_hash: string;
+}
+
+interface RichSignResponseData {
+  document_id: string;
+  content_type: string;
+  text: Record<string, unknown>;
+  images: SignedImageResult[];
+  composite_manifest: CompositeManifestSummary;
+  total_images: number;
+  processing_time_ms: number;
+}
+
+// ── GDPR Data Management types ────────────────────────────────────────────────
+
+interface DeletionRequestInfo {
+  id: string;
+  organization_id: string;
+  requested_by: string;
+  scope: string;
+  reason: string | null;
+  status: string;
+  requested_at: string;
+  scheduled_purge_at: string;
+}
+
+interface AdminPurgeResponseInfo {
+  request_id: string;
+  user_email: string;
+  status: string;
+  scheduled_purge_at: string;
+  records_marked: number;
+}
+
+interface DeletionReceiptInfo {
+  request_id: string;
+  organization_id: string;
+  scope: string;
+  requested_at: string;
+  completed_at: string | null;
+  status: string;
+  data_categories_deleted: string[];
+  data_categories_retained: string[];
+  retention_reasons: Record<string, string>;
+}
 
 // ── Rights Management types ───────────────────────────────────────────────────
 
@@ -2958,6 +3241,43 @@ interface WebhookTestResult {
   message?: string;
 }
 
+// -- BYOK types -----------------------------------------------------------------
+
+interface ByokPublicKeyInfo {
+  id: string;
+  organization_id: string;
+  key_name: string | null;
+  key_algorithm: string;
+  key_fingerprint: string;
+  public_key_pem: string;
+  is_active: boolean;
+  is_primary: boolean;
+  verification_count: number;
+  created_at: string | null;
+  last_used_at: string | null;
+}
+
+interface ByokKeyListData {
+  keys: ByokPublicKeyInfo[];
+  total: number;
+}
+
+interface ByokRegisterResponse {
+  success: boolean;
+  data: ByokPublicKeyInfo | null;
+}
+
+interface ByokTrustedCasResponse {
+  success: boolean;
+  trusted_cas: string[];
+  trust_list_url: string;
+  trust_list_fingerprint: string | null;
+  trust_list_loaded_at: string | null;
+  trust_list_source: string | null;
+  trust_list_count: string | null;
+  default_signing_mode: string;
+}
+
 export default apiClient;
 export { ApiError };
 export type {
@@ -3065,4 +3385,24 @@ export type {
   SamlConfigResponse,
   // Bulk Invite
   BulkInviteResult,
+  // BYOK Key Management
+  ByokPublicKeyInfo,
+  ByokKeyListData,
+  ByokRegisterResponse,
+  ByokTrustedCasResponse,
+  // Print Leak Detection
+  PrintFingerprintDocument,
+  PrintFingerprintMatch,
+  PrintDetectionResult,
+  // Image / Rich Signing
+  RichArticleSignPayload,
+  RichContentImagePayload,
+  RichSignOptionsPayload,
+  RichSignResponseData,
+  SignedImageResult,
+  CompositeManifestSummary,
+  // GDPR Data Management
+  DeletionRequestInfo,
+  AdminPurgeResponseInfo,
+  DeletionReceiptInfo,
 };

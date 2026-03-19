@@ -1010,6 +1010,84 @@ async def get_coalition_earnings(
 
 
 # =========================================================================
+# Stripe Connect (Payouts)
+# =========================================================================
+
+
+class ConnectOnboardingResponse(BaseModel):
+    """Response with Stripe Connect onboarding URL."""
+
+    url: str
+
+
+@router.post("/connect/onboarding", response_model=ConnectOnboardingResponse)
+async def create_connect_onboarding(
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Create a Stripe Connect onboarding link for publisher payouts.
+
+    If the organization does not yet have a Connect account, one is created
+    first. The user is then redirected to Stripe to complete onboarding.
+    """
+    import stripe as stripe_mod
+
+    org_id = current_user.get("organization_id") or current_user.get("default_organization_id")
+    email = current_user.get("email", "")
+
+    if not org_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No organization associated with this account.",
+        )
+
+    # Check if a Connect account already exists for this org via metadata lookup
+    connect_account_id: Optional[str] = None
+    try:
+        accounts = stripe_mod.Account.list(limit=100)
+        for acct in accounts.auto_paging_iter():
+            if acct.metadata.get("organization_id") == org_id:
+                connect_account_id = acct.id
+                break
+    except Exception as exc:
+        logger.warning("connect_account_lookup_failed error=%s", exc)
+
+    # Create a new Connect account if none exists
+    if not connect_account_id:
+        try:
+            account = await StripeService.create_connect_account(
+                email=email,
+                organization_id=org_id,
+            )
+            connect_account_id = account.id
+        except Exception as e:
+            logger.error("create_connect_account_failed error=%s", e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create payout account. Please try again.",
+            )
+
+    # Build onboarding link
+    dashboard_url = settings.DASHBOARD_URL.rstrip("/")
+    return_url = f"{dashboard_url}/billing?connect_return=true"
+    refresh_url = f"{dashboard_url}/billing?connect_refresh=true"
+
+    try:
+        link = await StripeService.create_connect_onboarding_link(
+            account_id=connect_account_id,
+            refresh_url=refresh_url,
+            return_url=return_url,
+        )
+        return ConnectOnboardingResponse(url=link.url)
+    except Exception as e:
+        logger.error("create_connect_onboarding_link_failed error=%s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create onboarding link. Please try again.",
+        )
+
+
+# =========================================================================
 # Payment Methods
 # =========================================================================
 

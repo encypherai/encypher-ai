@@ -15,11 +15,11 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Copy, Check, CreditCard } from 'lucide-react';
+import { Copy, Check, CreditCard, KeyRound, ShieldCheck } from 'lucide-react';
 import QRCode from 'qrcode';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
-import type { DashboardLayoutPreference, DomainClaimInfo, PublisherPlatform, PaymentMethod, OveragePreferences } from '../../lib/api';
+import type { DashboardLayoutPreference, DomainClaimInfo, PublisherPlatform, PaymentMethod, OveragePreferences, ByokPublicKeyInfo } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { useOrganization } from '../../contexts/OrganizationContext';
 
@@ -307,6 +307,280 @@ function SsoConfigCard({ orgId, accessToken }: { orgId: string | null | undefine
   );
 }
 
+function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | undefined; accessToken: string | undefined }) {
+  const queryClient = useQueryClient();
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [pemInput, setPemInput] = useState('');
+  const [keyName, setKeyName] = useState('');
+  const [keyAlgorithm, setKeyAlgorithm] = useState('Ed25519');
+  const [showRevoked, setShowRevoked] = useState(false);
+  const [revokeKeyId, setRevokeKeyId] = useState<string | null>(null);
+  const [revokeReason, setRevokeReason] = useState('');
+  const [showTrustedCas, setShowTrustedCas] = useState(false);
+
+  const keysQuery = useQuery({
+    queryKey: ['byok-keys', orgId, showRevoked],
+    queryFn: () => apiClient.listPublicKeys(accessToken!, showRevoked),
+    enabled: !!accessToken && !!orgId,
+    staleTime: 30_000,
+  });
+
+  const trustedCasQuery = useQuery({
+    queryKey: ['byok-trusted-cas'],
+    queryFn: () => apiClient.getTrustedCas(accessToken!),
+    enabled: !!accessToken && showTrustedCas,
+    staleTime: 10 * 60_000,
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: () => apiClient.registerPublicKey(accessToken!, pemInput, keyName || undefined, keyAlgorithm),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['byok-keys', orgId] });
+      toast.success('Public key registered successfully.');
+      setPemInput('');
+      setKeyName('');
+      setKeyAlgorithm('Ed25519');
+      setShowRegisterForm(false);
+    },
+    onError: (err: Error) => toast.error(err.message || 'Failed to register public key'),
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: ({ keyId, reason }: { keyId: string; reason?: string }) =>
+      apiClient.revokePublicKey(accessToken!, keyId, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['byok-keys', orgId] });
+      toast.success('Key revoked.');
+      setRevokeKeyId(null);
+      setRevokeReason('');
+    },
+    onError: (err: Error) => toast.error(err.message || 'Failed to revoke key'),
+  });
+
+  if (!orgId) return null;
+
+  const keys: ByokPublicKeyInfo[] = keysQuery.data?.keys ?? [];
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <KeyRound className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <CardTitle>BYOK Key Management</CardTitle>
+            <CardDescription>
+              Register and manage your own signing keys for Bring Your Own Key (BYOK) verification. Enterprise plan required.
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Register New Key */}
+        {!showRegisterForm ? (
+          <Button variant="primary" onClick={() => setShowRegisterForm(true)}>
+            Register Public Key
+          </Button>
+        ) : (
+          <div className="rounded-lg border border-border p-4 space-y-4">
+            <h4 className="text-sm font-semibold">Register a New Public Key</h4>
+            <div>
+              <label className="block text-sm font-medium mb-1">Key Name (optional)</label>
+              <Input
+                value={keyName}
+                onChange={(e) => setKeyName(e.target.value)}
+                placeholder="e.g. Production Signing Key"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Algorithm</label>
+              <StyledSelect value={keyAlgorithm} onChange={setKeyAlgorithm}>
+                <option value="Ed25519">Ed25519</option>
+                <option value="RSA-2048">RSA-2048</option>
+                <option value="RSA-4096">RSA-4096</option>
+                <option value="ECDSA P-256">ECDSA P-256</option>
+                <option value="ECDSA P-384">ECDSA P-384</option>
+              </StyledSelect>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Public Key (PEM)</label>
+              <textarea
+                value={pemInput}
+                onChange={(e) => setPemInput(e.target.value)}
+                placeholder={"-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"}
+                rows={6}
+                className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="primary"
+                onClick={() => registerMutation.mutate()}
+                disabled={registerMutation.isPending || !pemInput.trim()}
+              >
+                {registerMutation.isPending ? 'Registering...' : 'Register Key'}
+              </Button>
+              <Button variant="outline" onClick={() => { setShowRegisterForm(false); setPemInput(''); setKeyName(''); }}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Registered Keys List */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold">Registered Keys</h4>
+            <div className="flex items-center gap-2">
+              <ToggleSwitch checked={showRevoked} onChange={setShowRevoked} />
+              <span className="text-xs text-muted-foreground">Show Revoked</span>
+            </div>
+          </div>
+
+          {keysQuery.isLoading ? (
+            <div className="text-muted-foreground text-sm">Loading keys...</div>
+          ) : keys.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground text-sm">
+              No keys registered yet.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {keys.map((key) => (
+                <div key={key.id} className="rounded-lg border border-border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm font-medium truncate">
+                        {key.key_name || 'Unnamed Key'}
+                      </span>
+                      <Badge variant={key.is_active ? 'default' : 'secondary'}>
+                        {key.is_active ? 'Active' : 'Revoked'}
+                      </Badge>
+                      {key.is_primary && (
+                        <Badge variant="secondary">Primary</Badge>
+                      )}
+                    </div>
+                    {key.is_active && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRevokeKeyId(key.id)}
+                      >
+                        Revoke
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    <div>
+                      <span className="font-medium">Algorithm:</span> {key.key_algorithm}
+                    </div>
+                    <div>
+                      <span className="font-medium">Verifications:</span> {key.verification_count}
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">Fingerprint:</span>{' '}
+                      <code className="bg-muted px-1 rounded font-mono text-xs break-all">{key.key_fingerprint}</code>
+                    </div>
+                    <div>
+                      <span className="font-medium">Created:</span>{' '}
+                      {key.created_at ? new Date(key.created_at).toLocaleDateString() : '--'}
+                    </div>
+                    <div>
+                      <span className="font-medium">Last used:</span>{' '}
+                      {key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Never'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Revoke Confirmation Dialog */}
+        {revokeKeyId && (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 space-y-3">
+            <h4 className="text-sm font-semibold text-destructive">Revoke Key</h4>
+            <p className="text-xs text-muted-foreground">
+              This action cannot be undone. The key will no longer be usable for verification.
+            </p>
+            <div>
+              <label className="block text-sm font-medium mb-1">Reason (optional)</label>
+              <Input
+                value={revokeReason}
+                onChange={(e) => setRevokeReason(e.target.value)}
+                placeholder="e.g. Key compromised, rotated to new key"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => revokeMutation.mutate({ keyId: revokeKeyId, reason: revokeReason || undefined })}
+                disabled={revokeMutation.isPending}
+              >
+                {revokeMutation.isPending ? 'Revoking...' : 'Confirm Revoke'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { setRevokeKeyId(null); setRevokeReason(''); }}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Trusted CAs */}
+        <div className="space-y-3">
+          <button
+            type="button"
+            className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setShowTrustedCas(!showTrustedCas)}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            Trusted Certificate Authorities
+            <svg
+              className={`w-4 h-4 transition-transform ${showTrustedCas ? 'rotate-180' : ''}`}
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {showTrustedCas && (
+            <div className="rounded-lg border border-border p-4 space-y-3">
+              {trustedCasQuery.isLoading ? (
+                <div className="text-muted-foreground text-sm">Loading trusted CAs...</div>
+              ) : trustedCasQuery.data ? (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Certificates issued by these CAs (from the C2PA trust list) can be used for BYOK signing.
+                  </p>
+                  {trustedCasQuery.data.trust_list_loaded_at && (
+                    <p className="text-xs text-muted-foreground">
+                      Trust list loaded: {new Date(trustedCasQuery.data.trust_list_loaded_at).toLocaleString()}
+                      {trustedCasQuery.data.trust_list_count && ` -- ${trustedCasQuery.data.trust_list_count} entries`}
+                    </p>
+                  )}
+                  <div className="max-h-48 overflow-y-auto space-y-1">
+                    {trustedCasQuery.data.trusted_cas.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No trusted CAs loaded.</p>
+                    ) : (
+                      trustedCasQuery.data.trusted_cas.map((ca: string, idx: number) => (
+                        <div key={idx} className="text-xs font-mono bg-muted px-2 py-1 rounded break-all">
+                          {ca}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="text-muted-foreground text-sm">Failed to load trusted CAs.</div>
+              )}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefined }) {
   const { data: session } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
@@ -446,6 +720,157 @@ function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefi
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function AccountDeletionSection({ accessToken }: { accessToken: string | undefined }) {
+  const queryClient = useQueryClient();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [reason, setReason] = useState('');
+  const [confirmText, setConfirmText] = useState('');
+
+  const { data: existingRequests } = useQuery({
+    queryKey: ['deletion-requests'],
+    queryFn: async () => {
+      if (!accessToken) return { requests: [], total: 0 };
+      return apiClient.listDeletionRequests(accessToken);
+    },
+    enabled: Boolean(accessToken),
+    staleTime: 30_000,
+  });
+
+  const activeRequest = existingRequests?.requests?.find(
+    (r) => r.status === 'pending' || r.status === 'confirmed'
+  );
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.createDeletionRequest(accessToken, {
+        scope: 'account',
+        reason: reason.trim() || undefined,
+        confirm: true,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deletion-requests'] });
+      toast.success('Deletion request submitted. Your account will be deleted after 90 days.');
+      setShowConfirm(false);
+      setReason('');
+      setConfirmText('');
+    },
+    onError: (err: Error) => {
+      toast.error(err?.message || 'Failed to submit deletion request.');
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.cancelDeletionRequest(accessToken, requestId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deletion-requests'] });
+      toast.success('Deletion request cancelled.');
+    },
+    onError: (err: Error) => {
+      toast.error(err?.message || 'Failed to cancel deletion request.');
+    },
+  });
+
+  if (activeRequest) {
+    const purgeDate = new Date(activeRequest.scheduled_purge_at).toLocaleDateString();
+    return (
+      <div className="space-y-3">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-4">
+          <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+            Account deletion is scheduled
+          </p>
+          <p className="text-xs text-amber-800 dark:text-amber-300 mt-1">
+            Your account data will be permanently deleted on {purgeDate}.
+            Verification records will be retained for 7 years per legal requirements.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Status: {activeRequest.status} | Request ID: {activeRequest.id}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => cancelMutation.mutate(activeRequest.id)}
+          disabled={cancelMutation.isPending}
+        >
+          {cancelMutation.isPending ? 'Cancelling...' : 'Cancel deletion request'}
+        </Button>
+      </div>
+    );
+  }
+
+  if (!showConfirm) {
+    return (
+      <Button
+        variant="outline"
+        className="text-destructive border-destructive/50 hover:bg-destructive/10"
+        onClick={() => setShowConfirm(true)}
+      >
+        Delete my account
+      </Button>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+        <p className="text-sm font-medium text-destructive">Are you sure?</p>
+        <p className="text-xs text-muted-foreground">
+          This will initiate a 90-day deletion process. During this period you can cancel the request.
+          After 90 days, your account data, API keys, and team membership will be permanently deleted.
+          Verification records are retained for 7 years per legal requirements.
+        </p>
+        <div>
+          <label className="block text-xs font-medium mb-1">Reason (optional)</label>
+          <Input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Why are you deleting your account?"
+            className="text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium mb-1">
+            Type <span className="font-mono font-bold">DELETE</span> to confirm
+          </label>
+          <Input
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder="DELETE"
+            className="text-sm font-mono"
+          />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-destructive border-destructive/50 hover:bg-destructive/10"
+          onClick={() => createMutation.mutate()}
+          disabled={createMutation.isPending || confirmText !== 'DELETE'}
+        >
+          {createMutation.isPending ? 'Submitting...' : 'Confirm deletion'}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setShowConfirm(false);
+            setReason('');
+            setConfirmText('');
+          }}
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -1134,6 +1559,7 @@ function SettingsPageInner() {
 
           <div className="md:col-span-3 space-y-6">
             {activeTab === 'profile' && (
+              <>
               <Card>
                 <CardHeader>
                   <CardTitle>Profile Information</CardTitle>
@@ -1288,6 +1714,21 @@ function SettingsPageInner() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Danger zone: account deletion */}
+              <Card className="border-destructive/50">
+                <CardHeader>
+                  <CardTitle className="text-destructive">Delete Account</CardTitle>
+                  <CardDescription>
+                    Permanently delete your account and all associated data. This action follows a 90-day
+                    soft-delete window during which the request can be cancelled.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AccountDeletionSection accessToken={accessToken} />
+                </CardContent>
+              </Card>
+              </>
             )}
 
             {activeTab === 'security' && (
@@ -1508,6 +1949,26 @@ function SettingsPageInner() {
 
             {activeTab === 'organization' && (
               <>
+              <Card>
+                <CardContent className="p-4">
+                  <Link
+                    href="/settings/organization"
+                    className="flex items-center justify-between group"
+                  >
+                    <div>
+                      <p className="text-sm font-medium group-hover:text-blue-ncs transition-colors">
+                        Organization Administration
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Security policies, signing defaults, and feature overview for admins.
+                      </p>
+                    </div>
+                    <span className="text-muted-foreground group-hover:text-blue-ncs transition-colors">
+                      -&gt;
+                    </span>
+                  </Link>
+                </CardContent>
+              </Card>
               <Card>
                 <CardHeader>
                   <CardTitle>Organization domains</CardTitle>
@@ -1823,6 +2284,9 @@ function SettingsPageInner() {
 
               {/* SSO Configuration (Enterprise only) */}
               <SsoConfigCard orgId={orgId} accessToken={accessToken} />
+
+              {/* BYOK Key Management (Enterprise only) */}
+              <ByokKeyManagementCard orgId={orgId} accessToken={accessToken} />
               </>
             )}
 
