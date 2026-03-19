@@ -129,6 +129,54 @@ function ValueProofCard({ stats, isLoading }: { stats?: UsageStats; isLoading: b
         <div className="space-y-2">
           {[1, 2, 3].map(i => <div key={i} className="h-8 bg-muted rounded animate-pulse" />)}
         </div>
+      ) : verifications === 0 ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Content protected</span>
+            <span className="text-sm font-bold text-delft-blue dark:text-white">
+              {docsSigned.toLocaleString()} articles
+            </span>
+          </div>
+          <div className="rounded-lg border border-dashed border-blue-ncs/30 bg-blue-ncs/5 p-3">
+            <p className="text-xs font-semibold text-delft-blue dark:text-white mb-1">
+              No external verifications yet
+            </p>
+            <p className="text-[11px] text-muted-foreground mb-2">
+              Share your verification page to start collecting verifications from readers and partners.
+            </p>
+            <Link href="/docs" className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-ncs hover:underline">
+              Learn how to share verification
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground">Formal Notice progress</span>
+                <span className="relative group">
+                  <svg className="w-3.5 h-3.5 text-muted-foreground cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-48 p-2 text-[11px] text-white bg-delft-blue rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    A Formal Notice is a legal rights enforcement tool. Reaching {NOTICE_THRESHOLD.toLocaleString()} external verifications qualifies your content for automated notice generation.
+                  </span>
+                </span>
+              </div>
+              <span className="text-xs font-medium text-blue-ncs">{pct}%</span>
+            </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-blue-ncs to-columbia-blue rounded-full"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1.5">
+              {NOTICE_THRESHOLD.toLocaleString()} verifications needed to qualify -- verifications prove third-party awareness of your signed content
+            </p>
+          </div>
+        </div>
       ) : (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -145,7 +193,17 @@ function ValueProofCard({ stats, isLoading }: { stats?: UsageStats; isLoading: b
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-muted-foreground">Formal Notice progress</span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground">Formal Notice progress</span>
+                <span className="relative group">
+                  <svg className="w-3.5 h-3.5 text-muted-foreground cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-48 p-2 text-[11px] text-white bg-delft-blue rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    A Formal Notice is a legal rights enforcement tool. Reaching {NOTICE_THRESHOLD.toLocaleString()} external verifications qualifies your content for automated notice generation.
+                  </span>
+                </span>
+              </div>
               <span className="text-xs font-medium text-blue-ncs">{pct}%</span>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -295,6 +353,15 @@ export default function DashboardPage() {
               <p className="text-columbia-blue/80 text-sm mt-2 max-w-2xl">
                 {heroContent.description}
               </p>
+              <div className="flex items-center gap-2 mt-3">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 border border-white/20 rounded-full">
+                  <svg className="w-3.5 h-3.5 text-columbia-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span className="text-xs font-medium text-columbia-blue">C2PA Compliant</span>
+                </div>
+                <span className="text-xs text-white/50">Coalition for Content Provenance and Authenticity</span>
+              </div>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link href={heroContent.primaryHref}>
@@ -340,9 +407,18 @@ export default function DashboardPage() {
                   <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
                     {formatNumber(stats?.total_api_calls || 0)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    Last 30 days
+                  <p className="text-xs mt-2 flex items-center gap-1.5">
+                    {(stats?.total_api_calls || 0) > 0 ? (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-muted-foreground text-xs font-medium">
+                        No activity
+                      </span>
+                    )}
+                    <span className="text-muted-foreground">Last 30 days</span>
                   </p>
                 </div>
                 <div className="w-11 h-11 bg-gradient-to-br from-blue-ncs to-columbia-blue rounded-xl flex items-center justify-center text-white">
@@ -352,42 +428,96 @@ export default function DashboardPage() {
             </div>
 
             {/* Documents Signed Card */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">Documents Signed</p>
-                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
-                    {formatNumber(stats?.total_documents_signed || 0)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    Last 30 days
-                  </p>
+            {(stats?.total_documents_signed || 0) === 0 ? (
+              <Link href="/playground" className="block">
+                <div className="bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-ncs/30 p-5 lg:p-6 hover:shadow-md transition-shadow ring-2 ring-blue-ncs/20 animate-pulse-slow">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Documents Signed</p>
+                      <p className="text-sm font-semibold text-delft-blue dark:text-white mb-1">
+                        Sign your first document
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Try signing content in the API playground
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-ncs">
+                        Try Signing
+                        <IconArrowRight />
+                      </span>
+                    </div>
+                    <div className="w-11 h-11 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
+                      <IconDocument />
+                    </div>
+                  </div>
                 </div>
-                <div className="w-11 h-11 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
-                  <IconDocument />
+              </Link>
+            ) : (
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Documents Signed</p>
+                    <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
+                      {formatNumber(stats?.total_documents_signed || 0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {formatNumber(stats?.total_documents_signed || 0)} articles protected
+                    </p>
+                  </div>
+                  <div className="w-11 h-11 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
+                    <IconDocument />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Verifications Card */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-1">Verifications</p>
-                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
-                    {formatNumber(stats?.total_verifications || 0)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    Last 30 days
-                  </p>
+            {(stats?.total_verifications || 0) === 0 ? (
+              <Link href="/playground" className="block">
+                <div className="bg-white dark:bg-slate-800 rounded-xl border-2 border-blue-ncs/30 p-5 lg:p-6 hover:shadow-md transition-shadow ring-2 ring-blue-ncs/20 animate-pulse-slow">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Verifications</p>
+                      <p className="text-sm font-semibold text-delft-blue dark:text-white mb-1">
+                        Verify your first signed document
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Confirm your content is authentically signed
+                      </p>
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-ncs">
+                        Try Verification
+                        <IconArrowRight />
+                      </span>
+                    </div>
+                    <div className="w-11 h-11 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
+                      <IconShield />
+                    </div>
+                  </div>
                 </div>
-                <div className="w-11 h-11 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
-                  <IconShield />
+              </Link>
+            ) : (
+              <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">Verifications</p>
+                    <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
+                      {formatNumber(stats?.total_verifications || 0)}
+                    </p>
+                    <p className="text-xs mt-2 flex items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                        </svg>
+                        Verified
+                      </span>
+                      <span className="text-muted-foreground">Last 30 days</span>
+                    </p>
+                  </div>
+                  <div className="w-11 h-11 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-xl flex items-center justify-center text-white">
+                    <IconShield />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Success Rate Card */}
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
@@ -397,9 +527,26 @@ export default function DashboardPage() {
                   <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
                     {stats?.success_rate?.toFixed(1) || '100'}%
                   </p>
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    Last 30 days
+                  <p className="text-xs mt-2 flex items-center gap-1.5">
+                    {(() => {
+                      const rate = stats?.success_rate ?? 100;
+                      if (rate >= 95) return (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
+                          Excellent
+                        </span>
+                      );
+                      if (rate >= 80) return (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-medium">
+                          Needs attention
+                        </span>
+                      );
+                      return (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-medium">
+                          Critical
+                        </span>
+                      );
+                    })()}
+                    <span className="text-muted-foreground">Last 30 days</span>
                   </p>
                 </div>
                 <div className="w-11 h-11 bg-gradient-to-br from-[#00CED1] to-[#2A87C4] rounded-xl flex items-center justify-center text-white">
@@ -411,10 +558,10 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
-        {/* API Keys Section - Takes 2 columns */}
-        <div className="lg:col-span-2">
+      {/* Main Content -- Full-width sections to avoid lopsided layout */}
+      <div className="space-y-6 lg:space-y-8">
+        {/* API Keys Section - Full width */}
+        <div>
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-border overflow-hidden">
             <div className="p-6 border-b border-border">
               <div className="flex items-center justify-between">
@@ -497,13 +644,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick Actions Sidebar */}
-        <div className="space-y-4">
-          {/* TEAM_225: Value Proof Card - above OnboardingChecklist */}
-          <ValueProofCard stats={stats} isLoading={isLoadingStats} />
+        {/* Onboarding Checklist - Full width */}
+        <OnboardingChecklist />
 
-          {/* TEAM_191: Server-backed onboarding checklist */}
-          <OnboardingChecklist />
+        {/* Two-column grid: Value Proof + Quick Links */}
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+          <ValueProofCard stats={stats} isLoading={isLoadingStats} />
 
           {/* Quick Links */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5">
@@ -546,21 +692,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* C2PA Badge */}
-          <div className="bg-gradient-to-r from-columbia-blue/20 to-blue-ncs/10 rounded-xl p-5 border border-columbia-blue/30">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                <IconShield />
-              </div>
-              <div>
-                <p className="font-bold text-delft-blue dark:text-white text-sm">C2PA Compliant</p>
-                <p className="text-xs text-muted-foreground">Industry standard</p>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Content signed through Encypher conforms to the C2PA text provenance standard, developed alongside the Coalition for Content Provenance and Authenticity.
-            </p>
-          </div>
         </div>
       </div>
     </DashboardLayout>
