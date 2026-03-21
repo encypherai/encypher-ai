@@ -118,7 +118,7 @@ async def execute_rich_signing(
     try:
         signer_private_key_pem, signer_cert_chain_pem = _get_signer_credentials()
     except ValueError as e:
-        if settings.image_signing_passthrough:
+        if settings.signing_passthrough or settings.image_signing_passthrough:
             logger.warning("No signer credentials configured; using passthrough mode for doc=%s", doc_id)
             signer_private_key_pem, signer_cert_chain_pem = "", ""
         else:
