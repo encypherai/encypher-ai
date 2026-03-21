@@ -135,7 +135,7 @@ export default function EnforcementPage() {
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <SummaryCard title="Notices Sent" value={total} />
           <SummaryCard title="Delivery Rate" value={`${deliveryRate}%`} subtitle={`${delivered} of ${total} delivered`} />
           <SummaryCard title="Pending Responses" value={pending} />

@@ -238,10 +238,10 @@ function BillingPageContent() {
           <CardHeader>
             <CardTitle>{isDowngradeScheduled ? 'Current Plan (Downgrade Scheduled)' : 'Current Plan'}</CardTitle>
             <CardDescription>
-              {isLoading ? 'Loading plan information…' : currentTierLabel}
+              {isLoading ? 'Loading plan information…' : 'Your subscription and usage details'}
             </CardDescription>
           </CardHeader>
-          <CardContent className={isEnterpriseTier ? 'grid md:grid-cols-3 gap-6' : 'grid md:grid-cols-4 gap-6'}>
+          <CardContent className={isEnterpriseTier ? 'grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6' : 'grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6'}>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Plan</p>
               <p className="text-2xl font-bold text-delft-blue dark:text-white">

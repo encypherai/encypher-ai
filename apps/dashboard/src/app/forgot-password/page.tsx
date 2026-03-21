@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="flex min-h-screen bg-background">
-      <section className="w-full md:w-1/2 flex flex-col justify-center items-center px-4 py-12 min-h-screen relative overflow-hidden">
+      <section className="w-full lg:w-1/2 flex flex-col justify-center items-center px-4 py-12 min-h-screen relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-columbia-blue via-blue-ncs to-delft-blue opacity-60" />
         <div className="w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-border p-8 relative z-10">
           <div className="flex flex-col gap-6">
@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
                     Didn&apos;t receive the email? Check your spam folder or try again.
                   </p>
                 </div>
-                
+
                 <div className="space-y-3">
                   <Button
                     variant="outline"
@@ -152,7 +152,7 @@ export default function ForgotPasswordPage() {
         </div>
       </section>
 
-      <section className="hidden md:flex w-1/2 items-center justify-center bg-background relative overflow-hidden min-h-screen">
+      <section className="hidden lg:flex w-1/2 items-center justify-center relative overflow-hidden min-h-screen" style={{ background: 'linear-gradient(135deg, #1a2332 0%, #1e3a5f 40%, #1b2f50 100%)' }}>
         <div className="relative z-10 w-full h-full flex items-center justify-center">
           <div className="w-full h-[80vh] relative">
             <MetadataBackground />

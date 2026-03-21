@@ -76,20 +76,20 @@ export default function PartnersPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Page header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Partner Portal</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Manage your child publisher organizations and view aggregate stats.
             </p>
           </div>
-          <Link href="/api-keys">
+          <Link href="/api-keys" className="shrink-0">
             <Button variant="primary">Onboard Publishers</Button>
           </Link>
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {aggLoading ? (
             <>
               <StatCardSkeleton />

@@ -569,7 +569,7 @@ export default function TeamPage() {
     <DashboardLayout>
       <div className="flex flex-col gap-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Team Management</h1>
             <p className="text-sm text-muted-foreground mt-1">
