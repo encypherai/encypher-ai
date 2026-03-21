@@ -81,7 +81,7 @@ async def test_get_current_organization_composes_org_context_via_auth_service(mo
     assert mock_request.state.organization_id == "org_123"
     assert mock_request.state.user_id == "user_123"
     assert mock_request.state.api_key_id == "key_123"
-    assert mock_request.state.api_key_prefix == "fixture-toke"
+    assert mock_request.state.api_key_prefix == "ency_test_ke"
 
 
 @pytest.mark.asyncio

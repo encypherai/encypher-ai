@@ -80,7 +80,10 @@ class Settings(BaseSettings):
     dashboard_url: str = "https://dashboard.encypherai.com"
 
     internal_service_token: Optional[str] = None
-    compose_org_context_via_auth_service: bool = False
+    # Auth-service is the SSOT for org tier/features. Composed mode
+    # validates keys via key-service and fetches org context from
+    # auth-service, avoiding stale tier data in key-service's local copy.
+    compose_org_context_via_auth_service: bool = True
 
     # Database pool sizes (per replica)
     core_db_pool_size: int = 100

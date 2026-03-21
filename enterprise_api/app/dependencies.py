@@ -18,6 +18,7 @@ from fastapi import BackgroundTasks, Depends, HTTPException, Request, Security, 
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import settings
+from app.core.tier_config import coerce_tier_name
 from app.services.auth_service_client import auth_service_client
 from app.services.key_service_client import key_service_client
 
@@ -179,7 +180,7 @@ def _build_composed_org_context(key_context: Dict, org_data: Dict) -> Dict:
         "api_key_id": key_context.get("key_id"),
         "organization_id": key_context.get("organization_id"),
         "organization_name": org_data.get("name"),
-        "tier": key_context.get("tier", "free"),
+        "tier": org_data.get("tier", key_context.get("tier", "free")),
         "features": org_data.get("features", {}),
         "permissions": key_context.get("permissions", []),
         "monthly_api_limit": org_data.get("monthly_api_limit"),
@@ -454,12 +455,18 @@ def _normalize_org_context(org_context: Dict) -> Dict:
     if not isinstance(features, dict):
         features = {}
 
+    # Normalize tier to canonical name (free, enterprise, strategic_partner).
+    # This is the single coercion point -- downstream code should not need
+    # to call coerce_tier_name() again.
+    tier = coerce_tier_name(org_context.get("tier", "free"))
+
     # Ensure permissions is a list
     permissions = _normalize_permissions(org_context.get("permissions", []))
 
     # Map permissions to can_* for backward compatibility
     result = {
         **org_context,
+        "tier": tier,
         "features": features,
         "permissions": permissions,
         "can_sign": "sign" in permissions,
