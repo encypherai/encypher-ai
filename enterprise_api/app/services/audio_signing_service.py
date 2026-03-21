@@ -69,17 +69,29 @@ async def sign_audio(
 
     from app.config import settings
 
-    passthrough = settings.signing_passthrough or not (signer_private_key_pem and signer_cert_chain_pem)
+    passthrough = settings.signing_passthrough or settings.audio_signing_passthrough or not (signer_private_key_pem and signer_cert_chain_pem)
     if passthrough:
-        logger.debug("Audio signing passthrough: no C2PA embed for audio_id=%s", audio_id)
+        logger.debug("Audio signing passthrough: metadata embed for audio_id=%s", audio_id)
+        from app.utils.audio_metadata import inject_encypher_audio_metadata
+
+        instance_id = "urn:uuid:" + str(uuid.uuid4())
+        embedded_bytes = inject_encypher_audio_metadata(
+            audio_bytes=audio_data,
+            mime_type=canonical_mime,
+            instance_id=instance_id,
+            org_id=org_id,
+            document_id=document_id,
+            content_hash=original_hash,
+        )
+        signed_hash = compute_sha256(embedded_bytes)
         return SignedAudioResult(
             audio_id=audio_id,
-            signed_bytes=audio_data,
+            signed_bytes=embedded_bytes,
             original_hash=original_hash,
-            signed_hash=original_hash,
-            c2pa_instance_id="urn:uuid:" + str(uuid.uuid4()),
+            signed_hash=signed_hash,
+            c2pa_instance_id=instance_id,
             c2pa_manifest_hash="sha256:" + "0" * 64,
-            size_bytes=file_size,
+            size_bytes=len(embedded_bytes),
             mime_type=canonical_mime,
             c2pa_signed=False,
         )

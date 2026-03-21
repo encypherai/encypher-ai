@@ -124,8 +124,11 @@ class Settings(BaseSettings):
     # Use for local dev/CI where no CA-signed cert is available.
     # Never set this in production -- signed images will have no C2PA manifest.
     image_signing_passthrough: bool = False
+    # Per-type passthrough flags for audio and video (same semantics as image).
+    audio_signing_passthrough: bool = False
+    video_signing_passthrough: bool = False
     # Generic passthrough for all media types (images, audio, video).
-    # Supersedes image_signing_passthrough when set.
+    # Supersedes per-type flags when set.
     signing_passthrough: bool = False
 
     video_max_size_bytes: int = 500 * 1024 * 1024  # 500 MB

@@ -69,17 +69,29 @@ async def sign_video(
 
     from app.config import settings
 
-    passthrough = settings.signing_passthrough or not (signer_private_key_pem and signer_cert_chain_pem)
+    passthrough = settings.signing_passthrough or settings.video_signing_passthrough or not (signer_private_key_pem and signer_cert_chain_pem)
     if passthrough:
-        logger.debug("Video signing passthrough: no C2PA embed for video_id=%s", video_id)
+        logger.debug("Video signing passthrough: metadata embed for video_id=%s", video_id)
+        from app.utils.video_metadata import inject_encypher_video_metadata
+
+        instance_id = "urn:uuid:" + str(uuid.uuid4())
+        embedded_bytes = inject_encypher_video_metadata(
+            video_bytes=video_data,
+            mime_type=canonical_mime,
+            instance_id=instance_id,
+            org_id=org_id,
+            document_id=document_id,
+            content_hash=original_hash,
+        )
+        signed_hash = compute_sha256(embedded_bytes)
         return SignedVideoResult(
             video_id=video_id,
-            signed_bytes=video_data,
+            signed_bytes=embedded_bytes,
             original_hash=original_hash,
-            signed_hash=original_hash,
-            c2pa_instance_id="urn:uuid:" + str(uuid.uuid4()),
+            signed_hash=signed_hash,
+            c2pa_instance_id=instance_id,
             c2pa_manifest_hash="sha256:" + "0" * 64,
-            size_bytes=file_size,
+            size_bytes=len(embedded_bytes),
             mime_type=canonical_mime,
             c2pa_signed=False,
         )
