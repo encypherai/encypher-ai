@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- Initial project structure.
+- Audio C2PA signing and verification (`/enterprise/audio/sign`, `/enterprise/audio/verify`)
+  - Supported formats: WAV (RIFF), MP3 (ID3), M4A/AAC (ISO BMFF)
+  - Per-org credential loading via Organization model
+  - C2PA v2.3 audio actions: c2pa.created, c2pa.dubbed, c2pa.mixed, c2pa.mastered, c2pa.remixed
+- Shared C2PA modules extracted from image pipeline (c2pa_signer, c2pa_manifest, c2pa_verifier_core, hashing)
+- Generic `SIGNING_PASSTHROUGH` config flag (supersedes `IMAGE_SIGNING_PASSTHROUGH` for non-image media)
 
 ## [2026-03-10] CDN Provenance Continuity — All Phases
 
