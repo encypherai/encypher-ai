@@ -41,17 +41,18 @@ def create_signer_from_pem(
 
     elif isinstance(key_obj, ec.EllipticCurvePrivateKey):
         curve = key_obj.curve
-        if isinstance(curve, ec.SECP256R1):
-            alg = c2pa.C2paSigningAlg.ES256
-        elif isinstance(curve, ec.SECP384R1):
+        if isinstance(curve, ec.SECP384R1):
             alg = c2pa.C2paSigningAlg.ES384
+            hash_alg = hashes.SHA384()
         elif isinstance(curve, ec.SECP521R1):
             alg = c2pa.C2paSigningAlg.ES512
+            hash_alg = hashes.SHA512()
         else:
             alg = c2pa.C2paSigningAlg.ES256
+            hash_alg = hashes.SHA256()
 
         def sign_callback(data: bytes) -> bytes:
-            return key_obj.sign(data, ec.ECDSA(hashes.SHA256()))
+            return key_obj.sign(data, ec.ECDSA(hash_alg))
 
     elif isinstance(key_obj, rsa.RSAPrivateKey):
         alg = c2pa.C2paSigningAlg.PS256
@@ -69,19 +70,9 @@ def create_signer_from_pem(
     else:
         raise ValueError(f"Unsupported private key type: {type(key_obj).__name__}")
 
-    # Try from_info first (uses native signing, proper x5chain embedding)
-    try:
-        si = c2pa.C2paSignerInfo.__new__(c2pa.C2paSignerInfo)
-        si.alg = alg.value if hasattr(alg, "value") else alg
-        si.sign_cert = cert_chain_pem.encode("utf-8")
-        si.private_key = key_bytes
-        si.ta_url = None  # ctypes c_char_p: None = NULL = no TSA
-        return c2pa.Signer.from_info(si)
-    except Exception:
-        # Fallback: from_callback (cert chain embedded via certs param)
-        return c2pa.Signer.from_callback(
-            callback=sign_callback,
-            alg=alg,
-            certs=cert_chain_pem,
-            tsa_url=None,
-        )
+    return c2pa.Signer.from_callback(
+        callback=sign_callback,
+        alg=alg,
+        certs=cert_chain_pem,
+        tsa_url=None,
+    )

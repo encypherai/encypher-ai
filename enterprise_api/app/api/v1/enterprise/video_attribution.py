@@ -8,6 +8,7 @@ GET  /enterprise/video/download/{video_id} -- Download signed video bytes
 import base64
 import json
 import logging
+import re
 import time
 import uuid
 from typing import Dict, Optional
@@ -282,5 +283,5 @@ async def video_download(
     return Response(
         content=signed_bytes,
         media_type="application/octet-stream",
-        headers={"Content-Disposition": f'attachment; filename="{video_id}.mp4"'},
+        headers={"Content-Disposition": f'attachment; filename="{re.sub(r"[^a-zA-Z0-9_-]", "", video_id)}.mp4"'},
     )
