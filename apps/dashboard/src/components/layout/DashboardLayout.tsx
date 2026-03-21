@@ -402,7 +402,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-900 overflow-x-hidden">
       {/* TEAM_191: Mandatory setup wizard overlay */}
       {showSetupWizard && <SetupWizard />}
 
