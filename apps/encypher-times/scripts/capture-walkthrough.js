@@ -11,6 +11,7 @@
  * Options:
  *   --url <base>    Base URL (default: http://localhost:3070)
  *   --out <dir>     Output directory (default: ./walkthrough)
+ *   --zip <path>    Output zip path (default: ./encypher-times-walkthrough.zip)
  *   --skip-states   Skip mock verification state screenshots
  *
  * Prerequisites:
@@ -21,6 +22,7 @@
 const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
+const { execSync } = require("child_process");
 
 // -- Config ------------------------------------------------------------------
 
@@ -35,6 +37,9 @@ function opt(name, fallback) {
 
 const BASE = opt("url", "http://localhost:3070");
 const OUT = path.resolve(opt("out", "./walkthrough"));
+const ZIP_PATH = path.resolve(
+  opt("zip", "./encypher-times-walkthrough.zip")
+);
 const SKIP_STATES = flag("skip-states");
 
 // -- Mock verification result HTML -------------------------------------------
@@ -241,7 +246,32 @@ async function main() {
   await browser.close();
 
   const files = fs.readdirSync(OUT).filter((f) => f.endsWith(".png"));
-  console.log("\nDone! " + files.length + " screenshots saved to " + OUT);
+  console.log("\n" + files.length + " screenshots saved to " + OUT);
+
+  // -- Create zip ------------------------------------------------------------
+  console.log("Creating zip...");
+  const zipScript = path.join(OUT, "_zip.py");
+  fs.writeFileSync(
+    zipScript,
+    [
+      "import zipfile, os, sys",
+      "out_dir, zip_path = sys.argv[1], sys.argv[2]",
+      "zf = zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED)",
+      "for f in sorted(os.listdir(out_dir)):",
+      "    full = os.path.join(out_dir, f)",
+      "    if os.path.isfile(full) and not f.startswith('_'):",
+      "        zf.write(full, f)",
+      "zf.close()",
+      "size_mb = os.path.getsize(zip_path) / (1024 * 1024)",
+      "print(f'{zip_path} ({size_mb:.1f} MB)')",
+    ].join("\n")
+  );
+  const result = execSync(
+    `python3 "${zipScript}" "${OUT}" "${ZIP_PATH}"`,
+    { encoding: "utf-8" }
+  );
+  fs.unlinkSync(zipScript);
+  console.log(result.trim());
 }
 
 main().catch((e) => {
