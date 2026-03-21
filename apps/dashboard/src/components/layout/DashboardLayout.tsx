@@ -556,7 +556,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       {/* ── Main area (offset by sidebar width) ── */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-200 ${
+      <div className={`flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-200 ${
         sidebarCollapsed ? 'lg:ml-[68px]' : 'lg:ml-60'
       }`}>
         {/* ── Top header bar ── */}
