@@ -49,6 +49,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 #### Core Capabilities
 - ✅ **C2PA-Compliant Signing**: Full C2PA 2.3 text manifest support
+- ✅ **Audio C2PA Signing**: WAV, MP3, M4A/AAC audio signing and verification
 - ✅ **Content Verification**: Cryptographic verification with tamper detection
 - ✅ **Granular Attribution**: Track provenance of individual sentences
 - ✅ **Public Verification Pages**: Shareable verification URLs
@@ -106,6 +107,15 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | Print Leak Detection (`enable_print_fingerprint`) | ❌ | ✅ |
 | **Batch size limit** | 10 | 100 |
 | **Monthly signing quota** | 1,000 | Unlimited |
+
+### Audio Signing Features (`/api/v1/enterprise/audio`)
+
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Audio C2PA signing (WAV, MP3, M4A/AAC) | ❌ | ✅ |
+| Audio C2PA verification | ❌ | ✅ |
+| C2PA audio actions (created, dubbed, mixed, mastered, remixed) | ❌ | ✅ |
+| Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |
 
 ### Verification Features (`/api/v1/verify`)
 
@@ -235,6 +245,13 @@ available to all tiers; scope "all" (cross-organization) requires Enterprise.
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
 | `/api/v1/enterprise/images/attribution` | POST | ✅ | All (cross-org: Enterprise) | Find images by perceptual similarity (pHash) | None |
+
+### Audio Attribution Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/audio/sign` | POST | ✅ | Enterprise | Sign audio with C2PA manifest (WAV, MP3, M4A/AAC) |
+| `/api/v1/enterprise/audio/verify` | POST | ✅ | Enterprise | Verify C2PA manifest in audio file |
 
 ### Public Verification Endpoints
 
@@ -1653,6 +1670,11 @@ IMAGE_MAX_COUNT_PER_REQUEST=20
 # are absent. Set explicitly for local dev / CI.
 IMAGE_SIGNING_PASSTHROUGH=false
 
+# Generic passthrough mode: skip C2PA manifest embedding for ALL media types
+# (audio, future video, etc.). Auto-enabled when per-org signing credentials
+# are absent. Set explicitly for local dev / CI.
+SIGNING_PASSTHROUGH=false
+
 # TrustMark microservice URL (empty = disabled, Enterprise only)
 IMAGE_SERVICE_URL=
 ```
@@ -1845,6 +1867,7 @@ For detailed instructions on running local benchmarks and load tests, please ref
 - **Key Service**: [services/key-service/README.md](../services/key-service/README.md)
 - **Coalition Service**: [services/coalition-service/README.md](../services/coalition-service/README.md)
 - **Image Signing Implementation Guide**: [docs/image-signing/implementation-guide.md](../docs/image-signing/implementation-guide.md) -- XMP embedding details, passthrough mode, two-step verification, Traefik routing
+- **Audio C2PA Signing**: Endpoints at `/enterprise/audio/sign` and `/enterprise/audio/verify` -- WAV (RIFF), MP3 (ID3), M4A/AAC (ISO BMFF) via c2pa-python; see `app/services/audio_signing_service.py`
 - **Inspect Tool (marketing site)**: [apps/marketing-site/src/app/tools/inspect/README.md](../apps/marketing-site/src/app/tools/inspect/README.md)
 - **C2PA Custom Assertions API**: [docs/api/C2PA_CUSTOM_ASSERTIONS_API.md](../docs/api/C2PA_CUSTOM_ASSERTIONS_API.md)
 - **C2PA Provenance Chain**: [docs/c2pa/C2PA_PROVENANCE_CHAIN.md](../docs/c2pa/C2PA_PROVENANCE_CHAIN.md)

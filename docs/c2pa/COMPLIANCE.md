@@ -108,17 +108,41 @@ Encypher supports the following C2PA assertion types:
 |----------|---------|----------------|
 | `POST /api/v1/sign` | Sign text with C2PA manifest | Full C2PA embedding |
 | `POST /api/v1/verify` | Verify C2PA manifest in text | §14.3 validation |
+| `POST /api/v1/enterprise/audio/sign` | Sign audio with C2PA manifest (WAV, MP3, M4A) | Appendix A.3.4, A.3.7, A.5 |
+| `POST /api/v1/enterprise/audio/verify` | Verify C2PA manifest in audio | §14.3 validation |
 
 ---
 
-## Future Roadmap
+## Binary Media Embedding (c2pa-python)
 
-| Feature | Target | Spec Reference |
+Image and audio signing use `c2pa-python` (Python bindings for `c2pa-rs`) which handles container-specific JUMBF embedding internally. The library abstracts away the binary format details:
+
+| Format | Container | C2PA Binding Mechanism | Spec Reference |
+|--------|-----------|------------------------|----------------|
+| JPEG | JFIF/Exif | APP11 marker segment | Appendix A.1 |
+| PNG | PNG | `caBX` chunk | Appendix A.2 |
+| WAV | RIFF | `C2PA` chunk | Appendix A.3.4 |
+| MP3 | ID3v2 | GEOB frame (`application/x-c2pa-manifest-store`) | Appendix A.3.7 |
+| M4A/AAC | ISO BMFF | `uuid` box (C2PA UUID) | Appendix A.5 |
+
+**Implementation files:**
+- Shared signer: `enterprise_api/app/utils/c2pa_signer.py`
+- Shared manifest builder: `enterprise_api/app/utils/c2pa_manifest.py`
+- Shared verifier: `enterprise_api/app/utils/c2pa_verifier_core.py`
+- Audio signing: `enterprise_api/app/services/audio_signing_service.py`
+- Image signing: `enterprise_api/app/services/image_signing_service.py`
+
+---
+
+## Roadmap
+
+| Feature | Status | Spec Reference |
 |---------|--------|----------------|
 | SSL.com C2PA certificates | Q1 2026 | C2PA Trust List integration |
 | TSA integration | Q1 2026 | §15.8 |
-| PDF signing | Q2 2026 | Appendix A.4 |
-| Image signing | Q3 2026 | Appendix A.1-A.3 |
+| Image signing | Shipped (Feb 2026) | Appendix A.1-A.3 |
+| Audio signing (WAV, MP3, M4A) | Shipped (Mar 2026) | Appendix A.3.4, A.3.7, A.5 |
+| PDF signing | Planned | Appendix A.4 |
 
 ---
 
@@ -129,6 +153,8 @@ Encypher supports the following C2PA assertion types:
 | Dec 2025 | TEAM_009 | Text manifest embedding | ✅ 100% compliant |
 | Dec 2025 | TEAM_009 | NFC normalization | ✅ Verified |
 | Dec 2025 | TEAM_009 | Exclusions field | ✅ Verified |
+| Mar 2026 | TEAM_265 | Audio C2PA signing (WAV, MP3, M4A) | ✅ Implemented |
+| Mar 2026 | TEAM_265 | Shared C2PA modules (signer, manifest, verifier) | ✅ Refactored |
 
 ---
 

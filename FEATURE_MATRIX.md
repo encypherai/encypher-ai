@@ -1,6 +1,6 @@
 # Encypher Feature Matrix by Tier
 
-**Last Updated**: March 10, 2026
+**Last Updated**: March 21, 2026
 **Version**: 2.1
 
 This document provides a comprehensive breakdown of all Encypher features organized by subscription tier.
@@ -113,6 +113,20 @@ Makes C2PA provenance survive CDN image transformations (resize, reformat, recom
 | Metric | Free | Enterprise |
 |--------|:----:|:----------:|
 | Image registrations/month | 0 | Unlimited |
+
+---
+
+## Audio C2PA Signing
+
+Embed C2PA manifests directly into audio files. Uses `c2pa-python` (wrapping `c2pa-rs`) for container-specific embedding (RIFF chunk for WAV, ID3 GEOB frame for MP3, BMFF uuid box for M4A/AAC).
+
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Audio C2PA signing (WAV, MP3, M4A/AAC) | ❌ | ✅ |
+| Audio C2PA verification | ❌ | ✅ |
+| C2PA v2.3 audio actions (created, dubbed, mixed, mastered, remixed) | ❌ | ✅ |
+| Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |
+| Passthrough mode (provenance metadata without JUMBF embedding) | ❌ | ✅ |
 
 ---
 

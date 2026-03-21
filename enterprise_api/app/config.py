@@ -124,6 +124,9 @@ class Settings(BaseSettings):
     # Use for local dev/CI where no CA-signed cert is available.
     # Never set this in production -- signed images will have no C2PA manifest.
     image_signing_passthrough: bool = False
+    # Generic passthrough for all media types (images, audio, video).
+    # Supersedes image_signing_passthrough when set.
+    signing_passthrough: bool = False
 
     # C2PA signer trust list pinning/refresh
     c2pa_trust_list_url: Optional[str] = None

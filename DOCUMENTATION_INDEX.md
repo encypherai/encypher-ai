@@ -1,6 +1,6 @@
 # Encypher Commercial - Documentation Index
 
-**Last Updated**: March 10, 2026
+**Last Updated**: March 21, 2026
 **Repository**: encypherai-commercial
 **Documentation Status**: Complete and Current
 
@@ -123,10 +123,27 @@ Use this index to jump directly to the documentation you need.
 | [enterprise_api/docs/LICENSING_API.md](./enterprise_api/docs/LICENSING_API.md) | Licensing API reference (agreements, content, payouts) |
 | [docs/perf/batch-sign.md](./docs/perf/batch-sign.md) | Batch throughput benchmark results |
 
-**Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection, CDN provenance continuity
+**Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection, CDN provenance continuity, audio C2PA signing (WAV, MP3, M4A/AAC)
 **Status**: Production Ready
 **Tier**: Enterprise
 **Port**: 9000
+
+#### Audio C2PA Signing
+
+Audio signing has no standalone guide -- the implementation is self-documenting via the shared C2PA module pattern. Key files:
+
+| Document | Purpose |
+|----------|---------|
+| `enterprise_api/app/services/audio_signing_service.py` | Audio signing service (passthrough + C2PA) |
+| `enterprise_api/app/services/audio_verification_service.py` | Audio verification (delegates to shared verifier) |
+| `enterprise_api/app/services/audio_signing_executor.py` | Per-org credential loading and orchestration |
+| `enterprise_api/app/api/v1/enterprise/audio_attribution.py` | REST endpoints (`/enterprise/audio/sign`, `/enterprise/audio/verify`) |
+| `enterprise_api/app/utils/audio_utils.py` | Format detection, MIME canonicalization, validation |
+
+**Supported Formats**: WAV (RIFF), MP3 (ID3), M4A/AAC (ISO BMFF)
+**Status**: Production Ready
+**Tier**: Enterprise
+**Tests**: 51 tests (35 in test_audio_signing.py + 16 in test_c2pa_shared.py)
 
 #### CDN Provenance Continuity
 | Document | Purpose |

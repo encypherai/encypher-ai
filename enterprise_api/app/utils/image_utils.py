@@ -4,13 +4,13 @@ Provides: validation, EXIF extraction/stripping, pHash computation,
 SHA-256 hashing, thumbnail resizing, and XMP provenance injection/extraction.
 """
 
-import hashlib
 import logging
 import secrets
 import struct
 import xml.etree.ElementTree as ET
 import zlib
 from io import BytesIO
+from html import escape as _html_escape
 from typing import Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -173,15 +173,8 @@ def compute_phash(data: bytes) -> int:
         return 0
 
 
-def compute_sha256(data: bytes) -> str:
-    """
-    Compute SHA-256 hash of data.
-
-    Returns:
-        Hex string prefixed with "sha256:", e.g. "sha256:deadbeef..."
-    """
-    digest = hashlib.sha256(data).hexdigest()
-    return f"sha256:{digest}"
+# Re-export from shared module for backward compatibility
+from app.utils.hashing import compute_sha256  # noqa: F811, E402
 
 
 def resize_for_thumbnail(data: bytes, max_px: int = 256) -> bytes:
@@ -229,6 +222,11 @@ _XMP_PACKET_BEGIN = "<?xpacket begin='\xef\xbb\xbf' id='W5M0MpCehiHzreSzNTczkc9d
 _XMP_PACKET_END = "<?xpacket end='r'?>"
 
 
+def _xml_attr_escape(value: str) -> str:
+    """Escape a string for safe inclusion in an XML attribute value."""
+    return _html_escape(value, quote=True)
+
+
 def _build_xmp_packet(
     instance_id: str,
     org_id: str,
@@ -236,16 +234,20 @@ def _build_xmp_packet(
     image_hash: str,
 ) -> bytes:
     """Return UTF-8 XMP packet bytes with Encypher provenance fields."""
+    esc_instance_id = _xml_attr_escape(instance_id)
+    esc_org_id = _xml_attr_escape(org_id)
+    esc_document_id = _xml_attr_escape(document_id)
+    esc_image_hash = _xml_attr_escape(image_hash)
     xmp = (
         f"{_XMP_PACKET_BEGIN}\n"
         "<x:xmpmeta xmlns:x='adobe:ns:meta/'>\n"
         "<rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>\n"
         "<rdf:Description rdf:about=''\n"
         f"  xmlns:{_XMP_NS_PREFIX}='{_XMP_NS}'\n"
-        f"  {_XMP_NS_PREFIX}:instance_id='{instance_id}'\n"
-        f"  {_XMP_NS_PREFIX}:org_id='{org_id}'\n"
-        f"  {_XMP_NS_PREFIX}:document_id='{document_id}'\n"
-        f"  {_XMP_NS_PREFIX}:image_hash='{image_hash}'\n"
+        f"  {_XMP_NS_PREFIX}:instance_id='{esc_instance_id}'\n"
+        f"  {_XMP_NS_PREFIX}:org_id='{esc_org_id}'\n"
+        f"  {_XMP_NS_PREFIX}:document_id='{esc_document_id}'\n"
+        f"  {_XMP_NS_PREFIX}:image_hash='{esc_image_hash}'\n"
         f"  {_XMP_NS_PREFIX}:verify='{_XMP_VERIFY_URL}'\n"
         "/>\n"
         "</rdf:RDF>\n"

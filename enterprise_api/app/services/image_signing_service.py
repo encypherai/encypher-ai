@@ -8,14 +8,10 @@ plus metadata for storage.
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from io import BytesIO
-from typing import Any, List
+from typing import List
 
 logger = logging.getLogger(__name__)
-
-# ISO 8601 timestamp format for C2PA assertions
-_TS_FMT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 @dataclass
@@ -31,152 +27,6 @@ class SignedImageResult:
     size_bytes: int
     mime_type: str
     c2pa_signed: bool = True  # False in passthrough mode (no cert configured)
-
-
-def _build_manifest_dict(
-    *,
-    title: str,
-    org_id: str,
-    document_id: str,
-    image_id: str,
-    action: str,
-    custom_assertions: List[dict],
-    rights_data: dict,
-) -> dict:
-    """Build the c2pa manifest definition dict for signing."""
-    now_iso = datetime.now(timezone.utc).strftime(_TS_FMT)
-    instance_id = "urn:uuid:" + str(uuid.uuid4())
-
-    assertions = [
-        {
-            "label": "c2pa.actions",
-            "data": {
-                "actions": [
-                    {
-                        "action": action,
-                        "when": now_iso,
-                    }
-                ]
-            },
-        },
-    ]
-
-    # Add org/rights assertion
-    if rights_data:
-        assertions.append(
-            {
-                "label": "com.encypher.rights.v1",
-                "data": rights_data,
-            }
-        )
-
-    # Add custom assertions
-    for ca in custom_assertions:
-        assertions.append(ca)
-
-    # Add encypher provenance assertion
-    assertions.append(
-        {
-            "label": "com.encypher.provenance.v1",
-            "data": {
-                "organization_id": org_id,
-                "document_id": document_id,
-                "image_id": image_id,
-                "signed_at": now_iso,
-            },
-        }
-    )
-
-    return {
-        "claim_generator": "encypher-ai/1.0",
-        "claim_generator_info": [{"name": "Encypher", "version": "1.0"}],
-        "title": title,
-        "instance_id": instance_id,
-        "assertions": assertions,
-    }
-
-
-def _create_signer_from_pem(
-    private_key_pem: str,
-    cert_chain_pem: str,
-) -> Any:
-    """
-    Create a c2pa.Signer from PEM-encoded private key and certificate chain.
-
-    Uses C2paSignerInfo with ctypes NULL ta_url (no timestamp authority).
-    The private key must be PKCS8-encoded EC/RSA/Ed25519.
-    The cert_chain_pem should be EE cert + intermediate(s) + root CA.
-
-    Args:
-        private_key_pem: PKCS8 PEM-encoded private key string.
-        cert_chain_pem: PEM-encoded certificate chain (EE first).
-
-    Returns:
-        c2pa.Signer instance. Caller must call .close() when done.
-    """
-    import c2pa
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.asymmetric import ec, padding, rsa
-    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-
-    # Detect algorithm from the key type
-    from cryptography.hazmat.primitives.serialization import load_pem_private_key
-
-    key_bytes = private_key_pem.encode("utf-8")
-    key_obj = load_pem_private_key(key_bytes, password=None)
-
-    if isinstance(key_obj, Ed25519PrivateKey):
-        alg = c2pa.C2paSigningAlg.ED25519
-
-        def sign_callback(data: bytes) -> bytes:
-            return key_obj.sign(data)
-
-    elif isinstance(key_obj, ec.EllipticCurvePrivateKey):
-        curve = key_obj.curve
-        if isinstance(curve, ec.SECP256R1):
-            alg = c2pa.C2paSigningAlg.ES256
-        elif isinstance(curve, ec.SECP384R1):
-            alg = c2pa.C2paSigningAlg.ES384
-        elif isinstance(curve, ec.SECP521R1):
-            alg = c2pa.C2paSigningAlg.ES512
-        else:
-            alg = c2pa.C2paSigningAlg.ES256
-
-        def sign_callback(data: bytes) -> bytes:
-            return key_obj.sign(data, ec.ECDSA(hashes.SHA256()))
-
-    elif isinstance(key_obj, rsa.RSAPrivateKey):
-        alg = c2pa.C2paSigningAlg.PS256
-
-        def sign_callback(data: bytes) -> bytes:
-            return key_obj.sign(
-                data,
-                padding.PSS(
-                    mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=32,
-                ),
-                hashes.SHA256(),
-            )
-
-    else:
-        raise ValueError(f"Unsupported private key type: {type(key_obj).__name__}")
-
-    # Try from_info first (uses native signing, proper x5chain embedding)
-    try:
-        si = c2pa.C2paSignerInfo.__new__(c2pa.C2paSignerInfo)
-        si.alg = alg.value if hasattr(alg, "value") else alg
-        si.sign_cert = cert_chain_pem.encode("utf-8")
-        si.private_key = key_bytes
-        si.ta_url = None  # ctypes c_char_p: None = NULL = no TSA
-        return c2pa.Signer.from_info(si)
-    except Exception:
-        # Fallback: from_callback (cert chain embedded via certs param)
-        return c2pa.Signer.from_callback(
-            callback=sign_callback,
-            alg=alg,
-            certs=cert_chain_pem,
-            tsa_url=None,
-        )
 
 
 async def sign_image(
@@ -248,7 +98,7 @@ async def sign_image(
     # IMAGE_SIGNING_PASSTHROUGH flag is set. EXIF is still stripped, all hashes
     # and metadata are still computed and stored. Use for local dev / CI.
     # Never enable in production -- the returned image will have no C2PA manifest.
-    passthrough = settings.image_signing_passthrough or not (signer_private_key_pem and signer_cert_chain_pem)
+    passthrough = settings.signing_passthrough or settings.image_signing_passthrough or not (signer_private_key_pem and signer_cert_chain_pem)
     if passthrough:
         logger.debug("Image signing passthrough: XMP embedding for image_id=%s", image_id)
         from app.utils.image_utils import inject_encypher_xmp
@@ -277,12 +127,16 @@ async def sign_image(
 
     import c2pa
 
+    from app.utils.c2pa_manifest import build_c2pa_manifest_dict
+    from app.utils.c2pa_signer import create_signer_from_pem
+
     # Step 4: Build manifest
-    manifest_dict = _build_manifest_dict(
+    manifest_dict = build_c2pa_manifest_dict(
         title=title,
         org_id=org_id,
         document_id=document_id,
-        image_id=image_id,
+        asset_id=image_id,
+        asset_id_key="image_id",
         action=action,
         custom_assertions=custom_assertions,
         rights_data=rights_data,
@@ -290,7 +144,7 @@ async def sign_image(
     c2pa_instance_id = manifest_dict["instance_id"]
 
     # Step 5: Create signer
-    signer = _create_signer_from_pem(signer_private_key_pem, signer_cert_chain_pem)
+    signer = create_signer_from_pem(signer_private_key_pem, signer_cert_chain_pem)
 
     try:
         # Step 6: Build and sign
