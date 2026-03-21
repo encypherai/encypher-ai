@@ -50,6 +50,8 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 #### Core Capabilities
 - ✅ **C2PA-Compliant Signing**: Full C2PA 2.3 text manifest support
 - ✅ **Audio C2PA Signing**: WAV, MP3, M4A/AAC audio signing and verification
+- ✅ **Video C2PA Signing**: MP4, MOV, M4V, AVI video signing and verification (multipart upload)
+- ✅ **Live Video Stream Signing**: Per-segment C2PA signing with manifest chaining (C2PA 2.3 Section 19)
 - ✅ **Content Verification**: Cryptographic verification with tamper detection
 - ✅ **Granular Attribution**: Track provenance of individual sentences
 - ✅ **Public Verification Pages**: Shareable verification URLs
@@ -116,6 +118,25 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | Audio C2PA verification | ❌ | ✅ |
 | C2PA audio actions (created, dubbed, mixed, mastered, remixed) | ❌ | ✅ |
 | Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |
+
+### Video Signing Features (`/api/v1/enterprise/video`)
+
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Video C2PA signing (MP4, MOV, M4V, AVI) | ❌ | ✅ |
+| Video C2PA verification | ❌ | ✅ |
+| Multipart upload (up to 500 MB) | ❌ | ✅ |
+| Large file download endpoint (files > 50 MB) | ❌ | ✅ |
+| Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |
+
+### Live Video Stream Signing (`/api/v1/enterprise/video/stream`)
+
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Per-segment C2PA manifest signing (C2PA 2.3 Section 19) | ❌ | ✅ |
+| Manifest chaining (backwards-linked provenance) | ❌ | ✅ |
+| Merkle root computation on finalize | ❌ | ✅ |
+| Session-cached signing credentials | ❌ | ✅ |
 
 ### Verification Features (`/api/v1/verify`)
 
@@ -252,6 +273,23 @@ available to all tiers; scope "all" (cross-organization) requires Enterprise.
 |----------|--------|------|------|-------------|
 | `/api/v1/enterprise/audio/sign` | POST | ✅ | Enterprise | Sign audio with C2PA manifest (WAV, MP3, M4A/AAC) |
 | `/api/v1/enterprise/audio/verify` | POST | ✅ | Enterprise | Verify C2PA manifest in audio file |
+
+### Video Attribution Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/video/sign` | POST (multipart) | ✅ | Enterprise | Sign video with C2PA manifest (MP4, MOV, M4V, AVI) |
+| `/api/v1/enterprise/video/verify` | POST (multipart) | ✅ | Enterprise | Verify C2PA manifest in video file |
+| `/api/v1/enterprise/video/download/{video_id}` | GET | ✅ | Enterprise | Download signed video (files > 50 MB, 10-min TTL) |
+
+### Live Video Stream Signing Endpoints (C2PA 2.3 Section 19)
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/video/stream/start` | POST | ✅ | Enterprise | Start stream signing session |
+| `/api/v1/enterprise/video/stream/{session_id}/segment` | POST (multipart) | ✅ | Enterprise | Sign individual stream segment |
+| `/api/v1/enterprise/video/stream/{session_id}/finalize` | POST | ✅ | Enterprise | Finalize session, compute Merkle root |
+| `/api/v1/enterprise/video/stream/{session_id}/status` | GET | ✅ | Enterprise | Check session status |
 
 ### Public Verification Endpoints
 

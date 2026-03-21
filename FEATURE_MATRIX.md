@@ -130,6 +130,35 @@ Embed C2PA manifests directly into audio files. Uses `c2pa-python` (wrapping `c2
 
 ---
 
+## Video C2PA Signing
+
+Embed C2PA manifests directly into video files. Uses `c2pa-python` (wrapping `c2pa-rs`) for container-specific embedding (ISO BMFF uuid box for MP4/MOV/M4V, RIFF C2PA chunk for AVI). Video endpoints use multipart upload (not base64) to handle files up to 500 MB.
+
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Video C2PA signing (MP4, MOV, M4V, AVI) | ❌ | ✅ |
+| Video C2PA verification | ❌ | ✅ |
+| Multipart upload (up to 500 MB) | ❌ | ✅ |
+| Large file download endpoint (files > 50 MB) | ❌ | ✅ |
+| Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |
+| Passthrough mode (provenance metadata without JUMBF embedding) | ❌ | ✅ |
+
+---
+
+## Live Video Stream Signing (C2PA 2.3 Section 19)
+
+Per-segment C2PA manifest signing for live video streams. Each CMAF/fMP4 segment gets its own C2PA manifest with backwards-linked provenance chain. REST-based session lifecycle with Merkle root computation on finalize.
+
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Per-segment C2PA manifest signing | ❌ | ✅ |
+| Manifest chaining (backwards-linked provenance via `com.encypher.stream.chain.v1`) | ❌ | ✅ |
+| Merkle root computation over segment manifest hashes | ❌ | ✅ |
+| Session-cached signing credentials (1-hour TTL) | ❌ | ✅ |
+| Session status monitoring | ❌ | ✅ |
+
+---
+
 ## Distribution & Integrations
 
 | Feature | Free | Enterprise |

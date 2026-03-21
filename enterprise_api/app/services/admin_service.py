@@ -308,7 +308,7 @@ class AdminService:
             org_any.updated_at = datetime.utcnow()
             await db.commit()
 
-            logger.info(f"Admin {admin_id} changed user {user_id} status: " f"{previous_status} -> {status}. Reason: {reason}")
+            logger.info(f"Admin {admin_id} changed user {user_id} status: {previous_status} -> {status}. Reason: {reason}")
 
             return {
                 "success": True,

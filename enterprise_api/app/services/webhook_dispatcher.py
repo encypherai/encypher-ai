@@ -470,7 +470,7 @@ class WebhookDispatcher:
 
         if row.attempts >= row.max_attempts:
             await db.execute(
-                text("UPDATE webhook_deliveries" " SET status = 'permanently_failed', next_retry_at = NULL" " WHERE id = :id"),
+                text("UPDATE webhook_deliveries SET status = 'permanently_failed', next_retry_at = NULL WHERE id = :id"),
                 {"id": delivery_id},
             )
             await db.commit()
@@ -480,11 +480,11 @@ class WebhookDispatcher:
             delay_seconds = self.RETRY_DELAYS[delay_index]
             next_retry = datetime.now(timezone.utc) + timedelta(seconds=delay_seconds)
             await db.execute(
-                text("UPDATE webhook_deliveries" " SET status = 'retrying', next_retry_at = :next_retry" " WHERE id = :id"),
+                text("UPDATE webhook_deliveries SET status = 'retrying', next_retry_at = :next_retry WHERE id = :id"),
                 {"id": delivery_id, "next_retry": next_retry},
             )
             await db.commit()
-            logger.info(f"Webhook delivery {delivery_id} scheduled for retry " f"at {next_retry.isoformat()}")
+            logger.info(f"Webhook delivery {delivery_id} scheduled for retry at {next_retry.isoformat()}")
 
     async def process_pending_retries(self) -> int:
         """Process all deliveries due for retry. Returns count processed."""
@@ -575,13 +575,7 @@ class WebhookDispatcher:
 
         # Reset for retry
         await db.execute(
-            text(
-                "UPDATE webhook_deliveries"
-                " SET status = 'retrying',"
-                " next_retry_at = :now,"
-                " attempts = GREATEST(attempts - 1, 0)"
-                " WHERE id = :id"
-            ),
+            text("UPDATE webhook_deliveries SET status = 'retrying', next_retry_at = :now, attempts = GREATEST(attempts - 1, 0) WHERE id = :id"),
             {"id": delivery_id, "now": datetime.now(timezone.utc)},
         )
         await db.commit()

@@ -85,9 +85,9 @@ class TestContentSpreadUngated:
         async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.get("/api/v1/analytics/content-spread?days=30")
             # Should NOT be 403 -- the gate was removed
-            assert response.status_code != 403, (
-                f"Free tier got 403 on content-spread; gate should be removed. " f"Got {response.status_code}: {response.text}"
-            )
+            assert (
+                response.status_code != 403
+            ), f"Free tier got 403 on content-spread; gate should be removed. Got {response.status_code}: {response.text}"
 
     @pytest.mark.anyio
     async def test_enterprise_tier_can_access_content_spread(self):
@@ -179,7 +179,7 @@ class TestNoticeCreationGate:
                     },
                 )
                 # Should NOT be 403
-                assert response.status_code != 403, f"Enterprise tier got 403 on notice creation. " f"Got {response.status_code}: {response.text}"
+                assert response.status_code != 403, f"Enterprise tier got 403 on notice creation. Got {response.status_code}: {response.text}"
 
 
 # ---------------------------------------------------------------------------

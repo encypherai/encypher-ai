@@ -54,4 +54,4 @@ class UsageRecord(Base):
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)
 
     def __repr__(self) -> str:
-        return f"<UsageRecord(id={self.id}, org={self.organization_id}, " f"metric={self.metric}, count={self.count}, overage={self.overage_count})>"
+        return f"<UsageRecord(id={self.id}, org={self.organization_id}, metric={self.metric}, count={self.count}, overage={self.overage_count})>"

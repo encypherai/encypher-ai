@@ -656,7 +656,7 @@ class C2PAVerifier:
         signed_assertions = result._verified_payload.get("assertions", [])
         manifest_assertions = manifest_data.get("assertions", [])
         if signed_assertions != manifest_assertions:
-            result.warnings.append("Signed payload assertions do not match manifest assertions; " "assertion-level verification skipped")
+            result.warnings.append("Signed payload assertions do not match manifest assertions; assertion-level verification skipped")
             return
         for assertion in result.assertions:
             assertion.verified = True

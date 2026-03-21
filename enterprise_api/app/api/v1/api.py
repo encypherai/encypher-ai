@@ -7,7 +7,7 @@ Combines all v1 endpoints into a single router.
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import evidence, fingerprint, internal_usage, merkle, multi_source, provisioning, streaming_merkle
-from app.api.v1.enterprise import audio_attribution, c2pa, image_attribution
+from app.api.v1.enterprise import audio_attribution, c2pa, image_attribution, video_attribution, video_stream_attribution
 from app.api.v1.image_verify import router as image_verify_router
 from app.api.v1.public import c2pa as public_c2pa
 from app.api.v1.public import rights as public_rights
@@ -45,6 +45,12 @@ api_router.include_router(image_attribution.router, prefix="", tags=["Image Attr
 
 # Include audio C2PA signing and verification endpoints
 api_router.include_router(audio_attribution.router, prefix="", tags=["Audio Attribution"])
+
+# Include video C2PA signing and verification endpoints
+api_router.include_router(video_attribution.router, prefix="", tags=["Video Attribution"])
+
+# Include video stream C2PA signing endpoints (C2PA 2.3 Section 19)
+api_router.include_router(video_stream_attribution.router, prefix="", tags=["Video Stream Attribution"])
 
 # Include image verification endpoints (no auth -- public)
 api_router.include_router(image_verify_router, tags=["Image Verification"])

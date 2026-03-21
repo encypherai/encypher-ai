@@ -123,7 +123,7 @@ Use this index to jump directly to the documentation you need.
 | [enterprise_api/docs/LICENSING_API.md](./enterprise_api/docs/LICENSING_API.md) | Licensing API reference (agreements, content, payouts) |
 | [docs/perf/batch-sign.md](./docs/perf/batch-sign.md) | Batch throughput benchmark results |
 
-**Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection, CDN provenance continuity, audio C2PA signing (WAV, MP3, M4A/AAC)
+**Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection, CDN provenance continuity, audio C2PA signing (WAV, MP3, M4A/AAC), video C2PA signing (MP4, MOV, M4V, AVI), live video stream signing (C2PA 2.3 Section 19)
 **Status**: Production Ready
 **Tier**: Enterprise
 **Port**: 9000
@@ -144,6 +144,36 @@ Audio signing has no standalone guide -- the implementation is self-documenting 
 **Status**: Production Ready
 **Tier**: Enterprise
 **Tests**: 51 tests (35 in test_audio_signing.py + 16 in test_c2pa_shared.py)
+
+#### Video C2PA Signing
+
+Video signing follows the same shared C2PA module pattern as audio. Key differences: multipart upload (not base64), 500 MB max, large file download endpoint. Key files:
+
+| Document | Purpose |
+|----------|---------|
+| `enterprise_api/app/services/video_signing_service.py` | Video signing service (passthrough + C2PA) |
+| `enterprise_api/app/services/video_verification_service.py` | Video verification (delegates to shared verifier) |
+| `enterprise_api/app/services/video_signing_executor.py` | Per-org credential loading and orchestration |
+| `enterprise_api/app/api/v1/enterprise/video_attribution.py` | REST endpoints (`/enterprise/video/sign`, `/enterprise/video/verify`, `/enterprise/video/download/{video_id}`) |
+| `enterprise_api/app/utils/video_utils.py` | Format detection (ftyp, RIFF+AVI, EBML), MIME canonicalization, validation |
+
+**Supported Formats**: MP4, MOV, M4V (ISO BMFF), AVI (RIFF). WebM/MKV detected and rejected.
+**Status**: Production Ready
+**Tier**: Enterprise
+**Tests**: 34 tests in test_video_signing.py + shared tests in test_c2pa_shared.py
+
+#### Live Video Stream Signing (C2PA 2.3 Section 19)
+
+Per-segment C2PA manifest signing for live video streams with backwards-linked provenance chain and Merkle root computation. Key files:
+
+| Document | Purpose |
+|----------|---------|
+| `enterprise_api/app/services/video_stream_signing_service.py` | Session management, segment signing, Merkle root |
+| `enterprise_api/app/api/v1/enterprise/video_stream_attribution.py` | REST endpoints (start, segment, finalize, status) |
+
+**Status**: Production Ready
+**Tier**: Enterprise
+**Tests**: 17 tests in test_video_stream_signing.py
 
 #### CDN Provenance Continuity
 | Document | Purpose |

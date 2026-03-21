@@ -110,6 +110,11 @@ Encypher supports the following C2PA assertion types:
 | `POST /api/v1/verify` | Verify C2PA manifest in text | §14.3 validation |
 | `POST /api/v1/enterprise/audio/sign` | Sign audio with C2PA manifest (WAV, MP3, M4A) | Appendix A.3.4, A.3.7, A.5 |
 | `POST /api/v1/enterprise/audio/verify` | Verify C2PA manifest in audio | §14.3 validation |
+| `POST /api/v1/enterprise/video/sign` | Sign video with C2PA manifest (MP4, MOV, M4V, AVI) | Appendix A.5, A.3 |
+| `POST /api/v1/enterprise/video/verify` | Verify C2PA manifest in video | §14.3 validation |
+| `POST /api/v1/enterprise/video/stream/start` | Start live stream signing session | §19 (live video) |
+| `POST /api/v1/enterprise/video/stream/{id}/segment` | Sign individual stream segment | §19 Method 1 |
+| `POST /api/v1/enterprise/video/stream/{id}/finalize` | Finalize stream, compute Merkle root | §19 |
 
 ---
 
@@ -124,12 +129,16 @@ Image and audio signing use `c2pa-python` (Python bindings for `c2pa-rs`) which 
 | WAV | RIFF | `C2PA` chunk | Appendix A.3.4 |
 | MP3 | ID3v2 | GEOB frame (`application/x-c2pa-manifest-store`) | Appendix A.3.7 |
 | M4A/AAC | ISO BMFF | `uuid` box (C2PA UUID) | Appendix A.5 |
+| MP4/MOV/M4V | ISO BMFF | `uuid` box (C2PA UUID) | Appendix A.5 |
+| AVI | RIFF | `C2PA` chunk | Appendix A.3 |
 
 **Implementation files:**
 - Shared signer: `enterprise_api/app/utils/c2pa_signer.py`
 - Shared manifest builder: `enterprise_api/app/utils/c2pa_manifest.py`
 - Shared verifier: `enterprise_api/app/utils/c2pa_verifier_core.py`
 - Audio signing: `enterprise_api/app/services/audio_signing_service.py`
+- Video signing: `enterprise_api/app/services/video_signing_service.py`
+- Video stream signing: `enterprise_api/app/services/video_stream_signing_service.py`
 - Image signing: `enterprise_api/app/services/image_signing_service.py`
 
 ---
@@ -142,6 +151,8 @@ Image and audio signing use `c2pa-python` (Python bindings for `c2pa-rs`) which 
 | TSA integration | Q1 2026 | §15.8 |
 | Image signing | Shipped (Feb 2026) | Appendix A.1-A.3 |
 | Audio signing (WAV, MP3, M4A) | Shipped (Mar 2026) | Appendix A.3.4, A.3.7, A.5 |
+| Video signing (MP4, MOV, M4V, AVI) | Shipped (Mar 2026) | Appendix A.5, A.3 |
+| Live video stream signing | Shipped (Mar 2026) | Section 19 |
 | PDF signing | Planned | Appendix A.4 |
 
 ---
@@ -155,6 +166,8 @@ Image and audio signing use `c2pa-python` (Python bindings for `c2pa-rs`) which 
 | Dec 2025 | TEAM_009 | Exclusions field | ✅ Verified |
 | Mar 2026 | TEAM_265 | Audio C2PA signing (WAV, MP3, M4A) | ✅ Implemented |
 | Mar 2026 | TEAM_265 | Shared C2PA modules (signer, manifest, verifier) | ✅ Refactored |
+| Mar 2026 | TEAM_266 | Video C2PA signing (MP4, MOV, M4V, AVI) | ✅ Implemented |
+| Mar 2026 | TEAM_266 | Live video stream signing (C2PA 2.3 Section 19) | ✅ Implemented |
 
 ---
 

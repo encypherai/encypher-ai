@@ -172,6 +172,24 @@ class TestBuildC2paManifestDict:
         labels = [a["label"] for a in result["assertions"]]
         assert "com.example.custom" in labels
 
+    def test_video_asset_id_key(self):
+        from app.utils.c2pa_manifest import build_c2pa_manifest_dict
+
+        result = build_c2pa_manifest_dict(
+            title="test.mp4",
+            org_id="org_123",
+            document_id="doc_abc",
+            asset_id="vid_xyz",
+            asset_id_key="video_id",
+            action="c2pa.created",
+            custom_assertions=[],
+            rights_data={},
+        )
+        provenance = [a for a in result["assertions"] if a["label"] == "com.encypher.provenance.v1"][0]
+        assert provenance["data"]["video_id"] == "vid_xyz"
+        assert "image_id" not in provenance["data"]
+        assert "audio_id" not in provenance["data"]
+
     def test_action_in_assertions(self):
         from app.utils.c2pa_manifest import build_c2pa_manifest_dict
 

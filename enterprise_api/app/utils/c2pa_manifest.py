@@ -17,7 +17,7 @@ def build_c2pa_manifest_dict(
     org_id: str,
     document_id: str,
     asset_id: str,
-    asset_id_key: Literal["image_id", "audio_id"],
+    asset_id_key: Literal["image_id", "audio_id", "video_id"],
     action: str,
     custom_assertions: List[dict],
     rights_data: dict,
@@ -29,7 +29,7 @@ def build_c2pa_manifest_dict(
         org_id: Organization identifier.
         document_id: Parent document identifier.
         asset_id: Unique asset identifier (image_id, audio_id, etc.).
-        asset_id_key: Key name in provenance assertion ("image_id", "audio_id").
+        asset_id_key: Key name in provenance assertion ("image_id", "audio_id", "video_id").
         action: C2PA action string (e.g. "c2pa.created").
         custom_assertions: Additional C2PA assertions to embed.
         rights_data: Rights metadata dict for com.encypher.rights.v1 assertion.
