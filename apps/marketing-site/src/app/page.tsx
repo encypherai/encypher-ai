@@ -46,11 +46,11 @@ export default function HomePage() {
         primaryValue="Protect content at publish time, track where it appears, and enforce your licensing terms with cryptographic evidence. Encypher co-chairs the C2PA Text Provenance Task Force."
         pagePath="/"
       />
-      
+
       {/* Hero Section */}
       <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden" style={{ minHeight: '100vh' }}>
         <MetadataBackground />
-        
+
         <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20 lg:py-28 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6">
             <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-3 sm:mb-4 md:mb-6 text-shadow-md leading-tight px-2" style={{ minHeight: '3rem' }}>
@@ -61,7 +61,7 @@ export default function HomePage() {
               When someone uses your content, you can prove it&apos;s yours.<br />
               When they ignore your rights, you can prove that too.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center items-center px-2">
               <Button asChild size="lg" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base bg-white text-delft-blue hover:bg-columbia-blue transition-colors">
                 <Link href="/try">
@@ -78,7 +78,7 @@ export default function HomePage() {
                 </Link>
               </Button>
             </div>
-            
+
             {/* Standards Authority */}
             <div className="mt-8 sm:mt-12 md:mt-16 text-center">
               <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6 text-shadow-sm px-2">
@@ -392,9 +392,9 @@ export default function HomePage() {
           )}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
             <Button asChild size="lg" className="w-full sm:w-auto shadow-lg font-semibold" style={{ backgroundColor: '#1a365d', color: '#ffffff' }}>
-              <Link href="/auth/register">
+              <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}/signup`}>
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+              </a>
             </Button>
             <Button
               size="lg"
@@ -405,7 +405,7 @@ export default function HomePage() {
               Talk to Sales <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
-          
+
           {/* Developer CTA - Secondary */}
           <div className="mt-8 pt-8 border-t border-border/50">
             <p className="text-sm text-muted-foreground mb-3">

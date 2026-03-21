@@ -24,7 +24,7 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: session, status } = useSession();
-  
+
   // Determine which logo to use based on theme
   const logoSrc = mounted && resolvedTheme === 'light' ? LOGO_COLOR : LOGO_WHITE;
 
@@ -45,17 +45,17 @@ export function Navbar() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center">
-            <Image 
+            <Image
               src={logoSrc}
-              alt="Encypher Logo" 
-              width={160} 
+              alt="Encypher Logo"
+              width={160}
               height={40}
               className="h-10 w-auto object-contain"
               priority
             />
           </Link>
         </div>
-        
+
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-4">
           {/* Solutions Dropdown */}
@@ -147,15 +147,15 @@ export function Navbar() {
           ) : (
             <div className="flex gap-2 items-center">
               <Button asChild variant="ghost" size="sm">
-                <Link href="/auth/register?mode=signin">Sign In</Link>
+                <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}/login`}>Sign In</a>
               </Button>
               <Button asChild size="sm" className="font-semibold">
-                <Link href="/auth/register">Get Started</Link>
+                <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}/signup`}>Get Started</a>
               </Button>
             </div>
           )}
         </nav>
-        
+
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -176,11 +176,11 @@ export function Navbar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           {/* Mobile Menu Button */}
-          <Button 
-            variant="outline" 
-            size="icon" 
+          <Button
+            variant="outline"
+            size="icon"
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
@@ -189,7 +189,7 @@ export function Navbar() {
           </Button>
         </div>
       </div>
-      
+
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <div className="md:hidden p-4 border-t border-border/40 bg-background">
@@ -203,15 +203,15 @@ export function Navbar() {
             </Link>
             {/* Mobile Solutions Links */}
             <span className="text-sm font-medium">Solutions</span>
-            <Link 
-              href="/solutions/ai-companies" 
+            <Link
+              href="/solutions/ai-companies"
               className="text-sm font-medium hover:text-primary pl-4"
               onClick={() => setMobileMenuOpen(false)}
             >
               For AI Companies
             </Link>
-            <Link 
-              href="/solutions/publishers" 
+            <Link
+              href="/solutions/publishers"
               className="text-sm font-medium hover:text-primary pl-4"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -233,15 +233,15 @@ export function Navbar() {
             </Link>
             {/* Mobile Demos Links */}
             <span className="text-xs text-muted-foreground pl-4 pt-2">Demos</span>
-            <Link 
-              href="/publisher-demo" 
+            <Link
+              href="/publisher-demo"
               className="text-sm font-medium hover:text-primary pl-4"
               onClick={() => setMobileMenuOpen(false)}
             >
               Publisher Demo
             </Link>
-            <Link 
-              href="/ai-demo" 
+            <Link
+              href="/ai-demo"
               className="text-sm font-medium hover:text-primary pl-4"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -259,42 +259,42 @@ export function Navbar() {
                 {t.name}
               </Link>
             ))}
-            <Link 
-              href="/tools" 
+            <Link
+              href="/tools"
               className="text-sm font-medium hover:text-primary pl-4"
               onClick={() => setMobileMenuOpen(false)}
             >
               All Tools
             </Link>
-            <Link 
-              href="/blog" 
+            <Link
+              href="/blog"
               className="text-sm font-medium hover:text-primary"
               onClick={() => setMobileMenuOpen(false)}
             >
               Blog
             </Link>
-            <Link 
-              href="/pricing" 
+            <Link
+              href="/pricing"
               className="text-sm font-medium hover:text-primary"
               onClick={() => setMobileMenuOpen(false)}
             >
               Pricing
             </Link>
-            <Link 
-              href="/company" 
+            <Link
+              href="/company"
               className="text-sm font-medium hover:text-primary"
               onClick={() => setMobileMenuOpen(false)}
             >
               Company
             </Link>
-            <Link 
-              href="/contact" 
+            <Link
+              href="/contact"
               className="text-sm font-medium hover:text-primary"
               onClick={() => setMobileMenuOpen(false)}
             >
               Contact
             </Link>
-            
+
             {/* Auth Buttons for Mobile */}
             {status === "loading" ? null : session ? (
               <>
@@ -307,9 +307,9 @@ export function Navbar() {
                 >
                   <a href={process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}>Dashboard</a>
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="w-full"
                   onClick={() => { setMobileMenuOpen(false); signOut({ callbackUrl: "/" }); }}
                 >
@@ -318,20 +318,20 @@ export function Navbar() {
               </>
             ) : (
               <div className="flex flex-col space-y-2 pt-2">
-                <Link 
-                  href="/auth/register?mode=signin" 
+                <a
+                  href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}/login`}
                   className="block w-full text-left px-4 py-2 text-sm font-medium hover:text-primary"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Sign In
-                </Link>
-                <Link 
-                  href="/auth/register" 
+                </a>
+                <a
+                  href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}/signup`}
                   className="block w-full text-left px-4 py-2 text-sm font-medium hover:text-primary"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Sign Up
-                </Link>
+                </a>
               </div>
             )}
           </nav>
