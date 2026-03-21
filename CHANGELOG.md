@@ -2,15 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.1.0] - 2026-03-21
 
 ### Added
+- Video C2PA signing and verification (`/enterprise/video/sign`, `/enterprise/video/verify`, `/enterprise/video/download/{video_id}`)
+  - Supported formats: MP4, MOV, M4V (ISO BMFF), AVI (RIFF)
+  - Multipart upload (not base64) for files up to 500 MB
+  - Large file download endpoint for signed files > 50 MB (10-min TTL cache)
+  - Magic byte detection: ftyp (ISO BMFF), RIFF+AVI, EBML (rejected with clear error)
+- Live video stream C2PA signing (C2PA 2.3 Section 19)
+  - REST-based session lifecycle: start, segment, finalize, status
+  - Per-segment C2PA manifest with backwards-linked provenance chain (`com.encypher.stream.chain.v1`)
+  - Merkle root computation over all segment manifest hashes on finalize
+  - Session-cached signing credentials (1-hour TTL, 5-min idle timeout)
 - Audio C2PA signing and verification (`/enterprise/audio/sign`, `/enterprise/audio/verify`)
   - Supported formats: WAV (RIFF), MP3 (ID3), M4A/AAC (ISO BMFF)
   - Per-org credential loading via Organization model
   - C2PA v2.3 audio actions: c2pa.created, c2pa.dubbed, c2pa.mixed, c2pa.mastered, c2pa.remixed
 - Shared C2PA modules extracted from image pipeline (c2pa_signer, c2pa_manifest, c2pa_verifier_core, hashing)
 - Generic `SIGNING_PASSTHROUGH` config flag (supersedes `IMAGE_SIGNING_PASSTHROUGH` for non-image media)
+
+### Security
+- Sanitized error messages in signing executors (audio, video) to prevent internal detail leakage
+- Added enterprise tier gate to audio C2PA endpoints
+- Sanitized c2pa-rs error messages in verifier core
+- Added XMP XML attribute escaping to prevent injection in image provenance metadata
 
 ## [2026-03-10] CDN Provenance Continuity — All Phases
 
