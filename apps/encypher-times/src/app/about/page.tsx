@@ -44,8 +44,8 @@ export default function AboutPage() {
           <strong>See what signed content looks like at publication scale.</strong>{" "}
           Browse eight articles across five sections. Every article carries
           invisible, tamper-proof signatures at the sentence level -- proof of
-          origin that travels with the content and is detectable wherever it
-          surfaces.
+          origin that travels with the content, detectable at the point of
+          ingestion into any system.
         </p>
 
         <p>

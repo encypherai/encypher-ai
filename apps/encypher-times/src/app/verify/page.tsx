@@ -46,30 +46,49 @@ export default function VerifyPage() {
       {/* Verify widget */}
       <VerifyWidget />
 
-      {/* Technical details */}
+      {/* How It Works -- outcome-focused */}
       <div className="mt-10 pt-6 border-t border-rule-light">
         <h2 className="font-[family-name:var(--font-ui)] text-sm font-bold text-ink mb-3">
           How It Works
         </h2>
         <div className="font-[family-name:var(--font-ui)] text-sm text-ink-muted space-y-3 leading-relaxed">
           <p>
-            When articles are signed, invisible Unicode characters (variation
-            selectors) are embedded into each sentence. These characters are
-            zero-width -- they are invisible to readers and do not affect the
-            text&apos;s appearance.
+            When articles are signed, each sentence receives an invisible,
+            tamper-proof marker that travels with the text wherever it goes. If
+            even a single character is changed, the signature breaks -- revealing
+            exactly which sentences were altered.
           </p>
           <p>
-            Each marker contains a unique identifier and an HMAC signature bound
-            to the sentence content. If even a single character of the sentence
-            is changed, the signature will not match, revealing the tampering.
-          </p>
-          <p>
-            The markers survive copy-paste, most text editors, and raw text
-            extraction. This is what makes the technology practical for
-            real-world content provenance: the proof of origin travels with the
-            text and is detectable whenever content enters a new system.
+            These markers survive copy-paste, text editors, and raw extraction,
+            making them practical for real-world content tracking. When content
+            enters a new system, the signatures are detectable at the point of
+            ingestion.
           </p>
         </div>
+
+        {/* Collapsible technical details */}
+        <details className="mt-4">
+          <summary className="font-[family-name:var(--font-ui)] text-xs font-medium text-ink-faint cursor-pointer hover:text-ink-muted transition-colors">
+            Technical Details
+          </summary>
+          <div className="mt-3 p-4 bg-newsprint-warm/50 border border-rule-light/50 rounded font-[family-name:var(--font-ui)] text-xs text-ink-faint space-y-2 leading-relaxed">
+            <p>
+              Encypher embeds invisible Unicode variation selectors into each
+              sentence. Each marker carries a unique document identifier and an
+              HMAC signature cryptographically bound to the sentence content.
+            </p>
+            <p>
+              On verification, the API extracts the embedded marker, recomputes
+              the HMAC against the current text, and compares. A match confirms
+              integrity; a mismatch identifies tampering at the sentence level.
+            </p>
+            <p>
+              The markers are zero-width characters -- invisible to readers and
+              preserved through standard text operations including clipboard,
+              most editors, and raw text pipelines.
+            </p>
+          </div>
+        </details>
       </div>
 
       {/* Chrome extension CTA */}
