@@ -813,7 +813,7 @@ export default function PlaygroundPage() {
   return (
     <DashboardLayout>
       <div className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-y-2">
           <div>
             <h1 className="text-2xl font-bold text-delft-blue dark:text-white">API Playground</h1>
             <p className="text-sm text-muted-foreground mt-1">
@@ -938,7 +938,8 @@ export default function PlaygroundPage() {
                     <p className="text-sm text-muted-foreground">Complete walkthrough in 4 steps</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 ml-4">
+                <span className="ml-4 text-xs text-muted-foreground md:hidden">Step {tourStep + 1}/4</span>
+                <div className="hidden md:flex items-center gap-2 ml-4">
                   <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 0 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
                     <span className={tourStep > 0 ? 'text-green-600 dark:text-green-400' : ''}>1</span> API Key
                     {tourStep > 0 && <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}

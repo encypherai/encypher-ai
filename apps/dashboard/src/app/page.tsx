@@ -577,7 +577,7 @@ export default function DashboardPage() {
         <div className="relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 tracking-tight">
                 {greeting}, {userName}
               </h1>
               <p className="text-columbia-blue text-lg font-medium">
@@ -683,7 +683,7 @@ export default function DashboardPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground mb-1">API Calls</p>
-                    <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
+                    <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
                       {formatNumber(animApiCalls)}
                     </p>
                     <MiniSparkline data={sparklineData} />
@@ -729,7 +729,7 @@ export default function DashboardPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-medium text-muted-foreground mb-1">Documents Signed</p>
-                      <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
+                      <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
                         {formatNumber(animDocsSigned)}
                       </p>
                       <MiniSparkline data={docsSparklineData} color="#1b2f50" />
@@ -784,7 +784,7 @@ export default function DashboardPage() {
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-1">Verifications</p>
-                        <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
+                        <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
                           {formatNumber(animVerifications)}
                         </p>
                         <p className="text-xs mt-2">
@@ -813,7 +813,7 @@ export default function DashboardPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-muted-foreground mb-1">Verifications</p>
                         <div className="flex items-center gap-3">
-                          <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
+                          <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white animate-count-up">
                             {formatNumber(animVerifications)}
                           </p>
                           <ProgressRing
@@ -850,7 +850,7 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Success Rate</p>
-                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
                     {stats?.success_rate?.toFixed(1) || '100'}%
                   </p>
                   <p className="text-xs mt-2 flex items-center gap-1.5">

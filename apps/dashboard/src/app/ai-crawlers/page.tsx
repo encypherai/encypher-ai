@@ -382,7 +382,7 @@ export default function AICrawlersPage() {
       )}
 
       {/* Time Range + Export */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
         <div className="flex items-center space-x-2">
           <span className="text-sm text-muted-foreground">Time range:</span>
           {(['7', '30', '90'] as const).map((range) => (
@@ -733,7 +733,7 @@ export default function AICrawlersPage() {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[700px]">
                 <thead>
                   <tr className="border-b border-border text-left">
                     <th className="pb-3 font-medium text-muted-foreground">Crawler</th>

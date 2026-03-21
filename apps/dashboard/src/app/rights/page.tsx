@@ -340,7 +340,7 @@ function ProfileTab({ accessToken }: { accessToken: string }) {
                 { label: 'robots.txt additions', path: `/api/v1/public/rights/organization/${profile?.organization_id}/robots-txt` },
               ].map(item => (
                 <div key={item.label} className="flex items-center gap-3 text-xs">
-                  <span className="w-40 flex-shrink-0 text-slate-500">{item.label}</span>
+                  <span className="w-28 sm:w-40 flex-shrink-0 text-slate-500">{item.label}</span>
                   <code className="flex-1 font-mono bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded text-slate-700 dark:text-slate-300 truncate">
                     {item.path}
                   </code>
@@ -519,11 +519,11 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-5">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Total detections</p>
-            <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
               {detectionsQuery.isLoading ? '—' : (detectionSummary?.total_events ?? 0).toLocaleString()}
             </p>
           </CardContent>
@@ -531,7 +531,7 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
         <Card>
           <CardContent className="pt-5">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Discovery events</p>
-            <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100">
               {discoveryEventsQuery.isLoading ? '—' : (discoveryEventsQuery.data?.total ?? 0).toLocaleString()}
             </p>
           </CardContent>
@@ -539,7 +539,7 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
         <Card>
           <CardContent className="pt-5">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">External domains</p>
-            <p className="text-3xl font-bold text-amber-600 dark:text-amber-400">
+            <p className="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400">
               {discoveryDomainsQuery.isLoading ? '—' : discoveryDomains.filter((item: DomainSummaryItem) => !item.is_owned_domain).length.toLocaleString()}
             </p>
           </CardContent>
@@ -547,7 +547,7 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
         <Card>
           <CardContent className="pt-5">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Open alerts</p>
-            <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+            <p className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400">
               {discoveryAlertsQuery.isLoading ? '—' : discoveryAlerts.length.toLocaleString()}
             </p>
           </CardContent>
@@ -555,7 +555,7 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
         <Card>
           <CardContent className="pt-5">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Rights acknowledged</p>
-            <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+            <p className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">
               {detectionsQuery.isLoading ? '—' : (detectionSummary?.rights_acknowledged_count ?? 0).toLocaleString()}
             </p>
           </CardContent>
@@ -678,7 +678,7 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[500px]">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-700">
                     <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Domain</th>
@@ -729,7 +729,7 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[500px]">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-700">
                     <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Found URL</th>
@@ -801,7 +801,7 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[480px]">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-700">
                     <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">Crawler</th>
@@ -1162,7 +1162,7 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm min-w-[600px]">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-slate-700">
                     <th className="text-left py-2 px-3 text-xs font-medium text-slate-500">From</th>
@@ -1328,7 +1328,7 @@ export default function RightsPage() {
         </div>
 
         <Tabs defaultValue="profile">
-          <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mb-2">
+          <TabsList className="bg-slate-100 dark:bg-slate-800 p-1 rounded-xl mb-2 overflow-x-auto">
             <TabsTrigger value="profile" className="rounded-lg text-sm">
               Profile
             </TabsTrigger>

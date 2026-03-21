@@ -595,7 +595,7 @@ function ImageSigningPageInner() {
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 order-first lg:order-last">
             <SigningOptionsCard
               options={options}
               onChange={setOptions}

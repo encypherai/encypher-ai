@@ -132,7 +132,7 @@ function CreatePolicyForm({ onClose, onCreated }: { onClose: () => void; onCreat
           <label className="block text-sm font-medium mb-1">Policy Name</label>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Require Human Review" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Enforcement</label>
             <select
@@ -160,7 +160,7 @@ function CreatePolicyForm({ onClose, onCreated }: { onClose: () => void; onCreat
             </Button>
           </div>
           {rules.map((rule, idx) => (
-            <div key={idx} className="grid grid-cols-5 gap-2 mb-2 items-end">
+            <div key={idx} className="grid grid-cols-1 sm:grid-cols-5 gap-2 mb-2 items-end">
               <select
                 className="rounded-md border px-2 py-1.5 text-sm bg-background"
                 value={rule.field}
@@ -303,7 +303,7 @@ function PoliciesTab() {
           <Card key={policy.id} className={!policy.active ? 'opacity-60' : ''}>
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">
-                <div className="space-y-1">
+                <div className="space-y-1 min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold">{policy.name}</h3>
                     <Badge className={ENFORCEMENT_STYLES[policy.enforcement] || ''}>
@@ -320,7 +320,7 @@ function PoliciesTab() {
                     {policy.rules.length} rule{policy.rules.length !== 1 ? 's' : ''} -- Created {formatDate(policy.created_at)}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-shrink-0">
                   {policy.active && (
                     <Button
                       variant="outline"
@@ -370,7 +370,7 @@ function AttestationsTab() {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Total Attestations</p>
@@ -404,8 +404,8 @@ function AttestationsTab() {
           description="AI attestation records will appear here once your governance policies begin evaluating content against your rules."
         />
       ) : !isLoading && (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="border rounded-lg overflow-x-auto">
+          <table className="w-full text-sm min-w-[500px]">
             <thead className="bg-muted/50">
               <tr>
                 <th className="text-left px-4 py-3 font-medium">Document</th>

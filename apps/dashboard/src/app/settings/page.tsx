@@ -1585,8 +1585,23 @@ function SettingsPageInner() {
         <p className="text-sm text-muted-foreground mt-1">Manage your account settings and preferences.</p>
       </div>
 
+      {/* Mobile-only horizontal tab strip */}
+      <div className="flex overflow-x-auto gap-1 mb-4 md:hidden pb-2 -mx-1">
+        {['profile', 'security', 'notifications', 'organization', 'billing'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab as typeof activeTab)}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              activeTab === tab ? 'bg-blue-ncs text-white' : 'text-muted-foreground bg-muted hover:bg-muted/80'
+            }`}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
+      </div>
+
       <div className="grid md:grid-cols-4 gap-6">
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 hidden md:block">
             <Card>
               <CardContent className="p-4">
                 <nav className="space-y-1">

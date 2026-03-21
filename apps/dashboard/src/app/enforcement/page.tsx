@@ -162,7 +162,7 @@ export default function EnforcementPage() {
               />
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm min-w-[580px]">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-700">
                       <th className="text-left py-3 px-3 font-medium text-muted-foreground">Recipient</th>

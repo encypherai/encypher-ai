@@ -194,7 +194,7 @@ function SignupPageContent() {
     <main className="flex min-h-screen bg-background">
       {/* Left panel — form */}
       <section className="w-full md:w-1/2 flex flex-col justify-center items-center px-4 py-12 min-h-screen">
-        <div className="w-full max-w-md rounded-2xl bg-card shadow-2xl border border-border p-8 flex flex-col gap-6">
+        <div className="w-full max-w-md rounded-2xl bg-card shadow-2xl border border-border p-6 sm:p-8 flex flex-col gap-6">
           <Link href="/" className="inline-flex">
             <Image src={LOGO_COLOR} alt="Encypher" width={160} height={40} className="h-9 w-auto object-contain dark:hidden" priority />
             <Image src={LOGO_WHITE} alt="Encypher" width={160} height={40} className="h-9 w-auto object-contain hidden dark:block" priority />

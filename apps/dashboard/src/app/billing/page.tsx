@@ -314,7 +314,7 @@ function BillingPageContent() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col gap-6">
-                  <div className="grid grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     <div>
                       <p className="text-sm text-muted-foreground">Current Seats</p>
                       <p className="text-2xl font-bold text-delft-blue dark:text-white">
@@ -782,7 +782,8 @@ function BillingPageContent() {
           <h3 className="text-2xl font-semibold text-delft-blue dark:text-white">Invoices</h3>
           <Card>
             <CardContent className="p-0">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[400px]">
                 <thead>
                   <tr className="text-left text-muted-foreground border-b border-border">
                     <th className="py-3 px-4">Invoice</th>
@@ -817,6 +818,7 @@ function BillingPageContent() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </CardContent>
           </Card>
         </section>

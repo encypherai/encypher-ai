@@ -71,9 +71,9 @@ function DetectionResults({ matches }: { matches: PrintFingerprintMatch[] }) {
           <Card key={match.fingerprint_id + '-' + idx} className="border-border">
             <CardContent className="p-6 flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-foreground">Document: {match.document_id}</p>
-                  <p className="text-xs text-muted-foreground">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">Document: {match.document_id}</p>
+                  <p className="text-xs text-muted-foreground truncate">
                     Fingerprint: {match.fingerprint_id}
                   </p>
                 </div>

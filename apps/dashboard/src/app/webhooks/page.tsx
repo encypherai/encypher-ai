@@ -450,12 +450,12 @@ export default function WebhooksPage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         {/* URL and badges */}
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap min-w-0">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setExpandedId(isExpanded ? null : webhook.id)}
-                            className="flex items-center gap-1 px-0 h-auto font-normal hover:bg-transparent hover:opacity-80"
+                            className="flex items-center gap-1 px-0 h-auto font-normal hover:bg-transparent hover:opacity-80 overflow-hidden"
                           >
                             <svg
                               className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`}

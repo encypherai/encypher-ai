@@ -307,7 +307,7 @@ export default function CdnAnalyticsPage() {
             {/* Timeline */}
             <Card className="border-border">
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
                     <CardTitle>Activity Timeline</CardTitle>
                     <CardDescription>

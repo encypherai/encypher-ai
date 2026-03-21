@@ -295,7 +295,7 @@ export default function ContentPerformancePage() {
       </div>
 
       {/* Time Range Selector + Export */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
         <div className="flex items-center space-x-2">
           <span className="text-sm text-muted-foreground">Time range:</span>
           {(['7', '30', '90'] as const).map((range) => (
@@ -583,7 +583,7 @@ export default function ContentPerformancePage() {
         {apiHealthOpen && (
           <div className="mt-4 space-y-6">
             {/* Stat cards */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {isLoading ? (
                 <>
                   <StatCardSkeleton />

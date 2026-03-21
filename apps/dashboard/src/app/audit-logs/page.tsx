@@ -483,7 +483,7 @@ export default function AuditLogsPage() {
                   setDatePreset(preset);
                   setPage(1);
                 }}
-                className="w-[200px] px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full sm:w-[200px] px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="24h">Date Range: Last 24 Hours</option>
                 <option value="7d">Date Range: Last 7 Days</option>
@@ -492,8 +492,8 @@ export default function AuditLogsPage() {
               </select>
               {datePreset === 'custom' && (
                 <>
-                  <Input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} className="w-[220px]" />
-                  <Input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} className="w-[220px]" />
+                  <Input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} className="w-full sm:w-[220px]" />
+                  <Input type="datetime-local" value={endAt} onChange={(e) => setEndAt(e.target.value)} className="w-full sm:w-[220px]" />
                 </>
               )}
               <select
@@ -502,13 +502,13 @@ export default function AuditLogsPage() {
                   setStatusFilter(e.target.value);
                   setPage(1);
                 }}
-                className="w-[240px] px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full sm:w-[240px] px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="all">All statuses</option>
                 <option value="errors">Failures only (4xx/5xx)</option>
                 <option value="success">Successful only (2xx/3xx)</option>
               </select>
-              <details className="w-[240px] px-3 py-2 border border-input bg-background rounded-md text-sm">
+              <details className="w-full sm:w-[240px] px-3 py-2 border border-input bg-background rounded-md text-sm">
                 <summary className="cursor-pointer">Severities ({severityFilters.length || 'all'})</summary>
                 <div className="mt-2 space-y-1">
                   {['critical', 'high', 'medium', 'low'].map((severity) => (
@@ -526,7 +526,7 @@ export default function AuditLogsPage() {
                   ))}
                 </div>
               </details>
-              <details className="w-[240px] px-3 py-2 border border-input bg-background rounded-md text-sm">
+              <details className="w-full sm:w-[240px] px-3 py-2 border border-input bg-background rounded-md text-sm">
                 <summary className="cursor-pointer">Event Types ({eventTypeFilters.length || 'all'})</summary>
                 <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
                   {availableEventTypes.map((eventType) => (
@@ -550,7 +550,7 @@ export default function AuditLogsPage() {
                   setApiKeyFilter(e.target.value);
                   setPage(1);
                 }}
-                className="w-[240px] px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full sm:w-[240px] px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">All API keys</option>
                 {availableApiKeys.map((key) => (
@@ -574,14 +574,14 @@ export default function AuditLogsPage() {
                   placeholder="Saved Views"
                   value={savedViewName}
                   onChange={(e) => setSavedViewName(e.target.value)}
-                  className="w-[180px]"
+                  className="w-full sm:w-[180px]"
                 />
                 <Button variant="outline" onClick={saveCurrentView}>Save current view</Button>
               </div>
               <select
                 value={selectedSavedView}
                 onChange={(e) => applySavedView(e.target.value)}
-                className="w-[220px] px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full sm:w-[220px] px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Saved Views</option>
                 {savedViews.map((view) => (

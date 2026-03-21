@@ -93,11 +93,11 @@ export function CommandPalette() {
     { id: 'settings', title: 'Go to Settings', icon: <IconSettings />, action: () => router.push('/settings'), keywords: ['profile', 'account'], category: 'navigation' },
     { id: 'billing', title: 'Go to Billing', icon: <IconBilling />, action: () => router.push('/billing'), keywords: ['subscription', 'payment', 'plan'], category: 'navigation' },
     { id: 'support', title: 'Go to Support', icon: <IconSupport />, action: () => router.push('/support'), keywords: ['help', 'contact'], category: 'navigation' },
-    
+
     // Actions
     { id: 'new-key', title: 'Create New API Key', icon: <IconPlus />, action: () => router.push('/api-keys'), keywords: ['generate', 'add'], category: 'action' },
     { id: 'docs', title: 'Open API Documentation', icon: <IconDocs />, action: () => window.open('https://api.encypherai.com/docs', '_blank'), keywords: ['help', 'guide', 'reference', 'api'], category: 'action' },
-    
+
     // Settings
     { id: 'logout', title: 'Sign Out', icon: <IconLogout />, action: () => router.push('/api/auth/signout'), keywords: ['logout', 'exit'], category: 'settings' },
   ], [router]);
@@ -106,7 +106,7 @@ export function CommandPalette() {
   const filteredCommands = useMemo(() => {
     if (!query) return commands;
     const lowerQuery = query.toLowerCase();
-    return commands.filter(cmd => 
+    return commands.filter(cmd =>
       cmd.title.toLowerCase().includes(lowerQuery) ||
       cmd.keywords?.some(k => k.toLowerCase().includes(lowerQuery))
     );
@@ -153,7 +153,7 @@ export function CommandPalette() {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (!isOpen) return;
-      
+
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setSelectedIndex(prev => Math.min(prev + 1, filteredCommands.length - 1));
@@ -255,7 +255,7 @@ export function CommandPalette() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-2 border-t border-slate-200 bg-slate-50 text-xs text-slate-500">
+        <div className="hidden sm:flex items-center justify-between px-4 py-2 border-t border-slate-200 bg-slate-50 text-xs text-slate-500">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1">
               <kbd className="px-1.5 py-0.5 bg-white border border-slate-200 rounded">↑</kbd>

@@ -451,7 +451,7 @@ export default function ApiKeysPage() {
                 <code className="flex-1 bg-muted px-4 py-2.5 rounded-lg border border-border font-mono text-sm text-foreground">
                   {key.maskedKey}
                 </code>
-                <span className="text-xs text-muted-foreground italic whitespace-nowrap">
+                <span className="hidden sm:inline text-xs text-muted-foreground italic whitespace-nowrap">
                   Full key shown only at creation
                 </span>
               </div>
@@ -556,7 +556,7 @@ export default function ApiKeysPage() {
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
                 <div className="flex items-center gap-3">
-                  <code className="flex-1 bg-white dark:bg-slate-800 px-4 py-3 rounded-lg border-2 border-border font-mono text-sm text-gray-900 dark:text-gray-100 select-all">
+                  <code className="flex-1 bg-white dark:bg-slate-800 px-4 py-3 rounded-lg border-2 border-border font-mono text-sm text-gray-900 dark:text-gray-100 select-all break-all">
                     {generatedKey}
                   </code>
                   <Button variant="primary" size="sm" onClick={() => handleCopyKey(generatedKey)}>
