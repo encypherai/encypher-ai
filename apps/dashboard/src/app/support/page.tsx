@@ -139,7 +139,7 @@ export default function SupportPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">Category</label>
                   <select
-                    className="w-full px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-columbia-blue"
+                    className="w-full px-3 py-2 bg-background text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-columbia-blue"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                   >
@@ -161,7 +161,7 @@ export default function SupportPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">Message</label>
                   <textarea
-                    className="w-full min-h-[150px] px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-columbia-blue"
+                    className="w-full min-h-[150px] px-3 py-2 bg-background text-foreground border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-columbia-blue"
                     placeholder="Describe your issue in detail..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}

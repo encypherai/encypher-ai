@@ -15,6 +15,7 @@ import {
   Input,
 } from '@encypher/design-system';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
+import { EmptyState } from '../../components/ui/empty-state';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient from '../../lib/api';
 
@@ -284,6 +285,20 @@ function PoliciesTab() {
       {error && <p className="text-red-500">Failed to load policies.</p>}
 
       <div className="space-y-3">
+        {!isLoading && !error && policies.length === 0 && (
+          <EmptyState
+            icon={
+              <svg className="w-8 h-8 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                <path d="M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+            }
+            title="No governance policies"
+            description="Create your first policy to define content governance rules for your organization."
+            actionLabel="Create Policy"
+            onAction={() => setShowCreate(true)}
+          />
+        )}
         {policies.map((policy) => (
           <Card key={policy.id} className={!policy.active ? 'opacity-60' : ''}>
             <CardContent className="pt-6">
@@ -377,61 +392,64 @@ function AttestationsTab() {
       </div>
 
       {/* Table */}
-      {isLoading && <p className="text-muted-foreground">Loading attestations...</p>}
-      {error && <p className="text-red-500">Failed to load attestations.</p>}
+      {isLoading && (
+        <Card><CardContent className="py-12"><div className="flex flex-col items-center gap-3 text-sm text-muted-foreground"><div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-blue-500" /><span>Loading attestations...</span></div></CardContent></Card>
+      )}
+      {error && <p className="text-red-500 dark:text-red-400">Failed to load attestations.</p>}
 
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="text-left px-4 py-3 font-medium">Document</th>
-              <th className="text-left px-4 py-3 font-medium">Reviewer</th>
-              <th className="text-left px-4 py-3 font-medium">Model</th>
-              <th className="text-left px-4 py-3 font-medium">Verdict</th>
-              <th className="text-left px-4 py-3 font-medium">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {attestations.map((a) => (
-              <React.Fragment key={a.id}>
-                <tr
-                  className="border-t hover:bg-muted/30 cursor-pointer"
-                  onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}
-                >
-                  <td className="px-4 py-3 font-mono text-xs truncate max-w-[200px]">{a.document_id}</td>
-                  <td className="px-4 py-3">{a.reviewer || '--'}</td>
-                  <td className="px-4 py-3">{a.model_provider || '--'}</td>
-                  <td className="px-4 py-3">
-                    <Badge className={VERDICT_STYLES[a.verdict] || 'bg-gray-100 text-gray-800'}>
-                      {a.verdict}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">{formatDate(a.created_at)}</td>
-                </tr>
-                {expandedId === a.id && (
-                  <tr className="border-t bg-muted/10">
-                    <td colSpan={5} className="px-4 py-3">
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div><span className="font-medium">ID:</span> {a.id}</div>
-                        <div><span className="font-medium">Policy ID:</span> {a.policy_id || '--'}</div>
-                        <div><span className="font-medium">Confidence:</span> {a.confidence_score != null ? a.confidence_score : '--'}</div>
-                        <div><span className="font-medium">Created:</span> {a.created_at}</div>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
-            ))}
-            {attestations.length === 0 && !isLoading && (
+      {!isLoading && attestations.length === 0 ? (
+        <EmptyState
+          icon={<svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
+          title="No attestations found"
+          description="AI attestation records will appear here once your governance policies begin evaluating content against your rules."
+        />
+      ) : !isLoading && (
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                  No attestations found.
-                </td>
+                <th className="text-left px-4 py-3 font-medium">Document</th>
+                <th className="text-left px-4 py-3 font-medium">Reviewer</th>
+                <th className="text-left px-4 py-3 font-medium">Model</th>
+                <th className="text-left px-4 py-3 font-medium">Verdict</th>
+                <th className="text-left px-4 py-3 font-medium">Date</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {attestations.map((a) => (
+                <React.Fragment key={a.id}>
+                  <tr
+                    className="border-t hover:bg-muted/30 cursor-pointer"
+                    onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}
+                  >
+                    <td className="px-4 py-3 font-mono text-xs truncate max-w-[200px]">{a.document_id}</td>
+                    <td className="px-4 py-3">{a.reviewer || '--'}</td>
+                    <td className="px-4 py-3">{a.model_provider || '--'}</td>
+                    <td className="px-4 py-3">
+                      <Badge className={VERDICT_STYLES[a.verdict] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'}>
+                        {a.verdict}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">{formatDate(a.created_at)}</td>
+                  </tr>
+                  {expandedId === a.id && (
+                    <tr className="border-t bg-muted/10">
+                      <td colSpan={5} className="px-4 py-3">
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div><span className="font-medium">ID:</span> {a.id}</div>
+                          <div><span className="font-medium">Policy ID:</span> {a.policy_id || '--'}</div>
+                          <div><span className="font-medium">Confidence:</span> {a.confidence_score != null ? a.confidence_score : '--'}</div>
+                          <div><span className="font-medium">Created:</span> {a.created_at}</div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

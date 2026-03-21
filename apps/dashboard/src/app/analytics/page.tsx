@@ -162,13 +162,11 @@ function FunnelStage({
           {children && <div className="mt-2">{children}</div>}
           </div>
           {ctaLabel && ctaHref && (
-            <Link href={ctaHref}>
-              <button className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-ncs text-white text-xs font-semibold rounded-lg hover:bg-delft-blue transition-colors flex-shrink-0">
-                {ctaLabel}
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+            <Link href={ctaHref} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-ncs text-white text-xs font-semibold rounded-lg hover:bg-delft-blue transition-colors flex-shrink-0">
+              {ctaLabel}
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
           )}
         </div>
@@ -525,10 +523,8 @@ export default function ContentPerformancePage() {
                   : `${formatNumber(Math.max(0, PRELIMINARY_THRESHOLD - totalVerifications))} more encounters to unlock preliminary notice. ${formatNumber(Math.max(0, NOTICE_THRESHOLD - totalVerifications))} recommended for maximum legal leverage.`}
               </p>
               {(noticeReady || preliminaryReady) && (
-                <Link href="/rights">
-                  <button className={`mt-3 w-full py-2 text-white text-xs font-semibold rounded-lg transition-colors ${noticeReady ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-500 hover:bg-amber-600'}`}>
-                    {noticeReady ? 'Send Formal Notice' : 'Send Awareness Notice'}
-                  </button>
+                <Link href="/rights" className={`mt-3 w-full py-2 text-white text-xs font-semibold rounded-lg transition-colors flex items-center justify-center ${noticeReady ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-amber-500 hover:bg-amber-600'}`}>
+                  {noticeReady ? 'Send Formal Notice' : 'Send Awareness Notice'}
                 </Link>
               )}
             </CardContent>
@@ -564,9 +560,10 @@ export default function ContentPerformancePage() {
 
       {/* API Health -- collapsible */}
       <div className="mb-8">
-        <button
+        <Button
+          variant="ghost"
           onClick={() => setApiHealthOpen(v => !v)}
-          className="w-full flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20 hover:bg-muted/30 transition-colors"
+          className="w-full flex items-center justify-between p-4 rounded-xl border border-border bg-muted/20 hover:bg-muted/30 h-auto"
         >
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -581,7 +578,7 @@ export default function ContentPerformancePage() {
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
-        </button>
+        </Button>
 
         {apiHealthOpen && (
           <div className="mt-4 space-y-6">

@@ -14,6 +14,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { EnterpriseGate } from '../../components/ui/enterprise-gate';
 import { Loader } from '../../components/ui/Loader';
 import { useOrganization } from '../../contexts/OrganizationContext';
 import apiClient from '../../lib/api';
@@ -55,36 +56,10 @@ function recoverableColor(percent: number): string {
   return 'text-red-600 dark:text-red-400';
 }
 
-// -- Enterprise gate --
-
-function EnterpriseGate() {
-  return (
-    <DashboardLayout>
-      <div className="flex flex-col items-center justify-center py-24 px-4">
-        <div className="w-20 h-20 mb-6 rounded-full bg-blue-ncs/10 flex items-center justify-center">
-          <svg className="w-10 h-10 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">CDN Provenance Analytics</h2>
-        <p className="text-muted-foreground text-center max-w-lg mb-8">
-          Track how your images are protected and served through Encypher CDN provenance.
-          Monitor signing coverage, request volume, and recoverability across your assets.
-        </p>
-        <p className="text-sm text-muted-foreground mb-6">
-          This feature is available on the Enterprise plan.
-        </p>
-        <Link href="/billing">
-          <Button variant="primary">Upgrade to Enterprise</Button>
-        </Link>
-      </div>
-    </DashboardLayout>
-  );
-}
 
 // -- Empty state --
 
-function EmptyState() {
+function CdnEmptyState() {
   return (
     <div className="text-center py-16">
       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
@@ -249,7 +224,25 @@ export default function CdnAnalyticsPage() {
 
   // Gate: show upgrade prompt for non-enterprise (after all hooks)
   if (!orgLoading && activeOrganization && !isEnterprise) {
-    return <EnterpriseGate />;
+    return (
+      <DashboardLayout>
+        <EnterpriseGate
+          icon={
+            <svg className="w-8 h-8 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+            </svg>
+          }
+          title="CDN Provenance Analytics"
+          description="Track how your images are protected and served through Encypher CDN provenance. Monitor signing coverage, request volume, and recoverability across your assets."
+          features={[
+            'Real-time CDN delivery tracking with provenance data',
+            'Content integrity verification at the edge',
+            'Recoverable vs non-recoverable manifest analytics',
+            'Integration with Cloudflare and major CDN providers',
+          ]}
+        />
+      </DashboardLayout>
+    );
   }
 
   const summary = summaryQuery.data;
@@ -283,7 +276,7 @@ export default function CdnAnalyticsPage() {
             </CardContent>
           </Card>
         ) : !hasData ? (
-          <EmptyState />
+          <CdnEmptyState />
         ) : (
           <>
             {/* Summary cards */}

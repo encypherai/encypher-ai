@@ -13,9 +13,9 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import Link from 'next/link';
 
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { EnterpriseGate } from '../../components/ui/enterprise-gate';
 import { useOrganization } from '../../contexts/OrganizationContext';
 import apiClient from '../../lib/api';
 import type { PrintFingerprintMatch } from '../../lib/api';
@@ -40,39 +40,12 @@ function formatDate(dateString: string | undefined): string {
   }
 }
 
-function confidenceLabel(confidence: number): { text: string; variant: 'primary' | 'secondary' | 'destructive' } {
-  if (confidence >= 0.9) return { text: 'Very High', variant: 'destructive' };
+function confidenceLabel(confidence: number): { text: string; variant: 'success' | 'primary' | 'secondary' } {
+  if (confidence >= 0.9) return { text: 'Very High', variant: 'success' };
   if (confidence >= 0.7) return { text: 'High', variant: 'primary' };
   return { text: 'Moderate', variant: 'secondary' };
 }
 
-// -- Upgrade prompt for non-enterprise users --
-
-function EnterpriseGate() {
-  return (
-    <DashboardLayout>
-      <div className="flex flex-col items-center justify-center py-24 px-4">
-        <div className="w-20 h-20 mb-6 rounded-full bg-blue-ncs/10 flex items-center justify-center">
-          <svg className="w-10 h-10 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-        </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Print Leak Detection</h2>
-        <p className="text-muted-foreground text-center max-w-lg mb-8">
-          Identify the source of leaked printed or PDF documents. Encypher embeds imperceptible
-          spacing patterns into your content that survive printing and scanning, enabling
-          forensic source identification.
-        </p>
-        <p className="text-sm text-muted-foreground mb-6">
-          This feature is available on the Enterprise plan.
-        </p>
-        <Link href="/billing">
-          <Button variant="primary">Upgrade to Enterprise</Button>
-        </Link>
-      </div>
-    </DashboardLayout>
-  );
-}
 
 // -- Detection results panel --
 
@@ -173,7 +146,25 @@ export default function PrintDetectionPage() {
 
   // Gate: show upgrade prompt for non-enterprise (after all hooks)
   if (!orgLoading && activeOrganization && !isEnterprise) {
-    return <EnterpriseGate />;
+    return (
+      <DashboardLayout>
+        <EnterpriseGate
+          icon={
+            <svg className="w-8 h-8 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+          }
+          title="Print Leak Detection"
+          description="Identify the source of leaked printed or PDF documents. Encypher embeds imperceptible spacing patterns into your content that survive printing and scanning, enabling forensic source identification."
+          features={[
+            'Imperceptible spacing patterns embedded in documents',
+            'Scan printed pages to identify the source copy',
+            'Enterprise-grade leak investigation workflow',
+            'Works across print-to-scan pipelines',
+          ]}
+        />
+      </DashboardLayout>
+    );
   }
 
   return (

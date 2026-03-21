@@ -14,6 +14,7 @@ import {
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient, { type ComplianceReadinessResponse, type ComplianceReadinessItem } from '../../lib/api';
 
+
 type ComplianceItem = ComplianceReadinessItem;
 type ComplianceReadiness = ComplianceReadinessResponse;
 
@@ -122,21 +123,31 @@ export default function CompliancePage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Print-only report header (hidden on screen) */}
+        <div className="hidden print:block mb-8">
+          <h1 className="text-2xl font-bold text-slate-900">EU AI Act Compliance Report</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Generated {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })} -- Encypher AI
+          </p>
+          <hr className="my-4 border-slate-300" />
+        </div>
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white print:hidden">
               EU AI Act Compliance
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 print:hidden">
               EU AI Act Compliance Deadline: August 2, 2026
             </p>
           </div>
           <Button
             variant="outline"
+            className="print:hidden"
             onClick={() => window.print()}
           >
-            Download Compliance Report
+            Print Compliance Report
           </Button>
         </div>
 

@@ -13,6 +13,7 @@ import { ThemeToggleButton } from '../../contexts/ThemeContext';
 import apiClient from '../../lib/api';
 import { useOrganization } from '../../contexts/OrganizationContext';
 import { SetupWizard } from '../onboarding/SetupWizard';
+import { Breadcrumb } from '@/components/ui/breadcrumb';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -616,6 +617,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* ── Page content ── */}
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-7xl w-full mx-auto">
+          <Breadcrumb />
           {children}
         </main>
       </div>

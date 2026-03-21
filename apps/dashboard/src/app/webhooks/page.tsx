@@ -15,6 +15,7 @@ import {
   Badge,
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import apiClient from '../../lib/api';
 import type { WebhookSummary, WebhookDeliveryLog } from '../../lib/api';
 
@@ -167,6 +168,7 @@ export default function WebhooksPage() {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; webhookId: string | null }>({ open: false, webhookId: null });
 
   const webhooksQuery = useQuery({
     queryKey: ['webhooks'],
@@ -449,10 +451,11 @@ export default function WebhooksPage() {
                       <div className="flex-1 min-w-0">
                         {/* URL and badges */}
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <button
-                            type="button"
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => setExpandedId(isExpanded ? null : webhook.id)}
-                            className="flex items-center gap-1 hover:opacity-80"
+                            className="flex items-center gap-1 px-0 h-auto font-normal hover:bg-transparent hover:opacity-80"
                           >
                             <svg
                               className={`w-4 h-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`}
@@ -465,7 +468,7 @@ export default function WebhooksPage() {
                             <code className="text-sm font-mono text-foreground truncate">
                               {webhook.url}
                             </code>
-                          </button>
+                          </Button>
                           <Badge variant={webhook.is_active ? 'success' : 'secondary'} size="sm">
                             {webhook.is_active ? 'Active' : 'Inactive'}
                           </Badge>
@@ -525,11 +528,7 @@ export default function WebhooksPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            if (confirm('Are you sure you want to delete this webhook?')) {
-                              deleteWebhookMutation.mutate(webhook.id);
-                            }
-                          }}
+                          onClick={() => setDeleteConfirm({ open: true, webhookId: webhook.id })}
                           className="text-destructive hover:bg-destructive/10"
                         >
                           Delete
@@ -571,6 +570,20 @@ export default function WebhooksPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ open, webhookId: open ? deleteConfirm.webhookId : null })}
+        title="Delete Webhook"
+        description="Are you sure you want to delete this webhook?"
+        confirmLabel="Delete"
+        variant="destructive"
+        onConfirm={() => {
+          if (deleteConfirm.webhookId) {
+            deleteWebhookMutation.mutate(deleteConfirm.webhookId);
+          }
+        }}
+      />
     </DashboardLayout>
   );
 }

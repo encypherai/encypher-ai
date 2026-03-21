@@ -116,16 +116,16 @@ const DEMO_SIGN_SAMPLE = {
 const endpoints: ApiEndpoint[] = PLAYGROUND_ENDPOINTS as ApiEndpoint[];
 
 const methodColors: Record<HttpMethod, string> = {
-  GET: 'bg-green-100 text-green-700',
-  POST: 'bg-blue-100 text-blue-700',
-  PUT: 'bg-amber-100 text-amber-700',
-  DELETE: 'bg-red-100 text-red-700',
+  GET: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  POST: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  PUT: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  DELETE: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
 // Tier badge colors
 const tierColors: Record<Tier, string> = {
-  free: 'bg-slate-100 text-slate-600',
-  enterprise: 'bg-amber-100 text-amber-700',
+  free: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+  enterprise: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
 };
 
 const tierLabels: Record<Tier, string> = {
@@ -278,7 +278,11 @@ function CopyPasteSurvivalTester({ apiKey }: { apiKey: string }) {
           : 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800'
         }`}>
           <div className="flex items-start gap-3">
-            <span className="text-2xl">{survivalResult.survived ? '\u2705' : '\u274C'}</span>
+            <span className="text-2xl">{survivalResult.survived ? (
+              <svg className="w-6 h-6 text-green-600 dark:text-green-400 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            ) : (
+              <svg className="w-6 h-6 text-red-600 dark:text-red-400 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            )}</span>
             <div>
               <p className={`font-semibold text-sm ${survivalResult.survived ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'}`}>
                 {survivalResult.survived ? 'Watermark survived' : 'Watermark lost'}
@@ -800,10 +804,10 @@ export default function PlaygroundPage() {
   };
 
   const getStatusColor = (status: number | null) => {
-    if (!status) return 'text-slate-500';
-    if (status >= 200 && status < 300) return 'text-green-600';
-    if (status >= 400 && status < 500) return 'text-amber-600';
-    return 'text-red-600';
+    if (!status) return 'text-slate-500 dark:text-slate-400';
+    if (status >= 200 && status < 300) return 'text-green-600 dark:text-green-400';
+    if (status >= 400 && status < 500) return 'text-amber-600 dark:text-amber-400';
+    return 'text-red-600 dark:text-red-400';
   };
 
   return (
@@ -830,26 +834,30 @@ export default function PlaygroundPage() {
         </div>
         {/* Mode toggle */}
         <div className="flex gap-1 mt-4 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setPlaygroundMode('explorer')}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors h-auto ${
               playgroundMode === 'explorer'
-                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-transparent'
             }`}
           >
             API Explorer
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setPlaygroundMode('copy-paste-test')}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors h-auto ${
               playgroundMode === 'copy-paste-test'
-                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm hover:bg-white dark:hover:bg-slate-700'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-transparent'
             }`}
           >
             Copy-Paste Test
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -931,30 +939,30 @@ export default function PlaygroundPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 0 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
-                    <span className={tourStep > 0 ? 'text-green-600' : ''}>1</span> API Key
-                    {tourStep > 0 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 0 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                    <span className={tourStep > 0 ? 'text-green-600 dark:text-green-400' : ''}>1</span> API Key
+                    {tourStep > 0 && <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                   </div>
                   <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 1 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
-                    <span className={tourStep > 1 ? 'text-green-600' : ''}>2</span> Sign
-                    {tourStep > 1 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 1 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                    <span className={tourStep > 1 ? 'text-green-600 dark:text-green-400' : ''}>2</span> Sign
+                    {tourStep > 1 && <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                   </div>
                   <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 2 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
-                    <span className={tourStep > 2 ? 'text-green-600' : ''}>3</span> Copy
-                    {tourStep > 2 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 2 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                    <span className={tourStep > 2 ? 'text-green-600 dark:text-green-400' : ''}>3</span> Copy
+                    {tourStep > 2 && <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                   </div>
                   <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 3 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
-                    <span className={tourStep > 3 ? 'text-green-600' : ''}>4</span> Verify
-                    {tourStep > 3 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 3 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                    <span className={tourStep > 3 ? 'text-green-600 dark:text-green-400' : ''}>4</span> Verify
+                    {tourStep > 3 && <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                   </div>
                 </div>
               </div>
@@ -1653,17 +1661,12 @@ export default function PlaygroundPage() {
                 variant="primary"
                 onClick={handleSendRequest}
                 disabled={!canSendRequest}
+                loading={isLoading}
                 className="w-full"
                 data-tour-target="send-request"
               >
                 {isLoading ? (
-                  <>
-                    <svg className="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Sending...
-                  </>
+                  'Sending...'
                 ) : !hasAccess ? (
                   <>
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

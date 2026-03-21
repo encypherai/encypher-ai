@@ -10,6 +10,7 @@ import {
   CardContent,
   Input,
 } from '@encypher/design-system';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';
@@ -18,6 +19,7 @@ import apiClient from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { exportApiKeys } from '../../lib/exportCsv';
 import { useOrganization } from '../../contexts/OrganizationContext';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 
 // CIDR validation regexes (hoisted for perf)
 const IPV4_CIDR_RE = /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/;
@@ -268,6 +270,7 @@ export default function ApiKeysPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatedKey, setGeneratedKey] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; keyId: string | null }>({ open: false, keyId: null });
 
   const apiKeysQuery = useQuery({
     queryKey: ['api-keys', orgId],
@@ -338,7 +341,24 @@ export default function ApiKeysPage() {
 
   const renderKeyList = () => {
     if (isLoadingSession || isLoadingKeys) {
-      return <div className="text-muted-foreground">Loading API keys…</div>;
+      return (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-8 w-20" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-64" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
     }
 
     if (apiKeysQuery.isError) {
@@ -418,11 +438,7 @@ export default function ApiKeysPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    if (confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
-                      deleteKeyMutation.mutate(key.id);
-                    }
-                  }}
+                  onClick={() => setDeleteConfirm({ open: true, keyId: key.id })}
                   disabled={deleteKeyMutation.isPending}
                   className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
@@ -568,6 +584,21 @@ export default function ApiKeysPage() {
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleCreateKey}
           isLoading={createKeyMutation.isPending}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          open={deleteConfirm.open}
+          onOpenChange={(open) => setDeleteConfirm({ open, keyId: open ? deleteConfirm.keyId : null })}
+          title="Delete API Key"
+          description="Are you sure you want to delete this API key? This action cannot be undone."
+          confirmLabel="Delete"
+          variant="destructive"
+          onConfirm={() => {
+            if (deleteConfirm.keyId) {
+              deleteKeyMutation.mutate(deleteConfirm.keyId);
+            }
+          }}
         />
     </DashboardLayout>
   );

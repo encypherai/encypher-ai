@@ -441,7 +441,7 @@ export default function AuditLogsPage() {
           <Card>
             <CardContent className="p-4">
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Critical Failures</div>
-              <div className="mt-2 text-2xl font-semibold text-red-700">{alertSummary?.critical_failures ?? 0}</div>
+              <div className="mt-2 text-2xl font-semibold text-red-700 dark:text-red-400">{alertSummary?.critical_failures ?? 0}</div>
               <div className="mt-1 text-xs text-muted-foreground">Status 5xx in last 7 days</div>
             </CardContent>
           </Card>
@@ -655,7 +655,7 @@ export default function AuditLogsPage() {
                             {log.metadata?.request_id && (
                               <button
                                 type="button"
-                                className="text-xs text-blue-700 underline"
+                                className="text-xs text-blue-700 dark:text-blue-400 underline"
                                 onClick={() => setSearchQuery(log.metadata?.request_id || '')}
                               >
                                 Correlate by request ID

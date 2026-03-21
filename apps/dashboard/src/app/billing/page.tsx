@@ -63,12 +63,12 @@ function BillingPageContent() {
     queryKey: ['billing', accessToken],
     queryFn: async () => {
       if (!accessToken) return { subscription: null, invoices: [], usage: null, coalition: null };
-      const [invoices, usage, coalition] = await Promise.all([
+      const [invoices, usage, coalition, subscription] = await Promise.all([
         apiClient.getInvoices(accessToken).catch(() => []),
         apiClient.getBillingUsage(accessToken).catch(() => null),
         apiClient.getCoalitionEarnings(accessToken).catch(() => null),
+        apiClient.getSubscription(accessToken).catch(() => null),
       ]);
-      const subscription = null;
       return { subscription, invoices, usage, coalition };
     },
     enabled: Boolean(accessToken),
@@ -324,12 +324,12 @@ function BillingPageContent() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Available</p>
-                      <p className="text-2xl font-bold text-red-600">0</p>
+                      <p className="text-2xl font-bold text-red-600 dark:text-red-400">0</p>
                       <p className="text-xs text-muted-foreground mt-1">no seats remaining</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">After Upgrade</p>
-                      <p className="text-2xl font-bold text-green-600">
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                         {seatMax > 0 ? seatMax + seatQuantity : seatQuantity}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">total seats</p>
@@ -477,7 +477,7 @@ function BillingPageContent() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Pending</p>
-                      <p className="text-2xl font-bold text-green-600">
+                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                         ${coalition.pending_earnings.toFixed(2)}
                       </p>
                     </div>
@@ -489,13 +489,13 @@ function BillingPageContent() {
                     </div>
                     <div className="flex justify-between text-sm mt-1">
                       <span className="text-muted-foreground">Payout Account</span>
-                      <span className={coalition.payout_account_connected ? 'text-green-600' : 'text-yellow-600'}>
+                      <span className={coalition.payout_account_connected ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}>
                         {coalition.payout_account_connected ? 'Connected' : 'Not Connected'}
                       </span>
                     </div>
                   </div>
                   {coalition.payout_account_connected ? (
-                    <div className="flex items-center gap-2 text-sm font-medium text-green-600">
+                    <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
@@ -806,9 +806,9 @@ function BillingPageContent() {
                       <td className="py-3 px-4">${invoice.amount_paid.toFixed(2)}</td>
                       <td className="py-3 px-4">
                         <span className={`capitalize px-2 py-1 rounded text-xs font-medium ${
-                          invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
-                          invoice.status === 'open' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
+                          invoice.status === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                          invoice.status === 'open' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                          'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
                         }`}>
                           {invoice.status}
                         </span>

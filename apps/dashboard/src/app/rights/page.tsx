@@ -13,9 +13,11 @@ import {
   CardContent,
   Badge,
   Input,
+  type BadgeProps,
 } from '@encypher/design-system';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { EmptyState } from '../../components/ui/empty-state';
 import apiClient from '../../lib/api';
 import { downloadCsv } from '../../lib/exportCsv';
 import type {
@@ -61,7 +63,17 @@ const TIER_META = {
 
 type TierKey = 'bronze' | 'silver' | 'gold';
 
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type BadgeVariant = NonNullable<BadgeProps['variant']>;
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+function tierBadgeVariant(tier: string): BadgeVariant {
+  if (tier === 'gold') return 'warning';
+  if (tier === 'silver') return 'secondary';
+  return 'default';
+}
 
 function formatDate(dateStr?: string | null): string {
   if (!dateStr) return '—';
@@ -73,22 +85,18 @@ function formatDate(dateStr?: string | null): string {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const variants: Record<string, string> = {
-    delivered: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    draft: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
-    created: 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
-    approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    active: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    expired: 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400',
+  const variantMap: Record<string, BadgeVariant> = {
+    delivered: 'success',
+    pending: 'warning',
+    draft: 'secondary',
+    created: 'secondary',
+    approved: 'success',
+    rejected: 'destructive',
+    active: 'primary',
+    expired: 'secondary',
   };
-  const cls = variants[status?.toLowerCase()] ?? variants.draft;
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}>
-      {status}
-    </span>
-  );
+  const variant: BadgeVariant = variantMap[status?.toLowerCase()] ?? 'secondary';
+  return <Badge variant={variant}>{status}</Badge>;
 }
 
 // ── Tier display card ─────────────────────────────────────────────────────────
@@ -104,9 +112,9 @@ function TierCard({ tierKey, tier }: { tierKey: TierKey; tier?: RightsTier | nul
           <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 mt-0.5 ${meta.dot}`} />
           <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">{meta.label}</span>
         </div>
-        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${meta.badge}`}>
+        <Badge variant={permitted ? 'success' : 'secondary'}>
           {permitted ? 'Permitted' : 'Not Permitted'}
-        </span>
+        </Badge>
       </div>
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{meta.description}</p>
       {tier ? (
@@ -249,17 +257,18 @@ function ProfileTab({ accessToken }: { accessToken: string }) {
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {(templatesQuery.data ?? []).map((tpl: RightsTemplate) => (
-                  <button
+                  <Button
                     key={tpl.id}
+                    variant="outline"
                     onClick={() => applyTemplateMutation.mutate(tpl.id)}
                     disabled={applyTemplateMutation.isPending}
-                    className="text-left rounded-xl border border-slate-200 dark:border-slate-700 p-4 hover:border-[#2A87C4] hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all group"
+                    className="h-auto text-left rounded-xl p-4 flex-col items-start hover:border-[#2A87C4] hover:bg-blue-50/40 dark:hover:bg-blue-950/20 group"
                   >
                     <p className="font-medium text-sm text-slate-900 dark:text-slate-100 group-hover:text-[#2A87C4]">
                       {tpl.name}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{tpl.description}</p>
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -345,15 +354,16 @@ function ProfileTab({ accessToken }: { accessToken: string }) {
       {/* Version history */}
       {hasProfile && (
         <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => setShowHistory(!showHistory)}
-            className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium rounded-none"
           >
             <span>Version history</span>
             <svg className={`w-4 h-4 transition-transform ${showHistory ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
-          </button>
+          </Button>
           {showHistory && (
             <div className="px-5 pb-4 border-t border-slate-100 dark:border-slate-800">
               {historyQuery.isLoading ? (
@@ -361,7 +371,17 @@ function ProfileTab({ accessToken }: { accessToken: string }) {
                   {[1, 2, 3].map(i => <div key={i} className="h-8 bg-muted rounded animate-pulse" />)}
                 </div>
               ) : (historyQuery.data ?? []).length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-4">No version history available.</p>
+                <div className="pt-3">
+                  <EmptyState
+                    icon={
+                      <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    }
+                    title="No version history yet"
+                    description="Profile versions will appear here each time you update your rights terms."
+                  />
+                </div>
               ) : (
                 <div className="mt-3 space-y-2">
                   {(historyQuery.data ?? []).map((version: RightsProfileVersion) => (
@@ -551,7 +571,15 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
           {discoveryAlertsQuery.isLoading ? (
             <div className="space-y-2">{[1, 2].map(i => <div key={i} className="h-12 bg-muted rounded animate-pulse" />)}</div>
           ) : discoveryAlerts.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-8">No unacknowledged external-domain alerts.</p>
+            <EmptyState
+              icon={
+                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              }
+              title="No open alerts"
+              description="You will be notified here when signed content is found on an external domain you do not own."
+            />
           ) : (
             <div className="space-y-3">
               {discoveryAlerts.map((alert: DomainAlertItem) => (
@@ -581,7 +609,15 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
           {detectionsQuery.isLoading ? (
             <div className="space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}</div>
           ) : !detectionSummary || detectionSummary.total_events === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-8">No detection events recorded yet.</p>
+            <EmptyState
+              icon={
+                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              }
+              title="No detections yet"
+              description="Detection events appear once your signed content is verified or accessed by a crawler or publisher integration."
+            />
           ) : (
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
@@ -631,7 +667,15 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
           {discoveryDomainsQuery.isLoading ? (
             <div className="space-y-2">{[1, 2, 3].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}</div>
           ) : discoveryDomains.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-8">No discovery domains recorded yet.</p>
+            <EmptyState
+              icon={
+                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+              }
+              title="No domains discovered yet"
+              description="Domains where your signed content is found will be grouped and listed here."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -674,7 +718,15 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
           {discoveryEventsQuery.isLoading ? (
             <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}</div>
           ) : discoveryEvents.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-8">No discovery events recorded yet.</p>
+            <EmptyState
+              icon={
+                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              }
+              title="No discovery events recorded"
+              description="Each time your signed content is verified on a webpage, the event is logged here as evidence-quality provenance data."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -738,7 +790,15 @@ function AnalyticsTab({ accessToken }: { accessToken: string }) {
           {crawlersQuery.isLoading ? (
             <div className="space-y-2">{[1, 2, 3, 4].map(i => <div key={i} className="h-10 bg-muted rounded animate-pulse" />)}</div>
           ) : crawlers.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-8">No crawler activity recorded yet.</p>
+            <EmptyState
+              icon={
+                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              }
+              title="No crawler activity yet"
+              description="AI crawlers and retrieval systems that access your signed content will be identified and logged here."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -788,10 +848,10 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
   const [evidenceNoticeId, setEvidenceNoticeId] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [form, setForm] = useState({
-    recipient_entity: 'OpenAI',
-    recipient_contact: 'legal@openai.com',
+    recipient_entity: '',
+    recipient_contact: '',
     violation_type: 'unauthorized_training',
-    notice_text: "OpenAI's GPTBot has been systematically crawling The Encypher Times content without acknowledging our Rights Signal Layer terms. Cryptographic watermarks confirm ingestion of 47 articles between October and December 2025. This constitutes unauthorized training data collection in violation of our published licensing requirements. Continued use beyond the date of this notice constitutes willful copyright infringement under 17 U.S.C. § 504(c)(2).",
+    notice_text: '',
   });
 
   const evidenceQuery = useQuery({
@@ -912,9 +972,17 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
           {noticesQuery.isLoading ? (
             <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-14 bg-muted rounded-lg animate-pulse" />)}</div>
           ) : notices.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-sm text-slate-400">No formal notices issued yet.</p>
-            </div>
+            <EmptyState
+              icon={
+                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              }
+              title="No formal notices issued"
+              description="Send a cryptographically-provable notice to any party using your content without permission. Each notice creates a tamper-evident evidence chain."
+              actionLabel="Create your first notice"
+              onAction={() => setShowCreate(true)}
+            />
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-slate-700">
               {notices.map((notice: FormalNotice) => (
@@ -966,11 +1034,11 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Evidence Package</CardTitle>
-              <button onClick={() => setEvidenceNoticeId(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+              <Button variant="ghost" size="sm" onClick={() => setEvidenceNoticeId(null)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1 h-auto">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </button>
+              </Button>
             </div>
             <CardDescription>Court-ready evidence chain for this notice.</CardDescription>
           </CardHeader>
@@ -986,16 +1054,20 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
                   <p className="text-slate-700 dark:text-slate-300 break-all">{evidenceQuery.data.notice?.notice_hash}</p>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
                     onClick={() => {
                       navigator.clipboard.writeText(JSON.stringify(evidenceQuery.data, null, 2));
                       toast.success('Evidence package copied to clipboard.');
                     }}
-                    className="text-xs px-3 py-1.5 rounded bg-slate-100 dark:bg-slate-700 hover:opacity-80 transition-opacity text-slate-700 dark:text-slate-300"
                   >
                     Copy as JSON
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    loading={pdfLoading}
                     disabled={pdfLoading}
                     onClick={async () => {
                       if (!evidenceNoticeId) return;
@@ -1009,10 +1081,9 @@ function NoticesTab({ accessToken }: { accessToken: string }) {
                         setPdfLoading(false);
                       }
                     }}
-                    className="text-xs px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-white flex items-center gap-1.5"
                   >
                     {pdfLoading ? 'Generating...' : 'Download PDF'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : null}
@@ -1080,7 +1151,15 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
           {requestsQuery.isLoading ? (
             <div className="space-y-2">{[1, 2].map(i => <div key={i} className="h-12 bg-muted rounded animate-pulse" />)}</div>
           ) : requests.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-8">No licensing requests yet.</p>
+            <EmptyState
+              icon={
+                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              }
+              title="No licensing requests yet"
+              description="When a party requests permission to use your content, their request will appear here for you to approve, counter, or reject."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -1103,13 +1182,9 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
                         </td>
                         <td className="py-2.5 px-3">
                           {req.tier && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              req.tier === 'gold' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                              req.tier === 'silver' ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' :
-                              'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-                            }`}>
+                            <Badge variant={tierBadgeVariant(req.tier)}>
                               {req.tier}
-                            </span>
+                            </Badge>
                           )}
                         </td>
                         <td className="py-2.5 px-3"><StatusBadge status={req.status} /></td>
@@ -1118,20 +1193,22 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
                         <td className="py-2.5 px-3 text-right">
                           {(req.status === 'pending' || req.status === 'countered') ? (
                             <div className="flex items-center justify-end gap-1.5">
-                              <button
+                              <Button
+                                variant="success"
+                                size="sm"
                                 onClick={() => respondMutation.mutate({ requestId: req.id, action: 'approve' })}
                                 disabled={respondMutation.isPending}
-                                className="text-xs px-2 py-1 rounded bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"
                               >
                                 Approve
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
                                 onClick={() => setRejectingId(rejectingId === req.id ? null : req.id)}
                                 disabled={respondMutation.isPending}
-                                className="text-xs px-2 py-1 rounded bg-slate-200 hover:bg-red-100 hover:text-red-700 dark:bg-slate-700 dark:hover:bg-red-900/40 dark:hover:text-red-300 disabled:opacity-50 transition-colors"
                               >
                                 Reject
-                              </button>
+                              </Button>
                             </div>
                           ) : (
                             <span className="text-xs text-slate-400">—</span>
@@ -1148,19 +1225,22 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
                                 onChange={e => setRejectMessage(e.target.value)}
                                 className="flex-1 text-sm h-8"
                               />
-                              <button
+                              <Button
+                                variant="destructive"
+                                size="sm"
                                 onClick={() => respondMutation.mutate({ requestId: req.id, action: 'reject', message: rejectMessage })}
                                 disabled={respondMutation.isPending}
-                                className="text-xs px-3 py-1.5 rounded bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 transition-colors whitespace-nowrap"
+                                className="whitespace-nowrap"
                               >
                                 Confirm reject
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => { setRejectingId(null); setRejectMessage(''); }}
-                                className="text-xs px-2 py-1.5 rounded bg-slate-200 dark:bg-slate-700 hover:opacity-75 transition-opacity"
                               >
                                 Cancel
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -1183,7 +1263,15 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
           {agreementsQuery.isLoading ? (
             <div className="space-y-2">{[1, 2].map(i => <div key={i} className="h-12 bg-muted rounded animate-pulse" />)}</div>
           ) : agreements.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-8">No active agreements.</p>
+            <EmptyState
+              icon={
+                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              }
+              title="No active agreements"
+              description="Approved licensing agreements will appear here. Approve an incoming request above to create one."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -1203,13 +1291,9 @@ function LicensingTab({ accessToken }: { accessToken: string }) {
                       </td>
                       <td className="py-2.5 px-3">
                         {agr.tier && (
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            agr.tier === 'gold' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                            agr.tier === 'silver' ? 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300' :
-                            'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-                          }`}>
+                          <Badge variant={tierBadgeVariant(agr.tier)}>
                             {agr.tier}
-                          </span>
+                          </Badge>
                         )}
                       </td>
                       <td className="py-2.5 px-3"><StatusBadge status={agr.status} /></td>

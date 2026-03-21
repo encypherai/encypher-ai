@@ -170,3 +170,21 @@ html:not(.dark) {
   --muted: 210 40% 96%;
   --secondary: 210 40% 96%;
 }
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  /* Hide dashboard chrome: sidebar, header, breadcrumbs, mobile nav */
+  aside,
+  header,
+  nav[aria-label="breadcrumb"],
+  [data-mobile-nav],
+  .mobile-nav-overlay { display: none !important; }
+
+  /* Main content takes full width, remove padding/margin from sidebar offset */
+  div[class*="lg:ml-"] { margin-left: 0 !important; }
+  main { margin-left: 0 !important; padding: 2rem !important; width: 100% !important; max-width: 100% !important; }
+  body { background: white !important; }
+
+  /* Force light-mode colors for print */
+  * { color-adjust: exact; -webkit-print-color-adjust: exact; print-color-adjust: exact !important; }
+}

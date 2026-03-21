@@ -12,7 +12,9 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { EmptyState } from '../../components/ui/empty-state';
 import apiClient from '../../lib/api';
 import { downloadCsv } from '../../lib/exportCsv';
 import { toast } from 'sonner';
@@ -124,12 +126,12 @@ const SOURCE_LABELS: Record<string, string> = {
 
 function getComplianceBadgeClass(label?: string): string {
   switch (label) {
-    case 'Excellent': return 'bg-emerald-100 text-emerald-800';
-    case 'Good': return 'bg-blue-100 text-blue-800';
-    case 'Fair': return 'bg-yellow-100 text-yellow-800';
-    case 'Poor': return 'bg-orange-100 text-orange-800';
-    case 'Non-compliant': return 'bg-red-100 text-red-800';
-    default: return 'bg-slate-100 text-slate-700';
+    case 'Excellent': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400';
+    case 'Good': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+    case 'Fair': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+    case 'Poor': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400';
+    case 'Non-compliant': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+    default: return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
   }
 }
 
@@ -164,6 +166,7 @@ function formatLastSeen(dateStr?: string | null): string {
 export default function AICrawlersPage() {
   const [timeRange, setTimeRange] = useState<'7' | '30' | '90'>('30');
   const { data: session } = useSession();
+  const router = useRouter();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const userTier = (session?.user as any)?.tier || 'free';
   const isEnterprise = userTier === 'enterprise';
@@ -524,8 +527,11 @@ export default function AICrawlersPage() {
             {isTimeseriesLoading ? (
               <ChartSkeleton />
             ) : !displayDates.length ? (
-              <div className="h-64 flex items-center justify-center text-muted-foreground">
-                No timeseries data available for this period
+              <div className="h-64 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                <svg className="w-8 h-8 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span className="text-sm">No activity data for this period</span>
               </div>
             ) : (
               <div>
@@ -599,8 +605,11 @@ export default function AICrawlersPage() {
             {isLoading ? (
               <TableSkeleton />
             ) : sortedCrawlers.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-8 text-center">
-                No crawlers detected yet
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+                <svg className="w-7 h-7 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span className="text-sm">No crawlers detected yet</span>
               </div>
             ) : (
               <div className="space-y-3">
@@ -710,9 +719,18 @@ export default function AICrawlersPage() {
           {isLoading ? (
             <TableSkeleton />
           ) : sortedCrawlers.length === 0 ? (
-            <div className="text-sm text-muted-foreground py-12 text-center">
-              No AI crawler activity detected in this period.
-            </div>
+            <EmptyState
+              icon={
+                <svg className="w-8 h-8 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 1v2m0 18v2m8.66-17.66l-1.41 1.41M4.75 19.25l-1.41 1.41M23 12h-2M3 12H1m17.66 8.66l-1.41-1.41M4.75 4.75L3.34 3.34"/>
+                </svg>
+              }
+              title="No AI crawler activity detected"
+              description="Connect Cloudflare Logpush or wait for crawlers to access your content. Activity will appear here automatically."
+              actionLabel="Set Up Integration"
+              onAction={() => router.push('/integrations')}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -792,8 +810,11 @@ export default function AICrawlersPage() {
             {isLoading ? (
               <ChartSkeleton />
             ) : Object.keys(bySrc).length === 0 ? (
-              <div className="text-sm text-muted-foreground py-8 text-center">
-                No detection source data available
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+                <svg className="w-7 h-7 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" />
+                </svg>
+                <span className="text-sm">No detection source data yet</span>
               </div>
             ) : (
               <div className="space-y-3">
@@ -835,8 +856,11 @@ export default function AICrawlersPage() {
             {isLoading ? (
               <TableSkeleton />
             ) : Object.keys(byCat).length === 0 ? (
-              <div className="text-sm text-muted-foreground py-8 text-center">
-                No category data available
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+                <svg className="w-7 h-7 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                </svg>
+                <span className="text-sm">No category data yet</span>
               </div>
             ) : (
               <div className="space-y-3">

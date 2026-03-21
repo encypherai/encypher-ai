@@ -21,6 +21,8 @@ import { toast } from 'sonner';
 import apiClient from '../../lib/api';
 import type { DashboardLayoutPreference, DomainClaimInfo, PublisherPlatform, PaymentMethod, OveragePreferences, ByokPublicKeyInfo } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
+import { Skeleton } from '../../components/ui/skeleton';
 import { useOrganization } from '../../contexts/OrganizationContext';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
@@ -190,7 +192,7 @@ function SsoConfigCard({ orgId, accessToken }: { orgId: string | null | undefine
       </CardHeader>
       <CardContent className="space-y-6">
         {isLoading ? (
-          <div className="text-muted-foreground">Loading SSO configuration...</div>
+          <div className="space-y-4"><Skeleton className="h-5 w-48" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
         ) : (
           <>
             {/* SP Metadata */}
@@ -445,7 +447,17 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
           </div>
 
           {keysQuery.isLoading ? (
-            <div className="text-muted-foreground text-sm">Loading keys...</div>
+            <div className="space-y-2">
+              {[1,2,3].map(i => (
+                <div key={i} className="rounded-lg border border-border p-3 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-48" />
+                  </div>
+                  <Skeleton className="h-8 w-20" />
+                </div>
+              ))}
+            </div>
           ) : keys.length === 0 ? (
             <div className="text-center py-6 text-muted-foreground text-sm">
               No keys registered yet.
@@ -554,7 +566,7 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
           {showTrustedCas && (
             <div className="rounded-lg border border-border p-4 space-y-3">
               {trustedCasQuery.isLoading ? (
-                <div className="text-muted-foreground text-sm">Loading trusted CAs...</div>
+                <div className="space-y-2"><Skeleton className="h-4 w-40" /><Skeleton className="h-8 w-full" /></div>
               ) : trustedCasQuery.data ? (
                 <>
                   <p className="text-xs text-muted-foreground">
@@ -594,6 +606,7 @@ function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefi
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const queryClient = useQueryClient();
   const [newDomain, setNewDomain] = useState('');
+  const [domainRemoveConfirm, setDomainRemoveConfirm] = useState(false);
 
   const { data: domainInfo, isLoading } = useQuery({
     queryKey: ['verification-domain', orgId],
@@ -648,7 +661,7 @@ function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefi
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (
-          <div className="text-muted-foreground text-sm">Loading...</div>
+          <div className="space-y-3"><Skeleton className="h-5 w-32" /><Skeleton className="h-10 w-full" /><Skeleton className="h-4 w-48" /></div>
         ) : domainStatus === 'active' ? (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -661,7 +674,7 @@ function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefi
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { if (confirm('Remove custom verification domain? Existing verification links will still work as long as the CNAME stays pointed.')) removeMutation.mutate(); }}
+              onClick={() => setDomainRemoveConfirm(true)}
               disabled={removeMutation.isPending}
             >
               {removeMutation.isPending ? 'Removing...' : 'Remove domain'}
@@ -727,6 +740,15 @@ function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefi
           </form>
         )}
       </CardContent>
+      <ConfirmDialog
+        open={domainRemoveConfirm}
+        onOpenChange={setDomainRemoveConfirm}
+        title="Remove Custom Domain"
+        description="Remove custom verification domain? Existing verification links will still work as long as the CNAME stays pointed."
+        confirmLabel="Remove"
+        variant="destructive"
+        onConfirm={() => removeMutation.mutate()}
+      />
     </Card>
   );
 }
@@ -884,7 +906,19 @@ function AccountDeletionSection({ accessToken }: { accessToken: string | undefin
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-muted-foreground">Loading settings...</div>}>
+    <Suspense fallback={
+      <div className="p-8 space-y-6">
+        <div className="flex gap-2 border-b border-border pb-2">
+          {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-8 w-24" />)}
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-2/3" />
+        </div>
+      </div>
+    }>
       <SettingsPageInner />
     </Suspense>
   );
@@ -926,6 +960,7 @@ function SettingsPageInner() {
   const [totpSetupSecret, setTotpSetupSecret] = useState<string | null>(null);
   const [totpSetupUri, setTotpSetupUri] = useState<string | null>(null);
   const [totpQrCodeDataUrl, setTotpQrCodeDataUrl] = useState<string | null>(null);
+  const [showTotpSecret, setShowTotpSecret] = useState(false);
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [passkeyName, setPasskeyName] = useState('Primary device');
   const [enforceMfa, setEnforceMfa] = useState(false);
@@ -1581,7 +1616,23 @@ function SettingsPageInner() {
                 </CardHeader>
                 <CardContent>
                   {isLoading ? (
-                    <div className="text-muted-foreground">Loading profile…</div>
+                    <div className="space-y-4">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-10 w-full" />
+                        </div>
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-10 w-full" />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-10 w-full" />
+                      </div>
+                      <Skeleton className="h-10 w-32" />
+                    </div>
                   ) : (
                     <form className="space-y-4" onSubmit={handleProfileSave}>
                       <div className="grid md:grid-cols-2 gap-4">
@@ -1609,11 +1660,11 @@ function SettingsPageInner() {
                               )}
                             </div>
                             {pendingEmailChange && (
-                              <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                              <div className="flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
                                 <svg className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                <span className="text-sm text-amber-800 flex-1">
+                                <span className="text-sm text-amber-800 dark:text-amber-300 flex-1">
                                   Pending change to <strong>{pendingEmailChange}</strong>
                                 </span>
                                 <Button
@@ -1633,7 +1684,7 @@ function SettingsPageInner() {
 
                       {/* Email Change Form */}
                       {showEmailChange && (
-                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-4">
+                        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg space-y-4">
                           <div className="flex items-center justify-between">
                             <h4 className="font-medium text-sm">Change Email Address</h4>
                             <button
@@ -1643,7 +1694,7 @@ function SettingsPageInner() {
                                 setNewEmail('');
                                 setEmailChangePassword('');
                               }}
-                              className="text-slate-400 hover:text-slate-600"
+                              className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1791,24 +1842,46 @@ function SettingsPageInner() {
                         {totpQrCodeDataUrl && (
                           <div className="text-sm">
                             <div className="font-medium mb-2">Scan this QR code with Google Authenticator</div>
-                            <img
-                              src={totpQrCodeDataUrl}
-                              alt="TOTP setup QR code"
-                              width={220}
-                              height={220}
-                              className="rounded border border-border bg-white p-2"
-                            />
+                            <div className="inline-block p-2 rounded-lg border border-border bg-white">
+                              <img
+                                src={totpQrCodeDataUrl}
+                                alt="TOTP setup QR code"
+                                width={220}
+                                height={220}
+                              />
+                            </div>
                           </div>
                         )}
                         <div className="text-sm">
-                          <div className="font-medium">Manual setup code</div>
-                          <div className="font-mono text-xs mt-1">{totpSetupSecret}</div>
+                          <div className="font-medium mb-1">Manual setup</div>
+                          {showTotpSecret ? (
+                            <div className="space-y-2">
+                              <code className="block font-mono text-xs bg-muted rounded px-2 py-1 break-all">
+                                {totpSetupSecret}
+                              </code>
+                              {totpSetupUri && (
+                                <code className="block font-mono text-xs bg-muted rounded px-2 py-1 break-all text-muted-foreground">
+                                  {totpSetupUri}
+                                </code>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => setShowTotpSecret(false)}
+                                className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
+                              >
+                                Hide secret key
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setShowTotpSecret(true)}
+                              className="text-xs text-blue-600 dark:text-blue-400 underline hover:opacity-80 transition-opacity"
+                            >
+                              Show secret key (for manual entry)
+                            </button>
+                          )}
                         </div>
-                        {totpSetupUri && (
-                          <div className="text-xs text-muted-foreground break-all">
-                            otpauth URI: {totpSetupUri}
-                          </div>
-                        )}
 
                         {backupCodes.length > 0 && (
                           <div>
@@ -1918,7 +1991,17 @@ function SettingsPageInner() {
                 </CardHeader>
                 <CardContent>
                   {isLoading ? (
-                    <div className="text-muted-foreground">Loading preferences…</div>
+                    <div className="space-y-3">
+                      {[1,2,3,4].map(i => (
+                        <div key={i} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                          <div className="space-y-1">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-3 w-56" />
+                          </div>
+                          <Skeleton className="h-5 w-10 rounded-full" />
+                        </div>
+                      ))}
+                    </div>
                   ) : (
                     <div className="space-y-4">
                       {Object.entries(profile.notifications ?? defaultNotifications).map(([key, value]) => (
@@ -1992,7 +2075,7 @@ function SettingsPageInner() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {orgLoading ? (
-                    <div className="text-muted-foreground">Loading organization…</div>
+                    <div className="space-y-3"><Skeleton className="h-5 w-48" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
                   ) : !orgId ? (
                     <div className="text-muted-foreground">Select an organization to manage domain claims.</div>
                   ) : (
@@ -2187,7 +2270,7 @@ function SettingsPageInner() {
                       <div className="border-t border-border pt-6">
                         <h4 className="text-sm font-semibold mb-3">Domain claims</h4>
                         {domainClaimsQuery.isLoading ? (
-                          <div className="text-muted-foreground">Loading domain claims…</div>
+                          <div className="space-y-2"><Skeleton className="h-4 w-36" /><Skeleton className="h-8 w-full" /></div>
                         ) : (domainClaimsQuery.data ?? []).length === 0 ? (
                           <div className="text-center py-8 text-muted-foreground text-sm">
                             No domains added yet. Add your first domain to verify publisher identity.
@@ -2315,7 +2398,7 @@ function SettingsPageInner() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {paymentMethodsQuery.isLoading ? (
-                      <div className="text-muted-foreground">Loading payment methods...</div>
+                      <div className="space-y-3"><Skeleton className="h-5 w-40" /><Skeleton className="h-10 w-full" /></div>
                     ) : (paymentMethodsQuery.data ?? []).length === 0 ? (
                       <div className="text-center py-6 text-muted-foreground text-sm">
                         No payment methods on file.

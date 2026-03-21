@@ -14,16 +14,18 @@ import {
 } from '@encypher/design-system';
 import { toast } from 'sonner';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { EnterpriseGate } from '../../components/ui/enterprise-gate';
 import { useOrganization } from '../../contexts/OrganizationContext';
 import apiClient from '../../lib/api';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 // Role configuration
 const ROLE_CONFIG: Record<string, { color: string; bgColor: string }> = {
-  owner: { color: 'text-yellow-600', bgColor: 'bg-yellow-100' },
-  admin: { color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  manager: { color: 'text-purple-600', bgColor: 'bg-purple-100' },
-  member: { color: 'text-green-600', bgColor: 'bg-green-100' },
-  viewer: { color: 'text-gray-600', bgColor: 'bg-gray-100' },
+  owner:   { color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-100 dark:bg-yellow-900/30' },
+  admin:   { color: 'text-blue-600 dark:text-blue-400',     bgColor: 'bg-blue-100 dark:bg-blue-900/30'     },
+  manager: { color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/30' },
+  member:  { color: 'text-green-600 dark:text-green-400',   bgColor: 'bg-green-100 dark:bg-green-900/30'   },
+  viewer:  { color: 'text-gray-600 dark:text-gray-400',     bgColor: 'bg-gray-100 dark:bg-gray-800'        },
 };
 
 interface TeamMember {
@@ -67,6 +69,7 @@ interface ApiKeysByMemberProps {
 function ApiKeysByMember({ orgId, members, accessToken }: ApiKeysByMemberProps) {
   const queryClient = useQueryClient();
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
+  const [revokeConfirm, setRevokeConfirm] = useState<{ open: boolean; member: TeamMember | null }>({ open: false, member: null });
 
   const { data: apiKeys, isLoading } = useQuery({
     queryKey: ['org-api-keys', orgId],
@@ -103,6 +106,23 @@ function ApiKeysByMember({ orgId, members, accessToken }: ApiKeysByMemberProps) 
 
   return (
     <div className="space-y-3">
+      <ConfirmDialog
+        open={revokeConfirm.open}
+        onOpenChange={(open) => setRevokeConfirm((s) => ({ ...s, open }))}
+        title="Revoke API Keys"
+        description={
+          revokeConfirm.member
+            ? `Revoke all API keys for ${revokeConfirm.member.user_email || revokeConfirm.member.user_name}?`
+            : 'Revoke all API keys for this member?'
+        }
+        confirmLabel="Revoke All"
+        variant="destructive"
+        onConfirm={() => {
+          if (revokeConfirm.member) {
+            revokeKeysByUserMutation.mutate(revokeConfirm.member.user_id);
+          }
+        }}
+      />
       {keysByMember.map(({ member, keys }) => (
         <div key={member.user_id} className="border border-border rounded-lg">
           <button
@@ -120,9 +140,7 @@ function ApiKeysByMember({ orgId, members, accessToken }: ApiKeysByMemberProps) 
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`Revoke all ${keys.length} API key(s) for ${member.user_email || member.user_name}?`)) {
-                      revokeKeysByUserMutation.mutate(member.user_id);
-                    }
+                    setRevokeConfirm({ open: true, member });
                   }}
                   className="text-destructive hover:text-destructive"
                 >
@@ -171,6 +189,7 @@ export default function TeamPage() {
     setActiveOrganization,
   } = useOrganization();
 
+  const [removeConfirm, setRemoveConfirm] = useState<{ open: boolean; memberId: string | null }>({ open: false, memberId: null });
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
   const [showInviteForm, setShowInviteForm] = useState(Boolean(process.env.NEXT_PUBLIC_E2E_TEST));
@@ -527,21 +546,21 @@ export default function TeamPage() {
   if (!hasTeamFeature) {
     return (
       <DashboardLayout>
-        <div className="flex flex-col items-center justify-center py-16 px-4">
-          <div className="w-20 h-20 mb-6 rounded-full bg-blue-ncs/10 flex items-center justify-center">
-            <svg className="w-10 h-10 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <EnterpriseGate
+          icon={
+            <svg className="w-8 h-8 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">Team Management</h2>
-          <p className="text-muted-foreground text-center max-w-md mb-6">
-            Invite team members, assign roles, and manage access to your organization's resources.
-            Team management is available on the Enterprise plan.
-          </p>
-          <Button variant="primary" onClick={() => window.location.href = '/billing'}>
-            Upgrade to Enterprise
-          </Button>
-        </div>
+          }
+          title="Team Management"
+          description="Invite your organization's team, enforce role-based access control, and manage API keys per member -- all from a single unified dashboard."
+          features={[
+            'Role-based access control (Owner, Admin, Manager, Member, Viewer)',
+            'Bulk team invitations via CSV or paste',
+            'API key management per team member',
+            'Seat-based billing with usage tracking',
+          ]}
+        />
       </DashboardLayout>
     );
   }
@@ -802,8 +821,8 @@ export default function TeamPage() {
                 {invitations.map((inv) => (
                   <div key={inv.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                        <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                        <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
@@ -916,11 +935,7 @@ export default function TeamPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                if (confirm('Remove this member from the team?')) {
-                                  removeMemberMutation.mutate(member.user_id);
-                                }
-                              }}
+                              onClick={() => setRemoveConfirm({ open: true, memberId: member.user_id })}
                               className="text-destructive hover:text-destructive"
                             >
                               Remove
@@ -936,6 +951,20 @@ export default function TeamPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={removeConfirm.open}
+        onOpenChange={(open) => setRemoveConfirm((s) => ({ ...s, open }))}
+        title="Remove Team Member"
+        description="Remove this member from the team?"
+        confirmLabel="Remove"
+        variant="destructive"
+        onConfirm={() => {
+          if (removeConfirm.memberId) {
+            removeMemberMutation.mutate(removeConfirm.memberId);
+          }
+        }}
+      />
     </DashboardLayout>
   );
 }

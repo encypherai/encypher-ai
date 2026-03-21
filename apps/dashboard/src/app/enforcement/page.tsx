@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -12,6 +13,7 @@ import {
   Badge,
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { EmptyState } from '../../components/ui/empty-state';
 import apiClient from '../../lib/api';
 import type { FormalNotice } from '../../lib/api';
 
@@ -100,10 +102,13 @@ function StatusPipeline({ current }: { current: string }) {
 
 // -- Page ---------------------------------------------------------------------
 
+const PER_PAGE = 10;
+
 export default function EnforcementPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const accessToken = (session?.user as Record<string, unknown>)?.accessToken as string | undefined;
+  const [page, setPage] = useState(1);
 
   const { data: notices, isLoading } = useQuery({
     queryKey: ['enforcement-notices'],
@@ -148,12 +153,13 @@ export default function EnforcementPage() {
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-blue-500" />
               </div>
             ) : !notices || notices.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <p className="text-sm">No formal notices yet.</p>
-                <p className="text-xs mt-1">
-                  Notices created from the Rights page will appear here.
-                </p>
-              </div>
+              <EmptyState
+                icon={<svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+                title="No formal notices yet"
+                description="Notices created from the Rights page will appear here. Use formal notices to document awareness and enforce your content rights."
+                actionLabel="Go to Rights"
+                onAction={() => router.push('/rights')}
+              />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -167,7 +173,7 @@ export default function EnforcementPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {notices.map((notice: FormalNotice) => (
+                    {notices.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((notice: FormalNotice) => (
                       <tr
                         key={notice.id}
                         className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
@@ -206,7 +212,7 @@ export default function EnforcementPage() {
                               View
                             </Button>
                             <Button
-                              variant="outline"
+                              variant="secondary"
                               size="sm"
                               onClick={() => {
                                 if (accessToken) {
@@ -214,6 +220,11 @@ export default function EnforcementPage() {
                                 }
                               }}
                             >
+                              <svg className="w-3.5 h-3.5 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                              </svg>
                               Evidence
                             </Button>
                           </div>
@@ -222,6 +233,31 @@ export default function EnforcementPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            {notices && notices.length > PER_PAGE && (
+              <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700">
+                <p className="text-sm text-muted-foreground">
+                  Showing {(page - 1) * PER_PAGE + 1}-{Math.min(page * PER_PAGE, notices.length)} of {notices.length}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page * PER_PAGE >= notices.length}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
