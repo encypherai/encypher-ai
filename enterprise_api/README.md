@@ -1,4 +1,4 @@
-Try one more time, # Encypher Enterprise API
+# Encypher Enterprise API
 
 <div align="center">
 
@@ -7,21 +7,21 @@ Try one more time, # Encypher Enterprise API
 **Production-ready API for C2PA-compliant content signing and verification**
 
 [![Status](https://img.shields.io/badge/status-production-brightgreen)](https://api.encypherai.com)
-[![API Version](https://img.shields.io/badge/version-v1-blue)](https://docs.encypherai.com)
+[![API Version](https://img.shields.io/badge/version-v1.1.0-blue)](https://docs.encypherai.com)
 [![Uptime](https://img.shields.io/badge/uptime-99.9%25-brightgreen)](https://verify.encypherai.com/status)
 [![License](https://img.shields.io/badge/license-proprietary-red)](../LICENSE)
 
-[Features](#-features) •
-[Quick Start](#-quick-start) •
-[API Reference](#-api-reference) •
-[Architecture](#-architecture) •
-[Documentation](#-documentation)
+[Features](#features) |
+[Quick Start](#quick-start) |
+[API Reference](#api-reference) |
+[Architecture](#architecture) |
+[Documentation](#documentation)
 
 </div>
 
 ---
 
-## 🎯 Overview
+## Overview
 
 The Encypher Enterprise API provides cryptographic content signing and verification infrastructure for publishers, news organizations, legal firms, and content platforms. Built on C2PA standards with enterprise-grade features for granular content attribution and court-admissible evidence generation.
 
@@ -29,63 +29,63 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 ### D2 Workflow Views
 
-- [Enterprise API sign/verify flow](../docs/diagrams/workflows/enterprise-api-sign-verify.d2) — shows caller authentication, tier/rate-limit checks, router handoff, dependency calls, storage, and response generation.
-- [Repo system context](../docs/diagrams/architecture/system-context.d2) — shows how the Enterprise API sits between client surfaces, microservices, and storage layers.
+- [Enterprise API sign/verify flow](../docs/diagrams/workflows/enterprise-api-sign-verify.d2) --shows caller authentication, tier/rate-limit checks, router handoff, dependency calls, storage, and response generation.
+- [Repo system context](../docs/diagrams/architecture/system-context.d2) --shows how the Enterprise API sits between client surfaces, microservices, and storage layers.
 
 ### Why Encypher API?
 
-- **🔒 C2PA 2.3 Compliant**: Industry-standard content authenticity
-- **⚡ High Performance**: <100ms verification, 1000+ req/s capacity
-- **🔗 Microservices Architecture**: Scalable, resilient, database-per-service design
-- **📊 Advanced Features**: Merkle tree authentication, evidence generation, granular attribution
-- **🔐 SSL.com Integration**: Automated certificate lifecycle management
-- **⚖️ Court-Admissible**: Tamper-evident manifests for legal evidence
+- **C2PA 2.3 Compliant**: Industry-standard content authenticity
+- **High Performance**: <100ms verification, 1000+ req/s capacity
+- **Microservices Architecture**: Scalable, resilient, database-per-service design
+- **Advanced Features**: Merkle tree authentication, evidence generation, granular attribution
+- **SSL.com Integration**: Automated certificate lifecycle management
+- **Court-Admissible**: Tamper-evident manifests for legal evidence
 
 ---
 
-## ✨ Features
+## Features
 
 ### Complete Feature List
 
 #### Core Capabilities
-- ✅ **C2PA-Compliant Signing**: Full C2PA 2.3 text manifest support
-- ✅ **Audio C2PA Signing**: WAV, MP3, M4A/AAC audio signing and verification
-- ✅ **Video C2PA Signing**: MP4, MOV, M4V, AVI video signing and verification (multipart upload)
-- ✅ **Live Video Stream Signing**: Per-segment C2PA signing with manifest chaining (C2PA 2.3 Section 19)
-- ✅ **Content Verification**: Cryptographic verification with tamper detection
-- ✅ **Granular Attribution**: Track provenance of individual sentences
-- ✅ **Public Verification Pages**: Shareable verification URLs
-- ✅ **Batch Operations**: Sign/verify up to 100 documents at once
-- ✅ **Streaming Support**: WebSocket and SSE for real-time operations
-- ✅ **Custom Metadata**: Attach arbitrary metadata to signed content
-- ✅ **API Key Management**: Via integrated Key Service
+- **C2PA-Compliant Signing**: Full C2PA 2.3 text manifest support
+- **Audio C2PA Signing**: WAV, MP3, M4A/AAC audio signing and verification
+- **Video C2PA Signing**: MP4, MOV, M4V, AVI video signing and verification (multipart upload)
+- **Live Video Stream Signing**: Per-segment C2PA signing with manifest chaining (C2PA 2.3 Section 19)
+- **Content Verification**: Cryptographic verification with tamper detection
+- **Granular Attribution**: Track provenance of individual sentences
+- **Public Verification Pages**: Shareable verification URLs
+- **Batch Operations**: Sign/verify up to 100 documents at once
+- **Streaming Support**: WebSocket and SSE for real-time operations
+- **Custom Metadata**: Attach arbitrary metadata to signed content
+- **API Key Management**: Via integrated Key Service
 
 #### Enterprise Features
-- ✅ **Merkle Tree Encoding**: Hierarchical content fingerprinting with court-admissible evidence generation
-- ✅ **Source Attribution**: Find original sources of quoted content
-- ✅ **Plagiarism Detection**: Detect unauthorized content reuse
-- ✅ **Fuzzy Fingerprinting**: Locality-sensitive fingerprints for paraphrased attribution (index on encode, search on verify)
-- ✅ **Invisible Embeddings**: Unicode-based portable content tracking
-- ✅ **Custom C2PA Assertions**: Define custom assertion types
-- ✅ **Assertion Templates**: Pre-built templates for various industries
-- ✅ **Schema Registry**: Manage custom JSON schemas
-- ✅ **C2PA Provenance Chain**: Full edit history tracking
-- ✅ **Public Extraction API**: Third-party embedding verification
-- ✅ **Per-Document Revocation**: StatusList2021 assertions embedded on sign
+- **Merkle Tree Encoding**: Hierarchical content fingerprinting with court-admissible evidence generation
+- **Source Attribution**: Find original sources of quoted content
+- **Plagiarism Detection**: Detect unauthorized content reuse
+- **Fuzzy Fingerprinting**: Locality-sensitive fingerprints for paraphrased attribution (index on encode, search on verify)
+- **Invisible Embeddings**: Unicode-based portable content tracking
+- **Custom C2PA Assertions**: Define custom assertion types
+- **Assertion Templates**: Pre-built templates for various industries
+- **Schema Registry**: Manage custom JSON schemas
+- **C2PA Provenance Chain**: Full edit history tracking
+- **Public Extraction API**: Third-party embedding verification
+- **Per-Document Revocation**: StatusList2021 assertions embedded on sign
 
 #### Coalition Features (via Coalition Service)
-- ✅ **Auto-Enrollment**: Automatic coalition membership for free tier
-- ✅ **Content Indexing**: Aggregate content for bulk licensing
-- ✅ **Revenue Sharing**: Two-track model (coalition 60/40, self-service 80/20)
-- ✅ **Access Tracking**: Monitor where signed content appears across the web; ingestion-level tracking available when AI companies integrate provenance checking
+- **Auto-Enrollment**: Automatic coalition membership for free tier
+- **Content Indexing**: Aggregate content for bulk licensing
+- **Revenue Sharing**: Two-track model (coalition 60/40, self-service 80/20)
+- **Access Tracking**: Monitor where signed content appears across the web; ingestion-level tracking available when AI companies integrate provenance checking
 
 #### Team & Administration
-- ✅ **Team Management**: Multi-user organizations
-- ✅ **Audit Logs**: Complete activity tracking
-- ✅ **Usage Analytics**: Detailed usage metrics
-- ✅ **Tier-Based Access**: Feature gating by subscription tier (Free + Enterprise)
-- ✅ **Bring Your Own Keys (BYOK)**: Use your own signing keys (Enterprise)
-- ✅ **SSO Integration**: Single Sign-On (Enterprise)
+- **Team Management**: Multi-user organizations
+- **Audit Logs**: Complete activity tracking
+- **Usage Analytics**: Detailed usage metrics
+- **Tier-Based Access**: Feature gating by subscription tier (Free + Enterprise)
+- **Bring Your Own Keys (BYOK)**: Use your own signing keys (Enterprise)
+- **SSO Integration**: Single Sign-On (Enterprise)
 
 ---
 
@@ -97,16 +97,16 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 | Feature | Free | Enterprise |
 |---------|:----:|:----------:|
-| C2PA signing (document-level) | ✅ | ✅ |
-| Sentence/paragraph/section segmentation | ✅ | ✅ |
-| Merkle tree encoding | ✅ | ✅ |
-| Invisible Unicode embeddings | ✅ | ✅ |
-| Streaming signing (SSE/WebSocket) | ✅ | ✅ |
-| Custom metadata & assertions | ✅ | ✅ |
-| Advanced manifest modes | ✅ | ✅ |
-| Word segmentation | ❌ | ✅ |
-| Robust fingerprinting | ❌ | ✅ |
-| Print Leak Detection (`enable_print_fingerprint`) | ❌ | ✅ |
+| C2PA signing (document-level) | Yes | Yes |
+| Sentence/paragraph/section segmentation | Yes | Yes |
+| Merkle tree encoding | Yes | Yes |
+| Invisible Unicode embeddings | Yes | Yes |
+| Streaming signing (SSE/WebSocket) | Yes | Yes |
+| Custom metadata & assertions | Yes | Yes |
+| Advanced manifest modes | Yes | Yes |
+| Word segmentation | No | Yes |
+| Robust fingerprinting | No | Yes |
+| Print Leak Detection (`enable_print_fingerprint`) | No | Yes |
 | **Batch size limit** | 10 | 100 |
 | **Monthly signing quota** | 1,000 | Unlimited |
 
@@ -114,57 +114,57 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 | Feature | Free | Enterprise |
 |---------|:----:|:----------:|
-| Audio C2PA signing (WAV, MP3, M4A/AAC) | ❌ | ✅ |
-| Audio C2PA verification | ❌ | ✅ |
-| C2PA audio actions (created, dubbed, mixed, mastered, remixed) | ❌ | ✅ |
-| Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |
+| Audio C2PA signing (WAV, MP3, M4A/AAC) | No | Yes |
+| Audio C2PA verification | No | Yes |
+| C2PA audio actions (created, dubbed, mixed, mastered, remixed) | No | Yes |
+| Per-org signing credentials (SSL.com / BYOK) | No | Yes |
 
 ### Video Signing Features (`/api/v1/enterprise/video`)
 
 | Feature | Free | Enterprise |
 |---------|:----:|:----------:|
-| Video C2PA signing (MP4, MOV, M4V, AVI) | ❌ | ✅ |
-| Video C2PA verification | ❌ | ✅ |
-| Multipart upload (up to 500 MB) | ❌ | ✅ |
-| Large file download endpoint (files > 50 MB) | ❌ | ✅ |
-| Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |
+| Video C2PA signing (MP4, MOV, M4V, AVI) | No | Yes |
+| Video C2PA verification | No | Yes |
+| Multipart upload (up to 500 MB) | No | Yes |
+| Large file download endpoint (files > 50 MB) | No | Yes |
+| Per-org signing credentials (SSL.com / BYOK) | No | Yes |
 
 ### Live Video Stream Signing (`/api/v1/enterprise/video/stream`)
 
 | Feature | Free | Enterprise |
 |---------|:----:|:----------:|
-| Per-segment C2PA manifest signing (C2PA 2.3 Section 19) | ❌ | ✅ |
-| Manifest chaining (backwards-linked provenance) | ❌ | ✅ |
-| Merkle root computation on finalize | ❌ | ✅ |
-| Session-cached signing credentials | ❌ | ✅ |
+| Per-segment C2PA manifest signing (C2PA 2.3 Section 19) | No | Yes |
+| Manifest chaining (backwards-linked provenance) | No | Yes |
+| Merkle root computation on finalize | No | Yes |
+| Session-cached signing credentials | No | Yes |
 
 ### Verification Features (`/api/v1/verify`)
 
 | Feature | Free | Enterprise |
 |---------|:----:|:----------:|
-| Basic verification & tamper detection | ✅ | ✅ |
-| C2PA details | ✅ | ✅ |
-| Document info | ✅ | ✅ |
-| Licensing info | ✅ | ✅ |
-| Merkle proof | ✅ | ✅ |
-| Attribution lookup (`include_attribution`) | ✅ | ✅ |
-| Plagiarism detection (`detect_plagiarism`) | ✅ | ✅ |
-| Cross-org search (`search_scope=all`) | ❌ | ✅ |
-| Fuzzy matching (`fuzzy_search`) | ❌ | ✅ |
+| Basic verification & tamper detection | Yes | Yes |
+| C2PA details | Yes | Yes |
+| Document info | Yes | Yes |
+| Licensing info | Yes | Yes |
+| Merkle proof | Yes | Yes |
+| Attribution lookup (`include_attribution`) | Yes | Yes |
+| Plagiarism detection (`detect_plagiarism`) | Yes | Yes |
+| Cross-org search (`search_scope=all`) | No | Yes |
+| Fuzzy matching (`fuzzy_search`) | No | Yes |
 
 ### Account Features
 
 | Feature | Free | Enterprise |
 |---------|:----:|:----------:|
-| API keys (up to 2) | ✅ | ✅ (unlimited) |
-| Usage analytics | ✅ | ✅ |
-| Audit logs | ✅ | ✅ |
-| Coalition membership | ✅ | ✅ |
-| BYOK (own keys) | ❌ | ✅ |
-| Team management | ❌ | ✅ (unlimited members) |
-| Webhooks | ❌ | ✅ |
-| SSO/SAML | ❌ | ✅ |
-| Document revocation | ❌ | ✅ |
+| API keys (up to 2) | Yes | Yes (unlimited) |
+| Usage analytics | Yes | Yes |
+| Audit logs | Yes | Yes |
+| Coalition membership | Yes | Yes |
+| BYOK (own keys) | No | Yes |
+| Team management | No | Yes (unlimited members) |
+| Webhooks | No | Yes |
+| SSO/SAML | No | Yes |
+| Document revocation | No | Yes |
 
 ---
 
@@ -174,30 +174,30 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 | Endpoint | Method | Auth | Tier | Description | Dependencies |
 |----------|--------|------|------|-------------|--------------|
-| `/api/v1/sign` | POST | ✅ | All (features gated) | Sign content with C2PA manifest - features gated by tier | Key Service, Coalition Service (optional) |
-| `/api/v1/sign/advanced` | POST | - | - | ⚠️ **REMOVED** - Returns 410 Gone, use `/sign` with options | - |
-| `/api/v1/sign/rich` | POST | ✅ | All | Sign rich article (text + embedded images) with C2PA | Key Service |
-| `/api/v1/verify` | POST | ✅ | All (features gated) | Verify signed content with optional attribution, plagiarism, and fuzzy search flags - features gated by tier | Key Service |
-| `/api/v1/verify/image` | POST | ❌ | Public | Verify a signed image. Checks embedded C2PA manifest; falls back to XMP instance_id DB lookup for passthrough-mode images | None |
-| `/api/v1/verify/rich` | POST | ❌ | Public | Verify a signed rich article by document_id | None |
-| `/api/v1/lookup` | POST | ❌ | Public | Lookup sentence provenance | None |
-| `/api/v1/provenance/lookup` | POST | ❌ | Public | Lookup provenance for a document (structured) | None |
-| `/api/v1/account` | GET | ✅ | All | Get account profile | Auth Service |
-| `/api/v1/account/quota` | GET | ✅ | All | Get account quota and limits | Billing Service |
-| `/api/v1/usage` | GET | ✅ | All | Get organization usage statistics | Key Service |
-| `/api/v1/usage/history` | GET | ✅ | All | Get historical usage summaries | Analytics Service |
+| `/api/v1/sign` | POST | Yes | All (features gated) | Sign content with C2PA manifest - features gated by tier | Key Service, Coalition Service (optional) |
+| `/api/v1/sign/advanced` | POST | - | - | **REMOVED** - Returns 410 Gone, use `/sign` with options | - |
+| `/api/v1/sign/rich` | POST | Yes | All | Sign rich article (text + embedded images) with C2PA | Key Service |
+| `/api/v1/verify` | POST | Yes | All (features gated) | Verify signed content with optional attribution, plagiarism, and fuzzy search flags - features gated by tier | Key Service |
+| `/api/v1/verify/image` | POST | No | Public | Verify a signed image. Checks embedded C2PA manifest; falls back to XMP instance_id DB lookup for passthrough-mode images | None |
+| `/api/v1/verify/rich` | POST | No | Public | Verify a signed rich article by document_id | None |
+| `/api/v1/lookup` | POST | No | Public | Lookup sentence provenance | None |
+| `/api/v1/provenance/lookup` | POST | No | Public | Lookup provenance for a document (structured) | None |
+| `/api/v1/account` | GET | Yes | All | Get account profile | Auth Service |
+| `/api/v1/account/quota` | GET | Yes | All | Get account quota and limits | Billing Service |
+| `/api/v1/usage` | GET | Yes | All | Get organization usage statistics | Key Service |
+| `/api/v1/usage/history` | GET | Yes | All | Get historical usage summaries | Analytics Service |
 
-> **Design note:** Both `/sign` and `/verify` follow the same pattern — a single endpoint with optional feature flags (`include_attribution`, `detect_plagiarism`, `fuzzy_search`, `search_scope`) that are gated by tier or add-ons. No separate "advanced" endpoints.
+> **Design note:** Both `/sign` and `/verify` follow the same pattern --a single endpoint with optional feature flags (`include_attribution`, `detect_plagiarism`, `fuzzy_search`, `search_scope`) that are gated by tier or add-ons. No separate "advanced" endpoints.
 
 ### Public C2PA Utilities
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/public/c2pa/validate-manifest` | POST | ❌ | Public | Validate manifest JSON structure + assertion schema payloads (non-cryptographic). Optional API key supported for higher limits |
-| `/api/v1/public/c2pa/create-manifest` | POST | ❌ | Public | Create a manifest JSON payload from plaintext (non-cryptographic) and return a signing helper payload. Optional API key supported for higher limits |
-| `/api/v1/public/c2pa/trust-anchors/{signer_id}` | GET | ❌ | Public | Lookup trust anchor (public key) for external C2PA validators (public, IP rate-limited) |
-| `/api/v1/public/c2pa/zw/resolve/{segment_uuid}` | GET | ❌ | Public | Resolve a ZW-embedded segment UUID to its source document and provenance metadata |
-| `/api/v1/public/c2pa/zw/resolve` | POST | ❌ | Public | Bulk resolve multiple ZW segment UUIDs in a single call |
+| `/api/v1/public/c2pa/validate-manifest` | POST | No | Public | Validate manifest JSON structure + assertion schema payloads (non-cryptographic). Optional API key supported for higher limits |
+| `/api/v1/public/c2pa/create-manifest` | POST | No | Public | Create a manifest JSON payload from plaintext (non-cryptographic) and return a signing helper payload. Optional API key supported for higher limits |
+| `/api/v1/public/c2pa/trust-anchors/{signer_id}` | GET | No | Public | Lookup trust anchor (public key) for external C2PA validators (public, IP rate-limited) |
+| `/api/v1/public/c2pa/zw/resolve/{segment_uuid}` | GET | No | Public | Resolve a ZW-embedded segment UUID to its source document and provenance metadata |
+| `/api/v1/public/c2pa/zw/resolve` | POST | No | Public | Bulk resolve multiple ZW segment UUIDs in a single call |
 
 ### Verification Service Endpoints
 
@@ -205,58 +205,55 @@ The following endpoints are provided by the verification microservice (merged in
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/verify/health` | GET | ❌ | Public | Verification service health check |
-| `/api/v1/verify/stats` | GET | ✅ | All | Get verification statistics |
-| `/api/v1/verify/{document_id}` | GET | ✅ | All | Get verification history for a document |
-| `/api/v1/verify/history/{document_id}` | GET | ✅ | All | Get full verification history for a document |
-| `/api/v1/verify/document` | POST | ✅ | All | Verify document authenticity |
-| `/api/v1/verify/signature` | POST | ✅ | All | Verify a C2PA signature |
-| `/api/v1/verify/advanced` | POST | ✅ | All | Advanced verification with attribution and plagiarism detection |
-| `/api/v1/verify/quote-integrity` | POST | ❌ | Public | Verify AI attribution accuracy — check if a cited quote matches signed source documents (accurate/approximate/hallucinated/unverifiable) |
+| `/api/v1/verify/health` | GET | No | Public | Verification service health check |
+| `/api/v1/verify/stats` | GET | Yes | All | Get verification statistics |
+| `/api/v1/verify/{document_id}` | GET | Yes | All | Get verification history for a document |
+| `/api/v1/verify/history/{document_id}` | GET | Yes | All | Get full verification history for a document |
+| `/api/v1/verify/document` | POST | Yes | All | Verify document authenticity |
+| `/api/v1/verify/signature` | POST | Yes | All | Verify a C2PA signature |
+| `/api/v1/verify/advanced` | POST | Yes | All | Advanced verification with attribution and plagiarism detection |
+| `/api/v1/verify/quote-integrity` | POST | No | Public | Verify AI attribution accuracy --check if a cited quote matches signed source documents (accurate/approximate/hallucinated/unverifiable) |
 
 ### Enterprise Merkle Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/merkle/encode` | POST | ✅ | All | Encode document into Merkle tree |
+| `/api/v1/enterprise/merkle/encode` | POST | Yes | All | Encode document into Merkle tree |
 
 Deprecated Merkle attribution/plagiarism endpoints return HTTP 410 and redirect to `/api/v1/verify`.
 
-### Streaming Merkle Endpoints (NEW - Patent FIG. 5)
-
+### Streaming Merkle Endpoints
 Real-time Merkle tree construction for streaming content signing (e.g., LLM output).
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/stream/merkle/start` | POST | ✅ | All | Start streaming Merkle session |
-| `/api/v1/enterprise/stream/merkle/segment` | POST | ✅ | All | Add segment to session |
-| `/api/v1/enterprise/stream/merkle/finalize` | POST | ✅ | All | Finalize session and compute root |
-| `/api/v1/enterprise/stream/merkle/status` | POST | ✅ | All | Check session status |
+| `/api/v1/enterprise/stream/merkle/start` | POST | Yes | All | Start streaming Merkle session |
+| `/api/v1/enterprise/stream/merkle/segment` | POST | Yes | All | Add segment to session |
+| `/api/v1/enterprise/stream/merkle/finalize` | POST | Yes | All | Finalize session and compute root |
+| `/api/v1/enterprise/stream/merkle/status` | POST | Yes | All | Check session status |
 
-### Evidence Generation Endpoints (NEW - Patent FIG. 11)
-
+### Evidence Generation Endpoints
 Generate court-ready evidence packages for content attribution.
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/evidence/generate` | POST | ✅ | Enterprise | Generate evidence package with Merkle proofs |
+| `/api/v1/enterprise/evidence/generate` | POST | Yes | Enterprise | Generate evidence package with Merkle proofs |
 
-### Fingerprint Endpoints (NEW)
+### Fingerprint Endpoints
 
 Robust fingerprinting that survives text modifications.
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/fingerprint/encode` | POST | ✅ | Enterprise | Encode keyed fingerprint into text |
-| `/api/v1/enterprise/fingerprint/detect` | POST | ✅ | Enterprise | Detect fingerprint in text |
+| `/api/v1/enterprise/fingerprint/encode` | POST | Yes | Enterprise | Encode keyed fingerprint into text |
+| `/api/v1/enterprise/fingerprint/detect` | POST | Yes | Enterprise | Detect fingerprint in text |
 
-### Multi-Source Attribution Endpoints (NEW - Patent FIG. 8)
-
+### Multi-Source Attribution Endpoints
 Look up content across multiple sources with chronological ordering.
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/attribution/multi-source` | POST | ✅ | All (authority ranking: Enterprise) | Multi-source hash lookup with authority ranking |
+| `/api/v1/enterprise/attribution/multi-source` | POST | Yes | All (authority ranking: Enterprise) | Multi-source hash lookup with authority ranking |
 
 ### Image Attribution Endpoints
 
@@ -265,101 +262,101 @@ available to all tiers; scope "all" (cross-organization) requires Enterprise.
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/images/attribution` | POST | ✅ | All (cross-org: Enterprise) | Find images by perceptual similarity (pHash) | None |
+| `/api/v1/enterprise/images/attribution` | POST | Yes | All (cross-org: Enterprise) | Find images by perceptual similarity (pHash) | None |
 
 ### Audio Attribution Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/audio/sign` | POST | ✅ | Enterprise | Sign audio with C2PA manifest (WAV, MP3, M4A/AAC) |
-| `/api/v1/enterprise/audio/verify` | POST | ✅ | Enterprise | Verify C2PA manifest in audio file |
+| `/api/v1/enterprise/audio/sign` | POST | Yes | Enterprise | Sign audio with C2PA manifest (WAV, MP3, M4A/AAC) |
+| `/api/v1/enterprise/audio/verify` | POST | Yes | Enterprise | Verify C2PA manifest in audio file |
 
 ### Video Attribution Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/video/sign` | POST (multipart) | ✅ | Enterprise | Sign video with C2PA manifest (MP4, MOV, M4V, AVI) |
-| `/api/v1/enterprise/video/verify` | POST (multipart) | ✅ | Enterprise | Verify C2PA manifest in video file |
-| `/api/v1/enterprise/video/download/{video_id}` | GET | ✅ | Enterprise | Download signed video (files > 50 MB, 10-min TTL) |
+| `/api/v1/enterprise/video/sign` | POST (multipart) | Yes | Enterprise | Sign video with C2PA manifest (MP4, MOV, M4V, AVI) |
+| `/api/v1/enterprise/video/verify` | POST (multipart) | Yes | Enterprise | Verify C2PA manifest in video file |
+| `/api/v1/enterprise/video/download/{video_id}` | GET | Yes | Enterprise | Download signed video (files > 50 MB, 10-min TTL) |
 
 ### Live Video Stream Signing Endpoints (C2PA 2.3 Section 19)
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/video/stream/start` | POST | ✅ | Enterprise | Start stream signing session |
-| `/api/v1/enterprise/video/stream/{session_id}/segment` | POST (multipart) | ✅ | Enterprise | Sign individual stream segment |
-| `/api/v1/enterprise/video/stream/{session_id}/finalize` | POST | ✅ | Enterprise | Finalize session, compute Merkle root |
-| `/api/v1/enterprise/video/stream/{session_id}/status` | GET | ✅ | Enterprise | Check session status |
+| `/api/v1/enterprise/video/stream/start` | POST | Yes | Enterprise | Start stream signing session |
+| `/api/v1/enterprise/video/stream/{session_id}/segment` | POST (multipart) | Yes | Enterprise | Sign individual stream segment |
+| `/api/v1/enterprise/video/stream/{session_id}/finalize` | POST | Yes | Enterprise | Finalize session, compute Merkle root |
+| `/api/v1/enterprise/video/stream/{session_id}/status` | GET | Yes | Enterprise | Check session status |
 
 ### Public Verification Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/public/verify/{ref_id}` | GET | ❌ | Public | Verify embedding by reference ID (optional API key for higher limits) |
-| `/api/v1/public/verify/batch` | POST | ❌ | Public | Batch verify embeddings (optional API key for higher limits) |
-| `/api/v1/public/extract-and-verify` | POST | - | - | ⚠️ **DEPRECATED** - Returns 410 Gone, use `POST /api/v1/verify` via verification-service |
+| `/api/v1/public/verify/{ref_id}` | GET | No | Public | Verify embedding by reference ID (optional API key for higher limits) |
+| `/api/v1/public/verify/batch` | POST | No | Public | Batch verify embeddings (optional API key for higher limits) |
+| `/api/v1/public/extract-and-verify` | POST | - | - | **DEPRECATED** - Returns 410 Gone, use `POST /api/v1/verify` via verification-service |
 
 ### Enterprise C2PA Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/c2pa/schemas` | POST | ✅ | Enterprise | Register custom C2PA assertion schema |
-| `/api/v1/enterprise/c2pa/schemas` | GET | ✅ | Enterprise | List custom schemas |
-| `/api/v1/enterprise/c2pa/schemas/{schema_id}` | GET | ✅ | Enterprise | Get custom schema |
-| `/api/v1/enterprise/c2pa/schemas/{schema_id}` | PUT | ✅ | Enterprise | Update custom schema |
-| `/api/v1/enterprise/c2pa/schemas/{schema_id}` | DELETE | ✅ | Enterprise | Delete custom schema |
-| `/api/v1/enterprise/c2pa/validate` | POST | ✅ | Enterprise | Validate assertion before embedding |
-| `/api/v1/enterprise/c2pa/templates` | POST | ✅ | Enterprise | Create assertion template |
-| `/api/v1/enterprise/c2pa/templates` | GET | ✅ | Enterprise | List assertion templates |
-| `/api/v1/enterprise/c2pa/templates/{template_id}` | GET | ✅ | Enterprise | Get assertion template |
-| `/api/v1/enterprise/c2pa/templates/{template_id}` | PUT | ✅ | Enterprise | Update assertion template |
-| `/api/v1/enterprise/c2pa/templates/{template_id}` | DELETE | ✅ | Enterprise | Delete assertion template |
+| `/api/v1/enterprise/c2pa/schemas` | POST | Yes | Enterprise | Register custom C2PA assertion schema |
+| `/api/v1/enterprise/c2pa/schemas` | GET | Yes | Enterprise | List custom schemas |
+| `/api/v1/enterprise/c2pa/schemas/{schema_id}` | GET | Yes | Enterprise | Get custom schema |
+| `/api/v1/enterprise/c2pa/schemas/{schema_id}` | PUT | Yes | Enterprise | Update custom schema |
+| `/api/v1/enterprise/c2pa/schemas/{schema_id}` | DELETE | Yes | Enterprise | Delete custom schema |
+| `/api/v1/enterprise/c2pa/validate` | POST | Yes | Enterprise | Validate assertion before embedding |
+| `/api/v1/enterprise/c2pa/templates` | POST | Yes | Enterprise | Create assertion template |
+| `/api/v1/enterprise/c2pa/templates` | GET | Yes | Enterprise | List assertion templates |
+| `/api/v1/enterprise/c2pa/templates/{template_id}` | GET | Yes | Enterprise | Get assertion template |
+| `/api/v1/enterprise/c2pa/templates/{template_id}` | PUT | Yes | Enterprise | Update assertion template |
+| `/api/v1/enterprise/c2pa/templates/{template_id}` | DELETE | Yes | Enterprise | Delete assertion template |
 
 ### Batch Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/batch/sign` | POST | ✅ | Enterprise | Batch sign up to 100 documents |
-| `/api/v1/batch/verify` | POST | ✅ | Enterprise | Batch verify signed content |
+| `/api/v1/batch/sign` | POST | Yes | Enterprise | Batch sign up to 100 documents |
+| `/api/v1/batch/verify` | POST | Yes | Enterprise | Batch verify signed content |
 
 ### Streaming Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/sign/stream` | POST/WS | ✅ | All | Real-time signing via SSE (POST) and WebSocket (WS) |
-| `/api/v1/sign/stream/sessions` | POST | ✅ | All | Create streaming session |
-| `/api/v1/sign/stream/sessions/{session_id}/events` | GET | ✅ | All | Server-Sent Events (SSE) heartbeat and events |
-| `/api/v1/sign/stream/sessions/{session_id}/close` | POST | ✅ | All | Close streaming session |
-| `/api/v1/sign/stream/runs/{run_id}` | GET | ✅ | All | Get streaming run state |
-| `/api/v1/sign/stream/stats` | GET | ✅ | All | Get organization streaming statistics |
-| `/api/v1/chat/completions` | POST | ✅ | All | OpenAI-compatible SSE chat completions with signing |
-| `/api/v1/chat/health` | GET | ❌ | Public | Chat streaming health check |
+| `/api/v1/sign/stream` | POST/WS | Yes | All | Real-time signing via SSE (POST) and WebSocket (WS) |
+| `/api/v1/sign/stream/sessions` | POST | Yes | All | Create streaming session |
+| `/api/v1/sign/stream/sessions/{session_id}/events` | GET | Yes | All | Server-Sent Events (SSE) heartbeat and events |
+| `/api/v1/sign/stream/sessions/{session_id}/close` | POST | Yes | All | Close streaming session |
+| `/api/v1/sign/stream/runs/{run_id}` | GET | Yes | All | Get streaming run state |
+| `/api/v1/sign/stream/stats` | GET | Yes | All | Get organization streaming statistics |
+| `/api/v1/chat/completions` | POST | Yes | All | OpenAI-compatible SSE chat completions with signing |
+| `/api/v1/chat/health` | GET | No | Public | Chat streaming health check |
 
 ### Account, Keys, BYOK, Documents, and Webhooks
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/keys` | GET | ✅ | All | List API keys |
-| `/api/v1/keys` | POST | ✅ | All | Create API key |
-| `/api/v1/keys/{key_id}` | PATCH | ✅ | All | Update API key (name/metadata) |
-| `/api/v1/keys/{key_id}` | DELETE | ✅ | All | Delete API key |
-| `/api/v1/keys/{key_id}/rotate` | POST | ✅ | All | Rotate API key |
-| `/api/v1/byok/public-keys` | GET | ✅ | Enterprise | List BYOK public keys |
-| `/api/v1/byok/public-keys` | POST | ✅ | Enterprise | Register BYOK public key |
-| `/api/v1/byok/public-keys/{key_id}` | DELETE | ✅ | Enterprise | Delete BYOK public key |
-| `/api/v1/byok/trusted-cas` | GET | ❌ | Public | List C2PA trusted Certificate Authorities |
-| `/api/v1/byok/certificates` | POST | ✅ | Enterprise | Upload CA-signed certificate (validated against C2PA trust list) |
-| `/api/v1/documents` | GET | ✅ | Enterprise | List signed documents |
-| `/api/v1/documents/{document_id}` | GET | ✅ | Enterprise | Get signed document |
-| `/api/v1/documents/{document_id}/history` | GET | ✅ | Enterprise | Get document provenance history |
-| `/api/v1/documents/{document_id}` | DELETE | ✅ | Enterprise | Soft-delete a document |
-| `/api/v1/webhooks` | GET | ✅ | Enterprise | List webhooks |
-| `/api/v1/webhooks` | POST | ✅ | Enterprise | Create webhook |
-| `/api/v1/webhooks/{webhook_id}` | GET | ✅ | Enterprise | Get webhook |
-| `/api/v1/webhooks/{webhook_id}` | PATCH | ✅ | Enterprise | Update webhook |
-| `/api/v1/webhooks/{webhook_id}` | DELETE | ✅ | Enterprise | Delete webhook |
-| `/api/v1/webhooks/{webhook_id}/deliveries` | GET | ✅ | Enterprise | List webhook deliveries |
-| `/api/v1/webhooks/{webhook_id}/test` | POST | ✅ | Enterprise | Send a test delivery |
+| `/api/v1/keys` | GET | Yes | All | List API keys |
+| `/api/v1/keys` | POST | Yes | All | Create API key |
+| `/api/v1/keys/{key_id}` | PATCH | Yes | All | Update API key (name/metadata) |
+| `/api/v1/keys/{key_id}` | DELETE | Yes | All | Delete API key |
+| `/api/v1/keys/{key_id}/rotate` | POST | Yes | All | Rotate API key |
+| `/api/v1/byok/public-keys` | GET | Yes | Enterprise | List BYOK public keys |
+| `/api/v1/byok/public-keys` | POST | Yes | Enterprise | Register BYOK public key |
+| `/api/v1/byok/public-keys/{key_id}` | DELETE | Yes | Enterprise | Delete BYOK public key |
+| `/api/v1/byok/trusted-cas` | GET | No | Public | List C2PA trusted Certificate Authorities |
+| `/api/v1/byok/certificates` | POST | Yes | Enterprise | Upload CA-signed certificate (validated against C2PA trust list) |
+| `/api/v1/documents` | GET | Yes | Enterprise | List signed documents |
+| `/api/v1/documents/{document_id}` | GET | Yes | Enterprise | Get signed document |
+| `/api/v1/documents/{document_id}/history` | GET | Yes | Enterprise | Get document provenance history |
+| `/api/v1/documents/{document_id}` | DELETE | Yes | Enterprise | Soft-delete a document |
+| `/api/v1/webhooks` | GET | Yes | Enterprise | List webhooks |
+| `/api/v1/webhooks` | POST | Yes | Enterprise | Create webhook |
+| `/api/v1/webhooks/{webhook_id}` | GET | Yes | Enterprise | Get webhook |
+| `/api/v1/webhooks/{webhook_id}` | PATCH | Yes | Enterprise | Update webhook |
+| `/api/v1/webhooks/{webhook_id}` | DELETE | Yes | Enterprise | Delete webhook |
+| `/api/v1/webhooks/{webhook_id}/deliveries` | GET | Yes | Enterprise | List webhook deliveries |
+| `/api/v1/webhooks/{webhook_id}/test` | POST | Yes | Enterprise | Send a test delivery |
 
 #### Supported Webhook Events
 
@@ -384,12 +381,12 @@ available to all tiers; scope "all" (cross-organization) requires Enterprise.
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/integrations/ghost` | POST | ✅ | All | Create or update Ghost integration configuration and return webhook URL/token on first create |
-| `/api/v1/integrations/ghost` | GET | ✅ | All | Get current Ghost integration configuration with masked API key and configured webhook URL |
-| `/api/v1/integrations/ghost` | DELETE | ✅ | All | Deactivate Ghost integration for the current organization |
-| `/api/v1/integrations/ghost/regenerate-token` | POST | ✅ | All | Rotate webhook token and return a new ready-to-paste webhook URL |
-| `/api/v1/integrations/ghost/webhook` | POST | ❌ | Public (token-scoped) | Receive Ghost publish/update webhook events using scoped `ghwh_...` query token |
-| `/api/v1/integrations/ghost/sign/{post_id}` | POST | ✅ | All | Manually trigger signing for a Ghost post or page |
+| `/api/v1/integrations/ghost` | POST | Yes | All | Create or update Ghost integration configuration and return webhook URL/token on first create |
+| `/api/v1/integrations/ghost` | GET | Yes | All | Get current Ghost integration configuration with masked API key and configured webhook URL |
+| `/api/v1/integrations/ghost` | DELETE | Yes | All | Deactivate Ghost integration for the current organization |
+| `/api/v1/integrations/ghost/regenerate-token` | POST | Yes | All | Rotate webhook token and return a new ready-to-paste webhook URL |
+| `/api/v1/integrations/ghost/webhook` | POST | No | Public (token-scoped) | Receive Ghost publish/update webhook events using scoped `ghwh_...` query token |
+| `/api/v1/integrations/ghost/sign/{post_id}` | POST | Yes | All | Manually trigger signing for a Ghost post or page |
 
 #### BYOK Trust Policy Metadata (`GET /api/v1/byok/trusted-cas`)
 
@@ -405,12 +402,12 @@ In addition to trusted CA subjects, this endpoint returns active trust-policy me
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/coalition/dashboard` | GET | ✅ | All | Get coalition dashboard (content, earnings, payouts) |
-| `/api/v1/coalition/content-stats` | GET | ✅ | All | Get historical content corpus statistics |
-| `/api/v1/coalition/earnings` | GET | ✅ | All | Get detailed earnings history |
-| `/api/v1/coalition/opt-out` | POST | ✅ | All | Opt out of coalition revenue sharing |
-| `/api/v1/coalition/opt-in` | POST | ✅ | All | Opt in to coalition revenue sharing |
-| `/api/v1/coalition/public/stats` | GET | ❌ | Public | Aggregate coalition stats for marketing display (no auth) |
+| `/api/v1/coalition/dashboard` | GET | Yes | All | Get coalition dashboard (content, earnings, payouts) |
+| `/api/v1/coalition/content-stats` | GET | Yes | All | Get historical content corpus statistics |
+| `/api/v1/coalition/earnings` | GET | Yes | All | Get detailed earnings history |
+| `/api/v1/coalition/opt-out` | POST | Yes | All | Opt out of coalition revenue sharing |
+| `/api/v1/coalition/opt-in` | POST | Yes | All | Opt in to coalition revenue sharing |
+| `/api/v1/coalition/public/stats` | GET | No | Public | Aggregate coalition stats for marketing display (no auth) |
 
 ### Team Management Endpoints
 
@@ -418,13 +415,13 @@ In addition to trusted CA subjects, this endpoint returns active trust-policy me
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/org/members` | GET | ✅ | Internal | List team members |
-| `/api/v1/org/members/invite` | POST | ✅ | Internal | Invite a team member |
-| `/api/v1/org/members/invites` | GET | ✅ | Internal | List pending invitations |
-| `/api/v1/org/members/invites/{invite_id}` | DELETE | ✅ | Internal | Revoke an invitation |
-| `/api/v1/org/members/{member_id}/role` | PATCH | ✅ | Internal | Update member role |
-| `/api/v1/org/members/{member_id}` | DELETE | ✅ | Internal | Remove a team member |
-| `/api/v1/org/members/accept-invite` | POST | ✅ | Internal | Accept an invitation |
+| `/api/v1/org/members` | GET | Yes | Internal | List team members |
+| `/api/v1/org/members/invite` | POST | Yes | Internal | Invite a team member |
+| `/api/v1/org/members/invites` | GET | Yes | Internal | List pending invitations |
+| `/api/v1/org/members/invites/{invite_id}` | DELETE | Yes | Internal | Revoke an invitation |
+| `/api/v1/org/members/{member_id}/role` | PATCH | Yes | Internal | Update member role |
+| `/api/v1/org/members/{member_id}` | DELETE | Yes | Internal | Remove a team member |
+| `/api/v1/org/members/accept-invite` | POST | Yes | Internal | Accept an invitation |
 | `/api/v1/org/invites/public/{token}` | GET | None | Public | Look up invite metadata by token |
 | `/api/v1/org/invites/public/{token}/accept-new` | POST | None | Public | Register new user and accept invite |
 
@@ -434,8 +431,8 @@ In addition to trusted CA subjects, this endpoint returns active trust-policy me
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/audit-logs` | GET | ✅ | Internal | Get paginated audit logs |
-| `/api/v1/audit-logs/export` | GET | ✅ | Internal | Export audit logs (JSON or CSV) |
+| `/api/v1/audit-logs` | GET | Yes | Internal | Get paginated audit logs |
+| `/api/v1/audit-logs/export` | GET | Yes | Internal | Export audit logs (JSON or CSV) |
 
 ### Provisioning Endpoints (Internal)
 
@@ -446,9 +443,9 @@ In addition to trusted CA subjects, this endpoint returns active trust-policy me
 | `/api/v1/provisioning/api-keys` | GET | Token | Internal | List API keys for an organization |
 | `/api/v1/provisioning/api-keys/{key_id}` | DELETE | Token | Internal | Revoke an API key |
 | `/api/v1/provisioning/users` | POST | Token | Internal | Create a user account |
-| `/api/v1/provisioning/health` | GET | ❌ | Internal | Provisioning service health check |
+| `/api/v1/provisioning/health` | GET | No | Internal | Provisioning service health check |
 
-### Document Revocation Endpoints (NEW)
+### Document Revocation Endpoints
 
 | Endpoint | Description | Tier |
 |----------|-------------|------|
@@ -467,7 +464,7 @@ Licensing endpoints are internal-only and intentionally excluded from the public
 
 For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 
-### Rights Management Endpoints (NEW)
+### Rights Management Endpoints
 
 Machine-readable deed system for publishers to define and enforce licensing terms across AI use cases. Built on top of the existing enterprise_api; all data stored in the Core DB.
 
@@ -475,53 +472,53 @@ Machine-readable deed system for publishers to define and enforce licensing term
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/rights/profile` | PUT | ✅ | Free | Create or update default rights profile (versioned) |
-| `/api/v1/rights/profile` | GET | ✅ | Free | Get current rights profile |
-| `/api/v1/rights/profile/history` | GET | ✅ | Free | Get full version history of rights profile |
-| `/api/v1/rights/documents/{document_id}` | PUT | ✅ | Free | Override rights for a specific document |
-| `/api/v1/rights/collections/{collection_id}` | PUT | ✅ | Free | Override rights for a collection |
-| `/api/v1/rights/content-types/{content_type}` | PUT | ✅ | Free | Override rights for a content type |
-| `/api/v1/rights/bulk-update` | POST | ✅ | Free | Bulk update rights across documents/collections/types |
-| `/api/v1/rights/templates` | GET | ✅ | All | List available rights template presets |
-| `/api/v1/rights/profile/from-template/{template_id}` | POST | ✅ | Free | Initialize profile from a template |
-| `/api/v1/rights/profile/delegated-setup` | POST | ✅ | Strategic Partner | Platform partner sets up rights profile on behalf of publisher |
-| `/api/v1/partner/publishers/provision` | POST | ✅ | Strategic Partner | Bulk-provision publisher orgs, rights profiles, and claim emails in one call |
-| `/api/v1/rights/rsl/import` | POST | ✅ | Free | Import existing RSL 1.0 XML document |
-| `/api/v1/rights/analytics/detections` | GET | ✅ | Enforcement Add-on | Phone-home detection analytics (signed content encountered by AI systems) |
-| `/api/v1/rights/analytics/crawlers` | GET | ✅ | Free | AI crawler activity breakdown |
-| `/api/v1/rights/analytics/crawlers/timeseries` | GET | ✅ | Free | Daily crawler activity timeseries |
-| `/api/v1/rights/analytics/content-spread` | GET | ✅ | Enterprise | External domain detection analytics (content spread) |
+| `/api/v1/rights/profile` | PUT | Yes | Free | Create or update default rights profile (versioned) |
+| `/api/v1/rights/profile` | GET | Yes | Free | Get current rights profile |
+| `/api/v1/rights/profile/history` | GET | Yes | Free | Get full version history of rights profile |
+| `/api/v1/rights/documents/{document_id}` | PUT | Yes | Free | Override rights for a specific document |
+| `/api/v1/rights/collections/{collection_id}` | PUT | Yes | Free | Override rights for a collection |
+| `/api/v1/rights/content-types/{content_type}` | PUT | Yes | Free | Override rights for a content type |
+| `/api/v1/rights/bulk-update` | POST | Yes | Free | Bulk update rights across documents/collections/types |
+| `/api/v1/rights/templates` | GET | Yes | All | List available rights template presets |
+| `/api/v1/rights/profile/from-template/{template_id}` | POST | Yes | Free | Initialize profile from a template |
+| `/api/v1/rights/profile/delegated-setup` | POST | Yes | Strategic Partner | Platform partner sets up rights profile on behalf of publisher |
+| `/api/v1/partner/publishers/provision` | POST | Yes | Strategic Partner | Bulk-provision publisher orgs, rights profiles, and claim emails in one call |
+| `/api/v1/rights/rsl/import` | POST | Yes | Free | Import existing RSL 1.0 XML document |
+| `/api/v1/rights/analytics/detections` | GET | Yes | Enforcement Add-on | Phone-home detection analytics (signed content encountered by AI systems) |
+| `/api/v1/rights/analytics/crawlers` | GET | Yes | Free | AI crawler activity breakdown |
+| `/api/v1/rights/analytics/crawlers/timeseries` | GET | Yes | Free | Daily crawler activity timeseries |
+| `/api/v1/rights/analytics/content-spread` | GET | Yes | Enterprise | External domain detection analytics (content spread) |
 
 Rights profiles support three licensing tiers:
-- **Bronze** — Scraping / crawling terms
-- **Silver** — RAG / retrieval / search terms
-- **Gold** — Training / fine-tuning terms
+- **Bronze** --Scraping / crawling terms
+- **Silver** --RAG / retrieval / search terms
+- **Gold** --Training / fine-tuning terms
 
 #### Public Rights Resolution (Unauthenticated)
 
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
-| `/api/v1/public/rights/{document_id}` | GET | ❌ | Resolve rights for a specific signed document |
-| `/api/v1/public/rights/resolve` | POST | ❌ | Resolve rights from raw signed text |
-| `/api/v1/public/rights/organization/{org_id}` | GET | ❌ | Get organization's default rights profile |
-| `/api/v1/public/rights/{document_id}/json-ld` | GET | ❌ | Machine-readable rights in JSON-LD (Schema.org) format |
-| `/api/v1/public/rights/{document_id}/odrl` | GET | ❌ | Machine-readable rights in W3C ODRL format |
-| `/api/v1/public/rights/organization/{org_id}/robots-meta` | GET | ❌ | AI-specific robots meta tag directives |
-| `/api/v1/public/rights/organization/{org_id}/rsl` | GET | ❌ | Generate RSL 1.0 XML document |
-| `/api/v1/public/rights/organization/{org_id}/robots-txt` | GET | ❌ | robots.txt additions with RSL/AI directives |
-| `/api/v1/public/rights/rsl/olp/token` | POST | ❌ | RSL Open License Protocol — generate access token |
-| `/api/v1/public/rights/rsl/olp/validate/{token}` | GET | ❌ | Validate RSL OLP token |
+| `/api/v1/public/rights/{document_id}` | GET | No | Resolve rights for a specific signed document |
+| `/api/v1/public/rights/resolve` | POST | No | Resolve rights from raw signed text |
+| `/api/v1/public/rights/organization/{org_id}` | GET | No | Get organization's default rights profile |
+| `/api/v1/public/rights/{document_id}/json-ld` | GET | No | Machine-readable rights in JSON-LD (Schema.org) format |
+| `/api/v1/public/rights/{document_id}/odrl` | GET | No | Machine-readable rights in W3C ODRL format |
+| `/api/v1/public/rights/organization/{org_id}/robots-meta` | GET | No | AI-specific robots meta tag directives |
+| `/api/v1/public/rights/organization/{org_id}/rsl` | GET | No | Generate RSL 1.0 XML document |
+| `/api/v1/public/rights/organization/{org_id}/robots-txt` | GET | No | robots.txt additions with RSL/AI directives |
+| `/api/v1/public/rights/rsl/olp/token` | POST | No | RSL Open License Protocol --generate access token |
+| `/api/v1/public/rights/rsl/olp/validate/{token}` | GET | No | Validate RSL OLP token |
 
 #### Formal Notices (Authenticated)
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/notices/` | GET | ✅ | Enforcement Add-on | List all formal notices for the organization |
-| `/api/v1/notices/create` | POST | ✅ | Enforcement Add-on | Create an immutable formal notice |
-| `/api/v1/notices/{notice_id}` | GET | ✅ | Enforcement Add-on | Retrieve a formal notice |
-| `/api/v1/notices/{notice_id}/deliver` | POST | ✅ | Enforcement Add-on | Deliver notice to an AI company |
-| `/api/v1/notices/{notice_id}/evidence` | GET | ✅ | Enforcement Add-on | Get cryptographic evidence package (court-ready) |
-| `/api/v1/notices/{notice_id}/evidence/pdf` | GET | ✅ | Enforcement Add-on | Download Encypher-branded PDF evidence package |
+| `/api/v1/notices/` | GET | Yes | Enforcement Add-on | List all formal notices for the organization |
+| `/api/v1/notices/create` | POST | Yes | Enforcement Add-on | Create an immutable formal notice |
+| `/api/v1/notices/{notice_id}` | GET | Yes | Enforcement Add-on | Retrieve a formal notice |
+| `/api/v1/notices/{notice_id}/deliver` | POST | Yes | Enforcement Add-on | Deliver notice to an AI company |
+| `/api/v1/notices/{notice_id}/evidence` | GET | Yes | Enforcement Add-on | Get cryptographic evidence package (court-ready) |
+| `/api/v1/notices/{notice_id}/evidence/pdf` | GET | Yes | Enforcement Add-on | Download Encypher-branded PDF evidence package |
 
 Notices are append-only with SHA-256 content hashing for tamper-evidence. Each evidence package includes a linked `notice_evidence_chain` for chain-of-custody documentation.
 
@@ -529,90 +526,39 @@ Notices are append-only with SHA-256 content hashing for tamper-evidence. Each e
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/rights-licensing/request` | POST | ✅ | All | Submit a licensing request |
-| `/api/v1/rights-licensing/requests` | GET | ✅ | All | List licensing requests |
-| `/api/v1/rights-licensing/requests/{request_id}/respond` | PUT | ✅ | All | Approve or reject a licensing request |
-| `/api/v1/rights-licensing/agreements` | GET | ✅ | All | List active licensing agreements |
-| `/api/v1/rights-licensing/agreements/{agreement_id}` | GET | ✅ | All | Get a specific licensing agreement |
-| `/api/v1/rights-licensing/agreements/{agreement_id}/usage` | GET | ✅ | All | Get usage metrics for an agreement |
+| `/api/v1/rights-licensing/request` | POST | Yes | All | Submit a licensing request |
+| `/api/v1/rights-licensing/requests` | GET | Yes | All | List licensing requests |
+| `/api/v1/rights-licensing/requests/{request_id}/respond` | PUT | Yes | All | Approve or reject a licensing request |
+| `/api/v1/rights-licensing/agreements` | GET | Yes | All | List active licensing agreements |
+| `/api/v1/rights-licensing/agreements/{agreement_id}` | GET | Yes | All | Get a specific licensing agreement |
+| `/api/v1/rights-licensing/agreements/{agreement_id}/usage` | GET | Yes | All | Get usage metrics for an agreement |
 
 ### CDN Integration Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/cdn/cloudflare` | POST | ✅ | Enterprise | Create or update Cloudflare Logpush integration |
-| `/api/v1/cdn/cloudflare` | GET | ✅ | Enterprise | Get current Cloudflare Logpush integration config |
-| `/api/v1/cdn/cloudflare` | DELETE | ✅ | Enterprise | Remove Cloudflare Logpush integration |
+| `/api/v1/cdn/cloudflare` | POST | Yes | Enterprise | Create or update Cloudflare Logpush integration |
+| `/api/v1/cdn/cloudflare` | GET | Yes | Enterprise | Get current Cloudflare Logpush integration config |
+| `/api/v1/cdn/cloudflare` | DELETE | Yes | Enterprise | Remove Cloudflare Logpush integration |
 
 ### Onboarding & Provisioning Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/onboarding/request-certificate` | POST | ✅ | All | Request SSL.com code signing certificate |
-| `/api/v1/onboarding/certificate-status` | GET | ✅ | All | Get current certificate status |
-| `/api/v1/onboarding/progression-status` | GET | ✅ | All | Publisher value journey progression (6-stage Sign->Earnings) |
+| `/api/v1/onboarding/request-certificate` | POST | Yes | All | Request SSL.com code signing certificate |
+| `/api/v1/onboarding/certificate-status` | GET | Yes | All | Get current certificate status |
+| `/api/v1/onboarding/progression-status` | GET | Yes | All | Publisher value journey progression (6-stage Sign->Earnings) |
 
 ### Health & Monitoring Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/health` | GET | ❌ | Public | Health check |
-| `/readyz` | GET | ❌ | Public | Readiness probe |
-| `/metrics` | GET | ❌ | Internal | Prometheus-compatible metrics |
-| `/` | GET | ❌ | Public | API information |
+| `/health` | GET | No | Public | Health check |
+| `/readyz` | GET | No | Public | Readiness probe |
+| `/metrics` | GET | No | Internal | Prometheus-compatible metrics |
+| `/` | GET | No | Public | API information |
 
-### Features by Tier
-
-#### Free Tier ($0)
-- ✅ C2PA 2.3-compliant document signing (1K/month)
-- ✅ Sentence-level Merkle tree authentication
-- ✅ Invisible Unicode embeddings
-- ✅ Unlimited verifications and public API lookups
-- ✅ Content verification with attribution and plagiarism detection
-- ✅ Public verification pages
-- ✅ Streaming support (WebSocket/SSE)
-- ✅ Custom metadata and assertions
-- ✅ Audit logs
-- ✅ Coalition membership — auto-enrolled on first signed document
-- ✅ Rights Management — Bronze/Silver/Gold licensing profiles, templates, RSL import/export
-- ✅ Public rights resolution and machine-readable deeds (JSON-LD, ODRL, robots.txt)
-- ✅ Licensing transactions — request/respond/agreement lifecycle
-- ✅ AI crawler analytics — which bots are hitting your signed content, request volume over time, daily timeseries
-- ✅ WordPress plugin — auto-sign on publish
-- ✅ REST API, CLI, GitHub Action
-- ✅ Two-track licensing: Coalition deals (60% publisher / 40% Encypher) or Self-service deals (80% publisher / 20% Encypher)
-
-#### Enforcement Add-ons (paid)
-- **Phone-Home Detection**: Analytics for when signed content is actually encountered or used by AI systems (goes beyond crawl logs — requires Encypher provenance embeddings in content)
-- **Formal Notices**: Cryptographically-provable, court-ready notice infrastructure (append-only with SHA-256 content hashing, chain-of-custody documentation)
-- **Evidence Packages**: Court-ready evidence packages with Merkle proofs, tamper-evident manifests, litigation-format exports
-- **Content Spread** (Enterprise): External domain detection analytics — where signed content appears across the web
-
-#### Enterprise Tier (Custom pricing)
-- ✅ Everything in Free — unlimited (no caps on volume or API calls)
-- ✅ All enforcement add-ons included
-- ✅ **Cross-Org Search**: Verify content across all organizations (`search_scope=all`)
-- ✅ **Fuzzy Matching**: Detect paraphrased/rewritten content via fuzzy fingerprinting
-- ✅ **C2PA Provenance Chain**: Full edit history tracking
-- ✅ **Assertion Templates**: Pre-built industry templates
-- ✅ **Schema Registry**: Manage custom JSON schemas
-- ✅ **Robust Fingerprinting**: Survives paraphrasing, rewriting, and translation
-- ✅ **Evidence Generation**: Court-ready evidence packages (unlimited)
-- ✅ **Authority Ranking**: Configurable source ranking
-- ✅ **Cloudflare Logpush Integration**: CDN-level AI crawler detection
-- ✅ Batch operations (up to 100 documents per request)
-- ✅ Document revocation capability (StatusList2021)
-- ✅ Unlimited team members with role-based access controls
-- ✅ Webhooks for event notifications
-- ✅ SSO integration (SAML, OAuth)
-- ✅ Bring Your Own Keys (BYOK)
-- ✅ Dedicated SLA (99.9%), 24/7 support, named account manager
-- ✅ **Platform Partner Delegated Setup**: One-call publisher onboarding with rights profiles
-- ✅ Two-track licensing: Coalition deals (60% publisher / 40% Encypher) or Self-service deals (80% publisher / 20% Encypher)
-
----
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Authentication
 
@@ -639,7 +585,7 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
 
 ---
 
-## 📚 API Reference
+## API Reference
 
 ### Interactive API Docs
 
@@ -660,7 +606,7 @@ The API exposes interactive OpenAPI documentation:
 - `http://localhost:9000/docs/openapi.json`
 - `http://localhost:9000/internal/docs` (requires super admin)
 
-The gateway URL is what you should give to external developers—it's the single entry point for all API operations.
+The gateway URL is what you should give to external developers -- it's the single entry point for all API operations.
 
 For up-to-date per-tier limits and quotas, see [FEATURE_MATRIX.md](../FEATURE_MATRIX.md).
 
@@ -746,7 +692,7 @@ When `use_rights_profile: true`, the sign endpoint fetches the publisher's activ
 
 Verify signed content with optional attribution, plagiarism detection, and fuzzy search.
 
-Features are gated by tier — free tier gets basic verification, attribution, and plagiarism detection; Enterprise unlocks cross-org search and fuzzy matching.
+Features are gated by tier --free tier gets basic verification, attribution, and plagiarism detection; Enterprise unlocks cross-org search and fuzzy matching.
 
 **Dependencies**: Key Service (required)
 
@@ -899,7 +845,7 @@ Get usage statistics for your organization's current billing period.
 
 ---
 
-## 🔬 Enterprise Features
+## Enterprise Features
 
 ### Merkle Tree Encoding
 
@@ -962,21 +908,20 @@ scores, and optional Merkle proofs.
 
 ---
 
-### Source Attribution (Deprecated Endpoint)
+### POST /api/v1/enterprise/audio/sign
 
-The legacy Merkle attribution endpoint now returns HTTP 410. Use the unified verification endpoint instead.
-
-**Replacement Endpoint:** `POST /api/v1/verify` with `include_attribution=true`
-
-**Deprecated Endpoint:** `POST /api/v1/enterprise/merkle/attribute`
+Sign an audio file with a C2PA manifest. Enterprise tier only.
 
 **Request:**
 
 ```json
 {
-  "text": "Text to find sources for",
-  "min_similarity": 0.85,
-  "max_results": 10
+  "audio_data_base64": "<base64-encoded-audio>",
+  "mime_type": "audio/wav",
+  "title": "Interview Recording",
+  "action": "c2pa.created",
+  "custom_assertions": [],
+  "rights_data": {}
 }
 ```
 
@@ -985,37 +930,37 @@ The legacy Merkle attribution endpoint now returns HTTP 410. Use the unified ver
 ```json
 {
   "success": true,
-  "matches": [
-    {
-      "document_id": "doc_original123",
-      "similarity": 0.95,
-      "matched_text": "Original text that matches...",
-      "document_title": "Original Article",
-      "organization_name": "Original Publisher",
-      "publication_date": "2025-10-15T10:00:00Z"
-    }
-  ],
-  "search_time_ms": 45
+  "audio_id": "aud_a1b2c3d4e5f67890",
+  "document_id": "doc_f8e7d6c5b4a39021",
+  "signed_audio_base64": "<base64-encoded-signed-audio>",
+  "original_hash": "sha256:abc123...",
+  "signed_hash": "sha256:def456...",
+  "c2pa_instance_id": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+  "c2pa_manifest_hash": "sha256:789abc...",
+  "size_bytes": 1048576,
+  "mime_type": "audio/wav",
+  "c2pa_signed": true
 }
 ```
+
+Supported formats: WAV (RIFF), MP3 (ID3), M4A/AAC (ISO BMFF).
+Supported actions: `c2pa.created`, `c2pa.dubbed`, `c2pa.mixed`, `c2pa.mastered`, `c2pa.remixed`.
 
 ---
 
-### Plagiarism Detection (Deprecated Endpoint)
+### POST /api/v1/enterprise/video/sign
 
-The legacy plagiarism endpoint now returns HTTP 410. Use the unified verification endpoint instead.
+Sign a video file with a C2PA manifest. Multipart upload (not base64). Enterprise tier only.
 
-**Replacement Endpoint:** `POST /api/v1/verify` with `detect_plagiarism=true`
+**Request** (multipart/form-data):
 
-**Deprecated Endpoint:** `POST /api/v1/enterprise/merkle/detect-plagiarism`
-
-**Request:**
-
-```json
-{
-  "text": "Text to check for plagiarism",
-  "threshold": 0.80
-}
+```
+file: <video-file-binary>
+mime_type: video/mp4
+title: News Footage
+action: c2pa.created
+custom_assertions: []
+rights_data: {}
 ```
 
 **Response:**
@@ -1023,22 +968,71 @@ The legacy plagiarism endpoint now returns HTTP 410. Use the unified verificatio
 ```json
 {
   "success": true,
-  "is_plagiarized": true,
-  "similarity": 0.92,
-  "original_document_id": "doc_original123",
-  "original_title": "Original Article",
-  "original_author": "Jane Doe",
-  "original_publisher": "Acme News",
-  "publication_date": "2025-10-15T10:00:00Z",
-  "matched_segments": [
-    {
-      "query_text": "Plagiarized text segment...",
-      "original_text": "Original text segment...",
-      "similarity": 0.95
-    }
-  ]
+  "video_id": "vid_a1b2c3d4e5f67890",
+  "document_id": "doc_f8e7d6c5b4a39021",
+  "signed_video_base64": "<base64 for files under 50 MB, null for larger>",
+  "download_url": "/api/v1/enterprise/video/download/vid_a1b2c3d4e5f67890",
+  "original_hash": "sha256:abc123...",
+  "signed_hash": "sha256:def456...",
+  "c2pa_instance_id": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+  "c2pa_manifest_hash": "sha256:789abc...",
+  "size_bytes": 52428800,
+  "mime_type": "video/mp4",
+  "c2pa_signed": true
 }
 ```
+
+Supported formats: MP4, MOV, M4V (ISO BMFF), AVI (RIFF). Max 500 MB.
+Files over 50 MB return a `download_url` instead of inline base64 (10-min TTL).
+
+---
+
+### Live Video Stream Signing (C2PA 2.3 Section 19)
+
+Sign live video streams per-segment with backwards-linked provenance chain.
+
+**1. Start session:**
+
+```bash
+curl -X POST https://api.encypherai.com/api/v1/enterprise/video/stream/start \
+  -H "Authorization: Bearer encypher_..."
+```
+
+```json
+{
+  "session_id": "vstream_a1b2c3d4e5f6",
+  "status": "active",
+  "message": "Stream signing session created."
+}
+```
+
+**2. Sign segments** (multipart upload, repeat per segment):
+
+```
+POST /api/v1/enterprise/video/stream/{session_id}/segment
+file: <fmp4-segment-binary>
+mime_type: video/mp4
+```
+
+Each segment's C2PA manifest includes a `com.encypher.stream.chain.v1` assertion
+referencing the previous segment's manifest hash.
+
+**3. Finalize and get Merkle root:**
+
+```bash
+curl -X POST .../enterprise/video/stream/{session_id}/finalize
+```
+
+```json
+{
+  "session_id": "vstream_a1b2c3d4e5f6",
+  "segment_count": 42,
+  "merkle_root": "sha256:abc123...",
+  "status": "finalized"
+}
+```
+
+The Merkle root proves complete stream integrity over all segment manifest hashes.
 
 ---
 
@@ -1228,90 +1222,96 @@ scope="org" is available to all tiers; scope="all" (cross-org) requires Enterpri
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Microservices Architecture
 
 The Enterprise API is part of a comprehensive microservices ecosystem. Each service maintains its own database following the **database-per-service** pattern for scalability and resilience.
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                    Client Applications                        │
-│          (SDK, CLI, WordPress, Direct API Calls)             │
-└──────────────────────────────────────────────────────────────┘
-                              ↓
-┌──────────────────────────────────────────────────────────────┐
-│                    API Gateway (Traefik)                      │
-│                        Port 8000                              │
-│          Routes /api/v1/* to appropriate services             │
-└──────────────────────────────────────────────────────────────┘
-                              ↓
-            ┌─────────────────┴─────────────────┐
-            ↓                                   ↓
-┌─────────────────────────┐       ┌─────────────────────────┐
-│   Enterprise API        │       │    Key Service          │
-│     Port 9000           │←──────│     Port 8003           │
-│                         │       │                         │
-│ - C2PA Signing          │       │ - API Key Validation    │
-│ - Content Verification  │       │ - Org Context/Tier      │
-│ - Merkle Trees          │       │ - Feature Permissions   │
-│ - Embeddings            │       │ - Usage Quotas          │
-│ - Sentence Tracking     │       │                         │
-└─────────────────────────┘       └─────────────────────────┘
-            ↓                                   ↓
-┌─────────────────────────┐       ┌─────────────────────────┐
-│  PostgreSQL Content DB  │       │  PostgreSQL Keys DB     │
-│   (Enterprise API)      │       │   (Key Service)         │
-│                         │       │                         │
-│ - documents             │       │ - api_keys              │
-│ - merkle_trees          │       │ - organizations         │
-│ - sentence_records      │       │ - subscriptions         │
-│ - manifests             │       │ - usage_records         │
-│ - embeddings            │       │                         │
-└─────────────────────────┘       └─────────────────────────┘
++--------------------------------------------------------------+
+|                    Client Applications                        |
+|          (SDK, CLI, WordPress, Direct API Calls)              |
++--------------------------------------------------------------+
+                              |
+                              v
++--------------------------------------------------------------+
+|                    API Gateway (Traefik)                       |
+|                        Port 8000                              |
+|          Routes /api/v1/* to appropriate services             |
++--------------------------------------------------------------+
+                              |
+              +---------------+---------------+
+              v                               v
++-------------------------+       +-------------------------+
+|   Enterprise API        |       |    Key Service          |
+|     Port 9000           |<------|     Port 8003           |
+|                         |       |                         |
+| - C2PA Signing          |       | - API Key Validation    |
+| - Content Verification  |       | - Org Context/Tier      |
+| - Merkle Trees          |       | - Feature Permissions   |
+| - Embeddings            |       | - Usage Quotas          |
+| - Sentence Tracking     |       |                         |
++-------------------------+       +-------------------------+
+              |                               |
+              v                               v
++-------------------------+       +-------------------------+
+|  PostgreSQL Content DB  |       |  PostgreSQL Keys DB     |
+|   (Enterprise API)      |       |   (Key Service)         |
+|                         |       |                         |
+| - documents             |       | - api_keys              |
+| - merkle_trees          |       | - organizations         |
+| - sentence_records      |       | - subscriptions         |
+| - manifests             |       | - usage_records         |
+| - embeddings            |       |                         |
++-------------------------+       +-------------------------+
 
-            ↓
-┌─────────────────────────┐       ┌─────────────────────────┐
-│  Coalition Service      │       │    Auth Service         │
-│     Port 8009           │       │     Port 8001           │
-│                         │       │                         │
-│ - Content Indexing      │       │ - User Authentication   │
-│ - Revenue Distribution  │       │ - JWT Management        │
-│ - Licensing Management  │       │ - OAuth Integration     │
-│ - Member Stats          │       │ - Org Provisioning      │
-└─────────────────────────┘       └─────────────────────────┘
-            ↓                                   ↓
-┌─────────────────────────┐       ┌─────────────────────────┐
-│ PostgreSQL Coalition DB │       │  PostgreSQL Auth DB     │
-│  (Coalition Service)    │       │   (Auth Service)        │
-│                         │       │                         │
-│ - coalition_members     │       │ - users                 │
-│ - coalition_content     │       │ - sessions              │
-│ - licensing_agreements  │       │ - oauth_tokens          │
-│ - revenue_distributions │       │                         │
-└─────────────────────────┘       └─────────────────────────┘
+              |
+              v
++-------------------------+       +-------------------------+
+|  Coalition Service      |       |    Auth Service         |
+|     Port 8009           |       |     Port 8001           |
+|                         |       |                         |
+| - Content Indexing      |       | - User Authentication   |
+| - Revenue Distribution  |       | - JWT Management        |
+| - Licensing Management  |       | - OAuth Integration     |
+| - Member Stats          |       | - Org Provisioning      |
++-------------------------+       +-------------------------+
+              |                               |
+              v                               v
++-------------------------+       +-------------------------+
+| PostgreSQL Coalition DB |       |  PostgreSQL Auth DB     |
+|  (Coalition Service)    |       |   (Auth Service)        |
+|                         |       |                         |
+| - coalition_members     |       | - users                 |
+| - coalition_content     |       | - sessions              |
+| - licensing_agreements  |       | - oauth_tokens          |
+| - revenue_distributions |       |                         |
++-------------------------+       +-------------------------+
 
-                    ↓
-┌──────────────────────────────────────────────────────────────┐
-│                    Redis Cache Layer                          │
-│                        Port 6379                              │
-│                                                               │
-│ - Key Validation Cache (5min TTL)                            │
-│ - Session Management                                          │
-│ - Rate Limiting State                                         │
-│ - Streaming Session State                                    │
-└──────────────────────────────────────────────────────────────┘
+                    |
+                    v
++--------------------------------------------------------------+
+|                    Redis Cache Layer                           |
+|                        Port 6379                              |
+|                                                               |
+| - Key Validation Cache (5min TTL)                             |
+| - Session Management                                          |
+| - Rate Limiting State                                         |
+| - Streaming Session State                                     |
++--------------------------------------------------------------+
 
-                    ↓
-┌──────────────────────────────────────────────────────────────┐
-│                  encypher-ai Core Library                     │
-│                      (v2.9.0+)                               │
-│                                                               │
-│ - C2PA Manifest Generation                                    │
-│ - Unicode Metadata Embedding                                  │
-│ - Cryptographic Signature Verification                        │
-│ - Merkle Tree Operations                                      │
-└──────────────────────────────────────────────────────────────┘
+                    |
+                    v
++--------------------------------------------------------------+
+|                  encypher-ai Core Library                      |
+|                      (v2.9.0+)                                |
+|                                                               |
+| - C2PA Manifest Generation                                    |
+| - Unicode Metadata Embedding                                  |
+| - Cryptographic Signature Verification                        |
+| - Merkle Tree Operations                                      |
++--------------------------------------------------------------+
 ```
 
 ### Database-Per-Service Pattern
@@ -1353,18 +1353,18 @@ Each microservice maintains its own PostgreSQL database for complete autonomy:
 ### Unified Authentication Flow
 
 ```
-1. Client → Enterprise API
+1. Client -> Enterprise API
    Authorization: Bearer encypher_abc123...
 
-2. Enterprise API → Key Service
+2. Enterprise API -> Key Service
    POST /api/v1/keys/validate
    { "key": "encypher_abc123..." }
 
-3. Key Service → PostgreSQL Keys DB
+3. Key Service -> PostgreSQL Keys DB
    SELECT * FROM api_keys WHERE key_hash = hash(...)
    JOIN organizations, subscriptions
 
-4. Key Service → Enterprise API
+4. Key Service -> Enterprise API
    {
      "success": true,
      "data": {
@@ -1376,10 +1376,10 @@ Each microservice maintains its own PostgreSQL database for complete autonomy:
      }
    }
 
-5. Enterprise API → Redis
+5. Enterprise API -> Redis
    Cache validation result (5min TTL)
 
-6. Enterprise API → Client
+6. Enterprise API -> Client
    Process request with org context
 ```
 
@@ -1391,13 +1391,13 @@ Each microservice maintains its own PostgreSQL database for complete autonomy:
 ### Coalition Integration Flow
 
 ```
-1. Client signs content → Enterprise API
+1. Client signs content -> Enterprise API
    POST /api/v1/sign
 
 2. Enterprise API checks if user is coalition member
 
 3. If coalition member:
-   Enterprise API → Coalition Service
+   Enterprise API -> Coalition Service
    POST /api/v1/coalition/content
    {
      "member_id": "...",
@@ -1407,7 +1407,7 @@ Each microservice maintains its own PostgreSQL database for complete autonomy:
      "signed_at": "2025-12-01T10:00:00Z"
    }
 
-4. Coalition Service → PostgreSQL Coalition DB
+4. Coalition Service -> PostgreSQL Coalition DB
    INSERT INTO coalition_content (...)
 
 5. Coalition Service tracks content for:
@@ -1427,7 +1427,7 @@ Signed text is produced in a C2PA-compatible form and can be verified using `POS
 
 ---
 
-## 🔐 Security
+## Security
 
 ### Unified Authentication Architecture
 
@@ -1497,7 +1497,7 @@ X-RateLimit-Reset: 1733097600
 
 ---
 
-## 📊 Performance
+## Performance
 
 ### Benchmarks
 
@@ -1520,7 +1520,7 @@ See [BENCHMARK_BASELINE.md](BENCHMARK_BASELINE.md) for detailed analysis of the 
 
 ---
 
-## 🛠️ Error Handling
+## Error Handling
 
 ### Error Codes
 
@@ -1586,7 +1586,7 @@ message. This prevents binary data from being submitted to text endpoints.
 
 ---
 
-## 🤝 Coalition Service Integration
+## Coalition Service Integration
 
 The Enterprise API automatically indexes signed content with the Coalition Service for eligible users.
 
@@ -1605,10 +1605,10 @@ When content is signed:
 - `GET /api/v1/coalition/stats/{user_id}` - Get member statistics
 
 **Coalition Features**:
-- ✅ Automatic content indexing for coalition members
-- ✅ Revenue sharing (70-85% members / 15-30% platform, based on tier)
-- ✅ Bulk licensing to AI companies
-- ✅ Access tracking and analytics
+- Automatic content indexing for coalition members
+- Revenue sharing (70-85% members / 15-30% platform, based on tier)
+- Bulk licensing to AI companies
+- Access tracking and analytics
 
 **Service Location**: `services/coalition-service` (Port 8009)
 
@@ -1616,7 +1616,7 @@ When content is signed:
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -1715,6 +1715,9 @@ SIGNING_PASSTHROUGH=false
 
 # TrustMark microservice URL (empty = disabled, Enterprise only)
 IMAGE_SERVICE_URL=
+
+# Max video size per upload (bytes, default 500MB)
+VIDEO_MAX_SIZE_BYTES=524288000
 ```
 
 #### C2PA Trust List Configuration
@@ -1798,7 +1801,7 @@ This model avoids mandatory per-tenant cert spend while supporting premium tenan
 
 ---
 
-## 📖 SDK Support
+## SDK Support
 
 ### Official SDKs
 
@@ -1814,7 +1817,7 @@ This model avoids mandatory per-tenant cert spend while supporting premium tenan
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Test Environment
 Base URL: `https://api-staging.encypherai.com/api/v1`
@@ -1853,7 +1856,7 @@ To show a non-personal publisher name in verify responses and extension identity
 1. **Use an organization-scoped API key when possible**
    - Keys tied to an organization return organization identity fields directly.
 2. **Set your publishing identity in Dashboard**
-   - Open `dashboard.encypherai.com` → Settings → Publisher identity.
+   - Open `dashboard.encypherai.com` -> Settings -> Publisher identity.
    - Set a `display_name` (for example, your newsroom or brand name).
    - For enterprise/custom identity, set signing identity mode to `custom` and define a custom label.
 3. **Confirm identity fields via API**
@@ -1897,7 +1900,7 @@ For detailed instructions on running local benchmarks and load tests, please ref
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 - **API Docs**: [docs.encypherai.com/api](https://docs.encypherai.com/api)
 - **SDK Docs**: [docs.encypherai.com/sdk](https://docs.encypherai.com/sdk)
@@ -1906,6 +1909,8 @@ For detailed instructions on running local benchmarks and load tests, please ref
 - **Coalition Service**: [services/coalition-service/README.md](../services/coalition-service/README.md)
 - **Image Signing Implementation Guide**: [docs/image-signing/implementation-guide.md](../docs/image-signing/implementation-guide.md) -- XMP embedding details, passthrough mode, two-step verification, Traefik routing
 - **Audio C2PA Signing**: Endpoints at `/enterprise/audio/sign` and `/enterprise/audio/verify` -- WAV (RIFF), MP3 (ID3), M4A/AAC (ISO BMFF) via c2pa-python; see `app/services/audio_signing_service.py`
+- **Video C2PA Signing**: Endpoints at `/enterprise/video/sign` and `/enterprise/video/verify` -- MP4, MOV, M4V (ISO BMFF), AVI (RIFF); multipart upload up to 500 MB; see `app/services/video_signing_service.py`
+- **Live Video Stream Signing**: Session-based per-segment signing at `/enterprise/video/stream/*` -- C2PA 2.3 Section 19; see `app/services/video_stream_signing_service.py`
 - **Inspect Tool (marketing site)**: [apps/marketing-site/src/app/tools/inspect/README.md](../apps/marketing-site/src/app/tools/inspect/README.md)
 - **C2PA Custom Assertions API**: [docs/api/C2PA_CUSTOM_ASSERTIONS_API.md](../docs/api/C2PA_CUSTOM_ASSERTIONS_API.md)
 - **C2PA Provenance Chain**: [docs/c2pa/C2PA_PROVENANCE_CHAIN.md](../docs/c2pa/C2PA_PROVENANCE_CHAIN.md)
@@ -1915,7 +1920,7 @@ For detailed instructions on running local benchmarks and load tests, please ref
 
 ---
 
-## 🤝 Support
+## Support
 
 - **Email**: api@encypherai.com
 - **Status Page**: [verify.encypherai.com/status](https://verify.encypherai.com/status)
@@ -1931,13 +1936,13 @@ For detailed instructions on running local benchmarks and load tests, please ref
 
 ---
 
-## 📄 License
+## License
 
 Proprietary - See [LICENSE](../LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Built with:
 - [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework
@@ -1951,8 +1956,8 @@ Built with:
 
 <div align="center">
 
-**Made with ❤️ by Encypher**
+**Made by Encypher**
 
-[Website](https://encypherai.com) • [Dashboard](https://dashboard.encypherai.com) • [Docs](https://docs.encypherai.com) • [Status](https://verify.encypherai.com/status)
+[Website](https://encypherai.com) |[Dashboard](https://dashboard.encypherai.com) |[Docs](https://docs.encypherai.com) |[Status](https://verify.encypherai.com/status)
 
 </div>
