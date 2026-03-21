@@ -293,13 +293,15 @@ async def execute_rich_signing(
     except Exception as e:
         logger.error("DB commit failed for rich signing doc=%s: %s", doc_id, e)
         await content_db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "code": "E_DB_ERROR",
-                "message": "Failed to persist signing results",
-            },
-        )
+        if not (settings.signing_passthrough or settings.image_signing_passthrough):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "code": "E_DB_ERROR",
+                    "message": "Failed to persist signing results",
+                },
+            )
+        logger.warning("Passthrough mode: returning signed data despite DB failure for doc=%s", doc_id)
 
     elapsed_ms = round((time.time() - start_time) * 1000, 2)
 
