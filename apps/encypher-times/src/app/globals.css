@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+/* Tailwind v4 Theme -- Newspaper Design Tokens */
+@theme {
+  /* Brand colors (Encypher) */
+  --color-delft-blue: #1b2f50;
+  --color-blue-ncs: #2a87c4;
+  --color-columbia-blue: #b7d5ed;
+  --color-cyber-teal: #00ced1;
+
+  /* Newspaper palette */
+  --color-ink: #1a1a1a;
+  --color-ink-light: #555555;
+  --color-ink-muted: #666666;
+  --color-ink-faint: #999999;
+  --color-rule: #000000;
+  --color-rule-light: #d1d5db;
+  --color-newsprint: #ffffff;
+  --color-newsprint-warm: #fafaf8;
+
+  /* Section accent colors */
+  --color-section-technology: #1b2f50;
+  --color-section-policy: #2a87c4;
+  --color-section-media: #00ced1;
+  --color-section-analysis: #555555;
+  --color-section-opinion: #8b5cf6;
+
+  /* Font families */
+  --font-masthead: var(--font-unifraktur), "Georgia", serif;
+  --font-headline: var(--font-playfair), "Georgia", serif;
+  --font-body: "Georgia", "Times New Roman", serif;
+  --font-ui: var(--font-roboto), "Arial", sans-serif;
+  --font-mono: "Roboto Mono", monospace;
+}
+
+/* Base styles -- newspaper aesthetic */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-newsprint);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Newspaper container */
+.newspaper-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .newspaper-container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .newspaper-container {
+    padding: 0 2rem;
+  }
+}
+
+/* Article body typography */
+.article-prose p {
+  margin-bottom: 1.25rem;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+.article-prose h2 {
+  font-family: var(--font-headline);
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 2.5rem 0 1rem;
+  color: var(--color-rule);
+}
+
+.article-prose blockquote {
+  border-left: 3px solid var(--color-rule-light);
+  padding-left: 1.25rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--color-ink-light);
+}
+
+/* Section label style */
+.section-label {
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* Newspaper rules (horizontal lines) */
+.rule-heavy {
+  border-top: 3px solid var(--color-rule);
+}
+
+.rule-light {
+  border-top: 1px solid var(--color-rule-light);
+}
+
+.rule-section {
+  border-top: 1px solid var(--color-rule);
+}
+
+/* Extension banner slide-up */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
