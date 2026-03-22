@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Verification Test Page</title>
+  <style>
+    body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; }
+    h1, h2 { color: #1F2937; }
+    .section { margin: 20px 0; padding: 16px; border: 1px solid #E5E7EB; border-radius: 8px; }
+    img.test-img { max-width: 200px; display: block; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <h1>Media Verification Test Page</h1>
+  <p>This page contains various media elements for E2E testing of the Encypher Chrome extension.</p>
+
+  <!-- Images Section -->
+  <div class="section" id="images-section">
+    <h2>Images</h2>
+    <img src="https://via.placeholder.com/300x200.jpg?text=Test+Image+1" alt="Test image 1" class="test-img" id="img-1">
+    <img src="https://via.placeholder.com/300x200.png?text=Test+Image+2" alt="Test image 2" class="test-img" id="img-2">
+    <img src="https://via.placeholder.com/300x200.jpg?text=Test+Image+3" alt="Test image 3" class="test-img" id="img-3">
+  </div>
+
+  <!-- Audio Section -->
+  <div class="section" id="audio-section">
+    <h2>Audio</h2>
+    <audio controls id="audio-1">
+      <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGFxxxxx" type="audio/wav">
+      Your browser does not support the audio element.
+    </audio>
+  </div>
+
+  <!-- Video Section -->
+  <div class="section" id="video-section">
+    <h2>Video</h2>
+    <video controls width="320" id="video-1">
+      <source src="data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDE=" type="video/mp4">
+      Your browser does not support the video element.
+    </video>
+  </div>
+
+  <!-- No-media section (control) -->
+  <div class="section" id="text-section">
+    <h2>Plain Text (no media)</h2>
+    <p>This section has no media elements. It serves as a control area.</p>
+  </div>
+</body>
+</html>

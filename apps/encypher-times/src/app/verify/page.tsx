@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function VerifyPage() {
   return (
-    <div className="py-8 max-w-[680px] mx-auto">
+    <div className="py-8 pb-24 max-w-[680px] mx-auto">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-3">

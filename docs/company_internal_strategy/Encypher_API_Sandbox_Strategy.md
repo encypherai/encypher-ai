@@ -2,7 +2,7 @@
 
 ## Standards-Based Text Provenance Demonstration
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication (C2PA 2.3 Released)
 **Version:** 4.1
 **Distribution:** Product & Engineering Teams
@@ -66,6 +66,9 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - Formal notice capability
 - Performance intelligence
 - Public verification API (no auth required)
+- Multi-media C2PA signing: images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), live streams
+- Rich article signing: text + images as single atomic provenance unit
+- CDN image provenance with edge integrations (Cloudflare, Fastly, Lambda@Edge)
 - **Message: "This enables licensing, governance, and attribution intelligence"**
 
 ---
@@ -80,6 +83,7 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - "Enforcement + Enterprise"
 - "Real-Time Streaming Demo"
 - "Compare Unmarked vs. Marked"
+- "Multi-Media Signing Demo" (Enterprise)
 
 **Smart Examples:**
 
@@ -89,6 +93,9 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - Copy-paste survival demonstration
 - Real-time LLM signing (streaming)
 - Invisible embedding extraction & verification
+- Image C2PA signing and verification
+- Audio provenance embedding and extraction
+- Rich article (text + photos) atomic signing
 
 **Real-Time Comparison:**
 
@@ -273,6 +280,10 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 
 | | Court-Admissible Evidence | | Limited | ... Yes | |
 
+| | Multi-Media Signing | | | ... Yes | |
+
+| | Free Verification (All Media) | | ... Yes | ... Yes | |
+
 | | | |
 
 | | \[Start Free Trial\] \[Schedule Demo\] \[View Pricing\] | |
@@ -393,6 +404,38 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 
 - Create streaming session with configuration
 - Demo: Session management for long-running streams
+
+### Multi-Media Endpoints (Enterprise)
+
+**POST /api/v1/sign/rich**
+
+- Sign rich article (text + embedded images) as atomic provenance unit
+- Demo: Upload article text with photos, show unified C2PA manifests
+- Highlight: Single provenance unit for entire article package
+
+**POST /api/v1/cdn/images/sign**
+
+- Sign standalone images with C2PA JUMBF manifests
+- Demo: Upload image, show embedded manifest, verify with public API
+- Highlight: pHash fingerprinting for derivative detection across resized/reformatted variants
+
+**POST /enterprise/audio/sign**
+
+- Sign audio files (WAV/MP3/M4A) with format-native C2PA embedding
+- Demo: Upload audio, show C2PA manifest in container-specific format
+- Highlight: Supports c2pa.created, c2pa.dubbed, c2pa.mixed, c2pa.mastered actions
+
+**POST /enterprise/video/sign**
+
+- Sign video files (MP4/MOV/M4V/AVI up to 500MB) with C2PA manifests
+- Demo: Upload video, show embedded manifest, verify
+- Highlight: Large file support with download URL for files over 50MB
+
+**POST /enterprise/video/stream/***
+
+- Sign live video streams per-segment (C2PA 2.3 Section 19)
+- Demo: Simulate live stream signing with manifest chaining
+- Highlight: Backwards-linked provenance across segments
 
 ---
 
@@ -556,6 +599,8 @@ Every interaction highlights:
 
 **Opening:** "Text on the open web has no cryptographic proof of origin. As Co-Chair of the C2PA Text Provenance Task Force, we're changing that--building standards with Google, BBC, OpenAI, Adobe, and Microsoft."
 
+"Our Enterprise platform extends beyond text to sign your photos, audio, and video with C2PA provenance. And verification is free across all media -- any third party can check, no cost, no auth."
+
 **Comparison:** "See the difference between unmarked text (no proof), basic C2PA (document proof), and our patent-pending enhancements (sentence-level proof that enables licensing)."
 
 **Call to Action:** "Ready to implement? Try our reference implementation or explore enterprise capabilities."
@@ -578,7 +623,7 @@ The sandbox proves: **Unmarked text has no proof. C2PA provides proof. Our enhan
 
 ## Document Control
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication, Marketing Push Pending Landmark Deal
 **Distribution:** Product & Engineering Teams
 **Next Review:** After first landmark deal announcement
@@ -596,3 +641,10 @@ The sandbox proves: **Unmarked text has no proof. C2PA provides proof. Our enhan
 - ... Added minimal invisible embeddings feature
 - ... Added public verification API (no auth required)
 - ... Updated technical implementation to match production API
+- ... Added multi-media C2PA signing (images, audio, video, live streams) -- Enterprise tier
+- ... Added rich article signing (text + images as atomic provenance unit)
+- ... Added CDN image provenance with edge integrations
+- ... Added Multi-Media Endpoints section (5 new endpoints)
+- ... Added free verification across all media asset classes
+- ... Updated Capability Comparison table with multi-media and free verification rows
+- ... Updated Key Messages -- Opening to include multi-media and free verification message

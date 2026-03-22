@@ -697,6 +697,95 @@ async def _resolve_org_context(
 
 
 # ---------------------------------------------------------------------------
+# Content integrity check (tamper detection via leaf_hash)
+# ---------------------------------------------------------------------------
+
+# Characters used by the encypher-ai embedding system that must be stripped
+# before hashing the visible text for content integrity comparison.
+_INVISIBLE_RANGES = (
+    (0xE0000, 0xE0FFF),  # Tags + VS Supplement + private use
+    (0xFE00, 0xFE0F),  # Variation Selectors
+    (0x200B, 0x200F),  # Zero-width and directional markers
+    (0x2060, 0x2069),  # Word joiner, invisible separators
+    (0x034F, 0x034F),  # Combining Grapheme Joiner
+    (0x180E, 0x180E),  # Mongolian Vowel Separator
+    (0xFEFF, 0xFEFF),  # BOM / ZWNBSP
+)
+
+
+def _strip_invisible(text: str) -> str:
+    """Remove all invisible embedding characters, returning only visible text."""
+    chars = []
+    for c in text:
+        cp = ord(c)
+        skip = False
+        for lo, hi in _INVISIBLE_RANGES:
+            if lo <= cp <= hi:
+                skip = True
+                break
+        if not skip:
+            chars.append(c)
+    return "".join(chars)
+
+
+def _compute_leaf_hash(text: str) -> str:
+    """SHA-256 of NFC-normalized text (matches enterprise signing pipeline)."""
+    normalized = unicodedata.normalize("NFC", text)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _check_content_integrity(
+    submitted_text: str,
+    manifest: dict | None,
+    logger,
+) -> bool | None:
+    """Check if visible text matches the leaf_hash from embedded metadata.
+
+    Returns True if content matches, False if tampered, None if check is
+    not applicable (no leaf_hash available or not a basic-format embedding).
+    """
+    if not isinstance(manifest, dict):
+        return None
+
+    custom_metadata = manifest.get("custom_metadata", {})
+    if not isinstance(custom_metadata, dict):
+        return None
+
+    expected_hash = custom_metadata.get("leaf_hash")
+    if not expected_hash or not isinstance(expected_hash, str):
+        return None
+
+    # Only apply to basic/manifest format (C2PA has its own hard binding)
+    fmt = manifest.get("format")
+    if fmt == "c2pa":
+        return None
+
+    visible_text = _strip_invisible(submitted_text)
+
+    # The signing pipeline hashes sentences as sliced by spaCy, which may
+    # include trailing whitespace (newlines).  Try several normalizations.
+    candidates = [
+        visible_text,
+        visible_text.strip(),
+        visible_text + "\n",
+        visible_text + "\n\n",
+        visible_text.strip() + "\n",
+        visible_text.strip() + "\n\n",
+    ]
+    for candidate in candidates:
+        if _compute_leaf_hash(candidate) == expected_hash:
+            logger.info("content_integrity_check", result="match")
+            return True
+
+    logger.info(
+        "content_integrity_check",
+        result="mismatch",
+        expected_hash=expected_hash[:16] + "...",
+    )
+    return False
+
+
+# ---------------------------------------------------------------------------
 # Fallback embedding detection helpers (Task 2.0)
 # ---------------------------------------------------------------------------
 
@@ -923,26 +1012,33 @@ def _build_verdict(
     vs256_org_id: str | None,
     legacy_safe_org_id: str | None,
     include_merkle: bool,
+    content_tampered: bool = False,
 ) -> VerifyVerdict:
     """Assemble VerifyVerdict from all verification state."""
     # Determine reason_code
-    reason_code = "OK" if is_valid else "SIGNATURE_INVALID"
-    if not signer_id:
-        reason_code = "SIGNER_UNKNOWN"
-    elif zw_org_id and signer_id == zw_org_id:
-        # TEAM_156: ZW DB-resolved - skip public_key_resolver check
+    if content_tampered:
+        reason_code = "CONTENT_MODIFIED"
+    elif is_valid:
         reason_code = "OK"
-    elif vs256_org_id and signer_id == vs256_org_id:
-        # TEAM_158: VS256 DB-resolved - skip public_key_resolver check
-        reason_code = "OK"
-    elif legacy_safe_org_id and signer_id == legacy_safe_org_id:
-        # Legacy-safe DB-resolved - skip public_key_resolver check
-        reason_code = "OK"
-    elif public_key_resolver(signer_id) is None:
-        reason_code = "CERT_NOT_FOUND"
-    elif is_valid and embedded_public_key is not None and not embedded_trusted and not (organization_id and signer_id == organization_id):
-        # TEAM_065: Valid signature, but signer cannot be validated to a trusted root.
-        reason_code = "UNTRUSTED_SIGNER"
+    else:
+        reason_code = "SIGNATURE_INVALID"
+    if not content_tampered:
+        if not signer_id:
+            reason_code = "SIGNER_UNKNOWN"
+        elif zw_org_id and signer_id == zw_org_id:
+            # TEAM_156: ZW DB-resolved - skip public_key_resolver check
+            pass  # reason_code already "OK"
+        elif vs256_org_id and signer_id == vs256_org_id:
+            # TEAM_158: VS256 DB-resolved - skip public_key_resolver check
+            pass  # reason_code already "OK"
+        elif legacy_safe_org_id and signer_id == legacy_safe_org_id:
+            # Legacy-safe DB-resolved - skip public_key_resolver check
+            pass  # reason_code already "OK"
+        elif public_key_resolver(signer_id) is None:
+            reason_code = "CERT_NOT_FOUND"
+        elif is_valid and embedded_public_key is not None and not embedded_trusted and not (organization_id and signer_id == organization_id):
+            # TEAM_065: Valid signature, but signer cannot be validated to a trusted root.
+            reason_code = "UNTRUSTED_SIGNER"
 
     # Attach navigation hints for non-OK reason codes
     _REASON_HINTS: dict[str, str] = {
@@ -958,6 +1054,10 @@ def _build_verdict(
         "UNTRUSTED_SIGNER": (
             "The signature is cryptographically valid but the signer certificate is not "
             "anchored to a trusted root. Contact the publisher for their trust anchor PEM."
+        ),
+        "CONTENT_MODIFIED": (
+            "The embedded signature is valid but the visible text has been modified since signing. "
+            "The content no longer matches the original cryptographic hash."
         ),
     }
     hint = _REASON_HINTS.get(reason_code)
@@ -1033,7 +1133,7 @@ def _build_verdict(
 
     return VerifyVerdict(
         valid=is_valid,
-        tampered=(not is_valid and reason_code == "SIGNATURE_INVALID"),
+        tampered=(content_tampered or (not is_valid and reason_code == "SIGNATURE_INVALID")),
         reason_code=reason_code,
         signer_id=signer_id,
         publisher_name=publisher_name,
@@ -1427,6 +1527,14 @@ async def verify_text(
                 resolved_total_segments = ls_total_segs
             manifest = {"segment_uuid": ls_first_id, "total_signatures": len(ls_embeddings)}
 
+    # Content integrity check: verify visible text matches leaf_hash
+    content_tampered = False
+    if is_valid and manifest:
+        integrity_result = _check_content_integrity(verify_request.text, manifest, logger)
+        if integrity_result is False:
+            content_tampered = True
+            is_valid = False
+
     duration_ms = int((time.perf_counter() - start) * 1000)
 
     logger.info(
@@ -1437,6 +1545,7 @@ async def verify_text(
         duration_ms=duration_ms,
         has_c2pa_wrapper=has_c2pa_wrapper,
         variation_selectors=vs_count,
+        content_tampered=content_tampered,
     )
 
     include_merkle = bool(verify_request.options and verify_request.options.include_merkle_proof and organization_id)
@@ -1446,6 +1555,7 @@ async def verify_text(
         signer_id=signer_id,
         manifest=manifest,
         duration_ms=duration_ms,
+        content_tampered=content_tampered,
         payload_bytes=payload_bytes,
         organization_id=organization_id,
         organization_name=organization_name,

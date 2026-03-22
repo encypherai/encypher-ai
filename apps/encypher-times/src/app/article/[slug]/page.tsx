@@ -33,7 +33,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     .slice(0, 3);
 
   return (
-    <article className="py-8 max-w-[680px] mx-auto">
+    <article className="py-8 pb-24 max-w-[680px] mx-auto">
       {/* Breadcrumb */}
       <nav className="font-[family-name:var(--font-ui)] text-xs text-ink-faint mb-4">
         <Link href="/" className="hover:text-blue-ncs transition-colors">

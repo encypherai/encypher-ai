@@ -1,5 +1,5 @@
 # Encypher Corporation Master GTM Strategy
-## Standards-Driven Coalition Strategy for Text Provenance Infrastructure
+## Standards-Driven Coalition Strategy for Content Provenance Infrastructure
 
 **Last Updated:** March 4, 2026
 **Status:** Post-Standard Publication (Syracuse Roundtable Rescheduling)
@@ -17,12 +17,15 @@
 
 ## Executive Summary
 
-As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, Encypher executes a **Standards-Driven Coalition Strategy** to establish text provenance infrastructure as essential for the AI content economy. The C2PA text standard **published January 8, 2026** -- [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text). Our patent-pending sentence-level tracking creates a sustainable competitive moat while our two-track licensing model (coalition 60/40, self-service 80/20) aligns incentives for explosive growth.
+As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, Encypher executes a **Standards-Driven Coalition Strategy** to establish content provenance infrastructure as essential for the AI content economy. The C2PA text standard **published January 8, 2026** -- [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text). Our patent-pending sentence-level tracking creates a sustainable competitive moat while our two-track licensing model (coalition 60/40, self-service 80/20) aligns incentives for explosive growth.
+
+**Text is the strategic wedge; media signing is the full platform.** We entered the market through text -- where we authored the C2PA specification and no standard existed. The Enterprise API now signs text, images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), and live video streams with C2PA manifests. This means publishers can sign their entire content portfolio -- articles, photos, podcasts, video -- under one provenance infrastructure. Verification is free across all media asset classes: any third party can verify any signed content at no cost, removing friction from the trust chain.
 
 **The Asymmetric Model 3.0:**
-- **Publishers (Free Tier):** Full signing infrastructure at no cost + freemium enforcement add-ons
-- **Publishers (Enterprise):** $10-30k implementation + unlimited capabilities
+- **Publishers (Free Tier):** Full text signing infrastructure at no cost + freemium enforcement add-ons
+- **Publishers (Enterprise):** $10-30k implementation + unlimited capabilities including multi-media signing (images, audio, video, live streams)
 - **All Publishers:** Coalition deals (60/40) or self-service deals (80/20)
+- **All Tiers:** Verification is always free across all media asset classes -- text, images, audio, video
 - **Encypher:** Licensing revenue share + enforcement tool subscriptions + enterprise implementation fees
 
 **Strategic Positioning (Validated by AP Engagement):**
@@ -67,6 +70,17 @@ Tier 3 -- End-to-End Output Attribution (Future / Requires Full Provenance Chain
 AI company preserves provenance metadata through their pipeline and attributes sources in generated outputs. This is the long-term C2PA ecosystem vision but is NOT available today and requires industry-wide adoption of provenance infrastructure. It answers: "Which specific sources informed this AI-generated output?"
 
 When describing Attribution Analytics, Chrome extension, or any detection capability, always specify which tier applies. Never describe Tier 1 capabilities using Tier 2 or Tier 3 language.
+
+### Media Asset Verification
+
+Verification is free across all media asset classes. The public verification API requires no authentication and covers:
+- **Text:** Verify signed text, extract C2PA manifests, detect tampering at sentence level
+- **Images:** Verify C2PA JUMBF manifests in JPEG/PNG/WebP/TIFF; perceptual hash (pHash) attribution search for fuzzy derivative matching across resized/reformatted variants
+- **Audio:** Verify C2PA manifests in WAV (RIFF chunk), MP3 (ID3 GEOB frame), M4A/AAC (ISO BMFF uuid box)
+- **Video:** Verify C2PA manifests in MP4/MOV/M4V (ISO BMFF uuid box), AVI (RIFF chunk)
+- **Live Video Streams:** Verify per-segment C2PA manifests with backwards-linked provenance chain (C2PA 2.3 Section 19)
+
+Signing for images, audio, video, and live streams is Enterprise-tier only. Text signing is available at Free tier (document-level) and Enterprise tier (sentence-level + Merkle trees + invisible embeddings + fingerprinting). This asymmetry is intentional: text is the adoption wedge; media signing is the enterprise upsell that covers the full content portfolio.
 
 ---
 
@@ -142,10 +156,12 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
 1. **C2PA Standard** (collaborative infrastructure we co-chair--published January 8, 2026)
 2. **Cryptographic Watermarking** (proof embedded in text, survives distribution)
 3. **Sentence-Level Tracking** (patent-pending--enables willful infringement proof)
-4. **Formal Notice Capability** (legal + technical foundation)
-5. **Quote Integrity Verification** (accuracy vs. hallucination proof)
-6. **Market Standards Framework** (invite-only roundtable rescheduling + active 1:1 briefings)
-7. **Licensing Infrastructure** (economic transformation enablement)
+4. **Multi-Media Signing** (Enterprise: images, audio, video, live streams with C2PA JUMBF manifests)
+5. **Free Verification** (all media asset classes--text, images, audio, video--verified at no cost by any third party)
+6. **Formal Notice Capability** (legal + technical foundation)
+7. **Quote Integrity Verification** (accuracy vs. hallucination proof)
+8. **Market Standards Framework** (invite-only roundtable rescheduling + active 1:1 briefings)
+9. **Licensing Infrastructure** (economic transformation enablement)
 
 ### The Four-Layer Standards Stack (Cunningham Mapping)
 
@@ -203,12 +219,16 @@ Close: "Signing is free for every publisher. Founding members get implementation
 ```
 
 **Pricing Tiers (Tested):**
-- **Free Tier:** Full signing + coalition membership + 1,000 docs/month
+- **Free Tier:** Full text signing + coalition membership + 1,000 docs/month + free verification across all media asset classes
 - **Freemium Add-Ons:** Attribution Analytics ($299/mo), Formal Notices ($499/notice), Evidence Packages ($999/pkg), Enforcement Bundle ($999/mo)
-- **Enterprise Tier 1** (>$20M): $30K implementation + all features unlimited
-- **Enterprise Tier 2** ($3-20M): $20K implementation + all features unlimited
-- **Enterprise Tier 3** (<$3M): $10K implementation + all features unlimited
+- **Enterprise Tier 1** (>$20M): $30K implementation + all features unlimited + multi-media signing (images, audio, video, live streams)
+- **Enterprise Tier 2** ($3-20M): $20K implementation + all features unlimited + multi-media signing
+- **Enterprise Tier 3** (<$3M): $10K implementation + all features unlimited + multi-media signing
 - All tiers: Coalition deals 60/40, self-service 80/20
+- **All tiers: Verification is always free** -- any third party can verify any signed asset (text, image, audio, video) at no cost via the public verification API
+
+**Pricing Principle -- "Free to sign text. Free to verify everything. Paid to enforce."**
+Verification is free because every verification strengthens the trust chain. It removes friction for journalists, courts, compliance teams, and AI companies to check provenance. Free verification creates a natural funnel: verify for free -> realize you need signing -> realize you need enforcement.
 
 **Founding Member Benefits:**
 - Implementation fee waived for founding members
@@ -221,6 +241,8 @@ Close: "Signing is free for every publisher. Founding members get implementation
 - Show cryptographic watermarking surviving copy-paste and distribution
 - Demonstrate sentence-level tracking precision
 - Demo quote integrity verification (accurate vs. hallucinated)
+- Demo multi-media signing: sign an article's text + photos + embedded video as a single provenance unit (Enterprise)
+- Demo free verification: show any third party verifying signed content across all media types at no cost
 - Explain willful infringement enablement with precise legal language (statutory maximums require registered works)
 - Model licensing revenue potential
 - Demo available at: **encypherai.com/publisher-demo**
@@ -457,9 +479,12 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 **2. Technical Moat**
 - Patent-pending sentence-level tracking
 - Cryptographic watermarking that survives distribution
+- Full multi-media C2PA signing platform (text + images + audio + video + live streams)
+- Free verification across all media asset classes
 - Quote integrity verification
 - 18+ months technical lead on reference implementation
 - Performance intelligence capabilities
+- CDN edge integrations (Cloudflare Workers, Fastly Compute@Edge, Lambda@Edge) for image provenance at scale
 
 **3. Legal Transformation Moat (NEW)**
 - Willful infringement enablement (formal notice + cryptographic proof)
@@ -480,7 +505,7 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 RSL is an open standard (1.0 spec finalized December 2025, 50+ members including Reddit, Yahoo, Quora, Medium, BuzzFeed, USA Today, Vox Media) for machine-readable AI content licensing terms. RSL tells AI companies the rules (pricing models, usage rights). Encypher proves whether they followed the rules (cryptographic provenance + formal notice). RSL defines terms; Encypher provides enforcement evidence. The integration story: RSL terms reference Encypher provenance for enforcement. This is a natural partnership where RSL member publishers become Encypher coalition candidates.
 
 **Digimarc / Truepic -- Multi-Format C2PA:**
-Digimarc co-chairs the C2PA watermarking task force for images/video/audio. Truepic is a C2PA founding member for visual media. Encypher co-chairs the C2PA text provenance task force. Together: complete multi-format C2PA solution. Partnership narrative for enterprise buyers who need provenance across text + images + video.
+Digimarc co-chairs the C2PA watermarking task force for images/video/audio. Truepic is a C2PA founding member for visual media. Encypher co-chairs the C2PA text provenance task force. Note: while partnerships with Digimarc/Truepic remain strategically valuable for standards credibility, Encypher's Enterprise API now provides native C2PA signing for images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), and live video streams -- meaning enterprise customers can get full multi-format C2PA provenance from a single vendor. This is a competitive advantage for enterprise deals where publishers produce text + photos + podcasts + video. Partnership narrative shifts from "together we cover all formats" to "we cover all formats natively, and we collaborate on standards."
 
 ### Competitive Positioning (Updated)
 
@@ -519,7 +544,7 @@ Publishers need all three layers for complete protection:
 2. **Content Provenance (Layer 2):** Encypher -- cryptographic proof embedded in text, survives distribution, enables formal notice and enforcement. Works unilaterally -- no AI company cooperation required.
 3. **Attribution/Monetization (Layer 3):** ProRata, Dappier, Microsoft PCM -- opt-in back-end attribution and revenue sharing. Only functions within integrated ecosystems.
 
-Encypher is the only company operating at Layer 2 for text. This is the only layer that works without AI company cooperation. Layer 1 access gates only function when AI developers choose to opt in. Layer 3 attribution only works within specific integrated ecosystems. Layer 2 provenance is the critical infrastructure that travels with content regardless of who handles it -- making the other two layers enforceable and providing evidence when they fail.
+Encypher is the only company operating at Layer 2 for text, and at Enterprise tier covers all media formats (images, audio, video, live streams) natively. This is the only layer that works without AI company cooperation. Layer 1 access gates only function when AI developers choose to opt in. Layer 3 attribution only works within specific integrated ecosystems. Layer 2 provenance is the critical infrastructure that travels with content regardless of who handles it -- making the other two layers enforceable and providing evidence when they fail.
 
 ---
 
@@ -570,7 +595,9 @@ Encypher is the only company operating at Layer 2 for text. This is the only lay
 
 **For Market:**
 - "Authors of C2PA Section A.7--Standard Published January 8, 2026"
-- "Building Text Authentication WITH Industry Leaders"
+- "Building Content Authentication WITH Industry Leaders"
+- "Sign Your Entire Content Portfolio--Text, Images, Audio, Video--Under One Provenance Infrastructure"
+- "Free Verification Across All Media--Any Third Party, No Cost, No Auth Required"
 - "Invite-Only Industry Roundtable: Defining Market Licensing Standards"
 - "Infrastructure for the AI Content Economy"
 
@@ -735,11 +762,11 @@ We stand at a critical moment: standards authority established through C2PA Co-C
 - From "accept market terms" ' "participate in invite-only licensing framework roundtable"
 - From "compliance demand" ' "collaborative infrastructure building"
 
-We're not building a company or a product. We're building the protocol layer for text provenance in the AI content economy--collaboratively with the industry, not in opposition to it.
+We're not building a company or a product. We're building the protocol layer for content provenance in the AI content economy--collaboratively with the industry, not in opposition to it. Text is the strategic wedge where we authored the standard. Multi-media signing (images, audio, video, live streams) and free verification across all formats make us the full-stack provenance platform.
 
 The standard published January 8, 2026. The roundtable track is active. The infrastructure is here.
 
-**Encypher Corporation: Building text provenance infrastructure WITH the industry.**
+**Encypher Corporation: Building content provenance infrastructure WITH the industry.**
 
 **Technical Demos:**
 - Publishers: **encypherai.com/publisher-demo**
@@ -852,11 +879,21 @@ TollBit, ProRata, and Cloudflare AI Crawl Control are all Tier 1 licensing tools
 
 ## Document Control
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
 **Distribution:** Executive Team & Strategy Leadership
 **Next Review:** After roundtable date lock + framework brief publication
 **Document Owner:** CEO / Head of Publisher Strategy
+
+**Key Changes from March 2026 (v4.2):**
+1. ... Broadened positioning from "text provenance" to "content provenance" -- reflecting production multi-media signing capabilities (images, audio, video, live streams)
+2. ... Added free verification across all media asset classes as a named pricing principle
+3. ... Added Media Asset Verification section under Detection Capabilities Framework
+4. ... Updated Solution Stack to include multi-media signing and free verification
+5. ... Updated pricing tiers to reflect multi-media Enterprise capabilities and free verification
+6. ... Updated Technical Moat with multi-media platform and CDN edge integrations
+7. ... Updated Digimarc/Truepic competitive positioning to reflect native multi-format capability
+8. ... Updated content strategy messaging for multi-media and free verification
 
 **Key Changes from February 2026 (v4.0):**
 1. ... Replaced Nate Alvord (CRO) with Matt Kaminsky (Head of Publisher Strategy) throughout

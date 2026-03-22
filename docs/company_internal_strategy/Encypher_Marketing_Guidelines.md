@@ -1,7 +1,7 @@
 # Encypher Corporation: Brand & Marketing Standards Guide
 ## From Technology Vendor to Standards Infrastructure Authority
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
 **Version:** 4.1
 **Distribution:** Internal Marketing & Sales Teams
@@ -15,7 +15,7 @@
 
 ## Executive Summary
 
-Encypher has transcended product status to become **the infrastructure standard** for text provenance and content authentication. As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, we're not just implementing standards--we're defining them.
+Encypher has transcended product status to become **the infrastructure standard** for content provenance and authentication across text, images, audio, and video. As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, we're not just implementing standards--we're defining them.
 
 **Key Brand Evolution:**
 - **From:** Technology solution provider
@@ -41,8 +41,10 @@ Encypher has transcended product status to become **the infrastructure standard*
 ### The One-Liner:
 "Text on the open web has no proof of origin. We changed that--the C2PA 2.3 standard published January 8, 2026, and we wrote Section A.7."
 
+"Your content is more than text. Our Enterprise platform signs your articles, photos, podcasts, and video with C2PA provenance -- and anyone can verify for free."
+
 ### The Elevator Pitch:
-"As Co-Chair of the C2PA Text Provenance Task Force, Encypher works with Google, BBC, OpenAI, Adobe, and Microsoft to establish text authentication as the global standard--published January 8, 2026. We wrote Section A.7 of the specification and built the infrastructure to implement it. Our patent-pending granular content attribution (ENC0100, 83 claims filed January 7, 2026) with Merkle tree authentication embeds proof of origin directly into text, surviving copy-paste, B2B distribution, and data processing. Once publishers notify AI companies that content carries signatures, continued unauthorized use becomes provable willful infringement--materially strengthening enforcement posture, especially for registered works."
+"As Co-Chair of the C2PA Text Provenance Task Force, Encypher works with Google, BBC, OpenAI, Adobe, and Microsoft to establish text authentication as the global standard--published January 8, 2026. We wrote Section A.7 of the specification and built the infrastructure to implement it. Our patent-pending granular content attribution (ENC0100, 83 claims filed January 7, 2026) with Merkle tree authentication embeds proof of origin directly into text, surviving copy-paste, B2B distribution, and data processing. Once publishers notify AI companies that content carries signatures, continued unauthorized use becomes provable willful infringement--materially strengthening enforcement posture, especially for registered works. At Enterprise tier, we extend C2PA signing beyond text to images, audio, video, and live streams -- covering the full content portfolio. Verification is free across all media asset classes, enabling any third party to check provenance at no cost."
 
 ### The Value Architecture:
 - **Standards Layer:** "Co-Chair, C2PA Text Provenance Task Force--Standard published January 8, 2026 (Section A.7)"
@@ -50,6 +52,7 @@ Encypher has transcended product status to become **the infrastructure standard*
 - **Legal Layer:** "Eliminate the 'we didn't know' defense--enable willful infringement proof"
 - **Economic Layer:** "Free to sign. Paid to enforce. Coalition deals 60/40, self-service 80/20"
 - **Market Layer:** "Define industry licensing frameworks through the invite-only roundtable track"
+- **Platform Layer:** "Sign your entire content portfolio -- text, images, audio, video -- under one provenance infrastructure. Verify any signed asset for free."
 
 ---
 
@@ -73,7 +76,7 @@ We don't just enable compliance--we transform legal positioning. Formal notice +
 We convene the industry. The invite-only roundtable track is being rescheduled while 1:1 publisher GC and AI commercial briefings continue to translate technical standards into licensing frameworks. Founding coalition members shape the terms.
 
 **6. Foundational Protocol**
-We're infrastructure, not applications. We're the protocol layer for text provenance. We enable licensing, governance, and attribution at scale.
+We're infrastructure, not applications. We're the protocol layer for content provenance across all media types. We enable licensing, governance, and attribution at scale.
 
 ---
 
@@ -91,6 +94,8 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 - "Quote integrity verification--prove AI accuracy vs. hallucination"
 - "Participate in invite-only industry roundtable defining market licensing frameworks"
 - "Co-Chair, C2PA Text Provenance Task Force--standard published January 8, 2026"
+- "Sign your entire content portfolio -- articles, photos, podcasts, video"
+- "Free verification across all media -- no auth, no cost"
 
 **Example Message:**
 "Text on the open web has no cryptographic proof of origin. When your content flows through B2B licensees, gets scraped by aggregators, or trains AI models, the connection to your organization disappears. As Co-Chair of the C2PA Text Provenance Task Force, we're building the standard that changes this--published January 8, 2026. Our cryptographic watermarking embeds proof directly into text at sentence-level granularity. Once you notify AI companies that your content carries these signatures, continued unauthorized use becomes provable willful infringement--not 'we didn't know it was yours.' Signing is free for every publisher. Founding members get implementation fees waived and invite-only standards access while the roundtable track is finalized."

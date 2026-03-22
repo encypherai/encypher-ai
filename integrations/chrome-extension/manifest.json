@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Encypher Verify",
-  "version": "1.1.0",
-  "description": "Verify who authored any text on the web. Sign your own content with invisible cryptographic watermarks that survive copy-paste.",
+  "version": "2.0.0",
+  "description": "Verify provenance for any text, image, audio, or video on the web. Powered by the C2PA standard -- cryptographic proof of origin, not statistical guessing.",
   "permissions": [
     "activeTab",
     "storage",
@@ -11,6 +11,7 @@
     "scripting"
   ],
   "host_permissions": [
+    "<all_urls>",
     "http://localhost/*",
     "http://127.0.0.1/*",
     "https://api.encypherai.com/*",

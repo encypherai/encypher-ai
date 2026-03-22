@@ -57,6 +57,16 @@ let _detectionSequence = 0;
 // Uses Set (not WeakSet) so it can be cleared on RESCAN.
 const _processedElements = new Set();
 
+// Track processed images (by src URL) to avoid duplicate scanning/verification.
+const _processedImages = new Set();
+// Map image src -> { element, detectionId, status, details }
+const _imageVerificationState = new Map();
+
+// Track processed audio/video elements (by src URL) to avoid duplicates.
+const _processedAudioVideo = new Set();
+// Map media src -> { element, detectionId, status, details, mediaType }
+const _audioVideoVerificationState = new Map();
+
 // Track in-flight verifications by textHash → Promise<{status, details}>.
 // When a DOM expansion (e.g. LinkedIn "see more") reveals a new element whose
 // content is already being verified, the new element subscribes to the existing
@@ -1319,6 +1329,418 @@ async function _verifyDetections(detections) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Image scanning and verification (Phase 1 -- on-demand)
+// ---------------------------------------------------------------------------
+
+const MIN_IMAGE_DIMENSION = 50;
+const AUTO_SCAN_MAX_IMAGES = 20;
+const AUTO_SCAN_MAX_CONCURRENT = 3;
+const AUTO_SCAN_BANDWIDTH_LIMIT = 10 * 1024 * 1024; // 10MB per page
+const AUTO_SCAN_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
+let _autoScanBytesUsed = 0;
+let _autoScanEnabled = true;
+let _autoScanCheckedCount = 0;
+let _autoScanPageCooldown = new Map(); // url -> timestamp
+
+// Load auto-scan setting from storage
+try {
+  chrome.storage.sync.get({ autoScanImages: true }, (result) => {
+    _autoScanEnabled = result.autoScanImages !== false;
+  });
+} catch { /* storage may not be available in tests */ }
+
+/**
+ * Scan a DOM subtree for images, build an inventory, and trigger
+ * automatic C2PA header checks for newly discovered images.
+ * Returns the count of newly discovered images.
+ */
+function _scanImages(root) {
+  const imgs = (root || document.body).querySelectorAll('img');
+  let newCount = 0;
+  for (const img of imgs) {
+    const src = img.src || img.currentSrc;
+    if (!src) continue;
+    // Skip tiny images (icons, spacers), data URIs, and extension-injected images
+    if (src.startsWith('data:') || src.startsWith('blob:')) continue;
+    if (img.closest('.encypher-badge, .encypher-detail-panel')) continue;
+    if ((img.naturalWidth || img.width) > 0 && (img.naturalWidth || img.width) < MIN_IMAGE_DIMENSION) continue;
+    if ((img.naturalHeight || img.height) > 0 && (img.naturalHeight || img.height) < MIN_IMAGE_DIMENSION) continue;
+    if (_processedImages.has(src)) continue;
+
+    _processedImages.add(src);
+    newCount++;
+  }
+
+  // Trigger auto-scan after inventory is updated
+  if (_autoScanEnabled && newCount > 0) {
+    _autoScanImages();
+  }
+
+  return newCount;
+}
+
+/**
+ * Inject a floating verification badge over an image element.
+ * Images are void elements so the badge is appended to a wrapper.
+ */
+function injectImageBadge(imgElement, status, details) {
+  const src = imgElement.src || imgElement.currentSrc;
+  if (!src) return;
+
+  // Remove existing badge for this image
+  const existingWrapper = imgElement.closest('.encypher-image-badge-wrapper');
+  if (existingWrapper) {
+    const existing = existingWrapper.querySelector('.encypher-badge');
+    if (existing) {
+      if (status === 'pending' && !existing.classList.contains('encypher-badge--pending')) return;
+      existing.remove();
+    }
+  }
+
+  const badge = document.createElement('div');
+  badge.className = `encypher-badge encypher-badge--${status} encypher-badge--media`;
+  badge.setAttribute('role', 'button');
+  badge.setAttribute('aria-label', `Encypher image verification: ${status}`);
+  badge.setAttribute('tabindex', '0');
+  badge.dataset.encypherMediaSrc = src;
+
+  const statusOverlay = {
+    verified: '',
+    pending: '<span class="encypher-badge__status">&#x22EF;</span>',
+    invalid: '<span class="encypher-badge__status">&#x2717;</span>',
+    revoked: '<span class="encypher-badge__status">&#x2298;</span>',
+    error: '<span class="encypher-badge__status">!</span>'
+  };
+
+  badge.innerHTML = `
+    <span class="encypher-badge__icon">${ENCYPHER_LOGO_SVG}</span>
+    ${statusOverlay[status] || ''}
+  `;
+
+  const fullDetails = { ...details, _status: status };
+
+  badge.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    _showDetailPanel(badge, fullDetails);
+  });
+  badge.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      _showDetailPanel(badge, fullDetails);
+    }
+  });
+
+  // Wrap the image if not already wrapped
+  let wrapper = imgElement.closest('.encypher-image-badge-wrapper');
+  if (!wrapper) {
+    wrapper = document.createElement('span');
+    wrapper.className = 'encypher-image-badge-wrapper';
+    // Preserve the image's display flow
+    const computedDisplay = window.getComputedStyle(imgElement).display;
+    wrapper.style.display = (computedDisplay === 'block') ? 'block' : 'inline-block';
+    wrapper.style.position = 'relative';
+    imgElement.parentNode.insertBefore(wrapper, imgElement);
+    wrapper.appendChild(imgElement);
+  }
+
+  wrapper.appendChild(badge);
+
+  // Update tracking
+  _imageVerificationState.set(src, {
+    element: imgElement,
+    detectionId: details?.detectionId || null,
+    status,
+    details: fullDetails,
+  });
+}
+
+/**
+ * Verify an image by URL via the service worker and inject a badge.
+ */
+async function _verifyImageAndBadge(imgElement, srcUrl) {
+  const detectionId = `img-${++_detectionSequence}`;
+
+  injectImageBadge(imgElement, 'pending', { detectionId });
+
+  try {
+    const result = await chrome.runtime.sendMessage({
+      type: 'VERIFY_MEDIA',
+      url: srcUrl,
+      detectionId,
+      pageUrl: window.location.href,
+    });
+
+    const status = result?.success ? 'verified' : (result?.error ? 'error' : 'invalid');
+    const details = {
+      detectionId,
+      valid: result?.success || false,
+      signer: null,
+      date: result?.data?.verified_at || null,
+      overall_status: result?.data?.overall_status || null,
+      c2pa_manifest: result?.data?.c2pa_manifest || null,
+      cryptographically_verified: result?.data?.cryptographically_verified || false,
+      hash: result?.data?.hash || null,
+      document_id: result?.data?.document_id || null,
+      error: result?.error || null,
+    };
+
+    injectImageBadge(imgElement, status, details);
+  } catch (error) {
+    injectImageBadge(imgElement, 'error', { detectionId, error: error?.message || 'Verification failed' });
+  }
+}
+
+/**
+ * Check if an image URL likely contains a C2PA JUMBF manifest.
+ * Delegates to the service worker which can do cross-origin Range requests.
+ * Returns true if C2PA indicators are found.
+ */
+async function _checkC2paHeader(imageUrl) {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'CHECK_C2PA_HEADER',
+      url: imageUrl,
+    });
+    _autoScanBytesUsed += 4096; // Approximate Range request cost
+    return response?.hasC2pa === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Run the auto-scan pipeline on inventoried images.
+ * Uses lightweight Range requests to detect C2PA headers, then auto-verifies
+ * images that likely have manifests.
+ */
+async function _autoScanImages() {
+  if (!_autoScanEnabled) return;
+
+  // Cooldown: don't rescan same page within 5 minutes
+  const pageUrl = window.location.href;
+  const lastScan = _autoScanPageCooldown.get(pageUrl);
+  if (lastScan && Date.now() - lastScan < AUTO_SCAN_COOLDOWN_MS) return;
+  _autoScanPageCooldown.set(pageUrl, Date.now());
+
+  // Load setting
+  try {
+    const settings = await chrome.storage.sync.get({ autoScanImages: true });
+    if (!settings.autoScanImages) return;
+  } catch { return; }
+
+  // Collect unverified images up to the limit
+  const candidates = [];
+  for (const src of _processedImages) {
+    if (_imageVerificationState.has(src)) continue; // Already verified
+    if (candidates.length >= AUTO_SCAN_MAX_IMAGES) break;
+    candidates.push(src);
+  }
+
+  if (candidates.length === 0) return;
+
+  _debugLog('INFO', 'detector', `Auto-scan: checking ${candidates.length} images for C2PA headers`);
+
+  // Process in batches with concurrency limit
+  let active = 0;
+  const queue = [...candidates];
+
+  const processNext = async () => {
+    while (queue.length > 0 && active < AUTO_SCAN_MAX_CONCURRENT) {
+      // Circuit breaker: stop if bandwidth limit exceeded
+      if (_autoScanBytesUsed > AUTO_SCAN_BANDWIDTH_LIMIT) {
+        _debugLog('WARN', 'detector', `Auto-scan: bandwidth limit reached (${_autoScanBytesUsed} bytes), stopping`);
+        return;
+      }
+
+      const src = queue.shift();
+      if (!src || _imageVerificationState.has(src)) continue;
+
+      active++;
+
+      try {
+        const hasC2pa = await _checkC2paHeader(src);
+        if (hasC2pa) {
+          _debugLog('INFO', 'detector', `Auto-scan: C2PA header detected in ${src.slice(0, 80)}`);
+          const img = document.querySelector(`img[src="${CSS.escape(src)}"]`);
+          if (img) {
+            _verifyImageAndBadge(img, src);
+          }
+        }
+      } catch {
+        // Skip failed header checks
+      } finally {
+        active--;
+      }
+    }
+  };
+
+  // Use requestIdleCallback to avoid blocking rendering
+  const runBatch = () => {
+    if (queue.length === 0) return;
+    if (typeof requestIdleCallback === 'function') {
+      requestIdleCallback(() => {
+        processNext().then(() => {
+          if (queue.length > 0) runBatch();
+        });
+      });
+    } else {
+      setTimeout(() => {
+        processNext().then(() => {
+          if (queue.length > 0) runBatch();
+        });
+      }, 100);
+    }
+  };
+
+  runBatch();
+}
+
+/**
+ * Scan a DOM subtree for audio and video elements and build an inventory.
+ * Does NOT auto-verify -- elements are verified on-demand via context menu or popup.
+ * Returns the count of newly discovered audio/video elements.
+ */
+function _scanAudioVideo(root) {
+  const elements = (root || document.body).querySelectorAll('audio, video');
+  let newCount = 0;
+  for (const el of elements) {
+    // Get source URL from src attribute or first <source> child
+    let src = el.src || el.currentSrc;
+    if (!src) {
+      const sourceChild = el.querySelector('source');
+      if (sourceChild) src = sourceChild.src;
+    }
+    if (!src) continue;
+    if (src.startsWith('data:') || src.startsWith('blob:')) continue;
+    if (el.closest('.encypher-badge, .encypher-detail-panel')) continue;
+    if (_processedAudioVideo.has(src)) continue;
+
+    _processedAudioVideo.add(src);
+    newCount++;
+  }
+  return newCount;
+}
+
+/**
+ * Inject a floating verification badge over an audio or video element.
+ * For video: overlay at top-right corner (same as image).
+ * For audio: inline badge next to audio controls.
+ */
+function injectMediaBadge(mediaElement, status, details) {
+  const src = mediaElement.src || mediaElement.currentSrc || (() => {
+    const s = mediaElement.querySelector('source');
+    return s ? s.src : '';
+  })();
+  if (!src) return;
+
+  const mediaType = mediaElement.tagName.toLowerCase(); // 'audio' or 'video'
+
+  // Remove existing badge for this element
+  const existingWrapper = mediaElement.closest('.encypher-media-badge-wrapper');
+  if (existingWrapper) {
+    const existing = existingWrapper.querySelector('.encypher-badge');
+    if (existing) {
+      if (status === 'pending' && !existing.classList.contains('encypher-badge--pending')) return;
+      existing.remove();
+    }
+  }
+
+  const badge = document.createElement('div');
+  badge.className = `encypher-badge encypher-badge--${status} encypher-badge--media`;
+  badge.setAttribute('role', 'button');
+  badge.setAttribute('aria-label', `Encypher ${mediaType} verification: ${status}`);
+  badge.setAttribute('tabindex', '0');
+  badge.dataset.encypherMediaSrc = src;
+
+  const statusOverlay = {
+    verified: '',
+    pending: '<span class="encypher-badge__status">&#x22EF;</span>',
+    invalid: '<span class="encypher-badge__status">&#x2717;</span>',
+    revoked: '<span class="encypher-badge__status">&#x2298;</span>',
+    error: '<span class="encypher-badge__status">!</span>'
+  };
+
+  badge.innerHTML = `
+    <span class="encypher-badge__icon">${ENCYPHER_LOGO_SVG}</span>
+    ${statusOverlay[status] || ''}
+  `;
+
+  const fullDetails = { ...details, _status: status, mediaType };
+
+  badge.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    _showDetailPanel(badge, fullDetails);
+  });
+  badge.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      _showDetailPanel(badge, fullDetails);
+    }
+  });
+
+  // Wrap the element
+  let wrapper = mediaElement.closest('.encypher-media-badge-wrapper');
+  if (!wrapper) {
+    wrapper = document.createElement('div');
+    wrapper.className = 'encypher-media-badge-wrapper';
+    wrapper.style.position = 'relative';
+    const computedDisplay = window.getComputedStyle(mediaElement).display;
+    wrapper.style.display = (computedDisplay === 'inline') ? 'inline-block' : computedDisplay;
+    mediaElement.parentNode.insertBefore(wrapper, mediaElement);
+    wrapper.appendChild(mediaElement);
+  }
+
+  wrapper.appendChild(badge);
+
+  // Update tracking
+  _audioVideoVerificationState.set(src, {
+    element: mediaElement,
+    detectionId: details?.detectionId || null,
+    status,
+    details: fullDetails,
+    mediaType,
+  });
+}
+
+/**
+ * Verify an audio/video element by URL via the service worker and inject a badge.
+ */
+async function _verifyMediaAndBadge(mediaElement, srcUrl, mediaType) {
+  const detectionId = `${mediaType}-${++_detectionSequence}`;
+
+  injectMediaBadge(mediaElement, 'pending', { detectionId });
+
+  try {
+    const result = await chrome.runtime.sendMessage({
+      type: 'VERIFY_MEDIA',
+      mediaType,
+      url: srcUrl,
+      detectionId,
+      pageUrl: window.location.href,
+    });
+
+    const status = result?.success ? 'verified' : (result?.error ? 'error' : 'invalid');
+    const details = {
+      detectionId,
+      valid: result?.success || false,
+      signer: result?.data?.signer || null,
+      date: result?.data?.verified_at || null,
+      c2pa_manifest_valid: result?.data?.c2pa_manifest_valid || false,
+      c2pa_instance_id: result?.data?.c2pa_instance_id || null,
+      manifest_data: result?.data?.manifest_data || null,
+      error: result?.error || null,
+    };
+
+    injectMediaBadge(mediaElement, status, details);
+  } catch (error) {
+    injectMediaBadge(mediaElement, 'error', { detectionId, error: error?.message || 'Verification failed' });
+  }
+}
+
 /**
  * Scan the page (or a subtree) for C2PA embeddings and verify them.
  * Uses local browser cache to avoid re-hitting the API for already-verified content.
@@ -1388,6 +1810,20 @@ async function scanPage(root = document.body) {
       type: 'NO_EMBEDDINGS',
       url: window.location.href
     });
+  }
+
+  // Scan images (inventory + auto-scan for C2PA headers)
+  const newImages = _scanImages(root);
+  if (newImages > 0) {
+    _debugLog('INFO', 'detector', `Image scan: ${newImages} new images inventoried (${_processedImages.size} total)`);
+    // Trigger auto-scan after inventory (non-blocking)
+    _autoScanImages();
+  }
+
+  // Scan audio/video elements (inventory only -- on-demand verification)
+  const newAudioVideo = _scanAudioVideo(root);
+  if (newAudioVideo > 0) {
+    _debugLog('INFO', 'detector', `Audio/video scan: ${newAudioVideo} new elements inventoried (${_processedAudioVideo.size} total)`);
   }
 
   return totalFound;
@@ -1529,7 +1965,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Force rescan: clear all dedup state so everything is re-checked
     _verificationCache.clear();
     _processedElements.clear();
+    _processedImages.clear();
+    _imageVerificationState.clear();
+    _processedAudioVideo.clear();
+    _audioVideoVerificationState.clear();
+    _autoScanBytesUsed = 0;
+    _autoScanCheckedCount = 0;
+    _autoScanPageCooldown.clear();
     document.querySelectorAll('.encypher-badge').forEach(b => b.remove());
+    document.querySelectorAll('.encypher-image-badge-wrapper').forEach(wrapper => {
+      // Unwrap: move image back out, remove wrapper
+      const img = wrapper.querySelector('img');
+      if (img && wrapper.parentNode) {
+        wrapper.parentNode.insertBefore(img, wrapper);
+        wrapper.remove();
+      }
+    });
+    document.querySelectorAll('.encypher-media-badge-wrapper').forEach(wrapper => {
+      const media = wrapper.querySelector('audio, video');
+      if (media && wrapper.parentNode) {
+        wrapper.parentNode.insertBefore(media, wrapper);
+        wrapper.remove();
+      }
+    });
     document.querySelectorAll('.encypher-verified-content').forEach(el => {
       el.classList.remove('encypher-verified-content');
     });
@@ -1552,6 +2010,101 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'FOCUS_EMBEDDING') {
     const found = _focusEmbeddingById(message.detectionId);
     sendResponse({ found });
+  }
+
+  // Image verification triggered by context menu
+  if (message.type === 'VERIFY_IMAGE_CONTEXT') {
+    const srcUrl = message.srcUrl;
+    if (srcUrl) {
+      const img = document.querySelector(`img[src="${CSS.escape(srcUrl)}"]`);
+      if (img) {
+        _verifyImageAndBadge(img, srcUrl);
+      }
+    }
+    sendResponse({ received: true });
+  }
+
+  // Audio verification triggered by context menu
+  if (message.type === 'VERIFY_AUDIO_CONTEXT') {
+    const srcUrl = message.srcUrl;
+    if (srcUrl) {
+      const el = document.querySelector(`audio[src="${CSS.escape(srcUrl)}"], audio source[src="${CSS.escape(srcUrl)}"]`);
+      const audioEl = el?.tagName === 'SOURCE' ? el.closest('audio') : el;
+      if (audioEl) {
+        _verifyMediaAndBadge(audioEl, srcUrl, 'audio');
+      }
+    }
+    sendResponse({ received: true });
+  }
+
+  // Video verification triggered by context menu
+  if (message.type === 'VERIFY_VIDEO_CONTEXT') {
+    const srcUrl = message.srcUrl;
+    if (srcUrl) {
+      const el = document.querySelector(`video[src="${CSS.escape(srcUrl)}"], video source[src="${CSS.escape(srcUrl)}"]`);
+      const videoEl = el?.tagName === 'SOURCE' ? el.closest('video') : el;
+      if (videoEl) {
+        _verifyMediaAndBadge(videoEl, srcUrl, 'video');
+      }
+    }
+    sendResponse({ received: true });
+  }
+
+  // Focus on a verified media element (from popup "Locate on page")
+  if (message.type === 'FOCUS_MEDIA') {
+    const entry = _imageVerificationState.get(message.mediaUrl) || _audioVideoVerificationState.get(message.mediaUrl);
+    if (entry?.element?.isConnected) {
+      entry.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const origOutline = entry.element.style.outline;
+      entry.element.style.outline = '3px solid rgba(42, 135, 196, 0.85)';
+      setTimeout(() => { entry.element.style.outline = origOutline; }, 2000);
+      sendResponse({ found: true });
+    } else {
+      sendResponse({ found: false });
+    }
+  }
+
+  // Return image inventory for popup
+  if (message.type === 'GET_PAGE_IMAGES') {
+    const images = [];
+    for (const [src, state] of _imageVerificationState.entries()) {
+      images.push({
+        src,
+        detectionId: state.detectionId,
+        status: state.status,
+        details: state.details,
+      });
+    }
+    // Also include unverified inventoried images
+    for (const src of _processedImages) {
+      if (!_imageVerificationState.has(src)) {
+        images.push({ src, detectionId: null, status: null, details: null });
+      }
+    }
+    sendResponse({ images, total: _processedImages.size });
+  }
+
+  // Return audio/video inventory for popup
+  if (message.type === 'GET_PAGE_MEDIA') {
+    const media = [];
+    for (const [src, state] of _audioVideoVerificationState.entries()) {
+      media.push({
+        src,
+        mediaType: state.mediaType,
+        detectionId: state.detectionId,
+        status: state.status,
+        details: state.details,
+      });
+    }
+    for (const src of _processedAudioVideo) {
+      if (!_audioVideoVerificationState.has(src)) {
+        // Determine type from the element
+        const el = document.querySelector(`audio[src="${CSS.escape(src)}"], video[src="${CSS.escape(src)}"], source[src="${CSS.escape(src)}"]`);
+        const tag = el?.tagName === 'SOURCE' ? el.closest('audio, video')?.tagName : el?.tagName;
+        media.push({ src, mediaType: (tag || 'video').toLowerCase(), detectionId: null, status: null, details: null });
+      }
+    }
+    sendResponse({ media, total: _processedAudioVideo.size });
   }
 });
 

@@ -573,51 +573,124 @@ async def batch_verify_embeddings(
 
 
 # ============================================================================
-# DEPRECATED: Extract and Verify Invisible Embeddings
-# Use POST /api/v1/verify instead (verification-service)
+# Text Verification Endpoint (with HMAC integrity check)
 # ============================================================================
-# This endpoint has been removed. Use the unified /api/v1/verify endpoint
-# which provides full C2PA compliance and richer response format.
+
+
+class VerifyTextRequest(BaseModel):
+    """Request body for text verification."""
+
+    text: str = Field(..., description="Text with invisible embedding to verify")
+
+
+@router.post(
+    "/verify-text",
+    summary="Verify text with embedded signatures (Public - No Auth Required)",
+    description="""
+    Submit text containing invisible Encypher signatures for verification.
+    Returns signer identity, tamper detection result, and signing metadata.
+
+    **This endpoint is PUBLIC and does NOT require authentication.**
+    """,
+    responses={
+        200: {"description": "Verification result"},
+        400: {"description": "Invalid request"},
+        429: {"description": "Rate limit exceeded"},
+    },
+)
+async def verify_text(
+    verify_request: VerifyTextRequest,
+    request: Request,
+    core_db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
+):
+    """Verify text containing invisible Encypher signatures.
+
+    Runs the full verification cascade including HMAC integrity checks
+    to detect content tampering.
+    """
+    from app.services.verification_logic import (
+        build_verdict,
+        determine_reason_code,
+        execute_verification,
+    )
+
+    await public_rate_limiter(request, endpoint_type="verify_single")
+
+    text = verify_request.text
+    if not text or not text.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Text field is required and must not be empty",
+        )
+
+    payload_bytes = len(text.encode("utf-8"))
+    if payload_bytes > MAX_EXTRACT_AND_VERIFY_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Text payload too large",
+        )
+
+    try:
+        execution = await execute_verification(
+            payload_text=text,
+            db=core_db,
+            content_db=content_db,
+        )
+
+        reason_code = determine_reason_code(execution=execution)
+        verdict = build_verdict(
+            execution=execution,
+            reason_code=reason_code,
+            payload_bytes=payload_bytes,
+        )
+
+        response_data = {
+            "valid": verdict.valid,
+            "tampered": verdict.tampered,
+            "reason_code": verdict.reason_code,
+            "signer_id": verdict.signer_id,
+            "signer_name": verdict.signer_name,
+            "signed_at": verdict.timestamp.isoformat() if verdict.timestamp else None,
+        }
+
+        return {"data": response_data}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Text verification failed: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Verification failed",
+        )
+
+
+# ============================================================================
+# DEPRECATED: Extract and Verify Invisible Embeddings
 # ============================================================================
 
 
 @router.post(
     "/extract-and-verify",
     deprecated=True,
-    summary="DEPRECATED - Use POST /api/v1/verify instead",
-    description="""
-    **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**
-
-    Please use `POST /api/v1/verify` instead, which provides:
-    - Full C2PA trust chain validation
-    - Document info, licensing, and C2PA details (all free)
-    - Merkle proof (with API key)
-    - Better performance via verification-service
-    """,
+    summary="DEPRECATED - Use POST /api/v1/public/verify-text instead",
     responses={
-        301: {"description": "Redirect to /api/v1/verify"},
+        410: {"description": "Endpoint removed"},
     },
 )
 async def extract_and_verify_embedding(
     extract_request: ExtractAndVerifyRequest,
     request: Request,
 ):
-    """
-    DEPRECATED: Use POST /api/v1/verify instead.
-
-    This endpoint is deprecated. Please migrate to the unified /api/v1/verify
-    endpoint which provides full C2PA compliance and a richer response format.
-    """
+    """DEPRECATED: Use POST /api/v1/public/verify-text instead."""
     from fastapi.responses import JSONResponse
-
-    logger.warning("Deprecated endpoint /public/extract-and-verify called. Use /api/v1/verify instead.")
 
     return JSONResponse(
         status_code=status.HTTP_410_GONE,
         content={
             "error": "This endpoint is deprecated",
-            "message": "Please use POST /api/v1/verify instead",
-            "migration_guide": "The unified /api/v1/verify endpoint provides full C2PA compliance, document info, licensing, and C2PA details for free. Merkle proof requires an API key.",
-            "new_endpoint": "/api/v1/verify",
+            "message": "Please use POST /api/v1/public/verify-text instead",
+            "new_endpoint": "/api/v1/public/verify-text",
         },
     )

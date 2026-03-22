@@ -134,8 +134,8 @@ describe('Popup verification UX enhancements', () => {
 
     assert.match(
       popupJs,
-      /if\s*\(!state\s*\|\|\s*\(state\.count\s*===\s*0\s*&&\s*!hasDetails\)\)/,
-      'Popup should only show empty state when both count and details are absent'
+      /if\s*\(!state\s*\|\|\s*\(state\.count\s*===\s*0\s*&&\s*!hasDetails\s*&&\s*!hasImages\s*&&\s*!hasAudioVideo\)\)/,
+      'Popup should only show empty state when count, details, images, and audio/video are all absent'
     );
   });
 });

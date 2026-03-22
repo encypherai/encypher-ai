@@ -1,7 +1,7 @@
 # Encypher Corporation: Ideal Customer Profile Framework 3.0
 ## Standards-Driven Infrastructure Strategy
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
 **Version:** 4.1
 **Distribution:** Sales & Marketing Leadership
@@ -15,8 +15,8 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 **Strategic Evolution:**
 - **From:** Dual-value proposition (performance + legal)
 - **To:** Standards infrastructure with willful infringement enablement
-- **Positioning:** The reference implementation of C2PA text provenance with formal notice and licensing capabilities
-- **Value:** Infrastructure for text provenance that eliminates the "we didn't know" defense
+- **Positioning:** The reference implementation of C2PA content provenance with formal notice and licensing capabilities
+- **Value:** Infrastructure for content provenance that eliminates the "we didn't know" defense
 
 **Key Strategic Updates (Validated by AP Engagement):**
 - Lead with standards co-chair role and January 8, 2026 publication date
@@ -90,6 +90,8 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
  - Can't prove specific usage (which sentences, which context)
  - Premium content exists as unmarked, unmonetizable assets
 
+**Multi-Media Pain Points (Enterprise):** Publishers produce more than text. AP's photos are scraped alongside articles. Universal Music's audio tracks lack provenance when distributed digitally. BBC's video content appears on unauthorized platforms. Enterprise-tier multi-media signing (images, audio, video, live streams) addresses the full content portfolio. Verification is free across all media asset classes.
+
 **Why Encypher Wins:**
 - **Standards Authority:** Erik Svilich authored C2PA text spec and co-chairs task force (Google, BBC, OpenAI, Adobe, Microsoft)--standard published January 8, 2026
 - **Not Vendor Lock-in:** We wrote the open standard, built the reference implementation
@@ -98,6 +100,7 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
 - **Downstream Survival:** Cryptographic watermarking survives B2B distribution, wire services, aggregators, scrapers
 - **Market Standards Leadership:** Invite-only roundtable track + interim 1:1 briefings convene GCs and AI commercial leads to define licensing frameworks
 - **Two-Track Licensing Model:** Coalition deals (60/40) or self-service deals (80/20). Free signing infrastructure builds coalition supply. Enforcement tools are self-service add-ons. No revenue = no payment.
+- **Full Content Portfolio:** Enterprise customers sign text + images + audio + video under one provenance platform -- not just articles but the entire media library
 - **Matt Kaminsky Factor:** 13+ years digital media/ad-tech revenue leadership with deep sales house and publisher relationships (Mediavine, Enthusiast Gaming, Space Cow Media)
 
 **Decision Criteria:**
@@ -137,7 +140,7 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
 
 **Company Type:** Major AI research labs and LLM providers (OpenAI, Anthropic, Google DeepMind, Meta AI, Cohere)
 
-**About Kenji (COLLABORATIVE FRAMING):** Kenji oversees training pipelines processing billions of tokens daily. The publisher ecosystem is implementing cryptographic watermarking at scale--he needs compatible infrastructure to handle marked content properly. More importantly, text provenance data could provide unprecedented attribution intelligence, and quote integrity verification protects his company's reputation from hallucination claims.
+**About Kenji (COLLABORATIVE FRAMING):** Kenji oversees training pipelines processing billions of tokens daily. The publisher ecosystem is implementing cryptographic watermarking at scale--he needs compatible infrastructure to handle marked content properly. More importantly, content provenance data could provide unprecedented attribution intelligence, and quote integrity verification protects his company's reputation from hallucination claims. AI training pipelines ingest all media types -- text, images, audio, and video -- and provenance infrastructure now covers the full spectrum of ingested assets.
 
 **Critical Pain Points (Collaborative Framing):**
 
@@ -145,6 +148,7 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
  - Publishers implementing cryptographic watermarking--needs compatible infrastructure
  - Training pipeline encountering marked content with embedded origin proof
  - Basic C2PA won't integrate with publisher-specific sentence-level enhancements
+ - Training datasets span all media types (text, images, audio, video) -- provenance infrastructure must match the full ingestion surface
 
 2. **Attribution Opportunity (Requires Integration):**
  - When AI companies integrate provenance checking on ingestion, sentence-level provenance reveals which content drives results
@@ -265,7 +269,7 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 **Company Type:** Platforms implementing C2PA (Adobe, Microsoft, BBC, Meta, EIDR)
 
-**About Marcus:** Marcus implements C2PA across platforms and needs production-ready text provenance solutions. He's building with the standards community, not against it. The January 8, 2026 publication creates urgency.
+**About Marcus:** Marcus implements C2PA across platforms and needs production-ready content provenance solutions covering the full media spectrum. He's building with the standards community, not against it. The January 8, 2026 publication creates urgency. Enterprise-tier signing now covers text, images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), and live video streams with C2PA manifests. Verification is free across all media asset classes.
 
 **Strategic Importance:** Validates Encypher as reference implementation through platform adoption
 
@@ -287,7 +291,7 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 **Company Type:** Fortune 500 companies deploying AI at scale
 
-**About David:** David needs C2PA compliance for EU AI Act and wants competitive advantages from performance intelligence. The January 8, 2026 standard publication creates planning urgency. **The EU AI Act enforcement deadline for AI content transparency is August 2, 2026** -- five months away. The draft Code of Practice explicitly requires machine-readable marking and watermarking, with a multilayered approach (visible + invisible). This creates a hard regulatory deadline that accelerates David's buying timeline.
+**About David:** David needs C2PA compliance for EU AI Act and wants competitive advantages from performance intelligence. The January 8, 2026 standard publication creates planning urgency. **The EU AI Act enforcement deadline for AI content transparency is August 2, 2026** -- five months away. The draft Code of Practice explicitly requires machine-readable marking and watermarking, with a multilayered approach (visible + invisible). This creates a hard regulatory deadline that accelerates David's buying timeline. Enterprise-tier signing now covers text, images, audio, video, and live streams under one platform -- compliance governance spans the full content portfolio, not just written documents. Verification is free across all media asset classes.
 
 **Strategic Importance:** Drives enterprise adoption beyond publishers/AI companies. EU AI Act compliance deadline (August 2026) creates near-term urgency independent of publisher coalition timeline.
 
@@ -540,7 +544,7 @@ This isn't a sales process competing with alternatives. It's infrastructure adop
 
 ## Document Control
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
 **Distribution:** Sales & Marketing Leadership
 **Next Review:** After roundtable date lock + framework brief publication
@@ -555,3 +559,12 @@ This isn't a sales process competing with alternatives. It's infrastructure adop
 6. ... Revenue projections updated to realistic pre-revenue timeline
 7. ... Added sales house economics and channel partner framework
 8. ... Updated success criteria to reflect platform distribution model
+
+**Key Changes from March 4, 2026 (v4.1):**
+1. ... Added multi-media signing capabilities: Enterprise API now signs text, images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), and live video streams with C2PA manifests (Enterprise-tier only)
+2. ... Added free verification across all media asset classes
+3. ... Updated "text provenance infrastructure" to "content provenance infrastructure" in general descriptors (C2PA Text Provenance Task Force name unchanged)
+4. ... Added Multi-Media Pain Points note to ICP 1A with publisher-specific examples (AP photos, Universal Music audio, BBC video)
+5. ... Added "Full Content Portfolio" bullet to ICP 1A "Why Encypher Wins" section
+6. ... Updated ICP 1B to note AI training pipelines ingest all media types
+7. ... Updated ICP 2 and ICP 3 to reflect full multi-media coverage and free verification

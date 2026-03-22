@@ -1,6 +1,6 @@
 /**
  * Encypher Verify - Service Worker
- * 
+ *
  * Handles API calls to the Encypher verification endpoint.
  * Runs in the background and communicates with content scripts.
  */
@@ -21,6 +21,9 @@ let API_CONFIG = {
   baseUrl: 'https://api.encypherai.com',
   dashboardBaseUrl: 'https://dashboard.encypherai.com',
   verifyEndpoint: '/api/v1/verify',
+  imageVerifyEndpoint: '/api/v1/verify/image',
+  audioVerifyEndpoint: '/api/v1/verify/audio',
+  videoVerifyEndpoint: '/api/v1/verify/video',
   signEndpoint: '/api/v1/sign',
   provisioningEndpoint: '/api/v1/provisioning/auto-provision',
   analyticsEndpoint: '/api/v1/analytics/discovery',
@@ -368,7 +371,7 @@ function updateIcon(tabId, state) {
     mixed: 'MIX',
     invalid: '!'
   };
-  
+
   chrome.action.setBadgeText({
     tabId: tabId,
     text: badgeText[state] || ''
@@ -414,7 +417,7 @@ async function verifyContent(text, options = {}) {
 
       // Build request with optional parameters
       const requestBody = { text };
-      
+
       // Add options for paid features (requires API key)
       if (options.includeMerkleProof) {
         requestBody.options = { include_merkle_proof: true };
@@ -451,11 +454,11 @@ async function verifyContent(text, options = {}) {
 
       const data = await response.json();
       debugLog.api('verify', 'Response OK', { valid: data.data?.valid, correlationId: data.correlation_id });
-      
+
       // Handle the unified VerifyResponse format
       // Response: { success, data: VerifyVerdict, error, correlation_id }
       const verdict = data.data || {};
-      
+
       let accountInfo = null;
       if (apiKey) {
         accountInfo = await _getCachedAccountInfo(apiKey);
@@ -552,6 +555,523 @@ async function verifyContent(text, options = {}) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Automatic C2PA detection: lightweight header check via Range request
+// ---------------------------------------------------------------------------
+
+// JPEG APP11 marker (0xFF 0xEB) followed by JUMBF box containing 'jumb' or 'jumd'
+// PNG uses caBX chunk for C2PA data
+const _C2PA_SCAN_LIMIT_PER_PAGE = 20;
+const _C2PA_HEADER_BYTES = 4096;
+
+/**
+ * Check if an image URL likely contains a C2PA manifest by fetching the
+ * first 4KB via a Range request and scanning for JUMBF markers.
+ * Returns true if C2PA signature markers are found, false otherwise.
+ */
+async function _checkC2paHeader(imageUrl) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(imageUrl, {
+      headers: { 'Range': `bytes=0-${_C2PA_HEADER_BYTES - 1}` },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    // Accept 200 (full file) or 206 (partial content)
+    if (!response.ok && response.status !== 206) {
+      return false;
+    }
+
+    const buffer = await response.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+
+    return _hasJumbfMarker(bytes);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Scan raw bytes for JUMBF C2PA markers.
+ * JPEG: Look for APP11 marker (0xFF 0xEB) containing 'jumb' or 'jumd' box types.
+ * PNG: Look for 'caBX' chunk type.
+ */
+function _hasJumbfMarker(bytes) {
+  if (bytes.length < 12) return false;
+
+  // JPEG detection: starts with 0xFF 0xD8
+  if (bytes[0] === 0xFF && bytes[1] === 0xD8) {
+    return _scanJpegForC2pa(bytes);
+  }
+
+  // PNG detection: starts with PNG signature (89 50 4E 47)
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
+    return _scanPngForC2pa(bytes);
+  }
+
+  // TIFF detection: II (little-endian) or MM (big-endian)
+  // C2PA in TIFF is rare but possible; skip for now
+  return false;
+}
+
+/**
+ * Scan JPEG bytes for APP11 marker (0xFF 0xEB) containing JUMBF.
+ */
+function _scanJpegForC2pa(bytes) {
+  let offset = 2; // skip SOI (0xFF 0xD8)
+  while (offset < bytes.length - 4) {
+    if (bytes[offset] !== 0xFF) {
+      offset++;
+      continue;
+    }
+    const marker = bytes[offset + 1];
+
+    // APP11 = 0xEB (JUMBF container)
+    if (marker === 0xEB) {
+      // Check if payload contains 'jumb' or 'jumd' box type
+      const segmentStart = offset + 4; // skip marker + length
+      for (let i = segmentStart; i < Math.min(segmentStart + 100, bytes.length - 4); i++) {
+        if (
+          (bytes[i] === 0x6A && bytes[i+1] === 0x75 && bytes[i+2] === 0x6D && bytes[i+3] === 0x62) || // 'jumb'
+          (bytes[i] === 0x6A && bytes[i+1] === 0x75 && bytes[i+2] === 0x6D && bytes[i+3] === 0x64)    // 'jumd'
+        ) {
+          return true;
+        }
+      }
+    }
+
+    // Skip to next marker segment
+    if (marker >= 0xD0 && marker <= 0xD9) {
+      // Standalone markers (RST0-RST7, SOI, EOI) have no length
+      offset += 2;
+    } else {
+      const segLength = (bytes[offset + 2] << 8) | bytes[offset + 3];
+      if (segLength < 2) break;
+      offset += 2 + segLength;
+    }
+  }
+  return false;
+}
+
+/**
+ * Scan PNG bytes for caBX chunk (C2PA box).
+ */
+function _scanPngForC2pa(bytes) {
+  let offset = 8; // skip PNG signature
+  while (offset < bytes.length - 8) {
+    const chunkLength = (bytes[offset] << 24) | (bytes[offset+1] << 16) | (bytes[offset+2] << 8) | bytes[offset+3];
+    const chunkType = String.fromCharCode(bytes[offset+4], bytes[offset+5], bytes[offset+6], bytes[offset+7]);
+
+    if (chunkType === 'caBX') {
+      return true;
+    }
+
+    // Move to next chunk: 4 (length) + 4 (type) + chunkLength (data) + 4 (CRC)
+    offset += 12 + chunkLength;
+  }
+  return false;
+}
+
+/**
+ * Verify an image via the Encypher /verify/image API.
+ * Fetches the image bytes from the URL, base64-encodes them,
+ * and POSTs to the public image verification endpoint.
+ */
+async function verifyImage(imageUrl) {
+  const cacheKey = hashContent(imageUrl);
+  const cached = verificationCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.result;
+  }
+
+  const inFlight = verificationInFlight.get(cacheKey);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const runVerification = async () => {
+    try {
+      // Fetch the image bytes
+      const imgResponse = await fetch(imageUrl);
+      if (!imgResponse.ok) {
+        return {
+          success: false,
+          error: `Failed to fetch image: HTTP ${imgResponse.status}`,
+          contentType: 'image',
+        };
+      }
+
+      const contentType = imgResponse.headers.get('Content-Type') || '';
+      const mimeType = contentType.split(';')[0].trim() || _guessMimeType(imageUrl);
+
+      const arrayBuffer = await imgResponse.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+
+      // 10MB limit (matches API)
+      if (bytes.length > 10 * 1024 * 1024) {
+        return {
+          success: false,
+          error: 'Image exceeds 10MB size limit',
+          contentType: 'image',
+        };
+      }
+
+      const imageData = _uint8ToBase64(bytes);
+
+      // POST to verify/image
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout * 2);
+
+      const verifyUrl = `${API_CONFIG.baseUrl}${API_CONFIG.imageVerifyEndpoint}`;
+      debugLog.api('verify-image', `POST ${verifyUrl}`, { mimeType, sizeBytes: bytes.length });
+
+      const response = await fetch(verifyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_data: imageData, mime_type: mimeType }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        debugLog.error('verify-image', `HTTP ${response.status}`, errorData);
+        return {
+          success: false,
+          error: errorData.detail || errorData.error || `HTTP ${response.status}`,
+          contentType: 'image',
+          status: response.status,
+        };
+      }
+
+      const data = await response.json();
+      debugLog.api('verify-image', 'Response OK', {
+        valid: data.valid,
+        overallStatus: data.overall_status,
+      });
+
+      return {
+        success: data.valid === true,
+        revoked: false,
+        contentType: 'image',
+        data: {
+          valid: data.valid,
+          overall_status: data.overall_status,
+          c2pa_manifest: data.c2pa_manifest || null,
+          cryptographically_verified: data.cryptographically_verified || false,
+          db_matched: data.db_matched || false,
+          historically_signed_by_us: data.historically_signed_by_us || false,
+          hash: data.hash || null,
+          phash: data.phash || null,
+          image_id: data.image_id || null,
+          document_id: data.document_id || null,
+          verified_at: data.verified_at || null,
+        },
+        correlation_id: data.correlation_id,
+        error: data.error,
+      };
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return { success: false, error: 'Request timed out', contentType: 'image' };
+      }
+      return { success: false, error: error.message || 'Network error', contentType: 'image' };
+    }
+  };
+
+  const verifyPromise = (async () => {
+    let result = await runVerification();
+    if (!result.success && shouldRetryVerification(result)) {
+      debugLog.info('verify-image', 'Retrying image verification after transient failure');
+      result = await runVerification();
+    }
+    verificationCache.set(cacheKey, { result, timestamp: Date.now() });
+    return result;
+  })();
+
+  verificationInFlight.set(cacheKey, verifyPromise);
+  try {
+    return await verifyPromise;
+  } finally {
+    verificationInFlight.delete(cacheKey);
+  }
+}
+
+function _guessMimeType(url) {
+  const ext = String(url).split('?')[0].split('.').pop().toLowerCase();
+  const map = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+    webp: 'image/webp', tiff: 'image/tiff', tif: 'image/tiff',
+  };
+  return map[ext] || 'image/jpeg';
+}
+
+function _uint8ToBase64(uint8) {
+  let binary = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < uint8.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, uint8.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function _guessAudioMimeType(url) {
+  const ext = String(url).split('?')[0].split('.').pop().toLowerCase();
+  const map = {
+    wav: 'audio/wav', mp3: 'audio/mpeg', m4a: 'audio/mp4',
+    aac: 'audio/mp4', ogg: 'audio/ogg', flac: 'audio/flac',
+  };
+  return map[ext] || 'audio/mpeg';
+}
+
+function _guessVideoMimeType(url) {
+  const ext = String(url).split('?')[0].split('.').pop().toLowerCase();
+  const map = {
+    mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/mp4',
+    avi: 'video/x-msvideo', webm: 'video/webm',
+  };
+  return map[ext] || 'video/mp4';
+}
+
+async function verifyAudio(audioUrl) {
+  const cacheKey = hashContent(audioUrl);
+  const cached = verificationCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.result;
+  }
+
+  const inFlight = verificationInFlight.get(cacheKey);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const runVerification = async () => {
+    try {
+      const audioResponse = await fetch(audioUrl);
+      if (!audioResponse.ok) {
+        return {
+          success: false,
+          error: `Failed to fetch audio: HTTP ${audioResponse.status}`,
+          contentType: 'audio',
+        };
+      }
+
+      const contentType = audioResponse.headers.get('Content-Type') || '';
+      const mimeType = contentType.split(';')[0].trim() || _guessAudioMimeType(audioUrl);
+
+      const arrayBuffer = await audioResponse.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+
+      // 50MB limit (matches public API)
+      if (bytes.length > 50 * 1024 * 1024) {
+        return {
+          success: false,
+          error: 'Audio exceeds 50MB size limit',
+          contentType: 'audio',
+        };
+      }
+
+      const audioData = _uint8ToBase64(bytes);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout * 3);
+
+      const verifyUrl = `${API_CONFIG.baseUrl}${API_CONFIG.audioVerifyEndpoint}`;
+      debugLog.api('verify-audio', `POST ${verifyUrl}`, { mimeType, sizeBytes: bytes.length });
+
+      const response = await fetch(verifyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio_data: audioData, mime_type: mimeType }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        debugLog.error('verify-audio', `HTTP ${response.status}`, errorData);
+        return {
+          success: false,
+          error: errorData.detail || errorData.error || `HTTP ${response.status}`,
+          contentType: 'audio',
+          status: response.status,
+        };
+      }
+
+      const data = await response.json();
+      debugLog.api('verify-audio', 'Response OK', { valid: data.valid });
+
+      return {
+        success: data.valid === true,
+        revoked: false,
+        contentType: 'audio',
+        data: {
+          valid: data.valid,
+          c2pa_manifest_valid: data.c2pa_manifest_valid || false,
+          hash_matches: data.hash_matches || false,
+          c2pa_instance_id: data.c2pa_instance_id || null,
+          signer: data.signer || null,
+          signed_at: data.signed_at || null,
+          manifest_data: data.manifest_data || null,
+          verified_at: data.verified_at || null,
+        },
+        correlation_id: data.correlation_id,
+        error: data.error,
+      };
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return { success: false, error: 'Request timed out', contentType: 'audio' };
+      }
+      return { success: false, error: error.message || 'Network error', contentType: 'audio' };
+    }
+  };
+
+  const verifyPromise = (async () => {
+    let result = await runVerification();
+    if (!result.success && shouldRetryVerification(result)) {
+      debugLog.info('verify-audio', 'Retrying audio verification after transient failure');
+      result = await runVerification();
+    }
+    verificationCache.set(cacheKey, { result, timestamp: Date.now() });
+    return result;
+  })();
+
+  verificationInFlight.set(cacheKey, verifyPromise);
+  try {
+    return await verifyPromise;
+  } finally {
+    verificationInFlight.delete(cacheKey);
+  }
+}
+
+async function verifyVideo(videoUrl) {
+  const cacheKey = hashContent(videoUrl);
+  const cached = verificationCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.result;
+  }
+
+  const inFlight = verificationInFlight.get(cacheKey);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const runVerification = async () => {
+    try {
+      const videoResponse = await fetch(videoUrl);
+      if (!videoResponse.ok) {
+        return {
+          success: false,
+          error: `Failed to fetch video: HTTP ${videoResponse.status}`,
+          contentType: 'video',
+        };
+      }
+
+      const contentType = videoResponse.headers.get('Content-Type') || '';
+      const mimeType = contentType.split(';')[0].trim() || _guessVideoMimeType(videoUrl);
+
+      const arrayBuffer = await videoResponse.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+
+      // 50MB client-side limit
+      if (bytes.length > 50 * 1024 * 1024) {
+        return {
+          success: false,
+          error: 'Video exceeds 50MB size limit',
+          contentType: 'video',
+        };
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout * 4);
+
+      const verifyUrl = `${API_CONFIG.baseUrl}${API_CONFIG.videoVerifyEndpoint}`;
+      debugLog.api('verify-video', `POST ${verifyUrl}`, { mimeType, sizeBytes: bytes.length });
+
+      // Video uses multipart/form-data (matching API)
+      const formData = new FormData();
+      const blob = new Blob([bytes], { type: mimeType });
+      formData.append('file', blob, 'video' + _videoExtFromMime(mimeType));
+      formData.append('mime_type', mimeType);
+
+      const response = await fetch(verifyUrl, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        debugLog.error('verify-video', `HTTP ${response.status}`, errorData);
+        return {
+          success: false,
+          error: errorData.detail || errorData.error || `HTTP ${response.status}`,
+          contentType: 'video',
+          status: response.status,
+        };
+      }
+
+      const data = await response.json();
+      debugLog.api('verify-video', 'Response OK', { valid: data.valid });
+
+      return {
+        success: data.valid === true,
+        revoked: false,
+        contentType: 'video',
+        data: {
+          valid: data.valid,
+          c2pa_manifest_valid: data.c2pa_manifest_valid || false,
+          hash_matches: data.hash_matches || false,
+          c2pa_instance_id: data.c2pa_instance_id || null,
+          signer: data.signer || null,
+          signed_at: data.signed_at || null,
+          manifest_data: data.manifest_data || null,
+          verified_at: data.verified_at || null,
+        },
+        correlation_id: data.correlation_id,
+        error: data.error,
+      };
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return { success: false, error: 'Request timed out', contentType: 'video' };
+      }
+      return { success: false, error: error.message || 'Network error', contentType: 'video' };
+    }
+  };
+
+  const verifyPromise = (async () => {
+    let result = await runVerification();
+    if (!result.success && shouldRetryVerification(result)) {
+      debugLog.info('verify-video', 'Retrying video verification after transient failure');
+      result = await runVerification();
+    }
+    verificationCache.set(cacheKey, { result, timestamp: Date.now() });
+    return result;
+  })();
+
+  verificationInFlight.set(cacheKey, verifyPromise);
+  try {
+    return await verifyPromise;
+  } finally {
+    verificationInFlight.delete(cacheKey);
+  }
+}
+
+function _videoExtFromMime(mimeType) {
+  const map = {
+    'video/mp4': '.mp4', 'video/quicktime': '.mov',
+    'video/x-msvideo': '.avi', 'video/webm': '.webm',
+  };
+  return map[mimeType] || '.mp4';
+}
+
 /**
  * Sign content using the unified Encypher /sign API
  * Features are tier-gated server-side via options
@@ -569,7 +1089,7 @@ async function signContent(text, title, options = {}) {
 
     // Get API key from storage
     const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
-    
+
     if (!apiKey) {
       return {
         success: false,
@@ -667,7 +1187,7 @@ async function signContent(text, title, options = {}) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       debugLog.error('sign', `HTTP ${response.status}`, errorData);
-      
+
       if (response.status === 401) {
         return {
           success: false,
@@ -689,7 +1209,7 @@ async function signContent(text, title, options = {}) {
           error: hint ? `${errorMsg} ${hint}` : errorMsg
         };
       }
-      
+
       return {
         success: false,
         error: errorData.error?.message || errorData.detail || `Signing failed: HTTP ${response.status}`
@@ -698,7 +1218,7 @@ async function signContent(text, title, options = {}) {
 
     const data = await response.json();
     debugLog.api('sign', 'Response OK', { documentId: data.data?.document?.document_id, tier: data.meta?.tier });
-    
+
     // Handle new unified response format: { success, data: { document: {...} }, meta: {...} }
     const result = data.data?.document || data.data || data;
     const signedText = resolveSignedText({ visibleText: text, result });
@@ -708,7 +1228,7 @@ async function signContent(text, title, options = {}) {
         error: 'Signing response did not include signed text or a valid embedding plan'
       };
     }
-    
+
     return {
       success: true,
       signedText,
@@ -790,9 +1310,9 @@ function trackEmbeddingDiscovery(discoveryData) {
     // Anonymized user context (no PII)
     sessionId: getOrCreateSessionId()
   };
-  
+
   analyticsQueue.push(event);
-  
+
   // Flush if batch size reached
   if (mismatch.domainMismatch === true || analyticsQueue.length >= ANALYTICS_CONFIG.batchSize) {
     flushAnalytics();
@@ -817,7 +1337,7 @@ function getOrCreateSessionId() {
  */
 function scheduleAnalyticsFlush() {
   if (analyticsFlushTimeout) return;
-  
+
   analyticsFlushTimeout = setTimeout(() => {
     flushAnalytics();
     analyticsFlushTimeout = null;
@@ -829,21 +1349,21 @@ function scheduleAnalyticsFlush() {
  */
 async function flushAnalytics() {
   if (analyticsQueue.length === 0) return;
-  
+
   const events = analyticsQueue.splice(0, analyticsQueue.length);
-  
+
   try {
     // Get API key if available (for authenticated analytics)
     const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
-    
+
     const headers = {
       'Content-Type': 'application/json'
     };
-    
+
     if (apiKey) {
       headers['Authorization'] = `Bearer ${apiKey}`;
     }
-    
+
     const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.analyticsEndpoint}`, {
       method: 'POST',
       headers,
@@ -853,7 +1373,7 @@ async function flushAnalytics() {
         version: chrome.runtime.getManifest().version
       })
     });
-    
+
     if (!response.ok) {
       // Re-queue events on failure (with limit to prevent memory issues)
       if (analyticsQueue.length < 100) {
@@ -984,7 +1504,7 @@ async function getAccountInfo(apiKey) {
       : {};
     const organizationName = accountPayload.organization_name || accountPayload.name || accountPayload.organization?.name || null;
     const publisherDisplayName = accountPayload.publisher_display_name || accountPayload.display_name || accountPayload.publisher?.display_name || null;
-    
+
     return {
       success: true,
       data: {
@@ -1143,7 +1663,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
           // Update icon based on overall state
           updateIcon(tabId, getIconStateForTab(state));
-          
+
           // Track discovery for analytics (phone home)
           trackEmbeddingDiscovery({
             pageUrl: message.pageUrl || state.url,
@@ -1164,6 +1684,45 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
         }
         sendResponse(result);
+      });
+      return true; // async response
+
+    case 'VERIFY_MEDIA': {
+      const mediaType = message.mediaType || 'image';
+      const verifyFn = mediaType === 'audio' ? verifyAudio
+        : mediaType === 'video' ? verifyVideo
+        : verifyImage;
+      const markerType = mediaType === 'audio' ? 'c2pa_audio'
+        : mediaType === 'video' ? 'c2pa_video'
+        : 'c2pa_image';
+      verifyFn(message.url).then(result => {
+        if (tabId) {
+          const current = tabState.get(tabId) || {
+            verified: 0, invalid: 0, revoked: 0, pending: 0, details: [], url: message.pageUrl,
+          };
+          const state = updateTabStateWithVerification(current, result);
+          state.url = message.pageUrl || state.url;
+
+          const detail = buildVerificationDetail({
+            markerType,
+            result,
+            detectionId: message.detectionId || null,
+          });
+          detail.contentType = mediaType;
+          detail.mediaUrl = message.url;
+          state.details = appendVerificationDetail(state.details, detail);
+
+          tabState.set(tabId, state);
+          updateIcon(tabId, getIconStateForTab(state));
+        }
+        sendResponse(result);
+      });
+      return true; // async response
+    }
+
+    case 'CHECK_C2PA_HEADER':
+      _checkC2paHeader(message.url).then(hasC2pa => {
+        sendResponse({ hasC2pa });
       });
       return true; // async response
 
@@ -1335,26 +1894,47 @@ chrome.runtime.onInstalled.addListener((details) => {
     title: 'Verify with Encypher',
     contexts: ['selection']
   });
-  
+
   // Sign selected text (requires API key)
   chrome.contextMenus.create({
     id: 'sign-selected-text',
     title: 'Sign with Encypher',
     contexts: ['selection']
   });
-  
+
   // Separator
   chrome.contextMenus.create({
     id: 'encypher-separator',
     type: 'separator',
     contexts: ['selection']
   });
-  
+
   // Copy signed text
   chrome.contextMenus.create({
     id: 'copy-signed-text',
     title: 'Sign & Copy to Clipboard',
     contexts: ['selection']
+  });
+
+  // Verify image C2PA provenance
+  chrome.contextMenus.create({
+    id: 'verify-image',
+    title: 'Verify image with Encypher',
+    contexts: ['image']
+  });
+
+  // Verify audio C2PA provenance
+  chrome.contextMenus.create({
+    id: 'verify-audio',
+    title: 'Verify audio with Encypher',
+    contexts: ['audio']
+  });
+
+  // Verify video C2PA provenance
+  chrome.contextMenus.create({
+    id: 'verify-video',
+    title: 'Verify video with Encypher',
+    contexts: ['video']
   });
 });
 
@@ -1439,10 +2019,58 @@ async function sendFrameMessageWithFallback(tabId, frameId, payload, options = {
 
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (!info.selectionText) return;
   if (!tab?.id) return;
   const targetFrameId = Number.isInteger(info.frameId) ? info.frameId : 0;
-  
+
+  // Media verification does not require selectionText
+  if (info.menuItemId === 'verify-image') {
+    if (!info.srcUrl) return;
+    try {
+      await showPageToast(tab.id, 'Verifying image...', 'info');
+      await sendFrameMessageWithFallback(tab.id, targetFrameId, {
+        type: 'VERIFY_IMAGE_CONTEXT',
+        srcUrl: info.srcUrl,
+      }, { requireAck: true });
+    } catch (error) {
+      console.error('Error verifying image:', error);
+      await showPageToast(tab.id, 'Unable to verify image in this frame', 'error');
+    }
+    return;
+  }
+
+  if (info.menuItemId === 'verify-audio') {
+    if (!info.srcUrl) return;
+    try {
+      await showPageToast(tab.id, 'Verifying audio...', 'info');
+      await sendFrameMessageWithFallback(tab.id, targetFrameId, {
+        type: 'VERIFY_AUDIO_CONTEXT',
+        srcUrl: info.srcUrl,
+      }, { requireAck: true });
+    } catch (error) {
+      console.error('Error verifying audio:', error);
+      await showPageToast(tab.id, 'Unable to verify audio in this frame', 'error');
+    }
+    return;
+  }
+
+  if (info.menuItemId === 'verify-video') {
+    if (!info.srcUrl) return;
+    try {
+      await showPageToast(tab.id, 'Verifying video...', 'info');
+      await sendFrameMessageWithFallback(tab.id, targetFrameId, {
+        type: 'VERIFY_VIDEO_CONTEXT',
+        srcUrl: info.srcUrl,
+      }, { requireAck: true });
+    } catch (error) {
+      console.error('Error verifying video:', error);
+      await showPageToast(tab.id, 'Unable to verify video in this frame', 'error');
+    }
+    return;
+  }
+
+  // All other context menu items require selected text
+  if (!info.selectionText) return;
+
   switch (info.menuItemId) {
     case 'verify-selected-text':
       // Send selected text to content script for verification
@@ -1460,7 +2088,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         await showPageToast(tab.id, 'Unable to verify selected text in this frame', 'error');
       }
       break;
-      
+
     case 'sign-selected-text':
       // Send to content script to show signing UI
       try {
@@ -1476,7 +2104,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         await showPageToast(tab.id, 'Unable to sign selected text. Try popup Sign tab.', 'error');
       }
       break;
-      
+
     case 'copy-signed-text':
       // Sign and copy to clipboard directly
       try {

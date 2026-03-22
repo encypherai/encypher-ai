@@ -190,6 +190,9 @@ function formatDetailDate(rawDate) {
 function markerTypeLabel(markerType) {
   const marker = String(markerType || '').toLowerCase();
   if (marker === 'c2pa') return 'C2PA';
+  if (marker === 'c2pa_image') return 'C2PA Image';
+  if (marker === 'c2pa_audio') return 'C2PA Audio';
+  if (marker === 'c2pa_video') return 'C2PA Video';
   if (marker === 'encypher') return 'Encypher';
   if (marker === 'micro') return 'Micro';
   return 'Unknown';
@@ -230,6 +233,49 @@ async function locateEmbeddingOnPage(detectionId) {
   }
 }
 
+async function locateMediaOnPage(mediaUrl) {
+  if (!mediaUrl || !currentTabId) return;
+
+  try {
+    await chrome.tabs.sendMessage(currentTabId, {
+      type: 'FOCUS_MEDIA',
+      mediaUrl,
+    });
+  } catch (error) {
+    console.error('Error locating media:', error);
+  }
+}
+
+async function verifyImageFromPopup(srcUrl) {
+  if (!srcUrl || !currentTabId) return;
+
+  try {
+    await chrome.tabs.sendMessage(currentTabId, {
+      type: 'VERIFY_IMAGE_CONTEXT',
+      srcUrl,
+    });
+    // Reload state after a delay to pick up the result
+    setTimeout(loadTabState, 2000);
+  } catch (error) {
+    console.error('Error verifying image from popup:', error);
+  }
+}
+
+async function verifyMediaFromPopup(srcUrl, mediaType) {
+  if (!srcUrl || !currentTabId) return;
+
+  const messageType = mediaType === 'audio' ? 'VERIFY_AUDIO_CONTEXT' : 'VERIFY_VIDEO_CONTEXT';
+  try {
+    await chrome.tabs.sendMessage(currentTabId, {
+      type: messageType,
+      srcUrl,
+    });
+    setTimeout(loadTabState, 3000);
+  } catch (error) {
+    console.error(`Error verifying ${mediaType} from popup:`, error);
+  }
+}
+
 /**
  * Render detail items
  */
@@ -246,15 +292,18 @@ function renderDetails(details) {
 
     const iconClass = detail.revoked ? 'revoked' : (detail.valid ? 'verified' : 'invalid');
     const statusLabel = detail.revoked ? 'Revoked' : (detail.valid ? 'Verified' : 'Invalid');
+    const isMedia = detail.contentType === 'image' || detail.contentType === 'audio' || detail.contentType === 'video' || detail.markerType === 'c2pa_image' || detail.markerType === 'c2pa_audio' || detail.markerType === 'c2pa_video';
     const markerLabel = markerTypeLabel(detail.markerType);
     const detailDate = formatDetailDate(detail.date);
     const verificationUrl = safeExternalUrl(detail.verificationUrl) || safeExternalUrl(buildVerificationLink(detail.documentId));
     const verificationLinkHtml = verificationUrl
       ? `<a class="popup__detail-link" href="${verificationUrl}" target="_blank" rel="noopener noreferrer">View verification</a>`
       : '';
-    const locateButtonHtml = detail.detectionId
-      ? `<button class="popup__detail-action" type="button" data-action="locate-embedding" data-detection-id="${detail.detectionId}">Locate on page</button>`
-      : '';
+    const locateButtonHtml = isMedia && detail.mediaUrl
+      ? `<button class="popup__detail-action" type="button" data-action="locate-media" data-media-url="${detail.mediaUrl}">Locate on page</button>`
+      : (detail.detectionId
+        ? `<button class="popup__detail-action" type="button" data-action="locate-embedding" data-detection-id="${detail.detectionId}">Locate on page</button>`
+        : '');
     const iconSymbol = detail.revoked
       ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>'
       : (detail.valid
@@ -266,7 +315,7 @@ function renderDetails(details) {
       <div class="popup__detail-info">
         <div class="popup__detail-signer">${detail.signer || 'Unknown Signer'}</div>
         <div class="popup__detail-date">${detailDate}</div>
-        <div class="popup__detail-meta">${statusLabel} · ${markerLabel}</div>
+        <div class="popup__detail-meta">${isMedia ? 'Image · ' : ''}${statusLabel} · ${markerLabel}</div>
         ${locateButtonHtml}
         ${verificationLinkHtml}
       </div>
@@ -281,7 +330,140 @@ function renderDetails(details) {
       });
     }
 
+    const locateMediaButton = item.querySelector('[data-action="locate-media"]');
+    if (locateMediaButton) {
+      locateMediaButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        locateMediaOnPage(detail.mediaUrl);
+      });
+    }
+
     detailsListEl.appendChild(item);
+  }
+}
+
+/**
+ * Render the media (images, audio, video) section in the popup verify tab
+ */
+function renderMediaSection(imageData, audioVideoData) {
+  const mediaSectionEl = document.getElementById('media-section');
+  const mediaListEl = document.getElementById('media-list');
+  if (!mediaSectionEl || !mediaListEl) return;
+
+  const imageTotal = imageData?.total || 0;
+  const avTotal = audioVideoData?.total || 0;
+  const totalMedia = imageTotal + avTotal;
+
+  if (totalMedia === 0) {
+    mediaSectionEl.hidden = true;
+    return;
+  }
+
+  mediaSectionEl.hidden = false;
+  const titleEl = mediaSectionEl.querySelector('.popup__media-title');
+  if (titleEl) {
+    titleEl.textContent = `Media on page (${totalMedia})`;
+  }
+
+  mediaListEl.innerHTML = '';
+
+  // Show up to 10 images
+  const images = (imageData?.images || []).slice(0, 10);
+  for (const img of images) {
+    const item = document.createElement('div');
+    item.className = 'popup__media-item';
+
+    const statusClass = img.status === 'verified' ? 'verified'
+      : img.status === 'invalid' ? 'invalid'
+      : img.status === 'error' ? 'invalid'
+      : 'pending';
+
+    const statusLabel = img.status
+      ? (img.status === 'verified' ? 'Verified' : (img.status === 'error' ? 'Error' : 'Invalid'))
+      : 'Not verified';
+
+    const filename = img.src.split('/').pop().split('?')[0].slice(0, 30) || 'image';
+
+    const actionHtml = img.status
+      ? `<span class="popup__media-status popup__media-status--${statusClass}">${statusLabel}</span>`
+      : `<button class="popup__media-verify-btn" type="button" data-action="verify-image" data-src="${img.src}">Verify</button>`;
+
+    item.innerHTML = `
+      <img class="popup__media-thumb" src="${img.src}" alt="" width="32" height="32">
+      <span class="popup__media-name" title="${img.src}">${filename}</span>
+      ${actionHtml}
+    `;
+
+    const verifyBtn = item.querySelector('[data-action="verify-image"]');
+    if (verifyBtn) {
+      verifyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        verifyImageFromPopup(img.src);
+        verifyBtn.textContent = '...';
+        verifyBtn.disabled = true;
+      });
+    }
+
+    mediaListEl.appendChild(item);
+  }
+
+  // Show audio/video entries
+  const avItems = (audioVideoData?.media || []).slice(0, 10);
+  for (const av of avItems) {
+    const item = document.createElement('div');
+    item.className = 'popup__media-item';
+
+    const statusClass = av.status === 'verified' ? 'verified'
+      : av.status === 'invalid' ? 'invalid'
+      : av.status === 'error' ? 'invalid'
+      : 'pending';
+
+    const statusLabel = av.status
+      ? (av.status === 'verified' ? 'Verified' : (av.status === 'error' ? 'Error' : 'Invalid'))
+      : 'Not verified';
+
+    const filename = av.src.split('/').pop().split('?')[0].slice(0, 30) || av.mediaType;
+    const typeIcon = av.mediaType === 'audio' ? '&#x266B;' : '&#x25B6;';
+
+    const actionHtml = av.status
+      ? `<span class="popup__media-status popup__media-status--${statusClass}">${statusLabel}</span>`
+      : `<button class="popup__media-verify-btn" type="button" data-action="verify-media" data-src="${av.src}" data-media-type="${av.mediaType}">Verify</button>`;
+
+    item.innerHTML = `
+      <span class="popup__media-type-icon">${typeIcon}</span>
+      <span class="popup__media-name" title="${av.src}">${filename}</span>
+      ${actionHtml}
+    `;
+
+    const verifyBtn = item.querySelector('[data-action="verify-media"]');
+    if (verifyBtn) {
+      verifyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        verifyMediaFromPopup(av.src, av.mediaType);
+        verifyBtn.textContent = '...';
+        verifyBtn.disabled = true;
+      });
+    }
+
+    // Add locate button if verified
+    if (av.status && av.status !== 'pending') {
+      const locateBtn = document.createElement('button');
+      locateBtn.className = 'popup__media-verify-btn';
+      locateBtn.type = 'button';
+      locateBtn.dataset.action = 'locate-media';
+      locateBtn.textContent = 'Locate';
+      locateBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        locateMediaOnPage(av.src);
+      });
+      item.appendChild(locateBtn);
+    }
+
+    mediaListEl.appendChild(item);
   }
 }
 
@@ -312,7 +494,23 @@ async function loadTabState() {
     });
 
     const hasDetails = Array.isArray(state.details) && state.details.length > 0;
-    if (!state || (state.count === 0 && !hasDetails)) {
+
+    // Fetch image inventory from content script
+    let imageData = null;
+    try {
+      imageData = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_IMAGES' });
+    } catch { /* content script may not be ready */ }
+
+    // Fetch audio/video inventory from content script
+    let audioVideoData = null;
+    try {
+      audioVideoData = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_MEDIA' });
+    } catch { /* content script may not be ready */ }
+
+    const hasImages = imageData && imageData.total > 0;
+    const hasAudioVideo = audioVideoData && audioVideoData.total > 0;
+
+    if (!state || (state.count === 0 && !hasDetails && !hasImages && !hasAudioVideo)) {
       showState('empty');
     } else {
       showState('found');
@@ -322,6 +520,9 @@ async function loadTabState() {
       if (state.details) {
         renderDetails(state.details);
       }
+
+      // Render media section
+      renderMediaSection(imageData, audioVideoData);
     }
   } catch (error) {
     console.error('Error loading tab state:', error);

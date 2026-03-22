@@ -381,12 +381,14 @@ async def _resolve_uuids_from_db(
     *,
     payload_text: str,
     content_db: Optional[AsyncSession],
+    core_db: Optional[AsyncSession] = None,
 ) -> Optional[Dict[str, Any]]:
     """Resolve VS256/ZW segment UUIDs via the content DB.
 
     Extracts UUIDs from embedded signatures and looks them up in
-    ``content_references``.  This mirrors what the verification-service
-    does via ``_bulk_resolve_segment_uuids`` but runs in-process.
+    ``content_references``.  When ``core_db`` is provided, the org's
+    signing key is loaded and the HMAC is verified so that tampered
+    content is correctly rejected.
     """
     from sqlalchemy import text as sql_text
 
@@ -429,8 +431,58 @@ async def _resolve_uuids_from_db(
         if hasattr(row, "manifest_data") and row.manifest_data:
             manifest_data = row.manifest_data if isinstance(row.manifest_data, dict) else None
 
+        # Verify HMAC with the org's actual signing key when possible.
+        # Without this, the DB fallback would claim is_valid=True for any
+        # text containing a known UUID -- even if the visible content was
+        # tampered with after signing.
+        hmac_verified = False
+        if core_db and vs256_sigs:
+            try:
+                from app.utils.crypto_utils import load_organization_private_key
+                from app.utils.vs256_crypto import (
+                    derive_signing_key_from_private_key,
+                    verify_signed_marker,
+                )
+
+                private_key = await load_organization_private_key(
+                    row.organization_id,
+                    core_db,
+                )
+                signing_key = derive_signing_key_from_private_key(private_key)
+
+                _start, _end, sig_str = vs256_sigs[0]
+                clean_sentence = _extract_sentence_for_signature(
+                    payload_text,
+                    _start,
+                    _end,
+                )
+                sig_valid, _sig_log_id = verify_signed_marker(
+                    sig_str,
+                    signing_key,
+                    sentence_text=clean_sentence,
+                )
+                hmac_verified = sig_valid
+                if not sig_valid:
+                    logger.info(
+                        "DB UUID fallback HMAC check failed (content tampered): org=%s, log_id=%s",
+                        row.organization_id,
+                        first_hex,
+                    )
+                else:
+                    logger.info(
+                        "DB UUID fallback HMAC check passed: org=%s, log_id=%s",
+                        row.organization_id,
+                        first_hex,
+                    )
+            except Exception as e:
+                logger.warning(
+                    "DB UUID fallback: could not verify HMAC for org %s: %s",
+                    row.organization_id,
+                    e,
+                )
+
         return {
-            "is_valid": True,
+            "is_valid": hmac_verified,
             "signer_id": row.organization_id,
             "manifest": {
                 "manifest_mode": row.manifest_mode or "micro",
@@ -678,6 +730,7 @@ async def execute_verification(
             resolved = await _resolve_uuids_from_db(
                 payload_text=payload_text,
                 content_db=content_db,
+                core_db=db,
             )
             if resolved:
                 is_valid = resolved["is_valid"]

@@ -8,7 +8,9 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import evidence, fingerprint, internal_usage, merkle, multi_source, provisioning, streaming_merkle
 from app.api.v1.enterprise import audio_attribution, c2pa, image_attribution, video_attribution, video_stream_attribution
+from app.api.v1.audio_verify import router as audio_verify_router
 from app.api.v1.image_verify import router as image_verify_router
+from app.api.v1.video_verify import router as video_verify_router
 from app.api.v1.public import c2pa as public_c2pa
 from app.api.v1.public import rights as public_rights
 from app.api.v1.public import verify
@@ -54,6 +56,12 @@ api_router.include_router(video_stream_attribution.router, prefix="", tags=["Vid
 
 # Include image verification endpoints (no auth -- public)
 api_router.include_router(image_verify_router, tags=["Image Verification"])
+
+# Include audio verification endpoint (no auth -- public)
+api_router.include_router(audio_verify_router, tags=["Audio Verification"])
+
+# Include video verification endpoint (no auth -- public)
+api_router.include_router(video_verify_router, tags=["Video Verification"])
 
 # Include public verification endpoints (no auth)
 api_router.include_router(verify.router)

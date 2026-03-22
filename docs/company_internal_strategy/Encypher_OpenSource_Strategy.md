@@ -1,7 +1,7 @@
 # Encypher Corporation: Open Source Strategy
 ## C2PA Reference Implementation Proliferation
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
 **Version:** 4.1
 **Distribution:** Engineering & Strategy Leadership
@@ -16,12 +16,12 @@ As Co-Chair of the C2PA Text Provenance Task Force, our open-source strategy dri
 - **From:** Community building for credibility
 - **To:** Reference implementation as infrastructure standard with legal transformation upsell
 - **License:** AGPL-3.0 for ecosystem protection
-- **Commercial Hook:** Open source repo provides document-level reference implementation. Free hosted API provides full signing including sentence-level. Enforcement tools and enterprise features are commercial.
+- **Commercial Hook:** Open source repo provides document-level reference implementation. Free hosted API provides full signing including sentence-level. Enforcement tools and enterprise features are commercial. Enterprise tier also includes native multi-media C2PA signing (images, audio, video, live streams) and free verification across all media asset classes.
 
 **The Moat Architecture:**
 - **Open Source:** C2PA text standard reference implementation (document-level)
 - **Free Hosted API:** Full signing including sentence-level Merkle trees, invisible embeddings, coalition membership
-- **Commercial (Enforcement + Enterprise):** Attribution analytics, formal notice generation, evidence packages, streaming LLM signing, robust fingerprinting, batch operations, SSO, revocation
+- **Commercial (Enforcement + Enterprise):** Attribution analytics, formal notice generation, evidence packages, streaming LLM signing, robust fingerprinting, batch operations, SSO, revocation, multi-media C2PA signing (images, audio, video, live streams), free verification across all media
 - **Result:** Everyone implements our standard, enterprises need our enhancements for legal transformation
 
 **Key Dates:**
@@ -187,6 +187,23 @@ def performance_intelligence(content):
 def prepare_evidence_package(content, notification_record):
  """Generate willful infringement evidence package"""
  # For legal proceedings
+
+# Multi-Media Signing (Enterprise Only)
+def sign_image(image_bytes, metadata, format='jpeg'):
+    """C2PA JUMBF manifest embedding for images"""
+    # Supports JPEG, PNG, WebP, TIFF
+
+def sign_audio(audio_bytes, metadata, format='mp3'):
+    """Format-native C2PA embedding for audio"""
+    # WAV (RIFF chunk), MP3 (ID3 GEOB), M4A (ISO BMFF uuid box)
+
+def sign_video(video_bytes, metadata, format='mp4'):
+    """C2PA manifest embedding for video"""
+    # MP4, MOV, M4V (ISO BMFF), AVI (RIFF chunk)
+
+def sign_rich_article(text, images, metadata):
+    """Atomic provenance for text + embedded images"""
+    # Single provenance unit for entire article package
 ```
 
 ---
@@ -480,7 +497,7 @@ Roundtable Track: **Invite-only (rescheduling in progress)**
 
 ## Document Control
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
 **Distribution:** Engineering & Strategy Leadership
 **Next Review:** After roundtable date lock + framework brief publication

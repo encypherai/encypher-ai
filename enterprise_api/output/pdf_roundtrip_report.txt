@@ -16,8 +16,8 @@ Mode                     VS-BMP    VS-Supp      ZWC
 --------------------------------------------------
 VS256 (36 chars)              0          0        0
 VS256-RS (44 chars)           0          0        0
-ZWC (100 chars)               0          0      424
-ZWC-RS (112 chars)            0          0      456
+ZWC (100 chars)               0          0      410
+ZWC-RS (112 chars)            0          0      464
 
   Notes:
     (none)

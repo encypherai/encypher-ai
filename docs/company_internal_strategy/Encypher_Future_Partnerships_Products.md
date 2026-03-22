@@ -1,6 +1,6 @@
 # Encypher Future Partnerships and Products
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 22, 2026
 **Status:** Internal Strategy
 **Distribution:** Executive Team & Product Leadership
 
@@ -13,6 +13,8 @@ beyond the core C2PA signing SDK. Three themes drive the analysis: (1) where dis
 gated by platform partnerships, (2) where the LLM proxy creates a lower-friction enterprise
 on-ramp than the add-in, and (3) where data custody obligations will shape product architecture
 as we scale.
+
+Additionally, the Enterprise API now provides native multi-media C2PA signing (images, audio, video, live streams) and free verification across all media asset classes. This capability is production-ready and should be factored into all partnership and integration discussions -- enterprise customers can sign their entire content portfolio under one platform.
 
 ---
 
@@ -149,6 +151,8 @@ tools that call OpenAI/Anthropic/Gemini directly, the proxy is the right entry p
   Lead with compliance, not features. Target: CISO, General Counsel, Head of Engineering.
 - **Word Add-in:** "Attestation for human reviewers of AI-generated documents."
   Lead with the human review workflow. Target: Editorial, Legal, Communications teams.
+- **Multi-Media Signing:** "Provenance for your entire content portfolio -- articles, photos, podcasts, video."
+  Lead with completeness. Target: Head of Content, CTO, Digital Asset Management teams.
 
 These two motions are complementary: a proxy customer who also uses Word as their document
 workflow is a natural add-in upsell, and vice versa.
@@ -254,6 +258,51 @@ or when the Chrome extension gains a build step refactor.
 
 ---
 
+## 7. CDN Edge Signing & Distribution Leak Detection
+
+### Concept
+
+Partner with CDNs (Fastly, Cloudflare, Akamai) or ad-tech delivery platforms to sign content
+on demand at the delivery edge, embedding per-session/per-subscriber context via invisible
+fingerprinting. When content leaks, the publisher traces the leak back to the exact user
+session, subscriber account, referral path, and timestamp.
+
+This extends the existing Enterprise-tier fingerprint service (`fingerprint_service.py`) from a
+single-document tool into a distribution-layer forensic infrastructure.
+
+### Why It Matters
+
+- Upgrades Tier 1 detection from "what leaked" to "who leaked it" -- forensic-grade attribution
+- Unlocks a new buyer (Head of Subscriptions / VP Revenue) and budget (paywall enforcement)
+- No competitor can replicate: requires both ENC0100 patent-pending embedding AND delivery-layer integration
+- Natural Enterprise add-on at $1,500-3,000/mo per publisher domain
+
+### Technical Approach
+
+Two-phase signing: pre-sign at publish time (document-level C2PA, cached normally), then apply
+only the lightweight fingerprint layer at the CDN edge via WASM SDK. Hierarchical key derivation
+(master -> doc -> session) avoids per-session key storage. Zero latency impact on content delivery.
+
+### Partner Sequencing
+
+1. Freestar/PubOS (seed concept in current partnership, Phase 2 capability)
+2. Aditude (bridge into Prebid.org AI working group)
+3. Fastly (first CDN -- media vertical, least competitive overlap)
+4. Cloudflare (after reference implementation exists -- competitive risk if approached too early)
+
+### Prerequisites
+
+- Patent CIP for per-session dynamic embedding claims (P0)
+- Privacy framework: pseudonymous tokens only, mandatory publisher ToS disclosure, DPIA template (P0)
+- Lightweight fingerprint-only API endpoint + identification endpoint (P1)
+
+### Full Concept Document
+
+See `future_product_concepts/CDN_Edge_Signing_Leak_Detection.md` for complete technical
+architecture, privacy/legal analysis, partnership strategy, and risk register.
+
+---
+
 ## Summary: Priority Matrix
 
 | Initiative | Impact | Friction | Timeline |
@@ -261,13 +310,16 @@ or when the Chrome extension gains a build step refactor.
 | AppSource submission | High | Medium | 4-8 weeks |
 | Microsoft ISV Connect | Very High | High | 3-6 months |
 | LLM proxy as primary enterprise motion | Very High | Low | Now |
+| CDN edge signing / leak detection | Very High | High | Q2-Q3 2026 |
 | Google Docs add-on | Medium | Medium | 2-3 months |
 | Notion integration | Medium-High | Low | 1-2 months |
 | Slack signing bot | Low-Medium | Low | 2-3 months |
 | DPA + data custody roadmap | High (blocker) | Medium | 4-6 weeks |
 | @encypher/signing-config SSOT | Low | Low | When next mode change lands |
+| Multi-media signing GTM messaging | High | Low | Now (capability exists) |
 
 The highest-leverage near-term action is positioning the LLM proxy as the enterprise lead
 product while pursuing AppSource for the add-in distribution channel. The Copilot gap and
 data custody roadmap are medium-term blockers that require partnership conversations and
-legal preparation respectively.
+legal preparation respectively. CDN edge signing is a Q2-Q3 capability expansion with Very
+High impact but requires patent (CIP) and privacy framework prerequisites before any pilot.

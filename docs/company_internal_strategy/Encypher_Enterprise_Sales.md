@@ -1,7 +1,7 @@
 # Encypher Corporation: Enterprise Sales Positioning
-## Text Provenance Infrastructure Through Standards
+## Content Provenance Infrastructure Through Standards
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
 **Version:** 4.1
 **Distribution:** Sales & Solutions Teams
@@ -54,6 +54,8 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 Our patent-pending sentence-level tracking goes beyond basic C2PA to enable what matters: **willful infringement proof**, **quote integrity verification**, and **performance intelligence**.
 
+Publishers do not produce only text. Every major publisher produces photos, podcasts, and video alongside articles. The Enterprise platform signs the entire content portfolio -- text, images, audio, and video -- under one provenance infrastructure. Text is the wedge: C2PA text provenance authorship establishes the standard and the coalition. Multi-media signing is the full platform for publishers who need provenance coverage across every format they produce.
+
 ### Encypher Enterprise: The Complete Solution
 
 **Standards Foundation--Baseline**
@@ -73,6 +75,16 @@ Our patent-pending technology goes beyond basic C2PA:
 - **Directory-Scale Operations:** Sign and verify entire content repositories
 - **Performance Intelligence:** Real-time dashboards showing content attribution and model optimization insights
 
+**Multi-Media Provenance (Enterprise)**
+Sign the full content portfolio under one provenance infrastructure:
+- **Image Signing:** JPEG, PNG, WebP, and TIFF with C2PA JUMBF manifests
+- **Audio Signing:** WAV, MP3, and M4A with format-native C2PA embedding
+- **Video Signing:** MP4, MOV, M4V, and AVI (up to 500MB) with C2PA manifests
+- **Live Video Streams:** Per-segment C2PA signing conforming to C2PA Section 19
+- **Rich Article Signing:** Text and images signed as an atomic provenance unit
+- **CDN Edge Integrations:** Cloudflare, Fastly, and Lambda@Edge signing at distribution
+- **Perceptual Hash Attribution Search:** Track image derivatives and cropped variants across the web
+
 ### Four-Tier Value Proposition
 
 **Tier 1: Proof of Origin** (Compliance Baseline)
@@ -80,6 +92,7 @@ Our patent-pending technology goes beyond basic C2PA:
 - C2PA standard implementation (published January 8, 2026)
 - EU AI Act readiness
 - Survives copy-paste and distribution operations
+- Free verification across all media -- any third party verifies signed text, images, audio, or video at no cost via the public API, no auth required
 
 **Tier 2: Legal Transformation** (The Key Value for Publishers)
 - Willful infringement enablement (formal notice + proof)
@@ -447,7 +460,7 @@ Expect detailed follow-up questions on implementation method, systems integratio
 
 ## Document Control
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
 **Distribution:** Sales & Solutions Teams
 **Next Review:** After roundtable date lock + framework brief publication

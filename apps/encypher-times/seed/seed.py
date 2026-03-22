@@ -299,9 +299,12 @@ def sign_image(image_path: pathlib.Path, doc_id: str, title: str) -> bytes:
     resp.raise_for_status()
     data = resp.json()
 
-    signed_images = data.get("data", {}).get("signed_images", [])
+    inner = data.get("data", {})
+    signed_images = inner.get("images", inner.get("signed_images", []))
     if signed_images:
-        return base64.b64decode(signed_images[0].get("data", ""))
+        b64_data = signed_images[0].get("signed_image_b64", signed_images[0].get("data", ""))
+        if b64_data:
+            return base64.b64decode(b64_data)
     return image_bytes
 
 

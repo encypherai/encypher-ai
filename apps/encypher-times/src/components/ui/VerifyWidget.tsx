@@ -99,13 +99,13 @@ export function VerifyWidget() {
         </div>
       )}
 
-      {/* Tampered Result */}
+      {/* Content Modified Result */}
       {result && result.tampered && (
         <div className="p-4 rounded border bg-amber-50/60 border-amber-300/60">
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle className="w-5 h-5 text-amber-600" />
             <span className="font-[family-name:var(--font-ui)] text-sm font-bold text-amber-800">
-              Signature Invalid
+              Content Modified
             </span>
           </div>
           <dl className="font-[family-name:var(--font-ui)] text-xs space-y-1.5">
@@ -116,16 +116,23 @@ export function VerifyWidget() {
               </div>
             )}
             <div className="flex gap-2">
-              <dt className="text-ink-faint w-28 shrink-0">Status:</dt>
+              <dt className="text-ink-faint w-28 shrink-0">Signature:</dt>
+              <dd className="text-teal-700 font-medium">
+                Valid -- original signer confirmed
+              </dd>
+            </div>
+            <div className="flex gap-2">
+              <dt className="text-ink-faint w-28 shrink-0">Integrity:</dt>
               <dd className="text-amber-800 font-medium">
-                Modified -- content has been altered since signing
+                Modified -- text has been altered since signing
               </dd>
             </div>
           </dl>
           <p className="font-[family-name:var(--font-ui)] text-xs text-ink-muted mt-3 leading-relaxed">
-            This text was originally signed but modifications have been
-            detected. The original signature no longer matches the current
-            content.
+            This text carries a valid Encypher signature from{" "}
+            {result.signerName || "the original publisher"}, but the visible
+            content has been changed since it was signed. The original
+            cryptographic hash no longer matches.
           </p>
         </div>
       )}

@@ -1,7 +1,7 @@
-# Encypher Corporation: Infrastructure for Text Provenance
+# Encypher Corporation: Infrastructure for Content Provenance
 ## One-Page Overviews for Publishers and AI Companies
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
 **Version:** 4.1
 **Distribution:** Sales & Business Development Teams
@@ -13,7 +13,7 @@
 
 ---
 
-**Our Mission:** To establish and implement the global technical standard for text authentication through collaborative infrastructure building, enabling an economy where content ownership is provable, licensing is technically feasible, and market standards are industry-defined.
+**Our Mission:** To establish and implement the global technical standard for content authentication through collaborative infrastructure building, enabling an economy where content ownership is provable, licensing is technically feasible, and market standards are industry-defined.
 
 ---
 
@@ -40,6 +40,8 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 **The Technical Reality:**
 Publishers implementing our infrastructure embed cryptographic watermarking directly into text at sentence-level granularity. It survives copy-paste operations, B2B distribution through wire services, aggregator syndication, web scraping, and data processing. Basic C2PA provides document-level authentication--our patent-pending enhancements enable sentence-level tracking, tamper detection, quote verification, and performance analytics.
 
+Beyond text, our Enterprise API provides native C2PA signing for images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), and live video streams. AI training pipelines ingest all media types -- our provenance covers the full content portfolio. Verification is free across all media asset classes.
+
 ### Investment & Strategic Value
 
 **Enterprise Infrastructure:** Custom pricing based on coalition scale and integration requirements
@@ -50,6 +52,7 @@ Publishers implementing our infrastructure embed cryptographic watermarking dire
 - Quote integrity verification to prevent hallucination-related brand damage
 - Technical foundation for publisher partnerships
 - Exclusive patent-pending capabilities
+- Multi-media provenance infrastructure: text, images, audio, video under one platform
 
 **The Strategic Reality:**
 This isn't about restriction -- it's infrastructure for proper content licensing and model insights. Publishers need proof of origin. You benefit from provenance data and attribution intelligence when you integrate provenance checking into your pipeline. Both sides benefit from mathematical certainty and standards-based interoperability.
@@ -88,6 +91,8 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 - **Willful Infringement Enablement:** Once you notify AI companies that your content carries signatures, continued unauthorized use becomes provable willful infringement--not "we didn't know it was yours"
 - **Granular Tamper Detection:** Multiple hash layers reveal ANY modification to specific sentences
 - **Court-Admissible Evidence:** Mathematical proof that eliminates the innocent infringement defense
+- **Multi-Media Provenance (Enterprise):** Sign your photos, podcasts, and video alongside articles -- your entire content portfolio under one provenance infrastructure with C2PA manifests
+- **Free Verification:** Any third party -- journalists, courts, compliance teams, AI companies -- can verify any signed asset (text, image, audio, video) at no cost via the public API
 
 ### Eliminate the "We Didn't Know" Defense
 
@@ -112,7 +117,7 @@ Convert unmarked content into provably owned assets. Serve formal notice. Create
 **Our Model--Free to Sign. Paid to Enforce. Aligned on Outcomes.**
 
 **Free Tier -- Every Publisher:**
-Full signing infrastructure at no cost. C2PA 2.3-compliant signing, sentence-level Merkle tree authentication, invisible Unicode embeddings, public verification pages, coalition membership. 1,000 documents/month. WordPress plugin (beta), Chrome extension (beta), API, CLI, GitHub Action included.
+Full signing infrastructure at no cost. C2PA 2.3-compliant signing, sentence-level Merkle tree authentication, invisible Unicode embeddings, public verification pages, coalition membership. 1,000 documents/month. WordPress plugin (beta), Chrome extension (beta), API, CLI, GitHub Action included. Free verification across all media asset classes.
 
 **Enforcement Add-Ons (Self-Service):**
 - Attribution Analytics: $299/month (find where your signed content appears across the web -- scraped republication, aggregators, RAG systems, content platforms)
@@ -187,6 +192,7 @@ Technical demonstration showing how sentence-level tracking, quote integrity ver
 | **Licensing Infrastructure** | No | Partial | Complete |
 | **Publisher Coalition** | N/A | Partial | Full Access |
 | **AI Company Compatible** | No | Basic | Full Integration |
+| **Multi-Media Provenance** | No | No | Text + Images + Audio + Video |
 
 ---
 
@@ -291,7 +297,7 @@ matt.kaminsky@encypherai.com
 
 ## About Encypher
 
-Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and serves as Co-Chair of the task force, establishing text authentication as the global standard through collaboration with Google, BBC, OpenAI, Adobe, and Microsoft. Our patent-pending cryptographic watermarking embeds proof of origin directly into text at sentence-level granularity, enabling publishers to serve formal notice, prove willful infringement, verify quote integrity, and AI companies to gain performance intelligence. We're building the transaction layer for the AI content economy--not as a product, but as collaborative infrastructure that benefits the entire ecosystem.
+Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and serves as Co-Chair of the task force, establishing text authentication as the global standard through collaboration with Google, BBC, OpenAI, Adobe, and Microsoft. Our patent-pending cryptographic watermarking embeds proof of origin directly into content -- text, images, audio, and video -- at sentence-level granularity for text, enabling publishers to serve formal notice, prove willful infringement, verify quote integrity, and AI companies to gain performance intelligence. We're building the transaction layer for the AI content economy--not as a product, but as collaborative infrastructure that benefits the entire ecosystem.
 
 **The standard published January 8, 2026. The roundtable track is active. The infrastructure is here.**
 
@@ -301,7 +307,7 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 
 ## Document Control
 
-**Last Updated:** March 4, 2026
+**Last Updated:** March 21, 2026
 **Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
 **Distribution:** Sales & Business Development Teams
 **Next Review:** After roundtable date lock + framework brief publication

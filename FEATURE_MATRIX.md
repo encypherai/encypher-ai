@@ -123,7 +123,7 @@ Embed C2PA manifests directly into audio files. Uses `c2pa-python` (wrapping `c2
 | Feature | Free | Enterprise |
 |---------|:----:|:----------:|
 | Audio C2PA signing (WAV, MP3, M4A/AAC) | ❌ | ✅ |
-| Audio C2PA verification | ❌ | ✅ |
+| Audio C2PA verification | ✅ | ✅ |
 | C2PA v2.3 audio actions (created, dubbed, mixed, mastered, remixed) | ❌ | ✅ |
 | Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |
 | Passthrough mode (provenance metadata without JUMBF embedding) | ❌ | ✅ |
@@ -137,7 +137,7 @@ Embed C2PA manifests directly into video files. Uses `c2pa-python` (wrapping `c2
 | Feature | Free | Enterprise |
 |---------|:----:|:----------:|
 | Video C2PA signing (MP4, MOV, M4V, AVI) | ❌ | ✅ |
-| Video C2PA verification | ❌ | ✅ |
+| Video C2PA verification | ✅ | ✅ |
 | Multipart upload (up to 500 MB) | ❌ | ✅ |
 | Large file download endpoint (files > 50 MB) | ❌ | ✅ |
 | Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |

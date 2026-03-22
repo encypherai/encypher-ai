@@ -11,6 +11,7 @@ const publisherIdentityEl = document.getElementById('publisherIdentity');
 
 const autoVerifyCheckbox = document.getElementById('autoVerify');
 const showBadgesCheckbox = document.getElementById('showBadges');
+const autoScanImagesCheckbox = document.getElementById('autoScanImages');
 
 const apiBaseUrlInput = document.getElementById('apiBaseUrl');
 const cacheTtlInput = document.getElementById('cacheTtl');
@@ -45,6 +46,7 @@ const DEFAULT_SETTINGS = {
   defaultEmbeddingTechnique: 'micro_no_embed_c2pa',
   defaultSegmentationLevel: 'document',
   showEditorButtons: true,
+  autoScanImages: true,
   extensionSetupStatus: 'not_started'
 };
 
@@ -89,6 +91,7 @@ async function loadSettings() {
     // Verification settings
     autoVerifyCheckbox.checked = result.autoVerify;
     showBadgesCheckbox.checked = result.showBadges;
+    if (autoScanImagesCheckbox) autoScanImagesCheckbox.checked = result.autoScanImages;
 
     // Advanced settings
     const savedUrl = result.apiBaseUrl === 'custom'
@@ -319,6 +322,16 @@ showBadgesCheckbox.addEventListener('change', async () => {
     type: 'SETTINGS_UPDATED',
     setting: 'showBadges',
     value: showBadgesCheckbox.checked
+  });
+});
+
+// Auto-scan images toggle
+autoScanImagesCheckbox?.addEventListener('change', async () => {
+  await saveSetting('autoScanImages', autoScanImagesCheckbox.checked);
+  chrome.runtime.sendMessage({
+    type: 'SETTINGS_UPDATED',
+    setting: 'autoScanImages',
+    value: autoScanImagesCheckbox.checked
   });
 });
 

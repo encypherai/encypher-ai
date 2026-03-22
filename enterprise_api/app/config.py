@@ -136,6 +136,10 @@ class Settings(BaseSettings):
 
     video_max_size_bytes: int = 500 * 1024 * 1024  # 500 MB
 
+    # Public (unauthenticated) verification size limits -- lower than enterprise
+    public_audio_max_size_bytes: int = 50 * 1024 * 1024  # 50 MB
+    public_video_max_size_bytes: int = 100 * 1024 * 1024  # 100 MB
+
     # C2PA signer trust list pinning/refresh
     c2pa_trust_list_url: Optional[str] = None
     c2pa_trust_list_sha256: Optional[str] = None

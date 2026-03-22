@@ -1,6 +1,6 @@
 /**
  * Encypher Verify - Badge Styles
- * 
+ *
  * Brand Colors (from Encypher Brand Guidelines):
  *   Deep Navy:      #1B2F50  (primary — backgrounds, headers)
  *   Azure Blue:     #2A87C4  (highlight — CTAs, links, accents)
@@ -377,4 +377,44 @@
 .encypher-detail-panel__footer a:hover {
   opacity: 1;
   text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ */
+/* Image badge: floating overlay at the top-right corner of an image  */
+/* ------------------------------------------------------------------ */
+
+.encypher-image-badge-wrapper {
+  position: relative;
+  max-width: 100%;
+}
+
+.encypher-media-badge-wrapper {
+  position: relative;
+}
+
+/* Compact badge variant for media elements */
+.encypher-badge--media {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 24px;
+  height: 24px;
+  margin-left: 0;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.encypher-badge--media:hover {
+  opacity: 1;
+}
+
+.encypher-badge--media .encypher-badge__icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Ensure the tooltip opens below/beside the badge without overlapping the image */
+.encypher-badge--media .encypher-badge__tooltip {
+  right: 0;
+  top: calc(100% + 6px);
 }
