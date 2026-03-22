@@ -1,6 +1,6 @@
 {
   "name": "encypher-verify",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Chrome extension to verify and sign Encypher and C2PA-compatible content on any webpage",
   "private": true,
   "type": "module",

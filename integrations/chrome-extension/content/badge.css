@@ -418,3 +418,36 @@
   right: 0;
   top: calc(100% + 6px);
 }
+
+/* ------------------------------------------------------------------ */
+/* Dark mode adjustments for content-injected UI                      */
+/* Badge gradients, tooltip, and detail panel already use opaque dark  */
+/* backgrounds and work on both light and dark pages. Only elements    */
+/* that inherit from the page need overrides.                         */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-color-scheme: dark) {
+  /* Verified content border highlight - increase opacity for dark backgrounds */
+  .encypher-verified-content:hover {
+    border-left-color: rgba(42, 135, 196, 0.5);
+  }
+
+  /* Badge shadow needs more contrast on dark backgrounds */
+  .encypher-badge {
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  }
+
+  .encypher-badge:hover {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Status dot border matches dark page backgrounds better */
+  .encypher-badge__status {
+    border-color: #1e293b;
+  }
+
+  /* Media badge - increase base opacity on dark pages for visibility */
+  .encypher-badge--media {
+    opacity: 0.95;
+  }
+}

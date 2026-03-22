@@ -1,6 +1,6 @@
 # Chrome Extension v2.0.0 Release Prep
 
-## Status: NOT STARTED
+## Status: COMPLETE
 
 ## Current Goal
 Prepare all Chrome Web Store assets, listing copy, screenshots, and release notes for the v2.0.0 major release of Encypher Verify.
@@ -63,80 +63,86 @@ Journalists, researchers, content creators, fact-checkers, publishers, and techn
 - [x] 1.0.1 Bump version from 1.1.0 to 2.0.0
 - [x] 1.0.2 Update manifest description to reflect multi-media capabilities
 
-### 2.0 Chrome Web Store Listing Copy
-- [ ] 2.0.1 Write short description (132 char max, shown in search results)
-  - Current: "Verify who authored any text on the web. Sign your own content with invisible cryptographic watermarks that survive copy-paste."
-  - Needs to mention image/audio/video verification
-- [ ] 2.0.2 Write detailed description (full listing page)
-  - Structure: hero value prop -> what's new in v2 -> feature list -> how it works -> who it's for -> standards credibility
-  - Include: text verification, image/audio/video verification, auto-scan, in-editor signing
-  - Include: "Free -- no account required to verify" prominently
-  - Include: C2PA standards authority positioning
-  - Word count: 500-800 words
-  - Reference: docs/company_internal_strategy/Encypher_Marketing_Guidelines.md for tone
-- [ ] 2.0.3 Write "What's New" text for the update (shown to existing users)
-  - 3-5 bullet points highlighting major additions
-  - Keep it concise -- users scan this quickly
-- [ ] 2.0.4 Select category and tags for Web Store listing
-  - Suggested categories: Productivity, News & Weather
-  - Tags: C2PA, content authenticity, media provenance, verification, watermark detection
+### 2.0 Chrome Web Store Listing Copy (DONE)
+- [x] 2.0.1 Write short description (132 char max, shown in search results) -- 130 chars, in STORE_LISTING.md and manifest.json
+- [x] 2.0.2 Write detailed description (full listing page) -- ~650 words in STORE_LISTING.md, follows marketing guidelines
+- [x] 2.0.3 Write "What's New" text for the update (shown to existing users) -- 5 bullet points in STORE_LISTING.md
+- [x] 2.0.4 Select category and tags for Web Store listing -- Productivity + News & Weather, 7 tags
 
-### 3.0 Screenshots (1280x800 or 640x400)
+### 3.0 Screenshots (1280x800 or 640x400) (DONE)
 Chrome Web Store allows up to 5 screenshots. Each should have a clean, professional look with a brief caption overlay.
 
-- [ ] 3.0.1 Screenshot 1: Image verification badge on a real news article page
-  - Show a webpage with an image that has a verified badge overlay at top-right
-  - Caption: "Instantly verify image provenance on any website"
-- [ ] 3.0.2 Screenshot 2: Right-click context menu showing "Verify image with Encypher"
-  - Show Chrome's context menu on an image with the Encypher verify option
-  - Caption: "Right-click to verify any image, audio, or video"
-- [ ] 3.0.3 Screenshot 3: Popup showing "Media on page" section with verification results
-  - Show the popup Verify tab with image/audio/video entries and verification statuses
-  - Caption: "See all media on the page with verification status"
-- [ ] 3.0.4 Screenshot 4: Text verification badge on signed content
-  - Show a paragraph with an inline verification badge (existing feature, still important to showcase)
-  - Caption: "Detect cryptographic watermarks in text"
-- [ ] 3.0.5 Screenshot 5: Options page with auto-scan toggle
-  - Show the settings page with the "Auto-scan images for C2PA provenance" checkbox
-  - Caption: "Automatic scanning -- configurable in settings"
+- [x] 3.0.1 Screenshot 1: Image verification badge on a news article page -- generated at 1280x800
+  - File: store-assets/screenshot-1-image-verification.png
+- [x] 3.0.2 Screenshot 2: Right-click context menu showing "Verify image with Encypher" -- generated at 1280x800
+  - File: store-assets/screenshot-2-context-menu.png
+- [x] 3.0.3 Screenshot 3: Popup showing "Media on page" section with verification results -- generated at 1280x800
+  - File: store-assets/screenshot-3-popup-media.png
+- [x] 3.0.4 Screenshot 4: Text verification badge on signed content -- generated at 1280x800
+  - File: store-assets/screenshot-4-text-verification.png
+- [x] 3.0.5 Screenshot 5: Options page with auto-scan toggle -- captured via Puppeteer at 1280x800
+  - File: store-assets/screenshot-5-options-auto-scan.png
 
-### 4.0 Promotional Assets
-- [ ] 4.0.1 Small promotional tile (440x280)
-  - Clean design with Encypher logo, "v2.0" badge, and "Text + Image + Audio + Video Verification" tagline
-  - Use brand colors from marketing site
-- [ ] 4.0.2 Marquee promotional image (1280x800) -- optional but recommended
-  - Hero image showing the extension in action across multiple media types
-  - Tagline: "Verify provenance for any content on the web"
+### 4.0 Promotional Assets (DONE)
+- [x] 4.0.1 Small promotional tile (440x280) -- generated with v2.0 branding, media-type icons
+  - File: store-assets/promo-tile-440x280.png
+- [x] 4.0.2 Marquee promotional image (1280x800) -- generated with browser mockup and headline
+  - File: store-assets/promo-marquee-1280x800.png
 
-### 5.0 Release Notes
-- [ ] 5.0.1 Write CHANGELOG entry for v2.0.0
-  - Include all new features with brief descriptions
-  - Note: "Verification is free for all media types -- no account required"
-  - Note: API endpoints for audio/video verification are now public
-- [ ] 5.0.2 Write internal release announcement (for team/stakeholders)
-  - Summary of what shipped, test coverage (378 contract + 19 E2E + 15 API integration)
-  - Link to archived PRDs
+### 5.0 Release Notes (DONE)
+- [x] 5.0.1 Write CHANGELOG entry for v2.0.0 -- CHANGELOG.md created with full version history
+- [x] 5.0.2 Write internal release announcement -- docs/RELEASE_v2.0.0_INTERNAL.md
 
-### 6.0 Pre-Publish Verification
-- [ ] 6.0.1 Verify manifest.json is valid (version, description, permissions)
-- [ ] 6.0.2 Run full test suite: `npm test && xvfb-run --auto-servernum npm run test:e2e`
-- [ ] 6.0.3 Manual smoke test: load unpacked extension in Chrome, verify image/audio/video context menus appear, verify popup media section renders
-- [ ] 6.0.4 Review permissions justification for Chrome Web Store review
-  - `<all_urls>` host_permissions: required to fetch image/audio/video bytes with C2PA metadata intact from any domain
-  - `contextMenus`: required for right-click verify on media elements
-  - `storage`: required for user settings (API key, auto-scan toggle)
-- [ ] 6.0.5 Package extension as .zip for Chrome Web Store upload
+### 6.0 Pre-Publish Verification (DONE)
+- [x] 6.0.1 Verify manifest.json is valid (version, description, permissions) -- all fields validated, description 130/132 chars
+- [x] 6.0.2 Run full test suite: 378 unit tests pass + 19 E2E tests pass
+- [x] 6.0.3 Manual smoke test -- skipped per user directive (automated tests sufficient: 378 unit + 19 E2E)
+- [x] 6.0.4 Review permissions justification for Chrome Web Store review -- docs/PERMISSIONS_JUSTIFICATION.md created
+- [x] 6.0.5 Package extension as .zip for Chrome Web Store upload -- dist/encypher-verify-2.0.0.zip
+
+### Additional Fixes (discovered during release prep)
+- [x] Fix package.json version: was 1.1.0, updated to 2.0.0
+- [x] Fix options.html footer: was "v1.1.0", updated to "v2.0.0"
+- [x] Fix manifest.json description: was 155 chars (over limit), shortened to 130 chars
 
 ---
 
 ## Success Criteria
-- Web Store listing accurately reflects v2.0.0 capabilities without overclaiming (Tier 1 only)
-- All 5 screenshots showcase new media verification features alongside existing text verification
-- Description copy follows Encypher marketing guidelines (tone, positioning, approved phrases)
-- No emoji, no Unicode decorations, ASCII only
-- "Verification is free" is prominently featured
-- C2PA standards authority is mentioned
-- All tests pass before packaging
+- [x] Web Store listing accurately reflects v2.0.0 capabilities without overclaiming (Tier 1 only)
+- [x] All 5 screenshots showcase new media verification features alongside existing text verification (5/5 complete)
+- [x] Description copy follows Encypher marketing guidelines (tone, positioning, approved phrases)
+- [x] No emoji, no Unicode decorations, ASCII only
+- [x] "Verification is free" is prominently featured
+- [x] C2PA standards authority is mentioned
+- [x] All tests pass before packaging
 
 ## Completion Notes
-(To be filled upon completion)
+
+### Completed by TEAM_271 (2026-03-22)
+
+**Deliverables produced:**
+1. `STORE_LISTING.md` -- Complete rewrite with v2.0.0 short description (130 chars), detailed description (~650 words), "What's New" (5 bullets), updated categories/tags, and full v2.0.0 version history entry.
+2. `CHANGELOG.md` -- New file with structured changelog for all three versions (2.0.0, 1.1.0, 1.0.0).
+3. `docs/RELEASE_v2.0.0_INTERNAL.md` -- Internal release announcement with feature summary, test coverage table, technical decisions, and next steps.
+4. `docs/PERMISSIONS_JUSTIFICATION.md` -- Chrome Web Store permissions justification for all 5 permissions and host_permissions.
+5. `dist/encypher-verify-2.0.0.zip` -- Packaged extension ready for Chrome Web Store upload.
+
+**Screenshots (all 1280x800, in store-assets/):**
+1. `screenshot-1-image-verification.png` -- News article with verified image badge overlay
+2. `screenshot-2-context-menu.png` -- Right-click context menu with "Verify image with Encypher"
+3. `screenshot-3-popup-media.png` -- Extension popup with Media on Page section
+4. `screenshot-4-text-verification.png` -- Text verification badge with signer tooltip
+5. `screenshot-5-options-auto-scan.png` -- Options page with auto-scan toggle (Puppeteer capture)
+
+**Promotional assets (in store-assets/):**
+1. `promo-tile-440x280.png` -- Small tile with v2.0 badge, media-type icons, tagline
+2. `promo-marquee-1280x800.png` -- Marquee hero with browser mockup and C2PA positioning
+
+**Bug fixes:**
+- package.json version: 1.1.0 -> 2.0.0
+- options.html footer: v1.1.0 -> v2.0.0
+- manifest.json description: 155 chars -> 130 chars (within 132-char limit)
+
+**Test results at time of packaging:**
+- Unit tests: 378/378 pass
+- E2E tests: 19/19 pass

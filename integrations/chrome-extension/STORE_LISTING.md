@@ -6,63 +6,81 @@
 Encypher Verify
 
 ### Short Description (132 characters max)
-Verify who authored any text on the web. Sign your own content with invisible cryptographic watermarks that survive copy-paste.
+Verify provenance for any text, image, audio, or video on the web. Powered by C2PA -- cryptographic proof of origin, free for all.
 
 ### Detailed Description
 
-**Verify Authorship. Sign with Invisible Proof.**
+**Verify Provenance Across Text, Images, Audio, and Video -- Free, No Account Required.**
 
-Encypher Verify helps you see who authored text across the web and confirm proof of origin instantly. It surfaces verified authorship inline on articles, social posts, and other text content while letting you sign your own writing with invisible cryptographic watermarks.
+Every day, content moves across the web without proof of who made it. Encypher Verify brings cryptographic provenance to your browser. Powered by the C2PA standard, it detects and verifies proof of origin in text, images, audio, and video on any website -- instantly, at no cost.
 
-**Key Features:**
+Version 2.0 expands far beyond text. Right-click any image, audio element, or video to verify its provenance. Automatic C2PA scanning detects signed images as you browse, with no action required. A new "Media on page" section in the popup shows every detected media element and its verification status at a glance.
 
-- **Auto-Detection**: Automatically scans pages for embedded proof-of-origin markers
-- **Inline Verification Status**: Shows color-coded verified authorship status inline (blue = verified, red = invalid, gray = revoked)
-- **Content Signing**: Sign your own content directly from the browser (requires API key)
-- **Signing Controls**: Choose proof mode (embedded or compact) and frequency (per sentence, per paragraph, etc.)
-- **Context Menu**: Right-click any text and select "Verify with Encypher"
-- **Editor Integrations**: Sign directly inside ChatGPT, Claude, Gmail, Outlook, Slack, LinkedIn, GitHub, X/Twitter, Medium, TinyMCE, CKEditor, Quill, ProseMirror, and more
-- **Low-Friction Signing UX**: Compact sign button expands on focus, includes quick sign, advanced options, and signer identity cues
-- **Keyboard Shortcut**: Press Alt+Shift+S to sign selected text instantly
-- **Usage Tracking**: Free tier includes 1,000 signings/month with visual progress meter
-- **Privacy-First**: Only sends candidate text blocks for verification, never full pages
-- **Offline Detection**: Detects embedded proof locally before verifying
+**What you can verify:**
 
-**How It Works:**
+- Text: Detects invisible cryptographic watermarks (C2PA text manifests, zero-width character embeddings) on any webpage. Inline badges show verification status directly in the page.
+- Images: Right-click any image to verify C2PA provenance. Automatic background scanning detects signed images via lightweight header inspection (first 4KB only). Verified images get a floating badge overlay.
+- Audio: Right-click any audio element to verify. Supports files up to 50MB. No authentication required.
+- Video: Right-click any video element to verify. Supports files up to 100MB. No authentication required.
 
-1. **For Readers**: Browse normally. When proof is present, you see verified authorship inline with signer and timestamp details.
+**What you can sign:**
 
-2. **For Authors**: Get an API key from dashboard.encypherai.com, configure it in settings, then use the Sign tab or inline editor buttons to add invisible cryptographic watermarks before publishing. Choose embedded proof for portability or compact proof for a smaller payload. Set your preferred signing frequency once and reuse it everywhere.
+- Sign your own content directly in the browser with invisible cryptographic watermarks that survive copy-paste and distribution.
+- Works inside Google Docs, ChatGPT, Claude, Gmail, Outlook Web, Slack, LinkedIn, GitHub, X/Twitter, Medium, and dozens of other editors.
+- Choose your proof mode (Minimal, Embedded, or Compatible) and signing frequency (per document, paragraph, sentence, or section).
+- Free tier includes 1,000 signings per month with a visual usage meter.
 
-3. **For Publishers**: Add proof of origin to your editorial workflow so every update can be traced, verified, and audited.
+**Automatic C2PA image scanning:**
 
-**Why this is different**
+As you browse, Encypher Verify scans images on the page for C2PA provenance markers using lightweight Range requests that inspect only the first 4KB of each file. No full downloads. Built-in circuit breaker limits bandwidth to 10MB per page with a 5-minute cooldown, capping at 20 images and 3 concurrent requests. You can enable or disable auto-scanning in settings.
 
-Encypher embeds proof directly in text with invisible cryptographic watermarks that survive copy-paste and normal distribution workflows.
+**How it works:**
 
-**Privacy & Security:**
+1. For readers and fact-checkers: Browse normally. Encypher Verify automatically scans for provenance markers in text and images. When proof is present, you see verified status inline with signer identity and timestamp. Right-click any media element to verify on demand.
 
-- Anonymous signed-content discovery analytics (always on, no personal user identifiers)
-- API key stored securely in your browser
-- Only candidate text blocks are sent for verification
-- 1-hour local verification cache (no redundant API calls)
+2. For authors: Get a free API key from dashboard.encypherai.com, configure it in settings, and use the Sign tab or inline editor buttons to embed cryptographic proof before publishing.
+
+3. For publishers: Deploy proof of origin across your editorial workflow. Every article, image, and media asset can carry verifiable provenance that persists through distribution.
+
+**Why Encypher Verify is different:**
+
+Encypher is built on the C2PA standard -- the same open standard backed by Adobe, Google, BBC, OpenAI, and Microsoft. Encypher co-chairs the C2PA Text Provenance Task Force and authored Section A.7 of the specification, published January 8, 2026. This is not proprietary detection or statistical guessing. It is cryptographic proof embedded in content itself.
+
+Verification is free for all media types. No account, no login, no cost. Signing is free at 1,000 operations per month.
+
+**Privacy and security:**
+
+- API key stored securely in local browser storage
+- Only candidate content blocks are sent for verification, never full pages
+- 1-hour local verification cache eliminates redundant API calls
+- Anonymous discovery analytics (always on, no personal identifiers)
+- Auto-scan inspects only image headers (4KB), not full file content
 
 **Support:**
 
 - Documentation: encypherai.com/docs
 - Email: support@encypherai.com
 
+### What's New in v2.0.0
+
+- Image verification: Right-click any image to verify C2PA provenance. Verified images display a floating badge overlay.
+- Audio and video verification: Right-click audio or video elements to verify provenance -- supports files up to 50MB (audio) and 100MB (video), no authentication required.
+- Automatic C2PA image scanning: Lightweight header detection identifies signed images as you browse, with configurable toggle and built-in bandwidth limits.
+- Media on page: New popup section shows all detected images, audio, and video on the current page with verification status and on-demand verify buttons.
+- All verification is free -- no account required for any media type.
+
 ### Category
 **Primary**: Productivity
-**Secondary**: Developer Tools
+**Secondary**: News & Weather
+
+### Tags
+C2PA, content authenticity, media provenance, verification, watermark detection, content verification, proof of origin
 
 ### Language
 English
 
 ### Privacy Policy URL
 https://encypherai.com/privacy
-
-(Or include PRIVACY.md content directly if required)
 
 ## Visual Assets
 
@@ -76,72 +94,73 @@ https://encypherai.com/privacy
 ### Promotional Images (Required)
 
 #### Small Promo Tile (440x280)
-**Description**: Extension icon with "Encypher Verify" text
+**Description**: Encypher Verify v2.0 -- "Text + Image + Audio + Video Verification" with brand colors
 **File**: `store-assets/promo-small-440x280.png`
-**Status**: Ready
+**Status**: Needs update for v2.0 (current tile is v1.x)
 
 #### Large Promo Tile (920x680)
-**Description**: Screenshot of extension in action with verification badges
+**Description**: Screenshot of extension verifying media across multiple types
 **File**: `store-assets/promo-large-920x680.png`
-**Status**: Ready
+**Status**: Needs update for v2.0
 
 #### Marquee Promo Tile (1400x560)
-**Description**: Hero image showing verification workflow
+**Description**: Hero image -- "Verify provenance for any content on the web" with multi-media showcase
 **File**: `store-assets/promo-marquee-1400x560.png`
-**Status**: Ready
+**Status**: Needs update for v2.0
 
 ### Screenshots (Required: 1-5 screenshots, 1280x800 or 640x400)
 
-1. **Verification in Action**
-   - Show webpage with verified authorship marker
-   - Caption: "Instantly verify who authored text with inline proof of origin"
+1. **Image Verification Badge**
+   - Webpage with an image showing verified badge overlay at top-right
+   - Caption: "Instantly verify image provenance on any website"
+   - File: `store-assets/screenshot-1-image-verification-badge.png`
 
-2. **Popup Interface**
-   - Show popup with verification summary
-   - Caption: "Quick overview of verified content on the page"
+2. **Context Menu -- Media Verification**
+   - Chrome context menu on an image with "Verify image with Encypher" option
+   - Caption: "Right-click to verify any image, audio, or video"
+   - File: `store-assets/screenshot-2-context-menu-media.png`
 
-3. **Sign Tab**
-   - Show sign interface with text input
-   - Caption: "Sign your own content with invisible cryptographic watermarks"
+3. **Popup -- Media on Page**
+   - Popup Verify tab with image/audio/video entries and verification statuses
+   - Caption: "See all media on the page with verification status"
+   - File: `store-assets/screenshot-3-popup-media-section.png`
 
-4. **Options Page**
-   - Show settings with API key configuration
-   - Caption: "Configure API key and verification preferences"
+4. **Text Verification Badge**
+   - Paragraph with inline verification badge (existing feature)
+   - Caption: "Detect cryptographic watermarks in text"
+   - File: `store-assets/screenshot-4-text-verification-badge.png`
 
-5. **Context Menu**
-   - Show right-click menu with "Verify with Encypher"
-   - Caption: "Verify any selected text with a right-click"
+5. **Options -- Auto-Scan Toggle**
+   - Settings page with "Auto-scan images for C2PA provenance" checkbox
+   - Caption: "Automatic scanning -- configurable in settings"
+   - File: `store-assets/screenshot-5-options-auto-scan.png`
 
-**Files**:
-- `store-assets/screenshot-1-verification-badges.png`
-- `store-assets/screenshot-2-popup-interface.png`
-- `store-assets/screenshot-3-options-page.png`
-
-**Status**: Ready (3 screenshots captured)
+**Status**: Screenshots need to be recaptured for v2.0 features
 
 ## Promotional Copy
 
 ### Tagline
-"Verify who authored any text on the web. Sign your own content with invisible cryptographic watermarks that survive copy-paste."
+"Verify provenance for any text, image, audio, or video on the web. Powered by C2PA -- cryptographic proof of origin, free for all."
 
 ### Key Benefits
 
-1. **For Readers**: Verify who authored any text in seconds.
-2. **For Authors**: Sign your own content with invisible proof that survives copy-paste.
-3. **For Publishers**: Deploy sentence-level verification across editorial workflows.
+1. **For Readers and Fact-Checkers**: Verify who made any text, image, audio, or video -- instantly, free.
+2. **For Authors**: Sign your own content with invisible proof that survives copy-paste and distribution.
+3. **For Publishers**: Deploy proof of origin across your full content portfolio -- articles, photos, podcasts, video.
 
 ### Use Cases
 
-- **Journalism**: Verify news articles and combat fake news
-- **Academic**: Prove authorship of research and papers
-- **Creative**: Protect original writing, art descriptions, and creative work
-- **Legal**: Establish content provenance for legal documents
-- **Marketing**: Verify brand-authorized content
+- **Journalism**: Verify news articles, photos, and video for proof of origin
+- **Fact-Checking**: Confirm media provenance before sharing or citing
+- **Academic**: Prove authorship of research, papers, and media assets
+- **Creative**: Protect original writing, photography, audio, and video work
+- **Legal**: Establish content provenance for evidentiary and compliance purposes
+- **Marketing**: Verify brand-authorized content across media types
 
 ## Pricing
 
-**Free Tier**: Unlimited verification (no API key required). 1,000 content signings per month with API key. Embedded and compact proof modes, all frequency levels except per-word.
-**Enterprise**: Unlimited verification and signing, per-word embedding frequency, Merkle tree verification, attribution tracking. Contact sales at encypherai.com/contact.
+**Free Tier**: Unlimited verification across all media types (no API key required). 1,000 content signings per month with API key. All proof modes and frequency levels except per-word.
+**Enterprise**: Unlimited verification and signing, per-word embedding frequency, Merkle tree verification, attribution tracking, fingerprinting. Contact sales at encypherai.com/contact.
 
 ## Support & Links
 
@@ -152,9 +171,28 @@ https://encypherai.com/privacy
 
 ## Version History
 
+### Version 2.0.0
+
+**What's new:**
+- Image verification via right-click context menu with floating badge overlay (verified/invalid/error) at image top-right
+- Audio verification via right-click context menu -- Base64 POST to public /verify/audio endpoint (50MB limit, no auth)
+- Video verification via right-click context menu -- multipart POST to public /verify/video endpoint (100MB limit, no auth)
+- Automatic C2PA image scanning using lightweight Range-request header detection (first 4KB per image). Detects JUMBF markers in JPEG (APP11) and PNG (caBX). Configurable in settings with circuit breaker (10MB bandwidth limit per page, 5-min cooldown, max 20 images, max 3 concurrent)
+- "Media on page" section in popup showing all detected images, audio, and video with verification status and on-demand verify buttons
+- Auto-scan toggle in options page (default: enabled)
+- All verification endpoints are public -- no authentication required for any media type
+
+**Technical:**
+- 378 unit tests + 19 E2E tests passing
+- Manifest V3 with updated description
+- Service worker handles image, audio, and video context menu actions
+- Content script inventories page media and manages verification state per element
+- MutationObserver support for dynamically loaded media on infinite-scroll pages
+- Bandwidth-aware circuit breaker prevents excessive network usage during auto-scan
+
 ### Version 1.1.0
 
-**What’s new:**
+**What's new:**
 - Native sign-button placement for ChatGPT, Claude, Gmail, Outlook Web, Slack, LinkedIn posts/messages/articles, GitHub issues/comments, X/Twitter, and Medium
 - Upgraded inline signing UI with compact buttons, quick-sign flow, advanced options, signer identity cues, and verification follow-up links
 - Improved editor detection across hosted editors, modal composers, and open shadow-root surfaces with floating fallback when a native toolbar anchor is unavailable
@@ -193,19 +231,18 @@ https://encypherai.com/privacy
 ### Required Items
 
 - [x] Extension package (.zip)
-- [x] Detailed description
+- [x] Detailed description (v2.0.0 updated)
 - [x] Privacy policy
-- [x] Small promo tile (440x280)
-- [x] Screenshots (1280x800, 3 captured)
-- [x] Category selection
+- [ ] Small promo tile (440x280) -- needs v2.0 update
+- [ ] Screenshots (1280x800, 5 needed for v2.0)
+- [x] Category selection (updated: Productivity + News & Weather)
 - [x] Support email
 
 ### Optional Items
 
-- [x] Large promo tile (920x680)
-- [x] Marquee promo tile (1400x560)
+- [ ] Large promo tile (920x680) -- needs v2.0 update
+- [ ] Marquee promo tile (1400x560) -- needs v2.0 update
 - [ ] Video demo (YouTube link)
-- [ ] Additional screenshots
 
 ### Pre-Submission Testing
 
@@ -213,6 +250,9 @@ https://encypherai.com/privacy
 - [x] Verify all permissions are necessary
 - [x] Test signing flow end-to-end
 - [x] Test verification on multiple sites
+- [ ] Test image/audio/video verification context menus
+- [ ] Test auto-scan toggle in options
+- [ ] Test popup media section rendering
 - [x] Check all links in description
 - [x] Spell check all copy
 
@@ -224,17 +264,17 @@ https://encypherai.com/privacy
 - [ ] Blog post on encypherai.com
 - [ ] Submit to Product Hunt
 - [ ] Share in C2PA community
-- [ ] Email existing users
+- [ ] Email existing users about v2.0
 
 ### Monitoring
 
 - [ ] Set up Chrome Web Store analytics
 - [ ] Monitor user reviews
 - [ ] Track installation metrics
-- [ ] Collect user feedback
+- [ ] Collect user feedback on media verification
 
 ### Iteration
 
-- [ ] Plan v1.2 features based on feedback
+- [ ] Plan v2.1 features based on feedback
 - [ ] Address any reported bugs
 - [ ] Improve based on user requests

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Encypher Verify",
   "version": "2.0.0",
-  "description": "Verify provenance for any text, image, audio, or video on the web. Powered by the C2PA standard -- cryptographic proof of origin, not statistical guessing.",
+  "description": "Verify provenance for any text, image, audio, or video on the web. Powered by C2PA -- cryptographic proof of origin, free for all.",
   "permissions": [
     "activeTab",
     "storage",

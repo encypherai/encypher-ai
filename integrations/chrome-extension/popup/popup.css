@@ -1145,3 +1145,319 @@ body {
   background: #F3F4F6;
   border-radius: 4px;
 }
+
+/* ------------------------------------------------------------------ */
+/* Dark mode                                                          */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: #F9FAFB;
+    background: #1e293b;
+  }
+
+  /* Header gradient is already dark - no changes needed */
+
+  /* Content area */
+  .popup__content {
+    background: #1e293b;
+  }
+
+  .popup__state h2 {
+    color: #F9FAFB;
+  }
+
+  .popup__state p {
+    color: #94a3b8;
+  }
+
+  /* Icons */
+  .popup__icon--gray {
+    background: #334155;
+    color: #94a3b8;
+  }
+
+  .popup__icon--green {
+    background: rgba(42, 135, 196, 0.2);
+    color: #b7d5ed;
+  }
+
+  .popup__icon--red {
+    background: rgba(239, 68, 68, 0.15);
+    color: #FCA5A5;
+  }
+
+  /* Summary stats */
+  .popup__stat {
+    background: #334155;
+  }
+
+  .popup__stat-value {
+    color: #F9FAFB;
+  }
+
+  .popup__stat--verified .popup__stat-value {
+    color: #b7d5ed;
+  }
+
+  .popup__stat-label {
+    color: #94a3b8;
+  }
+
+  /* Detail items */
+  .popup__detail-item {
+    border-bottom-color: #334155;
+  }
+
+  .popup__detail-icon--verified {
+    background: rgba(42, 135, 196, 0.2);
+    color: #b7d5ed;
+  }
+
+  .popup__detail-icon--invalid {
+    background: rgba(239, 68, 68, 0.15);
+    color: #FCA5A5;
+  }
+
+  .popup__detail-icon--revoked {
+    background: rgba(107, 114, 128, 0.2);
+    color: #94a3b8;
+  }
+
+  .popup__detail-signer {
+    color: #F9FAFB;
+  }
+
+  .popup__detail-date {
+    color: #94a3b8;
+  }
+
+  .popup__detail-meta {
+    color: #94a3b8;
+  }
+
+  .popup__detail-link {
+    color: #b7d5ed;
+  }
+
+  /* CTA */
+  .popup__verify-cta {
+    border-color: #334155;
+    background: rgba(42, 135, 196, 0.1);
+  }
+
+  .popup__verify-cta-text {
+    color: #b7d5ed;
+  }
+
+  /* Footer */
+  .popup__footer {
+    border-top-color: #334155;
+    background: #1e293b;
+  }
+
+  .popup__btn--secondary {
+    background: #334155;
+    color: #F3F4F6;
+  }
+
+  .popup__btn--secondary:hover {
+    background: #475569;
+  }
+
+  .popup__btn--icon:hover {
+    background: #334155;
+  }
+
+  /* Scrollbar */
+  .popup__details::-webkit-scrollbar-track {
+    background: #334155;
+  }
+
+  .popup__details::-webkit-scrollbar-thumb {
+    background: #475569;
+  }
+
+  .popup__details::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+
+  /* Media section */
+  .popup__media-section {
+    border-top-color: #334155;
+  }
+
+  .popup__media-title {
+    color: #94a3b8;
+  }
+
+  .popup__media-item {
+    background: #334155;
+    border-color: #475569;
+  }
+
+  .popup__media-name {
+    color: #F3F4F6;
+  }
+
+  .popup__media-type-icon {
+    background: #475569;
+    color: #94a3b8;
+  }
+
+  .popup__media-status--verified {
+    color: #6EE7B7;
+    background: rgba(16, 185, 129, 0.15);
+  }
+
+  .popup__media-status--invalid {
+    color: #FCA5A5;
+    background: rgba(239, 68, 68, 0.15);
+  }
+
+  .popup__media-status--pending {
+    color: #FCD34D;
+    background: rgba(245, 158, 11, 0.15);
+  }
+
+  /* Sign form */
+  .popup__sign-form label {
+    color: #E5E7EB;
+  }
+
+  .popup__sign-form textarea,
+  .popup__sign-form input {
+    background: #334155;
+    border-color: #475569;
+    color: #F3F4F6;
+  }
+
+  .popup__sign-form textarea:focus,
+  .popup__sign-form input:focus {
+    border-color: #2A87C4;
+    box-shadow: 0 0 0 2px rgba(42, 135, 196, 0.2);
+  }
+
+  .popup__sign-identity {
+    color: #94a3b8;
+  }
+
+  /* Tier badge */
+  .popup__tier-badge {
+    background: #334155;
+    color: #94a3b8;
+  }
+
+  .popup__tier-badge--enterprise {
+    background: rgba(42, 135, 196, 0.15);
+    color: #b7d5ed;
+  }
+
+  /* Advanced options */
+  .popup__advanced-options {
+    border-color: #475569;
+  }
+
+  .popup__advanced-toggle {
+    background: #334155;
+    color: #94a3b8;
+  }
+
+  .popup__advanced-toggle:hover {
+    background: #475569;
+  }
+
+  .popup__advanced-panel {
+    background: #1e293b;
+    border-top-color: #475569;
+  }
+
+  .popup__advanced-panel label {
+    color: #E5E7EB;
+  }
+
+  .popup__advanced-panel select {
+    background: #334155;
+    border-color: #475569;
+    color: #F3F4F6;
+  }
+
+  .popup__advanced-panel select:focus {
+    border-color: #2A87C4;
+  }
+
+  /* Enterprise features */
+  .popup__enterprise-feature {
+    background: rgba(42, 135, 196, 0.1);
+    border-color: rgba(42, 135, 196, 0.25);
+  }
+
+  .popup__enterprise-options label {
+    color: #E5E7EB;
+  }
+
+  .popup__enterprise-link {
+    color: #b7d5ed;
+  }
+
+  /* Usage meter */
+  .popup__usage {
+    background: #334155;
+    border-color: #475569;
+  }
+
+  .popup__usage-bar {
+    background: #475569;
+  }
+
+  .popup__usage-text {
+    color: #94a3b8;
+  }
+
+  /* Sign result */
+  #signed-output {
+    background: #334155;
+    border-color: #475569;
+    color: #F3F4F6;
+  }
+
+  /* Auth setup */
+  .popup__auth-setup {
+    border-color: #334155;
+    background: rgba(42, 135, 196, 0.08);
+  }
+
+  .popup__auth-title {
+    color: #b7d5ed;
+  }
+
+  .popup__oauth-btn {
+    border-color: #475569;
+    background: #334155;
+    color: #b7d5ed;
+  }
+
+  .popup__oauth-btn:hover {
+    border-color: #2A87C4;
+    background: rgba(42, 135, 196, 0.15);
+  }
+
+  .popup__onboarding-status {
+    color: #94a3b8;
+  }
+
+  .popup__onboarding-label {
+    color: #E5E7EB;
+  }
+
+  .popup__onboarding-input {
+    background: #334155;
+    border-color: #475569;
+    color: #F3F4F6;
+  }
+
+  .popup__onboarding-input:focus {
+    border-color: #2A87C4;
+    box-shadow: 0 0 0 2px rgba(42, 135, 196, 0.2);
+  }
+}

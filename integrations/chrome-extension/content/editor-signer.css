@@ -538,10 +538,10 @@
   color: #EF4444;
 }
 
-/* Dark mode support */
+/* Dark mode support - aligned with theme.css slate palette */
 @media (prefers-color-scheme: dark) {
   .encypher-sign-ui {
-    background: #1F2937;
+    background: #1e293b;
     color: #F9FAFB;
   }
 
@@ -552,28 +552,28 @@
   .encypher-sign-ui__trust,
   .encypher-sign-ui__shortcut,
   .encypher-sign-ui__meta {
-    color: #9CA3AF;
+    color: #94a3b8;
   }
 
   .encypher-sign-ui__text {
-    background: #374151;
-    border-color: #4B5563;
+    background: #334155;
+    border-color: #475569;
     color: #F3F4F6;
   }
 
   .encypher-sign-ui__toggle {
-    background: #111827;
-    border-color: #374151;
+    background: #0f172a;
+    border-color: #334155;
     color: #E5E7EB;
   }
 
   .encypher-sign-ui__toggle:hover {
-    background: #1F2937;
+    background: #1e293b;
   }
 
   .encypher-sign-ui__advanced {
-    background: #111827;
-    border-color: #374151;
+    background: #0f172a;
+    border-color: #334155;
   }
 
   .encypher-sign-ui__options label {
@@ -581,20 +581,20 @@
   }
 
   .encypher-sign-ui__options input[type="text"] {
-    background: #374151;
-    border-color: #4B5563;
+    background: #334155;
+    border-color: #475569;
     color: #F3F4F6;
   }
 
   .encypher-sign-ui__select-group label {
-    color: #9CA3AF;
+    color: #94a3b8;
   }
 
   .encypher-sign-ui__select {
-    background-color: #374151;
-    border-color: #4B5563;
+    background-color: #334155;
+    border-color: #475569;
     color: #F3F4F6;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239CA3AF'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
   }
 
   .encypher-sign-ui__success-badge {
@@ -604,8 +604,8 @@
   }
 
   .encypher-sign-ui__meta-row {
-    border-color: #374151;
-    color: #9CA3AF;
+    border-color: #334155;
+    color: #94a3b8;
   }
 
   .encypher-sign-ui__meta-row strong {
@@ -613,7 +613,7 @@
   }
 
   .encypher-sign-ui__link {
-    color: #93C5FD;
+    color: #b7d5ed;
   }
 }
 

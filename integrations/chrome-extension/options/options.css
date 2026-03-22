@@ -292,3 +292,132 @@ body {
   text-decoration: none;
   color: #FFFFFF;
 }
+
+/* ------------------------------------------------------------------ */
+/* Dark mode                                                          */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color: #F9FAFB;
+    background: #1b2f50;
+  }
+
+  /* Header */
+  .options__header {
+    border-bottom-color: #334155;
+  }
+
+  .options__header h1 {
+    color: #F9FAFB;
+  }
+
+  .options__logo {
+    filter: brightness(0) invert(1);
+  }
+
+  /* Sections */
+  .options__section {
+    background: #1e293b;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .options__section h2 {
+    color: #94a3b8;
+  }
+
+  .options__description {
+    color: #94a3b8;
+  }
+
+  .options__description a {
+    color: #b7d5ed;
+  }
+
+  /* Fields */
+  .options__field label {
+    color: #E5E7EB;
+  }
+
+  .options__field input[type="text"],
+  .options__field input[type="password"],
+  .options__field input[type="url"],
+  .options__field input[type="number"],
+  .options__field select {
+    background: #334155;
+    border-color: #475569;
+    color: #F3F4F6;
+  }
+
+  .options__field input:focus,
+  .options__field select:focus {
+    border-color: #2A87C4;
+    box-shadow: 0 0 0 3px rgba(42, 135, 196, 0.2);
+  }
+
+  .options__hint {
+    color: #94a3b8;
+  }
+
+  .options__identity {
+    color: #94a3b8;
+  }
+
+  .options__setup-state {
+    border-top-color: #334155;
+  }
+
+  /* Checkbox fields */
+  .options__field--checkbox label strong {
+    color: #F9FAFB;
+  }
+
+  .options__field--checkbox label span {
+    color: #94a3b8;
+  }
+
+  /* Analytics info */
+  .options__analytics-info {
+    background: #334155;
+    border-left-color: #2A87C4;
+    color: #E5E7EB;
+  }
+
+  /* Buttons */
+  .options__btn--secondary {
+    background: #334155;
+    color: #F3F4F6;
+  }
+
+  .options__btn--secondary:hover {
+    background: #475569;
+  }
+
+  .options__btn--danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #FCA5A5;
+  }
+
+  .options__btn--danger:hover {
+    background: rgba(239, 68, 68, 0.25);
+  }
+
+  .options__btn--icon {
+    background: #334155;
+    color: #94a3b8;
+  }
+
+  .options__btn--icon:hover {
+    background: #475569;
+  }
+
+  /* Footer */
+  .options__footer {
+    border-top-color: #334155;
+    color: #64748b;
+  }
+
+  .options__footer a:not(.options__support-btn) {
+    color: #94a3b8;
+  }
+}
