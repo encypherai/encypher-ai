@@ -43,6 +43,11 @@ const publisherPlatformOptions: Array<{
     label: 'Custom CMS',
     description: 'We will route you to the API and integration docs.',
   },
+  {
+    value: 'other',
+    label: 'Other',
+    description: 'Tell us what you use and we will help you get started.',
+  },
 ];
 
 export function SetupWizard() {
@@ -59,6 +64,7 @@ export function SetupWizard() {
   );
   const [publisherPlatform, setPublisherPlatform] = useState<PublisherPlatform>('wordpress');
   const [publisherPlatformCustom, setPublisherPlatformCustom] = useState('');
+  const [publisherPlatformOther, setPublisherPlatformOther] = useState('');
 
   const progressSteps = workflowCategory === 'media_publishing'
     ? ['workflow', 'account_type', 'display_name', 'publisher_platform']
@@ -78,6 +84,10 @@ export function SetupWizard() {
         publisher_platform_custom:
           dashboardLayout === 'publisher' && publisherPlatform === 'custom'
             ? publisherPlatformCustom.trim()
+            : undefined,
+        publisher_platform_other:
+          dashboardLayout === 'publisher' && publisherPlatform === 'other'
+            ? publisherPlatformOther.trim()
             : undefined,
       });
     },
@@ -106,6 +116,10 @@ export function SetupWizard() {
   const handleSubmitPublisherPlatform = () => {
     if (publisherPlatform === 'custom' && !publisherPlatformCustom.trim()) {
       toast.error('Please tell us which publishing platform you use.');
+      return;
+    }
+    if (publisherPlatform === 'other' && !publisherPlatformOther.trim()) {
+      toast.error('Please describe which platform you use.');
       return;
     }
     completeMutation.mutate();
@@ -454,9 +468,28 @@ export function SetupWizard() {
                 </div>
               )}
 
+              {publisherPlatform === 'other' && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                    What do you use?
+                  </label>
+                  <input
+                    type="text"
+                    value={publisherPlatformOther}
+                    onChange={(e) => setPublisherPlatformOther(e.target.value)}
+                    placeholder="e.g. email newsletter, static site, social media"
+                    className="w-full px-4 py-2.5 rounded-lg border border-border bg-white dark:bg-slate-800 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-ncs focus:border-transparent"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSubmitPublisherPlatform();
+                    }}
+                  />
+                </div>
+              )}
+
               <button
                 onClick={handleSubmitPublisherPlatform}
-                disabled={completeMutation.isPending || (publisherPlatform === 'custom' && !publisherPlatformCustom.trim())}
+                disabled={completeMutation.isPending || (publisherPlatform === 'custom' && !publisherPlatformCustom.trim()) || (publisherPlatform === 'other' && !publisherPlatformOther.trim())}
                 className="w-full py-2.5 bg-gradient-to-r from-blue-ncs to-delft-blue text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {completeMutation.isPending ? 'Saving...' : 'Finish setup'}

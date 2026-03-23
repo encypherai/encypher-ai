@@ -482,9 +482,9 @@ class SetupWizardRequest(BaseModel):
             if not self.publisher_platform:
                 raise ValueError("Publisher platform is required for publisher layout")
             if self.publisher_platform == "custom_cms":
-                if not self.publisher_platform_language:
-                    raise ValueError("Programming language is required when platform is custom CMS")
-                self.publisher_platform_custom = None
+                if not self.publisher_platform_custom:
+                    raise ValueError("Platform name is required when platform is custom CMS")
+                self.publisher_platform_language = None
                 self.publisher_platform_other = None
             elif self.publisher_platform == "other":
                 if not self.publisher_platform_other:

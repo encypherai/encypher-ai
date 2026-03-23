@@ -1978,6 +1978,7 @@ const apiClient = {
     dashboard_layout: DashboardLayoutPreference;
     publisher_platform?: PublisherPlatform;
     publisher_platform_custom?: string;
+    publisher_platform_other?: string;
   }): Promise<SetupStatusResponse> {
     const response = await fetchWithAuth<{ success: boolean; data: SetupStatusResponse }>(
       `${API_BASE_URL}/auth/setup/complete`,
