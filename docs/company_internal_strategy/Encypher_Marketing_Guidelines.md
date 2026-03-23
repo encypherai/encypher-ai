@@ -1,9 +1,9 @@
 # Encypher Corporation: Brand & Marketing Standards Guide
 ## From Technology Vendor to Standards Infrastructure Authority
 
-**Last Updated:** March 21, 2026
-**Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
-**Version:** 4.1
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
+**Version:** 5.0
 **Distribution:** Internal Marketing & Sales Teams
 
 > **Messaging SSOT:** Core positioning, messaging pillars, and competitive framing are
@@ -53,6 +53,18 @@ Encypher has transcended product status to become **the infrastructure standard*
 - **Economic Layer:** "Free to sign. Paid to enforce. Coalition deals 60/40, self-service 80/20"
 - **Market Layer:** "Define industry licensing frameworks through the invite-only roundtable track"
 - **Platform Layer:** "Sign your entire content portfolio -- text, images, audio, video -- under one provenance infrastructure. Verify any signed asset for free."
+
+---
+
+## Tagline Hierarchy
+
+| Placement | Copy |
+|-----------|------|
+| Site tagline (footer, title, CTAs) | "Machine-Readable Rights for Your Content" |
+| Platform/category label | "Content Provenance Infrastructure" |
+| Homepage hero | "Your Content Carries Its Own Proof of Ownership. Everywhere It Goes." |
+| Standards one-liner | "Text on the open web has no proof of origin. We changed that." |
+| Credentials bar | Section A.7 / Jan 8, 2026 / Co-Chair / Free |
 
 ---
 
@@ -314,14 +326,14 @@ Once publishers notify AI companies their content is marked, continued unauthori
 
 The founding coalition is forming now. The invite-only roundtable track is defining market licensing standards through interim 1:1 briefings and reconvened sessions.
 
-See the demo: encypherai.com/publisher-demo
+See the demo: encypher.com/publisher-demo
 
 #C2PA #TextProvenance #ContentAuthenticity"
 
 ### Website Hero:
 **Headline:** "Unmarked Text Has No Proof of Origin. We're Changing That."
 **Subhead:** "Authors of C2PA Section A.7. Standard published January 8, 2026. Building text authentication standards with Google, BBC, OpenAI, Adobe, and Microsoft."
-**CTA:** "See Publisher Demo" ' encypherai.com/publisher-demo
+**CTA:** "See Publisher Demo" ' encypher.com/publisher-demo
 
 ### Email Subject Lines:
 - Publishers: "Eliminate the 'we didn't know' defense--C2PA standard now live"
@@ -538,10 +550,10 @@ The founding coalition is forming now. The invite-only roundtable track is defin
 ## Website-Specific Guidance
 
 ### URL Structure:
-- Primary domain: **encypherai.com**
-- Publisher demo: **encypherai.com/publisher-demo**
-- AI company demo: **encypherai.com/ai-demo**
-- Standards info: **encypherai.com/c2pa-standard**
+- Primary domain: **encypher.com**
+- Publisher demo: **encypher.com/publisher-demo**
+- AI company demo: **encypher.com/ai-demo**
+- Standards info: **encypher.com/c2pa-standard**
 - Symposium: ****
 
 ### Demo Page Messaging:
@@ -604,23 +616,29 @@ The standard published January 8, 2026. The roundtable track is active. The coll
 
 **We are Encypher. We are building text provenance infrastructure WITH the industry.**
 
-Visit: **encypherai.com/publisher-demo** or **encypherai.com/ai-demo**
+Visit: **encypher.com/publisher-demo** or **encypher.com/ai-demo**
 
 ---
 
 ## Document Control
 
-**Document Owner:** Head of Publisher Strategy
+**Document Owner:** Chief Commercial Officer (CCO)
 **Review Cycle:** Monthly
-**Next Review:** After roundtable date lock + framework brief publication
+**Next Review:** Monthly
 **Approved By:** Executive Team
 **Distribution:** All customer-facing teams
 
+**Key Changes from March 2026 (v5.0):**
+1. Domain migration: encypherai.com -> encypher.com
+2. Chrome extension v2.0 and WordPress plugin are released products (removed "beta" labels)
+3. Marketing posture shifted from "held pending landmark deal" to active launch
+4. Updated status to Active Launch -- Full-Stack Content Provenance
+
 **Key Changes from February 2026 (v4.0):**
-1. ... Updated team: Matt Kaminsky (Head of Publisher Strategy) replaces Nate Alvord
+1. ... Updated team: Matt Kaminsky (Chief Commercial Officer (CCO)) replaces Nate Alvord
 2. ... Added platform distribution messaging for platform/channel partner audiences
 3. ... Updated pipeline references to current active conversations
-4. ... WordPress plugin and Chrome extension now in beta release
+4. ... WordPress plugin and Chrome extension released
 5. ... Added January 8, 2026 C2PA publication date (hard date)
 6. ... Updated market standards references for roundtable rescheduling + active interim briefings
 

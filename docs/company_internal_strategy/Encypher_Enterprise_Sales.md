@@ -1,9 +1,9 @@
 # Encypher Corporation: Enterprise Sales Positioning
 ## Content Provenance Infrastructure Through Standards
 
-**Last Updated:** March 21, 2026
-**Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
-**Version:** 4.1
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
+**Version:** 5.0
 **Distribution:** Sales & Solutions Teams
 
 > **Messaging SSOT:** Core positioning, value propositions, and competitive framing are
@@ -182,7 +182,7 @@ All publishers get full signing capabilities at no cost:
 - Invisible Unicode embeddings--survive copy-paste, B2B distribution, scraping
 - Public verification pages and API
 - Coalition membership with content indexing
-- WordPress plugin (beta), Chrome extension (beta), API, CLI, GitHub Action
+- WordPress plugin, Chrome extension, API, CLI, GitHub Action
 - 1,000 documents/month (overage: $0.02/doc)
 
 ### Freemium Enforcement Add-Ons (Self-Service)
@@ -316,23 +316,23 @@ Expect detailed follow-up questions on implementation method, systems integratio
 
 ## Call to Action
 
-### For Publishers (Pre-January 8):
+### For Publishers:
 "Join the founding coalition. Implementation fee waived for founding members. Founding members get invite-only standards briefings and priority roundtable-track access while frameworks are being finalized. See how willful infringement enablement transforms your legal position."
 
-**Interactive Demo:** Visit **encypherai.com/publisher-demo** to see the technology
+**Interactive Demo:** Visit **encypher.com/publisher-demo** to see the technology
 
-### For Publishers (Post-January 8):
+### For Publishers (Standard Live):
 "The standard is live. The founding coalition is growing. The invite-only roundtable track is actively defining market licensing frameworks via interim briefings and reconvened sessions. Don't accept terms others define--join now and participate."
 
 ### For AI Companies:
 "Publishers are implementing marked content at scale. Quote integrity verification protects your brand. Performance intelligence improves your models. We're building this WITH you through C2PA."
 
-**Interactive Demo:** Visit **encypherai.com/ai-demo** to explore technical integration
+**Interactive Demo:** Visit **encypher.com/ai-demo** to explore technical integration
 
 ### For Strategic Evaluation:
 "Join our Executive Advisory Council to shape the future of text provenance standards. Limited positions available for industry leaders."
 
-**Contact:** solutions@encypherai.com | **encypherai.com**
+**Contact:** solutions@encypher.com | **encypher.com**
 
 ---
 
@@ -379,7 +379,7 @@ Expect detailed follow-up questions on implementation method, systems integratio
 - Demo quote integrity verification (accurate vs. hallucinated)
 - Explain willful infringement enablement with registration-qualified legal precision
 - Model licensing revenue potential
-- Demo: **encypherai.com/publisher-demo**
+- Demo: **encypher.com/publisher-demo**
 
 ### Stage 3: Business Case Development (Week 3)
 - Calculate ROI (willful infringement leverage + licensing enablement)
@@ -460,17 +460,23 @@ Expect detailed follow-up questions on implementation method, systems integratio
 
 ## Document Control
 
-**Last Updated:** March 21, 2026
-**Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
 **Distribution:** Sales & Solutions Teams
-**Next Review:** After roundtable date lock + framework brief publication
-**Document Owner:** Head of Publisher Strategy
+**Next Review:** Monthly
+**Document Owner:** Chief Commercial Officer (CCO)
+
+**Key Changes from March 2026 (v5.0):**
+1. Domain migration: encypherai.com -> encypher.com
+2. Removed "beta" labels from WordPress plugin and Chrome extension (both released)
+3. Marketing posture shifted to active launch
+4. Updated all demo and contact URLs to encypher.com domain
 
 **Key Updates from February 2026 (v4.0):**
-1. ... Updated team: Matt Kaminsky (Head of Publisher Strategy) replaces Nate Alvord
+1. ... Updated team: Matt Kaminsky (Chief Commercial Officer (CCO)) replaces Nate Alvord
 2. ... Added platform distribution context (sales house channel strategy)
 3. ... Updated pipeline references to current active conversations
-4. ... WordPress plugin and Chrome extension now in beta release
+4. ... WordPress plugin and Chrome extension released
 5. ... Revenue projections updated to reflect realistic timeline
 6. ... Detection Capabilities Framework maintained (3 tiers)
 7. ... All Nate references replaced with Matt/Erik as appropriate

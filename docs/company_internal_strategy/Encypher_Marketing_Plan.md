@@ -1,9 +1,9 @@
 # Encypher Corporation Marketing Plan
-## Standards-Driven Text Provenance Infrastructure
+## Standards-Driven Content Provenance Infrastructure
 
-**Last Updated:** March 4, 2026
-**Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
-**Version:** 4.1
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
+**Version:** 5.0
 **Distribution:** Marketing & Sales Leadership
 
 ---
@@ -85,7 +85,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Downstream survival demonstrations (B2B, wire services, aggregators)
 - Roundtable-track briefing materials
 - Founding member benefits package
-- Interactive demo: **encypherai.com/publisher-demo**
+- Interactive demo: **encypher.com/publisher-demo**
 
 ---
 
@@ -150,7 +150,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 - Quote integrity verification demonstrations
 - Performance intelligence value proposition
 - Partnership framework discussions (not procurement battles)
-- Demo: **encypherai.com/ai-demo**
+- Demo: **encypher.com/ai-demo**
 
 ---
 
@@ -167,14 +167,14 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 
 **Content Calendar:**
 
-**Pre-Landmark Deal (Now -- Held for Coordinated Launch):**
-Drafted and ready to publish alongside or immediately after first landmark deal announcement:
+**Launch Phase (Active -- March 2026):**
+Publishing now to establish market presence ahead of anticipated partnership announcements:
 - "C2PA Text Standard is Live: What Publishers Need to Know"
 - "The 'We Didn't Know' Defense is Over: Willful Infringement Framework for Publishers"
 - "Quote Integrity: Protecting Your Brand from AI Hallucinations"
 - "Cryptographic Watermarking That Survives B2B Distribution"
 
-**Landmark Deal Announcement (Date TBD -- triggered by first signed deal):**
+**Partnership Announcements (Anticipated Q2 2026):**
 - "[Partner] Implements C2PA Text Provenance -- Reference Implementation Now in Production"
 - "Founding Coalition Update: Network Effects in Action"
 - "Why Access Control Isn't Enough: The Three-Layer Publisher Protection Stack"
@@ -190,7 +190,7 @@ Drafted and ready to publish alongside or immediately after first landmark deal 
 - Publishing trades (Digiday, Publishing Executive)
 - Direct executive newsletters
 - LinkedIn thought leadership (Matt's publisher strategy voice + Erik's standards authority voice)
-- Interactive demo: **encypherai.com/publisher-demo**
+- Interactive demo: **encypher.com/publisher-demo**
 
 ---
 
@@ -220,7 +220,7 @@ Drafted and ready to publish alongside or immediately after first landmark deal 
 - C2PA standards forums
 - Technical conferences
 - Direct partnership discussions
-- Interactive demo: **encypherai.com/ai-demo**
+- Interactive demo: **encypher.com/ai-demo**
 
 ---
 
@@ -304,7 +304,7 @@ Drafted and ready to publish alongside or immediately after first landmark deal 
 - **/enterprise**: Governance and intelligence solutions
 
 **Key CTAs:**
-- "Join the Founding Coalition Before January 8"
+- "Join the Founding Coalition"
 - "Eliminate the 'We Didn't Know' Defense"
 - "Define market licensing frameworks at invite-only roundtable "
 - "Try Interactive Demo"
@@ -376,15 +376,15 @@ Drafted and ready to publish alongside or immediately after first landmark deal 
 - 5-minute: Standards overview + January 8 publication
 - 15-minute: Willful infringement + quote integrity demonstration
 - 30-minute: Full platform + sentence-level capabilities + roundtable-track opportunity
-- Interactive: **encypherai.com/publisher-demo** and **/ai-demo**
+- Interactive: **encypher.com/publisher-demo** and **/ai-demo**
 
 ---
 
 ## Metrics & KPIs
 
-### Current Goals (Q1 2026)
-- Founding coalition: 10 members signed
-- Website traffic: 15K monthly to **encypherai.com**
+### Goals (Updated March 2026)
+- Founding coalition: target 10 members (pipeline active, deal closures pending)
+- Website traffic: 15K monthly to **encypher.com**
 - Demo requests: 75 monthly (publisher focus)
 - Roundtable-track participants confirmed: rolling target 20-30
 - Media mentions: 10 tier-1 (standards authority angle)
@@ -392,7 +392,7 @@ Drafted and ready to publish alongside or immediately after first landmark deal 
 ### Q1 2026 Goals (Post-Standard Publication)
 - Publisher coalition: 20 members
 - AI company partnerships: 3 infrastructure discussions
-- Revenue pipeline: $10M+ (licensing + enforcement tools + implementations)
+- Revenue pipeline: building (first licensing revenue expected Q3-Q4 2026)
 - Roundtable reconvened session executed (date TBD)
 - Market framework published: March
 - Standards recognition: Industry validated
@@ -474,19 +474,26 @@ We're not marketing a product competing with alternatives. We're establishing th
 
 **The standard published January 8, 2026. The roundtable track is active. The collaboration is real. The infrastructure is here.**
 
-Website: **encypherai.com**
-Demos: **encypherai.com/publisher-demo** and **encypherai.com/ai-demo**
+Website: **encypher.com**
+Demos: **encypher.com/publisher-demo** and **encypher.com/ai-demo**
 Roundtable Track: Invite-only (rescheduling in progress)
 
 ---
 
 ## Document Control
 
-**Last Updated:** March 4, 2026
-**Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
 **Distribution:** Marketing & Sales Leadership
-**Next Review:** After roundtable date lock + framework brief publication
-**Document Owner:** Head of Publisher Strategy
+**Next Review:** Monthly
+**Document Owner:** Chief Commercial Officer (CCO)
+
+**Key Changes from March 2026 (v5.0):**
+1. Domain migration: encypherai.com -> encypher.com
+2. Subtitle updated: Text Provenance -> Content Provenance Infrastructure
+3. Marketing posture shifted from "held pending landmark deal" to active launch
+4. Q1 goals updated to reflect current pipeline reality
+5. Content calendar shifted from "held" to "publishing now"
 
 **Key Updates from February 2026 (v4.0):**
 1. ... Added January 8, 2026 C2PA publication date (hard date)

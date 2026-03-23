@@ -1,9 +1,9 @@
 # Encypher Corporation: Ideal Customer Profile Framework 3.0
 ## Standards-Driven Infrastructure Strategy
 
-**Last Updated:** March 21, 2026
-**Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
-**Version:** 4.1
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
+**Version:** 5.0
 **Distribution:** Sales & Marketing Leadership
 
 ---
@@ -130,7 +130,7 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
 7. Model licensing revenue potential (success-based)
 8. Close with founding coalition benefits (implementation fee waived, invite-only standards access, priority coalition positioning)
 
-**Demo:** **encypherai.com/publisher-demo**
+**Demo:** **encypher.com/publisher-demo**
 
 ---
 
@@ -193,7 +193,7 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 **Value Framing:** Not "litigation avoidance" but "provenance infrastructure + quote verification + performance intelligence (with integration) + foundation for content partnerships"
 
-**Demo:** **encypherai.com/ai-demo**
+**Demo:** **encypher.com/ai-demo**
 
 ---
 
@@ -310,7 +310,7 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 **Target:** 3-5 platform partners (Freestar advancing, Mediavine/Playwire/Raptive in pipeline) + direct Tier 1 publisher conversations (AP, Taylor & Francis, NMA)
 **Approach:** Matt-led platform distribution through sales houses + Erik-led GC engagement for strategic accounts + roundtable prep via 1:1 framework briefings
 **Pricing:** Free tier for all publishers via platform partners + enterprise implementations ($10-30K, waived for founding members). Coalition 60/40, self-service 80/20.
-**Product:** WordPress plugin (beta), Chrome extension (beta), API, CLI tools
+**Product:** WordPress plugin, Chrome extension v2.0, API, CLI tools
 **Goal:** Formalize first platform partnerships, maintain standards momentum during rescheduling, build marked content volume
 
 ### Q2 2026 (April - June): Platform Scaling + Licensing Foundation
@@ -408,7 +408,7 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 - 30-day implementation timeline
 - Roundtable track invitation
 
-**Demo:** **encypherai.com/publisher-demo**
+**Demo:** **encypher.com/publisher-demo**
 
 ### AI Company Sales Process:
 
@@ -433,16 +433,16 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 - Quote verification + performance intelligence access
 - Standards collaboration role
 
-**Demo:** **encypherai.com/ai-demo**
+**Demo:** **encypher.com/ai-demo**
 
 ---
 
 ## Success Metrics by Quarter
 
-### Q4 2025 - Q1 2026 (Completed):
-- 5 publisher agreements signed (founding coalition foundation)
-- Enforcement tool subscriptions growing + first enterprise implementations closed
-- 3 AI company infrastructure conversations (collaborative framing)
+### Q4 2025 - Q1 2026 (Review):
+- 5 publisher agreements signed -- target not met; pipeline active with Freestar (legal review), Valnet (active Q&A), NMA (preferred vendor discussions)
+- Enforcement tool subscriptions -- pre-revenue; first implementations pending deal closures
+- 3 AI company infrastructure conversations (collaborative framing) -- not yet initiated; priority remains publisher coalition
 - Active discussions: Freestar (CEO and BD meetings completed, PubOS press release pending), AP (Paul Sarkis engaged, Syracuse interest), Taylor & Francis, Scott Cunningham/AAM (CEO follow-up scheduled), Apartment Therapy, NMA (presented Feb 12), Linklaters (Syracuse + March meeting); platform distribution pipeline: Mediavine, Playwire, Raptive, Aditude; WordPress/Automattic partnership intro in progress
 - NMA preferred vendor discussions advancing
 
@@ -454,12 +454,12 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 - Market licensing framework defined
 - Standards collaboration press coverage
 
-### Q2 2026 (Scale Phase):
-- $20M in licensing enabled (publisher coalition)
-- 3 AI company partnerships (infrastructure + intelligence)
-- 10 enterprise customers (governance)
-- Industry standard recognition
-- $75M ARR run rate
+### Q2 2026 (Scale Phase -- Aspirational):
+- First licensing deals closed (publisher coalition)
+- 1-2 AI company infrastructure conversations initiated
+- First enterprise implementation live
+- Industry standard recognition growing
+- Revenue targets: see GTM Strategy for canonical forecast
 
 > **Note on scale-phase figures:** These numbers represent the high-case aspirational
 > scenario, not an operating plan commitment. They assume landmark deals close in Q1-Q2,
@@ -535,8 +535,8 @@ With C2PA co-chair authority, patent-pending sentence-level capabilities, and va
 
 This isn't a sales process competing with alternatives. It's infrastructure adoption with inevitable convergence through standards--published January 8, 2026.
 
-**Website:** **encypherai.com**
-**Demos:** **encypherai.com/publisher-demo** and **encypherai.com/ai-demo**
+**Website:** **encypher.com**
+**Demos:** **encypher.com/publisher-demo** and **encypher.com/ai-demo**
 **C2PA Standard Publication:** January 8, 2026
 **Industry Roundtable Track:** Rescheduling in progress; 1:1 briefings active
 
@@ -544,18 +544,25 @@ This isn't a sales process competing with alternatives. It's infrastructure adop
 
 ## Document Control
 
-**Last Updated:** March 21, 2026
-**Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
 **Distribution:** Sales & Marketing Leadership
-**Next Review:** After roundtable date lock + framework brief publication
-**Document Owner:** Head of Publisher Strategy
+**Next Review:** Monthly
+**Document Owner:** Chief Commercial Officer (CCO)
+
+**Key Changes from March 2026 (v5.0):**
+1. Domain migration: encypherai.com -> encypher.com
+2. Removed "beta" labels (Chrome extension v2.0 released, WordPress plugin released)
+3. Q4 2025 - Q1 2026 targets updated with actual status (pipeline active, no deals signed)
+4. Q2 2026 targets reset to realistic first-deal milestones (aspirational $75M ARR removed from operating targets)
+5. Marketing posture shifted to active launch
 
 **Key Changes from February 2026 (v4.0):**
-1. ... Updated team: Matt Kaminsky (Head of Publisher Strategy) replaces Nate Alvord
+1. ... Updated team: Matt Kaminsky (Chief Commercial Officer (CCO)) replaces Nate Alvord
 2. ... Added ICP 1C: "The Platform Distribution Partner" validated by Freestar CEO engagement
 3. ... Updated pipeline references to current active conversations and platform partnerships
 4. ... Updated Market Segmentation timeline to reflect current reality
-5. ... WordPress plugin and Chrome extension now in beta release
+5. ... WordPress plugin and Chrome extension released
 6. ... Revenue projections updated to realistic pre-revenue timeline
 7. ... Added sales house economics and channel partner framework
 8. ... Updated success criteria to reflect platform distribution model

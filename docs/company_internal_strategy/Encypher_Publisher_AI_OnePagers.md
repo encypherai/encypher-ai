@@ -1,9 +1,9 @@
 # Encypher Corporation: Infrastructure for Content Provenance
 ## One-Page Overviews for Publishers and AI Companies
 
-**Last Updated:** March 21, 2026
-**Status:** Post-Standard Publication (Roundtable Rescheduling in Progress)
-**Version:** 4.1
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
+**Version:** 5.0
 **Distribution:** Sales & Business Development Teams
 
 > **Messaging SSOT:** Core positioning and value propositions are owned by
@@ -63,9 +63,9 @@ Build basic C2PA yourself, remain incompatible with publisher-specific enhanceme
 **Next Step:**
 Technical demonstration showing sentence-level tracking and performance intelligence capabilities. See how provenance data can reveal which content drives success when integrated into AI pipelines.
 
-**Interactive Demo:** Visit **encypherai.com/ai-demo** to explore technical integration
+**Interactive Demo:** Visit **encypher.com/ai-demo** to explore technical integration
 
-**Contact:** Matt Kaminsky, Head of Publisher Strategy | matt.kaminsky@encypherai.com | encypherai.com
+**Contact:** Matt Kaminsky, Chief Commercial Officer (CCO) | matt.kaminsky@encypher.com | encypher.com
 
 ---
 
@@ -77,7 +77,7 @@ Text on the open web has no cryptographic proof of origin. When your content is 
 
 **The Technical Gap:** Legal strategies are necessary but insufficient without technical infrastructure. You need cryptographic proof embedded in the content itself.
 
-### Text Provenance Infrastructure--Enhanced for Publishers
+### Content Provenance Infrastructure--Enhanced for Publishers
 
 **Standards Authority:**
 Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and co-chairs the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The specification **published January 8, 2026**. We didn't just implement a standard--Erik wrote it, and we built the reference implementation.
@@ -117,7 +117,7 @@ Convert unmarked content into provably owned assets. Serve formal notice. Create
 **Our Model--Free to Sign. Paid to Enforce. Aligned on Outcomes.**
 
 **Free Tier -- Every Publisher:**
-Full signing infrastructure at no cost. C2PA 2.3-compliant signing, sentence-level Merkle tree authentication, invisible Unicode embeddings, public verification pages, coalition membership. 1,000 documents/month. WordPress plugin (beta), Chrome extension (beta), API, CLI, GitHub Action included. Free verification across all media asset classes.
+Full signing infrastructure at no cost. C2PA 2.3-compliant signing, sentence-level Merkle tree authentication, invisible Unicode embeddings, public verification pages, coalition membership. 1,000 documents/month. WordPress plugin, Chrome extension v2.0, API, CLI, GitHub Action included. Free verification across all media asset classes.
 
 **Enforcement Add-Ons (Self-Service):**
 - Attribution Analytics: $299/month (find where your signed content appears across the web -- scraped republication, aggregators, RAG systems, content platforms)
@@ -171,9 +171,9 @@ Each publisher implementing marked content strengthens the coalition. More marke
 **Next Step:**
 Technical demonstration showing how sentence-level tracking, quote integrity verification, and formal notice transform your position--from unmarked content to provably owned assets with cryptographic certainty.
 
-**Interactive Demo:** Visit **encypherai.com/publisher-demo** to see the technology in action
+**Interactive Demo:** Visit **encypher.com/publisher-demo** to see the technology in action
 
-**Contact:** Matt Kaminsky, Head of Publisher Strategy | matt.kaminsky@encypherai.com | encypherai.com
+**Contact:** Matt Kaminsky, Chief Commercial Officer (CCO) | matt.kaminsky@encypher.com | encypher.com
 
 ---
 
@@ -282,12 +282,12 @@ A: The EU AI Act enforcement deadline for AI content transparency is August 2, 2
 ## Contact Information
 
 **Matt Kaminsky**
-Head of Publisher Strategy
-matt.kaminsky@encypherai.com
+Chief Commercial Officer (CCO)
+matt.kaminsky@encypher.com
 
-**Website:** encypherai.com
-**Publisher Demo:** encypherai.com/publisher-demo
-**AI Company Demo:** encypherai.com/ai-demo
+**Website:** encypher.com
+**Publisher Demo:** encypher.com/publisher-demo
+**AI Company Demo:** encypher.com/ai-demo
 
 **Standards Work:** C2PA Text Provenance Task Force (Co-Chair)
 **C2PA Standard Publication:** January 8, 2026
@@ -307,16 +307,22 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 
 ## Document Control
 
-**Last Updated:** March 21, 2026
-**Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
 **Distribution:** Sales & Business Development Teams
-**Next Review:** After roundtable date lock + framework brief publication
-**Document Owner:** Head of Publisher Strategy
+**Next Review:** Monthly
+**Document Owner:** Chief Commercial Officer (CCO)
+
+**Key Changes from March 2026 (v5.0):**
+1. Domain migration: encypherai.com -> encypher.com (all URLs and email addresses)
+2. Removed "beta" labels (Chrome extension v2.0 released, WordPress plugin released)
+3. Section heading updated: Text Provenance -> Content Provenance Infrastructure
+4. Marketing posture shifted to active launch
 
 **Key Updates from February 2026:**
-- ... Updated team: Matt Kaminsky (Head of Publisher Strategy) replaces Nate Alvord
+- ... Updated team: Matt Kaminsky (Chief Commercial Officer (CCO)) replaces Nate Alvord
 - ... Added platform distribution strategy (Freestar, Mediavine, Raptive, Playwire, Aditude)
 - ... Updated pipeline to reflect current active conversations and platform partnerships
-- ... WordPress plugin and Chrome extension now in beta release
+- ... WordPress plugin and Chrome extension released
 - ... Revenue projections updated to reflect realistic pre-revenue timeline
 - ... Added Platform Distribution Partner ICP (ICP 1C) validated by Freestar CEO engagement

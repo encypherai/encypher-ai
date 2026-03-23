@@ -3,7 +3,7 @@
 
 **Last Updated:** March 4, 2026
 **Status:** Active Tracker (Living Document)
-**Owner:** Head of Publisher Strategy
+**Owner:** Chief Commercial Officer (CCO)
 **Distribution:** Executive, BD, Strategy
 
 ---
@@ -89,7 +89,7 @@ Use it to track status, ownership, next actions, and strategic significance acro
 
 ## 6) Encypher Attest Pipeline
 
-> **Status note:** Attest is a defined second product line (see `Encypher_Attest_Strategy.md`)
+> **Status note:** Attest is a defined second product line (see `future_product_concepts/Encypher_Attest_Strategy.md`)
 > but has no named prospects or active pipeline tracked here yet. This section should be
 > populated as Attest conversations open. Current priority is publisher coalition motion;
 > Attest outreach should begin in Q2 2026 once the publisher motion has at least one signed
@@ -97,9 +97,9 @@ Use it to track status, ownership, next actions, and strategic significance acro
 
 | Organization | Vertical | Key Contacts | Current Status | Health | Owner | Next Action |
 |---|---|---|---|---|---|---|
-| TBD -- Legal vertical | Legal | TBD | No active conversations yet | -- | Erik | Identify 2-3 target law firms or legal tech adjacents via standards network connections |
-| TBD -- Financial services | FinServ | TBD | No active conversations yet | -- | Erik | Build intro path through Linklaters relationship or AAM financial-publisher adjacents |
-| TBD -- Healthcare | Healthcare | TBD | No active conversations yet | -- | TBD | Assess after publisher coalition motion has one signed deal |
+| TBD -- Legal vertical | Legal | TBD | No active conversations yet (Attest deprioritized; see future_product_concepts/Encypher_Attest_Strategy.md) | -- | Erik | Identify 2-3 target law firms or legal tech adjacents via standards network connections |
+| TBD -- Financial services | FinServ | TBD | No active conversations yet (Attest deprioritized; see future_product_concepts/Encypher_Attest_Strategy.md) | -- | Erik | Build intro path through Linklaters relationship or AAM financial-publisher adjacents |
+| TBD -- Healthcare | Healthcare | TBD | No active conversations yet (Attest deprioritized; see future_product_concepts/Encypher_Attest_Strategy.md) | -- | TBD | Assess after publisher coalition motion has one signed deal |
 
 ---
 

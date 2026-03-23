@@ -1,9 +1,9 @@
 # Encypher Corporation Master GTM Strategy
 ## Standards-Driven Coalition Strategy for Content Provenance Infrastructure
 
-**Last Updated:** March 4, 2026
-**Status:** Post-Standard Publication (Syracuse Roundtable Rescheduling)
-**Version:** 4.1
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
+**Version:** 5.0
 **Distribution:** Executive Team & Strategy Leadership
 
 > **CANONICAL MESSAGING SSOT:** This document is the authoritative source for all
@@ -245,7 +245,7 @@ Verification is free because every verification strengthens the trust chain. It 
 - Demo free verification: show any third party verifying signed content across all media types at no cost
 - Explain willful infringement enablement with precise legal language (statutory maximums require registered works)
 - Model licensing revenue potential
-- Demo available at: **encypherai.com/publisher-demo**
+- Demo available at: **encypher.com/publisher-demo**
 
 ### Phase 2: Standards Publication Momentum (January 8, 2026 ')
 
@@ -346,7 +346,7 @@ When prospects say "we'll build C2PA ourselves," response is: "You'd be implemen
 
 ### Matt Kaminsky's Execution Plan
 
-Matt Kaminsky (Head of Publisher Strategy, 13+ years digital media/ad-tech revenue leadership) executes a two-track approach: platform distribution through publisher-facing sales houses and direct publisher engagement.
+Matt Kaminsky (Chief Commercial Officer (CCO), 13+ years digital media/ad-tech revenue leadership) executes a two-track approach: platform distribution through publisher-facing sales houses and direct publisher engagement.
 
 **Track 1: Platform Distribution (Primary GTM Motion)**
 
@@ -390,7 +390,7 @@ Erik handles Tier 1 publisher GC/CLO relationships directly:
 - Day 3: Erik/Matt demo call with BD lead (live Chrome plugin demo + integration walkthrough)
 - Day 5: Partnership terms review (channel partner economics + press/marketing collaboration)
 - Day 7-14: Integration planning (WordPress plugin for WP publishers, API/custom script for others)
-- Demo resource: **encypherai.com/publisher-demo**
+- Demo resource: **encypher.com/publisher-demo**
 
 **Direct Publisher Sales Cycle: 14-30 Days**
 - Day 1: Erik or Matt introduction call (willful infringement frame + standards authority)
@@ -398,14 +398,14 @@ Erik handles Tier 1 publisher GC/CLO relationships directly:
 - Day 7: Revenue modeling session (licensing enablement + coalition opportunity)
 - Day 14: Executive alignment (coalition value + market standards leadership)
 - Day 21-30: Agreement (success-based terms)
-- Demo resource: **encypherai.com/publisher-demo**
+- Demo resource: **encypher.com/publisher-demo**
 
 **AI Company Sales Cycle: 60-90 Days**
 - Month 1: Standards collaboration introduction (C2PA partnership + January 8 publication)
 - Month 2: Quote integrity + performance intelligence demonstration
 - Month 3: Publisher compatibility + infrastructure partnership framework
 - Week 12: Implementation agreement
-- Demo resource: **encypherai.com/ai-demo**
+- Demo resource: **encypher.com/ai-demo**
 
 ---
 
@@ -433,7 +433,7 @@ Erik handles Tier 1 publisher GC/CLO relationships directly:
 
 **Q1 2026 (January - March): Foundation Building**
 - Platform partner agreements formalized (Freestar, potentially Aditude)
-- WordPress plugin and Chrome extension in beta distribution
+- WordPress plugin and Chrome extension released
 - Syracuse roundtable postponed; 1:1 standards briefings active
 - NMA technical partnership advancing
 - Enterprise implementations: $0 (free tier adoption phase)
@@ -556,7 +556,7 @@ Encypher is the only company operating at Layer 2 for text, and at Enterprise ti
 - Freestar: Tim/Kurt one-on-one Friday, press release finalization
 - WordPress/Automattic: Reply to Parie (VP BD) intro from Anthony Gonsalves
 - Roundtable-track stakeholder briefing cadence and agenda refinement
-- WordPress plugin and Chrome extension beta release
+- WordPress plugin and Chrome extension released
 
 **Roundtable Track (Interim):**
 - 1:1 briefings with publisher GCs, AI company commercial leads, and policy stakeholders
@@ -660,8 +660,8 @@ The EU AI Act transparency requirements enforce in August 2026. The draft Code o
 ### Q1 2026 (January - March -- Current):
 - [ ] Freestar partnership formalized (PubOS integration + press release)
 - [x] NMA AI Licensing Working Group presentation completed (February 12)
-- [x] WordPress plugin in beta release
-- [x] Chrome extension in beta release
+- [x] WordPress plugin released
+- [x] Chrome extension v2.0 released
 - [ ] Roundtable reconvened and executed (rescheduling in progress)
 - [ ] 2-3 additional platform partner conversations advancing (Mediavine, Raptive, Playwire)
 - [ ] WordPress/Automattic partnership discussion initiated
@@ -696,7 +696,7 @@ The EU AI Act transparency requirements enforce in August 2026. The draft Code o
 - Technical moat protected (patent-pending sentence-level)
 - Legal transformation proven (willful infringement enablement)
 - Market standards defined (roundtable track)
-- WordPress plugin and Chrome extension in distribution
+- WordPress plugin and Chrome extension released
 - **$1-2M revenue target (enforcement tools + first licensing)**
 
 **Year 2 (2026-2027): Acceleration**
@@ -720,8 +720,8 @@ The EU AI Act transparency requirements enforce in August 2026. The draft Code o
 ### Immediate (Current Week):
 - [ ] Freestar: advance legal review to signed Marketplace Partner Agreement
 - [ ] WordPress/Automattic: follow-up on VP BD pathway and plugin distribution model
-- [x] WordPress plugin beta release active
-- [x] Chrome extension beta release active
+- [x] WordPress plugin released
+- [x] Chrome extension v2.0 released
 - [ ] Continue invite-only standards briefings while roundtable date is reset
 - [ ] Consolidate framework notes from publisher/AI stakeholder calls
 
@@ -769,8 +769,8 @@ The standard published January 8, 2026. The roundtable track is active. The infr
 **Encypher Corporation: Building content provenance infrastructure WITH the industry.**
 
 **Technical Demos:**
-- Publishers: **encypherai.com/publisher-demo**
-- AI Companies: **encypherai.com/ai-demo**
+- Publishers: **encypher.com/publisher-demo**
+- AI Companies: **encypher.com/ai-demo**
 
 *Execute with precision. Build with collaboration. Win through standards.*
 
@@ -879,11 +879,17 @@ TollBit, ProRata, and Cloudflare AI Crawl Control are all Tier 1 licensing tools
 
 ## Document Control
 
-**Last Updated:** March 21, 2026
-**Status:** Post-Standard Publication, Roundtable Rescheduling in Progress
+**Last Updated:** March 23, 2026
+**Status:** Active Launch -- Full-Stack Content Provenance
 **Distribution:** Executive Team & Strategy Leadership
 **Next Review:** After roundtable date lock + framework brief publication
-**Document Owner:** CEO / Head of Publisher Strategy
+**Document Owner:** CEO / Chief Commercial Officer (CCO)
+
+**Key Changes from March 2026 (v5.0):**
+1. Domain migration: encypherai.com -> encypher.com
+2. Status updated to Active Launch -- Full-Stack Content Provenance
+3. All "beta" labels removed (Chrome extension v2.0, WordPress plugin -- both released)
+4. Version bumped to 5.0 reflecting domain migration and launch posture shift
 
 **Key Changes from March 2026 (v4.2):**
 1. ... Broadened positioning from "text provenance" to "content provenance" -- reflecting production multi-media signing capabilities (images, audio, video, live streams)
@@ -896,13 +902,13 @@ TollBit, ProRata, and Cloudflare AI Crawl Control are all Tier 1 licensing tools
 8. ... Updated content strategy messaging for multi-media and free verification
 
 **Key Changes from February 2026 (v4.0):**
-1. ... Replaced Nate Alvord (CRO) with Matt Kaminsky (Head of Publisher Strategy) throughout
+1. ... Replaced Nate Alvord (CRO) with Matt Kaminsky (Chief Commercial Officer (CCO)) throughout
 2. ... Added Platform Distribution as primary GTM motion (sales houses as distribution layer)
 3. ... Added ICP 1C: Platform Distribution Partner with Freestar as validated archetype
 4. ... Updated pipeline to reflect current reality (Freestar, Aditude, AAM, NMA, Linklaters, Apartment Therapy, WordPress/Automattic)
 5. ... Updated revenue projections to realistic pre-revenue timeline
 6. ... Updated success metrics and KPIs to reflect platform distribution model
 7. ... Added competitive intelligence from Freestar conversations (Tollbit/ProRata status, OpenAI licensing intel)
-8. ... WordPress plugin and Chrome extension now in beta release
+8. ... WordPress plugin and Chrome extension released
 9. ... Updated campaign calendar to current execution timeline
 10. ... Updated implementation checklist to immediate action items

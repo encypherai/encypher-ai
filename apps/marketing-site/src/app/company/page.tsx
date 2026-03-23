@@ -44,13 +44,13 @@ export default function CompanyPage() {
         <div className="space-y-4 mb-12">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">About Encypher</h1>
           <p className="text-xl text-muted-foreground">
-            Building Trust Infrastructure for the AI Economy
+            Building Trust Infrastructure for Content Provenance
           </p>
 
           {/* Mission Statement */}
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 mt-8">
             <p className="text-lg font-medium text-center">
-              We believe AI and creators can thrive together. Our mission is to build the infrastructure that makes this possible—open standards that enable attribution, licensing, and trust at scale.
+              We believe AI and creators can thrive together. Our mission is to build the infrastructure that makes this possible -- open standards that enable attribution, licensing, and trust at scale.
             </p>
           </div>
 
@@ -85,10 +85,10 @@ export default function CompanyPage() {
               When the industry needed a standard for AI content authenticity, we wrote it. As co-authors of the C2PA text specification, we work alongside Adobe, Microsoft, Google, OpenAI, and the BBC to define how digital content is authenticated.
             </p>
             <p className="text-muted-foreground mb-4">
-              But standards alone don't solve problems—infrastructure does. Publishers need provable ownership. AI labs need performance intelligence and compliance infrastructure. The ecosystem needs interoperability.
+              But standards alone don't solve problems -- infrastructure does. Publishers need provable ownership. AI labs need performance intelligence and compliance infrastructure. The ecosystem needs interoperability.
             </p>
             <p className="text-muted-foreground mb-4">
-              So we built it. Sentence-level tracking with cryptographic certainty. Open-source foundations with commercial capabilities. Infrastructure that serves both creators and AI companies—because the future isn't adversarial, it's collaborative.
+              So we built it. Sentence-level tracking with cryptographic certainty. Open-source foundations with commercial capabilities. Infrastructure that serves both creators and AI companies -- because the future isn't adversarial, it's collaborative.
             </p>
             <ul className="space-y-2 mb-4">
               <li className="text-muted-foreground"><strong>For Publishers:</strong> Transform unmarked content into provably owned assets with licensing capability.</li>
@@ -116,18 +116,18 @@ export default function CompanyPage() {
                         Co-author of the C2PA text standard and co-chair of the C2PA Text Task Force. Working with Adobe, Microsoft, Google, and OpenAI to define content authenticity standards. Background in AI SaaS and enterprise software.
                       </p>
                       <div className="flex gap-2">
-                        <a 
-                          href="https://github.com/erik-sv" 
-                          target="_blank" 
+                        <a
+                          href="https://github.com/erik-sv"
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-muted-foreground hover:text-foreground"
                         >
                           <Github className="h-5 w-5" />
                           <span className="sr-only">GitHub</span>
                         </a>
-                        <a 
-                          href="https://www.linkedin.com/in/eriksvilich/" 
-                          target="_blank" 
+                        <a
+                          href="https://www.linkedin.com/in/eriksvilich/"
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-muted-foreground hover:text-foreground"
                         >
@@ -151,10 +151,10 @@ export default function CompanyPage() {
                         25+ years in enterprise sales and IP monetization. Former sales leader at Digimarc, Intellectual Ventures, and Dolby. Drives commercial strategy and enterprise partnerships.
                       </p>
                       <div className="flex gap-2">
-                        <a 
-                          href="https://www.linkedin.com/in/nate-alvord/" 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
+                        <a
+                          href="https://www.linkedin.com/in/nate-alvord/"
+                          target="_blank"
+                          rel="noopener noreferrer"
                           aria-label="Nate Alvord LinkedIn Profile"
                           className="text-muted-foreground hover:text-foreground"
                         >
@@ -170,15 +170,15 @@ export default function CompanyPage() {
                     <div className="flex flex-col items-center text-center">
                       <Image src="/images/headshots/Matt_Kaminsky_Headshot.png" alt="Matt Kaminsky headshot" width={96} height={96} className="h-24 w-24 rounded-full object-cover mb-4" />
                       <h3 className="text-xl font-semibold">Matt Kaminsky</h3>
-                      <p className="text-sm text-muted-foreground mb-2">Head of Publisher Strategy</p>
+                      <p className="text-sm text-muted-foreground mb-2">Chief Commercial Officer</p>
                       <p className="text-sm text-muted-foreground mb-4">
                         13+ years driving large scale growth and strategic partnerships for industry leading sales houses and publishers. Former VP of Business Development at Mediavine, Enthusiast Gaming, and CRO for an online media portfolio.
                       </p>
                       <div className="flex gap-2">
-                        <a 
-                          href="https://www.linkedin.com/in/matthew-kaminsky-b52a0042/" 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
+                        <a
+                          href="https://www.linkedin.com/in/matthew-kaminsky-b52a0042/"
+                          target="_blank"
+                          rel="noopener noreferrer"
                           aria-label="Matt Kaminsky LinkedIn Profile"
                           className="text-muted-foreground hover:text-foreground"
                         >
@@ -201,7 +201,7 @@ export default function CompanyPage() {
               <p className="text-lg text-muted-foreground mb-8">
                 Help shape the future of AI content provenance!  Encypher is open-source (AGPL-3.0) and built collaboratively. Find out how you can contribute.
               </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-4"> 
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <Button asChild className="shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
                   {/* Link to contribution guide or relevant section */}
                   <a href={`${siteConfig.links.github}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noopener noreferrer">
@@ -234,9 +234,9 @@ export default function CompanyPage() {
                       Report issues, contribute code, or explore the project on GitHub.
                     </p>
                     <Button asChild size="sm" className="shadow-md btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                      <a 
-                        href="https://github.com/encypherai/encypher-ai" 
-                        target="_blank" 
+                      <a
+                        href="https://github.com/encypherai/encypher-ai"
+                        target="_blank"
                         rel="noopener noreferrer"
                       >
                         Visit Repository
@@ -245,7 +245,7 @@ export default function CompanyPage() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center">
@@ -264,7 +264,7 @@ export default function CompanyPage() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center">
@@ -276,9 +276,9 @@ export default function CompanyPage() {
                       Join our community discussions, ask questions, and share your experiences.
                     </p>
                     <Button asChild size="sm" className="shadow-md btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                      <a 
-                        href="https://github.com/encypherai/encypher-ai/discussions" 
-                        target="_blank" 
+                      <a
+                        href="https://github.com/encypherai/encypher-ai/discussions"
+                        target="_blank"
                         rel="noopener noreferrer"
                       >
                         Join Discussions
