@@ -56,7 +56,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Encypher Key Service",
     description="API Key management microservice",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -81,7 +81,7 @@ async def root():
     """Root endpoint - returns service identity and endpoint index."""
     return {
         "service": settings.SERVICE_NAME,
-        "version": "1.0.0",
+        "version": "2.0.0",
         "status": "running",
         "endpoints": {
             "docs": "/docs",

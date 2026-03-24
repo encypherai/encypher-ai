@@ -7,7 +7,7 @@
 **Production-ready API for C2PA-compliant content signing and verification**
 
 [![Status](https://img.shields.io/badge/status-production-brightgreen)](https://api.encypherai.com)
-[![API Version](https://img.shields.io/badge/version-v1.1.0-blue)](https://docs.encypherai.com)
+[![API Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://docs.encypherai.com)
 [![Uptime](https://img.shields.io/badge/uptime-99.9%25-brightgreen)](https://verify.encypherai.com/status)
 [![License](https://img.shields.io/badge/license-proprietary-red)](../LICENSE)
 

@@ -10,7 +10,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 # Service information
 service_info = Info("analytics-service", "Analytics Service information")
-service_info.info({"version": "1.0.0", "service": "analytics-service", "port": "8006"})
+service_info.info({"version": "2.0.0", "service": "analytics-service", "port": "8006"})
 
 # Business metrics
 metrics_recorded_total = Counter("metrics_recorded_total", "Total metrics recorded", ["metric_type"])

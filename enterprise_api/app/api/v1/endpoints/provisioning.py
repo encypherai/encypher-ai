@@ -474,7 +474,7 @@ async def provisioning_health():
     return {
         "status": "healthy",
         "service": "provisioning",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "endpoints": {
             "auto_provision": "/api/v1/provisioning/auto-provision",
             "api_keys": "/api/v1/provisioning/api-keys",

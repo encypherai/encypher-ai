@@ -10,7 +10,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 # Service information
 service_info = Info("verification-service", "Verification Service information")
-service_info.info({"version": "1.0.0", "service": "verification-service", "port": "8005"})
+service_info.info({"version": "2.0.0", "service": "verification-service", "port": "8005"})
 
 # Business metrics
 verifications_total = Counter("verifications_total", "Total verifications", ["result"])

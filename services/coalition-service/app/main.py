@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Encypher Coalition Service",
     description="Coalition infrastructure and auto-onboarding microservice",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -72,7 +72,7 @@ async def root():
     """Root endpoint"""
     return {
         "service": settings.SERVICE_NAME,
-        "version": "1.0.0",
+        "version": "2.0.0",
         "status": "running",
     }
 

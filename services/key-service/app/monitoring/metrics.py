@@ -10,7 +10,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 # Service information
 service_info = Info("key-service", "Key Service information")
-service_info.info({"version": "1.0.0", "service": "key-service", "port": "8003"})
+service_info.info({"version": "2.0.0", "service": "key-service", "port": "8003"})
 
 # Business metrics
 api_key_operations_total = Counter("api_key_operations_total", "Total API key operations", ["operation", "status"])

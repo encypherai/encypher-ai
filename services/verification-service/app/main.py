@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Encypher Verification Service",
     description="Document verification microservice",
-    version="1.0.2",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -101,7 +101,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 async def root():
     return {
         "service": settings.SERVICE_NAME,
-        "version": "1.0.2",
+        "version": "2.0.0",
         "status": "running",
     }
 

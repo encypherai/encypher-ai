@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 
 
-app = FastAPI(title="Encypher Notification Service", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Encypher Notification Service", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -58,7 +58,7 @@ app.include_router(v1_router, prefix="/api/v1/notifications", tags=["notificatio
 
 @app.get("/")
 async def root():
-    return {"service": settings.SERVICE_NAME, "version": "1.0.0", "status": "running"}
+    return {"service": settings.SERVICE_NAME, "version": "2.0.0", "status": "running"}
 
 
 @app.get("/health")

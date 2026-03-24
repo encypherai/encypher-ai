@@ -10,7 +10,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 # Service information
 service_info = Info("billing-service", "Billing Service information")
-service_info.info({"version": "1.0.0", "service": "billing-service", "port": "8007"})
+service_info.info({"version": "2.0.0", "service": "billing-service", "port": "8007"})
 
 # Business metrics
 subscriptions_total = Counter("subscriptions_total", "Total subscriptions", ["operation", "status"])

@@ -131,7 +131,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Encypher Auth Service",
     description="Authentication and authorization microservice",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -237,7 +237,7 @@ async def root():
     """Capabilities index - lists available route groups."""
     return {
         "service": settings.SERVICE_NAME,
-        "version": "1.0.0",
+        "version": "2.0.0",
         "status": "running",
         "routes": {
             "authentication": "/api/v1/auth",

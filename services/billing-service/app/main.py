@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Encypher Billing Service",
     description="Billing and subscription microservice",
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -87,7 +87,7 @@ app.include_router(webhook_router, prefix="/api/v1", tags=["webhooks"])
 async def root():
     return {
         "service": settings.SERVICE_NAME,
-        "version": "1.0.0",
+        "version": "2.0.0",
         "status": "running",
         "docs_url": "/docs",
         "openapi_url": "/openapi.json",

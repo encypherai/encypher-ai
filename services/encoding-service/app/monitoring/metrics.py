@@ -10,7 +10,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 # Service information
 service_info = Info("encoding-service", "Encoding Service information")
-service_info.info({"version": "1.0.0", "service": "encoding-service", "port": "8004"})
+service_info.info({"version": "2.0.0", "service": "encoding-service", "port": "8004"})
 
 # Business metrics
 documents_signed_total = Counter("documents_signed_total", "Total documents signed", ["status"])

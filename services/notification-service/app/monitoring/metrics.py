@@ -10,7 +10,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 # Service information
 service_info = Info("notification-service", "Notification Service information")
-service_info.info({"version": "1.0.0", "service": "notification-service", "port": "8008"})
+service_info.info({"version": "2.0.0", "service": "notification-service", "port": "8008"})
 
 # Business metrics
 notifications_sent_total = Counter("notifications_sent_total", "Total notifications sent", ["channel", "status"])

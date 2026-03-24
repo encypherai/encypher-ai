@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 
 
-app = FastAPI(title="Encypher User Service", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Encypher User Service", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -113,7 +113,7 @@ async def root():
     """Service identity and capabilities summary."""
     return {
         "service": settings.SERVICE_NAME,
-        "version": "1.0.0",
+        "version": "2.0.0",
         "status": "running",
         "capabilities": _CAPABILITIES,
     }

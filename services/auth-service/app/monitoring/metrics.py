@@ -10,7 +10,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 # Service information
 service_info = Info("auth_service", "Auth Service information")
-service_info.info({"version": "1.0.0", "service": "auth-service", "port": "8001"})
+service_info.info({"version": "2.0.0", "service": "auth-service", "port": "8001"})
 
 # Request metrics (automatically collected by instrumentator)
 # - http_requests_total
