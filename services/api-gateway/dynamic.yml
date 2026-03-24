@@ -17,7 +17,7 @@ http:
     # ===========================================
     # API ROUTING (path-based)
     # ===========================================
-    
+
     # Key Service - API key management
     api-keys:
       rule: "PathPrefix(`/api/v1/keys`)"
@@ -268,6 +268,11 @@ http:
           - "https://encypherai.com"
           - "https://www.encypherai.com"
           - "https://dashboard.encypherai.com"
+          - "https://staging.encypher.com"
+          - "https://dashboard-staging.encypher.com"
+          - "https://encypher.com"
+          - "https://www.encypher.com"
+          - "https://dashboard.encypher.com"
         accessControlAllowCredentials: true
         accessControlMaxAge: 100
         addVaryHeader: true
