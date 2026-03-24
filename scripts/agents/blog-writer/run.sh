@@ -28,10 +28,12 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+REPO_ROOT_ORIG="$REPO_ROOT"  # preserved for accessing research archives from worktree
 BLOG_DIR="apps/marketing-site/src/content/blog"
 RESEARCH_PROMPT_FILE="$REPO_ROOT/scripts/agents/blog-writer/RESEARCH_PROMPT.md"
 AGENT_PROMPT_FILE="$REPO_ROOT/scripts/agents/blog-writer/AGENT_PROMPT.md"
 REVIEW_PROMPT_FILE="$REPO_ROOT/scripts/agents/blog-writer/REVIEW_PROMPT.md"
+TRENDS_PROMPT_FILE="$REPO_ROOT/scripts/agents/blog-writer/TRENDS_PROMPT.md"
 BRANCH_PREFIX="blog/auto"
 TODAY="${TODAY:-$(date +%Y-%m-%d)}"
 BRANCH_NAME="$BRANCH_PREFIX-$TODAY"
@@ -76,29 +78,54 @@ CLEAN_GIT_URL=$(git remote get-url origin)
 if [ -n "${GH_TOKEN:-}" ] && [[ "$CLEAN_GIT_URL" != *"@"* ]]; then
   AUTH_GIT_URL="${CLEAN_GIT_URL/https:\/\//https://x-access-token:${GH_TOKEN}@}"
   git remote set-url origin "$AUTH_GIT_URL"
-  trap 'git remote set-url origin "$CLEAN_GIT_URL"' EXIT
 fi
 
+# Clean up stale local blog branches from previous runs
+git branch --list 'blog/auto-*' | xargs -r git branch -D 2>/dev/null || true
+# Prune worktrees left behind by crashed runs
+git worktree prune 2>/dev/null || true
+
+WORKTREE_DIR="$REPO_ROOT/.blog-worktree"
+
+cleanup_worktree() {
+  cd "$REPO_ROOT"
+  if [ -d "$WORKTREE_DIR" ]; then
+    git worktree remove "$WORKTREE_DIR" --force 2>/dev/null || rm -rf "$WORKTREE_DIR"
+    git worktree prune 2>/dev/null || true
+  fi
+  git branch -D "$BRANCH_NAME" 2>/dev/null || true
+  # Restore original remote URL if we changed it
+  if [ -n "${CLEAN_GIT_URL:-}" ]; then
+    git remote set-url origin "$CLEAN_GIT_URL" 2>/dev/null || true
+  fi
+}
+
 if [ "$TEST_MODE" = false ]; then
-  log "Checking out main and pulling latest..."
-  git checkout main
-  git pull origin main
+  log "Ensuring main is up to date..."
+  git -C "$REPO_ROOT" checkout main 2>/dev/null || true
+  git -C "$REPO_ROOT" pull origin main
 
   if git ls-remote --exit-code --heads origin "$BRANCH_NAME" &>/dev/null; then
     log "Branch $BRANCH_NAME already exists on remote. Skipping."
     exit 0
   fi
 
-  git checkout -b "$BRANCH_NAME"
-  log "Created branch: $BRANCH_NAME"
+  # Create an isolated worktree for the blog work
+  rm -rf "$WORKTREE_DIR"
+  git worktree add "$WORKTREE_DIR" -b "$BRANCH_NAME" main
+  trap cleanup_worktree EXIT
+  cd "$WORKTREE_DIR"
+  # Update REPO_ROOT to point to the worktree for all subsequent phases
+  REPO_ROOT="$WORKTREE_DIR"
+  log "Created worktree: $WORKTREE_DIR (branch: $BRANCH_NAME)"
 else
   log "Test mode: running on branch $(git rev-parse --abbrev-ref HEAD)"
 fi
 
 RESEARCH_NOTES="$REPO_ROOT/.blog-research-temp.md"
 RESEARCH_ARCHIVE_DIR="$REPO_ROOT/scripts/agents/blog-writer/research"
-cleanup() { rm -f "$RESEARCH_NOTES"; }
-trap cleanup EXIT
+# Research temp file cleanup is handled by cleanup_worktree (worktree removal
+# deletes it) or naturally in test mode. No separate trap needed.
 
 # =========================================================================
 # Phase 1 -- Sonnet research agent
@@ -140,6 +167,49 @@ cp "$RESEARCH_NOTES" "$RESEARCH_ARCHIVE"
 git add "$RESEARCH_ARCHIVE"
 git commit -m "research($TODAY): $TOPIC_SLUG" || true
 log "Research archived: $RESEARCH_ARCHIVE"
+
+# =========================================================================
+# Phase 1.5 -- Trend analysis (includes this week's research)
+# =========================================================================
+# Trends file lives in the original repo's research dir (persists across worktrees)
+TRENDS_FILE="$REPO_ROOT_ORIG/scripts/agents/blog-writer/research/trends.md"
+RESEARCH_ARCHIVE_FOR_TRENDS="$REPO_ROOT_ORIG/scripts/agents/blog-writer/research"
+
+# In worktree mode, this week's archive was written to $REPO_ROOT (the worktree).
+# Copy it to the original research dir so the trend agent can see all weeks together.
+if [ "$TEST_MODE" = false ] && [ "$REPO_ROOT" != "$REPO_ROOT_ORIG" ]; then
+  cp "$RESEARCH_ARCHIVE" "$RESEARCH_ARCHIVE_FOR_TRENDS/" 2>/dev/null || true
+fi
+
+ARCHIVE_COUNT=$(find "$RESEARCH_ARCHIVE_FOR_TRENDS" -maxdepth 1 -name '20*.md' 2>/dev/null | wc -l)
+if [ "$ARCHIVE_COUNT" -ge 2 ]; then
+  log "Phase 1.5: Updating trend tracker ($ARCHIVE_COUNT research weeks archived)..."
+
+  TRENDS_PROMPT="$(sed \
+    -e "s|CURRENT_DATE|$TODAY|g" \
+    -e "s|RESEARCH_ARCHIVE_DIR|$RESEARCH_ARCHIVE_FOR_TRENDS|g" \
+    -e "s|TRENDS_FILE|$TRENDS_FILE|g" \
+    "$TRENDS_PROMPT_FILE")"
+
+  claude -p "$TRENDS_PROMPT" \
+    --allowedTools "Read,Glob,Write,Bash(ls *)" \
+    --output-format json > /dev/null || {
+    log "WARNING: Trend analysis failed. Continuing without update."
+  }
+
+  if [ -f "$TRENDS_FILE" ]; then
+    # Copy into worktree for committing on the blog branch
+    if [ "$REPO_ROOT" != "$REPO_ROOT_ORIG" ]; then
+      mkdir -p "$REPO_ROOT/scripts/agents/blog-writer/research"
+      cp "$TRENDS_FILE" "$REPO_ROOT/scripts/agents/blog-writer/research/trends.md"
+    fi
+    git add scripts/agents/blog-writer/research/trends.md
+    git commit -m "research($TODAY): update industry trend tracker" || true
+    log "Trend tracker updated."
+  fi
+else
+  log "Phase 1.5: Skipping trend analysis (need 2+ archived weeks, have $ARCHIVE_COUNT)"
+fi
 
 # =========================================================================
 # Phase 2 -- Opus writer
@@ -486,9 +556,9 @@ EOF
 log "PR: $PR_URL"
 
 if [ "$APPROVED" = true ]; then
-  # Auto-merge once CI checks pass — no human touchpoint needed
-  gh pr merge "$PR_URL" --squash --auto
-  log "Auto-merge enabled: will squash-merge when checks pass."
+  # Auto-merge once CI checks pass, then delete remote branch
+  gh pr merge "$PR_URL" --squash --auto --delete-branch
+  log "Auto-merge enabled: will squash-merge when checks pass and delete remote branch."
 else
   # Signal the workflow notify step to email the reviewer
   if [ -n "${GITHUB_OUTPUT:-}" ]; then
@@ -496,4 +566,5 @@ else
   fi
 fi
 
-log "Done."
+# Worktree and local branch cleanup happens automatically via EXIT trap
+log "Done. Main worktree remains on main branch."
