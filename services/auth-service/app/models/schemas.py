@@ -359,6 +359,20 @@ class RoleUpdateResponse(BaseModel):
     data: dict = Field(default_factory=dict)
 
 
+class SetDefaultOrgRequest(BaseModel):
+    """Admin request to set a user's default organization."""
+
+    user_id: str = Field(..., description="User ID to update")
+    organization_id: str = Field(..., description="Organization ID to set as default")
+
+
+class SetDefaultOrgResponse(BaseModel):
+    """Response for setting default organization."""
+
+    success: bool = True
+    data: dict = Field(default_factory=dict)
+
+
 # ============================================
 # TEAM_191: Onboarding Checklist Schemas
 # ============================================

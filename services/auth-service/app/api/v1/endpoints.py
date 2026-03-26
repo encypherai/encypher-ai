@@ -59,7 +59,7 @@ from ...core.config import settings
 from ...core.security import create_typed_token, verify_token as verify_jwt_token, get_password_hash
 from ...core.auth import extract_bearer_token as _extract_bearer_token
 from ...core.responses import ok
-from ...db.models import Organization
+from ...db.models import Organization, OrganizationMember
 from ...deps.rate_limit import rate_limiter
 from ...db.models import User
 from pydantic import BaseModel, EmailStr
@@ -71,6 +71,13 @@ class SuperAdminPromoteRequest(BaseModel):
     """Request to promote a user to super admin"""
 
     email: EmailStr
+
+
+class SetDefaultOrganizationRequest(BaseModel):
+    """Request to set a user's default organization"""
+
+    user_id: str
+    organization_id: str
 
 
 class NewsletterSubscriberStatusUpdateRequest(BaseModel):
@@ -1688,6 +1695,94 @@ async def list_super_admins(
     )
 
 
+@router.post("/admin/users/set-default-organization", response_model=None)
+async def set_user_default_organization(
+    request: SetDefaultOrganizationRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Set a user's default organization.
+
+    Useful for fixing users stuck in the setup wizard after accepting an
+    invite that did not automatically assign a default organization.
+
+    **Super Admin only** - Requires existing super admin privileges.
+    """
+    import structlog
+
+    logger = structlog.get_logger(__name__)
+
+    token = _extract_bearer_token(authorization)
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    require_super_admin(db, admin_user_id)
+
+    # Validate user exists
+    target_user = db.query(User).filter(User.id == request.user_id).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    # Validate organization exists
+    org = db.query(Organization).filter(Organization.id == request.organization_id).first()
+    if not org:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Organization not found",
+        )
+
+    # Validate user is a member of the organization
+    membership = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.user_id == request.user_id,
+            OrganizationMember.organization_id == request.organization_id,
+            OrganizationMember.status == "active",
+        )
+        .first()
+    )
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is not an active member of this organization",
+        )
+
+    previous_org_id = target_user.default_organization_id
+    target_user.default_organization_id = request.organization_id
+    db.commit()
+
+    logger.info(
+        "set_default_organization",
+        admin_user_id=admin_user_id,
+        target_user_id=request.user_id,
+        target_email=target_user.email,
+        organization_id=request.organization_id,
+        organization_name=org.name,
+        previous_organization_id=previous_org_id,
+    )
+
+    return ok(
+        {
+            "user_id": request.user_id,
+            "email": target_user.email,
+            "organization_id": request.organization_id,
+            "organization_name": org.name,
+            "previous_organization_id": previous_org_id,
+            "message": "Default organization updated",
+        }
+    )
+
+
 # ============================================
 # TEAM_191: ONBOARDING CHECKLIST ENDPOINTS
 # ============================================
@@ -2024,5 +2119,42 @@ async def create_user_internal(
             "user_id": user.id,
             "access_token": access_token,
             "refresh_token": refresh_token,
+        }
+    )
+
+
+@router.post("/internal/users/set-default-org", include_in_schema=False)
+async def set_default_org_internal(
+    payload: SetDefaultOrganizationRequest,
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+    db: Session = Depends(get_db),
+):
+    """
+    Set a user's default organization (internal service-to-service call).
+
+    Used by the enterprise_api team invite flow to link a newly created
+    user to their invited organization so the setup wizard can complete.
+    """
+    if not settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Internal service token not configured")
+    if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+
+    user = db.query(User).filter(User.id == payload.user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    org = db.query(Organization).filter(Organization.id == payload.organization_id).first()
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    user.default_organization_id = payload.organization_id
+    db.commit()
+
+    return ok(
+        {
+            "user_id": payload.user_id,
+            "organization_id": payload.organization_id,
+            "message": "Default organization set",
         }
     )

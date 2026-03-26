@@ -729,6 +729,12 @@ async def accept_invite(
 
     await db.commit()
 
+    # Set default org in auth-service so setup wizard can complete (best-effort)
+    await auth_service_client.set_default_organization(
+        user_id=user_id,
+        organization_id=str(invite.organization_id),
+    )
+
     return {
         "success": True,
         "member_id": member_id,
@@ -879,6 +885,12 @@ async def accept_invite_new_user(
         {"id": invite.id, "now": now},
     )
     await db.commit()
+
+    # Set default org in auth-service so setup wizard can complete (best-effort)
+    await auth_service_client.set_default_organization(
+        user_id=user_id,
+        organization_id=str(invite.organization_id),
+    )
 
     return {
         "success": True,

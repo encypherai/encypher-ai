@@ -96,6 +96,37 @@ class AuthServiceClient:
 
         return dict(payload["data"])
 
+    async def set_default_organization(
+        self,
+        user_id: str,
+        organization_id: str,
+    ) -> None:
+        """Set a user's default organization via the auth-service internal endpoint.
+
+        Called after team invite acceptance so the setup wizard can complete.
+        Best-effort: logs a warning on failure rather than raising, since the
+        membership row is already committed and the admin can fix it manually.
+        """
+        token = (getattr(settings, "internal_service_token", None) or "").strip()
+        if not token:
+            logger.warning("set_default_organization skipped: internal_service_token_missing")
+            return
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/v1/auth/internal/users/set-default-org",
+                    headers=self._build_internal_headers(audience="auth_service.set_default_org"),
+                    json={"user_id": user_id, "organization_id": organization_id},
+                )
+            if response.status_code != 200:
+                logger.warning(
+                    "set_default_organization_failed status=%s body=%s",
+                    response.status_code,
+                    response.text,
+                )
+        except httpx.RequestError as exc:
+            logger.warning("set_default_organization_request_failed error=%s", str(exc))
+
     async def bulk_provision_publishers(
         self,
         publishers: List[Dict[str, Any]],

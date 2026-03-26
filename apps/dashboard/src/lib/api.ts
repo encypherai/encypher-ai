@@ -1427,6 +1427,21 @@ const apiClient = {
     return { success: true };
   },
 
+  /**
+   * Set a user's default organization (super admin only)
+   */
+  async setUserDefaultOrganization(accessToken: string, userId: string, organizationId: string): Promise<unknown> {
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      `${API_BASE_URL}/auth/admin/users/set-default-organization`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId, organization_id: organizationId }),
+      }
+    );
+    return response.data;
+  },
+
   // ============================================
   // C2PA Templates (TEAM_044)
   // ============================================

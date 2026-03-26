@@ -182,6 +182,19 @@ export default function AdminOrganizationsPage() {
     },
   });
 
+  const setDefaultOrgMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!accessToken || !selectedOrgId) throw new Error('Organization not selected.');
+      return apiClient.setUserDefaultOrganization(accessToken, userId, selectedOrgId);
+    },
+    onSuccess: () => {
+      toast.success('Default organization updated.');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to set default organization.');
+    },
+  });
+
   const organization = organizationQuery.data;
   const seatInfo = seatsQuery.data;
   const members = membersQuery.data ?? [];
@@ -370,7 +383,15 @@ export default function AdminOrganizationsPage() {
                             <td className="px-6 py-4">
                               <StatusBadge label={member.status} tone={member.status === 'active' ? 'success' : 'default'} />
                             </td>
-                            <td className="px-6 py-4 text-right">
+                            <td className="px-6 py-4 text-right space-x-3">
+                              <button
+                                type="button"
+                                onClick={() => setDefaultOrgMutation.mutate(member.user_id)}
+                                disabled={setDefaultOrgMutation.isPending}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                              >
+                                Set default org
+                              </button>
                               {member.role !== 'owner' && (
                                 <button
                                   type="button"

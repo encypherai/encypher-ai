@@ -154,9 +154,17 @@ async def test_accept_invite_new_user_creates_member(client: AsyncClient, pendin
         "refresh_token": "ref_token_xyz",
     }
 
-    with patch(
-        "app.routers.team.auth_service_client.create_user_internal",
-        new=AsyncMock(return_value=mock_result),
+    mock_set_default_org = AsyncMock()
+
+    with (
+        patch(
+            "app.routers.team.auth_service_client.create_user_internal",
+            new=AsyncMock(return_value=mock_result),
+        ),
+        patch(
+            "app.routers.team.auth_service_client.set_default_organization",
+            new=mock_set_default_org,
+        ),
     ):
         r = await client.post(
             f"/api/v1/org/invites/public/{pending_invite['token']}/accept-new",
@@ -170,6 +178,12 @@ async def test_accept_invite_new_user_creates_member(client: AsyncClient, pendin
     assert data["data"]["refresh_token"] == "ref_token_xyz"
     assert data["data"]["organization_id"] == _ORG_ID
     assert data["data"]["role"] == "member"
+
+    # Verify default org was set in auth-service
+    mock_set_default_org.assert_called_once_with(
+        user_id="usr_freshlyinvited",
+        organization_id=_ORG_ID,
+    )
 
 
 @pytest.mark.asyncio
