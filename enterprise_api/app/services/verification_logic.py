@@ -315,7 +315,8 @@ _RESOLVE_UUID_SQL = """
            embedding_metadata->>'manifest_mode' AS manifest_mode,
            embedding_metadata->'segment_location' AS segment_location,
            (embedding_metadata->>'total_segments')::int AS total_segments,
-           manifest_data
+           manifest_data,
+           leaf_hash
     FROM content_references
     WHERE embedding_metadata->>'log_id' = :log_id
        OR embedding_metadata->>'segment_uuid' = :legacy_uuid
@@ -481,17 +482,50 @@ async def _resolve_uuids_from_db(
                     e,
                 )
 
+        # --- Leaf hash verification (TEAM_272) ---
+        # When the DB row stores a per-sentence leaf_hash, verify that the
+        # submitted text actually matches.  This catches cases where the HMAC
+        # passes (UUID present) but the visible sentence content was altered.
+        leaf_hash_verified: Optional[bool] = None
+        stored_leaf_hash = getattr(row, "leaf_hash", None)
+        if stored_leaf_hash and hmac_verified and vs256_sigs:
+            try:
+                from app.utils.merkle.hashing import compute_leaf_hash
+
+                _start, _end, _sig_str = vs256_sigs[0]
+                clean_sentence = _extract_sentence_for_signature(payload_text, _start, _end)
+                if clean_sentence is not None:
+                    recomputed = compute_leaf_hash(clean_sentence)
+                    leaf_hash_verified = recomputed == stored_leaf_hash
+                    if not leaf_hash_verified:
+                        hmac_verified = False
+                        logger.info(
+                            "Leaf hash mismatch: org=%s, log_id=%s",
+                            row.organization_id,
+                            first_hex,
+                        )
+            except Exception as e:
+                logger.warning(
+                    "Leaf hash check failed for org %s: %s",
+                    row.organization_id,
+                    e,
+                )
+
+        manifest_dict: Dict[str, Any] = {
+            "manifest_mode": row.manifest_mode or "micro",
+            "log_id": first_hex,
+            "document_id": row.document_id,
+            "total_signatures": len(log_ids),
+            "total_segments": row.total_segments,
+            **({"manifest_data": manifest_data} if manifest_data else {}),
+        }
+        if leaf_hash_verified is not None:
+            manifest_dict["leaf_hash_verified"] = leaf_hash_verified
+
         return {
             "is_valid": hmac_verified,
             "signer_id": row.organization_id,
-            "manifest": {
-                "manifest_mode": row.manifest_mode or "micro",
-                "log_id": first_hex,
-                "document_id": row.document_id,
-                "total_signatures": len(log_ids),
-                "total_segments": row.total_segments,
-                **({"manifest_data": manifest_data} if manifest_data else {}),
-            },
+            "manifest": manifest_dict,
             "total_signatures": len(log_ids),
         }
     finally:

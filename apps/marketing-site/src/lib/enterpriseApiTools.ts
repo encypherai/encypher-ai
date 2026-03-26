@@ -131,6 +131,21 @@ function readManifestSignerLabel(manifest: Record<string, unknown> | undefined):
     return topLevel.trim();
   }
 
+  // C2PA claim_generator_info: array of {name, version} objects
+  const cgi = manifest.claim_generator_info;
+  if (Array.isArray(cgi) && cgi.length > 0) {
+    const entry = cgi[0] as Record<string, unknown>;
+    if (typeof entry?.name === "string" && entry.name.trim()) {
+      return entry.name.trim();
+    }
+  }
+
+  // C2PA claim_generator: string like "App/1.0 c2pa-rs/0.x"
+  const cg = manifest.claim_generator;
+  if (typeof cg === "string" && cg.trim()) {
+    return cg.split("/")[0].trim() || cg.trim();
+  }
+
   return undefined;
 }
 

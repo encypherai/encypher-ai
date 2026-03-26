@@ -15,13 +15,14 @@ from typing import Iterable, List, Optional, Tuple
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, padding
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PublicKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
-from cryptography.x509 import Certificate
+from cryptography.hazmat.primitives.serialization import Encoding
+from cryptography.x509 import Certificate, ocsp as x509_ocsp
 
 logger = logging.getLogger(__name__)
 
@@ -321,6 +322,129 @@ def _is_revoked_by_internal_denylist(cert: Certificate) -> bool:
 
     fingerprint_hex = cert.fingerprint(hashes.SHA256()).hex().lower()
     return fingerprint_hex in _revoked_fingerprints
+
+
+async def check_ocsp_status(
+    cert: Certificate,
+    issuer_cert: Certificate,
+) -> Tuple[str, Optional[str]]:
+    """Check certificate revocation status via OCSP.
+
+    Extracts the OCSP responder URL from the certificate's Authority Information
+    Access (AIA) extension, builds an OCSP request, sends it via HTTP POST, and
+    parses the response.
+
+    Args:
+        cert: The leaf certificate to check.
+        issuer_cert: The issuer certificate (required to build the OCSP request).
+
+    Returns:
+        A (status_code, explanation) tuple where status_code is one of:
+          - ``signingCredential.ocsp.notRevoked``
+          - ``signingCredential.ocsp.revoked``
+          - ``signingCredential.ocsp.inaccessible``
+          - ``signingCredential.ocsp.skipped``
+    """
+    import httpx
+
+    # Locate the OCSP responder URL from the AIA extension.
+    ocsp_url: Optional[str] = None
+    try:
+        aia = cert.extensions.get_extension_for_class(x509.AuthorityInformationAccess).value
+        for access_desc in aia:
+            if access_desc.access_method == x509.AuthorityInformationAccessOID.OCSP:
+                ocsp_url = access_desc.access_location.value
+                break
+    except x509.ExtensionNotFound:
+        return (
+            "signingCredential.ocsp.skipped",
+            "Certificate has no Authority Information Access extension",
+        )
+    except Exception as exc:
+        logger.debug("Failed to read AIA extension: %s", exc)
+        return (
+            "signingCredential.ocsp.skipped",
+            f"Could not read AIA extension: {exc}",
+        )
+
+    if not ocsp_url:
+        return (
+            "signingCredential.ocsp.skipped",
+            "No OCSP responder URL found in AIA extension",
+        )
+
+    # Build the OCSP request.
+    try:
+        builder = x509_ocsp.OCSPRequestBuilder()
+        builder = builder.add_certificate(cert, issuer_cert, hashes.SHA256())
+        ocsp_request = builder.build()
+        request_bytes = ocsp_request.public_bytes(Encoding.DER)
+    except Exception as exc:
+        logger.debug("Failed to build OCSP request: %s", exc)
+        return (
+            "signingCredential.ocsp.inaccessible",
+            f"Could not build OCSP request: {exc}",
+        )
+
+    # Send the request to the OCSP responder.
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                ocsp_url,
+                content=request_bytes,
+                headers={"Content-Type": "application/ocsp-request"},
+                timeout=10.0,
+            )
+            resp.raise_for_status()
+            response_bytes = resp.content
+    except httpx.TimeoutException as exc:
+        logger.debug("OCSP request timed out for %s: %s", ocsp_url, exc)
+        return (
+            "signingCredential.ocsp.inaccessible",
+            f"OCSP responder timed out: {ocsp_url}",
+        )
+    except Exception as exc:
+        logger.debug("OCSP request failed for %s: %s", ocsp_url, exc)
+        return (
+            "signingCredential.ocsp.inaccessible",
+            f"OCSP responder unreachable: {ocsp_url}",
+        )
+
+    # Parse and evaluate the OCSP response.
+    try:
+        ocsp_response = x509_ocsp.load_der_ocsp_response(response_bytes)
+    except Exception as exc:
+        logger.debug("Failed to parse OCSP response: %s", exc)
+        return (
+            "signingCredential.ocsp.inaccessible",
+            f"Could not parse OCSP response: {exc}",
+        )
+
+    if ocsp_response.response_status != x509_ocsp.OCSPResponseStatus.SUCCESSFUL:
+        return (
+            "signingCredential.ocsp.inaccessible",
+            f"OCSP responder returned non-successful status: {ocsp_response.response_status.name}",
+        )
+
+    cert_status = ocsp_response.certificate_status
+    if cert_status == x509_ocsp.OCSPCertStatus.GOOD:
+        return ("signingCredential.ocsp.notRevoked", None)
+
+    if cert_status == x509_ocsp.OCSPCertStatus.REVOKED:
+        revocation_time = ocsp_response.revocation_time
+        revocation_reason = ocsp_response.revocation_reason
+        explanation = "Certificate revoked"
+        if revocation_time:
+            explanation += f" at {revocation_time.isoformat()}"
+        if revocation_reason:
+            explanation += f" (reason: {revocation_reason.name})"
+        return ("signingCredential.ocsp.revoked", explanation)
+
+    # OCSPCertStatus.UNKNOWN
+    return (
+        "signingCredential.ocsp.inaccessible",
+        "OCSP responder returned unknown status for certificate",
+    )
 
 
 def validate_certificate_chain(

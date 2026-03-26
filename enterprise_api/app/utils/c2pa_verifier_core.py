@@ -7,10 +7,24 @@ supported by c2pa-python.
 import io
 import json
 import logging
-from dataclasses import dataclass
-from typing import Callable, Optional
+from dataclasses import dataclass, field
+from typing import Callable, List, Optional
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ValidationStatus:
+    """A single C2PA spec validation status entry.
+
+    Mirrors the ValidationStatus object defined in the C2PA specification.
+    See: https://c2pa.org/specifications/specifications/2.1/specs/C2PA_Specification.html#_validation_status_codes
+    """
+
+    code: str
+    success: Optional[bool] = None
+    url: Optional[str] = None
+    explanation: Optional[str] = None
 
 
 @dataclass
@@ -25,6 +39,53 @@ class C2paVerificationResult:
     signed_at: Optional[str] = None
     manifest_data: Optional[dict] = None
     error: Optional[str] = None
+    validation_status: List[ValidationStatus] = field(default_factory=list)
+
+
+def _extract_validation_statuses(manifest_data: dict) -> List[ValidationStatus]:
+    """Extract structured ValidationStatus entries from c2pa-python Reader JSON output.
+
+    The Reader JSON contains a top-level ``validation_results`` key with the shape::
+
+        {
+          "activeManifest": {
+            "success": [{"code": "...", "url": "..."}, ...],
+            "failure": [{"code": "...", "url": "...", "explanation": "..."}, ...]
+          }
+        }
+
+    Each entry is mapped to a ValidationStatus with ``success=True`` for entries in
+    the success list and ``success=False`` for entries in the failure list.
+    """
+    statuses: List[ValidationStatus] = []
+    validation_results = manifest_data.get("validation_results", {})
+    active = validation_results.get("activeManifest", {})
+
+    for entry in active.get("success", []):
+        if not isinstance(entry, dict):
+            continue
+        statuses.append(
+            ValidationStatus(
+                code=str(entry.get("code", "")),
+                success=True,
+                url=entry.get("url") or None,
+                explanation=entry.get("explanation") or None,
+            )
+        )
+
+    for entry in active.get("failure", []):
+        if not isinstance(entry, dict):
+            continue
+        statuses.append(
+            ValidationStatus(
+                code=str(entry.get("code", "")),
+                success=False,
+                url=entry.get("url") or None,
+                explanation=entry.get("explanation") or None,
+            )
+        )
+
+    return statuses
 
 
 def verify_c2pa(
@@ -74,6 +135,8 @@ def verify_c2pa(
 
         reader.close()
 
+        validation_statuses = _extract_validation_statuses(manifest_data)
+
         return C2paVerificationResult(
             valid=True,
             c2pa_manifest_valid=True,
@@ -82,6 +145,7 @@ def verify_c2pa(
             signer=claim_generator,
             signed_at=signed_at,
             manifest_data=manifest_data,
+            validation_status=validation_statuses,
         )
 
     except ImportError:

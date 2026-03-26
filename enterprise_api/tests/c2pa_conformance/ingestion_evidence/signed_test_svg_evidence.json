@@ -1,0 +1,18 @@
+{
+  "filename": "signed_test.svg",
+  "mime_type": "image/svg+xml",
+  "verification_method": "c2pa_reader",
+  "valid": true,
+  "manifest_summary": {
+    "manifest_found": true,
+    "active_manifest": "urn:c2pa:916f83ea-115c-43de-a91d-6f7349b2b03b",
+    "instance_id": "xmp:iid:c05ccf2f-534b-42d1-9ddc-95634311723e",
+    "claim_generator": "",
+    "assertion_count": 2,
+    "signed_at": "2026-03-26T13:16:20Z",
+    "validation_success_count": 7,
+    "validation_failure_count": 0,
+    "informational_status_count": 1
+  },
+  "error": null
+}

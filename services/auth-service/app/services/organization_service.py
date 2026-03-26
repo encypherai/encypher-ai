@@ -1006,6 +1006,10 @@ class OrganizationService:
         invitation.status = "accepted"
         invitation.accepted_at = datetime.utcnow()
 
+        # Ensure user has a default org so the setup wizard can complete
+        if not user.default_organization_id:
+            user.default_organization_id = invitation.organization_id
+
         self._seed_enterprise_invite_onboarding(invitation, user)
 
         if invitation.tier:
@@ -1095,6 +1099,10 @@ class OrganizationService:
         # Update invitation status
         invitation.status = "accepted"
         invitation.accepted_at = datetime.utcnow()
+
+        # Ensure user has a default org so the setup wizard can complete
+        if not user.default_organization_id:
+            user.default_organization_id = invitation.organization_id
 
         self._seed_enterprise_invite_onboarding(invitation, user)
 

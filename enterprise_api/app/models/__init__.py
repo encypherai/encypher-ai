@@ -13,6 +13,7 @@ from app.models.ghost_integration import GhostIntegration
 from app.models.merkle import AttributionReport, MerkleProofCache, MerkleRoot, MerkleSubhash
 from app.models.organization import Organization
 from app.models.public_key import PublicKey
+from app.models.signed_video import SignedVideo
 from app.models.status_list import RevocationReason, StatusListEntry, StatusListMetadata
 from app.models.usage_record import UsageRecord
 from app.models.webhook import Webhook, WebhookDelivery, WebhookEvent
@@ -40,5 +41,6 @@ __all__ = [
     "WebhookDelivery",
     "WebhookEvent",
     "GhostIntegration",
+    "SignedVideo",
     "UsageRecord",
 ]

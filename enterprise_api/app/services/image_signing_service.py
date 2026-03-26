@@ -9,7 +9,7 @@ import logging
 import uuid
 from dataclasses import dataclass
 from io import BytesIO
-from typing import List
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ async def sign_image(
     signer_cert_chain_pem: str,
     action: str = "c2pa.created",
     image_quality: int = 95,
+    digital_source_type: Optional[str] = None,
 ) -> SignedImageResult:
     """
     Sign an image with a C2PA manifest (JUMBF embedding).
@@ -79,6 +80,7 @@ async def sign_image(
         Exception: If C2PA signing fails.
     """
     from app.config import settings
+    from app.utils.image_format_registry import canonicalize_mime_type
     from app.utils.image_utils import (
         compute_sha256,
         strip_exif,
@@ -87,6 +89,14 @@ async def sign_image(
 
     # Step 1: Validate
     validate_image(image_data, mime_type)
+
+    # JXL uses a custom ISOBMFF embedder (not c2pa-rs). Route to document signing.
+    if mime_type.lower().strip() == "image/jxl":
+        raise ValueError(
+            "image/jxl must be signed via the document signing pipeline "
+            "(sign_document with mime_type='image/jxl'), not the image signing service. "
+            "The custom ISOBMFF embedder handles JXL container files."
+        )
 
     # Step 2: Strip EXIF (must happen before signing)
     clean_bytes = strip_exif(image_data, mime_type=mime_type, quality=image_quality)
@@ -140,6 +150,7 @@ async def sign_image(
         action=action,
         custom_assertions=custom_assertions,
         rights_data=rights_data,
+        digital_source_type=digital_source_type,
     )
     c2pa_instance_id = manifest_dict["instance_id"]
 
@@ -148,13 +159,16 @@ async def sign_image(
 
     try:
         # Step 6: Build and sign
+        # Use canonical MIME type for c2pa-python (e.g. heic-sequence -> heic).
+        # The original mime_type is preserved in the returned SignedImageResult.
+        c2pa_mime = canonicalize_mime_type(mime_type)
         builder = c2pa.Builder(manifest_dict)
         dest = BytesIO()
         manifest_bytes = builder.sign(
-            signer=signer,
-            format=mime_type,
-            source=BytesIO(clean_bytes),
-            dest=dest,
+            signer,
+            c2pa_mime,
+            BytesIO(clean_bytes),
+            dest,
         )
         dest.seek(0)
         signed_bytes = dest.read()

@@ -1,0 +1,18 @@
+{
+  "filename": "PXL_20250708_195016574.50MP.jpg",
+  "source": "Pixel Camera Prod",
+  "mime_type": "image/jpeg",
+  "has_manifest": true,
+  "valid": true,
+  "manifest_summary": {
+    "claim_generator": "",
+    "signer": null,
+    "validation_status": "valid (with 2 informational notice(s))",
+    "assertion_count": 1,
+    "active_manifest_label": "urn:c2pa:f406aefa-db74-7ab3-7dc5-47f01576780c",
+    "success_checks": 6,
+    "failure_count": 0,
+    "informational_failures": 2
+  },
+  "error": null
+}

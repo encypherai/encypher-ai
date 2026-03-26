@@ -145,6 +145,14 @@ class Settings(BaseSettings):
     c2pa_trust_list_sha256: Optional[str] = None
     c2pa_trust_list_refresh_hours: int = 24
 
+    # C2PA TSA endpoint for RFC 3161 timestamps (required for conformance).
+    # SSL.com provides a free TSA at http://ts.ssl.com -- use it when certs
+    # are issued by SSL.com. Other common TSAs: http://timestamp.digicert.com
+    # SSL.com C2PA-specific TSA endpoints:
+    #   ECC: https://api.c2patool.io/api/v1/timestamps/ecc
+    #   RSA: https://api.c2patool.io/api/v1/timestamps/rsa
+    c2pa_tsa_url: Optional[str] = "http://ts.ssl.com"
+
     # C2PA TSA trust list pinning/refresh
     c2pa_tsa_trust_list_url: Optional[str] = None
     c2pa_tsa_trust_list_sha256: Optional[str] = None

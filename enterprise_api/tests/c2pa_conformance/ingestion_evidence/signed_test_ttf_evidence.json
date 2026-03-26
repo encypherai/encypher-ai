@@ -1,0 +1,23 @@
+{
+  "filename": "signed_test.ttf",
+  "mime_type": "font/ttf",
+  "verification_method": "jumbf_structural",
+  "valid": true,
+  "manifest_summary": {
+    "manifest_found": true,
+    "manifest_count": 1,
+    "active_manifest_label": "urn:c2pa:0103ddb6-8242-4715-885f-ae5aba44e321",
+    "instance_id": "urn:uuid:63bfd620-85f7-4aa6-a40b-1d7f42a51f76",
+    "claim_generator": "Encypher Enterprise API/2.0",
+    "assertion_labels": [
+      "c2pa.actions.v2",
+      "c2pa.hash.data",
+      "com.encypher.provenance"
+    ],
+    "assertion_count": 3,
+    "claim_cbor_bytes": 621,
+    "cose_signature_bytes": 27255,
+    "signature_present": true
+  },
+  "error": null
+}

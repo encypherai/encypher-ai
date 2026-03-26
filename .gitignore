@@ -25,6 +25,7 @@ __pycache__/
 # Keys/Secrets
 *.crt
 *.key
+**/private_key.pem
 
 # Distribution / packaging
 .Python
@@ -206,6 +207,9 @@ datasets/
 outputs/
 tools/.cache/
 *.bz2
+
+# C2PA conformance test artifacts (large sample library from third parties)
+enterprise_api/tests/c2pa_conformance/c2pa_sample_library/
 
 # Benchmark and test artifacts
 *.bench.example

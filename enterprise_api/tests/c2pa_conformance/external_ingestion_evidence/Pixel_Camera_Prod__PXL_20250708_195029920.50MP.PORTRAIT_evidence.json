@@ -1,0 +1,18 @@
+{
+  "filename": "PXL_20250708_195029920.50MP.PORTRAIT.jpg",
+  "source": "Pixel Camera Prod",
+  "mime_type": "image/jpeg",
+  "has_manifest": true,
+  "valid": true,
+  "manifest_summary": {
+    "claim_generator": "",
+    "signer": null,
+    "validation_status": "valid (with 2 informational notice(s))",
+    "assertion_count": 1,
+    "active_manifest_label": "urn:c2pa:570dbb65-379e-a02e-3027-4a57a19f3722",
+    "success_checks": 6,
+    "failure_count": 0,
+    "informational_failures": 2
+  },
+  "error": null
+}

@@ -1,0 +1,18 @@
+{
+  "filename": "PXL_20250708_194756993.PANO.jpg",
+  "source": "Pixel Camera Prod",
+  "mime_type": "image/jpeg",
+  "has_manifest": true,
+  "valid": true,
+  "manifest_summary": {
+    "claim_generator": "",
+    "signer": null,
+    "validation_status": "valid (with 2 informational notice(s))",
+    "assertion_count": 1,
+    "active_manifest_label": "urn:c2pa:00b8a4b2-67ac-cf26-5e63-442958001009",
+    "success_checks": 6,
+    "failure_count": 0,
+    "informational_failures": 2
+  },
+  "error": null
+}

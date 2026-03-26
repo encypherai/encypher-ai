@@ -2,24 +2,37 @@
 
 Used by both image and audio signing pipelines. Supports Ed25519, EC
 (P-256/P-384/P-521), and RSA (PS256) private keys.
+
+TSA URL is read from config by default (settings.c2pa_tsa_url).
 """
 
-from typing import Any
+import logging
+from typing import Any, Optional
+
+_SENTINEL = object()
+_log = logging.getLogger(__name__)
+
+
+def _get_tsa_url() -> Optional[str]:
+    """Read TSA URL from application config."""
+    from app.config import settings
+
+    return settings.c2pa_tsa_url or None
 
 
 def create_signer_from_pem(
     private_key_pem: str,
     cert_chain_pem: str,
+    *,
+    tsa_url: Any = _SENTINEL,
 ) -> Any:
     """Create a c2pa.Signer from PEM-encoded private key and certificate chain.
-
-    Uses C2paSignerInfo with NULL ta_url (no timestamp authority).
-    The private key must be PKCS8-encoded EC/RSA/Ed25519.
-    The cert_chain_pem should be EE cert + intermediate(s) + root CA.
 
     Args:
         private_key_pem: PKCS8 PEM-encoded private key string.
         cert_chain_pem: PEM-encoded certificate chain (EE first).
+        tsa_url: RFC 3161 TSA endpoint. Defaults to config value.
+            Pass ``None`` explicitly to disable timestamping.
 
     Returns:
         c2pa.Signer instance. Caller must call .close() when done.
@@ -70,9 +83,15 @@ def create_signer_from_pem(
     else:
         raise ValueError(f"Unsupported private key type: {type(key_obj).__name__}")
 
+    if tsa_url is _SENTINEL:
+        tsa_url = _get_tsa_url()
+
+    if tsa_url is None:
+        _log.warning("No TSA URL configured -- C2PA manifests will lack RFC 3161 timestamps")
+
     return c2pa.Signer.from_callback(
         callback=sign_callback,
         alg=alg,
         certs=cert_chain_pem,
-        tsa_url=None,
+        tsa_url=tsa_url,
     )

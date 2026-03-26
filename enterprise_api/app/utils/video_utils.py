@@ -5,7 +5,11 @@ and MIME type mapping for supported video formats.
 """
 
 import logging
+import os
 import struct
+import subprocess
+import tempfile
+from io import BytesIO
 from typing import Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -129,3 +133,69 @@ def validate_video(
         )
 
     return canonical, size
+
+
+def compute_video_phash(data: bytes) -> int:
+    """Compute a perceptual hash for a video file.
+
+    Extracts the first video frame via ffmpeg, then computes an 8x8
+    average perceptual hash (64-bit) using imagehash. Returns a signed
+    int64 for PostgreSQL BIGINT compatibility.
+
+    Returns 0 on any failure (matches image_utils.compute_phash behavior).
+    """
+    if not data:
+        return 0
+
+    input_path = ""
+    frame_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp_in:
+            tmp_in.write(data)
+            input_path = tmp_in.name
+
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp_out:
+            frame_path = tmp_out.name
+
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                input_path,
+                "-frames:v",
+                "1",
+                "-f",
+                "image2",
+                "-vcodec",
+                "mjpeg",
+                frame_path,
+            ],
+            capture_output=True,
+            timeout=30,
+        )
+
+        if not os.path.exists(frame_path) or os.path.getsize(frame_path) == 0:
+            return 0
+
+        import imagehash
+        from PIL import Image
+
+        with Image.open(frame_path) as img:
+            h = imagehash.average_hash(img, hash_size=8)
+
+        unsigned = int(str(h), 16)
+        if unsigned >= (1 << 63):
+            return unsigned - (1 << 64)
+        return unsigned
+
+    except Exception:
+        logger.debug("compute_video_phash failed, returning 0", exc_info=True)
+        return 0
+    finally:
+        for path in (input_path, frame_path):
+            if path:
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass

@@ -1,0 +1,18 @@
+{
+  "filename": "PXL_20250814_055729041.AddMe-01.jpg",
+  "source": "Pixel Camera Prod L2-MAH-Images",
+  "mime_type": "image/jpeg",
+  "has_manifest": true,
+  "valid": true,
+  "manifest_summary": {
+    "claim_generator": "",
+    "signer": null,
+    "validation_status": "valid (with 2 informational notice(s))",
+    "assertion_count": 1,
+    "active_manifest_label": "urn:c2pa:a5b89cc0-6b75-b7a8-cba5-40efb44fc4e7",
+    "success_checks": 6,
+    "failure_count": 0,
+    "informational_failures": 2
+  },
+  "error": null
+}

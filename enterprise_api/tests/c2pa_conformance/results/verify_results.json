@@ -1,0 +1,1435 @@
+{
+  "timestamp": "2026-03-26T13:16:24Z",
+  "total_formats": 31,
+  "sign_success": 30,
+  "verify_success": 30,
+  "results": [
+    {
+      "name": "JPEG",
+      "extension": ".jpg",
+      "mime_type": "image/jpeg",
+      "category": "image",
+      "fixture_size": 1306,
+      "signed_size": 45482,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:4969e35a-11ea-4485-9c68-5528a1790b7a",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.jpg"
+    },
+    {
+      "name": "PNG",
+      "extension": ".png",
+      "mime_type": "image/png",
+      "category": "image",
+      "fixture_size": 594,
+      "signed_size": 21827,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:46ee83ee-954b-4966-ba33-c784d3e96ece",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.png"
+    },
+    {
+      "name": "WebP",
+      "extension": ".webp",
+      "mime_type": "image/webp",
+      "category": "image",
+      "fixture_size": 164,
+      "signed_size": 15706,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:3c96dd0d-0522-4c35-a721-3d5492aaa1ba",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.webp"
+    },
+    {
+      "name": "TIFF",
+      "extension": ".tiff",
+      "mime_type": "image/tiff",
+      "category": "image",
+      "fixture_size": 120140,
+      "signed_size": 164349,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:e97d7c30-c04a-4fd6-9dc3-2611e4697723",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.tiff"
+    },
+    {
+      "name": "AVIF",
+      "extension": ".avif",
+      "mime_type": "image/avif",
+      "category": "image",
+      "fixture_size": 326,
+      "signed_size": 15331,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:cc64b2a8-c3b0-4470-8246-fd253d9d64f2",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.bmffHash.match",
+          "success": true,
+          "explanation": "BMFF hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.avif"
+    },
+    {
+      "name": "HEIC",
+      "extension": ".heic",
+      "mime_type": "image/heic",
+      "category": "image",
+      "fixture_size": 459,
+      "signed_size": 15464,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:cd07c038-643e-413f-9654-4c25a6ce627d",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.bmffHash.match",
+          "success": true,
+          "explanation": "BMFF hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.heic"
+    },
+    {
+      "name": "HEIF",
+      "extension": ".heif",
+      "mime_type": "image/heif",
+      "category": "image",
+      "fixture_size": 459,
+      "signed_size": 15464,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:db8e038e-fa98-4255-b493-34ae8638f689",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.bmffHash.match",
+          "success": true,
+          "explanation": "BMFF hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.heif"
+    },
+    {
+      "name": "SVG",
+      "extension": ".svg",
+      "mime_type": "image/svg+xml",
+      "category": "image",
+      "fixture_size": 355,
+      "signed_size": 19997,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:14f7139a-8d3d-4614-a6bb-44aae0f8426c",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.svg"
+    },
+    {
+      "name": "DNG",
+      "extension": ".dng",
+      "mime_type": "image/x-adobe-dng",
+      "category": "image",
+      "fixture_size": 4230,
+      "signed_size": 18931,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:b660f18b-6155-4672-ab6d-5af03146e8b5",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.dng"
+    },
+    {
+      "name": "GIF",
+      "extension": ".gif",
+      "mime_type": "image/gif",
+      "category": "image",
+      "fixture_size": 365,
+      "signed_size": 17102,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:91fdaf8a-64b3-4580-bfdb-e914b260987c",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.gif"
+    },
+    {
+      "name": "JXL",
+      "extension": ".jxl",
+      "mime_type": "image/jxl",
+      "category": "image",
+      "fixture_size": 32,
+      "signed_size": 65576,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "",
+      "manifest_label": "urn:c2pa:2d96bac3-32e1-4853-8ee6-3b9ec2a663aa",
+      "validation_codes": [
+        {
+          "code": "structural.jumbfPresent",
+          "success": true
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.jxl"
+    },
+    {
+      "name": "HEIC-sequence",
+      "extension": ".heic",
+      "mime_type": "image/heic-sequence",
+      "category": "image",
+      "fixture_size": 459,
+      "signed_size": 15483,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:60980f63-cb0e-4891-be8a-ebcd9d20f805",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.bmffHash.match",
+          "success": true,
+          "explanation": "BMFF hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test_heic-sequence.heic"
+    },
+    {
+      "name": "HEIF-sequence",
+      "extension": ".heif",
+      "mime_type": "image/heif-sequence",
+      "category": "image",
+      "fixture_size": 459,
+      "signed_size": 15483,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:b8a1a4fa-2b4a-49da-a021-661f4b8630b6",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.bmffHash.match",
+          "success": true,
+          "explanation": "BMFF hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test_heif-sequence.heif"
+    },
+    {
+      "name": "MP4",
+      "extension": ".mp4",
+      "mime_type": "video/mp4",
+      "category": "video",
+      "fixture_size": 8448,
+      "signed_size": 23451,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:b554f682-1637-4cfc-9303-984d128380da",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.bmffHash.match",
+          "success": true,
+          "explanation": "BMFF hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.mp4"
+    },
+    {
+      "name": "MOV",
+      "extension": ".mov",
+      "mime_type": "video/quicktime",
+      "category": "video",
+      "fixture_size": 2161,
+      "signed_size": 17164,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:dc9fe3f7-c19f-4f92-afa4-0def5a1c5971",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.bmffHash.match",
+          "success": true,
+          "explanation": "BMFF hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.mov"
+    },
+    {
+      "name": "AVI",
+      "extension": ".avi",
+      "mime_type": "video/x-msvideo",
+      "category": "video",
+      "fixture_size": 7436,
+      "signed_size": 22108,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:78b8e2c1-bf50-4855-b02e-eb2f421c9228",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.avi"
+    },
+    {
+      "name": "M4V",
+      "extension": ".m4v",
+      "mime_type": "video/x-m4v",
+      "category": "video",
+      "fixture_size": 2215,
+      "signed_size": 17218,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:bfb4b91a-f5e4-4e24-b397-757835fe58a6",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.bmffHash.match",
+          "success": true,
+          "explanation": "BMFF hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.m4v"
+    },
+    {
+      "name": "WAV",
+      "extension": ".wav",
+      "mime_type": "audio/wav",
+      "category": "audio",
+      "fixture_size": 88244,
+      "signed_size": 102918,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:99338516-019c-4aed-86b0-7f1194d31466",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.wav"
+    },
+    {
+      "name": "MP3",
+      "extension": ".mp3",
+      "mime_type": "audio/mpeg",
+      "category": "audio",
+      "fixture_size": 5977,
+      "signed_size": 20681,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:7ed483d3-de45-428c-bcfa-3bd7cf39c934",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.mp3"
+    },
+    {
+      "name": "M4A",
+      "extension": ".m4a",
+      "mime_type": "audio/mp4",
+      "category": "audio",
+      "fixture_size": 16161,
+      "signed_size": 31164,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:54250b9e-6c37-4373-93a7-0e2ab2e51f25",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.bmffHash.match",
+          "success": true,
+          "explanation": "BMFF hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.m4a"
+    },
+    {
+      "name": "FLAC",
+      "extension": ".flac",
+      "mime_type": "audio/flac",
+      "category": "audio",
+      "fixture_size": 42,
+      "signed_size": 65586,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "",
+      "manifest_label": "urn:c2pa:94e30b37-3c51-4b91-81a8-b3ee11de0c4d",
+      "validation_codes": [
+        {
+          "code": "structural.jumbfPresent",
+          "success": true
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.flac"
+    },
+    {
+      "name": "MPA",
+      "extension": ".mp3",
+      "mime_type": "audio/MPA",
+      "category": "audio",
+      "fixture_size": 5977,
+      "signed_size": 20681,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:1e52d6cb-20dc-4238-a353-00e791cbd3ea",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.dataHash.match",
+          "success": true,
+          "explanation": "data hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test_mpa.mp3"
+    },
+    {
+      "name": "AAC",
+      "extension": ".m4a",
+      "mime_type": "audio/aac",
+      "category": "audio",
+      "fixture_size": 16161,
+      "signed_size": 31164,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "urn:uuid:67e02e0a-0bfb-48f2-9111-9be247e6d14f",
+      "manifest_label": null,
+      "validation_codes": [
+        {
+          "code": "timeStamp.validated",
+          "success": true,
+          "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
+        },
+        {
+          "code": "claimSignature.insideValidity",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "claimSignature.validated",
+          "success": true,
+          "explanation": "claim signature valid"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.bmffHash.match",
+          "success": true,
+          "explanation": "BMFF hash valid"
+        },
+        {
+          "code": "signingCredential.untrusted",
+          "success": false,
+          "explanation": "signing certificate untrusted"
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test_aac.m4a"
+    },
+    {
+      "name": "PDF",
+      "extension": ".pdf",
+      "mime_type": "application/pdf",
+      "category": "document",
+      "fixture_size": 593,
+      "signed_size": 66639,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "",
+      "manifest_label": "urn:c2pa:c7735fac-6d98-45a7-bc98-6d9f3e67825a",
+      "validation_codes": [
+        {
+          "code": "structural.jumbfPresent",
+          "success": true
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.pdf"
+    },
+    {
+      "name": "EPUB",
+      "extension": ".epub",
+      "mime_type": "application/epub+zip",
+      "category": "document",
+      "fixture_size": 932,
+      "signed_size": 66608,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "",
+      "manifest_label": "urn:c2pa:b1d2d7e8-77ed-43ba-a617-984e2aaf4f56",
+      "validation_codes": [
+        {
+          "code": "structural.jumbfPresent",
+          "success": true
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.epub"
+    },
+    {
+      "name": "DOCX",
+      "extension": ".docx",
+      "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "category": "document",
+      "fixture_size": 1064,
+      "signed_size": 66740,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "",
+      "manifest_label": "urn:c2pa:907803f6-8f4b-42c2-8562-b4f8dd3f20b9",
+      "validation_codes": [
+        {
+          "code": "structural.jumbfPresent",
+          "success": true
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.docx"
+    },
+    {
+      "name": "ODT",
+      "extension": ".odt",
+      "mime_type": "application/vnd.oasis.opendocument.text",
+      "category": "document",
+      "fixture_size": 901,
+      "signed_size": 66577,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "",
+      "manifest_label": "urn:c2pa:50912451-5f4d-410e-9fb3-9f7ec95576e5",
+      "validation_codes": [
+        {
+          "code": "structural.jumbfPresent",
+          "success": true
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.odt"
+    },
+    {
+      "name": "OXPS",
+      "extension": ".oxps",
+      "mime_type": "application/oxps",
+      "category": "document",
+      "fixture_size": 998,
+      "signed_size": 66674,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "",
+      "manifest_label": "urn:c2pa:677975bf-87e6-49bf-8211-fc953b416425",
+      "validation_codes": [
+        {
+          "code": "structural.jumbfPresent",
+          "success": true
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.oxps"
+    },
+    {
+      "name": "OTF",
+      "extension": ".otf",
+      "mime_type": "font/otf",
+      "category": "font",
+      "fixture_size": 60,
+      "signed_size": 65612,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "",
+      "manifest_label": "urn:c2pa:56e90d0c-9ba9-4b63-a3cc-1228d34885ab",
+      "validation_codes": [
+        {
+          "code": "structural.jumbfPresent",
+          "success": true
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.otf"
+    },
+    {
+      "name": "TTF",
+      "extension": ".ttf",
+      "mime_type": "font/ttf",
+      "category": "font",
+      "fixture_size": 60,
+      "signed_size": 65612,
+      "sign_success": true,
+      "sign_error": null,
+      "verify_success": true,
+      "verify_error": null,
+      "instance_id": "",
+      "manifest_label": "urn:c2pa:0103ddb6-8242-4715-885f-ae5aba44e321",
+      "validation_codes": [
+        {
+          "code": "structural.jumbfPresent",
+          "success": true
+        }
+      ],
+      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.ttf"
+    },
+    {
+      "name": "SFNT",
+      "extension": ".sfnt",
+      "mime_type": "font/sfnt",
+      "category": "font",
+      "fixture_size": 0,
+      "signed_size": 0,
+      "sign_success": false,
+      "sign_error": "No generator for SFNT",
+      "verify_success": false,
+      "verify_error": null,
+      "instance_id": null,
+      "manifest_label": null,
+      "validation_codes": [],
+      "signed_file": null
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "filename": "PXL_20250814_054957360.50MP-Night.jpg",
+  "source": "Pixel Camera Prod L2-MAH-Images",
+  "mime_type": "image/jpeg",
+  "has_manifest": true,
+  "valid": true,
+  "manifest_summary": {
+    "claim_generator": "",
+    "signer": null,
+    "validation_status": "valid (with 2 informational notice(s))",
+    "assertion_count": 4,
+    "active_manifest_label": "urn:c2pa:3f75aea9-f6d7-cd06-4198-4c6a820d43f7",
+    "success_checks": 9,
+    "failure_count": 0,
+    "informational_failures": 2
+  },
+  "error": null
+}

@@ -1,0 +1,23 @@
+{
+  "filename": "signed_test.flac",
+  "mime_type": "audio/flac",
+  "verification_method": "jumbf_structural",
+  "valid": true,
+  "manifest_summary": {
+    "manifest_found": true,
+    "manifest_count": 1,
+    "active_manifest_label": "urn:c2pa:94e30b37-3c51-4b91-81a8-b3ee11de0c4d",
+    "instance_id": "urn:uuid:0a69857f-00fc-4892-9224-4c6436c2ee79",
+    "claim_generator": "Encypher Enterprise API/2.0",
+    "assertion_labels": [
+      "c2pa.actions.v2",
+      "c2pa.hash.data",
+      "com.encypher.provenance"
+    ],
+    "assertion_count": 3,
+    "claim_cbor_bytes": 624,
+    "cose_signature_bytes": 27255,
+    "signature_present": true
+  },
+  "error": null
+}

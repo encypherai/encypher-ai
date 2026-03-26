@@ -1,0 +1,23 @@
+c2patool 0.9.12 Verification of Encypher-Signed Files
+======================================================
+
+--- signed_test.jpg ---
+Error: claim could not be converted from CBOR
+
+--- signed_test.mp4 ---
+Error: claim could not be converted from CBOR
+
+--- signed_test.png ---
+Error: claim could not be converted from CBOR
+
+--- signed_test.wav ---
+Error: claim could not be converted from CBOR
+
+Note: CBOR indefinite-length encoding incompatibility is expected.
+c2patool 0.9.12 uses serde_cbor 0.11.2 which rejects indefinite-length CBOR.
+Encypher uses c2pa-python 0.29.0 (c2pa-rs 0.78.4/ciborium) which produces
+indefinite-length CBOR encodings (0xbf maps, 0x9f arrays, 0x5f byte strings).
+This is valid per RFC 8949.
+
+Adobe Content Credentials Verify (which uses a current c2pa-rs) has no issue
+parsing the same files -- see screenshots in evidence/screenshots/.

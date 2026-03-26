@@ -1,0 +1,18 @@
+{
+  "filename": "signed_test_aac.m4a",
+  "mime_type": "audio/mp4",
+  "verification_method": "c2pa_reader",
+  "valid": true,
+  "manifest_summary": {
+    "manifest_found": true,
+    "active_manifest": "urn:c2pa:29588e22-6984-4c06-8d68-6541b8d7e320",
+    "instance_id": "xmp:iid:f1e39c4f-be6a-4033-9ab0-96b95d793c35",
+    "claim_generator": "",
+    "assertion_count": 3,
+    "signed_at": "2026-03-26T13:16:24Z",
+    "validation_success_count": 7,
+    "validation_failure_count": 0,
+    "informational_status_count": 1
+  },
+  "error": null
+}

@@ -1,0 +1,18 @@
+{
+  "filename": "signed_test.mp3",
+  "mime_type": "audio/mpeg",
+  "verification_method": "c2pa_reader",
+  "valid": true,
+  "manifest_summary": {
+    "manifest_found": true,
+    "active_manifest": "urn:c2pa:541a8203-0163-40c2-8716-34fa0d9ac0b6",
+    "instance_id": "xmp:iid:b383d17d-3428-43f7-814a-1c6d85ccbb09",
+    "claim_generator": "",
+    "assertion_count": 2,
+    "signed_at": "2026-03-26T13:16:23Z",
+    "validation_success_count": 7,
+    "validation_failure_count": 0,
+    "informational_status_count": 1
+  },
+  "error": null
+}

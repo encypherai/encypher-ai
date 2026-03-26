@@ -16,8 +16,14 @@ from app.bootstrap import (
     register_middleware,
     register_probe_routes,
 )
-from app.bootstrap.docs import build_public_openapi as _build_public_openapi
+from app.bootstrap.docs import build_public_docs_html, build_public_openapi as _build_public_openapi
+from app.bootstrap.lifespan import validate_startup_config
 from app.bootstrap.logging_setup import configure_logging
+from app.bootstrap.middleware import (
+    EncypherTrustedHostMiddleware,
+    build_cors_settings,
+    build_trusted_hosts,
+)
 from app.dependencies import require_super_admin_dep
 
 configure_logging()

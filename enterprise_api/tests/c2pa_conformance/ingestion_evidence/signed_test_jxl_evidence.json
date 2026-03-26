@@ -1,0 +1,23 @@
+{
+  "filename": "signed_test.jxl",
+  "mime_type": "image/jxl",
+  "verification_method": "jumbf_structural",
+  "valid": true,
+  "manifest_summary": {
+    "manifest_found": true,
+    "manifest_count": 1,
+    "active_manifest_label": "urn:c2pa:2d96bac3-32e1-4853-8ee6-3b9ec2a663aa",
+    "instance_id": "urn:uuid:21a6efac-2230-43e8-8d36-ae18dd57c4b6",
+    "claim_generator": "Encypher Enterprise API/2.0",
+    "assertion_labels": [
+      "c2pa.actions.v2",
+      "c2pa.hash.data",
+      "com.encypher.provenance"
+    ],
+    "assertion_count": 3,
+    "claim_cbor_bytes": 622,
+    "cose_signature_bytes": 27255,
+    "signature_present": true
+  },
+  "error": null
+}

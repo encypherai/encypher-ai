@@ -2,6 +2,7 @@
 
 // TEAM_152: Drag-and-drop file inspector for text file verification
 // TEAM_241: Added image (JPEG/PNG/WebP) support with XMP + C2PA inspection
+// TEAM_280: Expanded to all C2PA media formats (audio, video, all images)
 import React, { useState, useRef, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,12 +12,16 @@ import { trackToolEvent } from "@/lib/toolsAnalytics";
 import {
   SUPPORTED_EXTENSIONS,
   SUPPORTED_FORMATS_DISPLAY,
-  isTextFile,
   isPdfFile,
   isImageFile,
+  isAudioFile,
+  isVideoFile,
+  getFileKind,
+  resolveMimeType,
   formatFileSize,
   validateFile,
 } from "@/lib/fileInspector";
+import type { FileKind } from "@/lib/fileInspector";
 
 // ---------------------------------------------------------------------------
 // Types: text verification (existing)
@@ -79,7 +84,7 @@ interface DecodeToolResponse {
 }
 
 // ---------------------------------------------------------------------------
-// Types: image verification (new)
+// Types: image verification
 // ---------------------------------------------------------------------------
 
 interface ImageVerifyResponse {
@@ -93,6 +98,24 @@ interface ImageVerifyResponse {
   phash?: string | null;
   error?: string | null;
   correlation_id?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Types: audio/video verification (shared response shape)
+// ---------------------------------------------------------------------------
+
+interface MediaVerifyResponse {
+  success: boolean;
+  valid: boolean;
+  c2pa_manifest_valid: boolean;
+  hash_matches: boolean;
+  c2pa_instance_id?: string | null;
+  signer?: string | null;
+  signed_at?: string | null;
+  manifest_data?: Record<string, unknown> | null;
+  error?: string | null;
+  correlation_id?: string | null;
+  verified_at?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -135,6 +158,44 @@ async function verifyImage(imageBase64: string, mimeType: string): Promise<Image
     throw new Error(errorData.detail || `Request failed with status ${response.status}`);
   }
   return response.json();
+}
+
+async function verifyAudio(audioBase64: string, mimeType: string): Promise<MediaVerifyResponse> {
+  const response = await fetch("/api/tools/verify-audio", {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ audio_data: audioBase64, mime_type: mimeType }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Request failed with status ${response.status}`);
+  }
+  return response.json();
+}
+
+async function verifyVideo(file: Blob, mimeType: string): Promise<MediaVerifyResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('mime_type', mimeType);
+
+  const response = await fetch("/api/tools/verify-video", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Request failed with status ${response.status}`);
+  }
+  return response.json();
+}
+
+function toBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
 }
 
 // ---------------------------------------------------------------------------
@@ -275,6 +336,130 @@ function ImageVerifyResult({
 }
 
 // ---------------------------------------------------------------------------
+// Audio/Video result sub-component
+// ---------------------------------------------------------------------------
+
+function MediaVerifyResult({
+  response,
+  fileName,
+  fileKind,
+}: {
+  response: MediaVerifyResponse;
+  fileName: string;
+  fileKind: FileKind;
+}) {
+  const [manifestExpanded, setManifestExpanded] = useState(false);
+  const hasManifest = !!response.manifest_data && Object.keys(response.manifest_data).length > 0;
+  const kindLabel = fileKind === 'audio' ? 'Audio' : 'Video';
+
+  const statusConfig = response.valid
+    ? {
+        className: "border-green-900 bg-green-800 text-white",
+        title: `${kindLabel} Provenance Verified`,
+        icon: "OK",
+        description: response.signer
+          ? `C2PA manifest verified. Signed by: ${response.signer}.`
+          : "C2PA manifest verified. Content provenance confirmed.",
+      }
+    : {
+        className: "border-red-900 bg-red-800 text-white",
+        title: `No ${kindLabel} Provenance Found`,
+        icon: "X",
+        description: response.error
+          ? response.error
+          : `No C2PA manifest was detected in this ${fileKind} file.`,
+      };
+
+  return (
+    <div className="space-y-4">
+      <Alert className={statusConfig.className}>
+        <AlertTitle className="flex items-center gap-2 text-base">
+          <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-xs font-bold ${
+            response.valid ? 'bg-green-600' : 'bg-red-700'
+          }`}>
+            {statusConfig.icon}
+          </span>
+          {statusConfig.title}
+        </AlertTitle>
+        <AlertDescription>
+          <p className="mb-3">{statusConfig.description}</p>
+
+          {response.valid && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+              <div className="p-2 bg-green-900/40 rounded border border-green-700">
+                <div className="text-green-300 mb-0.5 font-sans font-semibold not-italic">C2PA Manifest</div>
+                <div>{response.c2pa_manifest_valid ? 'Valid' : 'Invalid'}</div>
+              </div>
+              <div className="p-2 bg-green-900/40 rounded border border-green-700">
+                <div className="text-green-300 mb-0.5 font-sans font-semibold not-italic">Hash Binding</div>
+                <div>{response.hash_matches ? 'Matches' : 'Mismatch'}</div>
+              </div>
+              {response.c2pa_instance_id && (
+                <div className="p-2 bg-green-900/40 rounded border border-green-700 sm:col-span-2">
+                  <div className="text-green-300 mb-0.5 font-sans font-semibold not-italic">Instance ID</div>
+                  <div className="break-all">{response.c2pa_instance_id}</div>
+                </div>
+              )}
+              {response.signer && (
+                <div className="p-2 bg-green-900/40 rounded border border-green-700">
+                  <div className="text-green-300 mb-0.5 font-sans font-semibold not-italic">Signer</div>
+                  <div className="break-all">{response.signer}</div>
+                </div>
+              )}
+              {response.signed_at && (
+                <div className="p-2 bg-green-900/40 rounded border border-green-700">
+                  <div className="text-green-300 mb-0.5 font-sans font-semibold not-italic">Signed At</div>
+                  <div>{new Date(response.signed_at).toLocaleString()}</div>
+                </div>
+              )}
+              {response.verified_at && (
+                <div className="p-2 bg-green-900/40 rounded border border-green-700 sm:col-span-2">
+                  <div className="text-green-300 mb-0.5 font-sans font-semibold not-italic">Verified At</div>
+                  <div>{new Date(response.verified_at).toLocaleString()}</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {hasManifest && (
+            <div className="mt-3">
+              <button
+                onClick={() => setManifestExpanded(x => !x)}
+                className="flex items-center gap-2 text-xs text-green-200 hover:text-white transition-colors"
+              >
+                <span style={{ display: 'inline-block', transform: manifestExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                  &rsaquo;
+                </span>
+                C2PA Manifest Data
+              </button>
+              {manifestExpanded && (
+                <pre className="mt-2 p-3 bg-slate-900 rounded border border-slate-700 text-slate-200 text-xs whitespace-pre-wrap break-all overflow-x-auto max-h-64">
+                  {JSON.stringify(response.manifest_data, null, 2)}
+                </pre>
+              )}
+            </div>
+          )}
+
+          {!response.valid && !response.error && (
+            <div className="mt-2 text-xs text-red-200">
+              <p>Encypher checks for C2PA JUMBF manifests embedded in {fileKind} files.</p>
+              <p className="mt-1">Supported formats: {fileKind === 'audio' ? 'MP3, WAV, FLAC, M4A, OGG, AAC' : 'MP4, MOV, AVI, WebM'}</p>
+            </div>
+          )}
+        </AlertDescription>
+      </Alert>
+
+      <Card>
+        <CardContent className="pt-4">
+          <p className="text-xs text-muted-foreground mb-1 font-medium">{kindLabel} File</p>
+          <p className="text-sm font-mono">{fileName}</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
@@ -286,6 +471,7 @@ export default function FileInspectorTool() {
   const [error, setError] = useState<string | null>(null);
   const [verifyResponse, setVerifyResponse] = useState<DecodeToolResponse | null>(null);
   const [imageVerifyResponse, setImageVerifyResponse] = useState<ImageVerifyResponse | null>(null);
+  const [mediaVerifyResponse, setMediaVerifyResponse] = useState<MediaVerifyResponse | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [expandedEmbeddings, setExpandedEmbeddings] = useState<Set<number>>(new Set([0]));
   // TEAM_160: PDF first-page thumbnail
@@ -298,6 +484,7 @@ export default function FileInspectorTool() {
     setFileContent(null);
     setVerifyResponse(null);
     setImageVerifyResponse(null);
+    setMediaVerifyResponse(null);
     setImagePreviewUrl(null);
     setError(null);
     setExpandedEmbeddings(new Set([0]));
@@ -328,7 +515,7 @@ export default function FileInspectorTool() {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type || 'unknown',
-        fileKind: isImageFile(file.name, file.type) ? 'image' : 'text',
+        fileKind: getFileKind(file.name, file.type),
       },
     });
 
@@ -342,17 +529,8 @@ export default function FileInspectorTool() {
         const previewUrl = URL.createObjectURL(blob);
         setImagePreviewUrl(previewUrl);
 
-        // Base64 encode
-        const bytes = new Uint8Array(buffer);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-        const b64 = btoa(binary);
-
-        const mimeType = file.type || (
-          file.name.toLowerCase().endsWith('.png') ? 'image/png' :
-          file.name.toLowerCase().endsWith('.webp') ? 'image/webp' :
-          'image/jpeg'
-        );
+        const b64 = toBase64(buffer);
+        const mimeType = resolveMimeType(file.name, file.type);
 
         const response = await verifyImage(b64, mimeType);
 
@@ -378,15 +556,70 @@ export default function FileInspectorTool() {
         return;
       }
 
+      // --- Audio path ---
+      if (isAudioFile(file.name, file.type)) {
+        const buffer = await file.arrayBuffer();
+        const b64 = toBase64(buffer);
+        const mimeType = resolveMimeType(file.name, file.type);
+
+        const response = await verifyAudio(b64, mimeType);
+
+        trackToolEvent({
+          eventName: "tools_inspect_success",
+          pageUrl: window.location.href,
+          pageTitle: document.title,
+          referrer: document.referrer,
+          userAgent: navigator.userAgent,
+          properties: {
+            fileName: file.name,
+            fileSize: file.size,
+            fileKind: 'audio',
+            valid: response.valid,
+            hasC2pa: response.c2pa_manifest_valid,
+            durationMs: Date.now() - startedAt,
+          },
+        });
+
+        setMediaVerifyResponse(response);
+        setLoading(false);
+        return;
+      }
+
+      // --- Video path ---
+      if (isVideoFile(file.name, file.type)) {
+        const buffer = await file.arrayBuffer();
+        const mimeType = resolveMimeType(file.name, file.type);
+        const blob = new Blob([buffer], { type: mimeType });
+
+        const response = await verifyVideo(blob, mimeType);
+
+        trackToolEvent({
+          eventName: "tools_inspect_success",
+          pageUrl: window.location.href,
+          pageTitle: document.title,
+          referrer: document.referrer,
+          userAgent: navigator.userAgent,
+          properties: {
+            fileName: file.name,
+            fileSize: file.size,
+            fileKind: 'video',
+            valid: response.valid,
+            hasC2pa: response.c2pa_manifest_valid,
+            durationMs: Date.now() - startedAt,
+          },
+        });
+
+        setMediaVerifyResponse(response);
+        setLoading(false);
+        return;
+      }
+
       // --- Text / PDF path ---
       let text: string;
       let pdfB64: string | undefined;
       if (isPdfFile(file.name, file.type)) {
         const buffer = await file.arrayBuffer();
-        const bytes = new Uint8Array(buffer);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-        pdfB64 = btoa(binary);
+        pdfB64 = toBase64(buffer);
         const { extractTextFromPdf, renderPdfThumbnail } = await import("@/lib/pdfTextExtractor");
         text = await extractTextFromPdf(buffer);
         renderPdfThumbnail(buffer).then(setPdfThumbnailUrl).catch(() => {});
@@ -545,8 +778,13 @@ export default function FileInspectorTool() {
     return "border-red-700 bg-red-900/30";
   };
 
-  const isCurrentImage = selectedFile ? isImageFile(selectedFile.name, selectedFile.type) : false;
-  const hasResult = (isCurrentImage && imageVerifyResponse) || (!isCurrentImage && verifyResponse);
+  const currentFileKind: FileKind | null = selectedFile
+    ? getFileKind(selectedFile.name, selectedFile.type) : null;
+  const isCurrentImage = currentFileKind === 'image';
+  const isCurrentMedia = currentFileKind === 'audio' || currentFileKind === 'video';
+  const hasResult = (isCurrentImage && imageVerifyResponse)
+    || (isCurrentMedia && mediaVerifyResponse)
+    || (!isCurrentImage && !isCurrentMedia && verifyResponse);
 
   return (
     <div className="w-full">
@@ -609,7 +847,7 @@ export default function FileInspectorTool() {
                 {isDragOver ? 'Drop your file here' : 'Drag and drop your file'}
               </p>
               <p className="text-sm text-muted-foreground mb-1">
-                Images (JPEG, PNG, WebP) or text files (PDF, TXT, MD, ...)
+                Images, audio, video, or text files
               </p>
               <p className="text-xs text-muted-foreground mb-4">
                 Select a file from your device
@@ -667,15 +905,20 @@ export default function FileInspectorTool() {
                   ) : imagePreviewUrl ? (
                     <img src={imagePreviewUrl} alt={selectedFile.name} className="shrink-0 w-16 h-16 rounded border border-muted shadow-sm object-cover" />
                   ) : (
-                    <div className="shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-lg">
-                      {isPdfFile(selectedFile.name, selectedFile.type) ? '📕' : '📄'}
+                    <div className="shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-sm font-mono text-muted-foreground">
+                      {currentFileKind === 'audio' ? 'AUD'
+                        : currentFileKind === 'video' ? 'VID'
+                        : isPdfFile(selectedFile.name, selectedFile.type) ? 'PDF'
+                        : 'TXT'}
                     </div>
                   )}
                   <div className="min-w-0">
                     <p className="font-medium truncate">{selectedFile.name}</p>
                     <p className="text-xs text-muted-foreground">
                       {formatFileSize(selectedFile.size)}
-                      {isCurrentImage ? ' · image' : fileContent ? ` · ${fileContent.length.toLocaleString()} characters` : ''}
+                      {isCurrentImage ? ' · image'
+                        : isCurrentMedia ? ` · ${currentFileKind}`
+                        : fileContent ? ` · ${fileContent.length.toLocaleString()} characters` : ''}
                     </p>
                   </div>
                 </div>
@@ -693,8 +936,17 @@ export default function FileInspectorTool() {
                 />
               )}
 
+              {/* Audio/Video result */}
+              {isCurrentMedia && mediaVerifyResponse && currentFileKind && (
+                <MediaVerifyResult
+                  response={mediaVerifyResponse}
+                  fileName={selectedFile.name}
+                  fileKind={currentFileKind}
+                />
+              )}
+
               {/* Text/PDF result */}
-              {!isCurrentImage && verifyResponse && (
+              {!isCurrentImage && !isCurrentMedia && verifyResponse && (
                 <>
                   <Alert
                     variant={verifyResponse.verification_status === 'Success' ? 'default' : 'destructive'}
@@ -883,7 +1135,13 @@ export default function FileInspectorTool() {
                                     <div className="p-3 pt-0 border-t border-slate-700/50">
                                       {!!(verdict || hasManifest) && (
                                         <div className="mt-2 p-2.5 bg-slate-800 rounded border border-slate-600 space-y-1">
-                                          <div className="text-white"><strong>Signer:</strong>{' '}{String(verdict?.signer_name || verdict?.signer_id || (typeof manifest === 'object' && (manifest as Record<string, unknown>)?.claim_generator) || "Unknown")}</div>
+                                          <div className="text-white"><strong>Signer:</strong>{' '}{(() => {
+                                            const raw = verdict?.signer_name || verdict?.signer_id || (typeof manifest === 'object' && (manifest as Record<string, unknown>)?.claim_generator) || "Unknown";
+                                            if (typeof raw === 'object' && raw !== null) {
+                                              return (raw as Record<string, unknown>).name as string || JSON.stringify(raw);
+                                            }
+                                            return String(raw);
+                                          })()}</div>
                                           <div className="text-white"><strong>Reason Code:</strong>{' '}<span className={verdict?.valid ? 'text-green-400' : 'text-yellow-400'}>{verdict?.reason_code || (verdict?.valid ? "VERIFIED" : "Unknown")}</span></div>
                                           {verdict?.timestamp && <div className="text-white"><strong>Signed:</strong> {new Date(verdict.timestamp).toLocaleString()}</div>}
                                         </div>

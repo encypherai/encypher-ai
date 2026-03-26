@@ -1,0 +1,9 @@
+Encypher Verifier (c2pa-python 0.29.0) -> c2patool 0.9.12 Signed Files
+======================================================================
+
+c2patool_test.jpg: valid=True, claim_generator=c2patool/0.9.12 c2pa-rs/0.37.0, issuer=C2PA Test Signing Cert, val_errors=0
+c2patool_test.png: valid=True, claim_generator=c2patool/0.9.12 c2pa-rs/0.37.0, issuer=C2PA Test Signing Cert, val_errors=0
+c2patool_test.wav: valid=True, claim_generator=c2patool/0.9.12 c2pa-rs/0.37.0, issuer=C2PA Test Signing Cert, val_errors=0
+c2patool_test.mp4: valid=True, claim_generator=c2patool/0.9.12 c2pa-rs/0.37.0, issuer=C2PA Test Signing Cert, val_errors=0
+
+All files verified successfully.

@@ -15,26 +15,15 @@ from typing import Dict, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-# Supported MIME types for image signing
-SUPPORTED_MIME_TYPES = frozenset(
-    {
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/webp",
-        "image/tiff",
-        "image/heic",
-    }
+# Import SSOT format registry -- all format constants live there
+from app.utils.image_format_registry import (
+    SUPPORTED_IMAGE_MIME_TYPES as SUPPORTED_MIME_TYPES,
+    MIME_TO_PIL_FORMAT,
+    ensure_heif_plugin,
+    is_bypass_format,
+    is_pillow_format,
+    validate_magic_bytes,
 )
-
-MIME_TO_PIL_FORMAT = {
-    "image/jpeg": "JPEG",
-    "image/jpg": "JPEG",
-    "image/png": "PNG",
-    "image/webp": "WEBP",
-    "image/tiff": "TIFF",
-    "image/heic": "HEIC",
-}
 
 # Maximum image size: 10 MB
 IMAGE_MAX_SIZE_BYTES = 10 * 1024 * 1024
@@ -50,15 +39,29 @@ def validate_image(data: bytes, mime_type: str, max_size_bytes: int = IMAGE_MAX_
 
     Returns:
         Tuple of (width_px, height_px, pil_format_string).
+        For Tier C (bypass) formats, returns (0, 0, mime_type).
 
     Raises:
         ValueError: If the image exceeds the size limit, has an unsupported
-                    MIME type, or cannot be decoded by Pillow.
+                    MIME type, or cannot be decoded.
     """
     if len(data) > max_size_bytes:
         raise ValueError(f"Image size {len(data)} bytes exceeds maximum of {max_size_bytes} bytes")
     if mime_type not in SUPPORTED_MIME_TYPES:
         raise ValueError(f"Unsupported MIME type: {mime_type!r}. Supported types: {sorted(SUPPORTED_MIME_TYPES)}")
+
+    # Tier C: validate via magic bytes only (no Pillow)
+    if is_bypass_format(mime_type):
+        validate_magic_bytes(data, mime_type)
+        return 0, 0, mime_type
+
+    # Tier B: ensure HEIF plugin is registered
+    if not is_pillow_format(mime_type):
+        # Should not reach here -- safety fallback
+        raise ValueError(f"No validation handler for MIME type: {mime_type!r}")
+
+    ensure_heif_plugin()
+
     try:
         from PIL import Image
 
@@ -109,7 +112,11 @@ def strip_exif(data: bytes, mime_type: Optional[str] = None, quality: int = 95) 
     """
     Strip EXIF metadata from image bytes (GPS, device PII removal).
 
-    Re-encodes with Pillow to drop any EXIF payload. Returns clean image bytes.
+    Tier A/B: Re-encodes with Pillow to drop any EXIF payload.
+    Tier C (SVG, JXL, DNG): Returns original bytes unchanged.
+      - SVG has no EXIF.
+      - DNG metadata is intentional (raw sensor data).
+      - JXL has no stable Pillow support.
 
     Args:
         data: Raw image bytes.
@@ -117,6 +124,15 @@ def strip_exif(data: bytes, mime_type: Optional[str] = None, quality: int = 95) 
                    the format is inferred from the image data.
         quality: JPEG/WebP re-encode quality (1-100, default 95).
     """
+    # Tier C: no EXIF stripping -- return as-is
+    if mime_type and is_bypass_format(mime_type):
+        logger.debug("strip_exif: bypass format %s, returning original bytes", mime_type)
+        return data
+
+    # Tier B: ensure HEIF plugin
+    if mime_type:
+        ensure_heif_plugin()
+
     try:
         from PIL import Image
 
@@ -132,7 +148,7 @@ def strip_exif(data: bytes, mime_type: Optional[str] = None, quality: int = 95) 
             if pil_fmt.upper() in ("JPEG", "JPG"):
                 save_kwargs["format"] = "JPEG"
                 save_kwargs["quality"] = quality
-            elif pil_fmt.upper() == "WEBP":
+            elif pil_fmt.upper() in ("WEBP", "AVIF"):
                 save_kwargs["quality"] = quality
             img.save(buf, **save_kwargs)
         return buf.getvalue()
@@ -141,23 +157,31 @@ def strip_exif(data: bytes, mime_type: Optional[str] = None, quality: int = 95) 
         return data
 
 
-def compute_phash(data: bytes) -> int:
+def compute_phash(data: bytes, mime_type: Optional[str] = None) -> int:
     """
     Compute perceptual hash (average hash) of image bytes.
 
     Uses imagehash.average_hash on a Pillow-decoded image.
     Returns a signed int64 value (matching the BIGINT column).
-    Returns 0 if computation fails.
+    Returns 0 if computation fails or format is Tier C (non-raster).
 
     Args:
         data: Raw image bytes.
+        mime_type: Optional MIME type hint. Tier C formats return 0 immediately.
 
     Returns:
         Signed 64-bit integer pHash, or 0 on failure.
     """
+    # Tier C formats (SVG, JXL, DNG) cannot be rasterized by Pillow
+    if mime_type and is_bypass_format(mime_type):
+        return 0
+
     try:
         import imagehash
         from PIL import Image
+
+        if mime_type:
+            ensure_heif_plugin()
 
         with Image.open(BytesIO(data)) as img:
             h = imagehash.average_hash(img, hash_size=8)  # 8x8 = 64 bits

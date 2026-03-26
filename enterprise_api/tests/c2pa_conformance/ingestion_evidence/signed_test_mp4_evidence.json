@@ -1,0 +1,18 @@
+{
+  "filename": "signed_test.mp4",
+  "mime_type": "video/mp4",
+  "verification_method": "c2pa_reader",
+  "valid": true,
+  "manifest_summary": {
+    "manifest_found": true,
+    "active_manifest": "urn:c2pa:899d9ea4-c99f-41de-ba5e-28c2d4f0a3c4",
+    "instance_id": "xmp:iid:77bac872-d0d8-4d3a-a844-b772bb2d3124",
+    "claim_generator": "",
+    "assertion_count": 3,
+    "signed_at": "2026-03-26T13:16:21Z",
+    "validation_success_count": 7,
+    "validation_failure_count": 0,
+    "informational_status_count": 1
+  },
+  "error": null
+}

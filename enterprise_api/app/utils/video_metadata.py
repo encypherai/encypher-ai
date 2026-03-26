@@ -76,7 +76,7 @@ def _build_metadata_json(instance_id: str, org_id: str, document_id: str, conten
             "org_id": org_id,
             "document_id": document_id,
             "content_hash": content_hash,
-            "verify": "https://verify.encypherai.com",
+            "verify": "https://verify.encypher.ai/",
         },
         separators=(",", ":"),
     ).encode("utf-8")

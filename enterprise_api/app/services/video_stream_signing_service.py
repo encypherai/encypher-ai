@@ -4,23 +4,30 @@ Per-segment manifest signing with backwards-linked provenance chain.
 Each CMAF/fMP4 segment gets its own C2PA manifest. The manifest includes
 a c2pa.ingredient.v3 assertion referencing the previous segment's manifest
 hash, creating a verifiable chain across the stream.
+
+Session storage:
+- Primary: Redis via session_service.redis_client (multi-worker safe)
+- Fallback: in-memory dict when Redis is unavailable (dev mode)
+- PEM private keys are encrypted at rest in Redis via AESGCM
 """
 
 import hashlib
+import json
 import logging
 import secrets
 import time
 import uuid
 from dataclasses import dataclass, field
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# In-memory session store (Redis-backed in production)
+# In-memory fallback (used when Redis is unavailable)
 _sessions: Dict[str, "VideoStreamSession"] = {}
 _SESSION_TTL = 3600  # 1 hour default
 _SESSION_MAX_IDLE = 300  # 5 min idle timeout
+_REDIS_SESSION_PREFIX = "encypher:vstream:"
 
 
 @dataclass
@@ -31,15 +38,19 @@ class VideoStreamSession:
     org_id: str
     private_key_pem: str
     cert_chain_pem: str
+    stream_id: str = ""
     segment_count: int = 0
     segment_manifest_hashes: List[str] = field(default_factory=list)
     prev_manifest_hash: Optional[str] = None
+    prev_manifest_id: Optional[str] = None  # C2PA instance ID of previous segment
     status: str = "active"  # active | finalized | expired
     created_at: float = field(default_factory=time.time)
     last_activity: float = field(default_factory=time.time)
     expires_at: float = 0.0
 
     def __post_init__(self) -> None:
+        if not self.stream_id:
+            self.stream_id = "urn:uuid:" + str(uuid.uuid4())
         if self.expires_at == 0.0:
             self.expires_at = self.created_at + _SESSION_TTL
 
@@ -49,6 +60,8 @@ class SignedSegmentResult:
     """Result of signing a single video segment."""
 
     segment_index: int
+    sequence_number: int
+    stream_id: str
     signed_bytes: bytes
     original_hash: str
     signed_hash: str
@@ -64,13 +77,133 @@ class StreamFinalizeResult:
     """Result of finalizing a video stream session."""
 
     session_id: str
+    stream_id: str
     segment_count: int
     merkle_root: str
     status: str
 
 
+# ---------------------------------------------------------------------------
+# Redis session serialization (PEM encrypted at rest)
+# ---------------------------------------------------------------------------
+
+
+def _get_redis() -> Any:
+    """Get Redis client, or None if unavailable."""
+    try:
+        from app.services.session_service import session_service
+
+        return session_service.redis_client
+    except Exception:
+        return None
+
+
+def _serialize_session(session: VideoStreamSession) -> str:
+    """Serialize session to JSON with encrypted private key."""
+    data = {
+        "session_id": session.session_id,
+        "org_id": session.org_id,
+        "cert_chain_pem": session.cert_chain_pem,
+        "stream_id": session.stream_id,
+        "segment_count": session.segment_count,
+        "segment_manifest_hashes": session.segment_manifest_hashes,
+        "prev_manifest_hash": session.prev_manifest_hash,
+        "prev_manifest_id": session.prev_manifest_id,
+        "status": session.status,
+        "created_at": session.created_at,
+        "last_activity": session.last_activity,
+        "expires_at": session.expires_at,
+    }
+    # Encrypt private key before storing in Redis
+    try:
+        from app.utils.crypto_utils import encrypt_sensitive_value
+
+        encrypted = encrypt_sensitive_value(session.private_key_pem)
+        data["private_key_pem_encrypted"] = encrypted.hex()
+    except Exception:
+        logger.warning("Failed to encrypt PEM for Redis storage, skipping Redis")
+        raise
+
+    return json.dumps(data)
+
+
+def _deserialize_session(raw: str) -> VideoStreamSession:
+    """Deserialize session from JSON, decrypting private key."""
+    data = json.loads(raw)
+
+    # Decrypt private key
+    from app.utils.crypto_utils import decrypt_sensitive_value
+
+    private_key_pem = decrypt_sensitive_value(bytes.fromhex(data["private_key_pem_encrypted"]))
+
+    return VideoStreamSession(
+        session_id=data["session_id"],
+        org_id=data["org_id"],
+        private_key_pem=private_key_pem,
+        cert_chain_pem=data["cert_chain_pem"],
+        stream_id=data["stream_id"],
+        segment_count=data["segment_count"],
+        segment_manifest_hashes=data["segment_manifest_hashes"],
+        prev_manifest_hash=data.get("prev_manifest_hash"),
+        prev_manifest_id=data.get("prev_manifest_id"),
+        status=data["status"],
+        created_at=data["created_at"],
+        last_activity=data["last_activity"],
+        expires_at=data["expires_at"],
+    )
+
+
+async def _redis_save_session(session: VideoStreamSession) -> bool:
+    """Save session to Redis. Returns True on success."""
+    redis_client = _get_redis()
+    if not redis_client:
+        return False
+    try:
+        remaining_ttl = max(1, int(session.expires_at - time.time()))
+        serialized = _serialize_session(session)
+        await redis_client.setex(
+            f"{_REDIS_SESSION_PREFIX}{session.session_id}",
+            remaining_ttl,
+            serialized,
+        )
+        return True
+    except Exception as exc:
+        logger.debug("Redis session save failed: %s", exc)
+        return False
+
+
+async def _redis_get_session(session_id: str) -> Optional[VideoStreamSession]:
+    """Load session from Redis. Returns None if not found."""
+    redis_client = _get_redis()
+    if not redis_client:
+        return None
+    try:
+        raw = await redis_client.get(f"{_REDIS_SESSION_PREFIX}{session_id}")
+        if raw is None:
+            return None
+        return _deserialize_session(raw)
+    except Exception as exc:
+        logger.debug("Redis session load failed: %s", exc)
+        return None
+
+
+async def _redis_delete_session(session_id: str) -> None:
+    """Delete session from Redis."""
+    redis_client = _get_redis()
+    if redis_client:
+        try:
+            await redis_client.delete(f"{_REDIS_SESSION_PREFIX}{session_id}")
+        except Exception:
+            pass
+
+
+# ---------------------------------------------------------------------------
+# In-memory fallback
+# ---------------------------------------------------------------------------
+
+
 def _cleanup_expired_sessions() -> None:
-    """Remove expired/idle sessions."""
+    """Remove expired/idle sessions from in-memory fallback."""
     now = time.time()
     expired = [sid for sid, s in _sessions.items() if now > s.expires_at or (s.status == "active" and now - s.last_activity > _SESSION_MAX_IDLE)]
     for sid in expired:
@@ -78,6 +211,11 @@ def _cleanup_expired_sessions() -> None:
         if s and s.status == "active":
             s.status = "expired"
             logger.info("Stream session expired: %s (segments=%d)", sid, s.segment_count)
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
 
 
 def _compute_merkle_root(hashes: List[str]) -> str:
@@ -114,7 +252,6 @@ async def start_stream_session(
 
     Credentials are cached for the session lifetime to avoid per-segment DB reads.
     """
-    _cleanup_expired_sessions()
     session_id = f"vstream_{secrets.token_hex(12)}"
     session = VideoStreamSession(
         session_id=session_id,
@@ -122,13 +259,32 @@ async def start_stream_session(
         private_key_pem=private_key_pem,
         cert_chain_pem=cert_chain_pem,
     )
-    _sessions[session_id] = session
-    logger.info("Stream session started: %s org=%s", session_id, org_id)
+
+    saved = await _redis_save_session(session)
+    if not saved:
+        _cleanup_expired_sessions()
+        _sessions[session_id] = session
+
+    logger.info("Stream session started: %s org=%s redis=%s", session_id, org_id, saved)
     return session
 
 
-def get_session(session_id: str, org_id: str) -> Optional[VideoStreamSession]:
+async def get_session(session_id: str, org_id: str) -> Optional[VideoStreamSession]:
     """Get a session by ID, validating org ownership."""
+    # Try Redis first
+    session = await _redis_get_session(session_id)
+    if session is not None:
+        if session.org_id != org_id:
+            return None
+        # Check idle timeout
+        now = time.time()
+        if session.status == "active" and now - session.last_activity > _SESSION_MAX_IDLE:
+            session.status = "expired"
+            await _redis_save_session(session)
+            return None
+        return session
+
+    # Fallback to in-memory
     _cleanup_expired_sessions()
     session = _sessions.get(session_id)
     if session is None:
@@ -136,6 +292,14 @@ def get_session(session_id: str, org_id: str) -> Optional[VideoStreamSession]:
     if session.org_id != org_id:
         return None
     return session
+
+
+async def _persist_session(session: VideoStreamSession) -> None:
+    """Save session state after mutation (segment signed, finalized, etc.)."""
+    saved = await _redis_save_session(session)
+    if not saved:
+        # In-memory: session object is already mutated in place
+        _sessions[session.session_id] = session
 
 
 async def sign_segment(
@@ -165,19 +329,19 @@ async def sign_segment(
     segment_index = session.segment_count
     video_id = f"vseg_{session.session_id}_{segment_index}"
 
-    # Build assertions list including chain reference
+    # Build assertions list including c2pa.livevideo.segment (C2PA 2.3 Section 19)
     all_assertions = list(custom_assertions or [])
-    if session.prev_manifest_hash is not None:
-        all_assertions.append(
-            {
-                "label": "com.encypher.stream.chain.v1",
-                "data": {
-                    "prev_segment_index": segment_index - 1,
-                    "prev_manifest_hash": session.prev_manifest_hash,
-                    "session_id": session.session_id,
-                },
-            }
-        )
+    livevideo_assertion: dict = {
+        "label": "c2pa.livevideo.segment",
+        "data": {
+            "sequenceNumber": segment_index,
+            "streamId": session.stream_id,
+            "continuityMethod": "c2pa.manifestId",
+        },
+    }
+    if session.prev_manifest_id is not None:
+        livevideo_assertion["data"]["previousManifestId"] = session.prev_manifest_id
+    all_assertions.append(livevideo_assertion)
 
     passthrough = not (session.private_key_pem and session.cert_chain_pem)
 
@@ -192,10 +356,14 @@ async def sign_segment(
         session.segment_count += 1
         session.segment_manifest_hashes.append(manifest_hash)
         session.prev_manifest_hash = manifest_hash
+        session.prev_manifest_id = instance_id
         session.last_activity = time.time()
+        await _persist_session(session)
 
         return SignedSegmentResult(
             segment_index=segment_index,
+            sequence_number=segment_index,
+            stream_id=session.stream_id,
             signed_bytes=segment_data,
             original_hash=original_hash,
             signed_hash=original_hash,
@@ -220,6 +388,7 @@ async def sign_segment(
         action=action,
         custom_assertions=all_assertions,
         rights_data=rights_data or {},
+        digital_source_type="digitalCapture",
     )
     c2pa_instance_id = manifest_dict["instance_id"]
 
@@ -240,7 +409,9 @@ async def sign_segment(
     session.segment_count += 1
     session.segment_manifest_hashes.append(manifest_hash)
     session.prev_manifest_hash = manifest_hash
+    session.prev_manifest_id = c2pa_instance_id
     session.last_activity = time.time()
+    await _persist_session(session)
 
     logger.info(
         "Stream segment signed: session=%s index=%d size=%d",
@@ -251,6 +422,8 @@ async def sign_segment(
 
     return SignedSegmentResult(
         segment_index=segment_index,
+        sequence_number=segment_index,
+        stream_id=session.stream_id,
         signed_bytes=signed_bytes,
         original_hash=original_hash,
         signed_hash=signed_hash,
@@ -270,6 +443,7 @@ async def finalize_stream(session: VideoStreamSession) -> StreamFinalizeResult:
     merkle_root = _compute_merkle_root(session.segment_manifest_hashes)
     session.status = "finalized"
     session.last_activity = time.time()
+    await _persist_session(session)
 
     logger.info(
         "Stream finalized: session=%s segments=%d merkle_root=%s",
@@ -280,6 +454,7 @@ async def finalize_stream(session: VideoStreamSession) -> StreamFinalizeResult:
 
     return StreamFinalizeResult(
         session_id=session.session_id,
+        stream_id=session.stream_id,
         segment_count=session.segment_count,
         merkle_root=merkle_root,
         status="finalized",

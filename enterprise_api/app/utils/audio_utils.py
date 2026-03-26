@@ -11,6 +11,10 @@ from typing import Optional, Tuple
 logger = logging.getLogger(__name__)
 
 # Supported audio MIME types for C2PA signing (c2pa-python 0.29.0 / c2pa-rs 0.78.4)
+# NOTE: audio/flac is NOT included -- c2pa-rs 0.78.4 does not support FLAC signing.
+# NOTE: audio/aac (raw ADTS) is NOT included -- AAC wrapped in M4A container is
+#       covered by audio/mp4 (ISO BMFF). Callers should canonicalize .aac files as
+#       audio/mp4 when the container is M4A/ftyp-based.
 SUPPORTED_AUDIO_MIME_TYPES = frozenset(
     {
         "audio/wav",
@@ -18,11 +22,14 @@ SUPPORTED_AUDIO_MIME_TYPES = frozenset(
         "audio/vnd.wave",
         "audio/x-wav",
         "audio/mpeg",
+        "audio/mpa",
         "audio/mp4",
     }
 )
 
 # Canonical MIME type mapping (normalize variants to canonical form)
+# audio/flac: retained here for routing/detection only -- not signable.
+# audio/aac: maps to audio/mp4 (M4A container); raw ADTS AAC not signable.
 _CANONICAL_MIME = {
     "audio/wav": "audio/wav",
     "audio/wave": "audio/wav",
@@ -30,10 +37,12 @@ _CANONICAL_MIME = {
     "audio/x-wav": "audio/wav",
     "audio/mpeg": "audio/mpeg",
     "audio/mp3": "audio/mpeg",
+    "audio/mpa": "audio/mpeg",
     "audio/mp4": "audio/mp4",
+    "audio/flac": "audio/flac",  # detection alias only; not in SUPPORTED_AUDIO_MIME_TYPES
     "audio/m4a": "audio/mp4",
     "audio/x-m4a": "audio/mp4",
-    "audio/aac": "audio/mp4",
+    "audio/aac": "audio/mp4",  # M4A/ftyp-wrapped AAC; raw ADTS not supported
 }
 
 # File extension to canonical MIME type
@@ -44,6 +53,8 @@ EXTENSION_TO_MIME = {
     ".m4a": "audio/mp4",
     ".mp4": "audio/mp4",
     ".aac": "audio/mp4",
+    ".flac": "audio/flac",
+    ".mpa": "audio/mpeg",
 }
 
 # Maximum audio file size: 100 MB
@@ -54,6 +65,7 @@ _RIFF_MAGIC = b"RIFF"
 _WAVE_MAGIC = b"WAVE"
 _ID3_MAGIC = b"ID3"
 _MP3_SYNC_BYTES = (b"\xff\xfb", b"\xff\xf3", b"\xff\xf2")  # MPEG sync words
+_FLAC_MAGIC = b"fLaC"
 _FTYP_OFFSET = 4  # ftyp box type at offset 4 in ISO BMFF
 
 
@@ -86,6 +98,10 @@ def detect_audio_format(data: bytes) -> Optional[str]:
     # ISO BMFF (M4A/AAC/MP4): ftyp box
     if len(data) >= 8 and data[4:8] == b"ftyp":
         return "audio/mp4"
+
+    # FLAC: fLaC marker
+    if data[:4] == _FLAC_MAGIC:
+        return "audio/flac"
 
     return None
 

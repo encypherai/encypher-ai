@@ -1,0 +1,69 @@
+{
+  "manifests": [
+    {
+      "label": "urn:c2pa:9f6a781f-766f-40d4-b781-fb01c9bbb67d",
+      "assertions": {
+        "c2pa.actions.v2": {
+          "actions": [
+            {
+              "action": "c2pa.created",
+              "when": "2026-03-25T08:33:21Z",
+              "softwareAgent": {
+                "name": "Encypher Enterprise API",
+                "version": "2.0"
+              },
+              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture"
+            }
+          ]
+        },
+        "c2pa.hash.data": {
+          "exclusions": [
+            {
+              "start": 642,
+              "length": 65536
+            }
+          ],
+          "alg": "sha256",
+          "hash": "cdcc598e4803a118d226ee3f0919165d4f93277cd577111bf55b55fa1322f78b"
+        },
+        "com.encypher.provenance": {
+          "organization_id": "encypher-conformance",
+          "document_id": "conformance-pdf",
+          "document_asset_id": "9debc0a7-6755-4e72-86a0-98343de3213a",
+          "signed_at": "2026-03-25T08:33:21Z"
+        }
+      },
+      "claim": {
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "claim_generator_info": [
+          {
+            "name": "Encypher",
+            "version": "2.0"
+          }
+        ],
+        "dc:title": "C2PA Conformance Test -- PDF",
+        "dc:format": "application/pdf",
+        "instanceID": "urn:uuid:69a0047b-8a92-4e05-b325-db0d84b178f4",
+        "alg": "sha256",
+        "assertions": [
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
+            "hash": "50fc3efd84118ce0d0a778eb2a877c06e054c7f8a062798ee598c0ee467277ab",
+            "alg": "sha256"
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/c2pa.hash.data",
+            "hash": "d40e6e5c680195c1ef55949558bebbe8704a8abd3c867e8e025adc3b39f39bc8",
+            "alg": "sha256"
+          },
+          {
+            "url": "self#jumbf=c2pa.assertions/com.encypher.provenance",
+            "hash": "e492b0bbbe6a06315d59d51c6701338fd94913ff0d3294cbbf86788aafe331b8",
+            "alg": "sha256"
+          }
+        ],
+        "signature": "self#jumbf=urn:c2pa:9f6a781f-766f-40d4-b781-fb01c9bbb67d/c2pa.signature"
+      }
+    }
+  ]
+}

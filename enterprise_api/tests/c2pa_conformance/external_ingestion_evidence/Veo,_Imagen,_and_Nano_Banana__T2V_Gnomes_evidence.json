@@ -1,0 +1,18 @@
+{
+  "filename": "T2V_Gnomes.mp4",
+  "source": "Veo, Imagen, and Nano Banana",
+  "mime_type": "video/mp4",
+  "has_manifest": true,
+  "valid": true,
+  "manifest_summary": {
+    "claim_generator": "",
+    "signer": null,
+    "validation_status": "valid (with 1 informational notice(s))",
+    "assertion_count": 2,
+    "active_manifest_label": "urn:c2pa:7ed5bcad-f888-70a6-b0c6-4bb583e523ee",
+    "success_checks": 6,
+    "failure_count": 0,
+    "informational_failures": 1
+  },
+  "error": null
+}

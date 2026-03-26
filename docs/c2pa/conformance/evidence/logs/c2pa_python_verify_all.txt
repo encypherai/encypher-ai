@@ -1,0 +1,67 @@
+============================================================
+File: encypher_signed.jpg
+MIME: image/jpeg
+============================================================
+Size: 44833 bytes
+Active manifest: urn:c2pa:115c9464-8aa5-441e-bd3b-57ad89920ec5
+claim_generator_info: [{"name": "Encypher", "version": "1.0", "org.contentauth.c2pa_rs": "0.78.4"}]
+action: c2pa.created
+softwareAgent: {"name": "Encypher Enterprise API", "version": "1.0"}
+digitalSourceType: http://cv.iptc.org/newscodes/digitalsourcetype/digitalArt
+when: 2026-03-24T23:08:03Z
+issuer: Encypher Corporation
+timestamp: 2026-03-24T23:08:03+00:00
+validation_status: 1 entries
+  - signingCredential.untrusted: signing certificate untrusted
+Result: PASS
+
+============================================================
+File: encypher_signed.png
+MIME: image/png
+============================================================
+Size: 44291 bytes
+Active manifest: urn:c2pa:810d0ab7-3d4f-4e97-bace-01e1f2fc4655
+claim_generator_info: [{"name": "Encypher", "version": "1.0", "org.contentauth.c2pa_rs": "0.78.4"}]
+action: c2pa.created
+softwareAgent: {"name": "Encypher Enterprise API", "version": "1.0"}
+digitalSourceType: http://cv.iptc.org/newscodes/digitalsourcetype/digitalArt
+when: 2026-03-24T23:08:03Z
+issuer: Encypher Corporation
+timestamp: 2026-03-24T23:08:03+00:00
+validation_status: 1 entries
+  - signingCredential.untrusted: signing certificate untrusted
+Result: PASS
+
+============================================================
+File: encypher_signed.wav
+MIME: audio/wav
+============================================================
+Size: 30684 bytes
+Active manifest: urn:c2pa:b532a578-1f6f-46fa-9b0b-a1f7519ff5de
+claim_generator_info: [{"name": "Encypher", "version": "1.0", "org.contentauth.c2pa_rs": "0.78.4"}]
+action: c2pa.created
+softwareAgent: {"name": "Encypher Enterprise API", "version": "1.0"}
+digitalSourceType: http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture
+when: 2026-03-24T23:08:03Z
+issuer: Encypher Corporation
+timestamp: 2026-03-24T23:08:04+00:00
+validation_status: 1 entries
+  - signingCredential.untrusted: signing certificate untrusted
+Result: PASS
+
+============================================================
+File: encypher_signed.mp4
+MIME: video/mp4
+============================================================
+Size: 16542 bytes
+Active manifest: urn:c2pa:ffeeea94-cf11-447d-a3ae-3d169b64bb64
+claim_generator_info: [{"name": "Encypher", "version": "1.0", "org.contentauth.c2pa_rs": "0.78.4"}]
+action: c2pa.created
+softwareAgent: {"name": "Encypher Enterprise API", "version": "1.0"}
+digitalSourceType: http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture
+when: 2026-03-24T23:08:04Z
+issuer: Encypher Corporation
+timestamp: 2026-03-24T23:08:04+00:00
+validation_status: 1 entries
+  - signingCredential.untrusted: signing certificate untrusted
+Result: PASS

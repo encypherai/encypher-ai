@@ -5,15 +5,7 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
-SUPPORTED_MIME_TYPES = frozenset(
-    {
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "image/webp",
-        "image/tiff",
-    }
-)
+from app.utils.image_format_registry import SUPPORTED_IMAGE_MIME_TYPES as SUPPORTED_MIME_TYPES
 
 
 class RichContentImage(BaseModel):

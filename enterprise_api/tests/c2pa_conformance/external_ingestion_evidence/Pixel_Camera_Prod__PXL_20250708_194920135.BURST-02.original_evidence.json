@@ -1,0 +1,18 @@
+{
+  "filename": "PXL_20250708_194920135.BURST-02.original.jpg",
+  "source": "Pixel Camera Prod",
+  "mime_type": "image/jpeg",
+  "has_manifest": true,
+  "valid": true,
+  "manifest_summary": {
+    "claim_generator": "",
+    "signer": null,
+    "validation_status": "valid (with 2 informational notice(s))",
+    "assertion_count": 1,
+    "active_manifest_label": "urn:c2pa:317eaaee-b6fd-a1e8-c299-4bdd7e19fb1d",
+    "success_checks": 6,
+    "failure_count": 0,
+    "informational_failures": 2
+  },
+  "error": null
+}

@@ -9,7 +9,7 @@ import logging
 import uuid
 from dataclasses import dataclass
 from io import BytesIO
-from typing import List
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,7 @@ async def sign_video(
     signer_private_key_pem: str,
     signer_cert_chain_pem: str,
     action: str = "c2pa.created",
+    digital_source_type: Optional[str] = None,
 ) -> SignedVideoResult:
     """Sign a video file with a C2PA manifest.
 
@@ -110,6 +111,7 @@ async def sign_video(
         action=action,
         custom_assertions=custom_assertions,
         rights_data=rights_data,
+        digital_source_type=digital_source_type,
     )
     c2pa_instance_id = manifest_dict["instance_id"]
 

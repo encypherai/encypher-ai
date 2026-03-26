@@ -1,0 +1,618 @@
+{
+  "generated_at": "2026-03-26T13:16:42.397615+00:00",
+  "product": "Encypher Enterprise API",
+  "signed_dir": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed",
+  "total_files": 31,
+  "pass_count": 31,
+  "fail_count": 0,
+  "results": [
+    {
+      "filename": "signed_test.avi",
+      "mime_type": "video/x-msvideo",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:a5f7073f-9bba-4825-8ecf-0f8533d74a99",
+        "instance_id": "xmp:iid:63693288-df7c-4e42-a954-2df84df6fdbc",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:22Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.avif",
+      "mime_type": "image/avif",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:cbb20ddc-15d4-4078-9564-6c6c9db026cf",
+        "instance_id": "xmp:iid:5e62ae18-0de9-46ec-8edf-4091a3e287bb",
+        "claim_generator": "",
+        "assertion_count": 3,
+        "signed_at": "2026-03-26T13:16:19Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.dng",
+      "mime_type": "image/x-adobe-dng",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:ecac906c-0b04-4b20-be2c-3968521845b8",
+        "instance_id": "xmp:iid:43f0c547-aeba-406c-b0c1-9849362c0200",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:20Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.docx",
+      "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "verification_method": "jumbf_structural",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "manifest_count": 1,
+        "active_manifest_label": "urn:c2pa:907803f6-8f4b-42c2-8562-b4f8dd3f20b9",
+        "instance_id": "urn:uuid:8ecb7d83-3c39-44f8-b4ac-c9705963ef6c",
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "assertion_labels": [
+          "c2pa.actions.v2",
+          "c2pa.hash.collection.data",
+          "com.encypher.provenance"
+        ],
+        "assertion_count": 3,
+        "claim_cbor_bytes": 697,
+        "cose_signature_bytes": 27255,
+        "signature_present": true
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.epub",
+      "mime_type": "application/epub+zip",
+      "verification_method": "jumbf_structural",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "manifest_count": 1,
+        "active_manifest_label": "urn:c2pa:b1d2d7e8-77ed-43ba-a617-984e2aaf4f56",
+        "instance_id": "urn:uuid:b73684f4-0735-45e8-a920-9e7f38434e85",
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "assertion_labels": [
+          "c2pa.actions.v2",
+          "c2pa.hash.collection.data",
+          "com.encypher.provenance"
+        ],
+        "assertion_count": 3,
+        "claim_cbor_bytes": 645,
+        "cose_signature_bytes": 27255,
+        "signature_present": true
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.flac",
+      "mime_type": "audio/flac",
+      "verification_method": "jumbf_structural",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "manifest_count": 1,
+        "active_manifest_label": "urn:c2pa:94e30b37-3c51-4b91-81a8-b3ee11de0c4d",
+        "instance_id": "urn:uuid:0a69857f-00fc-4892-9224-4c6436c2ee79",
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "assertion_labels": [
+          "c2pa.actions.v2",
+          "c2pa.hash.data",
+          "com.encypher.provenance"
+        ],
+        "assertion_count": 3,
+        "claim_cbor_bytes": 624,
+        "cose_signature_bytes": 27255,
+        "signature_present": true
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.gif",
+      "mime_type": "image/gif",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:35bacec7-16ba-4ffd-ad14-dfbcec0c3ca0",
+        "instance_id": "xmp:iid:f11a1d99-4560-477c-a96f-183830678f36",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:21Z",
+        "validation_success_count": 8,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.heic",
+      "mime_type": "image/heic",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:c795c0c7-9606-47c6-a2ba-90ceff76ba30",
+        "instance_id": "xmp:iid:1333cc60-7372-4054-9baa-0124227e56bb",
+        "claim_generator": "",
+        "assertion_count": 3,
+        "signed_at": "2026-03-26T13:16:19Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.heif",
+      "mime_type": "image/heif",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:7c30308d-f5a8-4cbd-bfa0-5b2357d2f458",
+        "instance_id": "xmp:iid:d7217578-a5f3-48f8-9915-b1b9a765b464",
+        "claim_generator": "",
+        "assertion_count": 3,
+        "signed_at": "2026-03-26T13:16:20Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.jpg",
+      "mime_type": "image/jpeg",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:e40b74c6-8245-4c34-bd5d-9f874833eeb7",
+        "instance_id": "xmp:iid:016c6f72-f0a9-4375-a643-35f3559faf9f",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:18Z",
+        "validation_success_count": 8,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.jxl",
+      "mime_type": "image/jxl",
+      "verification_method": "jumbf_structural",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "manifest_count": 1,
+        "active_manifest_label": "urn:c2pa:2d96bac3-32e1-4853-8ee6-3b9ec2a663aa",
+        "instance_id": "urn:uuid:21a6efac-2230-43e8-8d36-ae18dd57c4b6",
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "assertion_labels": [
+          "c2pa.actions.v2",
+          "c2pa.hash.data",
+          "com.encypher.provenance"
+        ],
+        "assertion_count": 3,
+        "claim_cbor_bytes": 622,
+        "cose_signature_bytes": 27255,
+        "signature_present": true
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.m4a",
+      "mime_type": "audio/mp4",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:0eea2849-6d62-4a9b-b363-e8c4453244f9",
+        "instance_id": "xmp:iid:4994d8ed-b5a8-4f34-b15d-173516043ea3",
+        "claim_generator": "",
+        "assertion_count": 3,
+        "signed_at": "2026-03-26T13:16:23Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.m4v",
+      "mime_type": "video/x-m4v",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:34bddd8e-ffca-49fd-91dc-74bec0591798",
+        "instance_id": "xmp:iid:b4161190-bbe0-40ce-9a27-4e9bbd14d572",
+        "claim_generator": "",
+        "assertion_count": 3,
+        "signed_at": "2026-03-26T13:16:22Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.mov",
+      "mime_type": "video/quicktime",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:37a971ff-dbcf-4e5b-b7b1-581a34434157",
+        "instance_id": "xmp:iid:f694bea2-bbce-4ec5-84cd-9540b0e891f0",
+        "claim_generator": "",
+        "assertion_count": 3,
+        "signed_at": "2026-03-26T13:16:22Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.mp3",
+      "mime_type": "audio/mpeg",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:541a8203-0163-40c2-8716-34fa0d9ac0b6",
+        "instance_id": "xmp:iid:b383d17d-3428-43f7-814a-1c6d85ccbb09",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:23Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.mp4",
+      "mime_type": "video/mp4",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:899d9ea4-c99f-41de-ba5e-28c2d4f0a3c4",
+        "instance_id": "xmp:iid:77bac872-d0d8-4d3a-a844-b772bb2d3124",
+        "claim_generator": "",
+        "assertion_count": 3,
+        "signed_at": "2026-03-26T13:16:21Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.odt",
+      "mime_type": "application/vnd.oasis.opendocument.text",
+      "verification_method": "jumbf_structural",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "manifest_count": 1,
+        "active_manifest_label": "urn:c2pa:50912451-5f4d-410e-9fb3-9f7ec95576e5",
+        "instance_id": "urn:uuid:50ee5ee3-cd39-4f4b-8ac7-739e4e91d7f7",
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "assertion_labels": [
+          "c2pa.actions.v2",
+          "c2pa.hash.collection.data",
+          "com.encypher.provenance"
+        ],
+        "assertion_count": 3,
+        "claim_cbor_bytes": 664,
+        "cose_signature_bytes": 27255,
+        "signature_present": true
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.otf",
+      "mime_type": "font/otf",
+      "verification_method": "jumbf_structural",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "manifest_count": 1,
+        "active_manifest_label": "urn:c2pa:56e90d0c-9ba9-4b63-a3cc-1228d34885ab",
+        "instance_id": "urn:uuid:17a79b4e-5a17-4f7e-8820-fc7ad8f361a7",
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "assertion_labels": [
+          "c2pa.actions.v2",
+          "c2pa.hash.data",
+          "com.encypher.provenance"
+        ],
+        "assertion_count": 3,
+        "claim_cbor_bytes": 621,
+        "cose_signature_bytes": 27255,
+        "signature_present": true
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.oxps",
+      "mime_type": "application/oxps",
+      "verification_method": "jumbf_structural",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "manifest_count": 1,
+        "active_manifest_label": "urn:c2pa:677975bf-87e6-49bf-8211-fc953b416425",
+        "instance_id": "urn:uuid:545e6fcf-aa9d-401e-9f54-a10d8299a00b",
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "assertion_labels": [
+          "c2pa.actions.v2",
+          "c2pa.hash.collection.data",
+          "com.encypher.provenance"
+        ],
+        "assertion_count": 3,
+        "claim_cbor_bytes": 641,
+        "cose_signature_bytes": 27255,
+        "signature_present": true
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.pdf",
+      "mime_type": "application/pdf",
+      "verification_method": "jumbf_structural",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "manifest_count": 1,
+        "active_manifest_label": "urn:c2pa:c7735fac-6d98-45a7-bc98-6d9f3e67825a",
+        "instance_id": "urn:uuid:babf7eab-2c0c-4504-a092-bbc28e74fa9c",
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "assertion_labels": [
+          "c2pa.actions.v2",
+          "c2pa.hash.data",
+          "com.encypher.provenance"
+        ],
+        "assertion_count": 3,
+        "claim_cbor_bytes": 628,
+        "cose_signature_bytes": 27255,
+        "signature_present": true
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.png",
+      "mime_type": "image/png",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:7e499823-d162-4626-85a2-fa8c1bab2062",
+        "instance_id": "xmp:iid:40ce37a1-8f15-45dd-a5b4-68dbcfd3f1b4",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:18Z",
+        "validation_success_count": 8,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.sfnt",
+      "mime_type": "font/sfnt",
+      "verification_method": "jumbf_structural",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "manifest_count": 1,
+        "active_manifest_label": "urn:c2pa:9adfe008-96a2-4207-a7b4-0d39167e4c1f",
+        "instance_id": "urn:uuid:95194094-11dd-4830-bb44-e3d32a481601",
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "assertion_labels": [
+          "c2pa.actions.v2",
+          "c2pa.hash.data",
+          "com.encypher.provenance"
+        ],
+        "assertion_count": 3,
+        "claim_cbor_bytes": 623,
+        "cose_signature_bytes": 27255,
+        "signature_present": true
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.svg",
+      "mime_type": "image/svg+xml",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:916f83ea-115c-43de-a91d-6f7349b2b03b",
+        "instance_id": "xmp:iid:c05ccf2f-534b-42d1-9ddc-95634311723e",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:20Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.tiff",
+      "mime_type": "image/tiff",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:2503a08e-8786-4ebf-81fb-5a8177eadd64",
+        "instance_id": "xmp:iid:eb19d171-501c-4242-b5bf-5732692f054c",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:19Z",
+        "validation_success_count": 8,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.ttf",
+      "mime_type": "font/ttf",
+      "verification_method": "jumbf_structural",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "manifest_count": 1,
+        "active_manifest_label": "urn:c2pa:0103ddb6-8242-4715-885f-ae5aba44e321",
+        "instance_id": "urn:uuid:63bfd620-85f7-4aa6-a40b-1d7f42a51f76",
+        "claim_generator": "Encypher Enterprise API/2.0",
+        "assertion_labels": [
+          "c2pa.actions.v2",
+          "c2pa.hash.data",
+          "com.encypher.provenance"
+        ],
+        "assertion_count": 3,
+        "claim_cbor_bytes": 621,
+        "cose_signature_bytes": 27255,
+        "signature_present": true
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.wav",
+      "mime_type": "audio/wav",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:0593a7e6-d31e-4a3e-a706-9dec7fa17bf5",
+        "instance_id": "xmp:iid:c7ef8914-f21f-41f6-a14f-b1ff93a127fa",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:23Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test.webp",
+      "mime_type": "image/webp",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:6cab819f-3284-427e-87db-00980276148e",
+        "instance_id": "xmp:iid:92344cae-7c3d-4b8f-bc25-271f1ecf81e1",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:18Z",
+        "validation_success_count": 8,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test_aac.m4a",
+      "mime_type": "audio/mp4",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:29588e22-6984-4c06-8d68-6541b8d7e320",
+        "instance_id": "xmp:iid:f1e39c4f-be6a-4033-9ab0-96b95d793c35",
+        "claim_generator": "",
+        "assertion_count": 3,
+        "signed_at": "2026-03-26T13:16:24Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test_heic-sequence.heic",
+      "mime_type": "image/heic",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:13820e43-5b71-44be-a1d9-b4d0bdaf7099",
+        "instance_id": "xmp:iid:b7bddcc3-3325-43f1-b0ad-0c7e71db6513",
+        "claim_generator": "",
+        "assertion_count": 3,
+        "signed_at": "2026-03-26T13:16:21Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test_heif-sequence.heif",
+      "mime_type": "image/heif",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:00d05fcb-b210-414b-a5e8-51a8548d588c",
+        "instance_id": "xmp:iid:f900fd5c-2fd8-47e1-970f-4a3da4b9c1dc",
+        "claim_generator": "",
+        "assertion_count": 3,
+        "signed_at": "2026-03-26T13:16:21Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    },
+    {
+      "filename": "signed_test_mpa.mp3",
+      "mime_type": "audio/mpeg",
+      "verification_method": "c2pa_reader",
+      "valid": true,
+      "manifest_summary": {
+        "manifest_found": true,
+        "active_manifest": "urn:c2pa:0617e5b7-9680-482b-9666-8fb0919e0c61",
+        "instance_id": "xmp:iid:b40cbdfb-e331-44e1-a8d3-2d03fbe9dd4d",
+        "claim_generator": "",
+        "assertion_count": 2,
+        "signed_at": "2026-03-26T13:16:24Z",
+        "validation_success_count": 7,
+        "validation_failure_count": 0,
+        "informational_status_count": 1
+      },
+      "error": null
+    }
+  ]
+}

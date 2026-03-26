@@ -54,29 +54,99 @@ def require_enterprise_video(
 
 # ---------------------------------------------------------------------------
 # Signed video temp cache (for large file downloads)
+#
+# Primary: temp file on disk + Redis metadata (multi-worker safe)
+# Fallback: in-memory dict when Redis is unavailable (dev mode)
 # ---------------------------------------------------------------------------
 
 _VIDEO_DOWNLOAD_TTL = 600  # 10 minutes
 _VIDEO_RESPONSE_THRESHOLD = 50 * 1024 * 1024  # 50 MB - above this, use download endpoint
-# Dict of video_id -> (signed_bytes, org_id, expiry_timestamp)
+_REDIS_CACHE_PREFIX = "encypher:video:cache:"
+_CACHE_DIR = "/tmp"
+
+# Fallback in-memory cache (only used when Redis unavailable)
 _signed_video_cache: Dict[str, tuple] = {}
 
 
-def _cache_signed_video(video_id: str, signed_bytes: bytes, org_id: str) -> None:
-    """Store signed video bytes for later download."""
+def _get_redis():
+    """Get Redis client from session_service, or None if unavailable."""
+    try:
+        from app.services.session_service import session_service
+
+        return session_service.redis_client
+    except Exception:
+        return None
+
+
+async def _cache_signed_video(video_id: str, signed_bytes: bytes, org_id: str) -> None:
+    """Store signed video bytes for later download.
+
+    Writes bytes to a temp file and stores metadata in Redis. Falls back
+    to in-memory dict when Redis is not available.
+    """
+    import os
+    import tempfile
+
+    redis_client = _get_redis()
+    if redis_client:
+        try:
+            fd, file_path = tempfile.mkstemp(suffix=".vid", prefix=f"encypher_vid_{video_id}_", dir=_CACHE_DIR)
+            try:
+                os.write(fd, signed_bytes)
+            finally:
+                os.close(fd)
+
+            metadata = json.dumps({"file_path": file_path, "org_id": org_id})
+            await redis_client.setex(f"{_REDIS_CACHE_PREFIX}{video_id}", _VIDEO_DOWNLOAD_TTL, metadata)
+            return
+        except Exception as exc:
+            logger.warning("Redis video cache write failed, falling back to memory: %s", exc)
+            # Clean up temp file on Redis failure
+            try:
+                os.unlink(file_path)
+            except OSError:
+                pass
+
+    # Fallback: in-memory cache
     _cleanup_expired_cache()
     _signed_video_cache[video_id] = (signed_bytes, org_id, time.time() + _VIDEO_DOWNLOAD_TTL)
 
 
-def _get_cached_video(video_id: str, org_id: str) -> Optional[bytes]:
+async def _get_cached_video(video_id: str, org_id: str) -> Optional[bytes]:
     """Retrieve cached signed video bytes, or None if expired/missing."""
+    import os
+
+    redis_client = _get_redis()
+    if redis_client:
+        try:
+            raw = await redis_client.get(f"{_REDIS_CACHE_PREFIX}{video_id}")
+            if raw:
+                meta = json.loads(raw)
+                if meta.get("org_id") != org_id:
+                    return None
+                file_path = meta.get("file_path", "")
+                if os.path.exists(file_path):
+                    with open(file_path, "rb") as f:
+                        data = f.read()
+                    # Clean up after download
+                    try:
+                        os.unlink(file_path)
+                        await redis_client.delete(f"{_REDIS_CACHE_PREFIX}{video_id}")
+                    except Exception:
+                        pass
+                    return data
+            return None
+        except Exception as exc:
+            logger.warning("Redis video cache read failed, falling back to memory: %s", exc)
+
+    # Fallback: in-memory cache
     _cleanup_expired_cache()
     entry = _signed_video_cache.get(video_id)
     if entry is None:
         return None
     signed_bytes, cached_org_id, expiry = entry
     if cached_org_id != org_id:
-        return None  # org mismatch
+        return None
     if time.time() > expiry:
         _signed_video_cache.pop(video_id, None)
         return None
@@ -84,7 +154,7 @@ def _get_cached_video(video_id: str, org_id: str) -> Optional[bytes]:
 
 
 def _cleanup_expired_cache() -> None:
-    """Remove expired entries from the cache."""
+    """Remove expired entries from the in-memory fallback cache."""
     now = time.time()
     expired = [k for k, (_, _, exp) in _signed_video_cache.items() if now > exp]
     for k in expired:
@@ -153,6 +223,7 @@ async def video_sign(
     title: str = Form(default="untitled-video", description="Title for C2PA manifest"),
     document_id: Optional[str] = Form(default=None, description="Custom document ID (auto-generated if omitted)"),
     action: str = Form(default="c2pa.created", description="C2PA action (c2pa.created, c2pa.edited, c2pa.transcoded)"),
+    digital_source_type: Optional[str] = Form(default=None, description="C2PA digital source type (e.g. digitalCapture, trainedAlgorithmicMedia)"),
     custom_assertions: str = Form(default="[]", description="JSON-encoded list of additional C2PA assertions"),
     rights_data: str = Form(default="{}", description="JSON-encoded rights metadata"),
     organization: dict = Depends(require_enterprise_video),
@@ -197,6 +268,7 @@ async def video_sign(
             custom_assertions=parsed_assertions,
             rights_data=parsed_rights,
             action=action,
+            digital_source_type=digital_source_type,
         )
     except HTTPException:
         raise
@@ -210,7 +282,7 @@ async def video_sign(
     if len(signing_result.signed_bytes) <= _VIDEO_RESPONSE_THRESHOLD:
         signed_b64 = base64.b64encode(signing_result.signed_bytes).decode()
     else:
-        _cache_signed_video(signing_result.video_id, signing_result.signed_bytes, org_id)
+        await _cache_signed_video(signing_result.video_id, signing_result.signed_bytes, org_id)
         download_url = f"/api/v1/enterprise/video/download/{signing_result.video_id}"
 
     return VideoSignResponse(
@@ -274,7 +346,7 @@ async def video_download(
     organization: dict = Depends(require_enterprise_video),
 ) -> Response:
     org_id: str = organization["organization_id"]
-    signed_bytes = _get_cached_video(video_id, org_id)
+    signed_bytes = await _get_cached_video(video_id, org_id)
     if signed_bytes is None:
         raise HTTPException(
             status_code=404,

@@ -178,6 +178,40 @@ async def execute_rich_signing(
         phash_val = compute_phash(svc_result.signed_bytes)
         phash_hex = format(phash_val & 0xFFFFFFFFFFFFFFFF, "016x")
 
+        # Apply TrustMark neural watermark (Enterprise only)
+        trustmark_applied = False
+        trustmark_key_val = None
+        if request.options.enable_trustmark:
+            from app.services.trustmark_client import (
+                compute_trustmark_key,
+                compute_trustmark_payload,
+                trustmark_client,
+            )
+
+            if trustmark_client.is_configured:
+                signed_b64 = base64.b64encode(svc_result.signed_bytes).decode()
+                message_bits = compute_trustmark_payload(image_id, org_id)
+                tm_result = await trustmark_client.apply_watermark(signed_b64, img_req.mime_type, message_bits)
+                if tm_result is not None:
+                    watermarked_b64, _confidence = tm_result
+                    svc_result.signed_bytes = base64.b64decode(watermarked_b64)
+                    from app.utils.hashing import compute_sha256
+
+                    svc_result.signed_hash = compute_sha256(svc_result.signed_bytes)
+                    svc_result.size_bytes = len(svc_result.signed_bytes)
+                    trustmark_applied = True
+                    trustmark_key_val = compute_trustmark_key(image_id, org_id)
+                    logger.info(
+                        "TrustMark applied: image_id=%s doc=%s",
+                        image_id,
+                        doc_id,
+                    )
+                else:
+                    logger.warning(
+                        "TrustMark failed for image_id=%s, continuing without watermark",
+                        image_id,
+                    )
+
         # Build ArticleImage DB row
         row = ArticleImage(
             organization_id=org_id,
@@ -194,7 +228,8 @@ async def execute_rich_signing(
             c2pa_manifest_hash=svc_result.c2pa_manifest_hash,
             phash=phash_val,
             image_metadata=img_req.metadata or {},
-            trustmark_applied=False,
+            trustmark_applied=trustmark_applied,
+            trustmark_key=trustmark_key_val,
         )
         article_image_rows.append(row)
 
@@ -293,6 +328,21 @@ async def execute_rich_signing(
     except Exception as e:
         logger.error("DB commit failed for rich signing doc=%s: %s", doc_id, e)
         await content_db.rollback()
+
+        # IntegrityError (duplicate doc_id, constraint violation) must always
+        # be surfaced -- passthrough mode only forgives infrastructure failures,
+        # not data conflicts.
+        from sqlalchemy.exc import IntegrityError
+
+        if isinstance(e, IntegrityError):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={
+                    "code": "E_DUPLICATE_DOCUMENT",
+                    "message": f"Document {doc_id!r} already signed (constraint violation)",
+                },
+            )
+
         if not (settings.signing_passthrough or settings.image_signing_passthrough):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -1,0 +1,23 @@
+{
+  "filename": "signed_test.odt",
+  "mime_type": "application/vnd.oasis.opendocument.text",
+  "verification_method": "jumbf_structural",
+  "valid": true,
+  "manifest_summary": {
+    "manifest_found": true,
+    "manifest_count": 1,
+    "active_manifest_label": "urn:c2pa:50912451-5f4d-410e-9fb3-9f7ec95576e5",
+    "instance_id": "urn:uuid:50ee5ee3-cd39-4f4b-8ac7-739e4e91d7f7",
+    "claim_generator": "Encypher Enterprise API/2.0",
+    "assertion_labels": [
+      "c2pa.actions.v2",
+      "c2pa.hash.collection.data",
+      "com.encypher.provenance"
+    ],
+    "assertion_count": 3,
+    "claim_cbor_bytes": 664,
+    "cose_signature_bytes": 27255,
+    "signature_present": true
+  },
+  "error": null
+}

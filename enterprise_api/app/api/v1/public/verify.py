@@ -52,6 +52,11 @@ MAX_VERIFY_BATCH_BYTES = 256 * 1024
 SIGNATURE_PATTERN = re.compile(r"^[0-9a-fA-F]{8,64}$")
 
 
+def _requires_enterprise(options: Any) -> bool:
+    """Return True if the verify options contain Enterprise-only features."""
+    return getattr(options, "search_scope", "organization") == "all"
+
+
 def _signature_matches(signature_hash: Optional[str], provided: str) -> bool:
     if not signature_hash:
         return False
@@ -694,3 +699,90 @@ async def extract_and_verify_embedding(
             "new_endpoint": "/api/v1/public/verify-text",
         },
     )
+
+
+# ============================================================================
+# Unified Verify Endpoints (TEAM_273)
+# ============================================================================
+
+
+@router.post(
+    "/verify",
+    summary="Unified text verification (Public)",
+    description="Verify text content for embedded Encypher signatures. Returns a unified response envelope.",
+    responses={
+        200: {"description": "Verification result"},
+        400: {"description": "Invalid request (empty text)"},
+        422: {"description": "Validation error"},
+    },
+)
+async def unified_verify(
+    request: Request,
+    core_db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
+):
+    """Unified text verification endpoint.
+
+    Accepts JSON body with ``text`` (single) or ``documents`` (batch).
+    """
+    from app.schemas.verify_schemas import UnifiedVerifyRequest
+    from app.services.unified_verify_service import verify_text as svc_verify_text
+
+    await public_rate_limiter(request, endpoint_type="verify_single")
+
+    body = await request.json()
+    try:
+        req = UnifiedVerifyRequest(**body)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Provide exactly one of 'text' (single) or 'documents' (batch).",
+        )
+
+    docs = req.get_documents()
+    first_text = docs[0].text if docs else ""
+    if not first_text or not first_text.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Text field is required and must not be empty",
+        )
+
+    resp = await svc_verify_text(
+        first_text,
+        options=req.options,
+        core_db=core_db,
+        content_db=content_db,
+    )
+    return resp.model_dump(mode="json")
+
+
+@router.post(
+    "/verify/media",
+    summary="Unified media verification (Public)",
+    description="Verify binary media (image, audio, video) for C2PA provenance.",
+    responses={
+        200: {"description": "Verification result"},
+        422: {"description": "No file uploaded"},
+    },
+)
+async def unified_verify_media(
+    request: Request,
+    file: Any = None,
+):
+    """Unified media verification endpoint (multipart/form-data)."""
+    from fastapi import File, UploadFile
+    from app.services.unified_verify_service import verify_media as svc_verify_media
+
+    form = await request.form()
+    upload = form.get("file")
+    if upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="A 'file' field is required in the multipart form data.",
+        )
+
+    data = await upload.read()
+    mime_type = upload.content_type or "application/octet-stream"
+
+    resp = svc_verify_media(data, mime_type)
+    return resp.model_dump(mode="json")

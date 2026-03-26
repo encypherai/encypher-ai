@@ -28,6 +28,7 @@ async def execute_video_signing(
     custom_assertions: list[dict] | None = None,
     rights_data: dict | None = None,
     action: str = "c2pa.created",
+    digital_source_type: str | None = None,
 ) -> SignedVideoResult:
     """Sign video with C2PA using org credentials.
 
@@ -66,7 +67,7 @@ async def execute_video_signing(
         )
 
     try:
-        return await sign_video(
+        result = await sign_video(
             video_data=video_bytes,
             mime_type=mime_type,
             title=title,
@@ -78,6 +79,7 @@ async def execute_video_signing(
             signer_private_key_pem=private_key_pem,
             signer_cert_chain_pem=cert_chain_pem,
             action=action,
+            digital_source_type=digital_source_type,
         )
     except ValueError as exc:
         logger.error("video_signing_executor: validation error org=%s: %s", org_id, exc)
@@ -88,3 +90,37 @@ async def execute_video_signing(
             status_code=500,
             detail={"code": "VIDEO_SIGNING_FAILED", "message": "Video signing failed"},
         ) from exc
+
+    # Persist SignedVideo record
+    try:
+        from app.models.signed_video import SignedVideo
+        from app.utils.video_utils import compute_video_phash
+
+        phash_val = compute_video_phash(result.signed_bytes)
+
+        row = SignedVideo(
+            organization_id=org_id,
+            document_id=document_id,
+            video_id=result.video_id,
+            title=title,
+            mime_type=result.mime_type,
+            original_hash=result.original_hash,
+            signed_hash=result.signed_hash,
+            size_bytes=result.size_bytes,
+            c2pa_instance_id=result.c2pa_instance_id,
+            c2pa_manifest_hash=result.c2pa_manifest_hash,
+            c2pa_signed=result.c2pa_signed,
+            digital_source_type=digital_source_type,
+            phash=phash_val,
+        )
+        db.add(row)
+        await db.commit()
+    except Exception as exc:
+        logger.warning(
+            "video_signing_executor: failed to persist SignedVideo for org=%s video=%s: %s",
+            org_id,
+            result.video_id,
+            exc,
+        )
+
+    return result

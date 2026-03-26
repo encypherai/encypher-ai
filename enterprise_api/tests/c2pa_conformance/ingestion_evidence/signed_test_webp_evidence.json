@@ -1,0 +1,18 @@
+{
+  "filename": "signed_test.webp",
+  "mime_type": "image/webp",
+  "verification_method": "c2pa_reader",
+  "valid": true,
+  "manifest_summary": {
+    "manifest_found": true,
+    "active_manifest": "urn:c2pa:6cab819f-3284-427e-87db-00980276148e",
+    "instance_id": "xmp:iid:92344cae-7c3d-4b8f-bc25-271f1ecf81e1",
+    "claim_generator": "",
+    "assertion_count": 2,
+    "signed_at": "2026-03-26T13:16:18Z",
+    "validation_success_count": 8,
+    "validation_failure_count": 0,
+    "informational_status_count": 1
+  },
+  "error": null
+}

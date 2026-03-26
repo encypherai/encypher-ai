@@ -1,0 +1,18 @@
+{
+  "filename": "signed_test_heif-sequence.heif",
+  "mime_type": "image/heif",
+  "verification_method": "c2pa_reader",
+  "valid": true,
+  "manifest_summary": {
+    "manifest_found": true,
+    "active_manifest": "urn:c2pa:00d05fcb-b210-414b-a5e8-51a8548d588c",
+    "instance_id": "xmp:iid:f900fd5c-2fd8-47e1-970f-4a3da4b9c1dc",
+    "claim_generator": "",
+    "assertion_count": 3,
+    "signed_at": "2026-03-26T13:16:21Z",
+    "validation_success_count": 7,
+    "validation_failure_count": 0,
+    "informational_status_count": 1
+  },
+  "error": null
+}

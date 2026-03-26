@@ -48,7 +48,7 @@ class TestMP4Injection:
         assert extracted["org_id"] == _FIELDS["org_id"]
         assert extracted["document_id"] == _FIELDS["document_id"]
         assert extracted["content_hash"] == _FIELDS["content_hash"]
-        assert extracted["verify"] == "https://verify.encypherai.com"
+        assert extracted["verify"] == "https://verify.encypher.ai/"
 
     def test_quicktime_also_works(self):
         mp4 = _make_mp4_stub()
@@ -78,7 +78,7 @@ class TestAVIInjection:
         extracted = extract_encypher_video_metadata(embedded, "video/x-msvideo")
         assert extracted is not None
         assert extracted["instance_id"] == _FIELDS["instance_id"]
-        assert extracted["verify"] == "https://verify.encypherai.com"
+        assert extracted["verify"] == "https://verify.encypher.ai/"
 
     def test_no_metadata_returns_none(self):
         avi = _make_avi_stub()

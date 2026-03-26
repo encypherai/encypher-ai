@@ -169,7 +169,7 @@ async def stream_segment(
 
     from app.services.video_stream_signing_service import get_session, sign_segment
 
-    session = get_session(session_id, org_id)
+    session = await get_session(session_id, org_id)
     if session is None:
         raise HTTPException(status_code=404, detail=f"Stream session {session_id} not found or expired")
 
@@ -229,7 +229,7 @@ async def stream_finalize(
 
     from app.services.video_stream_signing_service import finalize_stream, get_session
 
-    session = get_session(session_id, org_id)
+    session = await get_session(session_id, org_id)
     if session is None:
         raise HTTPException(status_code=404, detail=f"Stream session {session_id} not found or expired")
 
@@ -261,7 +261,7 @@ async def stream_status(
 
     from app.services.video_stream_signing_service import get_session
 
-    session = get_session(session_id, org_id)
+    session = await get_session(session_id, org_id)
     if session is None:
         raise HTTPException(status_code=404, detail=f"Stream session {session_id} not found or expired")
 
