@@ -106,11 +106,11 @@ describe("fileInspector", () => {
     });
 
     it("rejects unsupported file types", () => {
-      const result = validateFile("video.mp4", "video/mp4", 1024);
+      const result = validateFile("archive.rar", "application/x-rar-compressed", 1024);
       expect(result.valid).toBe(false);
       if (!result.valid) {
         expect(result.reason).toContain("Unsupported file type");
-        expect(result.reason).toContain("video.mp4");
+        expect(result.reason).toContain("archive.rar");
       }
     });
 
@@ -200,7 +200,7 @@ describe("fileInspector", () => {
       expect(SUPPORTED_FORMATS_DISPLAY).toContain("PDF");
       expect(SUPPORTED_FORMATS_DISPLAY).toContain("TXT");
       expect(SUPPORTED_FORMATS_DISPLAY).toContain("JSON");
-      expect(SUPPORTED_FORMATS_DISPLAY).toContain("PY");
+      expect(SUPPORTED_FORMATS_DISPLAY).toContain("EPUB");
     });
   });
 });
@@ -284,10 +284,10 @@ describe("validateFile with images", () => {
   });
 
   it("rejects unsupported file types with appropriate message", () => {
-    const result = validateFile("video.mp4", "video/mp4", 1024);
+    const result = validateFile("archive.rar", "application/x-rar-compressed", 1024);
     expect(result.valid).toBe(false);
     if (!result.valid) {
-      expect(result.reason).toContain("image");
+      expect(result.reason).toContain("Unsupported");
     }
   });
 });

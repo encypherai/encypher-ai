@@ -28,11 +28,21 @@ export const SUPPORTED_VIDEO_EXTENSIONS = [
   '.mp4', '.mov', '.avi', '.webm', '.mkv',
 ];
 
+export const SUPPORTED_DOCUMENT_EXTENSIONS = [
+  '.epub', '.docx', '.odt', '.oxps',
+];
+
+export const SUPPORTED_FONT_EXTENSIONS = [
+  '.otf', '.ttf',
+];
+
 export const SUPPORTED_EXTENSIONS = [
   ...SUPPORTED_TEXT_EXTENSIONS,
   ...SUPPORTED_IMAGE_EXTENSIONS,
   ...SUPPORTED_AUDIO_EXTENSIONS,
   ...SUPPORTED_VIDEO_EXTENSIONS,
+  ...SUPPORTED_DOCUMENT_EXTENSIONS,
+  ...SUPPORTED_FONT_EXTENSIONS,
 ];
 
 // ---------------------------------------------------------------------------
@@ -65,28 +75,53 @@ export const SUPPORTED_VIDEO_MIME_TYPES = [
   'video/webm', 'video/x-matroska', 'video/ogg',
 ];
 
+export const SUPPORTED_DOCUMENT_MIME_TYPES = [
+  'application/epub+zip',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.oasis.opendocument.text',
+  'application/oxps',
+];
+
+export const SUPPORTED_FONT_MIME_TYPES = [
+  'font/otf', 'font/ttf', 'font/sfnt',
+];
+
 export const SUPPORTED_MIME_TYPES = [
   ...SUPPORTED_TEXT_MIME_TYPES,
   ...SUPPORTED_IMAGE_MIME_TYPES,
   ...SUPPORTED_AUDIO_MIME_TYPES,
   ...SUPPORTED_VIDEO_MIME_TYPES,
+  ...SUPPORTED_DOCUMENT_MIME_TYPES,
+  ...SUPPORTED_FONT_MIME_TYPES,
 ];
 
 // ---------------------------------------------------------------------------
 // Size limits
 // ---------------------------------------------------------------------------
 
-export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;        // 5 MB (text/PDF)
+export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;        // 5 MB (text)
 export const IMAGE_MAX_SIZE_BYTES = 10 * 1024 * 1024;      // 10 MB
 export const AUDIO_MAX_SIZE_BYTES = 25 * 1024 * 1024;      // 25 MB
 export const VIDEO_MAX_SIZE_BYTES = 100 * 1024 * 1024;     // 100 MB
+export const DOCUMENT_MAX_SIZE_BYTES = 25 * 1024 * 1024;   // 25 MB
+export const FONT_MAX_SIZE_BYTES = 10 * 1024 * 1024;       // 10 MB
 
 // ---------------------------------------------------------------------------
 // Display
 // ---------------------------------------------------------------------------
 
-export const SUPPORTED_FORMATS_DISPLAY =
-  'JPEG, PNG, WebP, TIFF, GIF, HEIC, HEIF, AVIF, SVG, DNG, JXL -- MP4, MOV, AVI, WebM -- MP3, WAV, FLAC, M4A, OGG, AAC -- PDF, TXT, MD, HTML, JSON, XML';
+export const SUPPORTED_FORMATS_BY_CATEGORY = {
+  Image: 'JPEG, PNG, WebP, TIFF, GIF, HEIC, HEIF, AVIF, SVG, DNG, JXL',
+  Video: 'MP4, MOV, AVI, WebM',
+  Audio: 'MP3, WAV, FLAC, M4A, OGG, AAC',
+  Document: 'PDF, EPUB, DOCX, ODT, OXPS',
+  Font: 'OTF, TTF',
+  Text: 'TXT, MD, HTML, JSON, XML',
+} as const;
+
+export const SUPPORTED_FORMATS_DISPLAY = Object.entries(SUPPORTED_FORMATS_BY_CATEGORY)
+  .map(([cat, fmts]) => `${cat}: ${fmts}`)
+  .join(' | ');
 
 // ---------------------------------------------------------------------------
 // Detection helpers
@@ -114,10 +149,23 @@ export function isVideoFile(fileName: string, mimeType: string): boolean {
   return SUPPORTED_VIDEO_EXTENSIONS.includes(getExtension(fileName));
 }
 
+export function isDocumentFile(fileName: string, mimeType: string): boolean {
+  if (SUPPORTED_DOCUMENT_MIME_TYPES.some((mime) => mimeType === mime)) return true;
+  return SUPPORTED_DOCUMENT_EXTENSIONS.includes(getExtension(fileName));
+}
+
+export function isFontFile(fileName: string, mimeType: string): boolean {
+  if (SUPPORTED_FONT_MIME_TYPES.some((mime) => mimeType === mime)) return true;
+  if (mimeType.startsWith('font/')) return true;
+  return SUPPORTED_FONT_EXTENSIONS.includes(getExtension(fileName));
+}
+
 export function isTextFile(fileName: string, mimeType: string): boolean {
   if (isImageFile(fileName, mimeType)) return false;
   if (isAudioFile(fileName, mimeType)) return false;
   if (isVideoFile(fileName, mimeType)) return false;
+  if (isDocumentFile(fileName, mimeType)) return false;
+  if (isFontFile(fileName, mimeType)) return false;
   if (SUPPORTED_TEXT_MIME_TYPES.some((mime) => mimeType.startsWith(mime))) return true;
   if (mimeType.startsWith('text/')) return true;
   return SUPPORTED_TEXT_EXTENSIONS.includes(getExtension(fileName));
@@ -128,12 +176,14 @@ export function isPdfFile(fileName: string, mimeType: string): boolean {
   return getExtension(fileName) === '.pdf';
 }
 
-export type FileKind = 'image' | 'audio' | 'video' | 'text';
+export type FileKind = 'image' | 'audio' | 'video' | 'document' | 'font' | 'text';
 
 export function getFileKind(fileName: string, mimeType: string): FileKind {
   if (isImageFile(fileName, mimeType)) return 'image';
   if (isAudioFile(fileName, mimeType)) return 'audio';
   if (isVideoFile(fileName, mimeType)) return 'video';
+  if (isDocumentFile(fileName, mimeType)) return 'document';
+  if (isFontFile(fileName, mimeType)) return 'font';
   return 'text';
 }
 
@@ -155,6 +205,13 @@ const EXTENSION_TO_MIME: Record<string, string> = {
   // Video
   '.mp4': 'video/mp4', '.mov': 'video/quicktime', '.avi': 'video/x-msvideo',
   '.webm': 'video/webm', '.mkv': 'video/x-matroska',
+  // Document
+  '.epub': 'application/epub+zip',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.odt': 'application/vnd.oasis.opendocument.text',
+  '.oxps': 'application/oxps',
+  // Font
+  '.otf': 'font/otf', '.ttf': 'font/ttf',
 };
 
 export function resolveMimeType(fileName: string, browserMime: string): string {
@@ -201,6 +258,8 @@ export function validateFile(
   const maxBytes = kind === 'video' ? VIDEO_MAX_SIZE_BYTES
     : kind === 'audio' ? AUDIO_MAX_SIZE_BYTES
     : kind === 'image' ? IMAGE_MAX_SIZE_BYTES
+    : kind === 'document' ? DOCUMENT_MAX_SIZE_BYTES
+    : kind === 'font' ? FONT_MAX_SIZE_BYTES
     : MAX_FILE_SIZE_BYTES;
 
   if (sizeBytes > maxBytes) {

@@ -11,11 +11,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { trackToolEvent } from "@/lib/toolsAnalytics";
 import {
   SUPPORTED_EXTENSIONS,
-  SUPPORTED_FORMATS_DISPLAY,
+  SUPPORTED_FORMATS_BY_CATEGORY,
   isPdfFile,
   isImageFile,
   isAudioFile,
   isVideoFile,
+  isDocumentFile,
+  isFontFile,
   getFileKind,
   resolveMimeType,
   formatFileSize,
@@ -182,6 +184,20 @@ async function verifyVideo(file: Blob, mimeType: string): Promise<MediaVerifyRes
   const response = await fetch("/api/tools/verify-video", {
     method: "POST",
     body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Request failed with status ${response.status}`);
+  }
+  return response.json();
+}
+
+async function verifyDocument(docBase64: string, mimeType: string): Promise<MediaVerifyResponse> {
+  const response = await fetch("/api/tools/verify-document", {
+    method: "POST",
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ document_data: docBase64, mime_type: mimeType }),
   });
 
   if (!response.ok) {
@@ -443,7 +459,12 @@ function MediaVerifyResult({
           {!response.valid && !response.error && (
             <div className="mt-2 text-xs text-red-200">
               <p>Encypher checks for C2PA JUMBF manifests embedded in {fileKind} files.</p>
-              <p className="mt-1">Supported formats: {fileKind === 'audio' ? 'MP3, WAV, FLAC, M4A, OGG, AAC' : 'MP4, MOV, AVI, WebM'}</p>
+              <p className="mt-1">Supported formats: {
+                fileKind === 'audio' ? 'MP3, WAV, FLAC, M4A, OGG, AAC'
+                : fileKind === 'document' ? 'EPUB, DOCX, ODT, OXPS'
+                : fileKind === 'font' ? 'OTF, TTF'
+                : 'MP4, MOV, AVI, WebM'
+              }</p>
             </div>
           )}
         </AlertDescription>
@@ -603,6 +624,36 @@ export default function FileInspectorTool() {
             fileName: file.name,
             fileSize: file.size,
             fileKind: 'video',
+            valid: response.valid,
+            hasC2pa: response.c2pa_manifest_valid,
+            durationMs: Date.now() - startedAt,
+          },
+        });
+
+        setMediaVerifyResponse(response);
+        setLoading(false);
+        return;
+      }
+
+      // --- Document / Font path (C2PA binary verification) ---
+      if (isDocumentFile(file.name, file.type) || isFontFile(file.name, file.type)) {
+        const buffer = await file.arrayBuffer();
+        const b64 = toBase64(buffer);
+        const mimeType = resolveMimeType(file.name, file.type);
+        const kind = isFontFile(file.name, file.type) ? 'font' : 'document';
+
+        const response = await verifyDocument(b64, mimeType);
+
+        trackToolEvent({
+          eventName: "tools_inspect_success",
+          pageUrl: window.location.href,
+          pageTitle: document.title,
+          referrer: document.referrer,
+          userAgent: navigator.userAgent,
+          properties: {
+            fileName: file.name,
+            fileSize: file.size,
+            fileKind: kind,
             valid: response.valid,
             hasC2pa: response.c2pa_manifest_valid,
             durationMs: Date.now() - startedAt,
@@ -781,7 +832,8 @@ export default function FileInspectorTool() {
   const currentFileKind: FileKind | null = selectedFile
     ? getFileKind(selectedFile.name, selectedFile.type) : null;
   const isCurrentImage = currentFileKind === 'image';
-  const isCurrentMedia = currentFileKind === 'audio' || currentFileKind === 'video';
+  const isCurrentMedia = currentFileKind === 'audio' || currentFileKind === 'video'
+    || currentFileKind === 'document' || currentFileKind === 'font';
   const hasResult = (isCurrentImage && imageVerifyResponse)
     || (isCurrentMedia && mediaVerifyResponse)
     || (!isCurrentImage && !isCurrentMedia && verifyResponse);
@@ -798,9 +850,14 @@ export default function FileInspectorTool() {
           <div className="mb-2">
             <strong className="text-sm">Supported formats</strong>
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {SUPPORTED_FORMATS_DISPLAY}
-          </p>
+          <dl className="text-xs text-muted-foreground leading-relaxed space-y-1">
+            {Object.entries(SUPPORTED_FORMATS_BY_CATEGORY).map(([category, formats]) => (
+              <div key={category}>
+                <dt className="inline font-medium text-foreground/70">{category}:</dt>{' '}
+                <dd className="inline">{formats}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
 
         {/* Main area */}

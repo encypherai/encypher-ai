@@ -66,6 +66,22 @@ _VIDEO_MIMES = frozenset(
         "video/mpeg",
     }
 )
+_DOCUMENT_MIMES = frozenset(
+    {
+        "application/pdf",
+        "application/epub+zip",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.oasis.opendocument.text",
+        "application/oxps",
+    }
+)
+_FONT_MIMES = frozenset(
+    {
+        "font/otf",
+        "font/ttf",
+        "font/sfnt",
+    }
+)
 
 
 def classify_mime(mime_type: str) -> str:
@@ -80,6 +96,10 @@ def classify_mime(mime_type: str) -> str:
         return "audio"
     if mime_lower in _VIDEO_MIMES or mime_lower.startswith("video/"):
         return "video"
+    if mime_lower in _DOCUMENT_MIMES:
+        return "document"
+    if mime_lower in _FONT_MIMES or mime_lower.startswith("font/"):
+        return "font"
     return "unknown"
 
 
@@ -654,6 +674,10 @@ def verify_media(
         from app.services.video_verification_service import verify_video_c2pa
 
         result = verify_video_c2pa(data, mime_type)
+    elif media_type in ("document", "font"):
+        from app.utils.c2pa_verifier_core import verify_c2pa
+
+        result = verify_c2pa(data, mime_type)
     else:
         return UnifiedVerifyResponse(
             success=False,
