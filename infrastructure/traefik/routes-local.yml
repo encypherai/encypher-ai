@@ -112,12 +112,12 @@ http:
         - cors-api
 
     # ============================================
-    # IMAGE VERIFICATION -> Enterprise API (9000)
-    # /api/v1/verify/image uses XMP+DB lookup in enterprise-api
+    # MEDIA VERIFICATION -> Enterprise API (9000)
+    # /api/v1/verify/{image,audio,video,media} use C2PA/XMP verification in enterprise-api
     # Must be higher priority than verify-router (100)
     # ============================================
-    verify-image-router:
-      rule: "PathPrefix(`/api/v1/verify/image`)"
+    verify-media-router:
+      rule: "PathPrefix(`/api/v1/verify/image`) || PathPrefix(`/api/v1/verify/audio`) || PathPrefix(`/api/v1/verify/video`) || PathPrefix(`/api/v1/verify/media`)"
       service: enterprise-api
       entryPoints:
         - web
