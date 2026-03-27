@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@encypher/design-system": "file:../../packages/design-system",
+    "@encypher/icons": "file:../../packages/icons",
     "clsx": "^2.1.1",
     "lucide-react": "^0.483.0",
     "next": "^15.3.3",

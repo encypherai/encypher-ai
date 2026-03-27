@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { VerifyWidget } from "@/components/ui/VerifyWidget";
-import { EncypherMark } from "@/components/ui/EncypherMark";
+import { EncypherMark } from "@encypher/icons";
 
 export const metadata: Metadata = {
   title: "Verify Content Authenticity -- The Encypher Times",

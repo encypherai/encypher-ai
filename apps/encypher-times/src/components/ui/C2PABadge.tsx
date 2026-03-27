@@ -1,4 +1,4 @@
-import { EncypherMark } from "@/components/ui/EncypherMark";
+import { EncypherMark } from "@encypher/icons";
 
 export function C2PABadge() {
   return (

@@ -21,6 +21,12 @@ export const metadata: Metadata = {
     index: false, // Don't index dashboard pages
     follow: false,
   },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+  },
 };
 
 export default function RootLayout({

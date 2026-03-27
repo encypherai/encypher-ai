@@ -18,7 +18,7 @@ const API_BASE =
   (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 
 // Canonical SVG logo
-const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
+const LOGO_WHITE = '/assets/wordmark-white-nobg.svg';
 
 type VerificationState = 'verifying' | 'success' | 'error' | 'logging-in';
 
@@ -55,7 +55,7 @@ function VerifyEmailContent() {
 
       if (!res.ok || !data.success) {
         setState('error');
-        setError(data.detail || data.error?.message || 'Invalid or expired verification token.');
+        setError((typeof data.detail === 'string' ? data.detail : null) || data.error?.message || 'Invalid or expired verification token.');
         return;
       }
 

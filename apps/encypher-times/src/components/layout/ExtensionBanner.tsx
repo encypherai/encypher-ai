@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { EncypherMark } from "@/components/ui/EncypherMark";
+import { EncypherMark } from "@encypher/icons";
 
 const DISMISSED_KEY = "encypher-ext-banner-dismissed";
 

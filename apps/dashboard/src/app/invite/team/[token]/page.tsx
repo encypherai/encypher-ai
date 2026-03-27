@@ -42,7 +42,7 @@ export default function TeamInvitePage() {
         const data = await response.json();
 
         if (!response.ok) {
-          setError(data.detail || 'Invitation not found or expired');
+          setError((typeof data.detail === 'string' ? data.detail : null) || 'Invitation not found or expired');
           return;
         }
 
@@ -73,7 +73,7 @@ export default function TeamInvitePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.detail || 'Failed to accept invitation');
+        toast.error((typeof data.detail === 'string' ? data.detail : null) || 'Failed to accept invitation');
         return;
       }
 
@@ -112,7 +112,7 @@ export default function TeamInvitePage() {
         if (response.status === 409) {
           toast.error('An account with this email already exists. Please sign in to accept the invitation.');
         } else {
-          toast.error(data.detail || 'Failed to create account');
+          toast.error((typeof data.detail === 'string' ? data.detail : null) || 'Failed to create account');
         }
         return;
       }
@@ -179,7 +179,7 @@ export default function TeamInvitePage() {
         <div className="max-w-7xl mx-auto px-4">
           <Link href="/">
             <Image
-              src="/assets/encypher_full_nobg.png"
+              src="/assets/wordmark-navy-nobg.svg"
               alt="Encypher"
               width={140}
               height={36}

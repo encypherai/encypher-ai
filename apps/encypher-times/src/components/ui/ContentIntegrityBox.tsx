@@ -1,6 +1,6 @@
 import { FileText, Hash } from "lucide-react";
 import Link from "next/link";
-import { EncypherMark } from "@/components/ui/EncypherMark";
+import { EncypherMark } from "@encypher/icons";
 
 interface ContentIntegrityBoxProps {
   documentId: string;

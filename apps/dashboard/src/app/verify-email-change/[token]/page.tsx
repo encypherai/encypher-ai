@@ -36,11 +36,11 @@ export default function VerifyEmailChangePage() {
         const data = await response.json();
 
         if (!response.ok) {
-          if (response.status === 410 || data.detail?.includes('expired')) {
+          if (response.status === 410 || (typeof data.detail === 'string' && data.detail.includes('expired'))) {
             setStatus('expired');
           } else {
             setStatus('error');
-            setError(data.detail || 'Failed to verify email change');
+            setError((typeof data.detail === 'string' ? data.detail : null) || 'Failed to verify email change');
           }
           return;
         }

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encypher Icon Library</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg-card: rgba(255,255,255,0.05);
+    --border: rgba(255,255,255,0.08);
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --checker-a: #1e293b;
+    --checker-b: #334155;
+    --toggle-bg: #334155;
+    --toggle-knob: #e2e8f0;
+    --badge-bg: rgba(255,255,255,0.08);
+    --badge-text: #94a3b8;
+  }
+  html.light {
+    --bg: #f8fafc;
+    --bg-card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --checker-a: #e2e8f0;
+    --checker-b: #cbd5e1;
+    --toggle-bg: #cbd5e1;
+    --toggle-knob: #1e293b;
+    --badge-bg: #e2e8f0;
+    --badge-text: #475569;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px 24px 80px;
+    transition: background 0.3s, color 0.3s;
+  }
+  .header {
+    max-width: 1080px;
+    margin: 0 auto 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .header-left p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+  /* Toggle switch */
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    user-select: none;
+    cursor: pointer;
+  }
+  .toggle-track {
+    width: 52px;
+    height: 28px;
+    background: var(--toggle-bg);
+    border-radius: 14px;
+    position: relative;
+    transition: background 0.3s;
+  }
+  .toggle-knob {
+    width: 22px;
+    height: 22px;
+    background: var(--toggle-knob);
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s, background 0.3s;
+  }
+  html.light .toggle-knob { transform: translateX(24px); }
+  .toggle-icon { font-size: 1.1rem; }
+
+  /* Theme-sensitive loader images */
+  .theme-loader-white { display: none; }
+  html.light .theme-loader-navy { display: inline; }
+  html.light .theme-loader-white { display: none; }
+  html:not(.light) .theme-loader-navy { display: none; }
+  html:not(.light) .theme-loader-white { display: inline; }
+
+  section {
+    max-width: 1080px;
+    margin: 0 auto 56px;
+  }
+  h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: var(--badge-bg);
+    color: var(--badge-text);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .card:hover { border-color: #2A87C4; }
+  .card-preview {
+    width: 96px;
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-preview img, .card-preview svg { max-width: 100%; max-height: 100%; }
+  .card-preview.checker {
+    background-image: linear-gradient(45deg, var(--checker-a) 25%, transparent 25%),
+      linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, var(--checker-a) 75%),
+      linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
+    background-size: 12px 12px;
+    background-position: 0 0, 0 6px, 6px -6px, -6px 0px;
+    background-color: var(--checker-b);
+    border-radius: 8px;
+    padding: 16px;
+    width: auto;
+    height: auto;
+  }
+  .card-meta {
+    text-align: center;
+    width: 100%;
+  }
+  .card-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    word-break: break-all;
+  }
+  .card-desc {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* Wide card for wordmarks */
+  .wide { grid-column: 1 / -1; }
+  .wide .card-preview { width: auto; height: 48px; }
+
+  /* Size ladder */
+  .size-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: background 0.3s, border-color 0.3s;
+  }
+  .size-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .size-item .card-preview.checker { padding: 8px; }
+  .size-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* Contrast preview */
+  .contrast-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .contrast-panel {
+    border-radius: 12px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid var(--border);
+  }
+  .contrast-panel.dark-bg { background: #0f172a; }
+  .contrast-panel.light-bg { background: #ffffff; }
+  .contrast-panel .panel-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .contrast-panel.dark-bg .panel-label { color: #94a3b8; }
+  .contrast-panel.light-bg .panel-label { color: #64748b; }
+  .contrast-icons {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  /* Footer */
+  .footer {
+    max-width: 1080px;
+    margin: 0 auto;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>@encypher/icons</h1>
+    <p>Brand icon library -- all generated variants</p>
+  </div>
+  <div class="toggle-wrap" id="themeToggle" title="Toggle light/dark mode">
+    <span class="toggle-icon" id="darkIcon">&#9790;</span>
+    <div class="toggle-track">
+      <div class="toggle-knob"></div>
+    </div>
+    <span class="toggle-icon" id="lightIcon">&#9788;</span>
+  </div>
+</div>
+
+<!-- ======== CONTRAST PREVIEW ======== -->
+<section>
+  <h2>Contrast Preview <span class="badge">always shows both</span></h2>
+  <div class="contrast-grid">
+    <div class="contrast-panel dark-bg">
+      <div class="panel-label">Dark Background</div>
+      <div class="contrast-icons">
+        <img src="svg/generated/mark-white-nobg.svg" width="64" height="64" alt="White mark on dark">
+        <img src="svg/generated/loader-white.svg" width="64" height="64" alt="White loader on dark">
+      </div>
+    </div>
+    <div class="contrast-panel light-bg">
+      <div class="panel-label">Light Background</div>
+      <div class="contrast-icons">
+        <img src="svg/generated/mark-navy-nobg.svg" width="64" height="64" alt="Navy mark on light">
+        <img src="svg/generated/loader-navy.svg" width="64" height="64" alt="Navy loader on light">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== SVG MARKS ======== -->
+<section>
+  <h2>SVG Marks <span class="badge">24x24 viewBox</span></h2>
+  <div class="grid">
+    <div class="card">
+      <div class="card-preview checker">
+        <img src="svg/generated/mark-navy-nobg.svg" width="64" height="64" alt="Navy no-bg">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">mark-navy-nobg.svg</div>
+        <div class="card-desc">Navy monochrome, transparent</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-preview">
+        <img src="svg/generated/mark-navy-bg.svg" width="64" height="64" alt="Navy with bg">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">mark-navy-bg.svg</div>
+        <div class="card-desc">Navy monochrome, white background</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-preview checker">
+        <img src="svg/generated/mark-white-nobg.svg" width="64" height="64" alt="White no-bg">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">mark-white-nobg.svg</div>
+        <div class="card-desc">White monochrome, transparent</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-preview">
+        <img src="svg/generated/mark-white-bg.svg" width="64" height="64" alt="White with bg">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">mark-white-bg.svg</div>
+        <div class="card-desc">White monochrome, navy background</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== LOADERS ======== -->
+<section>
+  <h2>Animated Loaders <span class="badge">spinning outer ring</span></h2>
+  <div class="grid">
+    <div class="card">
+      <div class="card-preview checker">
+        <img src="svg/generated/loader-navy.svg" width="64" height="64" alt="Loader navy">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">loader-navy.svg</div>
+        <div class="card-desc">Light mode loader, tinted ring</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-preview checker">
+        <img src="svg/generated/loader-white.svg" width="64" height="64" alt="Loader white">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">loader-white.svg</div>
+        <div class="card-desc">Dark mode loader, tinted ring</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== LOADER SIZE DEMO ======== -->
+<section>
+  <h2>Loader at Multiple Sizes <span class="badge">theme-sensitive</span></h2>
+  <div class="size-row">
+    <div class="size-item">
+      <img class="theme-loader-navy" src="svg/generated/loader-navy.svg" width="16" height="16">
+      <img class="theme-loader-white" src="svg/generated/loader-white.svg" width="16" height="16">
+      <div class="size-label">16</div>
+    </div>
+    <div class="size-item">
+      <img class="theme-loader-navy" src="svg/generated/loader-navy.svg" width="24" height="24">
+      <img class="theme-loader-white" src="svg/generated/loader-white.svg" width="24" height="24">
+      <div class="size-label">24</div>
+    </div>
+    <div class="size-item">
+      <img class="theme-loader-navy" src="svg/generated/loader-navy.svg" width="32" height="32">
+      <img class="theme-loader-white" src="svg/generated/loader-white.svg" width="32" height="32">
+      <div class="size-label">32</div>
+    </div>
+    <div class="size-item">
+      <img class="theme-loader-navy" src="svg/generated/loader-navy.svg" width="48" height="48">
+      <img class="theme-loader-white" src="svg/generated/loader-white.svg" width="48" height="48">
+      <div class="size-label">48</div>
+    </div>
+    <div class="size-item">
+      <img class="theme-loader-navy" src="svg/generated/loader-navy.svg" width="64" height="64">
+      <img class="theme-loader-white" src="svg/generated/loader-white.svg" width="64" height="64">
+      <div class="size-label">64</div>
+    </div>
+    <div class="size-item">
+      <img class="theme-loader-navy" src="svg/generated/loader-navy.svg" width="96" height="96">
+      <img class="theme-loader-white" src="svg/generated/loader-white.svg" width="96" height="96">
+      <div class="size-label">96</div>
+    </div>
+    <div class="size-item">
+      <img class="theme-loader-navy" src="svg/generated/loader-navy.svg" width="128" height="128">
+      <img class="theme-loader-white" src="svg/generated/loader-white.svg" width="128" height="128">
+      <div class="size-label">128</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== WORDMARKS ======== -->
+<section>
+  <h2>Wordmark SVGs <span class="badge">134x24 viewBox</span></h2>
+  <div class="grid">
+    <div class="card wide">
+      <div class="card-preview checker" style="width:auto;height:auto;padding:24px 32px">
+        <img src="svg/generated/wordmark-navy-nobg.svg" height="36" alt="Wordmark navy nobg">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">wordmark-navy-nobg.svg</div>
+        <div class="card-desc">Navy monochrome, transparent</div>
+      </div>
+    </div>
+    <div class="card wide">
+      <div class="card-preview" style="width:auto;height:auto;padding:24px 32px">
+        <img src="svg/generated/wordmark-navy-bg.svg" height="36" alt="Wordmark navy bg">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">wordmark-navy-bg.svg</div>
+        <div class="card-desc">Navy monochrome, white background</div>
+      </div>
+    </div>
+    <div class="card wide">
+      <div class="card-preview checker" style="width:auto;height:auto;padding:24px 32px">
+        <img src="svg/generated/wordmark-white-nobg.svg" height="36" alt="Wordmark white nobg">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">wordmark-white-nobg.svg</div>
+        <div class="card-desc">White monochrome, transparent</div>
+      </div>
+    </div>
+    <div class="card wide">
+      <div class="card-preview" style="width:auto;height:auto;padding:24px 32px">
+        <img src="svg/generated/wordmark-white-bg.svg" height="36" alt="Wordmark white bg">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">wordmark-white-bg.svg</div>
+        <div class="card-desc">White monochrome, navy background</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== FAVICON ======== -->
+<section>
+  <h2>Favicons <span class="badge">adaptive</span></h2>
+  <div class="grid">
+    <div class="card">
+      <div class="card-preview">
+        <img src="svg/generated/favicon.svg" width="64" height="64" alt="Favicon SVG">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">favicon.svg</div>
+        <div class="card-desc">Adaptive (prefers-color-scheme)</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-preview">
+        <img src="ico/generated/favicon.ico" width="48" height="48" alt="Favicon ICO">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">favicon.ico</div>
+        <div class="card-desc">Multi-size: 16, 32, 48px</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== PNG SIZE LADDER ======== -->
+<section>
+  <h2>PNG Size Ladder -- Navy (transparent) <span class="badge">rasterized</span></h2>
+  <div class="size-row">
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/16/mark-navy-nobg.png" width="16" height="16"></div>
+      <div class="size-label">16px</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/32/mark-navy-nobg.png" width="32" height="32"></div>
+      <div class="size-label">32px</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/48/mark-navy-nobg.png" width="48" height="48"></div>
+      <div class="size-label">48px</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/64/mark-navy-nobg.png" width="64" height="64"></div>
+      <div class="size-label">64px</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/128/mark-navy-nobg.png" width="128" height="128"></div>
+      <div class="size-label">128px</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/256/mark-navy-nobg.png" width="128" height="128"></div>
+      <div class="size-label">256px (scaled)</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/512/mark-navy-nobg.png" width="128" height="128"></div>
+      <div class="size-label">512px (scaled)</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>PNG Size Ladder -- White (transparent)</h2>
+  <div class="size-row">
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/16/mark-white-nobg.png" width="16" height="16"></div>
+      <div class="size-label">16px</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/32/mark-white-nobg.png" width="32" height="32"></div>
+      <div class="size-label">32px</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/48/mark-white-nobg.png" width="48" height="48"></div>
+      <div class="size-label">48px</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/64/mark-white-nobg.png" width="64" height="64"></div>
+      <div class="size-label">64px</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/128/mark-white-nobg.png" width="128" height="128"></div>
+      <div class="size-label">128px</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/256/mark-white-nobg.png" width="128" height="128"></div>
+      <div class="size-label">256px (scaled)</div>
+    </div>
+    <div class="size-item">
+      <div class="card-preview checker"><img src="png/generated/512/mark-white-nobg.png" width="128" height="128"></div>
+      <div class="size-label">512px (scaled)</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>PNG -- With Background</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="card-preview">
+        <img src="png/generated/128/mark-navy-bg.png" width="96" height="96" alt="Navy bg 128">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">mark-navy-bg.png</div>
+        <div class="card-desc">128px, white bg</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-preview">
+        <img src="png/generated/128/mark-white-bg.png" width="96" height="96" alt="White bg 128">
+      </div>
+      <div class="card-meta">
+        <div class="card-name">mark-white-bg.png</div>
+        <div class="card-desc">128px, navy bg</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="footer">
+  Encypher Corporation &middot; <a href="https://encypher.com" style="color:var(--text-muted)">encypher.com</a> &middot; All assets generated from svg/source/encypher-mark.svg
+</div>
+
+<script>
+  const toggle = document.getElementById('themeToggle');
+  const html = document.documentElement;
+
+  function setTheme(light) {
+    if (light) {
+      html.classList.add('light');
+      localStorage.setItem('encypher-icons-theme', 'light');
+    } else {
+      html.classList.remove('light');
+      localStorage.setItem('encypher-icons-theme', 'dark');
+    }
+  }
+
+  toggle.addEventListener('click', () => {
+    setTheme(!html.classList.contains('light'));
+  });
+
+  // Restore saved preference
+  const saved = localStorage.getItem('encypher-icons-theme');
+  if (saved === 'light') setTheme(true);
+</script>
+
+</body>
+</html>

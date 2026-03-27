@@ -10,8 +10,8 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Encypher C2PA Email Provenance"/>
   <Description DefaultValue="Embed and verify cryptographic proof of origin for Outlook email content using C2PA-aligned provenance infrastructure."/>
-  <IconUrl DefaultValue="https://encypher.com/assets/logo.png"/>
-  <HighResolutionIconUrl DefaultValue="https://encypher.com/assets/logo.png"/>
+  <IconUrl DefaultValue="https://dashboard.encypher.com/favicon.ico"/>
+  <HighResolutionIconUrl DefaultValue="https://dashboard.encypher.com/favicon.ico"/>
   <SupportUrl DefaultValue="https://docs.encypher.com"/>
 
   <AppDomains>
@@ -115,9 +115,9 @@
 
       <Resources>
         <bt:Images>
-          <bt:Image id="Icon.16" DefaultValue="https://encypher.com/assets/logo.png"/>
-          <bt:Image id="Icon.32" DefaultValue="https://encypher.com/assets/logo.png"/>
-          <bt:Image id="Icon.80" DefaultValue="https://encypher.com/assets/logo.png"/>
+          <bt:Image id="Icon.16" DefaultValue="https://dashboard.encypher.com/assets/mark-navy-nobg.png"/>
+          <bt:Image id="Icon.32" DefaultValue="https://dashboard.encypher.com/assets/mark-navy-nobg.png"/>
+          <bt:Image id="Icon.80" DefaultValue="https://dashboard.encypher.com/assets/mark-navy-nobg.png"/>
         </bt:Images>
         <bt:Urls>
           <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:4001/taskpane/taskpane.html"/>

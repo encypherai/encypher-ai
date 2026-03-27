@@ -14,8 +14,8 @@ import MetadataBackground from '../../components/hero/MetadataBackground';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
 // Canonical SVG logos
-const LOGO_COLOR = '/assets/encypher_full_logo_color.svg';
-const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
+const LOGO_COLOR = '/assets/wordmark-navy-nobg.svg';
+const LOGO_WHITE = '/assets/wordmark-white-nobg.svg';
 
 function LoginPageContent() {
   const searchParams = useSearchParams();

@@ -30,7 +30,10 @@ export const metadata: Metadata = {
   description:
     "Every Word Authenticated -- Every article, image, audio clip, and video on this site is cryptographically signed by Encypher.",
   icons: {
-    icon: "/encypher_icon_nobg_color.ico",
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
   },
 };
 

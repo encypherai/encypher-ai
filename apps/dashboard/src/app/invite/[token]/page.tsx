@@ -51,7 +51,7 @@ export default function InvitationPage() {
         const data = await response.json();
 
         if (!response.ok) {
-          setError(data.detail || 'Invitation not found');
+          setError((typeof data.detail === 'string' ? data.detail : null) || 'Invitation not found');
           return;
         }
 
@@ -98,7 +98,7 @@ export default function InvitationPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.detail || 'Failed to accept invitation');
+        toast.error((typeof data.detail === 'string' ? data.detail : null) || 'Failed to accept invitation');
         return;
       }
 
@@ -141,7 +141,7 @@ export default function InvitationPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.detail || 'Failed to create account');
+        toast.error((typeof data.detail === 'string' ? data.detail : null) || 'Failed to create account');
         return;
       }
 
@@ -251,7 +251,7 @@ export default function InvitationPage() {
         <div className="max-w-7xl mx-auto px-4">
           <Link href="/">
             <Image
-              src="/assets/encypher_full_nobg.png"
+              src="/assets/wordmark-navy-nobg.svg"
               alt="Encypher"
               width={140}
               height={36}

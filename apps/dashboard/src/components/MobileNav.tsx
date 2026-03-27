@@ -10,6 +10,7 @@ interface MobileNavProps {
   onClose: () => void;
   navItems: Array<{ href: string; label: string }>;
   isAdmin: boolean;
+  showBrandAssets?: boolean;
   userName: string;
   userEmail: string;
   userInitial: string;
@@ -20,6 +21,7 @@ export function MobileNav({
   onClose,
   navItems,
   isAdmin,
+  showBrandAssets,
   userName,
   userEmail,
   userInitial,
@@ -113,6 +115,21 @@ export function MobileNav({
                 </li>
               );
             })}
+            {showBrandAssets && (
+              <li>
+                <Link
+                  href="/brand"
+                  onClick={onClose}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                    pathname === '/brand'
+                      ? 'bg-blue-ncs/10 text-blue-ncs'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-delft-blue dark:hover:text-white'
+                  }`}
+                >
+                  Brand Assets
+                </Link>
+              </li>
+            )}
             {isAdmin && (
               <li>
                 <Link
@@ -121,7 +138,7 @@ export function MobileNav({
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                     pathname === '/admin'
                       ? 'bg-blue-ncs/10 text-blue-ncs'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-delft-blue'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-delft-blue dark:hover:text-white'
                   }`}
                 >
                   Admin

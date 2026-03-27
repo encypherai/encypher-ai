@@ -16,8 +16,8 @@ import { toolLinks } from '@/config/tools';
 import { useSession, signOut } from 'next-auth/react';
 
 // Canonical SVG logos - use color on light backgrounds, white on dark backgrounds
-const LOGO_COLOR = '/encypher_full_logo_color.svg';
-const LOGO_WHITE = '/encypher_full_logo_white.svg';
+const LOGO_COLOR = '/brand/wordmark-navy-nobg.svg';
+const LOGO_WHITE = '/brand/wordmark-white-nobg.svg';
 
 export function Navbar() {
   const { theme, resolvedTheme, setTheme } = useTheme();

@@ -42,7 +42,7 @@ function VerifyDomainContent() {
       <div className="w-full max-w-md rounded-2xl bg-card shadow-2xl border border-border p-8 flex flex-col gap-6">
         <div className="flex justify-center">
           <Image
-            src="/assets/encypher_full_logo_color.svg"
+            src="/assets/wordmark-navy-nobg.svg"
             alt="Encypher"
             width={140}
             height={36}

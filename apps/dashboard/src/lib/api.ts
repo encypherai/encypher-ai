@@ -568,6 +568,28 @@ interface PasskeyOptionsResponse {
   options_json: string;
 }
 
+/**
+ * Extract a human-readable string from FastAPI's `detail` field.
+ * Validation errors return `detail` as an array of objects; other errors return a string.
+ */
+function extractDetail(detail: unknown): string | null {
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const msgs = detail
+      .map((e: unknown) => {
+        if (typeof e === 'string') return e;
+        if (e && typeof e === 'object' && 'msg' in e) return (e as { msg: string }).msg;
+        return null;
+      })
+      .filter(Boolean);
+    return msgs.length > 0 ? msgs.join('; ') : null;
+  }
+  if (detail && typeof detail === 'object' && 'msg' in detail) {
+    return (detail as { msg: string }).msg;
+  }
+  return null;
+}
+
 class ApiError extends Error {
   constructor(
     message: string,
@@ -626,8 +648,8 @@ async function fetchWithAuth<T>(
         docsUrl = err.docs_url;
         fieldErrors = err.details?.field_errors;
       } else {
-        // Legacy format: { detail: "..." }
-        errorMessage = errorData.detail || errorData.message || errorMessage;
+        // Legacy format: { detail: "..." } or FastAPI validation { detail: [...] }
+        errorMessage = extractDetail(errorData.detail) || errorData.message || errorMessage;
       }
     } catch {
       // Ignore JSON parse errors
@@ -2080,7 +2102,7 @@ const apiClient = {
     });
     const payload = await response.json();
     if (!response.ok || !payload.success) {
-      throw new ApiError(payload.detail || payload.error?.message || 'MFA login failed', response.status);
+      throw new ApiError(extractDetail(payload.detail) || payload.error?.message || 'MFA login failed', response.status);
     }
     return payload.data;
   },
@@ -2114,7 +2136,7 @@ const apiClient = {
     });
     const payload = await response.json();
     if (!response.ok || !payload.success) {
-      throw new ApiError(payload.detail || payload.error?.message || 'Passkey start failed', response.status);
+      throw new ApiError(extractDetail(payload.detail) || payload.error?.message || 'Passkey start failed', response.status);
     }
     return payload.data;
   },
@@ -2127,7 +2149,7 @@ const apiClient = {
     });
     const payload = await response.json();
     if (!response.ok || !payload.success) {
-      throw new ApiError(payload.detail || payload.error?.message || 'Passkey login failed', response.status);
+      throw new ApiError(extractDetail(payload.detail) || payload.error?.message || 'Passkey login failed', response.status);
     }
     return payload.data;
   },
@@ -3384,7 +3406,7 @@ interface ByokTrustedCasResponse {
 }
 
 export default apiClient;
-export { ApiError };
+export { ApiError, extractDetail };
 export type {
   ApiKeyInfo,
   ApiKeyCreateResponse,

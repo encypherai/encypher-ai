@@ -48,7 +48,7 @@ function extractFullKey(payload: unknown): string {
   );
 }
 
-const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
+const LOGO_WHITE = '/assets/wordmark-white-nobg.svg';
 
 function HandoffShell({ children }: { children: React.ReactNode }) {
   return (

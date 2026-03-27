@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AlertTriangle, Loader2, Minus } from "lucide-react";
 import { verifyContent, type VerifyResult } from "@/lib/api";
-import { EncypherMark } from "@/components/ui/EncypherMark";
+import { EncypherMark } from "@encypher/icons";
 
 export function VerifyWidget() {
   const [text, setText] = useState("");

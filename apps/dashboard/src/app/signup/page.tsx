@@ -9,8 +9,8 @@ import { signIn } from 'next-auth/react';
 import MetadataBackground from '../../components/hero/MetadataBackground';
 import TurnstileWidget from '../../components/security/TurnstileWidget';
 
-const LOGO_COLOR = '/assets/encypher_full_logo_color.svg';
-const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
+const LOGO_COLOR = '/assets/wordmark-navy-nobg.svg';
+const LOGO_WHITE = '/assets/wordmark-white-nobg.svg';
 
 const getApiBase = () => {
   return (
@@ -131,7 +131,7 @@ function SignupPageContent() {
         setRegisteredEmail(rawEmail);
         setSuccess(true);
       } else {
-        setError(data.detail || data.message || data.error?.message || 'Failed to create account');
+        setError((typeof data.detail === 'string' ? data.detail : null) || data.message || data.error?.message || 'Failed to create account');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');

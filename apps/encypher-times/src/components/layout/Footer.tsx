@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { SECTIONS } from "@/lib/sections";
-import { EncypherMark } from "@/components/ui/EncypherMark";
+import { EncypherMark } from "@encypher/icons";
 
 export function Footer() {
   return (
