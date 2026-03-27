@@ -1,7 +1,7 @@
 {
-  "active_manifest": "urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268",
+  "active_manifest": "urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15",
   "manifests": {
-    "urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268": {
+    "urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15": {
       "claim_generator_info": [
         {
           "name": "Encypher",
@@ -9,8 +9,8 @@
           "org.contentauth.c2pa_rs": "0.78.4"
         }
       ],
-      "title": "C2PA Conformance Test -- HEIF-sequence",
-      "instance_id": "xmp:iid:714574ce-b810-46f1-96a8-b190719d5bef",
+      "title": "C2PA Conformance Test -- M4A",
+      "instance_id": "xmp:iid:bafb3cc6-cab1-4c63-877e-768dee4af9bb",
       "assertions": [
         {
           "label": "c2pa.hash.bmff.v3",
@@ -68,7 +68,7 @@
               }
             ],
             "alg": "sha256",
-            "hash": "tS3WyHzM13LJAX61rezYUnTPrTh/H4ZpTlAXZd0S5X8=",
+            "hash": "zCgr0YGfRc1OC9+p/ai8nM4a2izCTtbMup9f2GNIBFM=",
             "name": "jumbf manifest"
           },
           "created": true
@@ -79,7 +79,7 @@
             "actions": [
               {
                 "action": "c2pa.created",
-                "when": "2026-03-27T10:19:48Z",
+                "when": "2026-03-27T10:19:50Z",
                 "softwareAgent": {
                   "name": "Encypher Enterprise API",
                   "version": "1.0"
@@ -92,10 +92,10 @@
         {
           "label": "com.encypher.provenance",
           "data": {
-            "document_id": "conformance-heif-sequence",
-            "image_id": "b9f9c1e2-4cb5-49f0-80d9-a66146074685",
+            "audio_id": "40d4ad43-f291-4333-bee9-9ff8ed6b73b7",
+            "document_id": "conformance-m4a",
             "organization_id": "encypher-conformance",
-            "signed_at": "2026-03-27T10:19:48Z"
+            "signed_at": "2026-03-27T10:19:50Z"
           }
         }
       ],
@@ -104,16 +104,16 @@
         "issuer": "Encypher Corporation",
         "common_name": "Encypher Conformance Test Cert",
         "cert_serial_number": "8149767912641611982350984011013689761321125",
-        "time": "2026-03-27T10:19:48+00:00"
+        "time": "2026-03-27T10:19:51+00:00"
       },
-      "label": "urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268",
+      "label": "urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15",
       "claim_version": 2
     }
   },
   "validation_status": [
     {
       "code": "signingCredential.untrusted",
-      "url": "self#jumbf=/c2pa/urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268/c2pa.signature",
+      "url": "self#jumbf=/c2pa/urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15/c2pa.signature",
       "explanation": "signing certificate untrusted"
     }
   ],
@@ -122,51 +122,51 @@
       "success": [
         {
           "code": "timeStamp.validated",
-          "url": "self#jumbf=/c2pa/urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268/c2pa.signature",
+          "url": "self#jumbf=/c2pa/urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15/c2pa.signature",
           "explanation": "timestamp message digest matched: SSL.com Timestamping Unit 2025 E1"
         },
         {
           "code": "claimSignature.insideValidity",
-          "url": "self#jumbf=/c2pa/urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268/c2pa.signature",
+          "url": "self#jumbf=/c2pa/urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15/c2pa.signature",
           "explanation": "claim signature valid"
         },
         {
           "code": "claimSignature.validated",
-          "url": "self#jumbf=/c2pa/urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268/c2pa.signature",
+          "url": "self#jumbf=/c2pa/urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15/c2pa.signature",
           "explanation": "claim signature valid"
         },
         {
           "code": "assertion.hashedURI.match",
-          "url": "self#jumbf=/c2pa/urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268/c2pa.assertions/c2pa.hash.bmff.v3",
+          "url": "self#jumbf=/c2pa/urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15/c2pa.assertions/c2pa.hash.bmff.v3",
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.hashedURI.match",
-          "url": "self#jumbf=/c2pa/urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268/c2pa.assertions/c2pa.actions.v2",
+          "url": "self#jumbf=/c2pa/urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15/c2pa.assertions/c2pa.actions.v2",
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
-          "url": "self#jumbf=/c2pa/urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268/c2pa.assertions/com.encypher.provenance",
+          "url": "self#jumbf=/c2pa/urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15/c2pa.assertions/com.encypher.provenance",
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
         },
         {
           "code": "assertion.bmffHash.match",
-          "url": "self#jumbf=/c2pa/urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268/c2pa.assertions/c2pa.hash.bmff.v3",
+          "url": "self#jumbf=/c2pa/urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15/c2pa.assertions/c2pa.hash.bmff.v3",
           "explanation": "BMFF hash valid"
         }
       ],
       "informational": [
         {
           "code": "timeStamp.untrusted",
-          "url": "self#jumbf=/c2pa/urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268/c2pa.signature",
+          "url": "self#jumbf=/c2pa/urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15/c2pa.signature",
           "explanation": "timestamp cert untrusted: SSL.com Timestamping Unit 2025 E1"
         }
       ],
       "failure": [
         {
           "code": "signingCredential.untrusted",
-          "url": "self#jumbf=/c2pa/urn:c2pa:760b7b90-573a-41fe-8b9d-4ab6a6d3c268/c2pa.signature",
+          "url": "self#jumbf=/c2pa/urn:c2pa:41140775-91e8-4b20-9a12-acb1328a0a15/c2pa.signature",
           "explanation": "signing certificate untrusted"
         }
       ]

@@ -75,7 +75,10 @@ def build_c2pa_manifest_dict(
             )
         action_entry["digitalSourceType"] = dst
 
-    assertions = [
+    # All assertions originate from this generator product, so they go in
+    # createdAssertions per C2PA conformance requirements (not the inherited
+    # assertions array).
+    created_assertions = [
         {
             "label": "c2pa.actions.v2",
             "data": {
@@ -85,7 +88,7 @@ def build_c2pa_manifest_dict(
     ]
 
     if rights_data:
-        assertions.append(
+        created_assertions.append(
             {
                 "label": "com.encypher.rights.v1",
                 "data": rights_data,
@@ -93,9 +96,9 @@ def build_c2pa_manifest_dict(
         )
 
     for ca in custom_assertions:
-        assertions.append(ca)
+        created_assertions.append(ca)
 
-    assertions.append(
+    created_assertions.append(
         {
             "label": "com.encypher.provenance",
             "data": {
@@ -112,5 +115,6 @@ def build_c2pa_manifest_dict(
         "claim_generator_info": [{"name": "Encypher", "version": _PRODUCT_VERSION}],
         "title": title,
         "instance_id": instance_id,
-        "assertions": assertions,
+        "assertions": created_assertions,
+        "createdAssertions": created_assertions,
     }

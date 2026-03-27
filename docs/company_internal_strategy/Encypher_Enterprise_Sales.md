@@ -75,14 +75,17 @@ Our patent-pending technology goes beyond basic C2PA:
 - **Directory-Scale Operations:** Sign and verify entire content repositories
 - **Performance Intelligence:** Real-time dashboards showing content attribution and model optimization insights
 
-**Multi-Media Provenance (Enterprise)**
+**Multi-Media Provenance -- 31 MIME Types (Enterprise)**
 Sign the full content portfolio under one provenance infrastructure:
-- **Image Signing:** JPEG, PNG, WebP, and TIFF with C2PA JUMBF manifests
-- **Audio Signing:** WAV, MP3, and M4A with format-native C2PA embedding
-- **Video Signing:** MP4, MOV, M4V, and AVI (up to 500MB) with C2PA manifests
-- **Live Video Streams:** Per-segment C2PA signing conforming to C2PA Section 19
+- **Image Signing (13 formats):** JPEG, PNG, WebP, TIFF, AVIF, HEIC, HEIF, SVG, DNG, GIF, JXL (plus HEIC-sequence, HEIF-sequence) with C2PA JUMBF manifests
+- **Audio Signing (6 formats):** WAV, MP3, M4A, AAC, FLAC, MPA with format-native C2PA embedding
+- **Video Signing (4 formats):** MP4, MOV, M4V, and AVI (up to 500MB) with C2PA manifests
+- **Document Signing (5 formats):** PDF, EPUB, DOCX, ODT, OXPS with custom JUMBF/COSE manifests
+- **Font Signing (3 formats):** OTF, TTF, SFNT with custom JUMBF/COSE manifests
+- **Live Video Streams:** Per-segment C2PA signing conforming to C2PA 2.3 Section 19
 - **Rich Article Signing:** Text and images signed as an atomic provenance unit
-- **CDN Edge Integrations:** Cloudflare, Fastly, and Lambda@Edge signing at distribution
+- **CDN Image Provenance (shipped):** Cloudflare Logpush integration, C2PA image signing + pHash registration, analytics dashboard
+- **CDN Edge Fingerprinting (roadmap Q2-Q3 2026):** Per-session fingerprinting via WASM SDK on Cloudflare Workers, Fastly Compute@Edge, Lambda@Edge
 - **Perceptual Hash Attribution Search:** Track image derivatives and cropped variants across the web
 
 ### Four-Tier Value Proposition

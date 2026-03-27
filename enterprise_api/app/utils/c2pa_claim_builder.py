@@ -145,10 +145,10 @@ def build_claim_cbor(
     # Build hashed assertion references
     # Per C2PA spec 14.2.3: hash is over the referenced box's content
     # (description + content boxes, excluding the superbox LBox+TBox header)
-    assertions = []
+    assertion_refs = []
     for label, assertion_jumbf_content in assertion_data:
         h = _compute_hash(assertion_jumbf_content, alg)
-        assertions.append(
+        assertion_refs.append(
             {
                 "url": f"self#jumbf=c2pa.assertions/{label}",
                 "hash": h,
@@ -156,6 +156,10 @@ def build_claim_cbor(
             }
         )
 
+    # All assertions originate from this generator product, so they are
+    # listed in created_assertions per C2PA conformance requirements.
+    # The assertions array references all assertions (both created and
+    # gathered); created_assertions identifies those made by the signer.
     claim = {
         "claim_generator": f"{_PRODUCT_NAME}/{_PRODUCT_VERSION}",
         "claim_generator_info": [
@@ -168,7 +172,8 @@ def build_claim_cbor(
         "dc:format": dc_format,
         "instanceID": instance_id,
         "alg": alg,
-        "assertions": assertions,
+        "assertions": assertion_refs,
+        "created_assertions": assertion_refs,
         "signature": f"self#jumbf={manifest_label}/c2pa.signature",
     }
 

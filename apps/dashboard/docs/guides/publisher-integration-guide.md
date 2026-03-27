@@ -1156,6 +1156,64 @@ response = requests.post(
 response.raise_for_status()
 ```
 
+### Embedding License URLs Across Formats (com.encypher.rights.v1)
+
+The `com.encypher.rights.v1` assertion is the authoritative location for license and
+rights metadata across all signed formats. The `license_url` field points to the
+external license document governing the content -- this can be any machine-readable
+license framework (Creative Commons, Data Labels TDL, ODRL, or a custom terms
+document).
+
+This assertion is embedded identically across all supported formats:
+
+| Format Category | Formats | Embedding Method |
+|---|---|---|
+| Images | JPEG, PNG, WEBP, TIFF, AVIF, SVG | C2PA manifest via c2pa-python Builder (JUMBF) |
+| Audio | MP3, WAV, M4A, OGG, FLAC | C2PA manifest (JUMBF / FLAC APPLICATION block) |
+| Video | MP4, WEBM, MOV | C2PA manifest via c2pa-python Builder (JUMBF) |
+| Documents | PDF, EPUB, DOCX, ODT, OXPS | C2PA manifest (JUMBF, CBOR claim builder) |
+| Fonts | OTF, TTF | C2PA manifest (SFNT 'C2PA' table) |
+| Next-gen images | JPEG XL | C2PA manifest (ISOBMFF 'c2pa' box) |
+| Text | Plain text, HTML, Markdown | ZWC-embedded manifest with C2PA assertions |
+
+The assertion structure is the same regardless of format:
+
+```json
+{
+  "label": "com.encypher.rights.v1",
+  "data": {
+    "license_url": "https://example.com/terms/eu-creative-v1.html",
+    "copyright_holder": "Publisher Name",
+    "usage_terms": "Non-commercial use only. Attribution required.",
+    "syndication_allowed": false,
+    "contact_email": "licensing@publisher.com"
+  }
+}
+```
+
+**Fields:**
+
+- `license_url` (string, optional): URL to the authoritative license document. This is
+  the primary machine-readable pointer -- consuming tools can resolve this URL to
+  determine usage rights without parsing free-text fields. The URL should point to an
+  immutable, versioned document (content changes require a new URL).
+- `copyright_holder` (string, optional): Name of the copyright holder or publisher.
+- `usage_terms` (string, optional): Human-readable summary of usage terms.
+- `syndication_allowed` (boolean, optional): Whether downstream syndication is permitted.
+- `embargo_until` (datetime, optional): Content embargo end timestamp.
+- `contact_email` (string, optional): Contact email for licensing inquiries.
+
+**Relationship to `c2pa.training-mining.v1`:**
+
+The `c2pa.training-mining.v1` assertion signals AI training/mining permissions
+specifically (allowed/not allowed). The `com.encypher.rights.v1` assertion covers
+the broader licensing picture -- general copyright, commercial use, geographic
+restrictions, syndication, and the authoritative license URL. Use both together
+for complete rights coverage:
+
+- `c2pa.training-mining.v1` answers: "Can AI train on this?"
+- `com.encypher.rights.v1` answers: "What are the full terms governing this content?"
+
 ### Verifier Output: Rights Signals
 
 When rights signals are present in the manifest, `/verify` returns them under:

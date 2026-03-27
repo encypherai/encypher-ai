@@ -1,9 +1,9 @@
 # Encypher Corporation: Ideal Customer Profile Framework 3.0
 ## Standards-Driven Infrastructure Strategy
 
-**Last Updated:** March 23, 2026
+**Last Updated:** March 26, 2026
 **Status:** Active Launch -- Full-Stack Content Provenance
-**Version:** 5.0
+**Version:** 5.1
 **Distribution:** Sales & Marketing Leadership
 
 ---
@@ -269,7 +269,7 @@ AI company infrastructure pricing to be determined based on coalition leverage. 
 
 **Company Type:** Platforms implementing C2PA (Adobe, Microsoft, BBC, Meta, EIDR)
 
-**About Marcus:** Marcus implements C2PA across platforms and needs production-ready content provenance solutions covering the full media spectrum. He's building with the standards community, not against it. The January 8, 2026 publication creates urgency. Enterprise-tier signing now covers text, images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), and live video streams with C2PA manifests. Verification is free across all media asset classes.
+**About Marcus:** Marcus implements C2PA across platforms and needs production-ready content provenance solutions covering the full media spectrum. He's building with the standards community, not against it. The January 8, 2026 publication creates urgency. Enterprise-tier signing now covers 31 MIME types across 6 categories: text, images (13 formats including JPEG/PNG/WebP/TIFF/AVIF/HEIC/HEIF/SVG/DNG/GIF/JXL), audio (6 formats: WAV/MP3/M4A/AAC/FLAC/MPA), video (4 formats: MP4/MOV/M4V/AVI), documents (5 formats: PDF/EPUB/DOCX/ODT/OXPS), fonts (3 formats: OTF/TTF/SFNT), and live video streams with C2PA manifests. Verification is free across all media asset classes.
 
 **Strategic Importance:** Validates Encypher as reference implementation through platform adoption
 

@@ -64,7 +64,7 @@ class TestBuildC2paManifestDict:
         assert result["claim_generator"] == "Encypher Enterprise API/1.0"
         assert result["title"] == "test.wav"
         assert result["instance_id"].startswith("urn:uuid:")
-        assert isinstance(result["assertions"], list)
+        assert isinstance(result["createdAssertions"], list)
 
     def test_asset_id_key_in_provenance(self):
         from app.utils.c2pa_manifest import build_c2pa_manifest_dict
@@ -82,7 +82,7 @@ class TestBuildC2paManifestDict:
 
         # Find provenance assertion
         provenance = None
-        for a in result["assertions"]:
+        for a in result["createdAssertions"]:
             if a["label"] == "com.encypher.provenance":
                 provenance = a["data"]
                 break
@@ -108,7 +108,7 @@ class TestBuildC2paManifestDict:
         )
 
         provenance = None
-        for a in result["assertions"]:
+        for a in result["createdAssertions"]:
             if a["label"] == "com.encypher.provenance":
                 provenance = a["data"]
                 break
@@ -131,10 +131,10 @@ class TestBuildC2paManifestDict:
             rights_data={"license": "CC-BY-4.0"},
         )
 
-        labels = [a["label"] for a in result["assertions"]]
+        labels = [a["label"] for a in result["createdAssertions"]]
         assert "com.encypher.rights.v1" in labels
 
-        rights = next(a for a in result["assertions"] if a["label"] == "com.encypher.rights.v1")
+        rights = next(a for a in result["createdAssertions"] if a["label"] == "com.encypher.rights.v1")
         assert rights["data"]["license"] == "CC-BY-4.0"
 
     def test_rights_data_excluded_when_empty(self):
@@ -151,7 +151,7 @@ class TestBuildC2paManifestDict:
             rights_data={},
         )
 
-        labels = [a["label"] for a in result["assertions"]]
+        labels = [a["label"] for a in result["createdAssertions"]]
         assert "com.encypher.rights.v1" not in labels
 
     def test_custom_assertions_included(self):
@@ -169,7 +169,7 @@ class TestBuildC2paManifestDict:
             rights_data={},
         )
 
-        labels = [a["label"] for a in result["assertions"]]
+        labels = [a["label"] for a in result["createdAssertions"]]
         assert "com.example.custom" in labels
 
     def test_video_asset_id_key(self):
@@ -185,7 +185,7 @@ class TestBuildC2paManifestDict:
             custom_assertions=[],
             rights_data={},
         )
-        provenance = [a for a in result["assertions"] if a["label"] == "com.encypher.provenance"][0]
+        provenance = [a for a in result["createdAssertions"] if a["label"] == "com.encypher.provenance"][0]
         assert provenance["data"]["video_id"] == "vid_xyz"
         assert "image_id" not in provenance["data"]
         assert "audio_id" not in provenance["data"]
@@ -204,7 +204,7 @@ class TestBuildC2paManifestDict:
             rights_data={},
         )
 
-        actions_assertion = next(a for a in result["assertions"] if a["label"] == "c2pa.actions.v2")
+        actions_assertion = next(a for a in result["createdAssertions"] if a["label"] == "c2pa.actions.v2")
         assert actions_assertion["data"]["actions"][0]["action"] == "c2pa.dubbed"
         assert "when" in actions_assertion["data"]["actions"][0]
 
@@ -221,7 +221,7 @@ class TestBuildC2paManifestDict:
             custom_assertions=[],
             rights_data={},
         )
-        labels = [a["label"] for a in result["assertions"]]
+        labels = [a["label"] for a in result["createdAssertions"]]
         assert "c2pa.actions.v2" in labels
         assert "c2pa.actions" not in labels
 
@@ -238,7 +238,7 @@ class TestBuildC2paManifestDict:
             custom_assertions=[],
             rights_data={},
         )
-        action_entry = next(a for a in result["assertions"] if a["label"] == "c2pa.actions.v2")["data"]["actions"][0]
+        action_entry = next(a for a in result["createdAssertions"] if a["label"] == "c2pa.actions.v2")["data"]["actions"][0]
         assert "digitalSourceType" in action_entry
         assert action_entry["digitalSourceType"].startswith("http://cv.iptc.org/")
 
@@ -256,7 +256,7 @@ class TestBuildC2paManifestDict:
             rights_data={},
             digital_source_type="trainedAlgorithmicMedia",
         )
-        action_entry = next(a for a in result["assertions"] if a["label"] == "c2pa.actions.v2")["data"]["actions"][0]
+        action_entry = next(a for a in result["createdAssertions"] if a["label"] == "c2pa.actions.v2")["data"]["actions"][0]
         assert "trainedAlgorithmicMedia" in action_entry["digitalSourceType"]
 
     def test_no_digital_source_type_on_non_created(self):
@@ -272,7 +272,7 @@ class TestBuildC2paManifestDict:
             custom_assertions=[],
             rights_data={},
         )
-        action_entry = next(a for a in result["assertions"] if a["label"] == "c2pa.actions.v2")["data"]["actions"][0]
+        action_entry = next(a for a in result["createdAssertions"] if a["label"] == "c2pa.actions.v2")["data"]["actions"][0]
         assert "digitalSourceType" not in action_entry
 
     def test_software_agent_in_action(self):
@@ -288,7 +288,7 @@ class TestBuildC2paManifestDict:
             custom_assertions=[],
             rights_data={},
         )
-        action_entry = next(a for a in result["assertions"] if a["label"] == "c2pa.actions.v2")["data"]["actions"][0]
+        action_entry = next(a for a in result["createdAssertions"] if a["label"] == "c2pa.actions.v2")["data"]["actions"][0]
         assert "softwareAgent" in action_entry
         assert action_entry["softwareAgent"]["name"] == "Encypher Enterprise API"
 

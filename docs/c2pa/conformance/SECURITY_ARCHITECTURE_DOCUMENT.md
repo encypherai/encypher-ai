@@ -560,17 +560,25 @@ encrypted:
 
 **1. Client-to-API communication:**
 
-- **Protocol**: TLS 1.2 or higher (TLS 1.3 preferred).
+- **Protocol**: TLS 1.3 (minimum enforced).
 - **Termination point**: Traefik reverse proxy terminates TLS at the edge.
   Traefik is configured with automatic certificate management (Let's
   Encrypt or equivalent) and enforces HTTPS-only access.
 - **Cipher suites**: TLS termination is handled by Railway's edge proxy,
   not by the application-level Traefik instance. Railway's edge enforces
-  TLS 1.2 minimum with modern cipher suites (ECDHE+AESGCM,
+  TLS 1.3 minimum with modern cipher suites (ECDHE+AESGCM,
   ECDHE+CHACHA20). The internal Traefik API Gateway routes traffic on
-  Railway's private network (port 8080, no TLS) after Railway's edge has
-  already terminated TLS. This is a standard cloud-native pattern where
-  the platform provider manages TLS at the edge.
+  Railway's private network (port 8080) after Railway's edge has
+  already terminated TLS. This internal traffic runs entirely within a
+  single container process (localhost-only IPC) and does not traverse
+  any physical or network boundary.
+- **Verification**: TLS 1.3 enforcement can be independently verified:
+
+      openssl s_client -connect api.encypher.com:443 -tls1_2 </dev/null 2>&1
+      # Expected: "tlsv1 alert protocol version" (connection refused)
+
+      openssl s_client -connect api.encypher.com:443 -tls1_3 </dev/null 2>&1
+      # Expected: successful handshake
 
 **2. API-to-TSA communication:**
 
@@ -949,9 +957,12 @@ that addresses it.
 | 6.2.1.R1 | Claim signing key stored in encrypted form | C.2.2 | Addressed (encrypted env var store) |
 | 6.2.1.R2 | Access to signing key follows least privilege | C.2.2 | Addressed (non-root container, API auth, env var isolation) |
 | 6.2.1.R3 | GP TOE capable of rotating claim signing key | C.2.2 | Addressed (rotation procedure documented) |
+| 6.2.1.R4 | Edge subsystem authentication key used only for limiting access to Backend | C.2.2 | N/A -- Backend Implementation Class (Section 2.32). No Edge subsystem exists within the TOE. See Appendix A.1 for the reference Backend class architecture. |
+| 6.2.1.R5 | Edge and Backend subsystems mutually authenticated | C.2.2 | N/A -- Backend Implementation Class. The product is a monolithic backend service with no distributed subsystems. Mutual authentication applies only to the Distributed Implementation Class (Section 2.33). |
+| 6.2.1.R6 | Remote Backend SHALL authenticate calling client as valid Edge instance | C.2.2 | Addressed via API key authentication. While R6 is written for the Distributed class (it references "the Edge subsystem of the GP TOE"), our Backend-class product satisfies the security intent: every signing request requires a Bearer API key tied to a registered organization. Unauthenticated requests cannot trigger signing. This aligns with R6's accepted method of "shared secret/passphrase" and matches the trust model in Appendix A.1 (Backend Class: Video Generation Service). |
 | 6.2.1.SE1a | Document key access controls including encryption | C.2.2 | Addressed |
 | 6.2.1.SE1b | Document key rotation process | C.2.2 | Addressed |
-| 6.2.1.SE1c | Document mutual authentication between subsystems | C.2.2 | Addressed (N/A -- monolithic backend, no subsystem split) |
+| 6.2.1.SE1c | Document mutual authentication between subsystems | C.2.2 | N/A -- Backend Implementation Class, monolithic backend, no subsystem split. API key authentication provides caller verification at the TOE boundary. |
 
 ### O.3 -- Claim Generator Protection (Section 6.3.1)
 
@@ -973,8 +984,8 @@ that addresses it.
 
 | Req | Requirement | Section | Status |
 |-----|-------------|---------|--------|
-| 6.5.1.R1 | Network channels encrypted with TLS v1.2+ | C.2.5 | Addressed (Traefik TLS termination, HTTPS for all external comms) |
-| 6.5.1.SE1a | Document TLS versions and crypto protocols | C.2.5 | Addressed (TLS 1.2+ via Railway edge proxy, ECDHE+AESGCM/CHACHA20) |
+| 6.5.1.R1 | Network channels encrypted with TLS v1.3 or higher | C.2.5 | Addressed (Railway edge enforces TLS 1.3 minimum, HTTPS for all external comms) |
+| 6.5.1.SE1a | Document TLS versions and crypto protocols | C.2.5 | Addressed (TLS 1.3 via Railway edge proxy, ECDHE+AESGCM/CHACHA20) |
 
 ### O.6 -- Hosting Environment Protection (Section 6.6.1)
 
@@ -1005,7 +1016,7 @@ that addresses it.
 8. C.2.2 -- Env var encryption at rest: Railway AES-256
 9. C.2.2 -- Key rotation frequency: Aligned with certificate validity period
 10. C.2.3 -- pip-audit evidence: Attached (remediation plan documented)
-11. C.2.5 -- TLS config: Railway edge proxy handles TLS 1.2+ termination
+11. C.2.5 -- TLS config: Railway edge proxy enforces TLS 1.3 minimum
 12. C.2.6 -- Hosting platform IAM: Railway team RBAC (Owner -- sole administrator)
 13. C.2.6 -- Human access: Single individual with production access (Erik Svilich, CEO)
 14. C.2.6 -- Vuln scanning: pip-audit + Trivy + TruffleHog in security-scan.yml

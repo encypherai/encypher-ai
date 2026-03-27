@@ -240,6 +240,7 @@ BUILTIN_TEMPLATES: Dict[str, Dict[str, Any]] = {
                 {
                     "label": "com.encypher.rights.v1",
                     "default_data": {
+                        "license_url": "",
                         "syndication_allowed": True,
                         "usage_terms": "Syndication permitted for licensed wire partners.",
                     },

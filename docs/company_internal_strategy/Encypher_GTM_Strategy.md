@@ -1,9 +1,9 @@
 # Encypher Corporation Master GTM Strategy
 ## Standards-Driven Coalition Strategy for Content Provenance Infrastructure
 
-**Last Updated:** March 23, 2026
+**Last Updated:** March 26, 2026
 **Status:** Active Launch -- Full-Stack Content Provenance
-**Version:** 5.0
+**Version:** 5.1
 **Distribution:** Executive Team & Strategy Leadership
 
 > **CANONICAL MESSAGING SSOT:** This document is the authoritative source for all
@@ -19,7 +19,7 @@
 
 As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, Encypher executes a **Standards-Driven Coalition Strategy** to establish content provenance infrastructure as essential for the AI content economy. The C2PA text standard **published January 8, 2026** -- [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text). Our patent-pending sentence-level tracking creates a sustainable competitive moat while our two-track licensing model (coalition 60/40, self-service 80/20) aligns incentives for explosive growth.
 
-**Text is the strategic wedge; media signing is the full platform.** We entered the market through text -- where we authored the C2PA specification and no standard existed. The Enterprise API now signs text, images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), and live video streams with C2PA manifests. This means publishers can sign their entire content portfolio -- articles, photos, podcasts, video -- under one provenance infrastructure. Verification is free across all media asset classes: any third party can verify any signed content at no cost, removing friction from the trust chain.
+**Text is the strategic wedge; media signing is the full platform.** We entered the market through text -- where we authored the C2PA specification and no standard existed. The Enterprise API now signs **31 MIME types across 6 media categories** with C2PA manifests: text, images (13 formats including JPEG/PNG/WebP/TIFF/AVIF/HEIC/HEIF/SVG/DNG/GIF/JXL), audio (6 formats: WAV/MP3/M4A/AAC/FLAC/MPA), video (4 formats: MP4/MOV/M4V/AVI), documents (5 formats: PDF/EPUB/DOCX/ODT/OXPS), and fonts (3 formats: OTF/TTF/SFNT), plus live video streams. This means publishers can sign their entire content portfolio -- articles, photos, podcasts, video, PDFs, ebooks -- under one provenance infrastructure. Verification is free across all media asset classes: any third party can verify any signed content at no cost, removing friction from the trust chain.
 
 **The Asymmetric Model 3.0:**
 - **Publishers (Free Tier):** Full text signing infrastructure at no cost + freemium enforcement add-ons
@@ -73,14 +73,19 @@ When describing Attribution Analytics, Chrome extension, or any detection capabi
 
 ### Media Asset Verification
 
-Verification is free across all media asset classes. The public verification API requires no authentication and covers:
+Verification is free across all media asset classes. The public verification API requires no authentication and covers **31 MIME types** across 6 categories:
+
 - **Text:** Verify signed text, extract C2PA manifests, detect tampering at sentence level
-- **Images:** Verify C2PA JUMBF manifests in JPEG/PNG/WebP/TIFF; perceptual hash (pHash) attribution search for fuzzy derivative matching across resized/reformatted variants
-- **Audio:** Verify C2PA manifests in WAV (RIFF chunk), MP3 (ID3 GEOB frame), M4A/AAC (ISO BMFF uuid box)
-- **Video:** Verify C2PA manifests in MP4/MOV/M4V (ISO BMFF uuid box), AVI (RIFF chunk)
+- **Images (13 formats):** JPEG, PNG, WebP, TIFF, AVIF, HEIC, HEIC-sequence, HEIF, HEIF-sequence, SVG, DNG, GIF, JXL. Includes perceptual hash (pHash) attribution search for fuzzy derivative matching across resized/reformatted variants.
+- **Audio (6 formats):** WAV (RIFF chunk), MP3/MPA (ID3 GEOB frame), M4A/AAC (ISO BMFF uuid box), FLAC (custom JUMBF/COSE)
+- **Video (4 formats):** MP4, MOV/QuickTime, M4V (ISO BMFF uuid box), AVI (RIFF chunk)
+- **Documents (5 formats):** PDF, EPUB, DOCX, ODT, OXPS (custom JUMBF/COSE)
+- **Fonts (3 formats):** OTF, TTF, SFNT (custom JUMBF/COSE)
 - **Live Video Streams:** Verify per-segment C2PA manifests with backwards-linked provenance chain (C2PA 2.3 Section 19)
 
-Signing for images, audio, video, and live streams is Enterprise-tier only. Text signing is available at Free tier (document-level) and Enterprise tier (sentence-level + Merkle trees + invisible embeddings + fingerprinting). This asymmetry is intentional: text is the adoption wedge; media signing is the enterprise upsell that covers the full content portfolio.
+Two verification pipelines: c2pa-python (c2pa-rs) for natively supported formats (21 types), and custom JUMBF/COSE structural verification for formats where c2pa-python does not yet support embedding (10 types: PDF, EPUB, DOCX, ODT, OXPS, FLAC, JXL, OTF, TTF, SFNT).
+
+Signing for images, audio, video, documents, fonts, and live streams is Enterprise-tier only. Text signing is available at Free tier (document-level) and Enterprise tier (sentence-level + Merkle trees + invisible embeddings + fingerprinting). This asymmetry is intentional: text is the adoption wedge; media signing is the enterprise upsell that covers the full content portfolio.
 
 ---
 
@@ -484,7 +489,7 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 - Quote integrity verification
 - 18+ months technical lead on reference implementation
 - Performance intelligence capabilities
-- CDN edge integrations (Cloudflare Workers, Fastly Compute@Edge, Lambda@Edge) for image provenance at scale
+- CDN image provenance pipeline (Cloudflare Logpush integration, C2PA image signing + pHash registration, analytics dashboard -- all shipped). Per-session edge fingerprinting via WASM SDK (Cloudflare Workers, Fastly Compute@Edge, Lambda@Edge) is roadmap Q2-Q3 2026 (see future_product_concepts/CDN_Edge_Signing_Leak_Detection.md)
 
 **3. Legal Transformation Moat (NEW)**
 - Willful infringement enablement (formal notice + cryptographic proof)
@@ -505,7 +510,7 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 RSL is an open standard (1.0 spec finalized December 2025, 50+ members including Reddit, Yahoo, Quora, Medium, BuzzFeed, USA Today, Vox Media) for machine-readable AI content licensing terms. RSL tells AI companies the rules (pricing models, usage rights). Encypher proves whether they followed the rules (cryptographic provenance + formal notice). RSL defines terms; Encypher provides enforcement evidence. The integration story: RSL terms reference Encypher provenance for enforcement. This is a natural partnership where RSL member publishers become Encypher coalition candidates.
 
 **Digimarc / Truepic -- Multi-Format C2PA:**
-Digimarc co-chairs the C2PA watermarking task force for images/video/audio. Truepic is a C2PA founding member for visual media. Encypher co-chairs the C2PA text provenance task force. Note: while partnerships with Digimarc/Truepic remain strategically valuable for standards credibility, Encypher's Enterprise API now provides native C2PA signing for images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), and live video streams -- meaning enterprise customers can get full multi-format C2PA provenance from a single vendor. This is a competitive advantage for enterprise deals where publishers produce text + photos + podcasts + video. Partnership narrative shifts from "together we cover all formats" to "we cover all formats natively, and we collaborate on standards."
+Digimarc co-chairs the C2PA watermarking task force for images/video/audio. Truepic is a C2PA founding member for visual media. Encypher co-chairs the C2PA text provenance task force. Note: while partnerships with Digimarc/Truepic remain strategically valuable for standards credibility, Encypher's Enterprise API now provides native C2PA signing for 31 MIME types across 6 categories -- images (13 formats), audio (6 formats), video (4 formats), documents (5 formats including PDF/EPUB/DOCX), fonts (3 formats), plus live video streams and text. Enterprise customers get full multi-format C2PA provenance from a single vendor. This is a competitive advantage for enterprise deals where publishers produce text + photos + podcasts + video + PDFs + ebooks. Partnership narrative shifts from "together we cover all formats" to "we cover all formats natively, and we collaborate on standards."
 
 ### Competitive Positioning (Updated)
 
@@ -891,15 +896,22 @@ TollBit, ProRata, and Cloudflare AI Crawl Control are all Tier 1 licensing tools
 3. All "beta" labels removed (Chrome extension v2.0, WordPress plugin -- both released)
 4. Version bumped to 5.0 reflecting domain migration and launch posture shift
 
+**Key Changes from March 26, 2026 (v5.1):**
+1. Updated format coverage from 11 formats to 31 MIME types across 6 categories (images 13, audio 6, video 4, documents 5, fonts 3, plus text and live streams) -- reflecting conformance evidence
+2. Added document signing formats (PDF, EPUB, DOCX, ODT, OXPS) and font signing (OTF, TTF, SFNT) to all capability lists -- previously underclaimed
+3. Added image formats AVIF, HEIC, HEIF, SVG, DNG, GIF, JXL and audio formats FLAC, MPA, AAC to capability lists
+4. Clarified CDN edge status: image provenance pipeline (Logpush + signing + pHash + analytics) is shipped; per-session fingerprinting WASM SDK is roadmap Q2-Q3 2026
+5. Added dual verification pipeline detail (c2pa-python for 21 natively supported types, custom JUMBF/COSE for 10 types)
+
 **Key Changes from March 2026 (v4.2):**
-1. ... Broadened positioning from "text provenance" to "content provenance" -- reflecting production multi-media signing capabilities (images, audio, video, live streams)
-2. ... Added free verification across all media asset classes as a named pricing principle
-3. ... Added Media Asset Verification section under Detection Capabilities Framework
-4. ... Updated Solution Stack to include multi-media signing and free verification
-5. ... Updated pricing tiers to reflect multi-media Enterprise capabilities and free verification
-6. ... Updated Technical Moat with multi-media platform and CDN edge integrations
-7. ... Updated Digimarc/Truepic competitive positioning to reflect native multi-format capability
-8. ... Updated content strategy messaging for multi-media and free verification
+1. Broadened positioning from "text provenance" to "content provenance" -- reflecting production multi-media signing capabilities (images, audio, video, live streams)
+2. Added free verification across all media asset classes as a named pricing principle
+3. Added Media Asset Verification section under Detection Capabilities Framework
+4. Updated Solution Stack to include multi-media signing and free verification
+5. Updated pricing tiers to reflect multi-media Enterprise capabilities and free verification
+6. Updated Technical Moat with multi-media platform and CDN edge integrations
+7. Updated Digimarc/Truepic competitive positioning to reflect native multi-format capability
+8. Updated content strategy messaging for multi-media and free verification
 
 **Key Changes from February 2026 (v4.0):**
 1. ... Replaced Nate Alvord (CRO) with Matt Kaminsky (Chief Commercial Officer (CCO)) throughout

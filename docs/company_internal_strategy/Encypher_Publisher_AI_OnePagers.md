@@ -40,7 +40,7 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 **The Technical Reality:**
 Publishers implementing our infrastructure embed cryptographic watermarking directly into text at sentence-level granularity. It survives copy-paste operations, B2B distribution through wire services, aggregator syndication, web scraping, and data processing. Basic C2PA provides document-level authentication--our patent-pending enhancements enable sentence-level tracking, tamper detection, quote verification, and performance analytics.
 
-Beyond text, our Enterprise API provides native C2PA signing for images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), and live video streams. AI training pipelines ingest all media types -- our provenance covers the full content portfolio. Verification is free across all media asset classes.
+Beyond text, our Enterprise API provides native C2PA signing for 31 MIME types: images (13 formats including JPEG/PNG/WebP/TIFF/AVIF/HEIC/HEIF/SVG/DNG/GIF/JXL), audio (6 formats: WAV/MP3/M4A/AAC/FLAC/MPA), video (4 formats: MP4/MOV/M4V/AVI), documents (5 formats: PDF/EPUB/DOCX/ODT/OXPS), fonts (3 formats: OTF/TTF/SFNT), and live video streams. AI training pipelines ingest all media types -- our provenance covers the full content portfolio. Verification is free across all media asset classes.
 
 ### Investment & Strategic Value
 

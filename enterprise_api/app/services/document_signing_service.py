@@ -149,6 +149,7 @@ def sign_zip_document(
     asset_id: str = "",
     action: str = "c2pa.created",
     digital_source_type: Optional[str] = None,
+    rights_data: Optional[dict] = None,
     private_key_pem: str,
     cert_chain_pem: str,
     placeholder_size: int = 65536,
@@ -189,8 +190,12 @@ def sign_zip_document(
     assertions = [
         ("c2pa.actions.v2", build_actions_assertion(action, digital_source_type)),
         ("c2pa.hash.collection.data", build_collection_data_hash(file_hashes, cd_hash)),
-        ("com.encypher.provenance", build_provenance_assertion(org_id, document_id, asset_id)),
     ]
+    if rights_data:
+        assertions.append(("com.encypher.rights.v1", rights_data))
+    assertions.append(
+        ("com.encypher.provenance", build_provenance_assertion(org_id, document_id, asset_id)),
+    )
 
     # Build and sign manifest store
     manifest_store, manifest_label = _build_manifest_store(assertions, title, mime_type, private_key_pem, cert_chain_pem)
@@ -213,6 +218,7 @@ def sign_zip_document(
             asset_id=asset_id,
             action=action,
             digital_source_type=digital_source_type,
+            rights_data=rights_data,
             private_key_pem=private_key_pem,
             cert_chain_pem=cert_chain_pem,
             placeholder_size=new_size,
@@ -240,6 +246,7 @@ def sign_pdf_document(
     asset_id: str = "",
     action: str = "c2pa.created",
     digital_source_type: Optional[str] = None,
+    rights_data: Optional[dict] = None,
     private_key_pem: str,
     cert_chain_pem: str,
     placeholder_size: int = 65536,
@@ -280,8 +287,12 @@ def sign_pdf_document(
     assertions = [
         ("c2pa.actions.v2", build_actions_assertion(action, digital_source_type)),
         ("c2pa.hash.data", build_data_hash(data_hash, exclusions)),
-        ("com.encypher.provenance", build_provenance_assertion(org_id, document_id, asset_id)),
     ]
+    if rights_data:
+        assertions.append(("com.encypher.rights.v1", rights_data))
+    assertions.append(
+        ("com.encypher.provenance", build_provenance_assertion(org_id, document_id, asset_id)),
+    )
 
     # Build and sign manifest store
     manifest_store, manifest_label = _build_manifest_store(assertions, title, "application/pdf", private_key_pem, cert_chain_pem)
@@ -302,6 +313,7 @@ def sign_pdf_document(
             asset_id=asset_id,
             action=action,
             digital_source_type=digital_source_type,
+            rights_data=rights_data,
             private_key_pem=private_key_pem,
             cert_chain_pem=cert_chain_pem,
             placeholder_size=new_size,
@@ -330,6 +342,7 @@ def sign_font(
     asset_id: str = "",
     action: str = "c2pa.created",
     digital_source_type: Optional[str] = None,
+    rights_data: Optional[dict] = None,
     private_key_pem: str,
     cert_chain_pem: str,
     placeholder_size: int = 65536,
@@ -358,8 +371,12 @@ def sign_font(
     assertions = [
         ("c2pa.actions.v2", build_actions_assertion(action, digital_source_type)),
         ("c2pa.hash.data", build_data_hash(data_hash, exclusions)),
-        ("com.encypher.provenance", build_provenance_assertion(org_id, document_id, asset_id)),
     ]
+    if rights_data:
+        assertions.append(("com.encypher.rights.v1", rights_data))
+    assertions.append(
+        ("com.encypher.provenance", build_provenance_assertion(org_id, document_id, asset_id)),
+    )
 
     # Build and sign manifest store
     manifest_store, manifest_label = _build_manifest_store(assertions, title, mime_type, private_key_pem, cert_chain_pem)
@@ -381,6 +398,7 @@ def sign_font(
             asset_id=asset_id,
             action=action,
             digital_source_type=digital_source_type,
+            rights_data=rights_data,
             private_key_pem=private_key_pem,
             cert_chain_pem=cert_chain_pem,
             placeholder_size=new_size,
@@ -408,6 +426,7 @@ def sign_flac(
     asset_id: str = "",
     action: str = "c2pa.created",
     digital_source_type: Optional[str] = None,
+    rights_data: Optional[dict] = None,
     private_key_pem: str,
     cert_chain_pem: str,
     placeholder_size: int = 65536,
@@ -437,8 +456,12 @@ def sign_flac(
     assertions = [
         ("c2pa.actions.v2", build_actions_assertion(action, digital_source_type)),
         ("c2pa.hash.data", build_data_hash(data_hash, exclusions)),
-        ("com.encypher.provenance", build_provenance_assertion(org_id, document_id, asset_id)),
     ]
+    if rights_data:
+        assertions.append(("com.encypher.rights.v1", rights_data))
+    assertions.append(
+        ("com.encypher.provenance", build_provenance_assertion(org_id, document_id, asset_id)),
+    )
 
     # Build and sign manifest store
     manifest_store, manifest_label = _build_manifest_store(assertions, title, "audio/flac", private_key_pem, cert_chain_pem)
@@ -459,6 +482,7 @@ def sign_flac(
             asset_id=asset_id,
             action=action,
             digital_source_type=digital_source_type,
+            rights_data=rights_data,
             private_key_pem=private_key_pem,
             cert_chain_pem=cert_chain_pem,
             placeholder_size=new_size,
@@ -486,6 +510,7 @@ def sign_jxl(
     asset_id: str = "",
     action: str = "c2pa.created",
     digital_source_type: Optional[str] = None,
+    rights_data: Optional[dict] = None,
     private_key_pem: str,
     cert_chain_pem: str,
     placeholder_size: int = 65536,
@@ -517,8 +542,12 @@ def sign_jxl(
     assertions = [
         ("c2pa.actions.v2", build_actions_assertion(action, digital_source_type)),
         ("c2pa.hash.data", build_data_hash(data_hash, exclusions)),
-        ("com.encypher.provenance", build_provenance_assertion(org_id, document_id, asset_id)),
     ]
+    if rights_data:
+        assertions.append(("com.encypher.rights.v1", rights_data))
+    assertions.append(
+        ("com.encypher.provenance", build_provenance_assertion(org_id, document_id, asset_id)),
+    )
 
     # Build and sign manifest store
     manifest_store, manifest_label = _build_manifest_store(assertions, title, "image/jxl", private_key_pem, cert_chain_pem)
@@ -539,6 +568,7 @@ def sign_jxl(
             asset_id=asset_id,
             action=action,
             digital_source_type=digital_source_type,
+            rights_data=rights_data,
             private_key_pem=private_key_pem,
             cert_chain_pem=cert_chain_pem,
             placeholder_size=new_size,
@@ -567,6 +597,7 @@ def sign_document(
     asset_id: str = "",
     action: str = "c2pa.created",
     digital_source_type: Optional[str] = None,
+    rights_data: Optional[dict] = None,
     private_key_pem: str,
     cert_chain_pem: str,
 ) -> SignedDocumentResult:
@@ -586,6 +617,7 @@ def sign_document(
             asset_id=asset_id,
             action=action,
             digital_source_type=digital_source_type,
+            rights_data=rights_data,
             private_key_pem=private_key_pem,
             cert_chain_pem=cert_chain_pem,
         )
@@ -599,6 +631,7 @@ def sign_document(
             asset_id=asset_id,
             action=action,
             digital_source_type=digital_source_type,
+            rights_data=rights_data,
             private_key_pem=private_key_pem,
             cert_chain_pem=cert_chain_pem,
         )
@@ -611,6 +644,7 @@ def sign_document(
             asset_id=asset_id,
             action=action,
             digital_source_type=digital_source_type,
+            rights_data=rights_data,
             private_key_pem=private_key_pem,
             cert_chain_pem=cert_chain_pem,
         )
@@ -623,6 +657,7 @@ def sign_document(
             asset_id=asset_id,
             action=action,
             digital_source_type=digital_source_type,
+            rights_data=rights_data,
             private_key_pem=private_key_pem,
             cert_chain_pem=cert_chain_pem,
         )
@@ -636,6 +671,7 @@ def sign_document(
             asset_id=asset_id,
             action=action,
             digital_source_type=digital_source_type,
+            rights_data=rights_data,
             private_key_pem=private_key_pem,
             cert_chain_pem=cert_chain_pem,
         )

@@ -66,7 +66,7 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - Formal notice capability
 - Performance intelligence
 - Public verification API (no auth required)
-- Multi-media C2PA signing: images (JPEG/PNG/WebP/TIFF), audio (WAV/MP3/M4A), video (MP4/MOV/M4V/AVI), live streams
+- Multi-media C2PA signing -- 31 MIME types: images (JPEG/PNG/WebP/TIFF/AVIF/HEIC/HEIF/SVG/DNG/GIF/JXL), audio (WAV/MP3/M4A/AAC/FLAC/MPA), video (MP4/MOV/M4V/AVI), documents (PDF/EPUB/DOCX/ODT/OXPS), fonts (OTF/TTF/SFNT), live streams
 - Rich article signing: text + images as single atomic provenance unit
 - CDN image provenance with edge integrations (Cloudflare, Fastly, Lambda@Edge)
 - **Message: "This enables licensing, governance, and attribution intelligence"**
