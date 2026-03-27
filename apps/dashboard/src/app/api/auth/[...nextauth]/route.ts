@@ -77,7 +77,7 @@ async function refreshBackendToken(refreshToken: string): Promise<RefreshResult>
         },
       };
     }
-    const reason = data.error?.message || data.detail || 'Unexpected response shape';
+    const reason = data.error?.message || (typeof data.detail === 'string' ? data.detail : null) || 'Unexpected response shape';
     console.warn('[NextAuth] Token refresh: unexpected response -', reason);
     return { ok: false, reason };
   } catch (err) {
@@ -184,7 +184,7 @@ async function authorizeWithMfa(mfaToken: string, mfaCode: string): Promise<MfaR
     return { user: buildAuthorizedUser(mfaData.data.user, mfaData.data.access_token, mfaData.data.refresh_token) };
   }
 
-  const mfaErrorMessage = mfaData.detail || mfaData.error?.message || 'Invalid multi-factor authentication code';
+  const mfaErrorMessage = (typeof mfaData.detail === 'string' ? mfaData.detail : null) || mfaData.error?.message || 'Invalid multi-factor authentication code';
   if (mfaErrorMessage === 'Invalid or expired MFA challenge') {
     console.warn('[NextAuth] Stale MFA challenge detected; retrying primary login flow');
     return { staleMfaChallenge: true };
@@ -217,7 +217,7 @@ async function authorizeWithCredentials(
   console.log('[NextAuth] API response status:', res.status, 'success:', data.success);
 
   if (res.status === 401) {
-    const errorDetail = data?.detail || data?.error?.message;
+    const errorDetail = (typeof data?.detail === 'string' ? data.detail : null) || data?.error?.message;
     console.log('[NextAuth] Login failed - unauthorized:', errorDetail || 'Invalid credentials');
     throw new Error(errorDetail || 'Invalid email or password');
   }
@@ -229,7 +229,7 @@ async function authorizeWithCredentials(
 
   if (!res.ok) {
     console.log('[NextAuth] Login failed - server error:', res.status);
-    throw new Error(data.error?.message || data.detail || 'Login failed. Please try again.');
+    throw new Error(data.error?.message || (typeof data.detail === 'string' ? data.detail : null) || 'Login failed. Please try again.');
   }
 
   if (data.success && data.data?.mfa_required && data.data?.mfa_token) {

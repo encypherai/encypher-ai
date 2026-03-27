@@ -68,7 +68,7 @@ export default function ResetPasswordPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.detail || 'Failed to reset password');
+        throw new Error((typeof data.detail === 'string' ? data.detail : null) || 'Failed to reset password');
       }
 
       setSuccess(true);

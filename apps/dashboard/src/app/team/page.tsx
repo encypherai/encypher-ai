@@ -303,7 +303,7 @@ export default function TeamPage() {
       });
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Failed to send invitation');
+        throw new Error((typeof error.detail === 'string' ? error.detail : null) || 'Failed to send invitation');
       }
       return response.json();
     },
@@ -316,7 +316,7 @@ export default function TeamPage() {
       toast.success('Invitation sent successfully');
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error(error.message || 'Failed to send invitation');
     },
   });
 
@@ -401,7 +401,7 @@ export default function TeamPage() {
       });
       if (!response.ok) {
         const error = await response.json().catch(() => null);
-        throw new Error(error?.detail || 'Failed to resend invitation');
+        throw new Error((typeof error?.detail === 'string' ? error.detail : null) || 'Failed to resend invitation');
       }
       return response.json();
     },

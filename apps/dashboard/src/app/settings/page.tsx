@@ -621,7 +621,7 @@ function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefi
       toast.success('Domain configured. Add the DNS records shown below.');
       setNewDomain('');
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => toast.error(err.message || 'Failed to add domain'),
   });
 
   const verifyMutation = useMutation({
@@ -634,7 +634,7 @@ function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefi
         toast.error(`DNS verification failed: ${(data.errors || []).join(', ')}`);
       }
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => toast.error(err.message || 'Failed to verify domain'),
   });
 
   const removeMutation = useMutation({
@@ -643,7 +643,7 @@ function CustomVerificationDomainCard({ orgId }: { orgId: string | null | undefi
       queryClient.invalidateQueries({ queryKey: ['verification-domain', orgId] });
       toast.success('Custom domain removed.');
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => toast.error(err.message || 'Failed to remove domain'),
   });
 
   if (!orgId) return null;
@@ -1372,7 +1372,7 @@ function SettingsPageInner() {
       });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.detail || 'Failed to request email change');
+        throw new Error((typeof data.detail === 'string' ? data.detail : null) || 'Failed to request email change');
       }
       return response.json();
     },
@@ -1400,7 +1400,7 @@ function SettingsPageInner() {
       });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.detail || 'Failed to cancel email change');
+        throw new Error((typeof data.detail === 'string' ? data.detail : null) || 'Failed to cancel email change');
       }
     },
     onSuccess: () => {
@@ -1547,7 +1547,7 @@ function SettingsPageInner() {
       });
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.detail || 'Failed to update security settings');
+        throw new Error((typeof data.detail === 'string' ? data.detail : null) || 'Failed to update security settings');
       }
       return response.json();
     },
