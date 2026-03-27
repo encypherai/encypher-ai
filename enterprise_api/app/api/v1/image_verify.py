@@ -128,28 +128,34 @@ async def verify_image(
     image_id: Optional[str] = None
     doc_id: Optional[str] = None
     phash_hex: Optional[str] = None
+    row = None
 
-    stmt = select(ArticleImage).where(ArticleImage.signed_hash == img_hash).limit(1)
-    row = (await content_db.execute(stmt)).scalar_one_or_none()
-    if row:
-        image_id = row.image_id
-        doc_id = row.document_id
-        if row.phash is not None:
-            phash_hex = format(row.phash & 0xFFFFFFFFFFFFFFFF, "016x")
+    try:
+        stmt = select(ArticleImage).where(ArticleImage.signed_hash == img_hash).limit(1)
+        row = (await content_db.execute(stmt)).scalar_one_or_none()
+        if row:
+            image_id = row.image_id
+            doc_id = row.document_id
+            if row.phash is not None:
+                phash_hex = format(row.phash & 0xFFFFFFFFFFFFFFFF, "016x")
 
-    # XMP fallback: if exact hash miss, try instance_id from embedded XMP
-    if row is None:
-        from app.utils.image_utils import extract_encypher_xmp
+        # XMP fallback: if exact hash miss, try instance_id from embedded XMP
+        if row is None:
+            from app.utils.image_utils import extract_encypher_xmp
 
-        xmp_fields = extract_encypher_xmp(image_bytes, payload.mime_type or "image/jpeg")
-        if xmp_fields and "instance_id" in xmp_fields:
-            stmt2 = select(ArticleImage).where(ArticleImage.c2pa_instance_id == xmp_fields["instance_id"]).limit(1)
-            row = (await content_db.execute(stmt2)).scalar_one_or_none()
-            if row:
-                image_id = row.image_id
-                doc_id = row.document_id
-                if row.phash is not None:
-                    phash_hex = format(row.phash & 0xFFFFFFFFFFFFFFFF, "016x")
+            xmp_fields = extract_encypher_xmp(image_bytes, payload.mime_type or "image/jpeg")
+            if xmp_fields and "instance_id" in xmp_fields:
+                stmt2 = select(ArticleImage).where(ArticleImage.c2pa_instance_id == xmp_fields["instance_id"]).limit(1)
+                row = (await content_db.execute(stmt2)).scalar_one_or_none()
+                if row:
+                    image_id = row.image_id
+                    doc_id = row.document_id
+                    if row.phash is not None:
+                        phash_hex = format(row.phash & 0xFFFFFFFFFFFFFFFF, "016x")
+    except Exception:
+        # article_images table may not exist yet on content DB; C2PA result is
+        # still valid so we continue without the DB-match enrichment.
+        await content_db.rollback()
 
     db_confirmed = row is not None
     cryptographically_valid = bool(result.valid)

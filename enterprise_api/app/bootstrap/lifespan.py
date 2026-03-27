@@ -71,6 +71,59 @@ def _apply_content_database_schema_patches(primary_db_url: str) -> None:
                     " ADD COLUMN IF NOT EXISTS rights_resolution_url TEXT"
                 )
             )
+            # Ensure article_images table exists on content DB
+            # (Alembic only runs against core DB)
+            conn.execute(
+                sa_text(
+                    "CREATE TABLE IF NOT EXISTS article_images ("
+                    "  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),"
+                    "  organization_id VARCHAR(64) NOT NULL,"
+                    "  document_id VARCHAR(64) NOT NULL,"
+                    "  image_id VARCHAR(64) NOT NULL,"
+                    "  position INTEGER NOT NULL DEFAULT 0,"
+                    "  filename VARCHAR(500),"
+                    "  mime_type VARCHAR(100) NOT NULL,"
+                    "  alt_text TEXT,"
+                    "  original_hash VARCHAR(128) NOT NULL,"
+                    "  signed_hash VARCHAR(128) NOT NULL,"
+                    "  size_bytes BIGINT NOT NULL,"
+                    "  c2pa_instance_id VARCHAR(255),"
+                    "  c2pa_manifest_hash VARCHAR(128),"
+                    "  phash BIGINT,"
+                    "  phash_algorithm VARCHAR(20) DEFAULT 'average_hash',"
+                    "  trustmark_applied BOOLEAN NOT NULL DEFAULT false,"
+                    "  trustmark_key VARCHAR(100),"
+                    "  exif_metadata JSONB,"
+                    "  image_metadata JSONB DEFAULT '{}',"
+                    "  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),"
+                    "  CONSTRAINT uq_article_images_image_id UNIQUE (image_id)"
+                    ")"
+                )
+            )
+            conn.execute(sa_text("CREATE INDEX IF NOT EXISTS idx_article_images_org_doc ON article_images (organization_id, document_id)"))
+            conn.execute(sa_text("CREATE INDEX IF NOT EXISTS idx_article_images_image_id ON article_images (image_id)"))
+            conn.execute(sa_text("CREATE INDEX IF NOT EXISTS idx_article_images_phash ON article_images (phash) WHERE phash IS NOT NULL"))
+            conn.execute(sa_text("CREATE INDEX IF NOT EXISTS idx_article_images_signed_hash ON article_images (signed_hash)"))
+            # Ensure composite_manifests table exists on content DB
+            conn.execute(
+                sa_text(
+                    "CREATE TABLE IF NOT EXISTS composite_manifests ("
+                    "  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),"
+                    "  organization_id VARCHAR(64) NOT NULL,"
+                    "  document_id VARCHAR(64) NOT NULL,"
+                    "  instance_id VARCHAR(255) NOT NULL,"
+                    "  manifest_data JSONB NOT NULL,"
+                    "  manifest_hash VARCHAR(128) NOT NULL,"
+                    "  text_merkle_root VARCHAR(128),"
+                    "  ingredient_count INTEGER NOT NULL DEFAULT 0,"
+                    "  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),"
+                    "  CONSTRAINT uq_composite_manifests_document_id UNIQUE (document_id)"
+                    ")"
+                )
+            )
+            conn.execute(sa_text("CREATE INDEX IF NOT EXISTS idx_composite_manifests_org ON composite_manifests (organization_id)"))
+            conn.execute(sa_text("CREATE INDEX IF NOT EXISTS idx_composite_manifests_doc ON composite_manifests (document_id)"))
+            conn.execute(sa_text("CREATE INDEX IF NOT EXISTS idx_composite_manifests_instance ON composite_manifests (instance_id)"))
             conn.commit()
         content_engine.dispose()
         logger.info("Content database schema patches applied.")
