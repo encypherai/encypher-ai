@@ -878,9 +878,14 @@ readers while remaining fully extractable and verifiable.
 **Implementation**: `enterprise_api/app/services/embedding_service.py` (API
 integration layer); core signing via the Encypher Python SDK (`encypher` package)
 
-**Verification endpoint**: `POST /api/v1/public/verify-text` with JSON body
+**Verification endpoint**: `POST /api/v1/public/verify` with JSON body
 `{"text": "signed text content"}`. Returns verification result with signer
 identity, timestamp, and tamper detection status.
+
+**Media verification endpoint**: `POST /api/v1/public/verify/media` with
+multipart/form-data (`file` + `mime_type` fields). Unified endpoint for all
+binary media types -- routes by MIME type to image, audio, video, document,
+or font verification. No authentication required.
 
 ### E.2. Live Video Streaming (Per-Segment C2PA Signing)
 
@@ -940,6 +945,42 @@ All are defined in `enterprise_api/app/config.py` (class `Settings`).
 | `enable_public_api_docs` | Expose OpenAPI docs publicly | `False` |
 | `rate_limit_per_minute` | API rate limit per organization | 60 |
 | `internal_service_token` | Bearer token for inter-service auth | None |
+
+## Appendix: API Verification CURL Examples
+
+The following curl commands can be used to independently verify C2PA manifests
+against the live Encypher Enterprise API. No authentication is required for
+verification.
+
+**Verify any media file (image, audio, video):**
+
+```
+curl -X POST https://api.encypher.com/api/v1/public/verify/media \
+  -F "file=@signed_file.jpg;type=image/jpeg" \
+  -F "mime_type=image/jpeg"
+```
+
+Replace the file path and MIME type as appropriate. Supported MIME types include
+image/jpeg, image/png, image/webp, image/tiff, image/gif, image/heic, image/heif,
+image/avif, image/svg+xml, image/x-adobe-dng, audio/wav, audio/mpeg, audio/mp4,
+audio/flac, audio/ogg, video/mp4, video/quicktime, video/x-msvideo, video/webm.
+
+**Verify text with embedded provenance:**
+
+```
+curl -X POST https://api.encypher.com/api/v1/public/verify \
+  -H "Content-Type: application/json" \
+  -d '{"text": "<text with embedded provenance metadata>"}'
+```
+
+**Sign text (requires API key):**
+
+```
+curl -X POST https://api.encypher.com/api/v1/sign \
+  -H "Authorization: Bearer <API_KEY>" \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Content to sign"}'
+```
 
 ## Appendix: Requirement Traceability Matrix
 
