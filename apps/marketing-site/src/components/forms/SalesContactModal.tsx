@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Loader2, CheckCircle } from 'lucide-react';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 export type ContactContext = 'ai' | 'publisher' | 'enterprise' | 'general';
 
@@ -103,11 +104,11 @@ const contextConfig = {
   },
 };
 
-export default function SalesContactModal({ 
-  onClose, 
+export default function SalesContactModal({
+  onClose,
   context = 'general',
   title,
-  subtitle 
+  subtitle
 }: SalesContactModalProps) {
   const config = contextConfig[context];
   const displayTitle = title || config.title;
@@ -124,6 +125,7 @@ export default function SalesContactModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,7 +135,7 @@ export default function SalesContactModal({
     try {
       // Use local API route for demo requests (handles forwarding to web-service in production)
       const url = '/api/demo-request';
-      
+
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -143,6 +145,7 @@ export default function SalesContactModal({
           ...formData,
           source: config.source,
           context,
+          turnstileToken,
         }),
       });
 
@@ -159,6 +162,7 @@ export default function SalesContactModal({
       }, 3000);
     } catch {
       setError('Failed to submit request. Please try again or contact sales@encypher.com');
+      setTurnstileToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -330,6 +334,13 @@ export default function SalesContactModal({
                 </label>
               </div>
 
+              <TurnstileWidget
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+                action={`sales-${context}`}
+              />
+
               {/* Error */}
               {error && (
                 <div className="bg-red-50 border border-red-300 rounded-lg p-4 text-red-700 text-sm">
@@ -340,7 +351,7 @@ export default function SalesContactModal({
               {/* Submit */}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !turnstileToken}
                 className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-semibold transition-all flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (

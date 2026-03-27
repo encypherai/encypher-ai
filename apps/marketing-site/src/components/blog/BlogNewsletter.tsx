@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 export function BlogNewsletter() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -18,7 +20,7 @@ export function BlogNewsletter() {
       const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: 'blog' }),
+        body: JSON.stringify({ email, source: 'blog', turnstileToken }),
       });
       const data = await res.json();
 
@@ -29,6 +31,7 @@ export function BlogNewsletter() {
       setStatus('success');
     } catch (err) {
       setStatus('error');
+      setTurnstileToken(null);
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     }
   }
@@ -52,23 +55,31 @@ export function BlogNewsletter() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="email"
-              required
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={status === 'loading'}
-              className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="email"
+                required
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={status === 'loading'}
+                className="flex-1 rounded-md border border-input bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={status === 'loading' || !email || !turnstileToken}
+                className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+              >
+                {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
+              </button>
+            </div>
+            <TurnstileWidget
+              onVerify={setTurnstileToken}
+              onExpire={() => setTurnstileToken(null)}
+              onError={() => setTurnstileToken(null)}
+              action="newsletter"
             />
-            <button
-              type="submit"
-              disabled={status === 'loading' || !email}
-              className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
-            >
-              {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
-            </button>
           </form>
 
           {status === 'error' && (

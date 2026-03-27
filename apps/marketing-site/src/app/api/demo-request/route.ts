@@ -1,26 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { resolveDemoRequestEndpoint } from '@/lib/demoRequestRouting';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 /**
  * API route to handle demo requests from the marketing site.
  *
  * Architecture:
- * - Production: Forwards to web-service (source of truth for demo_requests + email)
+ * - Production: Validates Turnstile token, then forwards to web-service
  * - Development: Logs the request and returns success (no backend required)
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
+    // Verify Turnstile token before processing
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+    const turnstile = await verifyTurnstileToken(body.turnstileToken, clientIp);
+    if (!turnstile.success) {
+      console.warn('[Demo Request] Turnstile verification failed:', turnstile.error);
+      return NextResponse.json(
+        { success: false, error: turnstile.error },
+        { status: 403 }
+      );
+    }
+
+    // Strip turnstile token before forwarding to backend
+    const { turnstileToken: _removed, ...forwardBody } = body;
+
     // Log the demo request (useful for both dev and prod debugging)
     console.log('[Demo Request]', {
-      name: body.name,
-      email: body.email,
-      organization: body.organization,
-      role: body.role,
-      source: body.source,
-      context: body.context,
+      name: forwardBody.name,
+      email: forwardBody.email,
+      organization: forwardBody.organization,
+      role: forwardBody.role,
+      source: forwardBody.source,
+      context: forwardBody.context,
       timestamp: new Date().toISOString(),
     });
 
@@ -36,17 +51,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (webServiceUrl) {
-      if (body.context && !['ai', 'publisher', 'enterprise', 'general'].includes(body.context)) {
-        console.warn('[Demo Request] Unknown context, defaulting to general:', body.context);
+      if (forwardBody.context && !['ai', 'publisher', 'enterprise', 'general'].includes(forwardBody.context)) {
+        console.warn('[Demo Request] Unknown context, defaulting to general:', forwardBody.context);
       }
-      const endpoint = resolveDemoRequestEndpoint(body.context);
+      const endpoint = resolveDemoRequestEndpoint(forwardBody.context);
 
       const response = await fetch(`${webServiceUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(forwardBody),
       });
 
       if (!response.ok) {
@@ -70,9 +85,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Demo Request Error]', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to submit demo request. Please contact sales@encypher.com' 
+      {
+        success: false,
+        error: 'Failed to submit demo request. Please contact sales@encypher.com'
       },
       { status: 500 }
     );

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { CheckCircle, Loader2, Shield, FileText, Zap, Clock } from 'lucide-react';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 export default function DemoPage() {
   const [formData, setFormData] = useState({
@@ -18,9 +19,10 @@ export default function DemoPage() {
     consent: false,
     source: 'demo-page',
   });
-  
+
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -36,13 +38,14 @@ export default function DemoPage() {
       const response = await fetch('/api/demo-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, context: 'general' }),
+        body: JSON.stringify({ ...formData, context: 'general', turnstileToken }),
       });
       if (!response.ok) throw new Error('Failed to submit demo request');
       setStatus('success');
     } catch (error) {
       console.error('Demo request failed:', error);
       setStatus('error');
+      setTurnstileToken(null);
       setErrorMessage(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
     }
   };
@@ -119,11 +122,18 @@ export default function DemoPage() {
                       </Label>
                     </div>
 
+                    <TurnstileWidget
+                      onVerify={setTurnstileToken}
+                      onExpire={() => setTurnstileToken(null)}
+                      onError={() => setTurnstileToken(null)}
+                      action="demo-request"
+                    />
+
                     {status === 'error' && (
                       <div className="p-4 bg-red-50 text-red-700 rounded-md text-sm">{errorMessage}</div>
                     )}
 
-                    <Button type="submit" className="w-full py-3" disabled={status === 'submitting'}>
+                    <Button type="submit" className="w-full py-3" disabled={status === 'submitting' || !turnstileToken}>
                       {status === 'submitting' ? (
                         <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</span>
                       ) : (
@@ -193,4 +203,3 @@ export default function DemoPage() {
     </section>
   );
 }
-

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 import MetadataBackground from '../../components/hero/MetadataBackground';
+import TurnstileWidget from '../../components/security/TurnstileWidget';
 
 const LOGO_COLOR = '/assets/encypher_full_logo_color.svg';
 const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
@@ -38,6 +39,7 @@ function SignupPageContent() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const source = searchParams.get('source') || '';
   const extensionId = searchParams.get('extensionId') || '';
@@ -110,15 +112,15 @@ function SignupPageContent() {
     setLoading(true);
 
     try {
-      // Call API Gateway signup (SRF)
-      const apiBase = getApiBase().replace(/\/$/, '');
-      const res = await fetch(`${apiBase}/auth/signup`, {
+      // Call signup through local API proxy (validates Turnstile server-side)
+      const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: sanitizedName,
           email: rawEmail,
           password: rawPassword,
+          turnstileToken,
         }),
       });
 
@@ -133,6 +135,7 @@ function SignupPageContent() {
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
+      setTurnstileToken(null);
     } finally {
       setLoading(false);
     }
@@ -263,7 +266,14 @@ function SignupPageContent() {
               <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" value={formData.confirmPassword} onChange={(e) => setFormData((prev) => ({ ...prev, confirmPassword: e.target.value }))} required disabled={loading} />
             </div>
 
-            <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
+            <TurnstileWidget
+              onVerify={setTurnstileToken}
+              onExpire={() => setTurnstileToken(null)}
+              onError={() => setTurnstileToken(null)}
+              action="signup"
+            />
+
+            <Button type="submit" variant="primary" size="lg" fullWidth loading={loading} disabled={!turnstileToken}>
               Create account
             </Button>
           </form>

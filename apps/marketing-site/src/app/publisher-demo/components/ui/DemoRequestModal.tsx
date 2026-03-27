@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 // AnimatePresence not used in this component
 import { X, Loader2, CheckCircle } from 'lucide-react';
 import { trackFormEvent } from '../../lib/analytics';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 interface DemoRequestModalProps {
   onClose: () => void;
@@ -31,6 +32,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +49,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
           ...formData,
           source: 'publisher-demo',
           context: 'publisher',
+          turnstileToken,
         }),
       });
 
@@ -64,6 +67,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
       }, 3000);
     } catch (err) {
       setError('Failed to submit request. Please try again or contact demo@encypher.com');
+      setTurnstileToken(null);
       trackFormEvent('error', { error: err instanceof Error ? err.message : 'Unknown error' });
     } finally {
       setIsSubmitting(false);
@@ -234,6 +238,13 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
                 </label>
               </div>
 
+              <TurnstileWidget
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+                action="publisher-demo"
+              />
+
               {/* Error */}
               {error && (
                 <div className="bg-red-50 border border-red-300 rounded-lg p-4 text-red-700 text-sm">
@@ -244,7 +255,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !turnstileToken}
                 // TEAM_061: Remove blue/purple gradients; use design-system token colors.
                 className="w-full px-6 py-3 bg-blue-ncs hover:bg-blue-ncs/90 active:bg-blue-ncs/80 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-semibold transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-ncs"
               >

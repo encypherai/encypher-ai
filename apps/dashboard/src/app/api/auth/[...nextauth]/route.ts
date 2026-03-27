@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_SECRET) {
   throw new Error(
@@ -264,6 +265,15 @@ const handler = NextAuth({
         }
 
         try {
+          // Verify Turnstile token for non-token-based logins
+          if (!credentials.password.startsWith('__TOKEN__')) {
+            const turnstile = await verifyTurnstileToken(credentials.turnstileToken);
+            if (!turnstile.success) {
+              console.warn('[NextAuth] Turnstile verification failed:', turnstile.error);
+              throw new Error(turnstile.error || 'Bot verification failed');
+            }
+          }
+
           // Token-based login: password field carries a pre-issued access token.
           if (credentials.password.startsWith('__TOKEN__')) {
             const accessToken = credentials.password.replace('__TOKEN__', '');

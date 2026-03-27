@@ -5,6 +5,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import apiClient from '../../lib/api';
+import TurnstileWidget from '../../components/security/TurnstileWidget';
 
 // Note: API_BASE not used directly in login - auth goes through NextAuth
 import Link from 'next/link';
@@ -25,6 +26,7 @@ function LoginPageContent() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const autoAuthTriggeredRef = useRef(false);
 
   const source = searchParams.get('source') || '';
@@ -158,6 +160,7 @@ function LoginPageContent() {
         password,
         mfaToken: mfaToken || undefined,
         mfaCode: mfaCode || undefined,
+        turnstileToken: turnstileToken || undefined,
         redirect: false,
         callbackUrl,
       });
@@ -172,6 +175,7 @@ function LoginPageContent() {
         }
         // NextAuth passes the error message from authorize() in result.error
         setError(decodedError === 'CredentialsSignin' ? 'Invalid email or password' : decodedError);
+        setTurnstileToken(null);
         setLoading(false);
       } else if (result?.ok) {
         // Force a hard navigation to ensure middleware re-evaluates with fresh session
@@ -183,6 +187,7 @@ function LoginPageContent() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
+      setTurnstileToken(null);
       setLoading(false);
     }
   };
@@ -296,7 +301,14 @@ function LoginPageContent() {
               </div>
             )}
 
-            <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
+            <TurnstileWidget
+              onVerify={setTurnstileToken}
+              onExpire={() => setTurnstileToken(null)}
+              onError={() => setTurnstileToken(null)}
+              action="login"
+            />
+
+            <Button type="submit" variant="primary" size="lg" fullWidth loading={loading} disabled={!turnstileToken}>
               {mfaToken ? 'Verify and sign in' : 'Sign in'}
             </Button>
           </form>

@@ -4,14 +4,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Input, Button } from '@encypher/design-system';
 import MetadataBackground from '../../components/hero/MetadataBackground';
-
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+import TurnstileWidget from '../../components/security/TurnstileWidget';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,10 +19,10 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+      const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, turnstileToken }),
       });
 
       if (!response.ok) {
@@ -120,11 +120,18 @@ export default function ForgotPasswordPage() {
                     />
                   </div>
 
+                  <TurnstileWidget
+                    onVerify={setTurnstileToken}
+                    onExpire={() => setTurnstileToken(null)}
+                    onError={() => setTurnstileToken(null)}
+                    action="forgot-password"
+                  />
+
                   <Button
                     type="submit"
                     variant="primary"
                     className="w-full"
-                    disabled={loading || !email}
+                    disabled={loading || !email || !turnstileToken}
                   >
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">

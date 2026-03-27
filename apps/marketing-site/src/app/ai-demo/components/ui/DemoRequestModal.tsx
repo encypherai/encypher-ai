@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Loader2, CheckCircle } from 'lucide-react';
 import { trackEvent } from '../../lib/analytics';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 interface DemoRequestModalProps {
   onClose: () => void;
@@ -30,6 +31,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +48,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
           ...formData,
           source: 'ai-demo',
           context: 'ai',
+          turnstileToken,
         }),
       });
 
@@ -63,6 +66,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
       }, 3000);
     } catch (err) {
       setError('Failed to submit request. Please try again or contact demo@encypher.com');
+      setTurnstileToken(null);
       trackEvent('demo_form_error', { error: err instanceof Error ? err.message : 'Unknown error' });
     } finally {
       setIsSubmitting(false);
@@ -234,6 +238,13 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
                 </label>
               </div>
 
+              <TurnstileWidget
+                onVerify={setTurnstileToken}
+                onExpire={() => setTurnstileToken(null)}
+                onError={() => setTurnstileToken(null)}
+                action="ai-demo"
+              />
+
               {/* Error */}
               {error && (
                 <div className="bg-red-50 border border-red-300 rounded-lg p-4 text-red-700 text-sm">
@@ -244,7 +255,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !turnstileToken}
                 className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-semibold transition-all flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (

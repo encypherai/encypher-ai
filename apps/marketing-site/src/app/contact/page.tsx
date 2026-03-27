@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Mail, MessageSquare, Github, CheckCircle, Loader2, Building2, Clock } from 'lucide-react';
+import TurnstileWidget from '@/components/security/TurnstileWidget';
 
 type ContactContext = 'general' | 'publisher' | 'ai' | 'enterprise';
 
@@ -30,6 +31,7 @@ export default function ContactPage() {
 
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -48,6 +50,7 @@ export default function ContactPage() {
         body: JSON.stringify({
           ...formData,
           source: 'contact-page',
+          turnstileToken,
         }),
       });
       if (!response.ok) {
@@ -58,6 +61,7 @@ export default function ContactPage() {
       setStatus('success');
     } catch (err) {
       setStatus('error');
+      setTurnstileToken(null);
       setErrorMessage(
         err instanceof Error ? err.message : 'Failed to submit. Please try again or email sales@encypherai.com'
       );
@@ -193,11 +197,18 @@ export default function ContactPage() {
                       </Label>
                     </div>
 
+                    <TurnstileWidget
+                      onVerify={setTurnstileToken}
+                      onExpire={() => setTurnstileToken(null)}
+                      onError={() => setTurnstileToken(null)}
+                      action="contact"
+                    />
+
                     {status === 'error' && (
                       <div className="p-4 bg-red-50 text-red-700 rounded-md text-sm">{errorMessage}</div>
                     )}
 
-                    <Button type="submit" className="w-full py-3" disabled={status === 'submitting'}>
+                    <Button type="submit" className="w-full py-3" disabled={status === 'submitting' || !turnstileToken}>
                       {status === 'submitting' ? (
                         <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Sending...</span>
                       ) : (

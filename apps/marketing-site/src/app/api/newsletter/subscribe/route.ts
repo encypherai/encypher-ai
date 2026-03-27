@@ -1,16 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 /**
  * Newsletter subscription endpoint.
  *
  * Architecture mirrors demo-request:
- * - Production: Forwards to WEB_SERVICE_URL/api/v1/newsletter/subscribe
+ * - Production: Validates Turnstile token, then forwards to WEB_SERVICE_URL
  * - Development: Logs and returns success (no backend required)
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email } = body;
+    const { email, turnstileToken } = body;
+
+    // Verify Turnstile token before processing
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+    const turnstile = await verifyTurnstileToken(turnstileToken, clientIp);
+    if (!turnstile.success) {
+      console.warn('[Newsletter Subscribe] Turnstile verification failed:', turnstile.error);
+      return NextResponse.json(
+        { success: false, error: turnstile.error },
+        { status: 403 }
+      );
+    }
 
     if (!email || typeof email !== 'string' || !email.includes('@')) {
       return NextResponse.json(
