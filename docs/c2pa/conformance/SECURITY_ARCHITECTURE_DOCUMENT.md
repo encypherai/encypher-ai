@@ -92,11 +92,18 @@ The Target of Evaluation consists of:
 |  |  +--------+-----------------------------------------+    | |
 |  |           |                                               | |
 |  |  +--------v-----------------------------------------+    | |
+|  |  | Verification Services                              |    | |
+|  |  | - c2pa_verifier_core.py (c2pa-python Reader path)  |    | |
+|  |  | - document_verification_service.py (Pipeline B)    |    | |
+|  |  | - c2pa_manifest_extractor.py (format extraction)   |    | |
+|  |  +--------+-----------------------------------------+    | |
+|  |           |                                               | |
+|  |  +--------v-----------------------------------------+    | |
 |  |  | Cryptographic Core                                |    | |
 |  |  | - c2pa_signer.py     (c2pa.Signer factory)        |    | |
-|  |  | - cose_signer.py     (COSE_Sign1 signing)         |    | |
+|  |  | - cose_signer.py     (COSE_Sign1 sign + verify)   |    | |
 |  |  | - c2pa_claim_builder.py (CBOR claim construction)  |    | |
-|  |  | - jumbf.py           (ISO 19566-5 serializer)      |    | |
+|  |  | - jumbf.py           (ISO 19566-5 serial + parse)  |    | |
 |  |  | - c2pa_trust_list.py (trust anchor management)     |    | |
 |  |  +--------------------------------------------------+    | |
 |  +----------------------------------------------------------+ |
@@ -133,10 +140,13 @@ The Target of Evaluation consists of:
 |-----------|------|--------|
 | FastAPI application | HTTP API framework, request routing | Open-source (pypi) |
 | Signing services | Media-type-specific signing orchestration | Encypher proprietary |
+| Verification services | Media-type-specific C2PA verification | Encypher proprietary |
+| document_verification_service.py | Pipeline B verification (extract, JUMBF parse, COSE verify, hash check) | Encypher proprietary |
+| c2pa_manifest_extractor.py | Per-format JUMBF extraction (PDF, ZIP, SFNT, FLAC, JXL) | Encypher proprietary |
 | c2pa_signer.py | Creates c2pa.Signer from PEM credentials | Encypher proprietary |
-| cose_signer.py | COSE_Sign1_Tagged signing (RFC 9052) for custom pipeline | Encypher proprietary |
+| cose_signer.py | COSE_Sign1_Tagged signing and verification (RFC 9052) | Encypher proprietary |
 | c2pa_claim_builder.py | C2PA Claim v2 CBOR construction for custom pipeline | Encypher proprietary |
-| jumbf.py | ISO 19566-5 JUMBF box serializer for custom pipeline | Encypher proprietary |
+| jumbf.py | ISO 19566-5 JUMBF box serialization and parsing | Encypher proprietary |
 | c2pa_trust_list.py | Trust anchor loading, chain validation, OCSP, denylist | Encypher proprietary |
 | c2pa-python | C2PA manifest builder/signer/reader (wraps c2pa-rs) | Open-source (pypi) |
 | cryptography | Private key loading, ECDSA/RSA/EdDSA signing, X.509 | Open-source (pypi) |
@@ -801,7 +811,7 @@ Used for: images (13 types), video (3 types), audio (4 types).
 
 ### Pipeline B: Document formats (custom JUMBF/COSE path)
 
-Used for: PDF, EPUB, DOCX, ODT, OXPS, OTF fonts.
+Used for: PDF, EPUB, DOCX, ODT, OXPS, OTF/TTF fonts, FLAC audio, JPEG XL.
 
 ```
 1. API receives authenticated request with document bytes + metadata
@@ -831,6 +841,38 @@ Used for: PDF, EPUB, DOCX, ODT, OXPS, OTF fonts.
    - Manifest store -> manifest -> assertion store + claim + signature
 9. Pass 2: Replace placeholder with signed manifest store
 10. Return signed document bytes
+```
+
+#### Pipeline B Verification Flow
+
+```
+1. API receives file bytes + MIME type via /api/v1/public/verify/media
+2. Route to document_verification_service.verify_document_c2pa()
+3. Extract manifest: c2pa_manifest_extractor.extract_manifest()
+   - PDF: locate /AF entry with AFRelationship = C2PA_Manifest, read EF stream
+   - ZIP-based (EPUB, DOCX, ODT, OXPS): read META-INF/content_credential.c2pa
+   - Font (OTF/TTF): parse SFNT table directory, read C2PA table
+   - FLAC: parse metadata blocks, read APPLICATION block with app_id 'c2pa'
+   - JXL: parse ISOBMFF boxes, read 'c2pa' box payload
+4. Parse JUMBF manifest store: jumbf.parse_manifest_store()
+   - Locates active manifest (last manifest in store)
+   - Extracts assertion store (CBOR payloads + raw JUMBF bytes), claim, signature
+5. Verify COSE_Sign1 signature: cose_signer.verify_cose_sign1()
+   - Reconstructs Sig_structure: ["Signature1", protected, b"", claim_cbor]
+   - Verifies ECDSA/RSA/EdDSA signature against public key from x5chain
+   - Validates certificate chain
+6. Verify assertion hashes:
+   - Decode claim CBOR, extract hashed assertion URI references
+   - For each assertion: SHA-256 hash raw JUMBF content, compare to claim value
+7. Verify content hash:
+   - PDF/Font/FLAC/JXL (c2pa.hash.data): read exclusion range from assertion,
+     cross-check against independently located manifest range,
+     compute SHA-256 with exclusion zeroed out
+   - ZIP-based (c2pa.hash.collection.data): recompute per-file local entry
+     hashes and central directory hash, compare to stored values
+8. Extract signer identity (CN) and timestamp from COSE headers
+9. Return C2paVerificationResult (valid, c2pa_manifest_valid, hash_matches,
+   signer info, manifest_data matching c2pa-python Reader format)
 ```
 
 ## Extended Capabilities (Beyond Current Conformance Scope)
