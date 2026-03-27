@@ -784,11 +784,12 @@ currently addressed:
 All algorithms are drawn from NIST Cryptographic Standards and Guidelines
 (https://csrc.nist.gov/Projects/Cryptographic-Standards-and-Guidelines).
 
-## Appendix: Signing Pipeline Flow Detail
+## Appendix: Signing and Verification Pipeline Flow Detail
 
 ### Pipeline A: Media formats (c2pa-python path)
 
-Used for: images (13 types), video (3 types), audio (4 types).
+Used for: images (12 types -- all except JXL), video (3 types), audio (5 types -- all except FLAC).
+JXL and FLAC use Pipeline B because c2pa-python/c2pa-rs does not yet support these container formats.
 
 ```
 1. API receives authenticated request with media bytes + metadata
@@ -809,21 +810,26 @@ Used for: images (13 types), video (3 types), audio (4 types).
 8. Post-processing: compute SHA-256 of signed output, return result
 ```
 
-### Pipeline B: Document formats (custom JUMBF/COSE path)
+### Pipeline B: Custom JUMBF/COSE path
 
-Used for: PDF, EPUB, DOCX, ODT, OXPS, OTF/TTF fonts, FLAC audio, JPEG XL.
+Used for formats where c2pa-python/c2pa-rs lacks native container support:
+documents (PDF, EPUB, DOCX, ODT, OXPS), fonts (OTF/TTF), FLAC audio, JPEG XL.
 
 ```
 1. API receives authenticated request with document bytes + metadata
 2. Input validation: MIME type check against SUPPORTED_DOCUMENT_MIME_TYPES
-3. Pass 1: Create document with placeholder manifest
+3. Pass 1: Create file with placeholder manifest
    - PDF: insert JUMBF placeholder in PDF cross-reference stream
-   - ZIP-based: add c2pa.c2m entry to ZIP archive
-   - Font: add C2PA SFNT table with placeholder
+   - ZIP-based (EPUB, DOCX, ODT, OXPS): add c2pa.c2m entry to ZIP archive
+   - Font (OTF/TTF): add C2PA SFNT table with placeholder
+   - FLAC: add APPLICATION metadata block with app_id 'c2pa' and placeholder
+   - JXL: add ISOBMFF 'c2pa' box with placeholder
 4. Compute content binding hashes (SHA-256):
    - PDF: hash document bytes excluding placeholder region
    - ZIP: hash individual files + central directory
    - Font: hash font data excluding C2PA table
+   - FLAC: hash file bytes excluding APPLICATION block data range
+   - JXL: hash file bytes excluding 'c2pa' box data range
 5. Build assertions (CBOR-encoded, wrapped in JUMBF assertion boxes):
    - c2pa.actions.v2 (action, timestamp, software agent)
    - c2pa.hash.data / c2pa.hash.collection.data (content binding)
