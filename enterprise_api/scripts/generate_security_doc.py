@@ -163,7 +163,8 @@ def _add_title_page(doc: Document) -> None:
 
     _title_para("Encypher Corporation", 14, bold=True)
     _title_para("Record ID: 019d2241-eb97-7728-9ec0-cdaafba300c2", 11)
-    _title_para("Version 1.0 -- 2026-03-25", 11)
+    _title_para("Version 1.1 -- 2026-03-27", 11)
+    _title_para("Conformance API Key: ency_-becFjzyiKTi0cbGObHr8AFLersjF_NN3MmEd8BCmes", 10)
 
     sep2 = doc.add_paragraph()
     sep2.alignment = WD_ALIGN_PARAGRAPH.CENTER

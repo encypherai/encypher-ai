@@ -2,7 +2,9 @@
 
 C2PA Conformance Program Submission
 Encypher Corporation
-Version 1.0, 2026-03-25
+Version 1.1, 2026-03-27
+
+Conformance API Key: ency_-becFjzyiKTi0cbGObHr8AFLersjF_NN3MmEd8BCmes
 
 ---
 
@@ -11,8 +13,8 @@ Version 1.0, 2026-03-25
 ### C.1.1. Applicant Organization Details
 
 - **Legal Name**: Encypher Corporation
-- **Jurisdiction**: United Kingdom
-- **Registered Office**: London, United Kingdom
+- **Jurisdiction**: United States
+- **Registered Office**: Dover, Delaware
 - **Contact**: Erik Svilich, CEO -- erik.svilich@encypher.com
 - **Website**: https://encypher.com
 
@@ -24,7 +26,7 @@ Product's C2PA Claim Signing Certificate:
 1. **Common Name (CN)**: Encypher Enterprise API
 2. **Organization (O)**: Encypher Corporation
 3. **Organizational Unit (OU)**: Engineering
-4. **Country (C)**: GB
+4. **Country (C)**: US
 
 ### C.1.3. Generator Product Description
 
@@ -48,6 +50,8 @@ signed Content Credentials into media assets via authenticated API calls.
   require machine-verifiable provenance for digital assets.
 - Software integrators building content provenance into their own products
   via API integration.
+- AI/ML companies that require machine-verifiable provenance for generated
+  assets.
 
 **Key features:**
 
@@ -999,27 +1003,6 @@ that addresses it.
 | 6.6.1.SE3 | Document IAM policies for cloud resources | C.2.6 | Addressed (Railway project-level RBAC, resource access table in C.2.6) |
 | 6.6.1.SE4 | Document vuln scanning process | C.2.6 | Addressed |
 | 6.6.1.SE5 | Document vuln remediation process | C.2.6 | Addressed (30/90/180 day SLA) |
-
----
-
-## Summary of Resolved Items
-
-**All 14 original placeholder items have been resolved:**
-
-1. C.1.1 -- Compliance contact: Erik Svilich, CEO (erik.svilich@encypher.com)
-2. C.2.1 -- SSL.com enrollment: Via c2pasign portal (conformance testing); CA enrollment post-conformance
-3. C.2.1 -- Secrets management: Railway encrypted environment variables (AES-256)
-4. C.2.1 -- MFA on SSL.com: Confirmed enabled
-5. C.2.1 -- Personnel with access: Single individual (Erik Svilich, CEO)
-6. C.2.1 -- Dependabot: Alerts enabled at GitHub org level; no config file for auto-PRs
-7. C.2.2 -- Key generation: Via SSL.com c2pasign portal (conformance); CA process post-conformance
-8. C.2.2 -- Env var encryption at rest: Railway AES-256
-9. C.2.2 -- Key rotation frequency: Aligned with certificate validity period
-10. C.2.3 -- pip-audit evidence: Attached (remediation plan documented)
-11. C.2.5 -- TLS config: Railway edge proxy enforces TLS 1.3 minimum
-12. C.2.6 -- Hosting platform IAM: Railway team RBAC (Owner -- sole administrator)
-13. C.2.6 -- Human access: Single individual with production access (Erik Svilich, CEO)
-14. C.2.6 -- Vuln scanning: pip-audit + Trivy + TruffleHog in security-scan.yml
 
 ---
 
