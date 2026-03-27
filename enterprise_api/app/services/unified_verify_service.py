@@ -648,7 +648,14 @@ def verify_media(
     cid = correlation_id or uuid.uuid4().hex
     media_type = classify_mime(mime_type)
 
-    if media_type == "image":
+    # Pipeline B formats: route FLAC and JXL to document verifier
+    # (these use custom JUMBF/COSE embedding, not c2pa-python)
+    _mime_lower = mime_type.lower().strip()
+    if _mime_lower in ("audio/flac", "image/jxl"):
+        from app.services.document_verification_service import verify_document_c2pa
+
+        result = verify_document_c2pa(data, _mime_lower)
+    elif media_type == "image":
         from app.services.image_verification_service import verify_image_c2pa
 
         result = verify_image_c2pa(data, mime_type)
@@ -675,9 +682,9 @@ def verify_media(
 
         result = verify_video_c2pa(data, mime_type)
     elif media_type in ("document", "font"):
-        from app.utils.c2pa_verifier_core import verify_c2pa
+        from app.services.document_verification_service import verify_document_c2pa
 
-        result = verify_c2pa(data, mime_type)
+        result = verify_document_c2pa(data, mime_type)
     else:
         return UnifiedVerifyResponse(
             success=False,

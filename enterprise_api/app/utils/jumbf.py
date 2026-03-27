@@ -216,6 +216,7 @@ def _parse_manifest_box(payload: bytes) -> Optional[dict]:
     result = {
         "label": parsed["label"],
         "assertions": {},
+        "assertion_jumbf": {},  # raw JUMBF content per assertion (for hash verification)
         "claim_cbor": None,
         "signature_cose": None,
     }
@@ -230,6 +231,8 @@ def _parse_manifest_box(payload: bytes) -> Optional[dict]:
             for atype, apayload in inner["content_boxes"]:
                 if atype == TYPE_JUMB:
                     assertion = _parse_superbox_payload(apayload)
+                    # Store raw JUMBF content for hash verification
+                    result["assertion_jumbf"][assertion["label"]] = apayload
                     # Extract CBOR data from the first cbor content box
                     for actype, acpayload in assertion["content_boxes"]:
                         if actype == TYPE_CBOR:
