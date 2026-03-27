@@ -23,24 +23,24 @@ export interface AISummaryProps {
 /**
  * AI-optimized summary component for search engines and AI crawlers.
  * Renders hidden semantic content + JSON-LD structured data.
- * 
+ *
  * Best practices implemented:
  * - Hidden div with data-ai-summary for crawler extraction
  * - JSON-LD WebPage schema with mainEntity
  * - Optional FAQ schema for rich snippets
  * - Semantic HTML structure
  */
-export function AISummary({ 
-  title, 
-  whatWeDo, 
-  whoItsFor, 
-  keyDifferentiator, 
+export function AISummary({
+  title,
+  whatWeDo,
+  whoItsFor,
+  keyDifferentiator,
   primaryValue,
   faq,
   pagePath,
   pageType = 'WebPage'
 }: AISummaryProps) {
-  const baseUrl = 'https://encypherai.com';
+  const baseUrl = 'https://encypher.com';
   const pageUrl = pagePath ? `${baseUrl}${pagePath}` : baseUrl;
 
   // WebPage schema with AI-friendly properties
@@ -96,8 +96,8 @@ export function AISummary({
   return (
     <>
       {/* Hidden semantic content for AI crawlers */}
-      <div 
-        style={{ display: 'none' }} 
+      <div
+        style={{ display: 'none' }}
         data-ai-summary="true"
         aria-hidden="true"
         itemScope

@@ -8,12 +8,12 @@
 //!
 //! Required backends:
 //!   * `origin`         — Publisher's origin server (existing)
-//!   * `encypher_api`   — `api.encypherai.com` (add in Fastly console)
+//!   * `encypher_api`   — `api.encypher.com` (add in Fastly console)
 //!
 //! Required Edge Dictionary:
 //!   * Name: `encypher_config`
 //!   * Keys:
-//!     - `api_base_url`  — e.g. "https://api.encypherai.com"
+//!     - `api_base_url`  — e.g. "https://api.encypher.com"
 //!     - `cache_ttl_s`   — e.g. "3600"
 //!
 //! Deploy with: `fastly compute publish`
@@ -97,7 +97,7 @@ fn main(req: Request) -> Result<Response, Error> {
     let dict = fastly::Dictionary::open(DICT_CONFIG);
     let api_base = dict
         .get("api_base_url")
-        .unwrap_or_else(|| "https://api.encypherai.com".to_string());
+        .unwrap_or_else(|| "https://api.encypher.com".to_string());
 
     // Build canonical URL
     let request_url = req.get_url_str().to_string();

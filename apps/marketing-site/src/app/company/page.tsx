@@ -12,8 +12,8 @@ import AISummary from '@/components/seo/AISummary';
 export const metadata: Metadata = {
   title: 'Company | Encypher',
   description: 'Meet the Encypher team and advisors. Leaders in AI content provenance, trust, and enterprise adoption. Learn about our mission and the visionaries behind the open standard for AI content authenticity.',
-  alternates: { canonical: 'https://encypherai.com/company' },
-  metadataBase: new URL('https://encypherai.com'),
+  alternates: { canonical: 'https://encypher.com/company' },
+  metadataBase: new URL('https://encypher.com'),
 };
 
 export default function CompanyPage() {
@@ -257,8 +257,8 @@ export default function CompanyPage() {
                       For commercial licensing, enterprise solutions, or sales inquiries.
                     </p>
                     <Button asChild size="sm" className="shadow-md btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                      <a href="mailto:licensing@encypherai.com">
-                        licensing@encypherai.com
+                      <a href="mailto:licensing@encypher.com">
+                        licensing@encypher.com
                       </a>
                     </Button>
                   </div>

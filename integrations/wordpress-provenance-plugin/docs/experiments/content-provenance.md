@@ -11,7 +11,7 @@ The Content Provenance experiment automatically embeds C2PA-compatible cryptogra
 The result is content that:
 - Carries a cryptographic record of which AI model generated it, when, and from what source
 - Embeds an invisible Unicode watermark (variation selector technique) that survives copy-paste out of WordPress
-- Can be publicly verified via `curl POST https://api.encypherai.com/api/v1/verify`
+- Can be publicly verified via `curl POST https://api.encypher.com/api/v1/verify`
 - Provides audit trail for editorial compliance (EU AI Act, etc.)
 
 ## Architecture
@@ -48,7 +48,7 @@ The `Content_Provenance` class hooks into all WordPress/ai experiment output fil
 5. Observe the generated title — it now carries a C2PA manifest
 6. Verify:
    ```bash
-   curl -X POST https://api.encypherai.com/api/v1/verify \
+   curl -X POST https://api.encypher.com/api/v1/verify \
      -H "Content-Type: application/json" \
      -d '{"text": "<paste signed title here>"}'
    ```
@@ -59,7 +59,7 @@ The `Content_Provenance` class hooks into all WordPress/ai experiment output fil
 ### Verify a signed text
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/verify \
+curl -X POST https://api.encypher.com/api/v1/verify \
   -H "Content-Type: application/json" \
   -d '{"text": "Your AI-generated content here (with embedded Unicode watermark)"}'
 ```

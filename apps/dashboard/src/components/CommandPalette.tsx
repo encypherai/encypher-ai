@@ -96,7 +96,7 @@ export function CommandPalette() {
 
     // Actions
     { id: 'new-key', title: 'Create New API Key', icon: <IconPlus />, action: () => router.push('/api-keys'), keywords: ['generate', 'add'], category: 'action' },
-    { id: 'docs', title: 'Open API Documentation', icon: <IconDocs />, action: () => window.open('https://api.encypherai.com/docs', '_blank'), keywords: ['help', 'guide', 'reference', 'api'], category: 'action' },
+    { id: 'docs', title: 'Open API Documentation', icon: <IconDocs />, action: () => window.open('https://api.encypher.com/docs', '_blank'), keywords: ['help', 'guide', 'reference', 'api'], category: 'action' },
 
     // Settings
     { id: 'logout', title: 'Sign Out', icon: <IconLogout />, action: () => router.push('/api/auth/signout'), keywords: ['logout', 'exit'], category: 'settings' },

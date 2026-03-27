@@ -76,7 +76,7 @@ class Bulk
                 'restNonce' => wp_create_nonce('wp_rest'),
                 'tier' => $tier,
                 'pricing' => $pricing,
-                'billingUrlBase' => 'https://dashboard.encypherai.com/billing',
+                'billingUrlBase' => 'https://dashboard.encypher.com/billing',
                 'paymentStatusUrl' => esc_url_raw(rest_url('encypher-provenance/v1/payment-status')),
                 'paymentSetupUrl' => esc_url_raw(rest_url('encypher-provenance/v1/payment-setup')),
             ]
@@ -479,7 +479,7 @@ class Bulk
             $params['quantity'] = $quantity;
         }
 
-        return 'https://dashboard.encypherai.com/billing?' . http_build_query($params);
+        return 'https://dashboard.encypher.com/billing?' . http_build_query($params);
     }
 
     /**

@@ -35,7 +35,7 @@ describe("toolsAnalytics", () => {
     const event = buildToolAnalyticsEvent({
       eventName: "tools_sign_started",
       sessionId: "session-123",
-      pageUrl: "https://encypherai.com/tools/sign-verify",
+      pageUrl: "https://encypher.com/tools/sign-verify",
       pageTitle: "Sign/Verify Tool",
       referrer: "",
       userAgent: "test-agent",
@@ -49,7 +49,7 @@ describe("toolsAnalytics", () => {
       event_type: "tool_event",
       event_name: "tools_sign_started",
       session_id: "session-123",
-      page_url: "https://encypherai.com/tools/sign-verify",
+      page_url: "https://encypher.com/tools/sign-verify",
       page_title: "Sign/Verify Tool",
       referrer: "",
       user_agent: "test-agent",

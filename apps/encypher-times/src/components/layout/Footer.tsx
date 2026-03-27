@@ -52,7 +52,7 @@ export function Footer() {
             </li>
             <li>
               <a
-                href="https://encypherai.com"
+                href="https://encypher.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-[family-name:var(--font-ui)] text-sm text-ink-muted hover:text-ink transition-colors"
@@ -71,7 +71,7 @@ export function Footer() {
             tamper-proof proof of origin signed by Encypher, built on the C2PA
             open standard. Install{" "}
             <a
-              href="https://encypherai.com"
+              href="https://encypher.com"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-0.5 text-blue-ncs hover:underline"
@@ -98,7 +98,7 @@ export function Footer() {
         <p className="font-[family-name:var(--font-ui)] text-xs text-ink-faint inline-flex items-center gap-1">
           Content provenance by{" "}
           <a
-            href="https://encypherai.com"
+            href="https://encypher.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-blue-ncs hover:underline"

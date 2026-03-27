@@ -23,7 +23,7 @@ import { PLAYGROUND_ENDPOINTS } from '../../lib/playgroundEndpoints.mjs';
 import { extractSignedTextFromResponse } from '../../lib/playgroundSignedText.mjs';
 
 // API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -821,7 +821,7 @@ export default function PlaygroundPage() {
             </p>
           </div>
           <a
-            href="https://api.encypherai.com/docs"
+            href="https://api.encypher.com/docs"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-blue-ncs hover:underline flex items-center gap-1"

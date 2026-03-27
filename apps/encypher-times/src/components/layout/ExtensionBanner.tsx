@@ -50,7 +50,7 @@ export function ExtensionBanner() {
             </div>
             <div className="flex items-center gap-3 shrink-0 pl-8 sm:pl-0">
               <a
-                href="https://encypherai.com"
+                href="https://encypher.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#00CED1] text-delft-blue font-[family-name:var(--font-ui)] text-xs font-bold rounded hover:bg-[#00DFD2] transition-colors whitespace-nowrap"

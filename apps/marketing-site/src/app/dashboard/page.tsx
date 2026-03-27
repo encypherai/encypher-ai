@@ -1,7 +1,7 @@
 /**
  * Dashboard Redirect Page
  *
- * This page redirects authenticated users to the actual dashboard at dashboard.encypherai.com.
+ * This page redirects authenticated users to the actual dashboard at dashboard.encypher.com.
  * The marketing site should not have its own dashboard - all dashboard functionality
  * lives at the dashboard subdomain.
  */
@@ -10,10 +10,10 @@ import { useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 
 export default function DashboardPage() {
-  
+
   useEffect(() => {
     // Redirect to the actual dashboard
-    const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com";
+    const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com";
     window.location.href = dashboardUrl;
   }, []);
 

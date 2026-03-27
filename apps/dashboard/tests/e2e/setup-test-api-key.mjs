@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
  * Setup script to create a test API key for E2E testing
- * Creates an API key for test@encypherai.com with sign permission
+ * Creates an API key for test@encypher.com with sign permission
  */
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-const TEST_EMAIL = 'test@encypherai.com';
+const TEST_EMAIL = 'test@encypher.com';
 const TEST_PASSWORD = 'TestPassword123!';
 
 async function setupTestApiKey() {
@@ -60,7 +60,7 @@ async function setupTestApiKey() {
 
     console.log('✅ API key created successfully');
     console.log(`API Key: ${apiKey}`);
-    
+
     // Return the key for use in tests
     return apiKey;
 

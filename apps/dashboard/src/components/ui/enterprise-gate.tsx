@@ -34,7 +34,7 @@ export function EnterpriseGate({ icon, title, description, features }: Enterpris
             <Link href="/billing">
               <Button variant="primary">Upgrade to Enterprise</Button>
             </Link>
-            <a href="mailto:sales@encypherai.com">
+            <a href="mailto:sales@encypher.com">
               <Button variant="outline">Talk to Sales</Button>
             </a>
           </div>

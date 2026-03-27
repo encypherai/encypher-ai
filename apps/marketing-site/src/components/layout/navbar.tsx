@@ -140,17 +140,17 @@ export function Navbar() {
                 size="sm"
                 className="mr-2"
               >
-                <a href={process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}>Dashboard</a>
+                <a href={process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}>Dashboard</a>
               </Button>
               <Button variant="outline" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>Sign out</Button>
             </>
           ) : (
             <div className="flex gap-2 items-center">
               <Button asChild variant="ghost" size="sm">
-                <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}/login`}>Sign In</a>
+                <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}/login`}>Sign In</a>
               </Button>
               <Button asChild size="sm" className="font-semibold">
-                <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}/signup`}>Get Started</a>
+                <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}/signup`}>Get Started</a>
               </Button>
             </div>
           )}
@@ -305,7 +305,7 @@ export function Navbar() {
                   className="w-full"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <a href={process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}>Dashboard</a>
+                  <a href={process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}>Dashboard</a>
                 </Button>
                 <Button
                   variant="outline"
@@ -319,14 +319,14 @@ export function Navbar() {
             ) : (
               <div className="flex flex-col space-y-2 pt-2">
                 <a
-                  href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}/login`}
+                  href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}/login`}
                   className="block w-full text-left px-4 py-2 text-sm font-medium hover:text-primary"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Sign In
                 </a>
                 <a
-                  href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}/signup`}
+                  href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}/signup`}
                   className="block w-full text-left px-4 py-2 text-sm font-medium hover:text-primary"
                   onClick={() => setMobileMenuOpen(false)}
                 >

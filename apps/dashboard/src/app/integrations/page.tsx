@@ -210,7 +210,7 @@ export default function IntegrationsPage() {
               Publisher Integration Guide &rarr;
             </a>
             <a
-              href="https://api.encypherai.com/docs"
+              href="https://api.encypher.com/docs"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-medium text-blue-ncs hover:underline"

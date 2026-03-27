@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@encypher/design-system';
 
 const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+  (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
 
 type ConnectState = 'completing' | 'success' | 'error';

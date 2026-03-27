@@ -14,8 +14,8 @@
     "<all_urls>",
     "http://localhost/*",
     "http://127.0.0.1/*",
-    "https://api.encypherai.com/*",
-    "https://*.encypherai.com/*"
+    "https://api.encypher.com/*",
+    "https://*.encypher.com/*"
   ],
   "options_page": "options/options.html",
   "action": {
@@ -39,8 +39,8 @@
   },
   "externally_connectable": {
     "matches": [
-      "https://dashboard.encypherai.com/*",
-      "https://*.encypherai.com/*",
+      "https://dashboard.encypher.com/*",
+      "https://*.encypher.com/*",
       "http://localhost/*",
       "http://127.0.0.1/*"
     ]

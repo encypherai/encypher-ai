@@ -1,8 +1,8 @@
 var ENCYPHER_CONFIG = {
-  DEFAULT_API_BASE_URL: 'https://api.encypherai.com',
+  DEFAULT_API_BASE_URL: 'https://api.encypher.com',
   SIGN_PATH: '/api/v1/sign',
   VERIFY_PATH: '/api/v1/verify',
-  ALLOWED_API_HOST_SUFFIX: 'encypherai.com',
+  ALLOWED_API_HOST_SUFFIX: 'encypher.com',
   PROPERTY_API_KEY: 'encypher_api_key',
   PROPERTY_API_BASE_URL: 'encypher_api_base_url',
   PROPERTY_DOC_PROVENANCE_PREFIX: 'encypher_doc_provenance_',

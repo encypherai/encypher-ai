@@ -25,13 +25,13 @@ export default function ErikPage() {
           <p className="text-xl md:text-2xl text-muted-foreground mb-8">
             C2PA Text Co-Chair & Encypher CEO
           </p>
-          
+
           {/* Headshot */}
           <div className="flex justify-center mb-8">
             <div className="relative w-48 h-48 md:w-64 md:h-64">
-              <Image 
-                src="/images/headshots/Erik_Svilich_Headshot.png" 
-                alt="Erik Svilich - Professional Headshot" 
+              <Image
+                src="/images/headshots/Erik_Svilich_Headshot.png"
+                alt="Erik Svilich - Professional Headshot"
                 fill
                 className="rounded-full object-cover shadow-xl border-4 border-border"
                 priority
@@ -57,7 +57,7 @@ export default function ErikPage() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <a href="https://book.encypherai.com/#/encypherai" target="_blank" rel="noopener noreferrer">
+              <a href="https://book.encypher.com/#/encypherai" target="_blank" rel="noopener noreferrer">
                 <Calendar className="mr-2 h-5 w-5" />
                 Schedule a Call
               </a>
@@ -77,13 +77,13 @@ export default function ErikPage() {
         {/* What We Do Section */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-8 text-center">What We Do</h2>
-          
+
           <div className="grid md:grid-cols-2 gap-6">
             {/* For Publishers */}
             <div className="bg-card border border-border rounded-lg p-6 shadow-md">
               <h3 className="text-xl font-semibold mb-3 text-primary">FOR PUBLISHERS</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Transform litigation costs into licensing revenue through sentence-level usage proof 
+                Transform litigation costs into licensing revenue through sentence-level usage proof
                 and court-admissible evidence.
               </p>
             </div>
@@ -92,7 +92,7 @@ export default function ErikPage() {
             <div className="bg-card border border-border rounded-lg p-6 shadow-md">
               <h3 className="text-xl font-semibold mb-3 text-primary">FOR AI COMPANIES</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Access the publisher ecosystem while gaining performance intelligence and reducing legal 
+                Access the publisher ecosystem while gaining performance intelligence and reducing legal
                 exposure.
               </p>
             </div>
@@ -105,20 +105,20 @@ export default function ErikPage() {
         {/* About Erik Section */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-6 text-center">About Erik</h2>
-          
+
           <div className="bg-muted/30 rounded-lg p-6 md:p-8 space-y-4">
             <p className="text-muted-foreground leading-relaxed">
-              Erik Svilich co-chairs the C2PA Text Task Force, leading the development of global 
+              Erik Svilich co-chairs the C2PA Text Task Force, leading the development of global
               standards for AI content authentication.
             </p>
-            
+
             <p className="text-muted-foreground leading-relaxed">
-              As Founder & CEO of Encypher, Erik is building the production-ready implementation 
+              As Founder & CEO of Encypher, Erik is building the production-ready implementation
               of the C2PA text standard with proprietary sentence-level tracking capabilities.
             </p>
-            
+
             <p className="text-muted-foreground leading-relaxed">
-              Prior to Encypher, Erik led a $5M company's digital transformation and brings extensive 
+              Prior to Encypher, Erik led a $5M company's digital transformation and brings extensive
               experience in AI SaaS, enterprise software, and successful business turnarounds.
             </p>
           </div>
@@ -146,7 +146,7 @@ export default function ErikPage() {
         {/* How It Works Section */}
         <section className="mb-12">
           <h2 className="text-3xl font-bold mb-6 text-center">How It Works</h2>
-          
+
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             {/* For Publishers */}
             <div className="bg-card border border-border rounded-lg p-6 shadow-md">
@@ -214,13 +214,13 @@ export default function ErikPage() {
           {/* Documentation Links */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild variant="outline">
-              <a href="https://docs.encypherai.com" target="_blank" rel="noopener noreferrer">
+              <a href="https://docs.encypher.com" target="_blank" rel="noopener noreferrer">
                 <FileText className="mr-2 h-4 w-4" />
                 Technical Documentation
               </a>
             </Button>
             <Button asChild variant="outline">
-              <a href="https://docs.encypherai.com/integration" target="_blank" rel="noopener noreferrer">
+              <a href="https://docs.encypher.com/integration" target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Integration Guide
               </a>
@@ -236,10 +236,10 @@ export default function ErikPage() {
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Ready to Transform Your Approach?
           </h2>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white font-semibold">
-              <a href="https://book.encypherai.com/#/encypherai" target="_blank" rel="noopener noreferrer">
+              <a href="https://book.encypher.com/#/encypherai" target="_blank" rel="noopener noreferrer">
                 <Video className="mr-2 h-5 w-5" />
                 Schedule Technical Demo
               </a>

@@ -41,17 +41,17 @@ The breakthrough leverages Unicode variation selectors to create an invisible "c
 
 ## About Encypher
 
-Encypher builds the cryptographic trust infrastructure for the AI-powered internet. 󠇟󠇠󠇡󠇢󠄆󠅮󠅌︎󠅞󠆪󠄴󠅜󠆋󠆋󠄘󠇎󠅷󠆂󠇮󠄧󠆽󠆙󠅂︊󠇩︅󠆭󠆖󠅼󠆣󠅡󠇞󠄜󠄠󠅅󠅏︊󠄽󠇐󠆼󠄊󠄉︎󠇗The company's open-source technology embeds verifiable metadata directly into AI-generated content, providing mathematical certainty for content authenticity versus statistical detection tools. 󠇟󠇠󠇡󠇢󠄣󠅄󠄁󠆐󠅪󠆊󠄾󠆱󠆤󠄙󠅛󠆫󠄲󠅫󠅊󠇢󠆫󠄚󠆨󠅞󠆟󠄔󠆈󠅕󠅭󠅯󠆤󠇋󠅹󠆽󠅜󠄅󠆐󠅟󠆞󠆡󠄎󠄔󠇓︍Encypher's solutions enable content creators to protect intellectual property while allowing AI developers to build transparent, ethical training datasets. 󠇟󠇠󠇡󠇢󠆉󠆀󠄼󠄻󠄾󠄧󠄹󠄧󠆁󠅏󠅅󠄖󠅕󠄪󠇫󠆒󠅵󠅎󠅿󠄰󠆲󠅐󠄧󠆎󠅃󠇠󠇨󠄸󠅼󠆴󠅦󠅛󠄜󠄌󠄓󠇍󠄬︈󠇕󠇤The company is actively contributing to content authenticity standards through the Coalition for Content Provenance and Authenticity (C2PA) and Content Authenticity Initiative (CAI). 󠇟󠇠󠇡󠇢󠅴󠇪󠅜︋󠄂󠆸󠄶󠆏󠅲󠅳󠄽󠄉󠇋︅󠆹󠆇󠅟󠇡︇󠄵︎󠄟󠇚󠆻󠅻󠅞󠆠󠅠︋󠅠󠆩︆󠆠󠅈󠄸󠅅󠅤󠇅󠄢󠆄For more information, visit [https://encypherai.com](https://encypherai.com) or follow the company on [LinkedIn](https://linkedin.com/company/encypherai).
+Encypher builds the cryptographic trust infrastructure for the AI-powered internet. 󠇟󠇠󠇡󠇢󠄆󠅮󠅌︎󠅞󠆪󠄴󠅜󠆋󠆋󠄘󠇎󠅷󠆂󠇮󠄧󠆽󠆙󠅂︊󠇩︅󠆭󠆖󠅼󠆣󠅡󠇞󠄜󠄠󠅅󠅏︊󠄽󠇐󠆼󠄊󠄉︎󠇗The company's open-source technology embeds verifiable metadata directly into AI-generated content, providing mathematical certainty for content authenticity versus statistical detection tools. 󠇟󠇠󠇡󠇢󠄣󠅄󠄁󠆐󠅪󠆊󠄾󠆱󠆤󠄙󠅛󠆫󠄲󠅫󠅊󠇢󠆫󠄚󠆨󠅞󠆟󠄔󠆈󠅕󠅭󠅯󠆤󠇋󠅹󠆽󠅜󠄅󠆐󠅟󠆞󠆡󠄎󠄔󠇓︍Encypher's solutions enable content creators to protect intellectual property while allowing AI developers to build transparent, ethical training datasets. 󠇟󠇠󠇡󠇢󠆉󠆀󠄼󠄻󠄾󠄧󠄹󠄧󠆁󠅏󠅅󠄖󠅕󠄪󠇫󠆒󠅵󠅎󠅿󠄰󠆲󠅐󠄧󠆎󠅃󠇠󠇨󠄸󠅼󠆴󠅦󠅛󠄜󠄌󠄓󠇍󠄬︈󠇕󠇤The company is actively contributing to content authenticity standards through the Coalition for Content Provenance and Authenticity (C2PA) and Content Authenticity Initiative (CAI). 󠇟󠇠󠇡󠇢󠅴󠇪󠅜︋󠄂󠆸󠄶󠆏󠅲󠅳󠄽󠄉󠇋︅󠆹󠆇󠅟󠇡︇󠄵︎󠄟󠇚󠆻󠅻󠅞󠆠󠅠︋󠅠󠆩︆󠆠󠅈󠄸󠅅󠅤󠇅󠄢󠆄For more information, visit [https://encypher.com](https://encypher.com) or follow the company on [LinkedIn](https://linkedin.com/company/encypherai).
 
 ## Media Contact
 
 **Erik Svilich**  
 Founder & CEO, Encypher  
-Email: marketing@encypherai.com 
-Website: 󠇟󠇠󠇡󠇢󠅊󠄌︌󠆯󠅣󠅏󠄷󠅧󠅽󠆲󠄆󠅫󠅿󠇎󠅱󠆛󠅶󠆔󠆑󠄏󠅪󠅠︄󠄖󠇙󠆋󠄹󠇒󠆠󠄪󠆯󠆓󠇀󠇐󠅝󠅲󠆟󠄌󠅢󠅅[https://encypherai.com](https://encypherai.com)
+Email: marketing@encypher.com 
+Website: 󠇟󠇠󠇡󠇢󠅊󠄌︌󠆯󠅣󠅏󠄷󠅧󠅽󠆲󠄆󠅫󠅿󠇎󠅱󠆛󠅶󠆔󠆑󠄏󠅪󠅠︄󠄖󠇙󠆋󠄹󠇒󠆠󠄪󠆯󠆓󠇀󠇐󠅝󠅲󠆟󠄌󠅢󠅅[https://encypher.com](https://encypher.com)
 
 ## Technical Resources
 
 - GitHub Repository: [https://github.com/encypherai/encypher-ai](https://github.com/encypherai/encypher-ai)
-- Technical Documentation: [https://docs.encypherai.com](https://docs.encypherai.com)
-- Live Demo: [https://encypherai.com/demo](https://encypherai.com/demo)󠇟󠇠󠇡󠇢󠄷󠄶󠅻󠆱󠇝󠆵󠄿︈󠆀󠇈󠅾󠅔󠆱󠆎󠄧󠆏󠄗󠇤󠄕󠆸󠄔󠆠︆󠅅󠆂󠇂󠇆󠅼󠇮󠇫󠅠󠄼󠅈󠄔󠄐︂󠆖󠄗󠅂󠄖
+- Technical Documentation: [https://docs.encypher.com](https://docs.encypher.com)
+- Live Demo: [https://encypher.com/demo](https://encypher.com/demo)󠇟󠇠󠇡󠇢󠄷󠄶󠅻󠆱󠇝󠆵󠄿︈󠆀󠇈󠅾󠅔󠆱󠆎󠄧󠆏󠄗󠇤󠄕󠆸󠄔󠆠︆󠅅󠆂󠇂󠇆󠅼󠇮󠇫󠅠󠄼󠅈󠄔󠄐︂󠆖󠄗󠅂󠄖

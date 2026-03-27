@@ -7,7 +7,7 @@
   };
 
   const DEFAULTS = {
-    apiBaseUrl: 'https://api.encypherai.com',
+    apiBaseUrl: 'https://api.encypher.com',
     maxEntriesPerHash: 10,
     maxHashes: 50,
   };

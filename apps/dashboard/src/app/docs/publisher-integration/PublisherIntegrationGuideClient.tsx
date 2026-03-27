@@ -159,7 +159,7 @@ export function PublisherIntegrationGuideClient({ markdown }: { markdown: string
           </header>
 
           <div
-            className="prose prose-slate dark:prose-invert max-w-none 
+            className="prose prose-slate dark:prose-invert max-w-none
               prose-headings:scroll-mt-[72px]
               prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-16 prose-h2:mb-6 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-200 dark:prose-h2:border-slate-800
               prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-10 prose-h3:mb-4
@@ -316,7 +316,7 @@ export function PublisherIntegrationGuideClient({ markdown }: { markdown: string
 
             <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
               <a
-                href="https://api.encypherai.com/docs"
+                href="https://api.encypher.com/docs"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-between group p-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-ncs hover:bg-blue-ncs/5 transition-all text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-ncs"

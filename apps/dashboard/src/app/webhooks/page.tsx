@@ -559,7 +559,7 @@ export default function WebhooksPage() {
                 Learn how to handle webhook payloads, verify signatures, and implement retry logic.
               </p>
               <a
-                href="https://api.encypherai.com/docs#/Webhooks"
+                href="https://api.encypher.com/docs#/Webhooks"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-blue-ncs hover:underline mt-2 inline-block"

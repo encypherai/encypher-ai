@@ -41,7 +41,7 @@ Ghost CMS ──webhook──► Encypher Ghost Service ──sign──► Trae
 
 - Node.js 20+
 - A Ghost instance (self-hosted or Ghost(Pro))
-- An Encypher API key ([sign up](https://dashboard.encypherai.com/signup))
+- An Encypher API key ([sign up](https://dashboard.encypher.com/signup))
 
 ### 1. Install
 
@@ -181,7 +181,7 @@ npm run test:watch  # Watch mode
 | `EMBED_C2PA` | `true` | Embed C2PA payload for micro mode |
 | `DB_PATH` | `./data/ghost-provenance.db` | SQLite database path |
 | `BADGE_ENABLED` | `true` | Inject verification badge |
-| `VERIFY_BASE_URL` | `https://verify.encypherai.com` | Verification URL base |
+| `VERIFY_BASE_URL` | `https://verify.encypher.com` | Verification URL base |
 | `WEBHOOK_SECRET` | (optional) | Secret for verifying webhook signatures |
 
 ### Local replay hardening (edge-case fixtures)

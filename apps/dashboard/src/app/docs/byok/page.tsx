@@ -41,7 +41,7 @@ cat encypher_public.pem
 Register the public half with Encypher so we can embed it into signed manifests:
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/admin/public-keys \\
+curl -X POST https://api.encypher.com/api/v1/admin/public-keys \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -93,7 +93,7 @@ result = client.sign(
 Or via the REST API:
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/sign \\
+curl -X POST https://api.encypher.com/api/v1/sign \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -111,7 +111,7 @@ curl -X POST https://api.encypherai.com/api/v1/sign \\
 Verification works the same way. Encypher checks the embedded signature against your registered public key:
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/verify \\
+curl -X POST https://api.encypher.com/api/v1/verify \\
   -H "Content-Type: application/json" \\
   -d '{"text": "Signed text to verify..."}'
 \`\`\`
@@ -129,14 +129,14 @@ To rotate keys without downtime:
 
 \`\`\`bash
 # Revoke the old key
-curl -X DELETE https://api.encypherai.com/api/v1/admin/public-keys/key_old123 \\
+curl -X DELETE https://api.encypher.com/api/v1/admin/public-keys/key_old123 \\
   -H "Authorization: Bearer YOUR_API_KEY"
 \`\`\`
 
 ## Listing Your Keys
 
 \`\`\`bash
-curl https://api.encypherai.com/api/v1/admin/public-keys \\
+curl https://api.encypher.com/api/v1/admin/public-keys \\
   -H "Authorization: Bearer YOUR_API_KEY"
 \`\`\`
 
@@ -150,7 +150,7 @@ curl https://api.encypherai.com/api/v1/admin/public-keys \\
 
 ## Support
 
-For BYOK integration support, contact your account manager or email enterprise@encypherai.com.
+For BYOK integration support, contact your account manager or email enterprise@encypher.com.
 `;
 
 export default function ByokGuidePage() {

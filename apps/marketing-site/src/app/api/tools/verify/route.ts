@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     if ("error" in parsed) return parsed.error;
     const body = parsed.body;
 
-    // Use ENTERPRISE_API_URL (api.encypherai.com) - Traefik routes /api/v1/verify to verification-service
+    // Use ENTERPRISE_API_URL (api.encypher.com) - Traefik routes /api/v1/verify to verification-service
     const apiUrl = resolveEnterpriseApiUrl();
 
     // TEAM_156: For PDF files, the browser sends raw PDF bytes as base64.

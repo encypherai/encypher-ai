@@ -10,7 +10,7 @@ import { spawn } from "node:child_process";
 
 const PORT = parseInt(process.argv[2] || "3060", 10);
 const SERVE_PORT = PORT + 1; // internal port for npx serve
-const API_HOST = "api.encypherai.com";
+const API_HOST = "api.encypher.com";
 
 // Start npx serve on the internal port
 const serve = spawn("npx", ["serve", "out", "-l", String(SERVE_PORT), "--no-clipboard"], {

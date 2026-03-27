@@ -39,11 +39,11 @@ $has_coalition_traction =
     </div>
 
     <?php if ($stats && $has_coalition_traction): ?>
-        
+
         <!-- Stats Overview -->
         <div class="coalition-revenue-section">
             <h2><?php esc_html_e('Your Coalition Stats', 'encypher-provenance'); ?></h2>
-            
+
             <div class="coalition-stat-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
                 <div class="stat-item">
                     <span class="stat-label"><?php esc_html_e('Signed Posts', 'encypher-provenance'); ?></span>
@@ -92,7 +92,7 @@ $has_coalition_traction =
                     <?php esc_html_e('The coalition pools content from all members to license in bulk to AI companies for training data.', 'encypher-provenance'); ?>
                 </p>
                 <p>
-                    <a href="https://encypherai.com/coalition" target="_blank"><?php esc_html_e('Learn more about how the coalition works →', 'encypher-provenance'); ?></a>
+                    <a href="https://encypher.com/coalition" target="_blank"><?php esc_html_e('Learn more about how the coalition works →', 'encypher-provenance'); ?></a>
                 </p>
             </div>
         </div>
@@ -104,14 +104,14 @@ $has_coalition_traction =
                 <h2><?php esc_html_e('Coalition is in early rollout', 'encypher-provenance'); ?></h2>
                 <p><?php esc_html_e('We are preparing coalition analytics for broader availability. Your dashboard will populate once coalition participation and reporting are active for your workspace.', 'encypher-provenance'); ?></p>
                 <p>
-                    <a href="https://encypherai.com/coalition" target="_blank" class="button button-primary"><?php esc_html_e('Learn About Coalition', 'encypher-provenance'); ?></a>
+                    <a href="https://encypher.com/coalition" target="_blank" class="button button-primary"><?php esc_html_e('Learn About Coalition', 'encypher-provenance'); ?></a>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="button button-secondary"><?php esc_html_e('Review Settings', 'encypher-provenance'); ?></a>
                 </p>
             </div>
         </div>
 
     <?php else: ?>
-        
+
         <!-- Error State -->
         <div class="coalition-revenue-section">
             <div class="encypher-coalition-error">

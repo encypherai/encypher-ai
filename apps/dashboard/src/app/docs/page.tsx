@@ -215,7 +215,7 @@ const externalResources: ResourceItem[] = [
   {
     title: 'API Reference',
     description: 'Interactive Swagger UI documentation for all API endpoints.',
-    href: 'https://api.encypherai.com/docs',
+    href: 'https://api.encypher.com/docs',
     icon: IconApi,
     iconBg: 'bg-gradient-to-br from-[#1B2F50] to-[#2A87C4]',
   },

@@ -18,7 +18,7 @@ function saveAddonSettings(input) {
   var apiBaseUrl = (input && input.apiBaseUrl ? input.apiBaseUrl : '').trim();
 
   if (apiBaseUrl && !isAllowedApiBaseUrl_(apiBaseUrl)) {
-    throw new Error('API base URL must be https and hosted on encypherai.com.');
+    throw new Error('API base URL must be https and hosted on encypher.com.');
   }
 
   var userProps = getUserProperties_();

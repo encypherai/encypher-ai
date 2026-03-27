@@ -111,7 +111,7 @@
 
         const $billingLink = $('#encypher-buy-archive-backfill');
         if ($billingLink.length) {
-            const url = new URL(EncypherBulkMark.billingUrlBase || 'https://dashboard.encypherai.com/billing');
+            const url = new URL(EncypherBulkMark.billingUrlBase || 'https://dashboard.encypher.com/billing');
             url.searchParams.set('addon', 'bulk-archive-backfill');
             url.searchParams.set('source', 'wordpress-plugin');
             if (totalCount > 0) {

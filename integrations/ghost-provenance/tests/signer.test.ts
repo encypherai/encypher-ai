@@ -23,7 +23,7 @@ function makeConfig(): Config {
     },
     webhookSecret: '',
     dbPath: ':memory:',
-    badge: { enabled: false, verifyBaseUrl: 'https://verify.encypherai.com' },
+    badge: { enabled: false, verifyBaseUrl: 'https://verify.encypher.com' },
   };
 }
 

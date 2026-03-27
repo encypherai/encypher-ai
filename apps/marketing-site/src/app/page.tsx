@@ -15,7 +15,7 @@ import TryItPage from '@/app/try/page';
 import Script from 'next/script';
 import { organizationSchema } from '@/lib/seo';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.encypherai.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.encypher.com';
 
 export default function HomePage() {
   const [showContactModal, setShowContactModal] = useState(false);
@@ -392,7 +392,7 @@ export default function HomePage() {
           )}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
             <Button asChild size="lg" className="w-full sm:w-auto shadow-lg font-semibold" style={{ backgroundColor: '#1a365d', color: '#ffffff' }}>
-              <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}/signup`}>
+              <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}/signup`}>
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
               </a>
             </Button>

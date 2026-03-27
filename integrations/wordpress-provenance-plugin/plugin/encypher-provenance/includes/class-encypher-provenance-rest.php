@@ -1868,7 +1868,7 @@ class Rest
 
     /**
      * Normalizes an API base URL to always end with /api/v1 (no trailing slash).
-     * Accepts both https://api.encypherai.com/ and https://api.encypherai.com/api/v1.
+     * Accepts both https://api.encypher.com/ and https://api.encypher.com/api/v1.
      */
     private static function normalize_api_base_url(string $url): string
     {
@@ -2079,7 +2079,7 @@ class Rest
 
         $api_base_url = self::normalize_api_base_url((string) $request->get_param('api_base_url'));
         if ('' === $api_base_url) {
-            $api_base_url = isset($settings['api_base_url']) ? self::normalize_api_base_url((string) $settings['api_base_url']) : 'https://api.encypherai.com/api/v1';
+            $api_base_url = isset($settings['api_base_url']) ? self::normalize_api_base_url((string) $settings['api_base_url']) : 'https://api.encypher.com/api/v1';
         }
 
         if ('' === $email) {
@@ -2138,7 +2138,7 @@ class Rest
         }
 
         $session_id = isset($settings['connect_session_id']) ? trim((string) $settings['connect_session_id']) : '';
-        $api_base_url = isset($settings['api_base_url']) ? self::normalize_api_base_url((string) $settings['api_base_url']) : 'https://api.encypherai.com/api/v1';
+        $api_base_url = isset($settings['api_base_url']) ? self::normalize_api_base_url((string) $settings['api_base_url']) : 'https://api.encypher.com/api/v1';
         if ('' === $session_id) {
             return new WP_Error('missing_connect_session', __('No active WordPress connect session found.', 'encypher-provenance'), ['status' => 404]);
         }
@@ -2645,7 +2645,7 @@ class Rest
 
         $settings = get_option('encypher_provenance_settings', []);
         $api_key = $settings['api_key'] ?? '';
-        $api_url = rtrim($settings['api_url'] ?? 'https://enterprise.encypherai.com', '/');
+        $api_url = rtrim($settings['api_url'] ?? 'https://enterprise.encypher.com', '/');
 
         $response = wp_remote_post(
             $api_url . '/api/v1/cdn/images/sign',

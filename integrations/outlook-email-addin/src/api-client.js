@@ -11,8 +11,8 @@
       throw new Error('API base URL must use https.');
     }
 
-    if (!(parsed.hostname === 'encypherai.com' || parsed.hostname.endsWith('.encypherai.com'))) {
-      throw new Error('API base URL must be hosted on encypherai.com.');
+    if (!(parsed.hostname === 'encypher.com' || parsed.hostname.endsWith('.encypher.com'))) {
+      throw new Error('API base URL must be hosted on encypher.com.');
     }
 
     return parsed.origin;

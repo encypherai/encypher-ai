@@ -41,7 +41,7 @@ This guide walks you through integrating Encypher's C2PA content authentication 
 
 See the [dashboard onboarding flow](../diagrams/dashboard-onboarding-flow.d2) for the customer-facing setup path from account creation to first API key.
 
-1. Log in to your [Encypher Dashboard](https://dashboard.encypherai.com)
+1. Log in to your [Encypher Dashboard](https://dashboard.encypher.com)
 2. Navigate to **Settings** → **API Keys**
 3. Click **Create New Key**
 4. Name your key (e.g., "Production CMS Key")
@@ -81,7 +81,7 @@ import os
 import requests
 from typing import Optional
 
-ENCYPHER_API_URL = "https://api.encypherai.com/api/v1"
+ENCYPHER_API_URL = "https://api.encypher.com/api/v1"
 API_KEY = os.environ.get("ENCYPHER_API_KEY")
 
 
@@ -195,7 +195,7 @@ def on_article_display(article: dict) -> dict:
 
     article["is_verified"] = verification.get("valid", False)
     article["signer_name"] = verification.get("signer_name")
-    article["verification_url"] = article.get("verification_url") or f"https://verify.encypherai.com/{article.get('encypher_document_id', '')}".rstrip("/")
+    article["verification_url"] = article.get("verification_url") or f"https://verify.encypher.com/{article.get('encypher_document_id', '')}".rstrip("/")
 
     return article
 ```
@@ -207,7 +207,7 @@ def on_article_display(article: dict) -> dict:
 {% if article.is_verified %}
 <div class="encypher-badge">
   <a href="{{ article.verification_url }}" target="_blank">
-    <img src="https://encypherai.com/encypher_check_color.svg"
+    <img src="https://encypher.com/encypher_check_color.svg"
          alt="Verified by {{ article.signer_name }}" />
     <span>Verified Content</span>
   </a>
@@ -259,7 +259,7 @@ import uuid
 from typing import List, Optional
 from dataclasses import dataclass
 
-ENCYPHER_API_URL = "https://api.encypherai.com/api/v1"
+ENCYPHER_API_URL = "https://api.encypher.com/api/v1"
 
 
 @dataclass
@@ -473,7 +473,7 @@ from typing import List, Dict
 from concurrent.futures import ThreadPoolExecutor
 import time
 
-ENCYPHER_API_URL = "https://api.encypherai.com/api/v1"
+ENCYPHER_API_URL = "https://api.encypher.com/api/v1"
 
 
 class BusinessEncypherClient:
@@ -705,7 +705,7 @@ from typing import Dict, Optional
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
-ENCYPHER_API_URL = "https://api.encypherai.com/api/v1"
+ENCYPHER_API_URL = "https://api.encypher.com/api/v1"
 
 
 class EnterpriseEncypherClient:
@@ -980,7 +980,7 @@ Perfect for chatbots, AI assistants, and generative content.
 import requests
 import uuid
 
-ENCYPHER_API_URL = "https://api.encypherai.com/api/v1"
+ENCYPHER_API_URL = "https://api.encypher.com/api/v1"
 
 
 def sign_llm_stream(api_key: str, llm_generator):
@@ -1053,7 +1053,7 @@ Enterprise tier only.
 """
 import requests
 
-ENCYPHER_API_URL = "https://api.encypherai.com/api/v1"
+ENCYPHER_API_URL = "https://api.encypher.com/api/v1"
 
 
 def generate_evidence_package(api_key: str, disputed_text: str, document_id: str = None):
@@ -1460,7 +1460,7 @@ If you're on Business tier or higher, always use bulk endpoints for multiple doc
 
 ## Need Help?
 
-- **Documentation:** https://docs.encypherai.com
-- **API Reference:** https://api.encypherai.com/docs
-- **Support:** support@encypherai.com
-- **Enterprise Support:** enterprise@encypherai.com (24/7 for Enterprise tier)
+- **Documentation:** https://docs.encypher.com
+- **API Reference:** https://api.encypher.com/docs
+- **Support:** support@encypher.com
+- **Enterprise Support:** enterprise@encypher.com (24/7 for Enterprise tier)

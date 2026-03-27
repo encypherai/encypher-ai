@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Inspect File | Encypher Tool",
     description: "Drag and drop images or text files to inspect embedded C2PA and XMP provenance credentials. Verify authenticity and view metadata.",
-    url: "https://encypherai.com/tools/inspect",
+    url: "https://encypher.com/tools/inspect",
     siteName: "Encypher",
     type: "website",
   },

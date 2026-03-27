@@ -59,7 +59,7 @@ print(f"Total chunks: {manifest.total_chunks}")
 ### 1. Start a streaming session
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/sign/stream/start \\
+curl -X POST https://api.encypher.com/api/v1/sign/stream/start \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -81,7 +81,7 @@ Response:
 ### 2. Sign each chunk
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/sign/stream/chunk \\
+curl -X POST https://api.encypher.com/api/v1/sign/stream/chunk \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -94,7 +94,7 @@ curl -X POST https://api.encypherai.com/api/v1/sign/stream/chunk \\
 ### 3. Finalize the session
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/sign/stream/finalize \\
+curl -X POST https://api.encypher.com/api/v1/sign/stream/finalize \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"session_id": "stream_abc123"}'
@@ -136,7 +136,7 @@ print(f"\\nSigned document: {manifest.document_id}")
 Verifying streamed content works the same as verifying any signed text:
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/verify \\
+curl -X POST https://api.encypher.com/api/v1/verify \\
   -H "Content-Type: application/json" \\
   -d '{"text": "The concatenated signed chunks..."}'
 \`\`\`
@@ -162,7 +162,7 @@ if manifest.failed_chunks > 0:
 
 ## Support
 
-For streaming integration support, contact support@encypherai.com or visit the [API Playground](/playground) to test interactively.
+For streaming integration support, contact support@encypher.com or visit the [API Playground](/playground) to test interactively.
 `;
 
 export default function StreamingGuidePage() {

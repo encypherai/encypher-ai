@@ -237,7 +237,7 @@ export const UserKeyCard: React.FC = () => {
             <ul className="list-disc pl-4">
               <li>If the download or copy doesn’t work, try a different browser or disable extensions that block downloads/clipboard.</li>
               <li>Check your browser’s permissions for clipboard and downloads.</li>
-              <li>Contact <a href="mailto:support@encypherai.com" className="underline">support@encypherai.com</a> for help.</li>
+              <li>Contact <a href="mailto:support@encypher.com" className="underline">support@encypher.com</a> for help.</li>
             </ul>
           </div>
           <DialogFooter className="flex justify-center mt-4">

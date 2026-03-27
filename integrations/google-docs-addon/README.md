@@ -47,7 +47,7 @@ integrations/google-docs-addon/
    - `script.container.ui`
    - `script.external_request`
    - `userinfo.email`
-3. **HTTPS-only API access** with host restriction policy (`encypherai.com`) in `Config.gs`.
+3. **HTTPS-only API access** with host restriction policy (`encypher.com`) in `Config.gs`.
 4. **User-facing menu + sidebar UX** (`onOpen`, add-on menu, homepage card).
 5. **Error handling** for API and parsing failures.
 6. **No hardcoded secrets**: API key is stored in User Properties.
@@ -111,4 +111,4 @@ clasp open
 
 - Provenance data is stored in **Document Properties**, keyed by visible text hash.
 - Settings are stored in **User Properties** (per-user per-script).
-- URL policy currently only allows `https://*.encypherai.com` endpoints.
+- URL policy currently only allows `https://*.encypher.com` endpoints.

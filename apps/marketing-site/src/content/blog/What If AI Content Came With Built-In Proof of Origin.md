@@ -47,7 +47,7 @@ If you're working on:
 
 ...we'd love to collaborate.
 
-🔗 󠇟󠇠󠇡󠇢󠄭󠇀︎󠄑󠆃󠄴󠄴󠄦󠆞󠄅󠇀󠆖󠅍󠇉󠆧󠇓󠆺󠆇󠇗󠄖󠇤󠇍󠅘󠅴󠄒󠅃󠅞󠇡︉󠄮︂󠅭󠆆󠄂󠇣󠇟󠇅󠇒󠇡󠇋[encypherai.com](https://encypherai.com/?utm_source=linkedin&utm_medium=article&utm_campaign=explainer)  
+🔗 󠇟󠇠󠇡󠇢󠄭󠇀︎󠄑󠆃󠄴󠄴󠄦󠆞󠄅󠇀󠆖󠅍󠇉󠆧󠇓󠆺󠆇󠇗󠄖󠇤󠇍󠅘󠅴󠄒󠅃󠅞󠇡︉󠄮︂󠅭󠆆󠄂󠇣󠇟󠇅󠇒󠇡󠇋[encypher.com](https://encypher.com/?utm_source=linkedin&utm_medium=article&utm_campaign=explainer)  
 📁 󠇟󠇠󠇡󠇢󠅐󠆂󠆗󠄇󠇛󠇏󠄹󠆕󠆓󠆆󠄏󠆬󠅟󠆃󠅗󠆻󠅪󠅇󠄌󠇅󠆫󠅍󠄑󠆧󠆠󠅕󠅯󠄮󠄩󠄃󠆋󠅋󠅊󠅚󠆠󠅯󠄠󠄣󠆁󠇋[github.com/encypherai/encypher-ai](https://github.com/encypherai/encypher-ai)
 
 ## Final Thoughts

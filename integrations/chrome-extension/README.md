@@ -184,7 +184,7 @@ This produces `dist/encypher-verify-v<version>.zip` with localhost permissions s
 
 The extension uses these default settings:
 
-- **API Base URL**: `https://api.encypherai.com` (configurable text field in settings)
+- **API Base URL**: `https://api.encypher.com` (configurable text field in settings)
 - **Default Embedding Mode**: Minimal (`micro_no_embed_c2pa`)
 - **Default Embedding Frequency**: Entire content (`document`)
 - **Verification Cache TTL**: 1 hour (local browser cache)

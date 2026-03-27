@@ -1,4 +1,4 @@
-const DEFAULT_PRODUCTION_API_URL = "https://api.encypherai.com";
+const DEFAULT_PRODUCTION_API_URL = "https://api.encypher.com";
 const DEFAULT_DEVELOPMENT_API_URL = "http://localhost:9000";
 const API_VERSION_PATH_REGEX = /\/api\/v1\/?$/i;
 

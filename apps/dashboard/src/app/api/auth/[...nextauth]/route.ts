@@ -13,7 +13,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_SECRET) {
 
 // Server-side API base: prefer Docker-internal URL over public URL for server-side fetches
 const API_BASE =
-  (process.env.API_BASE_INTERNAL || process.env.API_BASE || process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+  (process.env.API_BASE_INTERNAL || process.env.API_BASE || process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 
 // Backend access token lifetime (8 hours), refresh 5 min before expiry
 const ACCESS_TOKEN_TTL_MS = 8 * 60 * 60 * 1000;

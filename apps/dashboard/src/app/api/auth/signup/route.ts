@@ -5,7 +5,7 @@ const API_BASE = (
   process.env.API_BASE_INTERNAL ||
   process.env.API_BASE ||
   process.env.NEXT_PUBLIC_API_URL ||
-  'https://api.encypherai.com/api/v1'
+  'https://api.encypher.com/api/v1'
 ).replace(/\/$/, '');
 
 /**

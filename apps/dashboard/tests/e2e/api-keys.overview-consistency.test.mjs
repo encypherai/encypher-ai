@@ -106,7 +106,7 @@ async function installApiMocks(page, dashboardUrl) {
     id: 'org_test',
     name: 'Test Org',
     slug: null,
-    email: 'test@encypherai.com',
+    email: 'test@encypher.com',
     tier: 'starter',
     max_seats: 1,
     subscription_status: 'active',
@@ -141,7 +141,7 @@ async function installApiMocks(page, dashboardUrl) {
   const session = {
     user: {
       name: 'Test User',
-      email: 'test@encypherai.com',
+      email: 'test@encypher.com',
       accessToken: 'test-access-token',
     },
     expires: '2099-01-01T00:00:00.000Z',

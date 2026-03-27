@@ -10,14 +10,14 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Encypher C2PA Provenance"/>
   <Description DefaultValue="Embed and verify cryptographic proof of origin across Word, Excel, and PowerPoint with C2PA-aligned provenance infrastructure."/>
-  <IconUrl DefaultValue="https://encypherai.com/assets/logo.png"/>
-  <HighResolutionIconUrl DefaultValue="https://encypherai.com/assets/logo.png"/>
-  <SupportUrl DefaultValue="https://docs.encypherai.com"/>
+  <IconUrl DefaultValue="https://encypher.com/assets/logo.png"/>
+  <HighResolutionIconUrl DefaultValue="https://encypher.com/assets/logo.png"/>
+  <SupportUrl DefaultValue="https://docs.encypher.com"/>
 
   <AppDomains>
-    <AppDomain>https://api.encypherai.com</AppDomain>
-    <AppDomain>https://dashboard.encypherai.com</AppDomain>
-    <AppDomain>https://word-addin-dev.encypherai.com</AppDomain>
+    <AppDomain>https://api.encypher.com</AppDomain>
+    <AppDomain>https://dashboard.encypher.com</AppDomain>
+    <AppDomain>https://word-addin-dev.encypher.com</AppDomain>
   </AppDomains>
 
   <Hosts>
@@ -27,7 +27,7 @@
   </Hosts>
 
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://word-addin-dev.encypherai.com/taskpane/taskpane.html"/>
+    <SourceLocation DefaultValue="https://word-addin-dev.encypher.com/taskpane/taskpane.html"/>
   </DefaultSettings>
   <Permissions>ReadWriteDocument</Permissions>
 
@@ -151,14 +151,14 @@
 
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16" DefaultValue="https://encypherai.com/assets/logo.png"/>
-        <bt:Image id="Icon.32" DefaultValue="https://encypherai.com/assets/logo.png"/>
-        <bt:Image id="Icon.80" DefaultValue="https://encypherai.com/assets/logo.png"/>
+        <bt:Image id="Icon.16" DefaultValue="https://encypher.com/assets/logo.png"/>
+        <bt:Image id="Icon.32" DefaultValue="https://encypher.com/assets/logo.png"/>
+        <bt:Image id="Icon.80" DefaultValue="https://encypher.com/assets/logo.png"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://docs.encypherai.com"/>
-        <bt:Url id="Commands.Url" DefaultValue="https://word-addin-dev.encypherai.com/taskpane/taskpane.html"/>
-        <bt:Url id="Taskpane.Url" DefaultValue="https://word-addin-dev.encypherai.com/taskpane/taskpane.html"/>
+        <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://docs.encypher.com"/>
+        <bt:Url id="Commands.Url" DefaultValue="https://word-addin-dev.encypher.com/taskpane/taskpane.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://word-addin-dev.encypher.com/taskpane/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GetStarted.Title" DefaultValue="Encypher C2PA Provenance"/>

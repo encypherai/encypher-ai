@@ -1,7 +1,7 @@
 // API client for Encypher Enterprise API
 // Uses unified /sign endpoint with tier-gated options
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
 
 export interface EncodeRequest {
@@ -51,7 +51,7 @@ export interface VerifyResponse {
 
 /**
  * Encode content with sentence-level provenance using unified /sign endpoint.
- * 
+ *
  * If API_KEY is provided, uses /sign with options for full Merkle tree + sentence-level embeddings.
  * If no API_KEY (local dev), falls back to /tools/encode for basic C2PA embedding.
  */
@@ -59,7 +59,7 @@ export async function encodeContent(request: EncodeRequest): Promise<EncodeRespo
   // Use authenticated endpoint if API key is available, otherwise use public tools endpoint
   const useSignEndpoint = !!API_KEY;
   const endpoint = useSignEndpoint ? '/api/v1/sign' : '/api/v1/tools/encode';
-  
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
@@ -67,7 +67,7 @@ export async function encodeContent(request: EncodeRequest): Promise<EncodeRespo
     headers['Authorization'] = `Bearer ${API_KEY}`;
   }
 
-  const body = useSignEndpoint 
+  const body = useSignEndpoint
     ? {
         text: request.text,
         document_id: request.document_id,
@@ -105,7 +105,7 @@ export async function encodeContent(request: EncodeRequest): Promise<EncodeRespo
   }
 
   const data = await response.json();
-  
+
   // Handle different response formats from /sign vs /tools/encode
   if (useSignEndpoint) {
     // Unified /sign response format
@@ -154,7 +154,7 @@ export async function verifyContent(text: string): Promise<VerifyResponse> {
 
   const data = await response.json();
   const verdict = data.data || {};
-  
+
   return {
     valid: verdict.valid || false,
     tampered: verdict.tampered || false,

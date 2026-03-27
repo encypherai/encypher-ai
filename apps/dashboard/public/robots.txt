@@ -1,4 +1,4 @@
-# robots.txt for Encypher Dashboard (dashboard.encypherai.com)
+# robots.txt for Encypher Dashboard (dashboard.encypher.com)
 # This is an authenticated application - not for public indexing
 
 User-agent: *

@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Encypher Provenance - WordPress Plugin for C2PA Content Authentication",
     description: "Protect your WordPress content with cryptographic proof of authorship. C2PA-compliant digital signatures prove when content was created, by whom, and detect tampering.",
-    url: "https://encypherai.com/tools/wordpress",
+    url: "https://encypher.com/tools/wordpress",
     siteName: "Encypher",
     type: "website",
   },
@@ -143,12 +143,12 @@ export default function WordPressPage() {
               </span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              Embed invisible digital signatures that prove when your content was created, by whom, 
+              Embed invisible digital signatures that prove when your content was created, by whom,
               and whether it&apos;s been tampered with. Fight misinformation, plagiarism, and content theft.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>
-                <Link href="https://dashboard.encypherai.com" target="_blank">
+                <Link href="https://dashboard.encypher.com" target="_blank">
                   <Download className="mr-2 h-5 w-5" />
                   Get Free API Key
                 </Link>
@@ -186,7 +186,7 @@ export default function WordPressPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Everything You Need to Protect Your Content</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Encypher Provenance integrates seamlessly with WordPress to provide enterprise-grade 
+              Encypher Provenance integrates seamlessly with WordPress to provide enterprise-grade
               content authentication without changing your workflow.
             </p>
           </div>
@@ -258,8 +258,8 @@ export default function WordPressPage() {
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             {tiers.map((tier) => (
-              <Card 
-                key={tier.name} 
+              <Card
+                key={tier.name}
                 className={`relative ${tier.highlighted ? 'border-primary border-2 shadow-lg' : ''}`}
               >
                 {tier.highlighted && (
@@ -286,12 +286,12 @@ export default function WordPressPage() {
                       </li>
                     ))}
                   </ul>
-                  <Button 
+                  <Button
                     className="w-full"
                     variant={tier.highlighted ? 'default' : 'outline'}
                     asChild
                   >
-                    <Link href="https://dashboard.encypherai.com">
+                    <Link href="https://dashboard.encypher.com">
                       {tier.cta}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
@@ -387,12 +387,12 @@ export default function WordPressPage() {
             Ready to Protect Your Content?
           </h2>
           <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
-            Join thousands of publishers using C2PA standards to prove content authenticity. 
+            Join thousands of publishers using C2PA standards to prove content authenticity.
             Get started in minutes with our free tier.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" variant="secondary" asChild>
-              <Link href="https://dashboard.encypherai.com">
+              <Link href="https://dashboard.encypher.com">
                 Get Your Free API Key
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
@@ -414,36 +414,36 @@ export default function WordPressPage() {
             <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">What is C2PA?</h3>
               <p className="text-muted-foreground">
-                C2PA (Coalition for Content Provenance and Authenticity) is an open standard for content 
-                authentication developed by Adobe, Microsoft, Google, BBC, and others. It provides a way 
+                C2PA (Coalition for Content Provenance and Authenticity) is an open standard for content
+                authentication developed by Adobe, Microsoft, Google, BBC, and others. It provides a way
                 to cryptographically sign content to prove its origin and detect tampering.
               </p>
             </div>
             <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">Are the signatures visible?</h3>
               <p className="text-muted-foreground">
-                No. C2PA manifests are embedded using invisible Unicode variation selectors. They don&apos;t 
+                No. C2PA manifests are embedded using invisible Unicode variation selectors. They don&apos;t
                 affect how your content looks but can be extracted for verification.
               </p>
             </div>
             <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">Does this work with Gutenberg and Classic Editor?</h3>
               <p className="text-muted-foreground">
-                Yes! The plugin supports both the block editor (Gutenberg) with a dedicated sidebar panel, 
+                Yes! The plugin supports both the block editor (Gutenberg) with a dedicated sidebar panel,
                 and the Classic Editor with a meta box.
               </p>
             </div>
             <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">What happens when I edit a signed post?</h3>
               <p className="text-muted-foreground">
-                The plugin automatically re-signs the content with a &quot;c2pa.edited&quot; action and maintains 
+                The plugin automatically re-signs the content with a &quot;c2pa.edited&quot; action and maintains
                 a provenance chain linking to the previous version, creating a complete edit history.
               </p>
             </div>
             <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">Is my content sent to external servers?</h3>
               <p className="text-muted-foreground">
-                Content is sent to Encypher&apos;s API for signing. We create cryptographic signatures but do 
+                Content is sent to Encypher&apos;s API for signing. We create cryptographic signatures but do
                 not store your full content. See our privacy policy for details.
               </p>
             </div>

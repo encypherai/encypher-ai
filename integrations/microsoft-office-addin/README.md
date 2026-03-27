@@ -20,7 +20,7 @@ Brand messaging and visual treatment are aligned with:
 - Provenance persistence in `Office.context.roamingSettings`
 - Re-sign support with `previous_embeddings`
 - Host capability matrix with safe fallbacks for unsupported actions
-- API base URL validation (`https://*.encypherai.com`)
+- API base URL validation (`https://*.encypher.com`)
 
 ## Brand & Design Conformance
 
@@ -96,5 +96,5 @@ Example with local HTTPS tooling (recommended):
 ## Security Notes
 
 - API key is stored in Office roaming settings (per user)
-- API host is restricted to `https://*.encypherai.com`
+- API host is restricted to `https://*.encypher.com`
 - Add-in uses `ReadWriteDocument` permission to support replacement flows

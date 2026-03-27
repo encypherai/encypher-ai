@@ -25,7 +25,7 @@ import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { Skeleton } from '../../components/ui/skeleton';
 import { useOrganization } from '../../contexts/OrganizationContext';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 
 function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (

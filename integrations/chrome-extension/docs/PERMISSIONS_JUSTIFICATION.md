@@ -15,7 +15,7 @@ Without `<all_urls>`, the extension cannot verify content on arbitrary websites,
 ### `http://localhost/*` and `http://127.0.0.1/*`
 **Required for**: Development and testing only. Stripped from production builds before Chrome Web Store submission.
 
-### `https://api.encypherai.com/*` and `https://*.encypherai.com/*`
+### `https://api.encypher.com/*` and `https://*.encypher.com/*`
 **Required for**: Communicating with the Encypher verification and signing API endpoints.
 
 ## Permissions

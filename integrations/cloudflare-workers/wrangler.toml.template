@@ -28,8 +28,8 @@ id = "<YOUR_KV_NAMESPACE_ID>"
 
 # Environment variables
 [vars]
-ENCYPHER_API_URL = "https://api.encypherai.com"
+ENCYPHER_API_URL = "https://api.encypher.com"
 
 # Uncomment to use a different API URL (staging, self-hosted)
 # [env.staging.vars]
-# ENCYPHER_API_URL = "https://staging-api.encypherai.com"
+# ENCYPHER_API_URL = "https://staging-api.encypher.com"

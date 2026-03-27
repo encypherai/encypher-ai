@@ -4,12 +4,12 @@ const assert = require('node:assert/strict');
 const { ensureHttpsEncypherHost, signContent } = require('../src/api-client');
 
 test('ensureHttpsEncypherHost allows https encypherai domains', () => {
-  assert.equal(ensureHttpsEncypherHost('https://api.encypherai.com'), 'https://api.encypherai.com');
-  assert.equal(ensureHttpsEncypherHost('https://staging.encypherai.com/v1'), 'https://staging.encypherai.com');
+  assert.equal(ensureHttpsEncypherHost('https://api.encypher.com'), 'https://api.encypher.com');
+  assert.equal(ensureHttpsEncypherHost('https://staging.encypher.com/v1'), 'https://staging.encypher.com');
 });
 
 test('ensureHttpsEncypherHost rejects non-https URLs', () => {
-  assert.throws(() => ensureHttpsEncypherHost('http://api.encypherai.com'));
+  assert.throws(() => ensureHttpsEncypherHost('http://api.encypher.com'));
 });
 
 test('ensureHttpsEncypherHost rejects non-encypher domains', () => {
@@ -35,7 +35,7 @@ test('signContent sends sentence + micro_ecc_c2pa defaults', async () => {
               signed_text: 'signed',
               embedding_plan: embeddingPlan,
               document_id: 'doc_1',
-              verification_url: 'https://verify.encypherai.com/doc_1',
+              verification_url: 'https://verify.encypher.com/doc_1',
             },
           },
         };
@@ -45,7 +45,7 @@ test('signContent sends sentence + micro_ecc_c2pa defaults', async () => {
 
   try {
     const result = await signContent({
-      apiBaseUrl: 'https://api.encypherai.com',
+      apiBaseUrl: 'https://api.encypher.com',
       apiKey: 'ency_key',
       text: 'hello',
       title: 'Office Content',

@@ -17,7 +17,7 @@ const getApiBase = () => {
     process.env.NEXT_PUBLIC_API_URL ||
     (process.env.NODE_ENV === 'development'
       ? 'http://localhost:8000/api/v1'
-      : 'https://api.encypherai.com/api/v1')
+      : 'https://api.encypher.com/api/v1')
   );
 };
 
@@ -285,8 +285,8 @@ function SignupPageContent() {
 
           <div className="text-xs text-muted-foreground text-center">
             By using Encypher you agree to our{' '}
-            <Link href="https://encypherai.com/terms" className="underline">Terms of Service</Link>,{' '}
-            <Link href="https://encypherai.com/privacy" className="underline">Privacy</Link>, and Security policies and practices.
+            <Link href="https://encypher.com/terms" className="underline">Terms of Service</Link>,{' '}
+            <Link href="https://encypher.com/privacy" className="underline">Privacy</Link>, and Security policies and practices.
           </div>
         </div>
       </section>

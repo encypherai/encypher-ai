@@ -13,24 +13,24 @@ import { getSiteUrl } from './env';
 
 export const siteConfig = {
   name: "Encypher",
-  url: "https://encypherai.com",
+  url: "https://encypher.com",
   tagline: "Machine-Readable Rights for Your Content",
   description: "Encypher authored the C2PA text authentication standard. Patent-pending granular content attribution with Merkle tree authentication for tamper-evident documentation.",
-  
+
   // OG Images by audience
   images: {
-    default: "https://encypherai.com/og-image.png",
-    publishers: "https://encypherai.com/og-image-publishers.png",
-    ai: "https://encypherai.com/og-image-ai.png",
+    default: "https://encypher.com/og-image.png",
+    publishers: "https://encypher.com/og-image-publishers.png",
+    ai: "https://encypher.com/og-image-ai.png",
   },
-  
+
   // Social profiles
   social: {
     twitter: "@encypherai",
     linkedin: "company/encypherai",
     github: "encypherai",
   },
-  
+
   // Standards & partnerships
   standards: {
     c2pa: "https://c2pa.org",
@@ -52,7 +52,7 @@ export const keywords = {
     "content provenance",
     "AI content licensing",
   ],
-  
+
   // Publisher-focused keywords
   publishers: [
     "publisher content protection",
@@ -68,7 +68,7 @@ export const keywords = {
     "AI training data copyright",
     "content provenance verification",
   ],
-  
+
   // AI Lab-focused keywords
   aiLabs: [
     "AI model optimization",
@@ -83,7 +83,7 @@ export const keywords = {
     "content authenticity",
     "AI detector",
   ],
-  
+
   // Enterprise-focused keywords
   enterprises: [
     "EU AI Act",
@@ -92,7 +92,7 @@ export const keywords = {
     "AI audit trail",
     "AI privacy protection",
   ],
-  
+
   // Technical keywords
   technical: [
     "Unicode metadata",
@@ -102,7 +102,7 @@ export const keywords = {
     "tamper detection",
     "blockchain verification",
   ],
-  
+
   // Market/industry keywords
   market: [
     "AI content economy",
@@ -334,7 +334,7 @@ export const organizationSchema = {
   "contactPoint": {
     "@type": "ContactPoint",
     "contactType": "Sales",
-    "email": "sales@encypherai.com",
+    "email": "sales@encypher.com",
     "availableLanguage": ["en"]
   },
   "hasOfferCatalog": {
@@ -762,10 +762,10 @@ export function generateMetadata(
 ): Metadata {
   const pageUrl = path ? `${siteConfig.url}${path}` : siteConfig.url;
   const pageImageUrl = imageUrl || siteConfig.images.default;
-  const pageKeywords = additionalKeywords 
+  const pageKeywords = additionalKeywords
     ? [...allKeywords, ...additionalKeywords]
     : allKeywords;
-  
+
   return {
     ...defaultMetadata,
     title: title,

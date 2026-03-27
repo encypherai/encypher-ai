@@ -106,7 +106,7 @@ class Coalition
     public function get_coalition_stats(): ?array
     {
         $settings = get_option('encypher_provenance_settings', []);
-        $api_base = $settings['api_base_url'] ?? 'https://api.encypherai.com/api/v1';
+        $api_base = $settings['api_base_url'] ?? 'https://api.encypher.com/api/v1';
         $api_key = $settings['api_key'] ?? '';
 
         if (empty($api_key)) {
@@ -230,7 +230,7 @@ class Coalition
     public function enroll_site(): array
     {
         $settings = get_option('encypher_provenance_settings', []);
-        $api_base = rtrim($settings['api_base_url'] ?? 'https://api.encypherai.com/api/v1', '/');
+        $api_base = rtrim($settings['api_base_url'] ?? 'https://api.encypher.com/api/v1', '/');
         $api_key  = $settings['api_key'] ?? '';
 
         if (empty($api_key)) {

@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name:       Encypher Provenance
- * Plugin URI:        https://encypherai.com/wordpress
+ * Plugin URI:        https://encypher.com/wordpress
  * Description:       C2PA-compliant text authentication. Embed cryptographic proof of origin into your WordPress content. Built on standards we're developing with Google, BBC, OpenAI, Adobe, and Microsoft.
  * Version:           1.1.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Encypher Corporation
- * Author URI:        https://encypherai.com/
+ * Author URI:        https://encypher.com/
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       encypher-provenance

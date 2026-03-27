@@ -51,7 +51,7 @@ cp .env.example .env.local
 2. Configure your API settings in `.env.local`:
 ```env
 # Use hosted API
-NEXT_PUBLIC_API_URL=https://api.encypherai.com
+NEXT_PUBLIC_API_URL=https://api.encypher.com
 NEXT_PUBLIC_API_KEY=your_api_key_here
 
 # Or use local API

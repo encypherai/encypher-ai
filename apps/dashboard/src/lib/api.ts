@@ -6,16 +6,16 @@
  */
 
 // All API calls go through Traefik (routes to appropriate microservice based on path)
-// In production: https://api.encypherai.com/api/v1
+// In production: https://api.encypher.com/api/v1
 // In development: http://localhost:8000/api/v1
 //
 // IMPORTANT: NEXT_PUBLIC_API_URL should include /api/v1 suffix
-// e.g., http://localhost:8000/api/v1 or https://api.encypherai.com/api/v1
+// e.g., http://localhost:8000/api/v1 or https://api.encypher.com/api/v1
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === 'development'
     ? 'http://localhost:8000/api/v1'
-    : 'https://api.encypherai.com/api/v1');
+    : 'https://api.encypher.com/api/v1');
 
 if (process.env.NODE_ENV === 'development') {
   console.info(`[dashboard] Using API base URL: ${API_BASE_URL}`);

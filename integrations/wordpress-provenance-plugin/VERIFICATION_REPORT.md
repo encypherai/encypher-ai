@@ -1,8 +1,8 @@
 # WordPress Provenance Plugin - Enterprise API Integration Verification Report
 
-**Date**: 2026-02-03  
-**Team**: TEAM_148  
-**Verification Type**: Dockerized Integration Testing  
+**Date**: 2026-02-03
+**Team**: TEAM_148
+**Verification Type**: Dockerized Integration Testing
 **Status**: ✅ PASSED
 
 ---
@@ -27,10 +27,10 @@ The WordPress Provenance Plugin successfully integrates with the Enterprise API'
 - **Enterprise API**: 1.0.0-preview (Port 9000)
 - **Plugin Tier**: Enterprise
 - **API Key**: `demo-api-key-for-testing`
-- **API Base URL**: `http://api.encypherai.com:9000/api/v1`
+- **API Base URL**: `http://api.encypher.com:9000/api/v1`
 
 ### Docker Setup
-- Used `docker-compose.test.yml` with `extra_hosts` mapping for `api.encypherai.com:host-gateway`
+- Used `docker-compose.test.yml` with `extra_hosts` mapping for `api.encypher.com:host-gateway`
 - Resolved previous `TrustedHostMiddleware` blocker by mapping allowed hostname to host gateway
 
 ---
@@ -213,7 +213,7 @@ $response = $this->call_backend($endpoint, $payload, $require_auth);
 ## Known Issues & Resolutions
 
 ### Issue 1: Docker Networking (RESOLVED ✅)
-**Problem**: `wp-cli` container could not resolve `api.encypherai.com`, causing connection timeouts.
+**Problem**: `wp-cli` container could not resolve `api.encypher.com`, causing connection timeouts.
 
 **Root Cause**: Missing `extra_hosts` mapping in `docker-compose.test.yml` for `wp-cli` service.
 
@@ -221,7 +221,7 @@ $response = $this->call_backend($endpoint, $payload, $require_auth);
 ```yaml
 extra_hosts:
   - "host.docker.internal:host-gateway"
-  - "api.encypherai.com:host-gateway"
+  - "api.encypher.com:host-gateway"
 ```
 
 ### Issue 2: TrustedHost Middleware (RESOLVED ✅)
@@ -229,7 +229,7 @@ extra_hosts:
 
 **Root Cause**: `TrustedHostMiddleware` only allows specific hostnames, not arbitrary IPs.
 
-**Resolution**: Used `extra_hosts` to map `api.encypherai.com` (an allowed hostname) to the host gateway IP.
+**Resolution**: Used `extra_hosts` to map `api.encypher.com` (an allowed hostname) to the host gateway IP.
 
 ---
 
@@ -269,6 +269,6 @@ All verification criteria met:
 
 ---
 
-**Verified by**: TEAM_148  
-**Date**: 2026-02-03  
+**Verified by**: TEAM_148
+**Date**: 2026-02-03
 **Environment**: Docker (WordPress 6.5.5 + Enterprise API 1.0.0-preview)

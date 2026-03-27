@@ -211,7 +211,7 @@ export default function PrivacyPage() {
             <li><strong>Opt-Out:</strong> Unsubscribe from marketing communications at any time using the unsubscribe link in any email</li>
           </ul>
           <p className="mb-4">
-            To exercise these rights, please contact us at privacy@encypherai.com. We will respond within 30 days. We may need to verify your identity before processing your request.
+            To exercise these rights, please contact us at privacy@encypher.com. We will respond within 30 days. We may need to verify your identity before processing your request.
           </p>
           <p className="mb-4">
             Note: Deletion of account data does not remove signing records from the public verification infrastructure. Signing records (document IDs, timestamps, organization names) are part of the content provenance chain and are retained to maintain the integrity of previously signed content.
@@ -221,14 +221,14 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">10. Children&apos;s Privacy</h2>
           <p className="mb-4">
-            Our Services are not intended for children under the age of 13 (or the applicable age of consent in your jurisdiction). We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately at privacy@encypherai.com.
+            Our Services are not intended for children under the age of 13 (or the applicable age of consent in your jurisdiction). We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately at privacy@encypher.com.
           </p>
         </section>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">11. International Data Transfers</h2>
           <p className="mb-4">
-            Our primary infrastructure is located in the United States. If you are located outside the United States, your information will be transferred to and processed in the United States. We ensure appropriate safeguards are in place to protect your data, including Standard Contractual Clauses (SCCs) for transfers from the European Economic Area (EEA) or United Kingdom. Enterprise customers may request a Data Processing Agreement (DPA) at legal@encypherai.com.
+            Our primary infrastructure is located in the United States. If you are located outside the United States, your information will be transferred to and processed in the United States. We ensure appropriate safeguards are in place to protect your data, including Standard Contractual Clauses (SCCs) for transfers from the European Economic Area (EEA) or United Kingdom. Enterprise customers may request a Data Processing Agreement (DPA) at legal@encypher.com.
           </p>
         </section>
 
@@ -246,8 +246,8 @@ export default function PrivacyPage() {
           </p>
           <p className="mb-4">
             <strong>Encypher</strong><br />
-            Privacy inquiries: privacy@encypherai.com<br />
-            Legal: legal@encypherai.com
+            Privacy inquiries: privacy@encypher.com<br />
+            Legal: legal@encypher.com
           </p>
         </section>
 
@@ -263,10 +263,10 @@ export default function PrivacyPage() {
             <li>Right to non-discrimination for exercising your privacy rights</li>
           </ul>
           <p className="mb-4">
-            <strong>Authorized Agent:</strong> You may designate an authorized agent to submit requests on your behalf. To use an authorized agent, provide written authorization signed by you and your agent, along with proof of identity. Contact privacy@encypherai.com with your request.
+            <strong>Authorized Agent:</strong> You may designate an authorized agent to submit requests on your behalf. To use an authorized agent, provide written authorization signed by you and your agent, along with proof of identity. Contact privacy@encypher.com with your request.
           </p>
           <p className="mb-4">
-            To exercise your California privacy rights, contact us at privacy@encypherai.com.
+            To exercise your California privacy rights, contact us at privacy@encypher.com.
           </p>
         </section>
 
@@ -285,7 +285,7 @@ export default function PrivacyPage() {
             <li><strong>Legal Obligation (Art. 6(1)(c)):</strong> Where processing is required by applicable law, such as financial record retention</li>
           </ul>
           <p className="mb-4">
-            For transfers of personal data from the EEA to the United States, we rely on Standard Contractual Clauses (SCCs) as the transfer mechanism. You may request a copy of our SCCs at legal@encypherai.com. You also have the right to lodge a complaint with your local supervisory authority.
+            For transfers of personal data from the EEA to the United States, we rely on Standard Contractual Clauses (SCCs) as the transfer mechanism. You may request a copy of our SCCs at legal@encypher.com. You also have the right to lodge a complaint with your local supervisory authority.
           </p>
         </section>
       </div>

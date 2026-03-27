@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     title: "Encypher Verify - Chrome Extension for C2PA Content Verification",
     description:
       "Verify C2PA provenance on any webpage. Free, no account required. Install the Encypher Verify extension for Chrome, Edge, and Brave.",
-    url: "https://encypherai.com/tools/chrome-extension",
+    url: "https://encypher.com/tools/chrome-extension",
     siteName: "Encypher",
     type: "website",
   },

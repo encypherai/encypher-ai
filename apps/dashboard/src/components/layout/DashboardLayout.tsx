@@ -382,7 +382,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const visibleNavItems = visibleGroups.flatMap(g => g.items);
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://s-www.encypherai.com' });
+    signOut({ callbackUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://s-www.encypher.com' });
   };
 
   const isActive = (href: string) => {
@@ -531,7 +531,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Sidebar footer */}
         <div className="flex-shrink-0 border-t border-white/10 p-2 space-y-0.5">
           <a
-            href="https://api.encypherai.com/docs"
+            href="https://api.encypher.com/docs"
             target="_blank"
             rel="noopener noreferrer"
             title={sidebarCollapsed ? 'API Reference' : undefined}

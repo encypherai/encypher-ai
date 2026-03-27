@@ -59,7 +59,7 @@ class Encypher_Verify_Ability
         }
 
         $settings = get_option(self::OPTION_KEY, []);
-        $api_base = rtrim($settings['api_base_url'] ?? 'https://api.encypherai.com/api/v1', '/');
+        $api_base = rtrim($settings['api_base_url'] ?? 'https://api.encypher.com/api/v1', '/');
 
         $response = wp_remote_post(
             $api_base . '/verify',

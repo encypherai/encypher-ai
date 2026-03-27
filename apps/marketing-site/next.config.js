@@ -21,7 +21,7 @@ for (const file of envFiles) {
 }
 
 /** @type {import('next').NextConfig} */
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://backend.encypherai.com';
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://backend.encypher.com';
 console.log(`[Next Config] Using API base URL: ${apiBaseUrl}`);
 
 // No longer throwing an error if the variable isn't set - using default value instead
@@ -53,7 +53,7 @@ const nextConfig = {
     "http://127.0.0.1:52924",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
-    "s-www.encypherai.com"
+    "s-www.encypher.com"
   ],
   async headers() {
     // Security headers applied to all routes

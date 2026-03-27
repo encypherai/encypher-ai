@@ -68,7 +68,79 @@ signed Content Credentials into media assets via authenticated API calls.
 
 ### C.1.4. Generator Product Target of Evaluation (TOE) Description
 
-The Target of Evaluation consists of:
+#### TOE Security Model
+
+The Encypher Enterprise API is a single-process backend service. The
+entire C2PA signing pipeline -- from request authentication through manifest
+embedding -- executes within one process boundary on the server. There is
+no client-side signing, no edge component, and no unauthenticated signing
+path.
+
+**Every signing request must pass through an authentication and authorization
+gate before any cryptographic operation occurs.** The enforcement chain is:
+
+1. **TLS termination** -- Railway's edge proxy terminates TLS 1.3. Only
+   HTTPS traffic reaches the application. Plaintext HTTP is rejected.
+2. **API key authentication** -- Every request to the signing endpoint
+   (`POST /api/v1/sign`) must present a Bearer API key in the
+   `Authorization` header. The key is a shared secret that positively
+   identifies the calling organization. Unauthenticated requests receive
+   `401 Unauthorized` and cannot trigger any signing operation.
+3. **Organization resolution** -- The API key is validated against the
+   Key Service, which resolves the calling organization and confirms
+   the key has not been revoked or expired.
+4. **Permission check** -- The `require_sign_permission` dependency
+   (`app/dependencies.py`) confirms the resolved organization has the
+   `can_sign` permission. Organizations without this permission receive
+   `403 Forbidden`.
+5. **Rate limiting** -- Per-organization rate limits (default: 60
+   requests/minute) constrain the volume of signing operations to
+   prevent abuse.
+6. **Signing execution** -- Only after steps 1-5 succeed does the
+   signing pipeline load the claim signing key from the environment
+   variable, construct the C2PA manifest, sign it, embed it into the
+   asset, and return the signed asset to the caller.
+
+**The claim signing key is never exposed to the API client.** The key
+exists only as an environment variable loaded into process memory at
+startup. The client sends content in; the server returns a signed asset
+out. At no point does key material leave the server process.
+
+#### Signing Request Lifecycle
+
+```
+API Client                    Encypher Backend TOE
+    |                                  |
+    |-- HTTPS POST /api/v1/sign ------>|
+    |   Authorization: Bearer <key>    |
+    |   Content-Type: application/json |
+    |   Body: { media + metadata }     |
+    |                                  |
+    |                         1. TLS 1.3 terminated (Railway edge)
+    |                         2. Extract Bearer token
+    |                         3. Validate API key (Key Service)
+    |                         4. Resolve organization
+    |                         5. Check can_sign permission
+    |                         6. Enforce rate limit
+    |                                  |
+    |                         7. Load signing key from env var
+    |                         8. Validate input (format, size, MIME)
+    |                         9. Construct C2PA manifest + assertions
+    |                        10. Sign claim (COSE_Sign1 / ES256)
+    |                        11. Request RFC 3161 timestamp (SSL.com TSA)
+    |                        12. Embed manifest into asset
+    |                        13. Return signed asset
+    |                                  |
+    |<-- 201 Created ------------------|
+    |    { signed_content, manifest }  |
+```
+
+**Verification is public.** The verification endpoint
+(`POST /api/v1/public/verify/media`) requires no authentication. Any party
+can submit a signed asset and receive a verification result. This is by
+design: verification enables the open trust model that C2PA requires.
+
+#### TOE Architecture Diagram
 
 ```
 +---------------------------------------------------------------+
@@ -84,18 +156,19 @@ The Target of Evaluation consists of:
 |  |  +--------+---------+  +------------------------------+  | |
 |  |           |                                               | |
 |  |  +--------v-----------------------------------------+    | |
+|  |  | Authentication Gate                               |    | |
+|  |  | - require_sign_permission (app/dependencies.py)   |    | |
+|  |  | - API key validation via Key Service              |    | |
+|  |  | - Organization resolution via Auth Service        |    | |
+|  |  | - Per-org rate limiting (api_rate_limiter)         |    | |
+|  |  +--------+-----------------------------------------+    | |
+|  |           | (only authenticated, authorized requests)     | |
+|  |  +--------v-----------------------------------------+    | |
 |  |  | Signing Services                                  |    | |
 |  |  | - image_signing_service.py  (c2pa-python path)    |    | |
 |  |  | - audio_signing_service.py  (c2pa-python path)    |    | |
 |  |  | - video_signing_service.py  (c2pa-python path)    |    | |
 |  |  | - document_signing_service.py (custom JUMBF path) |    | |
-|  |  +--------+-----------------------------------------+    | |
-|  |           |                                               | |
-|  |  +--------v-----------------------------------------+    | |
-|  |  | Verification Services                              |    | |
-|  |  | - c2pa_verifier_core.py (c2pa-python Reader path)  |    | |
-|  |  | - document_verification_service.py (Pipeline B)    |    | |
-|  |  | - c2pa_manifest_extractor.py (format extraction)   |    | |
 |  |  +--------+-----------------------------------------+    | |
 |  |           |                                               | |
 |  |  +--------v-----------------------------------------+    | |
@@ -105,6 +178,13 @@ The Target of Evaluation consists of:
 |  |  | - c2pa_claim_builder.py (CBOR claim construction)  |    | |
 |  |  | - jumbf.py           (ISO 19566-5 serial + parse)  |    | |
 |  |  | - c2pa_trust_list.py (trust anchor management)     |    | |
+|  |  +--------------------------------------------------+    | |
+|  |                                                           | |
+|  |  +--------------------------------------------------+    | |
+|  |  | Verification Services (public, no auth required)  |    | |
+|  |  | - c2pa_verifier_core.py (c2pa-python Reader path) |    | |
+|  |  | - document_verification_service.py (Pipeline B)   |    | |
+|  |  | - c2pa_manifest_extractor.py (format extraction)  |    | |
 |  |  +--------------------------------------------------+    | |
 |  +----------------------------------------------------------+ |
 |                                                                |
@@ -117,28 +197,29 @@ The Target of Evaluation consists of:
 |                                                                |
 +---------------------------------------------------------------+
         |                           |
-        | TLS (HTTPS)               | TLS (HTTPS)
+        | TLS 1.3 (HTTPS)          | TLS (HTTPS)
         v                           v
   +------------+            +------------------+
-  | Traefik    |            | SSL.com TSA      |
-  | (Reverse   |            | (RFC 3161        |
-  |  Proxy)    |            |  Timestamping)   |
+  | Railway    |            | SSL.com TSA      |
+  | Edge Proxy |            | (RFC 3161        |
+  | (TLS term) |            |  Timestamping)   |
   +------+-----+            +------------------+
          |
-         | TLS
+         | TLS 1.3
          v
   +------------+
   | API Client |
-  | (Authn via |
+  | (Bearer    |
   |  API Key)  |
   +------------+
 ```
 
-**Component inventory:**
+#### Component Inventory
 
 | Component | Role | Source |
 |-----------|------|--------|
 | FastAPI application | HTTP API framework, request routing | Open-source (pypi) |
+| Authentication gate | API key validation, org resolution, permission check, rate limiting | Encypher proprietary |
 | Signing services | Media-type-specific signing orchestration | Encypher proprietary |
 | Verification services | Media-type-specific C2PA verification | Encypher proprietary |
 | document_verification_service.py | Pipeline B verification (extract, JUMBF parse, COSE verify, hash check) | Encypher proprietary |
@@ -151,7 +232,7 @@ The Target of Evaluation consists of:
 | c2pa-python | C2PA manifest builder/signer/reader (wraps c2pa-rs) | Open-source (pypi) |
 | cryptography | Private key loading, ECDSA/RSA/EdDSA signing, X.509 | Open-source (pypi) |
 | cbor2 | CBOR encoding/decoding for claims and assertions | Open-source (pypi) |
-| Traefik | Reverse proxy, TLS termination | Open-source |
+| Traefik | API gateway, internal routing (behind Railway TLS edge) | Open-source |
 | Docker + Linux | Container runtime, process isolation | Open-source |
 
 ### C.1.5. Implementation Class
@@ -160,9 +241,11 @@ The Target of Evaluation consists of:
 
 The Encypher Enterprise API is a purely backend service. All asset
 processing, assertion construction, claim generation, and claim signing
-occur server-side within the hosting environment. There is no edge
-component. API clients submit content over HTTPS and receive signed assets
-in the response.
+occur server-side within a single process in the hosting environment.
+There is no edge component, no client-side signing SDK, and no path
+by which an unauthenticated caller can trigger a signing operation.
+API clients submit content over HTTPS with a valid Bearer API key and
+receive signed assets in the response.
 
 ### C.1.6. Target Max Assurance Level
 
@@ -370,11 +453,15 @@ identity during certificate enrollment.
   (`enterprise_api/Dockerfile`, line 12-13: `groupadd --gid 1000 appuser
   && useradd --uid 1000 --gid 1000 -m appuser`; line 43: `USER appuser`).
 
-- **API authentication**: All signing endpoints require a valid API key
-  presented as a Bearer token. The `require_sign_permission` dependency
+- **API authentication** (see also C.1.4 TOE Security Model): Every
+  signing request requires a valid API key presented as a Bearer token in
+  the `Authorization` header. The `require_sign_permission` dependency
   (`enterprise_api/app/dependencies.py`) validates the API key via the
-  Key Service and confirms the calling organization has signing
-  permission. Unauthenticated requests cannot trigger signing operations.
+  Key Service, resolves the calling organization, and confirms the
+  organization has the `can_sign` permission. Unauthenticated requests
+  receive `401 Unauthorized`; unauthorized organizations receive
+  `403 Forbidden`. No signing operation can execute without passing
+  this gate.
 
 - **Rate limiting**: The API enforces per-organization rate limits
   (configurable via `rate_limit_per_minute`, default 60) to limit the
@@ -434,11 +521,24 @@ submission.
 
 #### Authentication Before Using Keys
 
-Not applicable. The Encypher Enterprise API is a monolithic Backend
-service -- there is no Edge-Backend subsystem split. The signing key is
-used only by the Enterprise API process itself, which authenticates
-inbound API clients via API key validation before performing signing
-operations.
+The Encypher Enterprise API is a monolithic Backend service -- there is
+no Edge-Backend subsystem split requiring mutual authentication before
+key use. However, the signing key is never used without prior caller
+authentication:
+
+1. Every signing request must present a Bearer API key tied to a
+   registered organization.
+2. The `require_sign_permission` dependency validates the key, resolves
+   the organization, and confirms signing permission before the request
+   reaches any signing service.
+3. Only after this authentication and authorization gate succeeds does
+   the signing service load the claim signing key from the environment
+   variable and execute the signing operation.
+
+Unauthenticated requests cannot trigger signing operations. The key is
+used exclusively by the Enterprise API process in response to
+authenticated, authorized requests. See Section C.1.4 (TOE Security
+Model) for the complete enforcement chain.
 
 ### C.2.3. Protections Against Claim Generator Misconfiguration and Abuse
 

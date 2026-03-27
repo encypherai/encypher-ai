@@ -99,7 +99,7 @@ export default function VerifyPage() {
         <p className="font-[family-name:var(--font-ui)] text-sm text-ink-muted leading-relaxed">
           Install{" "}
           <a
-            href="https://encypherai.com"
+            href="https://encypher.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-blue-ncs hover:underline font-medium"

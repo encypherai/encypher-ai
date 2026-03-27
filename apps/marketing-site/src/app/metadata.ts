@@ -3,53 +3,53 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   // Page Title - Search Results & Browser Tab
   title: "Encypher | Machine-Readable Rights for Your Content",
-  
+
   // Meta Description - Search Results Preview
   description: "Authors of C2PA Section A.7. Patent-pending granular content attribution with Merkle tree authentication. Court-admissible evidence for publishers, performance intelligence for AI companies.",
-  
+
   // Keywords Array (not string)
   keywords: [
     // High Volume - Capture Market
     "AI copyright infringement",
-    "deepfake detection", 
+    "deepfake detection",
     "AI watermarking",
     "AI detector",
-    
+
     // Authority - Even if Low Volume
     "C2PA",
     "C2PA text standard",
     "content authenticity",
     "EU AI Act",
-    
+
     // Strategic - Emerging/Related
     "AI art copyright",
     "cryptographic proof",
     "publisher licensing",
     "enterprise AI governance",
     "AI training data copyright",
-    
+
     // Problem-Focused - High Intent
     "prove AI copyright infringement",
     "AI compliance",
     "AI audit trail",
     "content provenance",
     "AI privacy",
-    
+
     // Tools/Solutions - Breakout Queries
     "deepfake detection tools",
     "AI content verification",
   ],
-  
+
   // Open Graph (LinkedIn, Facebook, etc.)
   openGraph: {
     title: "Your Content Carries Its Own Proof of Ownership",
     description: "Authors of C2PA Section A.7. Patent-pending Merkle tree authentication provides court-admissible evidence for publishers and performance intelligence for AI companies.",
     images: ['/og-image.png'],
     type: 'website',
-    url: 'https://encypherai.com',
+    url: 'https://encypher.com',
     siteName: 'Encypher',
   },
-  
+
   // Twitter/X
   twitter: {
     card: 'summary_large_image',
@@ -58,18 +58,18 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
     creator: '@encypherai',
   },
-  
+
   // Favicon
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
   },
-  
+
   // Additional SEO
   alternates: {
-    canonical: 'https://encypherai.com',
+    canonical: 'https://encypher.com',
   },
-  
+
   // Robots
   robots: {
     index: true,

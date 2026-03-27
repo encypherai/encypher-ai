@@ -832,7 +832,7 @@ function _showDetailPanel(badge, details) {
     </div>
     <div class="encypher-detail-panel__body">${rows}</div>
     <div class="encypher-detail-panel__footer">
-      <a href="https://encypherai.com" target="_blank" rel="noopener">encypherai.com</a>
+      <a href="https://encypher.com" target="_blank" rel="noopener">encypher.com</a>
     </div>
   `;
 

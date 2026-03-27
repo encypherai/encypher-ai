@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 if (process.env.NODE_ENV === 'development') {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1';
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1';
   console.info(`[dashboard] NEXT_PUBLIC_API_URL (startup): ${apiBaseUrl}`);
 }
 
@@ -15,7 +15,7 @@ const nextConfig = {
     return config;
   },
   allowedDevOrigins: [
-    "s-dashboard.encypherai.com",
+    "s-dashboard.encypher.com",
     "http://localhost:3001",
     "http://127.0.0.1:3001"
   ],
@@ -27,10 +27,10 @@ const nextConfig = {
   // Image optimization
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'dashboard.encypherai.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'api.encypherai.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'encypherai.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'www.encypherai.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'dashboard.encypher.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'api.encypher.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'encypher.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'www.encypher.com', pathname: '/**' },
       { protocol: 'http', hostname: 'localhost', pathname: '/**' },
       { protocol: 'http', hostname: '127.0.0.1', pathname: '/**' },
     ],
@@ -39,8 +39,8 @@ const nextConfig = {
 
   // Environment variables
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1',
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://encypherai.com',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1',
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || 'https://encypher.com',
   },
 
   // Headers for security

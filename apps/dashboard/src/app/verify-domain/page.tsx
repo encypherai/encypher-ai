@@ -9,7 +9,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   (process.env.NODE_ENV === 'development'
     ? 'http://localhost:8000/api/v1'
-    : 'https://api.encypherai.com/api/v1');
+    : 'https://api.encypher.com/api/v1');
 
 type State = 'loading' | 'success' | 'error';
 

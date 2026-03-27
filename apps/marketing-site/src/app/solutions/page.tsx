@@ -9,12 +9,12 @@ export const metadata: Metadata = {
   title: 'Solutions | Content Authentication for Publishers, AI, and Enterprise | Encypher',
   description: 'C2PA-compliant content authentication for publishers protecting IP, AI companies licensing content and proving compliance, and enterprises governing AI-generated text. One API. Three use cases.',
   alternates: {
-    canonical: 'https://encypherai.com/solutions',
+    canonical: 'https://encypher.com/solutions',
   },
   openGraph: {
     title: 'Encypher Solutions: Publishers, AI Companies, Enterprises',
     description: 'Cryptographic content authentication from the Co-Chair of the C2PA Text Provenance Task Force. Publisher coalition access, compliance proof, and sentence-level governance.',
-    url: 'https://encypherai.com/solutions',
+    url: 'https://encypher.com/solutions',
     images: ['/og-image.png'],
     type: 'website',
   },
@@ -32,7 +32,7 @@ const SolutionsPage: NextPage = () => {
       />
       <h1 className="text-4xl font-bold text-center">Our Solutions</h1>
       <p className="mt-4 text-lg text-center text-muted-foreground">We provide tailored solutions to meet the unique challenges of your industry.</p>
-      
+
       <div className="mt-12 grid gap-8 md:grid-cols-3">
         {/* For AI Companies */}
         <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6 flex flex-col">

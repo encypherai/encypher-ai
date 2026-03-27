@@ -33,7 +33,7 @@ class Content_Provenance extends Abstract_Experiment {
 	/**
 	 * The Encypher API base URL.
 	 */
-	const API_BASE = 'https://api.encypherai.com/api/v1';
+	const API_BASE = 'https://api.encypher.com/api/v1';
 
 	/**
 	 * Get the experiment slug.
@@ -73,7 +73,7 @@ class Content_Provenance extends Abstract_Experiment {
 				'key'         => 'encypher_api_key',
 				'label'       => __( 'Encypher API Key', 'wordpress-ai' ),
 				'type'        => 'password',
-				'description' => __( 'Required. Get your free API key at encypherai.com. Free tier: 1,000 signs/month.', 'wordpress-ai' ),
+				'description' => __( 'Required. Get your free API key at encypher.com. Free tier: 1,000 signs/month.', 'wordpress-ai' ),
 				'required'    => true,
 			],
 			[

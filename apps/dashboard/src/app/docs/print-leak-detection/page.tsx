@@ -42,7 +42,7 @@ The fingerprint requires at least **128 inter-word spaces** (roughly 130+ words)
 Enable Print Leak Detection by adding \`enable_print_fingerprint: true\` to the \`options\` object when signing:
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/sign \\
+curl -X POST https://api.encypher.com/api/v1/sign \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -78,7 +78,7 @@ The response includes a \`print_fingerprint\` object:
 import httpx
 
 response = httpx.post(
-    "https://api.encypherai.com/api/v1/sign",
+    "https://api.encypher.com/api/v1/sign",
     headers={"X-API-Key": "YOUR_API_KEY"},
     json={
         "text": article_text,
@@ -104,7 +104,7 @@ When a document is suspected to have leaked:
 3. **Submit the OCR'd text** to the verify endpoint:
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/verify/advanced \\
+curl -X POST https://api.encypher.com/api/v1/verify/advanced \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"text": "<OCR output here>"}'

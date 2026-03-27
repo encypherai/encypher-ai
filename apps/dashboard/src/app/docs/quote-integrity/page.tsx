@@ -36,7 +36,7 @@ Encypher's Quote Integrity Verification lets you check whether a quoted passage 
 ### POST /api/v1/verify/quote-integrity
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/verify/quote-integrity \\
+curl -X POST https://api.encypher.com/api/v1/verify/quote-integrity \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -158,7 +158,7 @@ You can test Quote Integrity Verification in the [API Playground](/playground):
 
 ## Support
 
-For integration help, contact support@encypherai.com or test interactively in the [API Playground](/playground).
+For integration help, contact support@encypher.com or test interactively in the [API Playground](/playground).
 `;
 
 export default function QuoteIntegrityGuidePage() {

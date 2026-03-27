@@ -157,9 +157,9 @@ export function ChromeExtensionCard() {
             </p>
             <div className="flex items-center gap-2">
               <code className="text-xs flex-1 font-mono text-delft-blue dark:text-slate-200 bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
-                https://api.encypherai.com
+                https://api.encypher.com
               </code>
-              <CopyButton text="https://api.encypherai.com" />
+              <CopyButton text="https://api.encypher.com" />
             </div>
           </div>
         </CardContent>

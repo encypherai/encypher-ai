@@ -147,7 +147,7 @@ class Admin
             'type' => 'array',
             'sanitize_callback' => [$this, 'sanitize_settings'],
             'default' => [
-                'api_base_url' => 'https://api.encypherai.com/api/v1',
+                'api_base_url' => 'https://api.encypher.com/api/v1',
                 'api_key' => '',
                 'connect_email' => '',
                 'connect_session_id' => '',
@@ -352,7 +352,7 @@ class Admin
                         sprintf(
                             /* translators: %s: upgrade link */
                             __('Webhook alerting is an Enterprise add-on. <a href="%s" target="_blank" rel="noopener noreferrer">Upgrade to Enterprise</a> to enable outbound failure webhooks.', 'encypher-provenance'),
-                            'https://encypherai.com/pricing'
+                            'https://encypher.com/pricing'
                         ),
                         ['a' => ['href' => [], 'target' => [], 'rel' => []]]
                     ) . '</p>';
@@ -427,7 +427,7 @@ class Admin
 
     /**
      * Normalizes an API base URL to always end with /api/v1 (no trailing slash).
-     * Accepts both https://api.encypherai.com/ and https://api.encypherai.com/api/v1.
+     * Accepts both https://api.encypher.com/ and https://api.encypher.com/api/v1.
      */
     private static function normalize_api_base_url(string $url): string
     {
@@ -448,7 +448,7 @@ class Admin
         if (! is_array($current_settings)) {
             $current_settings = [];
         }
-        $sanitized['api_base_url'] = isset($settings['api_base_url']) ? esc_url_raw(trim($settings['api_base_url'])) : 'https://api.encypherai.com/api/v1';
+        $sanitized['api_base_url'] = isset($settings['api_base_url']) ? esc_url_raw(trim($settings['api_base_url'])) : 'https://api.encypher.com/api/v1';
         $sanitized['api_base_url'] = self::normalize_api_base_url($sanitized['api_base_url']);
         $sanitized['api_key'] = isset($settings['api_key']) ? sanitize_text_field($settings['api_key']) : '';
         $sanitized['connect_email'] = isset($settings['connect_email'])
@@ -1038,7 +1038,7 @@ class Admin
                 <div class="encypher-support-card">
                     <p><strong><?php esc_html_e('Need help? Contact support', 'encypher-provenance'); ?></strong></p>
                     <p>
-                        <a href="mailto:wp-support@encypherai.com">wp-support@encypherai.com</a>
+                        <a href="mailto:wp-support@encypher.com">wp-support@encypher.com</a>
                     </p>
                 </div>
             </div>
@@ -1108,7 +1108,7 @@ class Admin
                 <ol class="onboarding-steps">
                     <li>
                         <strong><?php esc_html_e('Get your API key', 'encypher-provenance'); ?></strong>
-                        <a href="https://dashboard.encypherai.com/register" target="_blank" class="button button-small"><?php esc_html_e('Sign Up Free', 'encypher-provenance'); ?></a>
+                        <a href="https://dashboard.encypher.com/register" target="_blank" class="button button-small"><?php esc_html_e('Sign Up Free', 'encypher-provenance'); ?></a>
                     </li>
                     <li>
                         <strong><?php esc_html_e('Configure your settings', 'encypher-provenance'); ?></strong>
@@ -1228,7 +1228,7 @@ class Admin
                     __('SSO/SCIM integration', 'encypher-provenance'),
                     __('Dedicated support & SLA', 'encypher-provenance'),
                 ],
-                'cta_url' => 'https://encypherai.com/enterprise',
+                'cta_url' => 'https://encypher.com/enterprise',
             ],
         ];
 
@@ -1329,7 +1329,7 @@ class Admin
                         <?php esc_html_e('$0.02/sign request applies after the monthly cap.', 'encypher-provenance'); ?>
                         <?php esc_html_e('Verification requests remain available with a soft cap of 10,000/month.', 'encypher-provenance'); ?>
                         <?php esc_html_e('Need more than 1,000 sign requests/month?', 'encypher-provenance'); ?>
-                        <a href="https://dashboard.encypherai.com/billing" target="_blank" rel="noopener noreferrer"><?php esc_html_e('View billing options', 'encypher-provenance'); ?></a>
+                        <a href="https://dashboard.encypher.com/billing" target="_blank" rel="noopener noreferrer"><?php esc_html_e('View billing options', 'encypher-provenance'); ?></a>
                     </p>
                 </div>
             <?php endif; ?>
@@ -1517,7 +1517,7 @@ class Admin
                     <?php endif; ?>
                     <?php $this->render_usage_progress_bar($usage, 'encypher-account-usage-progress'); ?>
                     <p>
-                        <a href="https://dashboard.encypherai.com/billing" class="button" target="_blank">
+                        <a href="https://dashboard.encypher.com/billing" class="button" target="_blank">
                             <?php esc_html_e('Manage Subscription', 'encypher-provenance'); ?>
                         </a>
                     </p>
@@ -1535,7 +1535,7 @@ class Admin
                         </p>
                     <?php endif; ?>
                     <p style="margin-top:6px;">
-                        <a href="https://dashboard.encypherai.com/settings?tab=billing" class="button button-link" target="_blank" rel="noopener noreferrer">
+                        <a href="https://dashboard.encypher.com/settings?tab=billing" class="button button-link" target="_blank" rel="noopener noreferrer">
                             <?php esc_html_e('Manage Payment Methods', 'encypher-provenance'); ?>
                         </a>
                     </p>
@@ -1560,7 +1560,7 @@ class Admin
                         <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="button">
                             <?php esc_html_e('Configure API', 'encypher-provenance'); ?>
                         </a>
-                        <a href="https://dashboard.encypherai.com/api-keys" class="button" target="_blank">
+                        <a href="https://dashboard.encypher.com/api-keys" class="button" target="_blank">
                             <?php esc_html_e('Manage API Keys', 'encypher-provenance'); ?>
                         </a>
                     </p>
@@ -1570,10 +1570,10 @@ class Admin
                 <div class="account-card">
                     <h2><?php esc_html_e('Quick Links', 'encypher-provenance'); ?></h2>
                     <ul class="quick-links">
-                        <li><a href="https://dashboard.encypherai.com" target="_blank"><?php esc_html_e('Encypher Dashboard', 'encypher-provenance'); ?> →</a></li>
-                        <li><a href="https://api.encypherai.com/docs" target="_blank"><?php esc_html_e('API Documentation', 'encypher-provenance'); ?> →</a></li>
-                        <li><a href="https://encypherai.com/support" target="_blank"><?php esc_html_e('Support Center', 'encypher-provenance'); ?> →</a></li>
-                        <li><a href="https://encypherai.com/coalition" target="_blank"><?php esc_html_e('Coalition Program', 'encypher-provenance'); ?> →</a></li>
+                        <li><a href="https://dashboard.encypher.com" target="_blank"><?php esc_html_e('Encypher Dashboard', 'encypher-provenance'); ?> →</a></li>
+                        <li><a href="https://api.encypher.com/docs" target="_blank"><?php esc_html_e('API Documentation', 'encypher-provenance'); ?> →</a></li>
+                        <li><a href="https://encypher.com/support" target="_blank"><?php esc_html_e('Support Center', 'encypher-provenance'); ?> →</a></li>
+                        <li><a href="https://encypher.com/coalition" target="_blank"><?php esc_html_e('Coalition Program', 'encypher-provenance'); ?> →</a></li>
                     </ul>
                 </div>
             </div>
@@ -1632,9 +1632,9 @@ class Admin
                 'signingMode' => isset($options['signing_mode']) ? $options['signing_mode'] : 'managed',
                 'byokEnabled' => isset($options['signing_mode']) && 'byok' === $options['signing_mode'],
                 'dashboardUrls' => [
-                    'billing' => 'https://dashboard.encypherai.com/billing',
-                    'apiKey' => 'https://dashboard.encypherai.com/register',
-                    'byok' => 'https://dashboard.encypherai.com/signing-profiles',
+                    'billing' => 'https://dashboard.encypher.com/billing',
+                    'apiKey' => 'https://dashboard.encypher.com/register',
+                    'byok' => 'https://dashboard.encypher.com/signing-profiles',
                 ],
                 'strings' => [
                     'byokDisabled' => __('BYOK is only available on the Enterprise tier.', 'encypher-provenance'),
@@ -1649,9 +1649,9 @@ class Admin
     public function render_api_base_url_field(): void
     {
         $options = get_option('encypher_provenance_settings', []);
-        $value = isset($options['api_base_url']) && '' !== $options['api_base_url'] ? esc_url($options['api_base_url']) : 'https://api.encypherai.com';
+        $value = isset($options['api_base_url']) && '' !== $options['api_base_url'] ? esc_url($options['api_base_url']) : 'https://api.encypher.com';
         ?>
-        <input type="url" id="api_base_url" class="regular-text" name="encypher_provenance_settings[api_base_url]" value="<?php echo esc_attr($value); ?>" placeholder="https://api.encypherai.com/api/v1" required />
+        <input type="url" id="api_base_url" class="regular-text" name="encypher_provenance_settings[api_base_url]" value="<?php echo esc_attr($value); ?>" placeholder="https://api.encypher.com/api/v1" required />
         <p class="description">
             <?php esc_html_e('Most publishers can leave this on the default hosted Encypher API. Change it only if your organization runs a self-hosted endpoint.', 'encypher-provenance'); ?>
         </p>
@@ -1670,10 +1670,10 @@ class Admin
         <p class="description">
             <?php esc_html_e('Optional if you use email connect. Paste an existing Encypher API key only when your team manages credentials outside the guided setup flow.', 'encypher-provenance'); ?>
             <br>
-            <a class="button button-secondary" href="https://dashboard.encypherai.com/register" target="_blank" rel="noopener noreferrer">
+            <a class="button button-secondary" href="https://dashboard.encypher.com/register" target="_blank" rel="noopener noreferrer">
                 <?php esc_html_e('Open Dashboard', 'encypher-provenance'); ?>
             </a>
-            <a class="button button-link" style="margin-left:8px;" href="https://dashboard.encypherai.com/billing" target="_blank" rel="noopener noreferrer">
+            <a class="button button-link" style="margin-left:8px;" href="https://dashboard.encypher.com/billing" target="_blank" rel="noopener noreferrer">
                 <?php esc_html_e('Manage Workspace & Billing', 'encypher-provenance'); ?>
             </a>
         </p>
@@ -1804,8 +1804,8 @@ class Admin
                 'usage' => $usage,
                 'signingMode' => isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed',
                 'byokEnabled' => isset($settings['signing_mode']) && 'byok' === $settings['signing_mode'],
-                'upgradeUrl' => 'https://dashboard.encypherai.com/billing',
-                'manageAccountUrl' => 'https://dashboard.encypherai.com/settings',
+                'upgradeUrl' => 'https://dashboard.encypher.com/billing',
+                'manageAccountUrl' => 'https://dashboard.encypher.com/settings',
                 'wordpress_ai_enabled' => !empty($settings['wordpress_ai_enabled']) ? true : false,
                 'settings_url' => admin_url('admin.php?page=encypher-settings'),
             ]
@@ -2148,7 +2148,7 @@ class Admin
                     <?php esc_html_e('Verification requests remain available with a soft cap of 10,000/month.', 'encypher-provenance'); ?>
                 </p>
                 <p>
-                    <a href="https://encypherai.com/enterprise" class="button button-primary" target="_blank">
+                    <a href="https://encypher.com/enterprise" class="button button-primary" target="_blank">
                         <?php esc_html_e('Upgrade to Enterprise', 'encypher-provenance'); ?>
                     </a>
                 </p>
@@ -2179,7 +2179,7 @@ class Admin
             </p>
             <p class="description" style="color: #666; font-style: italic;">
                 <?php esc_html_e('Free tier requires the C2PA badge to be displayed.', 'encypher-provenance'); ?>
-                <a href="https://encypherai.com/enterprise" target="_blank"><?php esc_html_e('Upgrade to Enterprise', 'encypher-provenance'); ?></a>
+                <a href="https://encypher.com/enterprise" target="_blank"><?php esc_html_e('Upgrade to Enterprise', 'encypher-provenance'); ?></a>
                 <?php esc_html_e('to customize badge visibility.', 'encypher-provenance'); ?>
             </p>
             <?php
@@ -2230,7 +2230,7 @@ class Admin
             <input type="hidden" name="encypher_provenance_settings[show_branding]" value="1" />
             <p class="description">
                 <?php esc_html_e('Free tier includes "Powered by Encypher" branding on verification badges.', 'encypher-provenance'); ?>
-                <a href="https://encypherai.com/enterprise" target="_blank"><?php esc_html_e('Upgrade to Enterprise to remove branding.', 'encypher-provenance'); ?></a>
+                <a href="https://encypher.com/enterprise" target="_blank"><?php esc_html_e('Upgrade to Enterprise to remove branding.', 'encypher-provenance'); ?></a>
                 <br><?php esc_html_e('Whitelabel is also available as a paid add-on for Free plans. Contact Encypher support or sales for current pricing.', 'encypher-provenance'); ?>
             </p>
             <?php
@@ -2268,7 +2268,7 @@ class Admin
                     <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-coalition')); ?>" class="button button-secondary">
                         <?php esc_html_e('View Coalition Dashboard', 'encypher-provenance'); ?>
                     </a>
-                    <a href="https://encypherai.com/coalition" class="button button-link" target="_blank">
+                    <a href="https://encypher.com/coalition" class="button button-link" target="_blank">
                         <?php esc_html_e('Learn More', 'encypher-provenance'); ?>
                     </a>
                 </p>
@@ -2290,7 +2290,7 @@ class Admin
                     <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-coalition')); ?>" class="button button-secondary">
                         <?php esc_html_e('View Coalition Dashboard', 'encypher-provenance'); ?>
                     </a>
-                    <a href="https://encypherai.com/coalition" target="_blank"><?php esc_html_e('Learn more about the coalition →', 'encypher-provenance'); ?></a>
+                    <a href="https://encypher.com/coalition" target="_blank"><?php esc_html_e('Learn more about the coalition →', 'encypher-provenance'); ?></a>
                 </p>
             </div>
             <?php
@@ -2379,7 +2379,7 @@ class Admin
                     sprintf(
                         /* translators: %s: pricing link */
                         __('<a href="%s" target="_blank" rel="noopener noreferrer">Upgrade to Enterprise</a> to enable failure webhooks.', 'encypher-provenance'),
-                        'https://encypherai.com/pricing'
+                        'https://encypher.com/pricing'
                     ),
                     ['a' => ['href' => [], 'target' => [], 'rel' => []]]
                 ); ?>
@@ -2689,7 +2689,7 @@ class Admin
                                 sprintf(
                                     /* translators: %s: pricing link */
                                     __('<a href="%s" target="_blank" rel="noopener noreferrer">Upgrade to Enterprise</a> to see all %d entries and export as CSV.', 'encypher-provenance'),
-                                    'https://encypherai.com/pricing',
+                                    'https://encypher.com/pricing',
                                     $full_log_count
                                 ),
                                 ['a' => ['href' => [], 'target' => [], 'rel' => []]]

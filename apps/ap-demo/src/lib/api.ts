@@ -1,7 +1,7 @@
 // API client for Encypher Enterprise API
 // Uses unified /sign endpoint with tier-gated options
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
 
 export interface EncodeRequest {

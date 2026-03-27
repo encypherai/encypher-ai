@@ -56,14 +56,14 @@ export default function ContactPage() {
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
         const hint = errData.next_action || errData.detail;
-        throw new Error(hint || 'Failed to submit. Please try again or email sales@encypherai.com');
+        throw new Error(hint || 'Failed to submit. Please try again or email sales@encypher.com');
       }
       setStatus('success');
     } catch (err) {
       setStatus('error');
       setTurnstileToken(null);
       setErrorMessage(
-        err instanceof Error ? err.message : 'Failed to submit. Please try again or email sales@encypherai.com'
+        err instanceof Error ? err.message : 'Failed to submit. Please try again or email sales@encypher.com'
       );
     }
   };
@@ -231,7 +231,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm">Email Us</h3>
-                    <a href="mailto:sales@encypherai.com" className="text-sm text-primary hover:underline">sales@encypherai.com</a>
+                    <a href="mailto:sales@encypher.com" className="text-sm text-primary hover:underline">sales@encypher.com</a>
                     <p className="text-xs text-muted-foreground mt-1">For sales & partnerships</p>
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm">Enterprise</h3>
-                    <a href="mailto:enterprise@encypherai.com" className="text-sm text-primary hover:underline">enterprise@encypherai.com</a>
+                    <a href="mailto:enterprise@encypher.com" className="text-sm text-primary hover:underline">enterprise@encypher.com</a>
                     <p className="text-xs text-muted-foreground mt-1">Custom implementations & SLAs</p>
                   </div>
                 </div>

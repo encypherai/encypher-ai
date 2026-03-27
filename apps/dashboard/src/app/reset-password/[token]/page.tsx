@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Input, Button } from '@encypher/design-system';
 import MetadataBackground from '../../../components/hero/MetadataBackground';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 
 export default function ResetPasswordPage() {
   const params = useParams();

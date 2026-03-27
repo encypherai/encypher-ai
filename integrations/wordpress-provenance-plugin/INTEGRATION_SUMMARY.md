@@ -1,7 +1,7 @@
 # WordPress Plugin - Enterprise API Integration Summary
 
-**Date:** October 31, 2025  
-**Branch:** `feature/wordpress-c2pa-plugin`  
+**Date:** October 31, 2025
+**Branch:** `feature/wordpress-c2pa-plugin`
 **Status:** ✅ Complete
 
 ---
@@ -72,7 +72,7 @@ The WordPress C2PA plugin has been successfully integrated with the Enterprise A
 ### 2. Verification Endpoints
 **Endpoints:**
 - `POST /api/v1/verify` (public verification)
-**Purpose:** Verify embedded C2PA manifests.  
+**Purpose:** Verify embedded C2PA manifests.
 **Authentication:** Optional/public endpoint for plugin verification.
 
 **Request Format:**
@@ -219,7 +219,7 @@ The integration ensures full C2PA compliance:
 ### Plugin Settings
 
 **API Configuration:**
-- `api_base_url`: Default `https://api.encypherai.com/api/v1`
+- `api_base_url`: Default `https://api.encypher.com/api/v1`
 - `api_key`: Enterprise API key (required)
 
 **C2PA Settings:**
@@ -242,7 +242,7 @@ ENCYPHER_API_KEY=demo-local-key
 
 For production:
 ```env
-ENCYPHER_API_BASE_URL=https://api.encypherai.com/api/v1
+ENCYPHER_API_BASE_URL=https://api.encypher.com/api/v1
 ENCYPHER_API_KEY=<your-production-key>
 ```
 
@@ -290,7 +290,7 @@ ENCYPHER_API_KEY=<your-production-key>
 
 **Test Advanced Signing Endpoint:**
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/sign \
+curl -X POST https://api.encypher.com/api/v1/sign \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -309,7 +309,7 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
 
 **Test Verification Endpoint:**
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/verify \
+curl -X POST https://api.encypher.com/api/v1/verify \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Content with invisible embeddings..."
@@ -434,12 +434,12 @@ Solution: Upgrade to higher tier or wait for quota reset
 
 The WordPress C2PA plugin is now fully integrated with the Enterprise API microservices architecture. The plugin:
 
-✅ Uses proper Enterprise API endpoints  
-✅ Implements C2PA-compliant text authentication  
-✅ Supports auto-mark on publish/update  
-✅ Provides manual marking capabilities  
-✅ Integrates with Merkle tree infrastructure  
-✅ Follows security best practices  
-✅ Includes comprehensive error handling  
+✅ Uses proper Enterprise API endpoints
+✅ Implements C2PA-compliant text authentication
+✅ Supports auto-mark on publish/update
+✅ Provides manual marking capabilities
+✅ Integrates with Merkle tree infrastructure
+✅ Follows security best practices
+✅ Includes comprehensive error handling
 
 The foundation is complete and ready for Phase 2 implementation of bulk marking, Pro/Enterprise features, and testing.

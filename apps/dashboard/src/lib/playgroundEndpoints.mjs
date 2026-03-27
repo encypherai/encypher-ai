@@ -8,7 +8,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Signing',
     requiresAuth: true,
     authType: 'apikey',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
       {
         text: 'Scientists at CERN have detected high-energy particles originating from a distant galaxy. The discovery could reshape our understanding of cosmic ray propagation. Researchers plan to publish their findings in Nature next month.',
@@ -31,7 +31,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Verify signed content — checks who signed it, when, and whether it has been tampered with. Paste the signed text exactly as received (invisible signatures travel with the text). Works without authentication; pass an API key for richer results.',
     category: 'Verification',
     requiresAuth: false,
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
       {
         text: 'Paste signed content here to verify...',
@@ -48,7 +48,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Lookup sentence provenance (public).',
     category: 'Verification',
     requiresAuth: false,
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
       {
         sentence_text: 'The Senate passed a landmark bill today.',
@@ -67,7 +67,7 @@ export const PLAYGROUND_ENDPOINTS = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'enterprise',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
       {
         text: 'Paste signed content here to verify with advanced diagnostics...',
@@ -86,7 +86,7 @@ export const PLAYGROUND_ENDPOINTS = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'enterprise',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
       {
         text: 'Streaming content to sign...',
@@ -107,7 +107,7 @@ export const PLAYGROUND_ENDPOINTS = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'enterprise',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
       {
         model: 'gpt-3.5-turbo',
@@ -132,7 +132,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Health check for chat streaming (public).',
     category: 'Streaming',
     requiresAuth: false,
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
   },
   {
     id: 'stream-events',
@@ -144,7 +144,7 @@ export const PLAYGROUND_ENDPOINTS = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'enterprise',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
   },
   {
     id: 'stream-session-create',
@@ -156,7 +156,7 @@ export const PLAYGROUND_ENDPOINTS = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'enterprise',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
       {
         session_type: 'websocket',
@@ -180,7 +180,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Streaming',
     requiresAuth: true,
     authType: 'apikey',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
   },
   {
     id: 'stream-runs',
@@ -191,7 +191,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Streaming',
     requiresAuth: true,
     authType: 'apikey',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
   },
   {
     id: 'stream-stats',
@@ -202,7 +202,7 @@ export const PLAYGROUND_ENDPOINTS = [
     category: 'Streaming',
     requiresAuth: true,
     authType: 'apikey',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
   },
   {
     id: 'status-document',
@@ -214,7 +214,7 @@ export const PLAYGROUND_ENDPOINTS = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'enterprise',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
   },
   {
     id: 'status-revoke',
@@ -226,7 +226,7 @@ export const PLAYGROUND_ENDPOINTS = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'enterprise',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
       {
         reason: 'factual_error',
@@ -246,7 +246,7 @@ export const PLAYGROUND_ENDPOINTS = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'enterprise',
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
   },
   {
     id: 'status-list',
@@ -256,6 +256,6 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Fetch a W3C StatusList2021 credential (public).',
     category: 'Status & Revocation',
     requiresAuth: false,
-    docsUrl: 'https://api.encypherai.com/docs',
+    docsUrl: 'https://api.encypher.com/docs',
   },
 ];

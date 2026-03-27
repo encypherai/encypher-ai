@@ -36,7 +36,7 @@ describe('manifest: image verification permissions', () => {
   });
 
   it('still includes Encypher API host permissions', () => {
-    assert.ok(manifest.host_permissions.includes('https://api.encypherai.com/*'));
+    assert.ok(manifest.host_permissions.includes('https://api.encypher.com/*'));
   });
 });
 

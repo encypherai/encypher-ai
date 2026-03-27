@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@encypher/design-system';
 import MetadataBackground from '../../../components/hero/MetadataBackground';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 
 type VerificationStatus = 'verifying' | 'success' | 'error' | 'expired';
 
@@ -61,7 +61,7 @@ export default function VerifyEmailChangePage() {
       <section className="w-full md:w-1/2 flex flex-col justify-center items-center px-4 py-12 min-h-screen relative overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 bg-gradient-to-br from-columbia-blue/20 via-transparent to-blue-ncs/10" />
-        
+
         <div className="relative z-10 w-full max-w-md">
           <div className="bg-card rounded-xl shadow-lg border border-border p-8">
             {status === 'verifying' && (

@@ -13,14 +13,14 @@ const LOGO_WHITE = '/encypher_full_logo_white.svg';
 export function Footer() {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   // Determine which logo to use based on theme
   const logoSrc = mounted && resolvedTheme === 'light' ? LOGO_COLOR : LOGO_WHITE;
-  
+
   return (
     <footer className="border-t bg-background">
       <div className="container py-8 md:py-12">
@@ -77,7 +77,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="https://docs.encypherai.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <a href="https://docs.encypher.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Documentation
                 </a>
               </li>
@@ -121,7 +121,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <button 
+                <button
                   onClick={showCookiePreferences}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
                 >
@@ -168,7 +168,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="mailto:contact@encypherai.com?subject=Encypher%20Inquiry" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <a href="mailto:contact@encypher.com?subject=Encypher%20Inquiry" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Email
                 </a>
               </li>
@@ -187,10 +187,10 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <a href="https://github.com/encypherai/encypher-ai" target="_blank" className="flex items-center">
-                <Image 
-                  src="https://img.shields.io/github/stars/encypherai/encypher-ai?style=for-the-badge&logo=github" 
-                  alt="GitHub Stars" 
-                  width={120} 
+                <Image
+                  src="https://img.shields.io/github/stars/encypherai/encypher-ai?style=for-the-badge&logo=github"
+                  alt="GitHub Stars"
+                  width={120}
                   height={28}
                   unoptimized
                 />

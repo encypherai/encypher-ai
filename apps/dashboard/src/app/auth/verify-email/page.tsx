@@ -15,7 +15,7 @@ import {
 } from '@encypher/design-system';
 
 const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+  (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 
 // Canonical SVG logo
 const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
@@ -44,7 +44,7 @@ function VerifyEmailContent() {
   const verifyEmail = async (verificationToken: string) => {
     try {
       setState('verifying');
-      
+
       const res = await fetch(`${API_BASE}/auth/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,10 +62,10 @@ function VerifyEmailContent() {
       // Verification successful - we have tokens for auto-login
       const { access_token, refresh_token, user } = data.data;
       setUserEmail(user?.email || '');
-      
+
       // Auto-login the user
       setState('logging-in');
-      
+
       // Use NextAuth to create a session with the credentials
       // We'll sign in with the email and a special flag to indicate we're using tokens
       const signInResult = await signIn('credentials', {
@@ -216,7 +216,7 @@ function VerifyEmailContent() {
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-white/60">
-          <Link href="https://encypherai.com" className="hover:text-white">
+          <Link href="https://encypher.com" className="hover:text-white">
             ← Back to main site
           </Link>
         </div>

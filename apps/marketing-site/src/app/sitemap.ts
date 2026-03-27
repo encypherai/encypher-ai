@@ -2,7 +2,7 @@ import { type MetadataRoute } from "next";
 import { getAllPostSlugs } from "@/lib/blog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://encypherai.com";
+  const base = "https://encypher.com";
   const now = new Date().toISOString();
 
   const staticUrls: MetadataRoute.Sitemap = [

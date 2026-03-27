@@ -364,7 +364,7 @@ function BillingPageContent() {
                       variant="primary"
                       onClick={() => {
                         const newTotal = seatMax > 0 ? seatMax + seatQuantity : seatQuantity;
-                        window.location.href = `mailto:sales@encypherai.com?subject=${encodeURIComponent('Seat Upgrade Request')}&body=${encodeURIComponent(`We have reached our seat limit (${seatCurrent}/${seatMax}) and would like to add ${seatQuantity} more seat(s) for a total of ${newTotal} on our Enterprise plan.`)}`;
+                        window.location.href = `mailto:sales@encypher.com?subject=${encodeURIComponent('Seat Upgrade Request')}&body=${encodeURIComponent(`We have reached our seat limit (${seatCurrent}/${seatMax}) and would like to add ${seatQuantity} more seat(s) for a total of ${newTotal} on our Enterprise plan.`)}`;
                       }}
                     >
                       Contact Sales for {seatQuantity} More Seat{seatQuantity !== 1 ? 's' : ''}
@@ -767,7 +767,7 @@ function BillingPageContent() {
                 <Button
                   variant="outline"
                   onClick={() => {
-                    window.location.href = 'mailto:sales@encypherai.com?subject=Enterprise%20Inquiry';
+                    window.location.href = 'mailto:sales@encypher.com?subject=Enterprise%20Inquiry';
                   }}
                 >
                   Contact Sales

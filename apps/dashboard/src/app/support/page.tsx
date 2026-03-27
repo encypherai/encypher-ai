@@ -114,10 +114,10 @@ export default function SupportPage() {
   ];
 
   const resources: { title: string; description: string; icon: ReactNode; iconBg: string; link: string }[] = [
-    { title: 'API Documentation', description: 'Interactive API reference with Swagger UI', icon: <IconApi className="w-5 h-5" />, iconBg: 'bg-gradient-to-br from-[#1B2F50] to-[#2A87C4]', link: 'https://api.encypherai.com/docs' },
+    { title: 'API Documentation', description: 'Interactive API reference with Swagger UI', icon: <IconApi className="w-5 h-5" />, iconBg: 'bg-gradient-to-br from-[#1B2F50] to-[#2A87C4]', link: 'https://api.encypher.com/docs' },
     { title: 'Python SDK', description: 'Official Python client library', icon: <IconTerminal className="w-5 h-5" />, iconBg: 'bg-gradient-to-br from-[#2A87C4] to-[#1B2F50]', link: 'https://pypi.org/project/encypher/' },
     { title: 'TypeScript SDK', description: 'Official TypeScript/Node.js client', icon: <IconPackage className="w-5 h-5" />, iconBg: 'bg-gradient-to-br from-[#00CED1] to-[#2A87C4]', link: 'https://www.npmjs.com/package/@encypher/sdk' },
-    { title: 'Status Page', description: 'Check system uptime and health', icon: <IconStatus className="w-5 h-5" />, iconBg: 'bg-gradient-to-br from-[#2A87C4] to-[#00CED1]', link: 'https://verify.encypherai.com/status' },
+    { title: 'Status Page', description: 'Check system uptime and health', icon: <IconStatus className="w-5 h-5" />, iconBg: 'bg-gradient-to-br from-[#2A87C4] to-[#00CED1]', link: 'https://verify.encypher.com/status' },
   ];
 
   return (

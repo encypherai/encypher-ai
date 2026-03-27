@@ -59,7 +59,7 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 
 ### Dashboard & Account Management
 
-All users authenticate via [dashboard.encypherai.com](https://dashboard.encypherai.com) to:
+All users authenticate via [dashboard.encypher.com](https://dashboard.encypher.com) to:
 - Create and manage a workspace for WordPress signing and verification
 - Upgrade to Enterprise for BYOK, custom branding, and advanced features
 - Manage billing and organization settings
@@ -97,7 +97,7 @@ The API key contains a `tier` claim that the plugin reads to automatically enabl
 3. Open the secure email from Encypher and approve the WordPress connection
 4. Return to the settings page and wait a few seconds while the plugin polls for completion and stores the provisioned API key automatically
 5. Review or adjust your settings:
-   - **API Base URL:** `https://api.encypherai.com/api/v1` (default)
+   - **API Base URL:** `https://api.encypher.com/api/v1` (default)
    - **API Key:** Auto-provisioned by the email connect flow, or entered manually if you already manage credentials
    - **Bring Your Own Signature (Pro/Enterprise):** Paste the Signing Profile ID generated in the dashboard BYOK wizard
    - **Auto-mark on publish/update:** Enable to automatically mark content (recommended)
@@ -272,7 +272,7 @@ You can override auto-marking for specific posts:
 ### Workspace Connection & API Settings
 
 **API Base URL**
-- Default: `https://api.encypherai.com/api/v1`
+- Default: `https://api.encypher.com/api/v1`
 - Only change if using self-hosted Enterprise API
 
 **API Key**
@@ -451,11 +451,11 @@ encypher_coalition_enrolled_at      // datetime: when enrollment was confirmed
 ## Support
 
 ### Free Tier
-- Documentation: [encypherai.com/docs](https://encypherai.com/docs)
-- Community Forum: [community.encypherai.com](https://community.encypherai.com)
+- Documentation: [encypher.com/docs](https://encypher.com/docs)
+- Community Forum: [community.encypher.com](https://community.encypher.com)
 
 ### Enterprise Tier
-- Dedicated Support: enterprise@encypherai.com
+- Dedicated Support: enterprise@encypher.com
 - SLA: Custom
 - Phone Support: Available
 
@@ -530,7 +530,7 @@ The plugin sends the following data to the Encypher API:
 ## Credits
 
 **Developed by:** Encypher Corporation
-**Website:** [encypherai.com](https://encypherai.com)
+**Website:** [encypher.com](https://encypher.com)
 **Standards:** Co-Chair of C2PA Text Provenance Task Force
 **License:** GPL-2.0-or-later
 

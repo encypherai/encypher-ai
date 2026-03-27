@@ -49,7 +49,7 @@ $has_coalition_traction =
         <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-coalition')); ?>" class="button button-secondary">
             <?php esc_html_e('View Full Dashboard', 'encypher-provenance'); ?>
         </a>
-        <a href="https://encypherai.com/coalition" class="button button-link" target="_blank">
+        <a href="https://encypher.com/coalition" class="button button-link" target="_blank">
             <?php esc_html_e('Learn About Coalition', 'encypher-provenance'); ?>
         </a>
     </div>
@@ -60,7 +60,7 @@ $has_coalition_traction =
     <h4><?php esc_html_e('Coalition is in early rollout', 'encypher-provenance'); ?></h4>
     <p><?php esc_html_e('Coalition analytics will appear here once participation and reporting are active for your workspace.', 'encypher-provenance'); ?></p>
     <div class="coalition-actions">
-        <a href="https://encypherai.com/coalition" class="button button-secondary" target="_blank">
+        <a href="https://encypher.com/coalition" class="button button-secondary" target="_blank">
             <?php esc_html_e('Learn About Coalition', 'encypher-provenance'); ?>
         </a>
         <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="button button-link">

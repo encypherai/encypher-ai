@@ -241,7 +241,7 @@ async function build() {
     console.log('Next steps:');
     console.log('  1. Upload dist/' + zipName + ' to https://chrome.google.com/webstore/devconsole');
     console.log('  2. Fill in store listing details (see STORE_LISTING.md)');
-    console.log('  3. Set privacy policy URL: https://encypherai.com/privacy');
+    console.log('  3. Set privacy policy URL: https://encypher.com/privacy');
     console.log('  4. Upload store-assets/ screenshots and promo images');
     console.log('  5. Submit for review\n');
   }

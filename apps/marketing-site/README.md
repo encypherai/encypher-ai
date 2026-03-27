@@ -1,6 +1,6 @@
 # Encypher Marketing Site
 
-**Domain:** `encypherai.com`  
+**Domain:** `encypher.com`
 **Purpose:** Marketing website for Encypher
 
 ## 🚀 Getting Started
@@ -70,7 +70,7 @@ src/
 
 ## 🌐 Deployment
 
-This site will be deployed to `encypherai.com`.
+This site will be deployed to `encypher.com`.
 
 ### Environment Variables
 

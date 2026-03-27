@@ -67,7 +67,7 @@ export function loadConfig(): Config {
     dbPath: process.env.DB_PATH || './data/ghost-provenance.db',
     badge: {
       enabled: envBool('BADGE_ENABLED', true),
-      verifyBaseUrl: process.env.VERIFY_BASE_URL || 'https://verify.encypherai.com',
+      verifyBaseUrl: process.env.VERIFY_BASE_URL || 'https://verify.encypher.com',
     },
   };
 }

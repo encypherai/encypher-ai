@@ -18,8 +18,8 @@ import {
 
 // API configuration (can be overridden by settings)
 let API_CONFIG = {
-  baseUrl: 'https://api.encypherai.com',
-  dashboardBaseUrl: 'https://dashboard.encypherai.com',
+  baseUrl: 'https://api.encypher.com',
+  dashboardBaseUrl: 'https://dashboard.encypher.com',
   verifyEndpoint: '/api/v1/verify',
   imageVerifyEndpoint: '/api/v1/verify/image',
   audioVerifyEndpoint: '/api/v1/verify/audio',
@@ -46,7 +46,7 @@ function deriveDashboardBaseUrl(apiBaseUrl) {
     parsed.hash = '';
     return parsed.toString().replace(/\/$/, '');
   } catch {
-    return 'https://dashboard.encypherai.com';
+    return 'https://dashboard.encypher.com';
   }
 }
 
@@ -217,7 +217,7 @@ function deriveContentLengthBucket(lengthValue) {
 }
 
 // Load settings on startup
-chrome.storage.sync.get({ apiBaseUrl: 'https://api.encypherai.com', customApiUrl: '' }, (result) => {
+chrome.storage.sync.get({ apiBaseUrl: 'https://api.encypher.com', customApiUrl: '' }, (result) => {
   if (result.apiBaseUrl === 'custom' && result.customApiUrl) {
     API_CONFIG.baseUrl = result.customApiUrl;
   } else if (result.apiBaseUrl) {
@@ -1818,7 +1818,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     case 'SETTINGS_RESET':
-      API_CONFIG.baseUrl = 'https://api.encypherai.com';
+      API_CONFIG.baseUrl = 'https://api.encypher.com';
       API_CONFIG.dashboardBaseUrl = deriveDashboardBaseUrl(API_CONFIG.baseUrl);
       verificationCache.clear();
       analyticsQueue.length = 0;

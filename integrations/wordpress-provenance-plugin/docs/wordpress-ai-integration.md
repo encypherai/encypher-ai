@@ -43,7 +43,7 @@ When enabled in settings, automatically enrolls the WordPress site in the Encyph
 1. Install and activate the Encypher Provenance plugin
 2. Install and activate the WordPress/ai plugin
 3. Go to **Encypher → Settings**
-4. Enter your Encypher API key ([get one free](https://encypherai.com))
+4. Enter your Encypher API key ([get one free](https://encypher.com))
 5. Enable **WordPress/ai Integration**
 6. Optionally enable **Coalition Auto-Enrollment**
 7. Go to WordPress/ai settings and enable desired experiments
@@ -53,7 +53,7 @@ When enabled in settings, automatically enrolls the WordPress site in the Encyph
 After setup, any AI-generated content will carry Encypher provenance. Verify:
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/verify \
+curl -X POST https://api.encypher.com/api/v1/verify \
   -H "Content-Type: application/json" \
   -d '{"text": "Your signed content here"}'
 ```

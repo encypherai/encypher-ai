@@ -9,7 +9,7 @@
  *   - Detects Chromium-based browsers (Chrome, Edge, Brave) via the presence of
  *     window.chrome.runtime.sendMessage.
  *   - Pings the installed extension via chrome.runtime.sendMessage (possible
- *     because encypherai.com is listed in the manifest externally_connectable).
+ *     because encypher.com is listed in the manifest externally_connectable).
  *     If the extension responds (even with an error payload), it is installed.
  *     If chrome.runtime.lastError is set, it is not installed.
  *   - Renders appropriate state: detecting -> not-installed -> installed,

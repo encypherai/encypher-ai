@@ -11,7 +11,7 @@ Brand messaging and visual treatment are aligned with internal standards in:
 - Sign current email body text via `POST /api/v1/sign`
 - Verify current email body text via `POST /api/v1/verify`
 - Provenance chain persistence in `Office.context.roamingSettings`
-- API base URL enforcement (`https://*.encypherai.com`)
+- API base URL enforcement (`https://*.encypher.com`)
 - C2PA-aligned trust messaging and proof-of-origin workflow language in UI
 
 ## Brand & Design Conformance

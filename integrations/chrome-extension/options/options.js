@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS = {
   apiKey: '',
   autoVerify: true,
   showBadges: true,
-  apiBaseUrl: 'https://api.encypherai.com',
+  apiBaseUrl: 'https://api.encypher.com',
   customApiUrl: '',
   cacheTtl: 5,
   // Signing defaults

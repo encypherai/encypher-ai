@@ -80,7 +80,7 @@ export function ContentIntegrityBox({
           Copy any paragraph from this article and paste it below to verify the
           signature is authentic. Or install{" "}
           <a
-            href="https://encypherai.com"
+            href="https://encypher.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-blue-ncs hover:underline font-medium"

@@ -28,12 +28,12 @@ export const metadata: Metadata = {
   title: 'Rights Management | Machine-Readable AI Content Licensing | Encypher',
   description: 'Control how AI companies use your content. Bronze (web crawling), Silver (RAG/retrieval), Gold (training) licensing tiers. C2PA 2.3 and RSL 1.0 compatible. Machine-readable terms embedded cryptographically in every document.',
   alternates: {
-    canonical: 'https://encypherai.com/rights-management',
+    canonical: 'https://encypher.com/rights-management',
   },
   openGraph: {
     title: 'Encypher Rights Management: Machine-Readable AI Licensing',
     description: 'Publisher-controlled licensing tiers for crawling, RAG, and AI training. Terms travel with your content. Compatible with C2PA 2.3 and RSL 1.0. Willful infringement documentation included.',
-    url: 'https://encypherai.com/rights-management',
+    url: 'https://encypher.com/rights-management',
     images: ['/og-image.png'],
     type: 'website',
   },
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   },
 };
 
-const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypherai.com';
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
 
 const TIERS = [
   {

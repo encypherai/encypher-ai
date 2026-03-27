@@ -522,7 +522,7 @@ export default function DashboardPage() {
         description: 'Protect your content, connect your CMS, and get signed publishing live quickly.',
         primaryHref: '/integrations',
         primaryLabel: 'Open Integrations',
-        secondaryHref: 'https://api.encypherai.com/docs',
+        secondaryHref: 'https://api.encypher.com/docs',
         secondaryLabel: 'Publisher Docs',
       }
     : workflowCategory === 'ai_provenance_governance'
@@ -531,7 +531,7 @@ export default function DashboardPage() {
           description: 'Stand up attested workflows, governance controls, and verification-ready records for high-stakes AI use cases.',
           primaryHref: '/api-keys',
           primaryLabel: 'Generate API Key',
-          secondaryHref: 'https://api.encypherai.com/docs',
+          secondaryHref: 'https://api.encypher.com/docs',
           secondaryLabel: 'Governance Docs',
         }
       : {
@@ -539,7 +539,7 @@ export default function DashboardPage() {
           description: 'Launch your implementation, validate your first workflow, and scale trusted content operations with confidence.',
           primaryHref: '/api-keys',
           primaryLabel: 'New API Key',
-          secondaryHref: 'https://api.encypherai.com/docs',
+          secondaryHref: 'https://api.encypher.com/docs',
           secondaryLabel: 'API Docs',
         };
   const formatDateUtc = (value: string, options: Intl.DateTimeFormatOptions) =>

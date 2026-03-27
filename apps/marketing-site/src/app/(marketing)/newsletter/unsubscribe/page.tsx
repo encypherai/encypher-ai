@@ -60,8 +60,8 @@ export default async function UnsubscribePage({ searchParams }: Props) {
             <p style={{ color: '#475569', fontSize: '16px', lineHeight: '1.6' }}>
               This unsubscribe link is invalid or has already been used.
               If you&apos;re still receiving emails, please contact us at{' '}
-              <a href="mailto:contact@encypherai.com" style={{ color: '#2a87c4' }}>
-                contact@encypherai.com
+              <a href="mailto:contact@encypher.com" style={{ color: '#2a87c4' }}>
+                contact@encypher.com
               </a>
               .
             </p>

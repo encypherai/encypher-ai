@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   // Check if user is authenticated and has admin role
   if (status === 'loading') {
     return (
@@ -35,16 +35,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </div>
     );
   }
-  
+
   // Redirect to login if not authenticated
   if (status === 'unauthenticated') {
     router.push('/auth/signin?callbackUrl=/admin');
     return null;
   }
-  
+
   // Check if user has admin role
-  const isAdmin = session?.user?.role === 'admin' || session?.user?.email?.endsWith('@encypherai.com');
-  
+  const isAdmin = session?.user?.role === 'admin' || session?.user?.email?.endsWith('@encypher.com');
+
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </div>
     );
   }
-  
+
   // Navigation items
   const navItems = [
     { name: 'Dashboard', href: '/admin' },
@@ -66,7 +66,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { name: 'Users', href: '/admin/users' },
     { name: 'Settings', href: '/admin/settings' },
   ];
-  
+
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Desktop Sidebar */}
@@ -111,7 +111,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </div>
       </div>
-      
+
       {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <Link href="/admin" className="text-xl font-bold text-gray-900 dark:text-white">
@@ -163,7 +163,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </SheetContent>
         </Sheet>
       </div>
-      
+
       {/* Main Content */}
       <div className="flex flex-col flex-1">
         <main className="flex-1 p-4 md:p-6">

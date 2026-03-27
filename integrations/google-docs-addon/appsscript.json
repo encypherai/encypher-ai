@@ -10,12 +10,12 @@
     "https://www.googleapis.com/auth/userinfo.email"
   ],
   "urlFetchWhitelist": [
-    "https://api.encypherai.com/"
+    "https://api.encypher.com/"
   ],
   "addOns": {
     "common": {
       "name": "Encypher C2PA Provenance",
-      "logoUrl": "https://dashboard.encypherai.com/favicon.ico",
+      "logoUrl": "https://dashboard.encypher.com/favicon.ico",
       "layoutProperties": {
         "primaryColor": "#1B2F50",
         "secondaryColor": "#2A87C4"

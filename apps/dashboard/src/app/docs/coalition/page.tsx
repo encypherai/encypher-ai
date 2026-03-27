@@ -28,7 +28,7 @@ Coalition membership is opt-in at the organization level. To join:
 Or via the API:
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/billing/coalition/join \\
+curl -X POST https://api.encypher.com/api/v1/billing/coalition/join \\
   -H "Authorization: Bearer YOUR_API_KEY"
 \`\`\`
 
@@ -61,11 +61,11 @@ When an AI company wants to license your content:
 
 \`\`\`bash
 # List pending requests
-curl https://api.encypherai.com/api/v1/rights-licensing/requests \\
+curl https://api.encypher.com/api/v1/rights-licensing/requests \\
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # Approve a request
-curl -X PUT https://api.encypherai.com/api/v1/rights-licensing/requests/{request_id}/respond \\
+curl -X PUT https://api.encypher.com/api/v1/rights-licensing/requests/{request_id}/respond \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"action": "approve"}'
@@ -77,7 +77,7 @@ Once approved, a licensing agreement is automatically generated:
 
 \`\`\`bash
 # List active agreements
-curl https://api.encypherai.com/api/v1/rights-licensing/agreements \\
+curl https://api.encypher.com/api/v1/rights-licensing/agreements \\
   -H "Authorization: Bearer YOUR_API_KEY"
 \`\`\`
 
@@ -94,7 +94,7 @@ Each agreement includes:
 View your coalition earnings in the Dashboard under **Billing > Coalition**, or via API:
 
 \`\`\`bash
-curl https://api.encypherai.com/api/v1/billing/coalition \\
+curl https://api.encypher.com/api/v1/billing/coalition \\
   -H "Authorization: Bearer YOUR_API_KEY"
 \`\`\`
 
@@ -127,7 +127,7 @@ Response:
 You can leave the coalition at any time. Existing agreements will be honored through their term, but no new coalition deals will include your content:
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/billing/coalition/opt-out \\
+curl -X POST https://api.encypher.com/api/v1/billing/coalition/opt-out \\
   -H "Authorization: Bearer YOUR_API_KEY"
 \`\`\`
 
@@ -157,7 +157,7 @@ A: Earnings are based on the number of licensed content items, the tier, and the
 
 ## Support
 
-For coalition and licensing questions, contact partnerships@encypherai.com or visit the [Rights Management](/rights) dashboard.
+For coalition and licensing questions, contact partnerships@encypher.com or visit the [Rights Management](/rights) dashboard.
 `;
 
 export default function CoalitionGuidePage() {

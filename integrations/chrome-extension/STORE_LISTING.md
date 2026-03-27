@@ -38,7 +38,7 @@ As you browse, Encypher Verify scans images on the page for C2PA provenance mark
 
 1. For readers and fact-checkers: Browse normally. Encypher Verify automatically scans for provenance markers in text and images. When proof is present, you see verified status inline with signer identity and timestamp. Right-click any media element to verify on demand.
 
-2. For authors: Get a free API key from dashboard.encypherai.com, configure it in settings, and use the Sign tab or inline editor buttons to embed cryptographic proof before publishing.
+2. For authors: Get a free API key from dashboard.encypher.com, configure it in settings, and use the Sign tab or inline editor buttons to embed cryptographic proof before publishing.
 
 3. For publishers: Deploy proof of origin across your editorial workflow. Every article, image, and media asset can carry verifiable provenance that persists through distribution.
 
@@ -58,8 +58,8 @@ Verification is free for all media types. No account, no login, no cost. Signing
 
 **Support:**
 
-- Documentation: encypherai.com/docs
-- Email: support@encypherai.com
+- Documentation: encypher.com/docs
+- Email: support@encypher.com
 
 ### What's New in v2.0.0
 
@@ -80,7 +80,7 @@ C2PA, content authenticity, media provenance, verification, watermark detection,
 English
 
 ### Privacy Policy URL
-https://encypherai.com/privacy
+https://encypher.com/privacy
 
 ## Visual Assets
 
@@ -160,14 +160,14 @@ https://encypherai.com/privacy
 ## Pricing
 
 **Free Tier**: Unlimited verification across all media types (no API key required). 1,000 content signings per month with API key. All proof modes and frequency levels except per-word.
-**Enterprise**: Unlimited verification and signing, per-word embedding frequency, Merkle tree verification, attribution tracking, fingerprinting. Contact sales at encypherai.com/contact.
+**Enterprise**: Unlimited verification and signing, per-word embedding frequency, Merkle tree verification, attribution tracking, fingerprinting. Contact sales at encypher.com/contact.
 
 ## Support & Links
 
-- **Website**: https://encypherai.com
-- **Documentation**: https://encypherai.com/docs/chrome-extension
-- **Support Email**: support@encypherai.com
-- **Dashboard**: https://dashboard.encypherai.com
+- **Website**: https://encypher.com
+- **Documentation**: https://encypher.com/docs/chrome-extension
+- **Support Email**: support@encypher.com
+- **Dashboard**: https://dashboard.encypher.com
 
 ## Version History
 
@@ -261,7 +261,7 @@ https://encypherai.com/privacy
 ### Marketing
 
 - [ ] Announce on Twitter/X
-- [ ] Blog post on encypherai.com
+- [ ] Blog post on encypher.com
 - [ ] Submit to Product Hunt
 - [ ] Share in C2PA community
 - [ ] Email existing users about v2.0

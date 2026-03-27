@@ -45,11 +45,11 @@ test('saveUserSettings uses roamingSettings when available', async () => {
 
   const result = await storage.saveUserSettings({
     apiKey: 'encypher_live_key',
-    apiBaseUrl: 'https://api.encypherai.com',
+    apiBaseUrl: 'https://api.encypher.com',
   });
 
   assert.equal(result.apiKey, 'encypher_live_key');
-  assert.equal(result.apiBaseUrl, 'https://api.encypherai.com');
+  assert.equal(result.apiBaseUrl, 'https://api.encypher.com');
   assert.equal(roamingSettings._state.get('encypher_api_key'), 'encypher_live_key');
   assert.equal(documentSettings._state.get('encypher_api_key'), undefined);
 });
@@ -65,13 +65,13 @@ test('saveUserSettings falls back to document.settings when roamingSettings is u
 
   const result = await storage.saveUserSettings({
     apiKey: 'encypher_live_key',
-    apiBaseUrl: 'https://api.encypherai.com',
+    apiBaseUrl: 'https://api.encypher.com',
   });
 
   assert.equal(result.apiKey, 'encypher_live_key');
-  assert.equal(result.apiBaseUrl, 'https://api.encypherai.com');
+  assert.equal(result.apiBaseUrl, 'https://api.encypher.com');
   assert.equal(documentSettings._state.get('encypher_api_key'), 'encypher_live_key');
-  assert.equal(documentSettings._state.get('encypher_api_base_url'), 'https://api.encypherai.com');
+  assert.equal(documentSettings._state.get('encypher_api_base_url'), 'https://api.encypher.com');
 });
 
 test('saveUserSettings throws a context error when no Office settings container exists', async () => {
@@ -81,7 +81,7 @@ test('saveUserSettings throws a context error when no Office settings container 
   });
 
   await assert.rejects(
-    () => storage.saveUserSettings({ apiKey: 'k', apiBaseUrl: 'https://api.encypherai.com' }),
+    () => storage.saveUserSettings({ apiKey: 'k', apiBaseUrl: 'https://api.encypher.com' }),
     /Office settings unavailable\. Open from Office task pane context\./
   );
 });

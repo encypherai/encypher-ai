@@ -4,12 +4,12 @@ const assert = require('node:assert/strict');
 const { ensureAllowedApiUrl, signEmailBody } = require('../src/api-client');
 
 test('ensureAllowedApiUrl accepts https encypherai domains', () => {
-  assert.equal(ensureAllowedApiUrl('https://api.encypherai.com'), 'https://api.encypherai.com');
-  assert.equal(ensureAllowedApiUrl('https://staging.encypherai.com/v1'), 'https://staging.encypherai.com');
+  assert.equal(ensureAllowedApiUrl('https://api.encypher.com'), 'https://api.encypher.com');
+  assert.equal(ensureAllowedApiUrl('https://staging.encypher.com/v1'), 'https://staging.encypher.com');
 });
 
 test('ensureAllowedApiUrl rejects non-https URLs', () => {
-  assert.throws(() => ensureAllowedApiUrl('http://api.encypherai.com'));
+  assert.throws(() => ensureAllowedApiUrl('http://api.encypher.com'));
 });
 
 test('ensureAllowedApiUrl rejects non-encypher host', () => {
@@ -43,7 +43,7 @@ test('signEmailBody requests embedding plan mode and returns embeddingPlan', asy
 
   try {
     const result = await signEmailBody({
-      apiBaseUrl: 'https://api.encypherai.com',
+      apiBaseUrl: 'https://api.encypher.com',
       apiKey: 'ency_key',
       text: 'hello',
       title: 'Outlook Email',

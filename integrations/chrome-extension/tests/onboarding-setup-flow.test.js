@@ -245,12 +245,12 @@ describe('Optional login onboarding + setup tracking', () => {
     const externalMatches = manifest.externally_connectable?.matches || [];
 
     assert.ok(
-      externalMatches.includes('https://dashboard.encypherai.com/*'),
-      'Manifest should explicitly allow dashboard.encypherai.com to send extension handoff messages'
+      externalMatches.includes('https://dashboard.encypher.com/*'),
+      'Manifest should explicitly allow dashboard.encypher.com to send extension handoff messages'
     );
 
     assert.ok(
-      externalMatches.includes('https://*.encypherai.com/*'),
+      externalMatches.includes('https://*.encypher.com/*'),
       'Manifest should allow secure dashboard subdomains for extension handoff'
     );
 

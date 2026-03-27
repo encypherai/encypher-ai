@@ -20,7 +20,7 @@ import {
 } from '@/lib/pricing-config/coalition';
 
 // Dashboard URL for sign-up flows
-const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypherai.com';
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
 
 type ICP = 'publishers' | 'ai-labs' | 'enterprises';
 
@@ -179,15 +179,15 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* 
+      {/*
         SEO NOTE: All three sections are rendered in the DOM but only one is visible.
         This ensures crawlers index all content while users see a clean tabbed interface.
         Using CSS visibility/display instead of conditional rendering.
       */}
 
       {/* ==================== PUBLISHERS SECTION ==================== */}
-      <section 
-        id="publishers" 
+      <section
+        id="publishers"
         className={`py-12 w-full ${activeICP === 'publishers' ? 'block' : 'hidden'}`}
         aria-hidden={activeICP !== 'publishers'}
       >
@@ -410,8 +410,8 @@ export default function PricingPage() {
           <div className="max-w-3xl mx-auto p-6 bg-muted/30 rounded-lg">
             <h4 className="font-bold text-lg mb-3">New to content provenance?</h4>
             <p className="text-sm text-muted-foreground mb-4">
-              <strong>Content provenance</strong> is cryptographic proof that you created your content. 
-              When AI companies scrape the web for training data, they currently can&apos;t tell who owns what. 
+              <strong>Content provenance</strong> is cryptographic proof that you created your content.
+              When AI companies scrape the web for training data, they currently can&apos;t tell who owns what.
               Our technology embeds invisible, tamper-proof signatures directly into your text that:
             </p>
             <ul className="text-sm text-muted-foreground space-y-2 mb-4">
@@ -429,7 +429,7 @@ export default function PricingPage() {
               </li>
             </ul>
             <p className="text-sm text-muted-foreground">
-              Built on <strong>C2PA</strong>, the same standard used by NYT, BBC, Adobe, and Google. 
+              Built on <strong>C2PA</strong>, the same standard used by NYT, BBC, Adobe, and Google.
               We co-authored the text specification.
             </p>
           </div>
@@ -437,8 +437,8 @@ export default function PricingPage() {
       </section>
 
       {/* ==================== AI LABS SECTION ==================== */}
-      <section 
-        id="ai-labs" 
+      <section
+        id="ai-labs"
         className={`py-12 w-full ${activeICP === 'ai-labs' ? 'block' : 'hidden'}`}
         aria-hidden={activeICP !== 'ai-labs'}
       >
@@ -520,7 +520,7 @@ export default function PricingPage() {
                 Annual licensing tailored to your scale. One integration covers the entire publisher ecosystem.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
+                <Button
                   onClick={() => setShowAIModal(true)}
                   size="lg"
                 >
@@ -557,8 +557,8 @@ export default function PricingPage() {
       </section>
 
       {/* ==================== ENTERPRISES SECTION ==================== */}
-      <section 
-        id="enterprises" 
+      <section
+        id="enterprises"
         className={`py-12 w-full ${activeICP === 'enterprises' ? 'block' : 'hidden'}`}
         aria-hidden={activeICP !== 'enterprises'}
       >
@@ -630,7 +630,7 @@ export default function PricingPage() {
               </div>
 
               <div className="text-center">
-                <Button 
+                <Button
                   onClick={() => setShowEnterpriseModal(true)}
                   size="lg"
                 >

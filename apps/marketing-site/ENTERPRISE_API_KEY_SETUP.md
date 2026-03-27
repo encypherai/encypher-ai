@@ -8,9 +8,9 @@ The marketing site's `/tools/encode-decode` page requires an Enterprise API key 
 
 **Key Name:** `ency_marketing_site_prod_2026`
 
-**Organization:** Encypher Corporation - Marketing Site  
-**Tier:** Starter (Free)  
-**Permissions:** `sign`, `verify` (basic operations only)  
+**Organization:** Encypher Corporation - Marketing Site
+**Tier:** Starter (Free)
+**Permissions:** `sign`, `verify` (basic operations only)
 **Monthly Limit:** 50,000 requests
 
 ### Key Configuration
@@ -85,7 +85,7 @@ Or set it via Railway Dashboard:
 ### Verify Configuration
 
 After deployment, test the tools page:
-- Visit: `https://encypherai.com/tools/encode-decode`
+- Visit: `https://encypher.com/tools/encode-decode`
 - Try encoding some text
 - Verify it works without "Missing ENTERPRISE_API_KEY" error
 

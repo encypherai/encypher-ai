@@ -62,7 +62,7 @@ services:
       SEGMENTATION_LEVEL: sentence
       DB_PATH: /app/data/ghost-provenance.db
       BADGE_ENABLED: "true"
-      VERIFY_BASE_URL: https://verify.encypherai.com
+      VERIFY_BASE_URL: https://verify.encypher.com
     volumes:
       - provenance_data:/app/data
     networks:

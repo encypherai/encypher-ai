@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Verify Signed Text | Encypher Tool",
     description: "Verify signed text and inspect embedded metadata with Encypher's provenance tool. Free, secure, and privacy-preserving.",
-    url: "https://encypherai.com/tools/verify",
+    url: "https://encypher.com/tools/verify",
     siteName: "Encypher",
     type: "website",
   },

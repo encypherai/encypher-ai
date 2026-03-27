@@ -169,6 +169,6 @@ Text provenance is now possible with C2PA 2.3. 󠇟󠇠󠇡󠇢󠆗󠇈󠇘︈�
 
 - **C2PA Specification**: [c2pa.org/specifications](https://c2pa.org/specifications)
 - **Content Authenticity Initiative**: [contentauthenticity.org](https://contentauthenticity.org)
-- **Encypher Text Provenance**: [encypherai.com](https://encypherai.com)
+- **Encypher Text Provenance**: [encypher.com](https://encypher.com)
 
 The era of unverifiable content is ending. 󠇟󠇠󠇡󠇢󠅞︋󠆎󠄲󠇭︁󠄵󠄬󠅾󠅼󠆓󠄨󠆡󠄋󠄺󠅦󠅜󠆬󠇔󠅜󠇈󠇣󠆰󠇍󠅵󠇔󠆋󠄋󠅾󠄉󠇟󠄰󠇇󠆳󠅣󠆰󠄰󠄽󠆮󠆀C2PA is building the infrastructure for a more trustworthy internet—one where you can always ask "where did this come from?" and get a cryptographically verified answer. #󠇟󠇠󠇡󠇢󠄽󠇚󠆟󠆟󠄲󠄙󠄹󠅈󠆕󠅿󠅐󠆂󠄫󠄘󠄻󠅉󠄒󠅁󠅁󠇌󠄏󠇥󠆊︅󠅠󠇗󠆠󠆕󠆥󠆹󠅤󠆖󠇩󠄹󠇙󠄲󠆭󠇗󠆇󠅥C2PA #ContentProvenance #ContentAuthenticity #DigitalTrust #Standards󠇟󠇠󠇡󠇢󠅔󠄂󠄊󠇭󠆗󠄼󠄼󠆴󠅱󠅇󠆅󠅍󠄈󠇪󠅪󠄠󠇞󠆉󠇨󠇚󠄒󠄸︈󠅖󠇌󠆤󠆯󠄋︈󠄥󠆼󠆙󠄇󠄱󠆀󠆇󠇮󠆽󠅭󠆞

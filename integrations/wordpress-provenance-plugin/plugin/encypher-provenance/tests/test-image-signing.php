@@ -300,7 +300,7 @@ $GLOBALS['_attachment_mime'][20] = 'image/jpeg';
 
 $GLOBALS['_option_store']['encypher_provenance_settings'] = [
     'api_key' => 'test-key-abc', // pragma: allowlist secret
-    'api_url' => 'https://enterprise.encypherai.com',
+    'api_url' => 'https://enterprise.encypher.com',
 ];
 
 $GLOBALS['_wp_remote_post_mock'] = function (string $url, array $args) {
@@ -308,7 +308,7 @@ $GLOBALS['_wp_remote_post_mock'] = function (string $url, array $args) {
         'response' => ['code' => 201],
         'body'     => json_encode([
             'record_id'    => 'rec-00001',
-            'manifest_url' => 'https://cdn.encypherai.com/manifests/rec-00001.json',
+            'manifest_url' => 'https://cdn.encypher.com/manifests/rec-00001.json',
         ]),
     ];
 };
@@ -322,7 +322,7 @@ assert_equals(
     'record_id stored in post meta'
 );
 assert_equals(
-    'https://cdn.encypherai.com/manifests/rec-00001.json',
+    'https://cdn.encypher.com/manifests/rec-00001.json',
     $GLOBALS['_post_meta_store'][10]['_encypher_image_manifest_url'] ?? '',
     'manifest_url stored in post meta'
 );
@@ -349,7 +349,7 @@ $GLOBALS['_attachment_mime'][31] = 'image/png';
 
 $GLOBALS['_option_store']['encypher_provenance_settings'] = [
     'api_key' => 'key', // pragma: allowlist secret
-    'api_url' => 'https://enterprise.encypherai.com',
+    'api_url' => 'https://enterprise.encypher.com',
 ];
 
 $GLOBALS['_wp_remote_post_mock'] = function () {
@@ -378,7 +378,7 @@ reset_globals();
 $GLOBALS['_is_singular']    = true;
 $GLOBALS['_current_post_id'] = 77;
 $GLOBALS['_post_meta_store'][77]['_encypher_image_manifest_url'] =
-    'https://cdn.encypherai.com/manifests/rec-abc.json';
+    'https://cdn.encypher.com/manifests/rec-abc.json';
 
 $rest = new TestableRest();
 $rest->inject_image_provenance_header();
@@ -432,11 +432,11 @@ echo "\nTest 9: get_image_manifest_url returns stored manifest URL\n";
 reset_globals();
 
 $GLOBALS['_post_meta_store'][6]['_encypher_image_manifest_url'] =
-    'https://cdn.encypherai.com/manifests/rec-xyz-789.json';
+    'https://cdn.encypher.com/manifests/rec-xyz-789.json';
 
 $rest = new TestableRest();
 assert_equals(
-    'https://cdn.encypherai.com/manifests/rec-xyz-789.json',
+    'https://cdn.encypher.com/manifests/rec-xyz-789.json',
     $rest->get_image_manifest_url(6),
     'get_image_manifest_url returns correct value'
 );

@@ -6,7 +6,7 @@
  * for images that have been registered with Encypher provenance tracking.
  *
  * Environment bindings required:
- *   ENCYPHER_API_URL  - string, e.g. "https://api.encypherai.com"
+ *   ENCYPHER_API_URL  - string, e.g. "https://api.encypher.com"
  *   CDN_PROVENANCE_CACHE - KV namespace for manifest URL caching
  */
 

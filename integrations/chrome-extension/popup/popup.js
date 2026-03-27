@@ -200,7 +200,7 @@ function markerTypeLabel(markerType) {
 
 function buildVerificationLink(documentId) {
   if (!documentId) return null;
-  return `https://api.encypherai.com/api/v1/public/verify/${encodeURIComponent(documentId)}`;
+  return `https://api.encypher.com/api/v1/public/verify/${encodeURIComponent(documentId)}`;
 }
 
 function safeExternalUrl(urlValue) {
@@ -874,7 +874,7 @@ async function checkDevMode() {
 
       // Show the current API URL in the debug panel
       const settings = await chrome.storage.sync.get({
-        apiBaseUrl: 'https://api.encypherai.com',
+        apiBaseUrl: 'https://api.encypher.com',
         customApiUrl: ''
       });
       const url = settings.apiBaseUrl === 'custom' ? settings.customApiUrl : settings.apiBaseUrl;

@@ -68,7 +68,7 @@ class Plugin
     public static function activate(): void
     {
         $defaults = [
-            'api_base_url' => 'https://api.encypherai.com/api/v1',
+            'api_base_url' => 'https://api.encypher.com/api/v1',
             'api_key' => '',
             'auto_verify' => true,
             'tier' => 'free',

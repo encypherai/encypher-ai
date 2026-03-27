@@ -86,7 +86,7 @@ export default function AboutPage() {
         <p>
           Install the{" "}
           <a
-            href="https://encypherai.com"
+            href="https://encypher.com"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-blue-ncs hover:underline"
@@ -152,12 +152,12 @@ export default function AboutPage() {
         <p>
           Learn more at{" "}
           <a
-            href="https://encypherai.com"
+            href="https://encypher.com"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-ncs hover:underline"
           >
-            encypherai.com
+            encypher.com
           </a>
         </p>
       </div>

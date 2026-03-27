@@ -38,7 +38,7 @@ export default function TermsPage() {
             <li>Interactive demonstrations and technical documentation</li>
           </ul>
           <p className="mb-4">
-            <strong>Free Tier</strong> includes full C2PA-compliant signing infrastructure, public verification, and Publisher Coalition membership. <strong>Enterprise Tier</strong> includes unlimited signing, sentence-level Merkle tree authentication, advanced analytics, and implementation services. Current pricing and tier details are available at encypherai.com/pricing.
+            <strong>Free Tier</strong> includes full C2PA-compliant signing infrastructure, public verification, and Publisher Coalition membership. <strong>Enterprise Tier</strong> includes unlimited signing, sentence-level Merkle tree authentication, advanced analytics, and implementation services. Current pricing and tier details are available at encypher.com/pricing.
           </p>
         </section>
 
@@ -195,7 +195,7 @@ export default function TermsPage() {
             &quot;Net Revenue&quot; means gross payments received by Encypher from licensees for Coalition content, less payment processing fees, applicable taxes, and third-party platform transaction fees. Encypher will not deduct its internal operating costs or personnel costs from Net Revenue.
           </p>
           <p className="mb-4">
-            Encypher will make payment statements available through your dashboard. You must dispute any payment statement within <strong>30 days</strong> of the statement date by contacting support@encypherai.com. Undisputed statements are deemed accepted after that period.
+            Encypher will make payment statements available through your dashboard. You must dispute any payment statement within <strong>30 days</strong> of the statement date by contacting support@encypher.com. Undisputed statements are deemed accepted after that period.
           </p>
 
           <h3 className="text-xl font-semibold mb-3 mt-6">7.5 No Revenue Guarantee</h3>
@@ -353,7 +353,7 @@ export default function TermsPage() {
 
           <h3 className="text-xl font-semibold mb-3 mt-6">15.5 Notices</h3>
           <p className="mb-4">
-            Notices from Encypher to you may be delivered by email to your registered address, by posting to your dashboard, or by posting prominently on our website. Email and dashboard notices are effective upon transmission. You may provide notices to Encypher by email to legal@encypherai.com.
+            Notices from Encypher to you may be delivered by email to your registered address, by posting to your dashboard, or by posting prominently on our website. Email and dashboard notices are effective upon transmission. You may provide notices to Encypher by email to legal@encypher.com.
           </p>
 
           <h3 className="text-xl font-semibold mb-3 mt-6">15.6 Entire Agreement</h3>
@@ -374,9 +374,9 @@ export default function TermsPage() {
           </p>
           <p className="mb-4">
             <strong>Encypher</strong><br />
-            Legal: legal@encypherai.com<br />
-            Privacy: privacy@encypherai.com<br />
-            Support: support@encypherai.com
+            Legal: legal@encypher.com<br />
+            Privacy: privacy@encypher.com<br />
+            Support: support@encypher.com
           </p>
         </section>
       </div>

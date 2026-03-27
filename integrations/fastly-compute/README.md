@@ -8,10 +8,10 @@ and browsers to discover and verify C2PA provenance metadata without modifying t
 
 **Backends** (add in the Fastly console):
 - `origin` — your existing publisher origin server
-- `encypher_api` — `api.encypherai.com` (port 443, TLS)
+- `encypher_api` — `api.encypher.com` (port 443, TLS)
 
 **Edge Dictionary** — create a dictionary named `encypher_config` with keys:
-- `api_base_url` — e.g. `https://api.encypherai.com`
+- `api_base_url` — e.g. `https://api.encypher.com`
 - `cache_ttl_s` — e.g. `3600`
 
 ## Prerequisites

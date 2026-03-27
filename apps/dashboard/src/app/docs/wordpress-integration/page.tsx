@@ -23,7 +23,7 @@ After installation, your WordPress site will:
 
 Before you begin, make sure you have:
 
-1. **An Encypher account** - [Sign up here](https://dashboard.encypherai.com/signup) if you don't have one
+1. **An Encypher account** - [Sign up here](https://dashboard.encypher.com/signup) if you don't have one
 2. **WordPress 6.0+** with admin access
 3. **PHP 7.4+** (WordPress default)
 4. **Access to your work email inbox** so you can approve the secure connection link
@@ -289,9 +289,9 @@ Minimal. Signing happens during post save, adding ~100-200ms. Verification badge
 
 Need help? Contact us:
 
-- **Email**: support@encypherai.com
+- **Email**: support@encypher.com
 - **Documentation**: [Publisher Integration Guide](/docs/publisher-integration)
-- **API Reference**: [api.encypherai.com/docs](https://api.encypherai.com/docs)
+- **API Reference**: [api.encypher.com/docs](https://api.encypher.com/docs)
 `;
 
 export default function WordPressIntegrationGuidePage() {

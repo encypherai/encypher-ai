@@ -441,7 +441,7 @@ export default function AdminPage() {
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Admin Access Required</h1>
           <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">
-            You need super admin privileges to access this page. Contact erik.svilich@encypherai.com if you believe this is an error.
+            You need super admin privileges to access this page. Contact erik.svilich@encypher.com if you believe this is an error.
           </p>
           <Link
             href="/"

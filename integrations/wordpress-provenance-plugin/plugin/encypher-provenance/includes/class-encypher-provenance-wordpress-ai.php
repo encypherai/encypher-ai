@@ -89,7 +89,7 @@ class WordPress_AI_Compat
         }
 
         $settings = get_option(self::OPTION_KEY, []);
-        $api_base = rtrim($settings['api_base_url'] ?? 'https://api.encypherai.com/api/v1', '/');
+        $api_base = rtrim($settings['api_base_url'] ?? 'https://api.encypher.com/api/v1', '/');
         $api_key  = $settings['api_key'] ?? '';
 
         if (empty($api_key)) {

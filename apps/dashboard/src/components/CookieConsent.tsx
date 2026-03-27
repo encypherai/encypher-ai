@@ -6,7 +6,7 @@ import * as CookieConsent from 'vanilla-cookieconsent';
 
 /**
  * Cookie Consent Banner Component
- * 
+ *
  * Implements GDPR, CCPA, and other privacy regulation compliant cookie consent.
  * Uses vanilla-cookieconsent (MIT license) - https://github.com/orestbida/cookieconsent
  */
@@ -21,9 +21,9 @@ export default function CookieConsentBanner() {
     // Prevent double initialization in React Strict Mode
     if (initialized.current) return;
     initialized.current = true;
-    
+
     console.log('[CookieConsent] Initializing...');
-    
+
     CookieConsent.run({
       cookie: {
         name: 'encypher_cc',
@@ -65,7 +65,7 @@ export default function CookieConsentBanner() {
               acceptAllBtn: 'Accept All',
               acceptNecessaryBtn: 'Reject All',
               showPreferencesBtn: 'Manage Preferences',
-              footer: '<a href="https://encypherai.com/privacy">Privacy Policy</a> | <a href="https://encypherai.com/terms">Terms</a>',
+              footer: '<a href="https://encypher.com/privacy">Privacy Policy</a> | <a href="https://encypher.com/terms">Terms</a>',
             },
             preferencesModal: {
               title: 'Cookie Preferences',
@@ -99,7 +99,7 @@ export default function CookieConsentBanner() {
         },
       },
     });
-    
+
     console.log('[CookieConsent] Initialized');
   }, []);
 

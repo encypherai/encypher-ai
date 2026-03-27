@@ -18,8 +18,8 @@
 
 ### Host Permissions
 
-- [x] `https://api.encypherai.com/*` - Production API
-- [x] `https://*.encypherai.com/*` - All Encypher subdomains
+- [x] `https://api.encypher.com/*` - Production API
+- [x] `https://*.encypher.com/*` - All Encypher subdomains
 
 ### Justification
 
@@ -189,7 +189,7 @@ All dev dependencies are not included in the extension package.
 
 ## Security Contact
 
-For security issues, please email: security@encypherai.com
+For security issues, please email: security@encypher.com
 
 Do not open public GitHub issues for security vulnerabilities.
 

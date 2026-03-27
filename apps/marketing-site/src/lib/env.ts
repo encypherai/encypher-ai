@@ -17,7 +17,7 @@ export function getSiteUrl(): string {
     }
   }
   if (typeof console !== 'undefined') {
-    console.warn('[env] NEXT_PUBLIC_SITE_URL is missing or invalid, using default https://encypherai.com');
+    console.warn('[env] NEXT_PUBLIC_SITE_URL is missing or invalid, using default https://encypher.com');
   }
-  return 'https://encypherai.com';
+  return 'https://encypher.com';
 }

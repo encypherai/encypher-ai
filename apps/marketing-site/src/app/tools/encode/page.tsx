@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Sign Text with Metadata | Encypher Tool",
     description: "Sign text with secure metadata using Encypher's provenance tool. Try Encypher's free online signing tool for digital authenticity.",
-    url: "https://encypherai.com/tools/sign",
+    url: "https://encypher.com/tools/sign",
     siteName: "Encypher",
     type: "website"
   },

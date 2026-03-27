@@ -11,7 +11,7 @@ export default function ToolsPage() {
         whatWeDo="Free tools from the Co-Chair of the C2PA Text Provenance Task Force. Sign and verify C2PA-compliant content authentication. Full API and SDKs in Python, TypeScript, Go, and Rust available."
         whoItsFor="Developers building content authentication, publishers exploring provenance technology, and researchers testing C2PA text standard implementations."
         keyDifferentiator="Built on the C2PA text standard (c2pa.org) we co-authored with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others. Same technology powering our production API."
-        primaryValue="Test cryptographic watermarking without signup. Standard publishes January 8, 2026. Sign up at encypherai.com for API access and documentation (API base URL: api.encypherai.com)."
+        primaryValue="Test cryptographic watermarking without signup. Standard publishes January 8, 2026. Sign up at encypher.com for API access and documentation (API base URL: api.encypher.com)."
         pagePath="/tools"
         pageType="CollectionPage"
       />

@@ -2,7 +2,7 @@
 
 /**
  * API Access Gate Component
- * 
+ *
  * TEAM_006: Gates API key generation behind approval workflow.
  * Shows different UI based on user's API access status:
  * - not_requested: Show request form
@@ -34,7 +34,7 @@ export function ApiAccessGate({ children }: ApiAccessGateProps) {
   const { data: session } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const queryClient = useQueryClient();
-  
+
   const [useCase, setUseCase] = useState('');
   const [showRequestForm, setShowRequestForm] = useState(false);
 
@@ -106,7 +106,7 @@ export function ApiAccessGate({ children }: ApiAccessGateProps) {
             </div>
             <CardTitle className="text-2xl">Request API Access</CardTitle>
             <CardDescription className="text-base mt-2">
-              {status === 'denied' 
+              {status === 'denied'
                 ? 'Your previous request was denied. Please provide more details about your use case.'
                 : 'To generate API keys, please tell us how you plan to use the Encypher API.'}
             </CardDescription>
@@ -130,7 +130,7 @@ export function ApiAccessGate({ children }: ApiAccessGateProps) {
                   Minimum 20 characters. Be specific about your project and how you'll use content provenance.
                 </p>
               </div>
-              
+
               <div className="flex gap-3">
                 {status === 'denied' && (
                   <Button
@@ -261,7 +261,7 @@ export function ApiAccessGate({ children }: ApiAccessGateProps) {
               If you believe this is an error, please contact our support team.
             </p>
             <a
-              href="mailto:support@encypherai.com"
+              href="mailto:support@encypher.com"
               className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import Image from 'next/image';
 import Link from 'next/link';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 
 interface TeamInviteDetails {
   email: string;
@@ -325,9 +325,9 @@ export default function TeamInvitePage() {
 
                     <p className="text-xs text-muted-foreground text-center">
                       By creating an account, you agree to our{' '}
-                      <a href="https://encypherai.com/terms" className="text-blue-ncs hover:underline">Terms of Service</a>
+                      <a href="https://encypher.com/terms" className="text-blue-ncs hover:underline">Terms of Service</a>
                       {' '}and{' '}
-                      <a href="https://encypherai.com/privacy" className="text-blue-ncs hover:underline">Privacy Policy</a>
+                      <a href="https://encypher.com/privacy" className="text-blue-ncs hover:underline">Privacy Policy</a>
                     </p>
                   </form>
                 </div>

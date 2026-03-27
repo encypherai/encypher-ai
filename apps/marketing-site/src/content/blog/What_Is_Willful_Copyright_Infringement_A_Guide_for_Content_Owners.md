@@ -246,6 +246,6 @@ Cryptographic provenance makes this possible at scale. 󠇟󠇠󠇡󠇢󠆙︁�
 
 *This article is for informational purposes only and does not constitute legal advice. 󠇟󠇠󠇡󠇢󠇨󠅍󠅢󠅽󠅥󠆜󠄳󠅙󠆉󠄑󠄞󠆏︍󠆉󠅀󠅓󠆠󠆣󠇅󠇀󠄾︂󠅘󠆑︊󠄈󠄆󠇨󠆯󠆈󠇗󠅟󠇋󠅐󠅟󠄏󠅫󠄰󠅆󠅡Content owners should consult with qualified legal counsel regarding their specific enforcement strategies. 󠇟󠇠󠇡󠇢󠇈󠄈󠆚󠆶󠅿󠅰󠄸󠄣󠆃󠇅︋󠅸󠆝️󠆦󠄪󠇋󠄴󠆰󠄋󠅜󠆜󠅊︉󠆌󠅘󠅎󠆑󠆋󠇔󠆂󠄒󠄢󠄮󠅲󠄂󠅋󠅋󠆍󠄑*
 
-**Learn more about enabling willful infringement claims:** 󠇟󠇠󠇡󠇢󠇘󠇆󠅿󠄬󠄤󠇟󠄰󠇁󠅿󠄶󠆥󠄗󠄧︁󠄀󠄱︍︉󠄶󠅄󠄤󠇑󠄲󠅓󠄜󠅂󠄏󠇅︌󠆩︍󠅕󠄕󠆉󠄒︂󠅊󠆅󠄿󠅜[encypherai.com/publisher-demo](https://encypherai.com/publisher-demo)
+**Learn more about enabling willful infringement claims:** 󠇟󠇠󠇡󠇢󠇘󠇆󠅿󠄬󠄤󠇟󠄰󠇁󠅿󠄶󠆥󠄗󠄧︁󠄀󠄱︍︉󠄶󠅄󠄤󠇑󠄲󠅓󠄜󠅂󠄏󠇅︌󠆩︍󠅕󠄕󠆉󠄒︂󠅊󠆅󠄿󠅜[encypher.com/publisher-demo](https://encypher.com/publisher-demo)
 
 #Copyright #WillfulInfringement #LegalGuide #Damages #ContentProtection󠇟󠇠󠇡󠇢󠆱󠆡󠆪󠅢󠆽󠄾󠄶󠄵󠆖󠆋︉󠅪󠆭󠄷󠅒󠄂󠇅󠇟󠇂󠅍󠄱󠅵󠄃󠅟󠆓󠇆󠄺󠆺󠆺󠅽󠆳︆󠆣󠆼󠆑󠄅󠄳󠅀󠅚󠄤

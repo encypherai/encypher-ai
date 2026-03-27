@@ -143,7 +143,7 @@ export default function EnterpriseToolsPanel() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              const to = "sales@encypherai.com";
+              const to = "sales@encypher.com";
               const subject = encodeURIComponent("Enterprise License Upgrade Request");
               const body = encodeURIComponent(`Email: ${email}\n\n${message}`);
               window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
@@ -166,7 +166,7 @@ export default function EnterpriseToolsPanel() {
             <div className="flex gap-3">
               <Button type="submit">Request Upgrade</Button>
               <a
-                href="mailto:sales@encypherai.com?subject=Enterprise%20License%20Upgrade%20Request"
+                href="mailto:sales@encypher.com?subject=Enterprise%20License%20Upgrade%20Request"
                 className="inline-flex items-center"
               >
                 <Button type="button" variant="outline">Email Sales</Button>

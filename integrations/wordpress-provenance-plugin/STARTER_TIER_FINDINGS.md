@@ -1,7 +1,7 @@
 # WordPress Plugin - Starter (Free) Tier Functionality Assessment
 
-**Date**: 2026-02-03  
-**Team**: TEAM_148  
+**Date**: 2026-02-03
+**Team**: TEAM_148
 **Status**: ⚠️ **CRITICAL BUG IDENTIFIED**
 
 ---
@@ -181,7 +181,7 @@ async def execute_signing(...):
         select(Document).where(Document.id == document_id)
     )
     doc = existing_doc.scalar_one_or_none()
-    
+
     if doc:
         # Update existing document
         doc.signed_text = signed_text
@@ -229,7 +229,7 @@ if ($is_starter && $is_marked) {
     return new WP_Error(
         'starter_tier_limit',
         __('Re-signing edited posts requires Pro tier. Upgrade to enable automatic provenance tracking.', 'encypher-provenance'),
-        ['status' => 403, 'upgrade_url' => 'https://encypherai.com/pricing']
+        ['status' => 403, 'upgrade_url' => 'https://encypher.com/pricing']
     );
 }
 ```
@@ -257,7 +257,7 @@ if ($is_starter && $is_marked) {
 - **Config**: `tier: enterprise`, `auto_mark_on_publish: true`, `auto_mark_on_update: true`
 - **Action**: Create and publish new post
 - **Result**: ✅ **SUCCESS** - Post signed twice with `/sign/advanced`, provenance chain tracked
-- **Logs**: 
+- **Logs**:
   - `Stored new instance_id for post 7: 476ae886-8bff-4000-81ab-07ecc13e9070`
   - `Post 7 is being edited. Previous instance_id: 476ae886-8bff-4000-81ab-07ecc13e9070`
   - `Stored new instance_id for post 7: 2cae2070-99c9-4861-9c00-a417fca6dedd`
@@ -322,6 +322,6 @@ The `/sign` endpoint must be updated to support document updates (upsert logic) 
 
 ---
 
-**Verified by**: TEAM_148  
-**Date**: 2026-02-03  
+**Verified by**: TEAM_148
+**Date**: 2026-02-03
 **Environment**: Docker (WordPress 6.5.5 + Enterprise API 1.0.0-preview)

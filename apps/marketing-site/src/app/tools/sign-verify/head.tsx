@@ -1,5 +1,5 @@
 // SEO head for /tools/sign-verify
-// Canonical domain: https://encypherai.com
+// Canonical domain: https://encypher.com
 export default function Head() {
   const jsonLdSoftware = {
     "@context": "https://schema.org",
@@ -7,7 +7,7 @@ export default function Head() {
     "name": "Encypher Sign/Verify Tool",
     "applicationCategory": "Utility",
     "operatingSystem": "All",
-    "url": "https://encypherai.com/tools/sign-verify",
+    "url": "https://encypher.com/tools/sign-verify",
     "description": "Sign or verify secure metadata in your text using Encypher's provenance tool. Free, secure, and privacy-preserving.",
     "offers": {
       "@type": "Offer",
@@ -23,19 +23,19 @@ export default function Head() {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://encypherai.com/"
+        "item": "https://encypher.com/"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Tools",
-        "item": "https://encypherai.com/tools"
+        "item": "https://encypher.com/tools"
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": "Sign/Verify",
-        "item": "https://encypherai.com/tools/sign-verify"
+        "item": "https://encypher.com/tools/sign-verify"
       }
     ]
   };
@@ -71,10 +71,10 @@ export default function Head() {
   };
   return (
     <>
-      <link rel="canonical" href="https://encypherai.com/tools/sign-verify" />
+      <link rel="canonical" href="https://encypher.com/tools/sign-verify" />
       <meta property="og:title" content="Encypher Sign/Verify Tool" />
       <meta property="og:description" content="Sign or verify secure metadata in your text using Encypher's provenance tool. Free, secure, and privacy-preserving." />
-      <meta property="og:url" content="https://encypherai.com/tools/sign-verify" />
+      <meta property="og:url" content="https://encypher.com/tools/sign-verify" />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="Encypher" />
       <meta name="twitter:card" content="summary_large_image" />

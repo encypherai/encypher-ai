@@ -54,7 +54,7 @@ wordpress-provenance-plugin/
 
 ## Enterprise API Integration
 
-The plugin targets the production Enterprise API hosted at `https://api.encypherai.com`:
+The plugin targets the production Enterprise API hosted at `https://api.encypher.com`:
 
 - `POST /api/v1/sign` - Unified signing endpoint with options-based configuration (`manifest_mode: micro`, `ecc`, `embed_c2pa`, sentence segmentation, and optional `return_embedding_plan`).
 - `POST /api/v1/verify` - Public verification endpoint used by the plugin.
@@ -102,7 +102,7 @@ The plugin adapts its capabilities based on your Encypher workspace tier:
 
 ## New User Onboarding (Email Connect Flow)
 
-1. Visit `https://dashboard.encypherai.com/signup` and create an Encypher account if you do not already have one.
+1. Visit `https://dashboard.encypher.com/signup` and create an Encypher account if you do not already have one.
 2. Install and activate the WordPress plugin.
 3. Open **Encypher > Settings** in WordPress, enter your work email, and click **Email me a secure connect link**.
 4. Open the secure email from Encypher and approve the WordPress site connection in the browser.
@@ -117,7 +117,7 @@ If your team already manages Encypher API credentials outside the guided onboard
 3. Go to **Encypher > Settings** and either:
    - enter your work email and use the secure email connect flow to provision the API key automatically, or
    - paste an existing API key manually.
-4. Confirm the **API Base URL** is `https://api.encypherai.com/api/v1` (or your self-hosted Enterprise API endpoint).
+4. Confirm the **API Base URL** is `https://api.encypher.com/api/v1` (or your self-hosted Enterprise API endpoint).
 5. In the Gutenberg editor, open the **Encypher Provenance** panel to sign your draft. The Classic Editor uses the provided meta box. Each signing request produces C2PA-compliant wrapped text that replaces the post body contents.
 6. When posts load on the public site the plugin replays `POST /api/v1/verify` and displays a badge summarising the verification result.
 

@@ -1,10 +1,10 @@
 /**
  * Encypher Debug Logger
- * 
+ *
  * Structured logging for the Chrome extension that activates automatically
  * when the API is pointed at localhost. Logs are stored in chrome.storage.local
  * and can be viewed in the popup's Debug tab.
- * 
+ *
  * TEAM_151: Added for localhost development debugging
  */
 
@@ -17,7 +17,7 @@ const MAX_LOGS = 500;
 async function isDevMode() {
   try {
     const result = await chrome.storage.sync.get({
-      apiBaseUrl: 'https://api.encypherai.com',
+      apiBaseUrl: 'https://api.encypher.com',
       customApiUrl: ''
     });
     const url = result.apiBaseUrl === 'custom' ? result.customApiUrl : result.apiBaseUrl;

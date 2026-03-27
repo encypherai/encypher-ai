@@ -101,7 +101,7 @@ Yes! A verification badge can be displayed on your posts. Clicking it shows veri
 
 = Is my content sent to external servers? =
 
-Yes, content is sent to Encypher's API for signing. The API creates cryptographic signatures but does not store your full content. See our [Privacy Policy](https://encypherai.com/privacy) for details.
+Yes, content is sent to Encypher's API for signing. The API creates cryptographic signatures but does not store your full content. See our [Privacy Policy](https://encypher.com/privacy) for details.
 
 == Screenshots ==
 
@@ -148,4 +148,4 @@ Public beta with polished admin UX and production-ready signing/verification def
 
 == Privacy Policy ==
 
-Encypher Provenance sends your post content to Encypher's API (api.encypherai.com) for cryptographic signing. We do not store your full content - only metadata needed for verification. See [encypherai.com/privacy](https://encypherai.com/privacy) for our complete privacy policy.
+Encypher Provenance sends your post content to Encypher's API (api.encypher.com) for cryptographic signing. We do not store your full content - only metadata needed for verification. See [encypher.com/privacy](https://encypher.com/privacy) for our complete privacy policy.

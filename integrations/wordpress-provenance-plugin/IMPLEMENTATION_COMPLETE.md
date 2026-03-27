@@ -1,7 +1,7 @@
 # WordPress C2PA Plugin - Implementation Complete ✅
 
-**Date:** October 31, 2025  
-**Branch:** `feature/wordpress-c2pa-plugin`  
+**Date:** October 31, 2025
+**Branch:** `feature/wordpress-c2pa-plugin`
 **Status:** ✅ PRD Complete - Ready for Testing
 
 ---
@@ -17,7 +17,7 @@ The WordPress C2PA plugin implementation is **complete** per the PRD specificati
 ### ✅ Phase 1: Foundation (Complete)
 - [x] Plugin branding and version update
 - [x] C2PA auto-mark on publish
-- [x] C2PA auto-mark on update  
+- [x] C2PA auto-mark on update
 - [x] Enterprise API integration
 - [x] Post meta storage
 - [x] Settings infrastructure
@@ -61,7 +61,7 @@ The WordPress C2PA plugin implementation is **complete** per the PRD specificati
 5. Enterprise API returns embedded content
 6. Plugin updates post content and metadata
 
-### 2. Enterprise API Integration 
+### 2. Enterprise API Integration
 
 **Description:** Full integration with Enterprise API microservices.
 
@@ -263,7 +263,7 @@ _encypher_merkle_total_leaves       // int: tree size
 **Settings:**
 ```php
 encypher_assurance_settings = [
-    'api_base_url' => 'https://api.encypherai.com/api/v1',
+    'api_base_url' => 'https://api.encypher.com/api/v1',
     'api_key' => '',
     'auto_verify' => true,
     'auto_mark_on_publish' => true,
@@ -546,14 +546,14 @@ Response:
 
 The WordPress C2PA plugin implementation is **complete per the PRD specifications**. All major features have been implemented:
 
-✅ **Auto-Mark on Publish/Update** - Automatic C2PA embedding  
-✅ **Enterprise API Integration** - Full microservices integration  
-✅ **Bulk Archive Marking** - Programmatic marking tool  
-✅ **Comprehensive Settings** - Complete configuration UI  
-✅ **Frontend Badge** - Optional C2PA display  
-✅ **Multi-Tier Support** - Free, Pro, Enterprise  
-✅ **C2PA Compliance** - Full spec adherence  
-✅ **Documentation** - Comprehensive guides  
+✅ **Auto-Mark on Publish/Update** - Automatic C2PA embedding
+✅ **Enterprise API Integration** - Full microservices integration
+✅ **Bulk Archive Marking** - Programmatic marking tool
+✅ **Comprehensive Settings** - Complete configuration UI
+✅ **Frontend Badge** - Optional C2PA display
+✅ **Multi-Tier Support** - Free, Pro, Enterprise
+✅ **C2PA Compliance** - Full spec adherence
+✅ **Documentation** - Comprehensive guides
 
 The plugin is ready for:
 - Testing (unit, integration, end-to-end)
@@ -561,9 +561,9 @@ The plugin is ready for:
 - Pro/Enterprise tier activation
 - User onboarding and training
 
-**Total Implementation Time:** ~6 hours  
-**Code Quality:** Production-ready  
-**Documentation:** Complete  
+**Total Implementation Time:** ~6 hours
+**Code Quality:** Production-ready
+**Documentation:** Complete
 **Status:** ✅ PRD Complete - Ready for Testing
 
 ---

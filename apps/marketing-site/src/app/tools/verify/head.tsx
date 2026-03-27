@@ -1,5 +1,5 @@
 // SEO head for /tools/verify
-// Canonical domain: https://encypherai.com
+// Canonical domain: https://encypher.com
 export default function Head() {
   const jsonLd = {
     "@context": "https://schema.org",
@@ -7,7 +7,7 @@ export default function Head() {
     "name": "Encypher Verify Tool",
     "applicationCategory": "Utility",
     "operatingSystem": "All",
-    "url": "https://encypherai.com/tools/verify",
+    "url": "https://encypher.com/tools/verify",
     "description": "Verify signed text and inspect embedded metadata with Encypher's provenance tool. Free, secure, and privacy-preserving.",
     "offers": {
       "@type": "Offer",
@@ -17,10 +17,10 @@ export default function Head() {
   };
   return (
     <>
-      <link rel="canonical" href="https://encypherai.com/tools/verify" />
+      <link rel="canonical" href="https://encypher.com/tools/verify" />
       <meta property="og:title" content="Verify Signed Text | Encypher Tool" />
       <meta property="og:description" content="Verify signed text and inspect embedded metadata with Encypher's provenance tool. Free, secure, and privacy-preserving." />
-      <meta property="og:url" content="https://encypherai.com/tools/verify" />
+      <meta property="og:url" content="https://encypher.com/tools/verify" />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="Encypher" />
       <meta name="twitter:card" content="summary_large_image" />

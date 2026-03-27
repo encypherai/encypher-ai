@@ -8,7 +8,7 @@
  *   - Origin: your image origin
  *
  * Environment variables (set on Lambda function):
- *   ENCYPHER_API_URL  — e.g. "https://api.encypherai.com"
+ *   ENCYPHER_API_URL  — e.g. "https://api.encypher.com"
  *
  * Note: Lambda@Edge functions run in us-east-1 and are replicated to edge
  * locations. They cannot use environment variables directly in the handler —
@@ -18,7 +18,7 @@
  */
 
 // REPLACE with your Encypher API base URL before deploying
-const ENCYPHER_API_URL = process.env.ENCYPHER_API_URL || 'https://api.encypherai.com';
+const ENCYPHER_API_URL = process.env.ENCYPHER_API_URL || 'https://api.encypher.com';
 
 // In-process cache: Map<canonicalUrl, {manifestUrl, expiresAt}>
 const manifestCache = new Map();

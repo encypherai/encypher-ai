@@ -95,7 +95,7 @@ When you use the "Sign" feature with your API key:
 
 - **Purpose**: Content verification and signing
 - **Data Shared**: Signed content blocks, API key for authentication
-- **Privacy Policy**: https://encypherai.com/privacy
+- **Privacy Policy**: https://encypher.com/privacy
 
 ### No Other Third Parties
 
@@ -113,7 +113,7 @@ We do not share data with any other third-party services, analytics providers, o
 ### Data Deletion
 
 - **Local Data**: Automatically deleted when you uninstall the extension
-- **Server Data**: Contact support@encypherai.com to request deletion of signed content metadata
+- **Server Data**: Contact support@encypher.com to request deletion of signed content metadata
 
 ## Security
 
@@ -143,8 +143,8 @@ We may update this privacy policy from time to time. Changes will be reflected i
 
 If you have questions about this privacy policy or our data practices:
 
-- **Email**: support@encypherai.com
-- **Website**: https://encypherai.com/privacy
+- **Email**: support@encypher.com
+- **Website**: https://encypher.com/privacy
 
 ## Summary
 

@@ -41,7 +41,7 @@ Encypher's rights management system lets you define licensing terms for three us
 ### Step 1: Set Your Rights Profile
 
 \`\`\`bash
-curl -X PUT https://api.encypherai.com/api/v1/rights/profile \\
+curl -X PUT https://api.encypher.com/api/v1/rights/profile \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -66,18 +66,18 @@ Or start from a template:
 
 \`\`\`bash
 # List available templates
-curl https://api.encypherai.com/api/v1/rights/templates \\
+curl https://api.encypher.com/api/v1/rights/templates \\
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # Apply a template (e.g., "news_publisher_standard")
-curl -X POST https://api.encypherai.com/api/v1/rights/profile/from-template/news_publisher_standard \\
+curl -X POST https://api.encypher.com/api/v1/rights/profile/from-template/news_publisher_standard \\
   -H "Authorization: Bearer YOUR_API_KEY"
 \`\`\`
 
 ### Step 2: Sign Content with Rights
 
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/sign \\
+curl -X POST https://api.encypher.com/api/v1/sign \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -96,7 +96,7 @@ The response will include a \`rights_resolution_url\` — a public endpoint embe
   "success": true,
   "document_id": "doc_abc123xyz",
   "signed_text": "Your article text here...",
-  "rights_resolution_url": "https://api.encypherai.com/api/v1/public/rights/doc_abc123xyz"
+  "rights_resolution_url": "https://api.encypher.com/api/v1/public/rights/doc_abc123xyz"
 }
 \`\`\`
 
@@ -105,7 +105,7 @@ The response will include a \`rights_resolution_url\` — a public endpoint embe
 AI companies, search engines, and scrapers can call the public rights endpoint — no API key required:
 
 \`\`\`bash
-curl https://api.encypherai.com/api/v1/public/rights/doc_abc123xyz
+curl https://api.encypher.com/api/v1/public/rights/doc_abc123xyz
 \`\`\`
 
 Or get machine-readable formats:
@@ -122,7 +122,7 @@ When AI companies scrape or use your content without a license, Encypher lets yo
 
 \`\`\`bash
 # Create a notice
-curl -X POST https://api.encypherai.com/api/v1/notices/create \\
+curl -X POST https://api.encypher.com/api/v1/notices/create \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -134,11 +134,11 @@ curl -X POST https://api.encypherai.com/api/v1/notices/create \\
   }'
 
 # Deliver the notice
-curl -X POST https://api.encypherai.com/api/v1/notices/{notice_id}/deliver \\
+curl -X POST https://api.encypher.com/api/v1/notices/{notice_id}/deliver \\
   -H "Authorization: Bearer YOUR_API_KEY"
 
 # Get court-ready evidence package
-curl https://api.encypherai.com/api/v1/notices/{notice_id}/evidence \\
+curl https://api.encypher.com/api/v1/notices/{notice_id}/evidence \\
   -H "Authorization: Bearer YOUR_API_KEY"
 \`\`\`
 
@@ -148,7 +148,7 @@ curl https://api.encypherai.com/api/v1/notices/{notice_id}/evidence \\
 
 ### Sign Content
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/sign \\
+curl -X POST https://api.encypher.com/api/v1/sign \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"text": "Your article text here...", "options": {"use_rights_profile": true}}'
@@ -156,7 +156,7 @@ curl -X POST https://api.encypherai.com/api/v1/sign \\
 
 ### Verify Content
 \`\`\`bash
-curl -X POST https://api.encypherai.com/api/v1/verify \\
+curl -X POST https://api.encypher.com/api/v1/verify \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"content": "Text to verify..."}'
@@ -200,7 +200,7 @@ Install our WordPress plugin for automatic content signing:
 
 ## Support
 
-For detailed integration support, contact us at support@encypherai.com or visit the [Support](/support) page.
+For detailed integration support, contact us at support@encypher.com or visit the [Support](/support) page.
 `;
 
 export default function PublisherIntegrationGuidePage() {

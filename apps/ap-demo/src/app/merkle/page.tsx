@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  TreeDeciduous, 
-  FileText, 
-  Search, 
-  Shield, 
-  Loader2, 
-  CheckCircle2, 
+import {
+  TreeDeciduous,
+  FileText,
+  Search,
+  Shield,
+  Loader2,
+  CheckCircle2,
   AlertTriangle,
   Hash,
   Layers,
@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
 
 // Sample article for encoding
@@ -76,19 +76,19 @@ interface AttributionResponse {
 
 export default function MerkleDemoPage() {
   const [activeTab, setActiveTab] = useState<'encode' | 'attribute'>('encode');
-  
+
   // Encode state
   const [isEncoding, setIsEncoding] = useState(false);
   const [encodeResult, setEncodeResult] = useState<EncodeResponse | null>(null);
   const [encodeError, setEncodeError] = useState<string | null>(null);
   const [showRootDetails, setShowRootDetails] = useState(false);
-  
+
   // Attribution state
   const [searchText, setSearchText] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [attributionResult, setAttributionResult] = useState<AttributionResponse | null>(null);
   const [attributionError, setAttributionError] = useState<string | null>(null);
-  
+
   // Copy state
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
@@ -136,7 +136,7 @@ export default function MerkleDemoPage() {
 
   const handleAttribution = async () => {
     if (!searchText.trim()) return;
-    
+
     setIsSearching(true);
     setAttributionError(null);
     setAttributionResult(null);
@@ -195,7 +195,7 @@ export default function MerkleDemoPage() {
                 <p className="text-sm font-medium text-delft-blue">Merkle Tree Demo</p>
               </div>
             </div>
-            <Link 
+            <Link
               href="/"
               className="flex items-center gap-2 text-blue-ncs hover:text-delft-blue text-sm font-medium transition-colors"
             >
@@ -212,7 +212,7 @@ export default function MerkleDemoPage() {
         <div className="bg-white rounded-2xl p-6 mb-8 border border-gray-200 shadow-sm">
           <h2 className="text-2xl font-bold text-delft-blue mb-3">What is Merkle Tree Encoding?</h2>
           <p className="text-gray-600 mb-4">
-            Merkle trees create a cryptographic fingerprint of your content at multiple granularity levels 
+            Merkle trees create a cryptographic fingerprint of your content at multiple granularity levels
             (sentence, paragraph, section). This enables:
           </p>
           <div className="grid md:grid-cols-3 gap-4">
@@ -561,7 +561,7 @@ export default function MerkleDemoPage() {
         {/* Footer Note */}
         <div className="mt-8 text-center text-gray-500 text-sm">
           <p>
-            Merkle tree encoding is an <strong className="text-delft-blue">Enterprise feature</strong>. 
+            Merkle tree encoding is an <strong className="text-delft-blue">Enterprise feature</strong>.
             Contact us to enable it for your organization.
           </p>
         </div>

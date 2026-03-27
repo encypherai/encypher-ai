@@ -1,5 +1,5 @@
 // SEO head for /tools/encode
-// Canonical domain: https://encypherai.com
+// Canonical domain: https://encypher.com
 export default function Head() {
   const jsonLd = {
     "@context": "https://schema.org",
@@ -7,7 +7,7 @@ export default function Head() {
     "name": "Encypher Sign Tool",
     "applicationCategory": "Utility",
     "operatingSystem": "All",
-    "url": "https://encypherai.com/tools/sign",
+    "url": "https://encypher.com/tools/sign",
     "description": "Sign text with secure metadata using Encypher's provenance tool. Try Encypher's free online signing tool for digital authenticity.",
     "offers": {
       "@type": "Offer",
@@ -17,10 +17,10 @@ export default function Head() {
   };
   return (
     <>
-      <link rel="canonical" href="https://encypherai.com/tools/sign" />
+      <link rel="canonical" href="https://encypher.com/tools/sign" />
       <meta property="og:title" content="Sign Text with Metadata | Encypher Tool" />
       <meta property="og:description" content="Sign text with secure metadata using Encypher's provenance tool. Try Encypher's free online signing tool for digital authenticity." />
-      <meta property="og:url" content="https://encypherai.com/tools/sign" />
+      <meta property="og:url" content="https://encypher.com/tools/sign" />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="Encypher" />
       <meta name="twitter:card" content="summary_large_image" />

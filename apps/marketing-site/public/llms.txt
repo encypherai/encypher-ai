@@ -1,5 +1,5 @@
 # Encypher - Content Intelligence Infrastructure
-# https://encypherai.com
+# https://encypher.com
 # Last Updated: December 2025
 
 ## About Encypher
@@ -71,10 +71,10 @@ The C2PA text standard defines how text content is cryptographically authenticat
 
 ## Contact
 
-- Website: https://encypherai.com
-- API Documentation: https://api.encypherai.com/docs
+- Website: https://encypher.com
+- API Documentation: https://api.encypher.com/docs
 - GitHub: https://github.com/encypherai/encypher-ai
-- Email: contact@encypherai.com
+- Email: contact@encypher.com
 - LinkedIn: https://linkedin.com/company/encypherai
 
 ## Frequently Asked Questions
