@@ -205,14 +205,32 @@ def _render_table(doc: Document, raw_lines: list) -> None:
     # Pad rows to uniform width
     rows_data = [r + [""] * (col_count - len(r)) for r in rows_data]
 
+    # Small tables (<=12 rows) are kept together on one page via a
+    # keepWithNext chain across all rows. Large tables allow page breaks
+    # between rows but repeat the header row and never split a single row.
+    keep_together = len(rows_data) <= 12
+
     table = doc.add_table(rows=len(rows_data), cols=col_count)
     table.style = "Table Grid"
 
     for row_idx, row_cells in enumerate(rows_data):
         is_header = row_idx == 0
+        is_last_row = row_idx == len(rows_data) - 1
         bg_hex = "F2F2F2" if (row_idx % 2 == 0 and not is_header) else "FFFFFF"
         if is_header:
             bg_hex = "1F497D"
+
+        # Prevent row from splitting across page break
+        row = table.rows[row_idx]
+        tr = row._tr
+        trPr = tr.get_or_add_trPr()
+        cant_split = OxmlElement("w:cantSplit")
+        trPr.append(cant_split)
+
+        # Repeat header row on each page (only useful for large tables)
+        if is_header:
+            tbl_header = OxmlElement("w:tblHeader")
+            trPr.append(tbl_header)
 
         for col_idx, cell_text in enumerate(row_cells):
             cell = table.cell(row_idx, col_idx)
@@ -220,6 +238,10 @@ def _render_table(doc: Document, raw_lines: list) -> None:
             para = cell.paragraphs[0]
             para.paragraph_format.space_before = Pt(3)
             para.paragraph_format.space_after = Pt(3)
+            # Chain rows together for small tables (skip last row to
+            # break the chain so the paragraph after the table is free)
+            if keep_together and not is_last_row:
+                para.paragraph_format.keep_with_next = True
             _apply_inline_formatting(para, cell_text)
             for run in para.runs:
                 run.font.name = "Calibri"
@@ -315,6 +337,10 @@ def _render_heading(doc: Document, text: str, level: int) -> None:
     except Exception:
         p = doc.add_paragraph(style=style)
         p.add_run(text)
+
+    # Keep heading with the content that follows (prevents orphaned headings)
+    p.paragraph_format.keep_with_next = True
+    p.paragraph_format.page_break_before = False
 
     # Apply font sizes directly on runs to override theme defaults
     sizes = {1: 16, 2: 14, 3: 12, 4: 11}
