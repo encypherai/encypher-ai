@@ -384,8 +384,8 @@ async def upload_certificate(
             fingerprint = PublicKeyService.compute_key_fingerprint(public_key_pem)
             await db.execute(
                 sa_text("""
-                    UPDATE byok_public_keys
-                    SET is_active = true, key_name = :key_name
+                    UPDATE public_keys
+                    SET is_active = true, revoked_at = NULL, revoked_reason = NULL, key_name = :key_name
                     WHERE organization_id = :org_id AND key_fingerprint = :fingerprint
                 """),
                 {
@@ -396,7 +396,7 @@ async def upload_certificate(
             )
             # Fetch the existing key ID
             existing = await db.execute(
-                sa_text("SELECT id, key_fingerprint FROM byok_public_keys WHERE organization_id = :org_id AND key_fingerprint = :fingerprint"),
+                sa_text("SELECT id, key_fingerprint FROM public_keys WHERE organization_id = :org_id AND key_fingerprint = :fingerprint"),
                 {"org_id": org_id, "fingerprint": fingerprint},
             )
             row = existing.fetchone()
