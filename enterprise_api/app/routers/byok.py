@@ -1,5 +1,6 @@
 """Customer-facing BYOK (Bring Your Own Key) endpoints."""
 
+import hashlib
 import logging
 from datetime import datetime
 from typing import Optional, cast
@@ -366,7 +367,7 @@ async def upload_certificate(
     else:
         trust_warnings.append("No private key provided. The API cannot sign with this certificate until a matching private key is uploaded.")
 
-    # Register the public key
+    # Register the public key (or reactivate if already registered)
     result = await PublicKeyService.register_public_key(
         db=db,
         organization_id=org_id,
@@ -376,10 +377,40 @@ async def upload_certificate(
     )
 
     if not result.get("success"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result.get("error", "Failed to register certificate"),
-        )
+        error_msg = result.get("error", "")
+        if "already registered" in error_msg:
+            # Key exists (possibly revoked) -- reactivate it
+            from sqlalchemy import text as sa_text
+
+            fingerprint = f"SHA256:{hashlib.sha256(public_key_pem.encode()).hexdigest()}"
+            await db.execute(
+                sa_text("""
+                    UPDATE byok_public_keys
+                    SET is_active = true, key_name = :key_name
+                    WHERE organization_id = :org_id AND key_fingerprint = :fingerprint
+                """),
+                {
+                    "org_id": org_id,
+                    "key_name": request.key_name or f"CA-signed: {cert_subject[:50]}",
+                    "fingerprint": fingerprint,
+                },
+            )
+            # Fetch the existing key ID
+            existing = await db.execute(
+                sa_text("SELECT id, key_fingerprint FROM byok_public_keys WHERE organization_id = :org_id AND key_fingerprint = :fingerprint"),
+                {"org_id": org_id, "fingerprint": fingerprint},
+            )
+            row = existing.fetchone()
+            result = {
+                "success": True,
+                "data": {"id": row.id if row else "unknown", "key_fingerprint": fingerprint},
+            }
+            logger.info(f"Reactivated existing BYOK key for org {org_id}: {fingerprint}")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=result.get("error", "Failed to register certificate"),
+            )
 
     # Update organization's certificate and optionally private key
     from sqlalchemy import text
