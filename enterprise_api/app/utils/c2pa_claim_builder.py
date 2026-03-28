@@ -101,6 +101,7 @@ def build_data_hash(
         "exclusions": [{"start": e["start"], "length": e["length"]} for e in exclusions],
         "alg": alg,
         "hash": hash_value,
+        "pad": b"",
     }
 
 
@@ -156,25 +157,23 @@ def build_claim_cbor(
             }
         )
 
-    # All assertions originate from this generator product, so they are
-    # listed in created_assertions per C2PA conformance requirements.
-    # The assertions array references all assertions (both created and
-    # gathered); created_assertions identifies those made by the signer.
+    # c2pa.claim.v2 allows ONLY these fields (c2pa-rs enforces strictly):
+    #   instanceID, claim_generator_info, signature, created_assertions,
+    #   gathered_assertions, dc:title, redacted_assertions, alg, alg_soft, metadata
+    # Fields like claim_generator, dc:format, assertions are v1-only and
+    # cause "unsupported claim version" or "unknown V2 claim field" errors.
     claim = {
-        "claim_generator": f"{_PRODUCT_NAME}/{_PRODUCT_VERSION}",
-        "claim_generator_info": [
-            {
-                "name": "Encypher",
-                "version": _PRODUCT_VERSION,
-            }
-        ],
-        "dc:title": title or "Untitled Document",
-        "dc:format": dc_format,
         "instanceID": instance_id,
-        "alg": alg,
-        "assertions": assertion_refs,
-        "created_assertions": assertion_refs,
+        "claim_generator_info": {
+            "name": "Encypher",
+            "version": _PRODUCT_VERSION,
+        },
         "signature": f"self#jumbf={manifest_label}/c2pa.signature",
+        "created_assertions": assertion_refs,
+        "alg": alg,
     }
+
+    if title:
+        claim["dc:title"] = title
 
     return cbor2.dumps(claim)

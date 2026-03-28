@@ -110,6 +110,7 @@ class OuterPayload(TypedDict, total=False):
     payload: Union[BasicPayload, ManifestPayload, str]
     signature: str  # Base64 encoded signature string
     cose_sign1: str
+    cbor_payload: str  # Base64-encoded CBOR payload for detached COSE_Sign1 verification
 
 
 # --- End TypedDict Definitions ---

@@ -40,7 +40,15 @@ from .payloads import (
     serialize_jumbf_payload,
     serialize_payload,
 )
-from .signing import SigningKey, extract_payload_from_cose_sign1, sign_c2pa_cose, sign_payload, verify_c2pa_cose, verify_signature
+from .signing import (
+    SigningKey,
+    extract_certificates_from_cose,
+    extract_payload_from_cose_sign1,
+    sign_c2pa_cose,
+    sign_payload,
+    verify_c2pa_cose,
+    verify_signature,
+)
 
 
 class UnicodeMetadata:
@@ -382,6 +390,7 @@ class UnicodeMetadata:
         omit_keys: Optional[list[str]] = None,
         distribute_across_targets: bool = False,
         add_hard_binding: bool = True,
+        cert_chain_pem: Optional[str] = None,
     ) -> str:
         if metadata_format == "c2pa":
             # Convert timestamp once for C2PA-specific embedding (optional)
@@ -404,6 +413,7 @@ class UnicodeMetadata:
                 distribute_across_targets=distribute_across_targets,
                 add_hard_binding=add_hard_binding,
                 custom_assertions=custom_assertions,
+                cert_chain_pem=cert_chain_pem,
             )
         # --- Start: Input Validation ---
         if not isinstance(text, str):
@@ -765,6 +775,7 @@ class UnicodeMetadata:
         distribute_across_targets: bool,
         add_hard_binding: bool,
         custom_assertions: Optional[list[dict[str, Any]]] = None,
+        cert_chain_pem: Optional[str] = None,
     ) -> str:
         """
         Constructs and embeds a C2PA-compliant manifest.
@@ -774,9 +785,14 @@ class UnicodeMetadata:
         hash. The resulting manifest is serialized to CBOR, signed, and then
         embedded into the text using Unicode variation selectors.
 
+        When cert_chain_pem is provided, produces a spec-compliant COSE_Sign1_Tagged
+        structure with x5chain and detached payload (matching the binary media
+        signing pipeline). Without cert_chain_pem, falls back to the legacy
+        Ed25519-only inline-payload mode.
+
         Args:
             text: The original, clean text content to be watermarked.
-            private_key: The Ed25519 private key for signing the manifest.
+            private_key: Private key for signing (Ed25519, EC, RSA, or Signer).
             signer_id: An identifier for the key pair.
             claim_generator: A string identifying the software agent creating the claim.
             actions: A list of action dictionaries to include in the manifest.
@@ -786,12 +802,17 @@ class UnicodeMetadata:
             distribute_across_targets: If True, distribute bits across multiple targets.
             add_hard_binding: If True, include the hard binding assertion in the manifest.
             custom_assertions: Optional list of custom C2PA assertions to include.
+            cert_chain_pem: Optional PEM-encoded certificate chain (EE cert first).
 
         Returns:
             The text with the embedded C2PA manifest.
         """
-        if not isinstance(private_key, ed25519.Ed25519PrivateKey):
-            raise TypeError("For C2PA embedding, 'private_key' must be an Ed25519PrivateKey instance.")
+        # When no cert chain is provided, require Ed25519 for legacy path
+        if not cert_chain_pem and not isinstance(private_key, ed25519.Ed25519PrivateKey):
+            raise TypeError(
+                "For C2PA embedding without a certificate chain, 'private_key' must be an "
+                "Ed25519PrivateKey instance. Provide cert_chain_pem to use EC/RSA keys."
+            )
 
         text = normalize_text(text)
 
@@ -912,13 +933,17 @@ class UnicodeMetadata:
             actions_data["actions"].append(copy.deepcopy(wm_action))
 
             final_cbor_payload_bytes = serialize_c2pa_payload_to_cbor(c2pa_manifest)
-            cose_sign1_bytes = sign_c2pa_cose(private_key, final_cbor_payload_bytes)
+            cose_sign1_bytes = sign_c2pa_cose(private_key, final_cbor_payload_bytes, cert_chain_pem=cert_chain_pem)
 
-            jumbf_payload = {
+            jumbf_payload: dict[str, Any] = {
                 "format": "c2pa",
                 "signer_id": signer_id,
                 "cose_sign1": base64.b64encode(cose_sign1_bytes).decode("utf-8"),
             }
+            # For spec-compliant COSE (detached payload), include the CBOR payload
+            # separately so the verifier can reconstruct the Sig_structure.
+            if cert_chain_pem:
+                jumbf_payload["cbor_payload"] = base64.b64encode(final_cbor_payload_bytes).decode("utf-8")
             jumbf_bytes = serialize_jumbf_payload(jumbf_payload)
             wrapper_text = encode_wrapper(jumbf_bytes)
 
@@ -1158,6 +1183,10 @@ class UnicodeMetadata:
         and integrity of an embedded C2PA manifest, including signature verification,
         soft binding, and hard binding checks.
 
+        Supports both:
+        - Spec-compliant COSE_Sign1_Tagged with x5chain (extracts public key from cert)
+        - Legacy untagged COSE_Sign1 with bare Ed25519 (uses public_key_resolver)
+
         Args:
             original_text: The full text asset (including the wrapper) provided for verification.
             outer_payload: The deserialized outer payload containing the manifest.
@@ -1182,38 +1211,75 @@ class UnicodeMetadata:
             return False, signer_id, None
 
         # --- 1. Signature Verification using COSE ---
-        public_key = public_key_resolver(signer_id)
-        if not public_key:
-            logger.warning(f"C2PA verification: Public key not found for signer_id: {signer_id}")
-            if return_payload_on_failure:
-                try:
-                    payload = extract_payload_from_cose_sign1(cose_sign1_bytes)
-                    if payload is None:
-                        return False, signer_id, None
-                    unverified_manifest = deserialize_c2pa_payload_from_cbor(payload)
-                    return False, signer_id, unverified_manifest
-                except Exception:
-                    return False, signer_id, None
-            return False, signer_id, None
+        # Determine if this is a spec-compliant (tagged, detached, x5chain) or legacy structure.
+        # For spec-compliant: public key comes from x5chain in the COSE structure.
+        # For legacy: public key comes from the resolver.
 
+        # Extract inline payload (may be None for detached mode)
+        inline_payload = extract_payload_from_cose_sign1(cose_sign1_bytes)
+
+        # For detached payload mode, the CBOR payload is stored separately in the wrapper
+        external_payload: Optional[bytes] = None
+        cbor_payload_b64 = outer_payload.get("cbor_payload")
+        if cbor_payload_b64 and isinstance(cbor_payload_b64, str):
+            try:
+                external_payload = base64.b64decode(cbor_payload_b64)
+            except (binascii.Error, ValueError):
+                pass
+
+        # Check if COSE has embedded certificates (spec-compliant path)
+        has_x5chain = False
         try:
-            cbor_payload_bytes = verify_c2pa_cose(public_key, cose_sign1_bytes)
-            c2pa_manifest = deserialize_c2pa_payload_from_cbor(cbor_payload_bytes)
-        except (InvalidSignature, ValueError) as e:
-            logger.warning(f"C2PA COSE verification failed for signer_id: {signer_id}. Reason: {e}")
-            if return_payload_on_failure:
-                try:
-                    payload = extract_payload_from_cose_sign1(cose_sign1_bytes)
-                    if payload is None:
-                        return False, signer_id, None
-                    unverified_manifest = deserialize_c2pa_payload_from_cbor(payload)
-                    return False, signer_id, unverified_manifest
-                except Exception:
-                    return False, signer_id, None
-            return False, signer_id, None
-        except Exception as e:
-            logger.error(f"An unexpected error occurred during COSE verification: {e}", exc_info=True)
-            return False, signer_id, None
+            certs = extract_certificates_from_cose(cose_sign1_bytes)
+            has_x5chain = len(certs) > 0
+        except (ValueError, Exception):
+            pass
+
+        # The payload for verification: inline (legacy) or external (spec-compliant detached)
+        effective_payload = inline_payload or external_payload
+
+        if has_x5chain:
+            # Spec-compliant path: verify using x5chain certificate
+            try:
+                cbor_payload_bytes = verify_c2pa_cose(None, cose_sign1_bytes, payload_override=effective_payload)
+                c2pa_manifest = deserialize_c2pa_payload_from_cbor(cbor_payload_bytes)
+            except (InvalidSignature, ValueError) as e:
+                logger.warning(f"C2PA COSE verification failed (x5chain path) for signer_id: {signer_id}. Reason: {e}")
+                if return_payload_on_failure and effective_payload:
+                    try:
+                        return False, signer_id, deserialize_c2pa_payload_from_cbor(effective_payload)
+                    except Exception:
+                        pass
+                return False, signer_id, None
+            except Exception as e:
+                logger.error(f"Unexpected error during COSE verification: {e}", exc_info=True)
+                return False, signer_id, None
+        else:
+            # Legacy path: use public_key_resolver
+            public_key = public_key_resolver(signer_id)
+            if not public_key:
+                logger.warning(f"C2PA verification: Public key not found for signer_id: {signer_id}")
+                if return_payload_on_failure and effective_payload:
+                    try:
+                        return False, signer_id, deserialize_c2pa_payload_from_cbor(effective_payload)
+                    except Exception:
+                        pass
+                return False, signer_id, None
+
+            try:
+                cbor_payload_bytes = verify_c2pa_cose(public_key, cose_sign1_bytes, payload_override=effective_payload)
+                c2pa_manifest = deserialize_c2pa_payload_from_cbor(cbor_payload_bytes)
+            except (InvalidSignature, ValueError) as e:
+                logger.warning(f"C2PA COSE verification failed for signer_id: {signer_id}. Reason: {e}")
+                if return_payload_on_failure and effective_payload:
+                    try:
+                        return False, signer_id, deserialize_c2pa_payload_from_cbor(effective_payload)
+                    except Exception:
+                        pass
+                return False, signer_id, None
+            except Exception as e:
+                logger.error(f"An unexpected error occurred during COSE verification: {e}", exc_info=True)
+                return False, signer_id, None
 
         # --- 2. Manifest Content Validation ---
         settings = Settings()
@@ -1446,6 +1512,9 @@ class UnicodeMetadata:
                 "signature": "c2pa_manifest_store",
             }
             outer_payload["cose_sign1"] = cose_sign1
+            cbor_payload = manifest_store.get("cbor_payload")
+            if cbor_payload:
+                outer_payload["cbor_payload"] = cbor_payload
             return outer_payload
 
         # 1. Extract Bytes for legacy/other formats:

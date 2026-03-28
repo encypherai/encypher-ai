@@ -75,30 +75,35 @@ def build_c2pa_manifest_dict(
             )
         action_entry["digitalSourceType"] = dst
 
-    # All assertions originate from this generator product, so they go in
-    # createdAssertions per C2PA conformance requirements (not the inherited
-    # assertions array).
-    created_assertions = [
+    # Every assertion must have "created": True so c2pa-rs places it in
+    # created_assertions (not gathered_assertions) in the claim CBOR.
+    # The per-assertion flag is the only mechanism c2pa-rs respects;
+    # a top-level "createdAssertions" field is silently ignored.
+    assertions = [
         {
             "label": "c2pa.actions.v2",
             "data": {
                 "actions": [action_entry],
             },
+            "created": True,
         },
     ]
 
     if rights_data:
-        created_assertions.append(
+        assertions.append(
             {
                 "label": "com.encypher.rights.v1",
                 "data": rights_data,
+                "created": True,
             }
         )
 
     for ca in custom_assertions:
-        created_assertions.append(ca)
+        ca_copy = dict(ca)
+        ca_copy["created"] = True
+        assertions.append(ca_copy)
 
-    created_assertions.append(
+    assertions.append(
         {
             "label": "com.encypher.provenance",
             "data": {
@@ -107,6 +112,7 @@ def build_c2pa_manifest_dict(
                 asset_id_key: asset_id,
                 "signed_at": now_iso,
             },
+            "created": True,
         }
     )
 
@@ -115,6 +121,5 @@ def build_c2pa_manifest_dict(
         "claim_generator_info": [{"name": "Encypher", "version": _PRODUCT_VERSION}],
         "title": title,
         "instance_id": instance_id,
-        "assertions": created_assertions,
-        "createdAssertions": created_assertions,
+        "assertions": assertions,
     }

@@ -87,13 +87,15 @@ async def execute_signing(
             authorization=None,
         )
 
-    # Load organization's private key
+    # Load organization's private key and certificate chain
     # For demo orgs (including user-level keys), use demo key but keep actual org_id as signer
     # This allows verification to look up the org and find they use the demo key
+    cert_chain_pem: Optional[str] = None
     try:
         if signing_mode == SIGNING_MODE_MANAGED:
             private_key = load_managed_signing_private_key()
             signer_id = settings.managed_signer_id
+            cert_chain_pem = settings.managed_signer_certificate_chain_pem or settings.managed_signer_certificate_pem
             logger.info("Using managed signer key for org %s as signer %s", org_id, signer_id)
         elif is_demo_org:
             private_key = get_demo_private_key()
@@ -103,6 +105,15 @@ async def execute_signing(
         else:
             private_key = await load_organization_private_key(org_id, db)
             signer_id = org_id
+            # Fetch certificate chain from database
+            try:
+                row = await db.execute(
+                    text("SELECT certificate_chain FROM organizations WHERE id = :org_id"),
+                    {"org_id": org_id},
+                )
+                cert_chain_pem = row.scalar_one_or_none() or None
+            except Exception as exc:
+                logger.warning("Failed to load cert chain for org %s: %s", org_id, exc)
     except ValueError as exc:
         logger.error("Failed to load private key: %s", exc)
         raise HTTPException(
@@ -298,6 +309,7 @@ async def execute_signing(
             claim_generator=effective_claim_generator,
             actions=request.actions,
             custom_assertions=custom_assertions,
+            cert_chain_pem=cert_chain_pem,
         )
     except HTTPException:
         raise

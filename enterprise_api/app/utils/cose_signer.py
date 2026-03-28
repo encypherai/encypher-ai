@@ -142,9 +142,11 @@ def sign_claim(
     signature = _sign_bytes(key_obj, sig_structure, alg)
 
     # Unprotected headers: certificate chain + padding
+    # Use string label "x5chain" (not integer 33) because c2pa-rs coset
+    # only checks Label::Text("x5chain") in unprotected headers.
     cert_chain_der = _parse_cert_chain_pem(cert_chain_pem)
     unprotected = {
-        COSE_HDR_X5CHAIN: cert_chain_der if len(cert_chain_der) > 1 else cert_chain_der[0],
+        "x5chain": cert_chain_der if len(cert_chain_der) > 1 else cert_chain_der[0],
     }
 
     # Add padding to reserve space for the two-pass approach
@@ -222,7 +224,8 @@ def verify_cose_sign1(cose_bytes: bytes, claim_cbor: bytes) -> CoseVerifyResult:
             return CoseVerifyResult(valid=False, algorithm=0, error="Missing algorithm in protected headers")
 
         # Extract certificate from unprotected headers
-        x5chain = unprotected.get(COSE_HDR_X5CHAIN)
+        # Check both string "x5chain" and integer 33 for compatibility
+        x5chain = unprotected.get("x5chain") or unprotected.get(COSE_HDR_X5CHAIN)
         if x5chain is None:
             return CoseVerifyResult(valid=False, algorithm=alg, error="Missing x5chain in unprotected headers")
 
