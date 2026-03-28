@@ -110,9 +110,9 @@ function AssetCard({ label, src, bgMode }: { label: string; src: string; bgMode:
   const hasPng = basename.startsWith('mark-');
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700">
       <div
-        className={`flex items-center justify-center p-6 ${
+        className={`flex items-center justify-center p-6 rounded-t-xl ${
           isDark ? 'bg-slate-900' : 'bg-white'
         } ${isWordmark ? 'min-h-[80px]' : 'min-h-[120px]'}`}
       >
@@ -125,7 +125,7 @@ function AssetCard({ label, src, bgMode }: { label: string; src: string; bgMode:
           unoptimized
         />
       </div>
-      <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+      <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-b-xl border-t border-slate-200 dark:border-slate-700">
         <p className="text-sm font-medium text-slate-900 dark:text-white mb-2">{label}</p>
         <div className="flex items-center gap-2 flex-wrap">
           <DownloadDropdown

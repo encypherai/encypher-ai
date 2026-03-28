@@ -68,7 +68,7 @@ export function MobileNav({
 
       {/* Slide-out drawer */}
       <div
-        className={`fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-800 shadow-xl z-50 lg:hidden transform transition-transform duration-300 ease-out ${
+        className={`fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-800 shadow-xl z-50 lg:hidden transform transition-transform duration-300 ease-out flex flex-col ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -95,7 +95,7 @@ export function MobileNav({
         </div>
 
         {/* Navigation */}
-        <nav className="p-4">
+        <nav className="flex-1 overflow-y-auto p-4">
           <ul className="space-y-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
@@ -149,7 +149,7 @@ export function MobileNav({
         </nav>
 
         {/* Footer actions */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <div className="shrink-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
           <a
             href="https://api.encypher.com/docs"
             target="_blank"
