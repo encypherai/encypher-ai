@@ -1,76 +1,67 @@
 {
-  "format": "FLAC",
-  "mime_type": "audio/flac",
-  "pipeline": "custom_jumbf_cose",
-  "file_size": 65586,
-  "embedding_method": "FLAC APPLICATION metadata block (block type 2, app_id=c2pa)",
-  "jumbf_structure": {
-    "manifest_store_label": "c2pa",
-    "active_manifest": "urn:c2pa:7da2b869-daba-4801-abec-d1ba1f7a93c4",
-    "boxes": [
-      "jumb(c2pa) -> jumb(manifest) -> jumb(c2pa.assertions) + jumb(c2pa.claim.v2) + jumb(c2pa.signature)"
-    ]
-  },
-  "claim": {
-    "claim_generator": "Encypher Enterprise API/2.0",
-    "claim_generator_info": [
-      {
-        "name": "Encypher",
-        "version": "2.0"
-      }
-    ],
-    "dc:title": "C2PA Conformance Test -- FLAC",
-    "dc:format": "audio/flac",
-    "instanceID": "urn:uuid:18d23a62-d872-445f-94ad-f6acb4a45333",
-    "alg": "sha256",
-    "assertions": [
-      {
-        "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
-        "hash": "4743d63bb8fb73449599f28da75ee128ee6d5636738b3525e9a59f7d3616ec34",
-        "alg": "sha256"
-      },
-      {
-        "url": "self#jumbf=c2pa.assertions/c2pa.hash.data",
-        "hash": "58d59cb3fd252e5f800e090a30499dd24bafe6896f79474a65228a738bdbbd6b",
-        "alg": "sha256"
-      },
-      {
-        "url": "self#jumbf=c2pa.assertions/com.encypher.provenance",
-        "hash": "545e675e69f4a77b306790d48f6a9d15561afd03c4c0e7f792beb224756ed861",
-        "alg": "sha256"
-      }
-    ],
-    "signature": "self#jumbf=urn:c2pa:7da2b869-daba-4801-abec-d1ba1f7a93c4/c2pa.signature"
-  },
-  "assertions": {
-    "c2pa.actions.v2": {
-      "actions": [
+  "active_manifest": "urn:c2pa:b15b7bf3-aa45-4deb-8c05-6ffed14a0713",
+  "manifests": {
+    "urn:c2pa:b15b7bf3-aa45-4deb-8c05-6ffed14a0713": {
+      "claim_generator_info": [
         {
-          "action": "c2pa.created",
-          "when": "2026-03-25T09:05:45Z",
-          "softwareAgent": {
-            "name": "Encypher Enterprise API",
-            "version": "2.0"
-          },
-          "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture"
-        }
-      ]
-    },
-    "c2pa.hash.data": {
-      "exclusions": [
-        {
-          "start": 50,
-          "length": 65536
+          "name": "Encypher",
+          "version": "2.0"
         }
       ],
-      "alg": "sha256",
-      "hash": "7f5d061c6983dca2bac3a5ffd84af85503fb82b11e5bd4dd9cca17085c24b505"
-    },
-    "com.encypher.provenance": {
-      "organization_id": "encypher-conformance",
-      "document_id": "conformance-flac",
-      "document_asset_id": "14962ff9-758c-4775-bac4-1520a9d21856",
-      "signed_at": "2026-03-25T09:05:45Z"
+      "title": "C2PA Conformance Test -- FLAC",
+      "instance_id": "xmp:iid:75728cbc-bc4f-435c-bbc7-016f00c88074",
+      "assertions": [
+        {
+          "label": "c2pa.actions.v2",
+          "data": {
+            "actions": [
+              {
+                "action": "c2pa.created",
+                "when": "2026-03-28T12:45:26Z",
+                "softwareAgent": {
+                  "name": "Encypher Enterprise API",
+                  "version": "2.0"
+                },
+                "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture"
+              }
+            ]
+          },
+          "created": true
+        },
+        {
+          "label": "c2pa.hash.data",
+          "data": {
+            "exclusions": [
+              {
+                "start": 50,
+                "length": 65536
+              }
+            ],
+            "alg": "sha256",
+            "hash": "7f5d061c6983dca2bac3a5ffd84af85503fb82b11e5bd4dd9cca17085c24b505",
+            "pad": ""
+          },
+          "created": true
+        },
+        {
+          "label": "com.encypher.provenance",
+          "data": {
+            "organization_id": "encypher-conformance",
+            "document_id": "conformance-flac",
+            "document_asset_id": "06c73b9f-f6f4-4038-971c-93383a78c5bb",
+            "signed_at": "2026-03-28T12:45:26Z"
+          },
+          "created": true
+        }
+      ],
+      "label": "urn:c2pa:b15b7bf3-aa45-4deb-8c05-6ffed14a0713",
+      "claim_version": 2,
+      "signature_info": {
+        "alg": "Es256",
+        "issuer": "Encypher Corporation",
+        "common_name": "Encypher Conformance Test Cert",
+        "cert_serial_number": "8149767912641611982350984011013689761321125"
+      }
     }
   }
 }

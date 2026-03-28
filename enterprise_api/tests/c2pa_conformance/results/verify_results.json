@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-03-27T10:19:51Z",
+  "timestamp": "2026-03-28T12:45:27Z",
   "total_formats": 31,
   "sign_success": 30,
   "verify_success": 30,
@@ -15,7 +15,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:963cfef7-e74b-47ec-ae32-d336782f2f36",
+      "instance_id": "urn:uuid:eaf98bc2-6af7-4e4d-afad-81a194cb593e",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -36,22 +36,22 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
         },
         {
           "code": "assertion.dataHash.match",
@@ -77,7 +77,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:5e038c71-5d9a-4469-b781-fe8c0e2ad06a",
+      "instance_id": "urn:uuid:48b0d8fe-d8b2-4330-a7d6-346424d915db",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -98,22 +98,22 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
         },
         {
           "code": "assertion.dataHash.match",
@@ -139,7 +139,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:3f81f496-7da7-4312-a5d8-41a4416b94b6",
+      "instance_id": "urn:uuid:06d20644-3cb8-42a4-85a9-b97b0d65cc95",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -160,22 +160,22 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
         },
         {
           "code": "assertion.dataHash.match",
@@ -201,7 +201,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:e218dded-57c1-46ee-bbe9-fc9e7410c226",
+      "instance_id": "urn:uuid:efe4ff08-6465-40c4-b742-d026e565c930",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -222,22 +222,22 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
         },
         {
           "code": "assertion.dataHash.match",
@@ -258,12 +258,12 @@
       "mime_type": "image/avif",
       "category": "image",
       "fixture_size": 326,
-      "signed_size": 15331,
+      "signed_size": 15310,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:68d3e41e-76a6-4d2f-9e91-54ce3530bddf",
+      "instance_id": "urn:uuid:2d7658d1-6b35-4f6c-b329-7b2f66299e41",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -284,17 +284,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.bmffHash.match",
@@ -315,12 +315,12 @@
       "mime_type": "image/heic",
       "category": "image",
       "fixture_size": 459,
-      "signed_size": 15464,
+      "signed_size": 15443,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:9c212280-983c-4fbd-8dc9-9501d5c5d5e2",
+      "instance_id": "urn:uuid:99906764-0854-43b6-8620-e2330baef830",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -341,17 +341,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.bmffHash.match",
@@ -372,12 +372,12 @@
       "mime_type": "image/heif",
       "category": "image",
       "fixture_size": 459,
-      "signed_size": 15464,
+      "signed_size": 15443,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:9a7baad4-86c9-4bf5-bec8-2e3e7baba7be",
+      "instance_id": "urn:uuid:5cae68ee-edd3-4d38-9715-aa555a709d6c",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -398,17 +398,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.bmffHash.match",
@@ -429,12 +429,12 @@
       "mime_type": "image/svg+xml",
       "category": "image",
       "fixture_size": 355,
-      "signed_size": 19997,
+      "signed_size": 19969,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:df1cd211-98e2-48a8-bcc4-f69fe276c9c0",
+      "instance_id": "urn:uuid:0278aa74-7123-4b6d-b5ed-3c68912b5f68",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -455,17 +455,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
         },
         {
           "code": "assertion.dataHash.match",
@@ -486,12 +486,12 @@
       "mime_type": "image/x-adobe-dng",
       "category": "image",
       "fixture_size": 4230,
-      "signed_size": 18931,
+      "signed_size": 18910,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:faff10ab-3dd7-4dab-9ea5-52258fe64463",
+      "instance_id": "urn:uuid:32ffaa30-77c9-476e-a4b2-7cd71d72e1fc",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -512,17 +512,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
         },
         {
           "code": "assertion.dataHash.match",
@@ -548,7 +548,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:f6aff836-3632-44ab-9337-b31c3ecfcbdc",
+      "instance_id": "urn:uuid:532f3067-9da3-4437-b7e0-126cd3f3cfe6",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -569,22 +569,22 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.thumbnail.claim"
         },
         {
           "code": "assertion.dataHash.match",
@@ -611,7 +611,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:b5e214fc-b62f-45c1-8004-fd1e38a8f709",
+      "manifest_label": "urn:c2pa:704a22c6-2cdb-4033-b656-5dfc51c67ec0",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -626,12 +626,12 @@
       "mime_type": "image/heic-sequence",
       "category": "image",
       "fixture_size": 459,
-      "signed_size": 15483,
+      "signed_size": 15462,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:b4729721-67ba-46f7-9d93-c3f2903d73df",
+      "instance_id": "urn:uuid:68dd22bd-aaa3-406e-8968-230b3b6c5ae9",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -652,17 +652,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.bmffHash.match",
@@ -683,12 +683,12 @@
       "mime_type": "image/heif-sequence",
       "category": "image",
       "fixture_size": 459,
-      "signed_size": 15483,
+      "signed_size": 15462,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:ec52fe2a-a167-4eef-aeef-6ab5217fd23f",
+      "instance_id": "urn:uuid:9ff401e0-7f6f-49b8-8d44-5b8e74bd556d",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -709,17 +709,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.bmffHash.match",
@@ -740,12 +740,12 @@
       "mime_type": "video/mp4",
       "category": "video",
       "fixture_size": 8448,
-      "signed_size": 23451,
+      "signed_size": 23430,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:fbf72a60-8c5b-4623-ba26-ebe000405bc8",
+      "instance_id": "urn:uuid:19f25d4d-3e6e-4a39-89ba-4f35d6f62f12",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -766,17 +766,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.bmffHash.match",
@@ -797,12 +797,12 @@
       "mime_type": "video/quicktime",
       "category": "video",
       "fixture_size": 2161,
-      "signed_size": 17164,
+      "signed_size": 17143,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:464325c5-100d-4617-a1b7-6e0792f186fb",
+      "instance_id": "urn:uuid:334dab42-f1d7-457c-b54a-b4dc91f8fbff",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -823,17 +823,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.bmffHash.match",
@@ -854,12 +854,12 @@
       "mime_type": "video/x-msvideo",
       "category": "video",
       "fixture_size": 7436,
-      "signed_size": 22108,
+      "signed_size": 22086,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:5086e1a8-4d4b-4182-8557-fec242ebfdb6",
+      "instance_id": "urn:uuid:129bcf88-9f9f-44a2-9831-506d4f483c3e",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -880,17 +880,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
         },
         {
           "code": "assertion.dataHash.match",
@@ -911,12 +911,12 @@
       "mime_type": "video/x-m4v",
       "category": "video",
       "fixture_size": 2215,
-      "signed_size": 17218,
+      "signed_size": 17197,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:c25f093d-8b25-4cc5-921d-236726f466d8",
+      "instance_id": "urn:uuid:d438ee3c-1df5-4b6b-9362-44676bce21a0",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -937,17 +937,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.bmffHash.match",
@@ -968,12 +968,12 @@
       "mime_type": "audio/wav",
       "category": "audio",
       "fixture_size": 88244,
-      "signed_size": 102918,
+      "signed_size": 102896,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:1065ab94-6937-421c-945e-5ac7fd65d6f3",
+      "instance_id": "urn:uuid:421d867d-25e6-4d82-83b7-01033093837a",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -994,17 +994,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
         },
         {
           "code": "assertion.dataHash.match",
@@ -1025,12 +1025,12 @@
       "mime_type": "audio/mpeg",
       "category": "audio",
       "fixture_size": 5977,
-      "signed_size": 20681,
+      "signed_size": 20660,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:88a4b827-1f40-4721-aa10-83ca13caed9f",
+      "instance_id": "urn:uuid:f4598833-71af-4d72-9d18-8f17d6fe2029",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -1051,17 +1051,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
         },
         {
           "code": "assertion.dataHash.match",
@@ -1082,12 +1082,12 @@
       "mime_type": "audio/mp4",
       "category": "audio",
       "fixture_size": 16161,
-      "signed_size": 31164,
+      "signed_size": 31143,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:ea7356a8-83f3-4723-a414-1f6ab3e9f894",
+      "instance_id": "urn:uuid:82a1184a-8911-4e87-b6e3-0fc7cdeb0582",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -1108,17 +1108,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.bmffHash.match",
@@ -1145,7 +1145,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:02c0c696-19fd-43ab-ba61-8cdeef3adfab",
+      "manifest_label": "urn:c2pa:b15b7bf3-aa45-4deb-8c05-6ffed14a0713",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1160,12 +1160,12 @@
       "mime_type": "audio/MPA",
       "category": "audio",
       "fixture_size": 5977,
-      "signed_size": 20681,
+      "signed_size": 20660,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:3d65bd4d-6392-4fc8-aea2-3c204b410db3",
+      "instance_id": "urn:uuid:840ea2ff-7180-4a4d-a312-586408fd6e45",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -1186,17 +1186,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.data"
         },
         {
           "code": "assertion.dataHash.match",
@@ -1217,12 +1217,12 @@
       "mime_type": "audio/aac",
       "category": "audio",
       "fixture_size": 16161,
-      "signed_size": 31164,
+      "signed_size": 31143,
       "sign_success": true,
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:9d46b5c8-531f-4846-8368-7ce9e046f9f9",
+      "instance_id": "urn:uuid:72554575-c0bc-4301-bafe-206b33e892e9",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -1243,17 +1243,17 @@
         {
           "code": "assertion.hashedURI.match",
           "success": true,
-          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
-        },
-        {
-          "code": "assertion.hashedURI.match",
-          "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.actions.v2"
         },
         {
           "code": "assertion.hashedURI.match",
           "success": true,
           "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/com.encypher.provenance"
+        },
+        {
+          "code": "assertion.hashedURI.match",
+          "success": true,
+          "explanation": "hashed uri matched: self#jumbf=c2pa.assertions/c2pa.hash.bmff.v3"
         },
         {
           "code": "assertion.bmffHash.match",
@@ -1280,7 +1280,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:c8f152ec-bddb-41b0-8c9c-4aadf5883976",
+      "manifest_label": "urn:c2pa:8856e341-0143-4351-85c5-d4800d1fc5e9",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1301,7 +1301,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:196fcb79-ff7d-4390-a009-1929db994317",
+      "manifest_label": "urn:c2pa:e7e75c51-eaf8-4801-9502-3bf873186667",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1322,7 +1322,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:6a8ea06f-c6e0-4c58-b2f2-d1f937e727ac",
+      "manifest_label": "urn:c2pa:63284269-d6f4-43c7-98e7-781f6f84a699",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1343,7 +1343,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:26337aae-f1e9-46ad-9b4c-63cd3f814b34",
+      "manifest_label": "urn:c2pa:3f9c9827-8dc2-42ff-aa6c-6b4bef1b1268",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1364,7 +1364,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:0bf56cf9-f735-4861-81b5-c04695582d37",
+      "manifest_label": "urn:c2pa:1151a708-4046-46c2-8db2-b63d7e6e5220",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1385,7 +1385,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:9b7b8aa7-1eee-4478-b35d-9623f83186fa",
+      "manifest_label": "urn:c2pa:1f70ab2f-fa14-4cbd-8f7c-3a9789de6f2d",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1406,7 +1406,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:3064f03f-f3fe-412c-b6e8-f077c4026b31",
+      "manifest_label": "urn:c2pa:6aa04e28-0079-4caf-a3fb-324ef55fd777",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",

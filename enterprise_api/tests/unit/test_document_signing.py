@@ -179,7 +179,7 @@ class TestCoseSigner:
 
         decoded = cbor2.loads(result)
         unprotected = decoded.value[1]
-        assert COSE_HDR_X5CHAIN in unprotected
+        assert "x5chain" in unprotected
 
     def test_sign_claim_protected_has_alg(self, test_certs):
         from app.utils.cose_signer import sign_claim, COSE_HDR_ALG
@@ -235,11 +235,10 @@ class TestClaimBuilder:
             title="Test Doc",
         )
         claim = cbor2.loads(result)
-        assert "claim_generator" in claim
-        assert "assertions" in claim
-        assert len(claim["assertions"]) == 1
+        assert "claim_generator_info" in claim
+        assert "created_assertions" in claim
+        assert len(claim["created_assertions"]) == 1
         assert claim["dc:title"] == "Test Doc"
-        assert claim["dc:format"] == "application/pdf"
 
 
 # ---- ZIP embedder tests ----
@@ -824,8 +823,8 @@ class TestSignVerifyRoundtrip:
 
         # 4. Verify claim structure
         claim = cbor2.loads(m["claim_cbor"])
-        assert "claim_generator" in claim
-        assert "assertions" in claim
+        assert "claim_generator_info" in claim
+        assert "created_assertions" in claim
         assert "signature" in claim
 
         # 5. Verify collection data hash assertion exists
@@ -904,7 +903,7 @@ class TestSignVerifyRoundtrip:
 
         # 4. Verify claim structure
         claim = cbor2.loads(m["claim_cbor"])
-        assert "assertions" in claim
+        assert "created_assertions" in claim
 
         return True
 
@@ -1239,8 +1238,7 @@ class TestJxlSigning:
 
         # Verify claim
         claim = cbor2.loads(m["claim_cbor"])
-        assert claim["dc:format"] == "image/jxl"
-        assert "assertions" in claim
+        assert "created_assertions" in claim
 
     def test_sign_jxl_via_dispatcher(self, test_certs):
         """Verify sign_document routes image/jxl correctly."""

@@ -44,12 +44,14 @@ log = logging.getLogger("c2pa_conformance")
 FIXTURES_DIR = SCRIPT_DIR / "fixtures"
 SIGNED_DIR = SCRIPT_DIR / "signed"
 RESULTS_DIR = SCRIPT_DIR / "results"
+MANIFESTS_DIR = SCRIPT_DIR / "manifests"
 CERTS_DIR = ENTERPRISE_DIR / "tests" / "c2pa_test_certs"
 
 # Ensure output dirs exist
 FIXTURES_DIR.mkdir(exist_ok=True)
 SIGNED_DIR.mkdir(exist_ok=True)
 RESULTS_DIR.mkdir(exist_ok=True)
+MANIFESTS_DIR.mkdir(exist_ok=True)
 
 
 @dataclass
@@ -98,10 +100,8 @@ FORMATS = [
     FormatSpec("DOCX", ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "document", "document_service"),
     FormatSpec("ODT", ".odt", "application/vnd.oasis.opendocument.text", "document", "document_service"),
     FormatSpec("OXPS", ".oxps", "application/oxps", "document", "document_service"),
-    # Fonts (3)
+    # Fonts (C2PA conformance covers OTF only; TTF/SFNT supported at runtime)
     FormatSpec("OTF", ".otf", "font/otf", "font", "document_service"),
-    FormatSpec("TTF", ".ttf", "font/ttf", "font", "document_service"),
-    FormatSpec("SFNT", ".sfnt", "font/sfnt", "font", "document_service"),
 ]
 
 
@@ -820,6 +820,217 @@ def verify_signed_file(
 
 
 # ---------------------------------------------------------------------------
+# Manifest JSON extraction (for conformance test validation)
+# ---------------------------------------------------------------------------
+
+
+def extract_manifest_json(
+    signed_bytes: bytes,
+    mime_type: str,
+    fmt: FormatSpec,
+) -> Optional[dict]:
+    """Extract the C2PA manifest as a JSON-serializable dict.
+
+    Pipeline A: uses c2pa.Reader to get the full manifest with created flags.
+    Pipeline B: parses JUMBF directly and includes the CBOR claim (with
+    created_assertions) in the output.
+    """
+    if mime_type in _CUSTOM_PIPELINE_MIMES:
+        return _extract_pipeline_b_manifest(signed_bytes, mime_type)
+    return _extract_pipeline_a_manifest(signed_bytes, mime_type)
+
+
+def _extract_pipeline_a_manifest(signed_bytes: bytes, mime_type: str) -> Optional[dict]:
+    """Extract manifest JSON via c2pa.Reader (Pipeline A formats)."""
+    import c2pa
+
+    builder_mime = _BUILDER_MIME_CANONICAL.get(mime_type, mime_type)
+    try:
+        reader = c2pa.Reader(builder_mime, io.BytesIO(signed_bytes))
+        return json.loads(reader.json())
+    except Exception as e:
+        log.warning("  Manifest extraction (Pipeline A) failed: %s", e)
+        return None
+
+
+def _extract_pipeline_b_manifest(signed_bytes: bytes, mime_type: str) -> Optional[dict]:
+    """Extract manifest JSON from JUMBF (Pipeline B formats).
+
+    Parses JUMBF, decodes CBOR assertions and claim, and produces a
+    manifest dict in the **canonical c2pa-rs Reader format** so that
+    Pipeline A and Pipeline B JSON output are structurally identical.
+    """
+    import cbor2
+
+    from cryptography.x509 import load_der_x509_certificate
+
+    from app.utils.c2pa_manifest_extractor import extract_manifest
+    from app.utils.cose_signer import COSE_ALG_EDDSA, COSE_ALG_ES256, COSE_ALG_ES384, COSE_ALG_ES512, COSE_ALG_PS256
+    from app.utils.jumbf import parse_manifest_store
+
+    ALG_NAMES = {
+        COSE_ALG_ES256: "Es256",
+        COSE_ALG_ES384: "Es384",
+        COSE_ALG_ES512: "Es512",
+        COSE_ALG_PS256: "Ps256",
+        COSE_ALG_EDDSA: "EdDsa",
+    }
+
+    try:
+        manifest_bytes = extract_manifest(signed_bytes, mime_type)
+        if not manifest_bytes:
+            log.warning("  No JUMBF manifest found in %s", mime_type)
+            return None
+
+        store = parse_manifest_store(manifest_bytes)
+        manifests_dict: dict[str, dict] = {}
+        active_label = None
+
+        for m in store.get("manifests", []):
+            label = m.get("label", "")
+            if active_label is None:
+                active_label = label
+
+            # Decode CBOR assertions into canonical array format
+            assertions_list = []
+            for a_label, cbor_bytes in m.get("assertions", {}).items():
+                try:
+                    data = cbor2.loads(cbor_bytes)
+                except Exception:
+                    data = {"_raw_hex": cbor_bytes.hex()}
+                # Convert bytes values to hex strings for JSON serialization
+                _sanitize_bytes(data)
+                assertions_list.append(
+                    {
+                        "label": a_label,
+                        "data": data,
+                        "created": True,
+                    }
+                )
+
+            # Decode CBOR claim
+            claim = {}
+            if m.get("claim_cbor"):
+                try:
+                    claim = cbor2.loads(m["claim_cbor"])
+                except Exception as e:
+                    log.warning("  CBOR claim decode failed: %s", e)
+
+            # Extract signature_info from COSE envelope
+            sig_info = {}
+            if m.get("signature_cose"):
+                sig_info = _extract_signature_info(
+                    m["signature_cose"],
+                    ALG_NAMES,
+                )
+
+            # Map claim fields to canonical c2pa-rs Reader keys
+            instance_id = claim.get("instanceID", "")
+            # c2pa-rs normalizes instanceID to xmp:iid: format
+            if instance_id.startswith("urn:uuid:"):
+                instance_id = "xmp:iid:" + instance_id[len("urn:uuid:") :]
+
+            cgi = claim.get("claim_generator_info", {})
+            # c2pa-rs always wraps claim_generator_info in an array
+            if isinstance(cgi, dict):
+                cgi = [cgi]
+
+            manifest_obj: dict = {
+                "claim_generator_info": cgi,
+                "title": claim.get("dc:title", ""),
+                "instance_id": instance_id,
+                "assertions": assertions_list,
+                "label": label,
+                "claim_version": 2,
+            }
+            if sig_info:
+                manifest_obj["signature_info"] = sig_info
+
+            manifests_dict[label] = manifest_obj
+
+        return {
+            "active_manifest": active_label,
+            "manifests": manifests_dict,
+        }
+    except Exception as e:
+        log.warning("  Manifest extraction (Pipeline B) failed: %s", e)
+        return None
+
+
+def _sanitize_bytes(obj):
+    """Recursively convert bytes values to hex strings for JSON serialization."""
+    if isinstance(obj, dict):
+        for k, v in list(obj.items()):
+            if isinstance(v, bytes):
+                obj[k] = v.hex()
+            elif isinstance(v, (dict, list)):
+                _sanitize_bytes(v)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            if isinstance(v, bytes):
+                obj[i] = v.hex()
+            elif isinstance(v, (dict, list)):
+                _sanitize_bytes(v)
+
+
+def _extract_signature_info(cose_bytes: bytes, alg_names: dict) -> dict:
+    """Extract signature_info from a COSE_Sign1 envelope."""
+    import cbor2
+
+    from cryptography.x509 import load_der_x509_certificate
+
+    try:
+        decoded = cbor2.loads(cose_bytes)
+        # Handle CBORTag wrapper
+        if isinstance(decoded, cbor2.CBORTag):
+            decoded = decoded.value
+        if not isinstance(decoded, (list, tuple)) or len(decoded) < 4:
+            return {}
+
+        protected_bytes = decoded[0]
+        unprotected = decoded[1] if isinstance(decoded[1], dict) else {}
+
+        # Get algorithm from protected headers
+        protected = cbor2.loads(protected_bytes) if protected_bytes else {}
+        alg_id = protected.get(1)
+        alg_name = alg_names.get(alg_id, f"Unknown({alg_id})")
+
+        info: dict = {"alg": alg_name}
+
+        # Extract cert info from x5chain (string key or integer 33)
+        chain = unprotected.get("x5chain") or unprotected.get(33)
+        if chain:
+            cert_der = chain[0] if isinstance(chain, list) else chain
+            if isinstance(cert_der, bytes):
+                cert = load_der_x509_certificate(cert_der)
+                subject = cert.subject
+                for attr in subject:
+                    oid = attr.oid.dotted_string
+                    if oid == "2.5.4.10":  # O = Organization
+                        info["issuer"] = attr.value
+                    elif oid == "2.5.4.3":  # CN = Common Name
+                        info["common_name"] = attr.value
+                info["cert_serial_number"] = str(cert.serial_number)
+
+        return info
+    except Exception:
+        return {}
+
+
+def save_manifest_json(manifest_data: Optional[dict], fmt: FormatSpec):
+    """Save extracted manifest as a JSON file in the manifests/ directory."""
+    if manifest_data is None:
+        return
+    stem = fmt.output_stem or "signed_test"
+    # Map extension to a clean name for the JSON filename
+    ext_name = fmt.extension.lstrip(".")
+    json_name = f"{stem}_{ext_name}.json" if stem == "signed_test" else f"{stem}.json"
+    json_path = MANIFESTS_DIR / json_name
+    json_path.write_text(json.dumps(manifest_data, indent=2, default=str) + "\n")
+    log.info("  Manifest JSON: %s", json_path.name)
+
+
+# ---------------------------------------------------------------------------
 # Main orchestration
 # ---------------------------------------------------------------------------
 
@@ -906,6 +1117,13 @@ def run() -> list[FormatResult]:
             result.verify_error = str(e)
             result.verify_success = False
             log.error("  Verify error: %s", e)
+
+        # Step 4: Extract and save manifest JSON
+        try:
+            manifest_data = extract_manifest_json(signed_bytes, fmt.mime_type, fmt)
+            save_manifest_json(manifest_data, fmt)
+        except Exception as e:
+            log.warning("  Manifest JSON extraction failed: %s", e)
 
         results.append(result)
 
