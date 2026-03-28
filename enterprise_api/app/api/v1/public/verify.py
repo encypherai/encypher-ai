@@ -783,6 +783,7 @@ async def unified_verify_media(
 
     data = await upload.read()
     mime_type = upload.content_type or "application/octet-stream"
+    filename = getattr(upload, "filename", None)
 
-    resp = svc_verify_media(data, mime_type)
+    resp = svc_verify_media(data, mime_type, filename=filename)
     return resp.model_dump(mode="json")

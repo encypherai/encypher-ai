@@ -64,8 +64,10 @@ async def execute_image_signing(
     document_id = f"cdn_{uuid.uuid4().hex[:16]}"
 
     # Load signing credentials — use empty strings for passthrough mode
+    # x5chain needs leaf cert first, then intermediates
     cert_pem: str = org.certificate_pem or ""
-    cert_chain_pem: str = org.cert_chain_pem or ""
+    chain_only: str = org.cert_chain_pem or ""
+    cert_chain_pem: str = (cert_pem.strip() + "\n" + chain_only.strip()).strip() if cert_pem else chain_only
 
     private_key_pem: str = ""
     try:

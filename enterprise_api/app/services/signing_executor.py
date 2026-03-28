@@ -105,13 +105,19 @@ async def execute_signing(
         else:
             private_key = await load_organization_private_key(org_id, db)
             signer_id = org_id
-            # Fetch certificate chain from database
+            # Fetch leaf certificate + chain from database for x5chain embedding
             try:
                 row = await db.execute(
-                    text("SELECT certificate_chain FROM organizations WHERE id = :org_id"),
+                    text("SELECT certificate_pem, certificate_chain FROM organizations WHERE id = :org_id"),
                     {"org_id": org_id},
                 )
-                cert_chain_pem = row.scalar_one_or_none() or None
+                cert_row = row.one_or_none()
+                if cert_row:
+                    leaf_pem = cert_row[0] or ""
+                    chain_pem_val = cert_row[1] or ""
+                    # x5chain needs leaf cert first, then intermediates
+                    combined = (leaf_pem.strip() + "\n" + chain_pem_val.strip()).strip()
+                    cert_chain_pem = combined if combined else None
             except Exception as exc:
                 logger.warning("Failed to load cert chain for org %s: %s", org_id, exc)
     except ValueError as exc:

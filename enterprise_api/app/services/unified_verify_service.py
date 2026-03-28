@@ -42,6 +42,7 @@ _AUDIO_MIMES = frozenset(
     {
         "audio/mpeg",
         "audio/mp3",
+        "audio/mpa",
         "audio/wav",
         "audio/wave",
         "audio/x-wav",
@@ -60,6 +61,7 @@ _VIDEO_MIMES = frozenset(
         "video/ogg",
         "video/quicktime",
         "video/x-msvideo",
+        "video/x-m4v",
         "video/avi",
         "video/msvideo",
         "video/x-matroska",
@@ -101,6 +103,158 @@ def classify_mime(mime_type: str) -> str:
     if mime_lower in _FONT_MIMES or mime_lower.startswith("font/"):
         return "font"
     return "unknown"
+
+
+# Extension-to-MIME mapping for fallback detection (all conformance formats)
+_EXTENSION_TO_MIME: dict[str, str] = {
+    # Images
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".tiff": "image/tiff",
+    ".tif": "image/tiff",
+    ".avif": "image/avif",
+    ".heic": "image/heic",
+    ".heif": "image/heif",
+    ".svg": "image/svg+xml",
+    ".dng": "image/x-adobe-dng",
+    ".gif": "image/gif",
+    ".jxl": "image/jxl",
+    # Video
+    ".mp4": "video/mp4",
+    ".mov": "video/quicktime",
+    ".m4v": "video/x-m4v",
+    ".avi": "video/x-msvideo",
+    # Audio
+    ".wav": "audio/wav",
+    ".wave": "audio/wav",
+    ".mp3": "audio/mpeg",
+    ".m4a": "audio/mp4",
+    ".aac": "audio/aac",
+    ".flac": "audio/flac",
+    ".mpa": "audio/mpeg",
+    # Documents
+    ".pdf": "application/pdf",
+    ".epub": "application/epub+zip",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".odt": "application/vnd.oasis.opendocument.text",
+    ".oxps": "application/oxps",
+    # Fonts
+    ".otf": "font/otf",
+    ".ttf": "font/ttf",
+}
+
+
+def sniff_mime_type(data: bytes, filename: str | None, client_mime: str) -> str:
+    """Determine MIME type from file bytes and filename, falling back to client header.
+
+    Uses magic byte detection for media files when the client-supplied MIME type
+    is generic (application/octet-stream) or missing.
+    """
+    client_lower = client_mime.lower().strip()
+    if client_lower not in ("application/octet-stream", ""):
+        return client_mime
+
+    # Try magic byte detection
+    detected = _detect_mime_from_bytes(data)
+    if detected:
+        return detected
+
+    # Fall back to filename extension
+    if filename:
+        import os
+
+        ext = os.path.splitext(filename)[1].lower()
+        if ext in _EXTENSION_TO_MIME:
+            return _EXTENSION_TO_MIME[ext]
+
+    return client_mime
+
+
+def _detect_mime_from_bytes(data: bytes) -> str | None:
+    """Detect MIME type from file magic bytes."""
+    if len(data) < 12:
+        return None
+
+    # RIFF container: WAV or AVI
+    if data[:4] == b"RIFF" and len(data) >= 12:
+        if data[8:12] == b"WAVE":
+            return "audio/wav"
+        if data[8:12] == b"AVI ":
+            return "video/x-msvideo"
+
+    # ISO BMFF: MP4, MOV, M4V, M4A (ftyp box)
+    if data[4:8] == b"ftyp":
+        ftyp_brand = data[8:12]
+        if ftyp_brand in (b"isom", b"iso2", b"mp41", b"mp42", b"avc1", b"dash"):
+            return "video/mp4"
+        if ftyp_brand in (b"qt  ",):
+            return "video/quicktime"
+        if ftyp_brand in (b"M4V ", b"M4VP"):
+            return "video/x-m4v"
+        if ftyp_brand in (b"M4A ", b"M4B "):
+            return "audio/mp4"
+        if ftyp_brand in (b"heic", b"heis"):
+            return "image/heic"
+        if ftyp_brand in (b"heif", b"mif1"):
+            return "image/heif"
+        if ftyp_brand in (b"avif", b"avis"):
+            return "image/avif"
+        # Generic ftyp -- default to video/mp4
+        return "video/mp4"
+
+    # JPEG
+    if data[:2] == b"\xff\xd8":
+        return "image/jpeg"
+
+    # PNG
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+
+    # GIF
+    if data[:6] in (b"GIF87a", b"GIF89a"):
+        return "image/gif"
+
+    # WebP
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+
+    # TIFF (also covers DNG)
+    if data[:4] in (b"II\x2a\x00", b"MM\x00\x2a"):
+        return "image/tiff"
+
+    # FLAC
+    if data[:4] == b"fLaC":
+        return "audio/flac"
+
+    # MP3 (ID3 tag or sync word)
+    if data[:3] == b"ID3" or (data[0] == 0xFF and (data[1] & 0xE0) == 0xE0):
+        return "audio/mpeg"
+
+    # PDF
+    if data[:5] == b"%PDF-":
+        return "application/pdf"
+
+    # SVG
+    stripped = data[:200].lstrip()
+    if stripped.startswith((b"<?xml", b"<svg", b"\xef\xbb\xbf<?xml", b"\xef\xbb\xbf<svg")):
+        return "image/svg+xml"
+
+    # JUMBF / JXL
+    if data[:2] == b"\xff\x0a" or data[:12] == b"\x00\x00\x00\x0cJXL \r\n\x87\n":
+        return "image/jxl"
+
+    # EBML (WebM/MKV)
+    if data[:4] == b"\x1a\x45\xdf\xa3":
+        return "video/webm"
+
+    # ZIP-based containers (EPUB, DOCX, ODT, OXPS)
+    if data[:4] == b"PK\x03\x04":
+        # Cannot distinguish without reading zip entries; rely on extension
+        return None
+
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -642,10 +796,12 @@ def verify_media(
     data: bytes,
     mime_type: str,
     *,
+    filename: str | None = None,
     correlation_id: Optional[str] = None,
 ) -> UnifiedVerifyResponse:
     """Verify a binary media file (image, audio, or video) via C2PA."""
     cid = correlation_id or uuid.uuid4().hex
+    mime_type = sniff_mime_type(data, filename, mime_type)
     media_type = classify_mime(mime_type)
 
     # Pipeline B formats: route FLAC and JXL to document verifier

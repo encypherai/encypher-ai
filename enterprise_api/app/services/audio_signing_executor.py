@@ -43,7 +43,10 @@ async def execute_audio_signing(
     audio_id = f"aud_{uuid.uuid4().hex[:16]}"
     document_id = document_id or f"doc_{uuid.uuid4().hex[:16]}"
 
-    cert_chain_pem: str = org.cert_chain_pem or ""
+    # x5chain needs leaf cert first, then intermediates
+    _cert_pem: str = org.certificate_pem or ""
+    _chain_only: str = org.cert_chain_pem or ""
+    cert_chain_pem: str = (_cert_pem.strip() + "\n" + _chain_only.strip()).strip() if _cert_pem else _chain_only
 
     private_key_pem: str = ""
     try:
