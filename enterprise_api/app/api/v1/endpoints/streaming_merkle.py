@@ -109,13 +109,27 @@ async def add_segment_to_session(
 
             organization_id = organization["organization_id"]
             is_demo = organization.get("is_demo", False)
+            cert_chain_pem = None
 
             if is_demo or organization_id.startswith("user_"):
                 private_key = get_demo_private_key()
             else:
                 private_key = await load_organization_private_key(organization_id, db)
+                try:
+                    from sqlalchemy import text as sa_text
 
-            embedding_service = EmbeddingService(private_key, organization_id)
+                    row = await db.execute(
+                        sa_text("SELECT certificate_pem, certificate_chain FROM organizations WHERE id = :org_id"),
+                        {"org_id": organization_id},
+                    )
+                    cert_row = row.one_or_none()
+                    if cert_row:
+                        combined = ((cert_row[0] or "").strip() + "\n" + (cert_row[1] or "").strip()).strip()
+                        cert_chain_pem = combined if combined else None
+                except Exception as exc:
+                    logger.warning("Failed to load cert chain for org %s: %s", organization_id, exc)
+
+            embedding_service = EmbeddingService(private_key, organization_id, cert_chain_pem=cert_chain_pem)
 
             session, root_hash, _ = await streaming_merkle_service.finalize_session(
                 session_id=request.session_id,
@@ -180,13 +194,27 @@ async def finalize_streaming_session(
         from app.utils.crypto_utils import get_demo_private_key, load_organization_private_key
 
         is_demo = organization.get("is_demo", False)
+        cert_chain_pem = None
 
         if is_demo or organization_id.startswith("user_"):
             private_key = get_demo_private_key()
         else:
             private_key = await load_organization_private_key(organization_id, db)
+            try:
+                from sqlalchemy import text as sa_text
 
-        embedding_service = EmbeddingService(private_key, organization_id)
+                row = await db.execute(
+                    sa_text("SELECT certificate_pem, certificate_chain FROM organizations WHERE id = :org_id"),
+                    {"org_id": organization_id},
+                )
+                cert_row = row.one_or_none()
+                if cert_row:
+                    combined = ((cert_row[0] or "").strip() + "\n" + (cert_row[1] or "").strip()).strip()
+                    cert_chain_pem = combined if combined else None
+            except Exception as exc:
+                logger.warning("Failed to load cert chain for org %s: %s", organization_id, exc)
+
+        embedding_service = EmbeddingService(private_key, organization_id, cert_chain_pem=cert_chain_pem)
 
         session, root_hash, embedded_content = await streaming_merkle_service.finalize_session(
             session_id=request.session_id,

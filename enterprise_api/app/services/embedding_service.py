@@ -23,8 +23,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 # Import from free encypher-ai package (foundation)
 try:
-    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
     from encypher.core.constants import MetadataTarget
+    from encypher.core.signing import SigningKey
     from encypher.core.unicode_metadata import UnicodeMetadata
 except ImportError:
     raise ImportError("encypher-ai package not found. Please install: pip install encypher-ai")
@@ -83,16 +83,18 @@ class EmbeddingService:
     - Tamper detection
     """
 
-    def __init__(self, private_key: Ed25519PrivateKey, signer_id: str):
+    def __init__(self, private_key: SigningKey, signer_id: str, cert_chain_pem: Optional[str] = None):
         """
         Initialize embedding service.
 
         Args:
-            private_key: Ed25519 private key for signing (from encypher-ai)
-            signer_id: Identifier for the signing key
+            private_key: Private key for signing (Ed25519, EC, or RSA).
+            signer_id: Identifier for the signing key.
+            cert_chain_pem: Optional PEM certificate chain (required for EC/RSA C2PA signing).
         """
         self.private_key = private_key
         self.signer_id = signer_id
+        self.cert_chain_pem = cert_chain_pem
 
     @staticmethod
     def _get_api_version() -> str:
@@ -316,6 +318,7 @@ class EmbeddingService:
                         custom_metadata=minimal_metadata,
                         metadata_format="basic",  # Minimal format, not full C2PA
                         add_hard_binding=False,  # No hard binding for sentence-level
+                        cert_chain_pem=self.cert_chain_pem,
                     )
                     embedded_segments.append(embedded_segment)
                 except Exception as e:
@@ -471,6 +474,7 @@ class EmbeddingService:
                     add_hard_binding=False,
                     distribute_across_targets=use_distributed,
                     target=target_for_embedding,
+                    cert_chain_pem=self.cert_chain_pem,
                 )
                 logger.info(f"Successfully added basic metadata to document {document_id}")
             except Exception as e:
@@ -614,6 +618,7 @@ class EmbeddingService:
                     custom_assertions=final_custom_assertions,
                     distribute_across_targets=use_distributed,
                     target=target_for_embedding,
+                    cert_chain_pem=self.cert_chain_pem,
                 )
 
                 # --- Phase 4: Extract C2PA manifest for DB storage ---
@@ -632,13 +637,13 @@ class EmbeddingService:
                     embedded_document = full_document
 
                 # --- Phase 5: Compute segment location ---
-                from app.utils.segmentation import segment_paragraphs, segment_sentences
+                from app.utils.segmentation import segment_paragraphs, segment_sentences_default
 
                 paragraphs = segment_paragraphs("\n\n".join(segments))
                 sentence_location: dict[int, dict[str, int]] = {}
                 global_sent_idx = 0
                 for para_idx, para_text in enumerate(paragraphs):
-                    para_sentences = segment_sentences(para_text)
+                    para_sentences = segment_sentences_default(para_text)
                     for sent_in_para, _sent in enumerate(para_sentences):
                         if global_sent_idx < len(segments):
                             sentence_location[global_sent_idx] = {
@@ -712,6 +717,7 @@ class EmbeddingService:
                     custom_assertions=final_custom_assertions,
                     distribute_across_targets=use_distributed,
                     target=target_for_embedding,
+                    cert_chain_pem=self.cert_chain_pem,
                 )
                 logger.info(f"Successfully added C2PA wrapper to document {document_id}")
             except Exception as e:

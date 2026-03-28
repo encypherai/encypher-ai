@@ -83,9 +83,10 @@ async def encode_document_with_embeddings(
                 authorization=None,
             )
 
-        # Load organization's private key for signing
+        # Load organization's private key and certificate chain for signing
         # For user-level orgs (is_demo=true), use the demo key
         is_demo = organization.get("is_demo", False)
+        cert_chain_pem: Optional[str] = None
 
         if is_demo or organization_id.startswith("user_"):
             # Use demo key for user-level orgs and demo accounts
@@ -99,6 +100,20 @@ async def encode_document_with_embeddings(
                 private_key = await load_organization_private_key(organization_id, core_db)
                 # organization_id already has "org_" prefix (e.g., "org_demo")
                 signer_id = organization_id
+                # Fetch leaf certificate + chain for C2PA signing (required for EC/RSA keys)
+                try:
+                    row = await core_db.execute(
+                        text("SELECT certificate_pem, certificate_chain FROM organizations WHERE id = :org_id"),
+                        {"org_id": organization_id},
+                    )
+                    cert_row = row.one_or_none()
+                    if cert_row:
+                        leaf_pem = cert_row[0] or ""
+                        chain_pem_val = cert_row[1] or ""
+                        combined = (leaf_pem.strip() + "\n" + chain_pem_val.strip()).strip()
+                        cert_chain_pem = combined if combined else None
+                except Exception as exc:
+                    logger.warning("Failed to load cert chain for org %s: %s", organization_id, exc)
             except ValueError as e:
                 logger.error(f"Failed to load private key for org {organization_id}: {e}")
                 raise HTTPException(
@@ -338,8 +353,8 @@ async def encode_document_with_embeddings(
             validated_assertions = list(validated_assertions)
         validated_assertions.append(status_assertion)
 
-        # Initialize embedding service with organization's key
-        embedding_service = EmbeddingService(private_key, signer_id)
+        # Initialize embedding service with organization's key and certificate chain
+        embedding_service = EmbeddingService(private_key, signer_id, cert_chain_pem=cert_chain_pem)
 
         # Free tier (document-level): Skip Merkle tree and segmentation
         # Just create ONE C2PA wrapper for the entire document
