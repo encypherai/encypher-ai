@@ -11,6 +11,10 @@ import apiClient from '../../lib/api';
 type BgMode = 'light' | 'dark';
 
 const SVG_ASSETS = [
+  { label: 'Lockup - Navy (no bg)', file: 'lockup-navy-nobg.svg' },
+  { label: 'Lockup - White (no bg)', file: 'lockup-white-nobg.svg' },
+  { label: 'Lockup - Navy (bg)', file: 'lockup-navy-bg.svg' },
+  { label: 'Lockup - White (bg)', file: 'lockup-white-bg.svg' },
   { label: 'Mark - Navy (no bg)', file: 'mark-navy-nobg.svg' },
   { label: 'Mark - White (no bg)', file: 'mark-white-nobg.svg' },
   { label: 'Mark - Navy (bg)', file: 'mark-navy-bg.svg' },
@@ -205,25 +209,27 @@ function PngExportPanel({ svgUrl, basename, aspectRatio }: {
 
 function AssetCard({ label, src, bgMode }: { label: string; src: string; bgMode: BgMode }) {
   const isDark = bgMode === 'dark';
-  const isWordmark = label.toLowerCase().includes('wordmark');
+  const lowerLabel = label.toLowerCase();
+  const isLockup = lowerLabel.includes('lockup');
+  const isWordmark = lowerLabel.includes('wordmark');
   const filename = src.split('/').pop() || '';
   const basename = filename.replace('.svg', '');
   const embedUrl = `https://encypher.com/brand/${filename}`;
-  const aspectRatio = isWordmark ? 134 / 24 : 1;
+  const aspectRatio = isLockup ? 950 / 240 : isWordmark ? 134 / 24 : 1;
 
   return (
-    <div className="rounded-xl border border-slate-200 dark:border-slate-700">
+    <div className={`rounded-xl border border-slate-200 dark:border-slate-700 ${isLockup ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
       <div
         className={`flex items-center justify-center p-6 rounded-t-xl ${
           isDark ? 'bg-slate-900' : 'bg-white'
-        } ${isWordmark ? 'min-h-[80px]' : 'min-h-[120px]'}`}
+        } ${isLockup ? 'min-h-[100px]' : isWordmark ? 'min-h-[80px]' : 'min-h-[120px]'}`}
       >
         <Image
           src={src}
           alt={label}
-          width={isWordmark ? 200 : 64}
-          height={isWordmark ? 50 : 64}
-          className={isWordmark ? 'h-8 w-auto' : 'h-16 w-16'}
+          width={isLockup ? 280 : isWordmark ? 200 : 64}
+          height={isLockup ? 71 : isWordmark ? 50 : 64}
+          className={isLockup ? 'h-14 w-auto' : isWordmark ? 'h-8 w-auto' : 'h-16 w-16'}
           unoptimized
         />
       </div>
