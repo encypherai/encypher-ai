@@ -4,7 +4,12 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Input, Button } from '@encypher/design-system';
-import MetadataBackground from '../../../components/hero/MetadataBackground';
+import dynamic from 'next/dynamic';
+
+const MetadataBackground = dynamic(
+  () => import('../../../components/hero/MetadataBackground'),
+  { ssr: false },
+);
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 

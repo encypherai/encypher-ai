@@ -21,8 +21,28 @@ const nextConfig = {
   ],
   transpilePackages: ['@encypher/design-system'],
 
-  // Optimize for production
+  // Skip type-checking during build (run separately via `tsc --noEmit` in CI)
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 
+  // Skip linting during build (run separately via `next lint`)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-accordion',
+      '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tabs',
+      'react-syntax-highlighter',
+    ],
+  },
 
   // Image optimization
   images: {

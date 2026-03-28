@@ -3,7 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Input, Button } from '@encypher/design-system';
-import MetadataBackground from '../../components/hero/MetadataBackground';
+import dynamic from 'next/dynamic';
+
+const MetadataBackground = dynamic(
+  () => import('../../components/hero/MetadataBackground'),
+  { ssr: false },
+);
 import TurnstileWidget from '../../components/security/TurnstileWidget';
 
 export default function ForgotPasswordPage() {

@@ -6,7 +6,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
-import MetadataBackground from '../../components/hero/MetadataBackground';
+import dynamic from 'next/dynamic';
+
+const MetadataBackground = dynamic(
+  () => import('../../components/hero/MetadataBackground'),
+  { ssr: false },
+);
 import TurnstileWidget from '../../components/security/TurnstileWidget';
 
 const LOGO_COLOR = '/assets/wordmark-navy-nobg.svg';

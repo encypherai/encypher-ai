@@ -62,6 +62,15 @@ jobs:
       - name: Install dependencies
         run: cd apps/dashboard && npm ci
 
+      - name: Restore Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: apps/dashboard/.next/cache
+          key: nextjs-dashboard-${{ hashFiles('apps/dashboard/package-lock.json') }}-${{ hashFiles('apps/dashboard/src/**') }}
+          restore-keys: |
+            nextjs-dashboard-${{ hashFiles('apps/dashboard/package-lock.json') }}-
+            nextjs-dashboard-
+
       - name: Type check
         run: cd apps/dashboard && npx tsc --noEmit
 

@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { EncypherMark, EncypherLoader, BRAND_COLORS } from '@encypher/icons';
@@ -24,9 +24,35 @@ const SVG_ASSETS = [
   { label: 'Favicon (SVG)', file: 'favicon.svg' },
 ] as const;
 
+const PRESET_SIZES = [32, 64, 128, 256, 512, 1024] as const;
 const MARK_COLORS = ['navy', 'azure', 'white'] as const;
 const LOADER_COLORS = ['navy', 'white'] as const;
 const LOADER_SIZES = ['sm', 'md', 'lg', 'xl'] as const;
+
+function svgToCanvas(svgUrl: string, width: number, height: number): Promise<HTMLCanvasElement> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas context unavailable'));
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas);
+    };
+    img.onerror = () => reject(new Error('Failed to load SVG'));
+    img.src = svgUrl;
+  });
+}
+
+function downloadCanvas(canvas: HTMLCanvasElement, filename: string) {
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = filename;
+  a.click();
+}
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -44,27 +70,59 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-const PNG_SIZES = [128, 256, 512] as const;
-
-function DownloadDropdown({ svgHref, svgFilename, pngBasename }: {
-  svgHref: string;
-  svgFilename: string;
-  pngBasename: string | null;
+function PngExportPanel({ svgUrl, basename, aspectRatio }: {
+  svgUrl: string;
+  basename: string;
+  aspectRatio: number;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [customW, setCustomW] = useState('');
+  const [customH, setCustomH] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  const handleCustomW = (v: string) => {
+    setCustomW(v);
+    const n = parseInt(v, 10);
+    if (n > 0) setCustomH(String(Math.round(n / aspectRatio)));
+    else setCustomH('');
+  };
+
+  const handleCustomH = (v: string) => {
+    setCustomH(v);
+    const n = parseInt(v, 10);
+    if (n > 0) setCustomW(String(Math.round(n * aspectRatio)));
+    else setCustomW('');
+  };
+
+  const downloadPng = useCallback(async (w: number, h: number) => {
+    setExporting(true);
+    try {
+      const canvas = await svgToCanvas(svgUrl, w, h);
+      downloadCanvas(canvas, `${basename}-${w}x${h}.png`);
+    } finally {
+      setExporting(false);
+    }
+  }, [svgUrl, basename]);
+
+  const downloadSvg = () => {
+    const a = document.createElement('a');
+    a.href = svgUrl;
+    a.download = `${basename}.svg`;
+    a.click();
+  };
+
   return (
-    <div ref={ref} className="relative">
+    <div ref={panelRef} className="relative">
       <button
         onClick={() => setOpen(!open)}
         className="px-2 py-1 text-xs rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/40 transition-colors inline-flex items-center gap-1"
@@ -75,26 +133,70 @@ function DownloadDropdown({ svgHref, svgFilename, pngBasename }: {
         </svg>
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg py-1 min-w-[140px]">
-          <a
-            href={svgHref}
-            download={svgFilename}
-            onClick={() => setOpen(false)}
-            className="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg py-2 min-w-[220px]">
+          {/* SVG download */}
+          <button
+            onClick={() => { downloadSvg(); setOpen(false); }}
+            className="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium"
           >
             SVG (vector)
-          </a>
-          {pngBasename && PNG_SIZES.map((size) => (
-            <a
-              key={size}
-              href={`/assets/png/${size}/${pngBasename}.png`}
-              download={`${pngBasename}-${size}.png`}
-              onClick={() => setOpen(false)}
-              className="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+          </button>
+
+          <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+          <p className="px-3 py-1 text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">PNG presets</p>
+
+          {/* Preset sizes */}
+          {PRESET_SIZES.map((size) => {
+            const w = Math.round(size * aspectRatio);
+            const h = size;
+            const label = aspectRatio === 1 ? `${size}x${size}` : `${w}x${h}`;
+            return (
+              <button
+                key={size}
+                disabled={exporting}
+                onClick={() => downloadPng(w, h)}
+                className="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50"
+              >
+                PNG {label}
+              </button>
+            );
+          })}
+
+          {/* Custom size */}
+          <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+          <p className="px-3 py-1 text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">Custom size</p>
+          <div className="px-3 py-1.5 flex items-center gap-2">
+            <input
+              type="number"
+              placeholder="W"
+              min={1}
+              max={4096}
+              value={customW}
+              onChange={(e) => handleCustomW(e.target.value)}
+              className="w-16 px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200"
+            />
+            <span className="text-xs text-slate-400">x</span>
+            <input
+              type="number"
+              placeholder="H"
+              min={1}
+              max={4096}
+              value={customH}
+              onChange={(e) => handleCustomH(e.target.value)}
+              className="w-16 px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-200"
+            />
+            <button
+              disabled={exporting || !customW || !customH}
+              onClick={() => {
+                const w = parseInt(customW, 10);
+                const h = parseInt(customH, 10);
+                if (w > 0 && h > 0) downloadPng(w, h);
+              }}
+              className="px-2 py-1 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 transition-colors"
             >
-              PNG {size}x{size}
-            </a>
-          ))}
+              Go
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -107,7 +209,7 @@ function AssetCard({ label, src, bgMode }: { label: string; src: string; bgMode:
   const filename = src.split('/').pop() || '';
   const basename = filename.replace('.svg', '');
   const embedUrl = `https://encypher.com/brand/${filename}`;
-  const hasPng = basename.startsWith('mark-');
+  const aspectRatio = isWordmark ? 134 / 24 : 1;
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700">
@@ -128,10 +230,10 @@ function AssetCard({ label, src, bgMode }: { label: string; src: string; bgMode:
       <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-b-xl border-t border-slate-200 dark:border-slate-700">
         <p className="text-sm font-medium text-slate-900 dark:text-white mb-2">{label}</p>
         <div className="flex items-center gap-2 flex-wrap">
-          <DownloadDropdown
-            svgHref={src}
-            svgFilename={filename}
-            pngBasename={hasPng ? basename : null}
+          <PngExportPanel
+            svgUrl={src}
+            basename={basename}
+            aspectRatio={aspectRatio}
           />
           <CopyButton text={embedUrl} />
         </div>
@@ -200,7 +302,7 @@ export default function BrandAssetsPage() {
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Brand Assets</h1>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Official Encypher brand assets. Download or copy embed URLs for external use.
+              Official Encypher brand assets. Download SVG or export as PNG at any size.
             </p>
           </div>
           <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">

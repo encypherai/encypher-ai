@@ -10,7 +10,12 @@ import TurnstileWidget from '../../components/security/TurnstileWidget';
 // Note: API_BASE not used directly in login - auth goes through NextAuth
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import MetadataBackground from '../../components/hero/MetadataBackground';
+import dynamic from 'next/dynamic';
+
+const MetadataBackground = dynamic(
+  () => import('../../components/hero/MetadataBackground'),
+  { ssr: false },
+);
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
 // Canonical SVG logos
