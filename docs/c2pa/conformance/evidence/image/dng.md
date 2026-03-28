@@ -37,7 +37,7 @@ and routed to the TIFF codec within c2pa-rs.
 | instance_id (manifest) | xmp:iid:677395d3-0213-43a6-88d5-f84e38fbccf7 |
 | claim_generator_info.name | Encypher |
 | claim_generator_info.version | 1.0 |
-| claim_generator_info.org.contentauth.c2pa_rs | 0.67.1 |
+| claim_generator_info.org.contentauth.c2pa_rs | 0.78.4 |
 | signature_info.alg | Es256 |
 | signature_info.issuer | Encypher Corporation |
 | signature_info.common_name | Encypher Conformance Test Cert |

@@ -35,7 +35,7 @@ c2pa-rs handles MOV with the same BMFF pipeline as MP4, embedding the manifest i
 | instance_id (manifest) | xmp:iid:0d7814b3-88d1-49df-8980-3b90d316d5b0 |
 | claim_generator_info.name | Encypher |
 | claim_generator_info.version | 1.0 |
-| claim_generator_info.org.contentauth.c2pa_rs | 0.67.1 |
+| claim_generator_info.org.contentauth.c2pa_rs | 0.78.4 |
 | signature_info.alg | Es256 |
 | signature_info.issuer | Encypher Corporation |
 | signature_info.common_name | Encypher Conformance Test Cert |

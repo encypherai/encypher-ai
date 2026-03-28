@@ -35,7 +35,7 @@ rather than BMFF box hashing. This is the same hash binding type as WAV, MP3, JP
 | instance_id (manifest) | xmp:iid:a59eb6e9-a7d6-46e9-aa90-a161028e980b |
 | claim_generator_info.name | Encypher |
 | claim_generator_info.version | 1.0 |
-| claim_generator_info.org.contentauth.c2pa_rs | 0.67.1 |
+| claim_generator_info.org.contentauth.c2pa_rs | 0.78.4 |
 | signature_info.alg | Es256 |
 | signature_info.issuer | Encypher Corporation |
 | signature_info.common_name | Encypher Conformance Test Cert |

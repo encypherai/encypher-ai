@@ -190,7 +190,7 @@ design: verification enables the open trust model that C2PA requires.
 |                                                                |
 |  +----------------------------------------------------------+ |
 |  | Dependencies (in-process)                                 | |
-|  | - c2pa-python (>=0.6.0, wraps c2pa-rs via PyO3)          | |
+|  | - c2pa-python (==0.29.0, wraps c2pa-rs via PyO3)         | |
 |  | - cryptography (>=46.0.5, OpenSSL bindings)               | |
 |  | - cbor2 (>=5.8.0, CBOR serialization)                     | |
 |  +----------------------------------------------------------+ |
@@ -643,7 +643,7 @@ Key content-processing dependencies and their roles:
 
 | Dependency | Version | Role |
 |-----------|---------|------|
-| c2pa-python | >=0.6.0 | C2PA manifest building, signing, reading (wraps c2pa-rs compiled to native code via PyO3) |
+| c2pa-python | ==0.29.0 | C2PA manifest building, signing, reading (wraps c2pa-rs compiled to native code via PyO3) |
 | cryptography | >=46.0.5 | Private key loading, ECDSA/RSA/EdDSA signing, X.509 certificate parsing, OCSP |
 | cbor2 | >=5.8.0 | CBOR encoding/decoding for C2PA claims and assertions |
 | Pillow | >=12.1.1 | Image decoding, EXIF stripping, format conversion |
@@ -888,7 +888,7 @@ All algorithms are drawn from NIST Cryptographic Standards and Guidelines
 
 ### Pipeline A: Media formats (c2pa-python path)
 
-Used for: images (12 types -- all except JXL), video (3 types), audio (5 types -- all except FLAC).
+Used for: images (12 types -- all except JXL), video (4 types), audio (5 types -- all except FLAC).
 JXL and FLAC use Pipeline B because c2pa-python/c2pa-rs does not yet support these container formats.
 
 ```
@@ -936,7 +936,9 @@ documents (PDF, EPUB, DOCX, ODT, OXPS), fonts (OTF/TTF), FLAC audio, JPEG XL.
    - com.encypher.provenance (org/document/asset IDs)
 6. Build C2PA Claim v2 (CBOR): build_claim_cbor() in c2pa_claim_builder.py
    - Includes hashed assertion references (URL + SHA-256 of assertion JUMBF)
-   - claim_generator, instance_id, dc:format, dc:title
+   - claim_generator: "Encypher Enterprise API/2.0"
+   - instance_id, dc:format, dc:title
+   - assertions + created_assertions (all assertions are signer-originated)
 7. Sign claim: sign_claim() in cose_signer.py
    - Constructs COSE Sig_structure: ["Signature1", protected, b"", claim_cbor]
    - Signs with ECDSA (or RSA/EdDSA depending on key type)

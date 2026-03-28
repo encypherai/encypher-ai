@@ -1,0 +1,67 @@
+{
+  "active_manifest": "urn:c2pa:6aa04e28-0079-4caf-a3fb-324ef55fd777",
+  "manifests": {
+    "urn:c2pa:6aa04e28-0079-4caf-a3fb-324ef55fd777": {
+      "claim_generator_info": [
+        {
+          "name": "Encypher",
+          "version": "2.0"
+        }
+      ],
+      "title": "C2PA Conformance Test -- TTF",
+      "instance_id": "xmp:iid:ed62e53f-d8e6-4127-ae78-c25c7d59609a",
+      "assertions": [
+        {
+          "label": "c2pa.actions.v2",
+          "data": {
+            "actions": [
+              {
+                "action": "c2pa.created",
+                "when": "2026-03-28T12:45:27Z",
+                "softwareAgent": {
+                  "name": "Encypher Enterprise API",
+                  "version": "2.0"
+                },
+                "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture"
+              }
+            ]
+          },
+          "created": true
+        },
+        {
+          "label": "c2pa.hash.data",
+          "data": {
+            "exclusions": [
+              {
+                "start": 44,
+                "length": 65536
+              }
+            ],
+            "alg": "sha256",
+            "hash": "fd959cce7aa094472474dbc08f29139b467bb62a48341e73ca20bc12eb95d808",
+            "pad": ""
+          },
+          "created": true
+        },
+        {
+          "label": "com.encypher.provenance",
+          "data": {
+            "organization_id": "encypher-conformance",
+            "document_id": "conformance-ttf",
+            "document_asset_id": "890ef5ea-2920-4282-b659-c3afa3a2d393",
+            "signed_at": "2026-03-28T12:45:27Z"
+          },
+          "created": true
+        }
+      ],
+      "label": "urn:c2pa:6aa04e28-0079-4caf-a3fb-324ef55fd777",
+      "claim_version": 2,
+      "signature_info": {
+        "alg": "Es256",
+        "issuer": "Encypher Corporation",
+        "common_name": "Encypher Conformance Test Cert",
+        "cert_serial_number": "8149767912641611982350984011013689761321125"
+      }
+    }
+  }
+}

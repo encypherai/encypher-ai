@@ -36,7 +36,7 @@ This is a different hash binding than WAV and MP3 (which use c2pa.hash.data).
 | instance_id (manifest) | xmp:iid:3ea7bf80-bb06-48c0-a3c5-74ee187a87a5 |
 | claim_generator_info.name | Encypher |
 | claim_generator_info.version | 1.0 |
-| claim_generator_info.org.contentauth.c2pa_rs | 0.67.1 |
+| claim_generator_info.org.contentauth.c2pa_rs | 0.78.4 |
 | signature_info.alg | Es256 |
 | signature_info.issuer | Encypher Corporation |
 | signature_info.common_name | Encypher Conformance Test Cert |

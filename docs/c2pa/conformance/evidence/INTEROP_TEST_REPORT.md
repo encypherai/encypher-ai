@@ -5,7 +5,7 @@
 **Test Certificate**: SSL.com c2pasign (CN=Encypher Conformance Test Cert, O=Encypher Corporation, ECC P-256)
 **Certificate Authority**: SSL.com (c2pasign conformance testing program)
 **Conforming Product ID**: c1207642-3ca7-4697-87bc-57b013ce6fe3
-**c2pa-python version**: 0.29.0 (c2pa-rs 0.67.1 embedded in signed manifests)
+**c2pa-python version**: 0.29.0 (c2pa-rs 0.78.4 embedded in signed manifests)
 **Signing library**: c2pa-python Builder + Signer.from_callback (ECC P-256 / ES256)
 **TSA**: http://ts.ssl.com (RFC 3161)
 

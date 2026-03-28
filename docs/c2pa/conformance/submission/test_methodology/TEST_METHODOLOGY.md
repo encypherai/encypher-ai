@@ -158,4 +158,4 @@ The test certificate chain is stored in `tests/c2pa_test_certs/`.
 - **TSA**: http://ts.ssl.com (RFC 3161), SSL.com Timestamping Unit 2025 E1
 
 The certificate includes the C2PA required Extended Key Usage OID
-(1.3.6.1.4.1.57264.1.x) issued via SSL.com staging.
+(1.3.6.1.4.1.62558.2.1) issued via SSL.com staging.

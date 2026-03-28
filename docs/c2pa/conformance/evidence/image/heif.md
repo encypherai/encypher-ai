@@ -38,7 +38,7 @@ fixture was used for both. Each has a distinct manifest UUID and instance_id.
 | instance_id (manifest) | xmp:iid:dbe4cdaa-bb5c-418b-9a1b-f8b17677fdbf |
 | claim_generator_info.name | Encypher |
 | claim_generator_info.version | 1.0 |
-| claim_generator_info.org.contentauth.c2pa_rs | 0.67.1 |
+| claim_generator_info.org.contentauth.c2pa_rs | 0.78.4 |
 | signature_info.alg | Es256 |
 | signature_info.issuer | Encypher Corporation |
 | signature_info.common_name | Encypher Conformance Test Cert |

@@ -1,81 +1,78 @@
 {
-  "manifests": [
-    {
-      "label": "urn:c2pa:6dedfef9-60eb-42e1-a98e-a7994ad0eaa6",
-      "assertions": {
-        "c2pa.actions.v2": {
-          "actions": [
-            {
-              "action": "c2pa.created",
-              "when": "2026-03-25T08:51:11Z",
-              "softwareAgent": {
-                "name": "Encypher Enterprise API",
-                "version": "2.0"
-              },
-              "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture"
-            }
-          ]
-        },
-        "c2pa.hash.collection.data": {
-          "uris": [
-            {
-              "uri": "mimetype",
-              "hash": "0132c288a29fe7315032a7916ba020486014c6041e72935312f1bb49444fcb10"
-            },
-            {
-              "uri": "META-INF/container.xml",
-              "hash": "1322d9ffcdfb453c995f17faa96225bee90b515ce5270e45055824c914e92927"
-            },
-            {
-              "uri": "content.opf",
-              "hash": "fcb6dea8d53f7003ac794216a87432c5f6298bc5d96d091f1d42d7d3436db3cf"
-            },
-            {
-              "uri": "chapter1.xhtml",
-              "hash": "584163766da95cf149231b3fe8711a1bcccefcbece609aa7343ccf42e145a2a8"
-            }
-          ],
-          "alg": "sha256",
-          "zip_central_directory_hash": "68361161554d766b934aac47ff522596fba18361a60bebe3a09205bd35194894"
-        },
-        "com.encypher.provenance": {
-          "organization_id": "",
-          "document_id": "",
-          "document_asset_id": "",
-          "signed_at": "2026-03-25T08:51:11Z"
+  "active_manifest": "urn:c2pa:e7e75c51-eaf8-4801-9502-3bf873186667",
+  "manifests": {
+    "urn:c2pa:e7e75c51-eaf8-4801-9502-3bf873186667": {
+      "claim_generator_info": [
+        {
+          "name": "Encypher",
+          "version": "2.0"
         }
-      },
-      "claim": {
-        "claim_generator": "Encypher Enterprise API/2.0",
-        "claim_generator_info": [
-          {
-            "name": "Encypher",
-            "version": "2.0"
-          }
-        ],
-        "dc:title": "C2PA Conformance - application/epub+zip",
-        "dc:format": "application/epub+zip",
-        "instanceID": "urn:uuid:d7fc4a39-75b5-4dfa-9fa9-ac24c6009073",
-        "alg": "sha256",
-        "assertions": [
-          {
-            "url": "self#jumbf=c2pa.assertions/c2pa.actions.v2",
-            "hash": "726c8a75985754917f48cfccbcf7399dabcea08657a4477f4243018810ae3caa",
-            "alg": "sha256"
+      ],
+      "title": "C2PA Conformance Test -- EPUB",
+      "instance_id": "xmp:iid:ab0d6412-bfd9-4be6-80a6-162468bd73f0",
+      "assertions": [
+        {
+          "label": "c2pa.actions.v2",
+          "data": {
+            "actions": [
+              {
+                "action": "c2pa.created",
+                "when": "2026-03-28T12:45:27Z",
+                "softwareAgent": {
+                  "name": "Encypher Enterprise API",
+                  "version": "2.0"
+                },
+                "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture"
+              }
+            ]
           },
-          {
-            "url": "self#jumbf=c2pa.assertions/c2pa.hash.collection.data",
-            "hash": "254dbe11ca6f8952a2d9cc0695a1a3b6e76874895e932da603e7b47fdc9c6a9f",
-            "alg": "sha256"
+          "created": true
+        },
+        {
+          "label": "c2pa.hash.collection.data",
+          "data": {
+            "uris": [
+              {
+                "uri": "mimetype",
+                "hash": "0132c288a29fe7315032a7916ba020486014c6041e72935312f1bb49444fcb10"
+              },
+              {
+                "uri": "META-INF/container.xml",
+                "hash": "03bac064ee689c0332d800132d691727ba48bb20b100eea33c86e37dc76bdddb"
+              },
+              {
+                "uri": "content.opf",
+                "hash": "2ae3fee0fbcbcf2710a7187e52a70836044a9d0f8db2a574d3862239607812d8"
+              },
+              {
+                "uri": "chapter1.xhtml",
+                "hash": "b297a558a1e119bc9167e90c405f40f237d14344f23494c7b7e5be2e91a4cc2f"
+              }
+            ],
+            "alg": "sha256",
+            "zip_central_directory_hash": "51e1d85e33584105b01d7ff866bf93e6dbb71851a6023833034f385d051dd6dd"
           },
-          {
-            "url": "self#jumbf=c2pa.assertions/com.encypher.provenance",
-            "hash": "2648e1e6eed1c7c3b0266221f75fa1235ff21256c6711f3c29d3309e1b60caf8",
-            "alg": "sha256"
-          }
-        ],
-        "signature": "self#jumbf=urn:c2pa:6dedfef9-60eb-42e1-a98e-a7994ad0eaa6/c2pa.signature"
+          "created": true
+        },
+        {
+          "label": "com.encypher.provenance",
+          "data": {
+            "organization_id": "encypher-conformance",
+            "document_id": "conformance-epub",
+            "document_asset_id": "cfab9f45-4c55-43e6-8336-03792757f9e7",
+            "signed_at": "2026-03-28T12:45:27Z"
+          },
+          "created": true
+        }
+      ],
+      "label": "urn:c2pa:e7e75c51-eaf8-4801-9502-3bf873186667",
+      "claim_version": 2,
+      "signature_info": {
+        "alg": "Es256",
+        "issuer": "Encypher Corporation",
+        "common_name": "Encypher Conformance Test Cert",
+        "cert_serial_number": "8149767912641611982350984011013689761321125"
       }
     }
-  ]
+  }
 }
