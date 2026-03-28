@@ -201,8 +201,12 @@ async def verify_rich(
     await public_rate_limiter(request, endpoint_type="verify_rich")
 
     # Load composite manifest
-    comp_stmt = select(CompositeManifest).where(CompositeManifest.document_id == payload.document_id).limit(1)
-    composite_row = (await content_db.execute(comp_stmt)).scalar_one_or_none()
+    try:
+        comp_stmt = select(CompositeManifest).where(CompositeManifest.document_id == payload.document_id).limit(1)
+        composite_row = (await content_db.execute(comp_stmt)).scalar_one_or_none()
+    except Exception:
+        await content_db.rollback()
+        composite_row = None
 
     if composite_row is None:
         return _invalid_rich_verify_response(
@@ -212,9 +216,13 @@ async def verify_rich(
         )
 
     # Load article images ordered by position
-    imgs_stmt = select(ArticleImage).where(ArticleImage.document_id == payload.document_id).order_by(ArticleImage.position)
-    imgs_result = await content_db.execute(imgs_stmt)
-    image_rows = imgs_result.scalars().all()
+    try:
+        imgs_stmt = select(ArticleImage).where(ArticleImage.document_id == payload.document_id).order_by(ArticleImage.position)
+        imgs_result = await content_db.execute(imgs_stmt)
+        image_rows = imgs_result.scalars().all()
+    except Exception:
+        await content_db.rollback()
+        image_rows = []
 
     image_verifications = []
     historically_signed_by_us = True

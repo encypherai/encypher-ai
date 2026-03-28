@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     formData.append("file", new Blob([binaryData], { type: mimeType }), "upload");
     formData.append("mime_type", mimeType);
 
-    const upstream = await fetch(`${apiUrl}/api/v1/verify/media`, {
+    const upstream = await fetch(`${apiUrl}/api/v1/public/verify/media`, {
       method: "POST",
       headers: {
         "X-Request-Id": requestId,
