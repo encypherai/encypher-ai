@@ -71,6 +71,14 @@ def create_pdf_with_placeholder(pdf_bytes: bytes, placeholder_size: int = 32768)
     writer = PdfWriter()
     writer.append_pages_from_reader(reader)
 
+    # Preserve EncypherSignedText stream from source PDF (encypher-pdf embeds
+    # the original signed text for lossless round-trip extraction)
+    if "/EncypherSignedText" in reader.trailer["/Root"]:
+        signed_stream_ref = reader.trailer["/Root"]["/EncypherSignedText"]
+        signed_stream_obj = signed_stream_ref.get_object()
+        copied_ref = writer._add_object(signed_stream_obj)
+        writer._root_object[NameObject("/EncypherSignedText")] = copied_ref
+
     # Create the placeholder content with markers for easy detection
     # The actual manifest bytes will replace this
     inner_size = placeholder_size - len(_PLACEHOLDER_MARKER) - len(_PLACEHOLDER_END)

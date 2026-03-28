@@ -380,10 +380,12 @@ async def encode_document_with_embeddings(
             if not merkle_levels:
                 merkle_levels = [request.segmentation_level]
 
+            include_words = request.segmentation_level == "word" or (merkle_levels is not None and "word" in merkle_levels)
+
             processing_metadata = build_processing_metadata(
                 segmentation_level=request.segmentation_level,
                 segmentation_levels=merkle_levels,
-                include_words=False,
+                include_words=include_words,
             )
 
             merkle_metadata = dict(request.metadata or {})
@@ -419,7 +421,7 @@ async def encode_document_with_embeddings(
                 text=document_text,
                 segmentation_levels=merkle_levels,
                 metadata=merkle_metadata,
-                include_words=False,
+                include_words=include_words,
             )
 
             merkle_root = merkle_roots.get(request.segmentation_level) or next(iter(merkle_roots.values()))
@@ -438,7 +440,7 @@ async def encode_document_with_embeddings(
             # Get segments and hashes
             from app.utils.segmentation import HierarchicalSegmenter
 
-            segmenter = HierarchicalSegmenter(document_text, include_words=False)
+            segmenter = HierarchicalSegmenter(document_text, include_words=include_words)
             segments = segmenter.get_segments(request.segmentation_level)
 
             # Compute leaf hashes

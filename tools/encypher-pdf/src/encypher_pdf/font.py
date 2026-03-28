@@ -184,11 +184,14 @@ def embed_font(
     # extractable while remaining visually invisible.
     from encypher_pdf.fonttools_subset import INVISIBLE_CODEPOINTS
 
-    invisible_gids = {
-        metrics["cmap"].get(cp)
-        for cp in INVISIBLE_CODEPOINTS
-        if cp in metrics["cmap"]
-    }
+    # Build the set of GIDs that are ONLY used by invisible codepoints.
+    # Some fonts map both a visible and invisible codepoint to the same
+    # glyph (e.g. U+002D hyphen-minus and U+00AD soft-hyphen share a GID
+    # in LiberationSans/Roboto).  If any visible codepoint uses a GID,
+    # that GID must keep its real width.
+    invisible_candidate_gids = {metrics["cmap"].get(cp) for cp in INVISIBLE_CODEPOINTS if cp in metrics["cmap"]}
+    visible_gids = {metrics["cmap"].get(cp) for cp in used_codepoints if cp not in INVISIBLE_CODEPOINTS and cp in metrics["cmap"]}
+    invisible_gids = invisible_candidate_gids - visible_gids
     w_entries: list[str] = []
     widths = metrics["widths"]
     for gid in sorted(mapping.gid_to_unicode.keys()):

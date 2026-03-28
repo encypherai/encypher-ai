@@ -91,6 +91,7 @@ class _TextBlock:
 
     text: str
     style: TextStyle
+    url: Optional[str] = None
 
 
 @dataclass
@@ -149,6 +150,7 @@ class Document:
         margin_left: Optional[float] = None,
         margin_right: Optional[float] = None,
         footer_text: Optional[str] = None,
+        footer_url: Optional[str] = None,
     ) -> None:
         self._page_width = page_width
         self._page_height = page_height
@@ -157,8 +159,10 @@ class Document:
         self._margin_left = margin_left or margin
         self._margin_right = margin_right or margin
         self._footer_text = footer_text
+        self._footer_url = footer_url
         self._story: list[_StoryItem] = []
         self._signed_text: Optional[str] = None
+        self._link_regions: list[tuple[int, tuple[float, float, float, float], str]] = []  # (page_idx, rect, url)
 
     def set_signed_text(self, text: str) -> None:
         """Store the original signed text for lossless round-trip extraction.
@@ -171,9 +175,12 @@ class Document:
         """
         self._signed_text = text
 
-    def add_text(self, text: str, style: Optional[TextStyle] = None) -> None:
-        """Add a text block to the document."""
-        self._story.append(_TextBlock(text=text, style=style or TextStyle()))
+    def add_text(self, text: str, style: Optional[TextStyle] = None, url: Optional[str] = None) -> None:
+        """Add a text block to the document.
+
+        If url is provided, the entire text block becomes a clickable link.
+        """
+        self._story.append(_TextBlock(text=text, style=style or TextStyle(), url=url))
 
     def add_spacer(self, height: float) -> None:
         """Add vertical space."""
@@ -227,7 +234,13 @@ class Document:
             font_map[("roboto", False, False, None)] = (font_obj_id, font_label, mapping.metrics, mapping)
 
         # Phase 4: Layout and pagination
+        self._link_regions = []  # Reset before layout
         pages_content = self._layout(font_map)
+
+        # Group link regions by page
+        page_links: dict[int, list[tuple[tuple[float, float, float, float], str]]] = {}
+        for pg_idx, rect, url in self._link_regions:
+            page_links.setdefault(pg_idx, []).append((rect, url))
 
         # Phase 5: Write page objects
         page_obj_ids: list[int] = []
@@ -238,12 +251,29 @@ class Document:
             content_stream = "\n".join(page_ops).encode("latin-1")
             content_id = writer.add_stream(PdfStream(data=content_stream, compress=True))
 
+            # Create link annotations for this page
+            annot_refs = ""
+            if page_idx in page_links:
+                annot_ids: list[int] = []
+                for rect, url in page_links[page_idx]:
+                    x1, y1, x2, y2 = rect
+                    annot_id = writer.add_object(
+                        f"<< /Type /Annot /Subtype /Link"
+                        f" /Rect [{x1:.2f} {y1:.2f} {x2:.2f} {y2:.2f}]"
+                        f" /Border [0 0 0]"
+                        f" /A << /Type /Action /S /URI /URI ({url}) >>"
+                        f" >>".encode()
+                    )
+                    annot_ids.append(annot_id)
+                annot_refs = f" /Annots [{' '.join(writer.ref(aid) for aid in annot_ids)}]"
+
             page_id = writer.add_object(
                 f"<< /Type /Page"
                 f" /Parent {writer.ref(pages_id)}"
                 f" /MediaBox [0 0 {self._page_width} {self._page_height}]"
                 f" /Contents {writer.ref(content_id)}"
                 f" /Resources << /Font << {font_resources} >> >>"
+                f"{annot_refs}"
                 f" >>".encode()
             )
             page_obj_ids.append(page_id)
@@ -295,11 +325,11 @@ class Document:
             nonlocal cursor_y
             # Add footer to current page if needed
             if self._footer_text and pages[-1]:
-                _add_footer(pages[-1])
+                _add_footer(pages[-1], len(pages) - 1)
             pages.append([])
             cursor_y = content_top
 
-        def _add_footer(ops: list[str]) -> None:
+        def _add_footer(ops: list[str], page_idx: int) -> None:
             if not self._footer_text:
                 return
             _, label, metrics, fmap = font_map[("roboto", False, False, None)]
@@ -314,6 +344,9 @@ class Document:
             ops.append(f"{footer_x:.2f} {footer_y:.2f} Td")
             ops.append(f"<{footer_text_hex}> Tj")
             ops.append("ET")
+            if self._footer_url:
+                rect = (footer_x, footer_y - 2, footer_x + text_width, footer_y + footer_size + 2)
+                self._link_regions.append((page_idx, rect, self._footer_url))
 
         for item in self._story:
             if isinstance(item, _Spacer):
@@ -337,8 +370,20 @@ class Document:
             # Word-wrap the text into lines
             lines = _wrap_text(block.text, metrics, style.font_size, effective_width, style.first_line_indent)
 
+            # Track bounding box for link annotations
+            block_y_top: Optional[float] = None
+            block_y_bottom: Optional[float] = None
+            block_x_min = self._margin_left
+            block_x_max = self._margin_left + content_width
+            block_page_idx: Optional[int] = None
+
             for line_idx, line_text in enumerate(lines):
                 if cursor_y - leading < content_bottom:
+                    # If we have a link spanning to previous page, save it
+                    if block.url and block_y_top is not None and block_page_idx is not None:
+                        rect = (block_x_min, block_y_bottom or cursor_y, block_x_max, block_y_top + style.font_size)
+                        self._link_regions.append((block_page_idx, rect, block.url))
+                        block_y_top = None
                     new_page()
 
                 cursor_y -= leading
@@ -354,6 +399,13 @@ class Document:
                     x = self._margin_left + (content_width - line_width) / 2
                 elif style.alignment == Alignment.RIGHT:
                     x = self._margin_left + content_width - style.right_indent - line_width
+
+                # Track link region
+                if block.url:
+                    if block_y_top is None:
+                        block_y_top = cursor_y
+                        block_page_idx = len(pages) - 1
+                    block_y_bottom = cursor_y
 
                 # Emit PDF text operators using TJ array to keep all
                 # chunks in a single text-showing operation.  This avoids
@@ -374,12 +426,17 @@ class Document:
                     ops.append(f"[{tj_array}] TJ")
                 ops.append("ET")
 
+            # Save link region for this text block
+            if block.url and block_y_top is not None and block_page_idx is not None:
+                rect = (block_x_min, (block_y_bottom or block_y_top) - 2, block_x_max, block_y_top + style.font_size + 2)
+                self._link_regions.append((block_page_idx, rect, block.url))
+
             # Apply space_after
             cursor_y -= style.space_after
 
         # Add footer to last page
         if self._footer_text and pages[-1]:
-            _add_footer(pages[-1])
+            _add_footer(pages[-1], len(pages) - 1)
 
         return pages
 
