@@ -1072,10 +1072,13 @@ def _build_verdict(
     hint = _REASON_HINTS.get(reason_code)
 
     # Build document_info
+    # Prefer resolved_c2pa_manifest (DB-backed full manifest from micro embeddings)
+    # over the inline manifest (which is a skeleton for micro content).
     document_info = None
     licensing_info = None
-    if isinstance(manifest, dict):
-        custom_metadata = manifest.get("custom_metadata", {})
+    manifest_for_metadata = resolved_c2pa_manifest if isinstance(resolved_c2pa_manifest, dict) else manifest
+    if isinstance(manifest_for_metadata, dict):
+        custom_metadata = manifest_for_metadata.get("custom_metadata", {})
         if isinstance(custom_metadata, dict):
             document_info = DocumentInfo(
                 document_id=custom_metadata.get("document_id") or custom_metadata.get("manifest_uuid"),
@@ -1126,9 +1129,12 @@ def _build_verdict(
     manifest_for_publisher = resolved_c2pa_manifest if resolved_c2pa_manifest else (manifest if isinstance(manifest, dict) else None)
     publisher_name = _extract_publisher_name_from_manifest(manifest_for_publisher)
 
-    # Cap manifest before including in details
-    raw_manifest_for_details = manifest or {}
-    capped_manifest, manifest_truncated = _cap_manifest(raw_manifest_for_details if isinstance(raw_manifest_for_details, dict) else {})
+    # Cap manifest before including in details — prefer the full resolved
+    # C2PA manifest (fetched from DB) over the inline skeleton.
+    raw_manifest_for_details = (
+        resolved_c2pa_manifest if isinstance(resolved_c2pa_manifest, dict) else (manifest if isinstance(manifest, dict) else {})
+    )
+    capped_manifest, manifest_truncated = _cap_manifest(raw_manifest_for_details)
 
     details: dict = {
         "manifest": capped_manifest or {},
