@@ -404,44 +404,53 @@ async def get_optional_organization(
     if not authorization.startswith("Bearer "):
         return None
 
-    api_key = authorization.split(" ", 1)[1].strip()
-    if not api_key:
+    token = authorization.split(" ", 1)[1].strip()
+    if not token:
         return None
 
+    # Attempt 1: validate as API key via key-service
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{settings.KEY_SERVICE_URL}/api/v1/keys/validate",
-                json={"key": api_key},
+                json={"key": token},
                 timeout=5.0,
             )
+        if response.status_code == 200:
+            payload = response.json()
+            data = payload.get("data")
+            if payload.get("success") and isinstance(data, dict):
+                request.state.organization_id = data.get("organization_id")
+                request.state.user_id = data.get("user_id") or data.get("api_key_owner_id")
+                request.state.api_key_id = data.get("api_key_id")
+                request.state.tier = data.get("tier")
+                return data
     except httpx.RequestError:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Key service unavailable",
-        )
+        pass  # Fall through to JWT attempt
 
-    if response.status_code != 200:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid API key",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    # Attempt 2: validate as JWT session token via auth-service
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
+                headers={"Authorization": authorization},
+                timeout=5.0,
+            )
+        if response.status_code == 200:
+            jwt_payload = response.json()
+            user_data = jwt_payload.get("data") if isinstance(jwt_payload, dict) and jwt_payload.get("success") else jwt_payload
+            if isinstance(user_data, dict):
+                org_id = user_data.get("default_organization_id") or user_data.get("organization_id")
+                if org_id:
+                    request.state.organization_id = org_id
+                    request.state.user_id = user_data.get("user_id") or user_data.get("id")
+                    request.state.tier = user_data.get("tier")
+                    return {"organization_id": org_id, "user_id": request.state.user_id, "tier": request.state.tier}
+    except httpx.RequestError:
+        pass
 
-    payload = response.json()
-    data = payload.get("data")
-    if not payload.get("success") or not isinstance(data, dict):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid API key",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    request.state.organization_id = data.get("organization_id")
-    request.state.user_id = data.get("user_id") or data.get("api_key_owner_id")
-    request.state.api_key_id = data.get("api_key_id")
-    request.state.tier = data.get("tier")
-    return data
+    # Neither method worked; verification is public, so return None (unauthenticated)
+    return None
 
 
 def _demo_private_key_bytes() -> bytes:

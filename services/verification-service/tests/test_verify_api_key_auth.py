@@ -238,7 +238,8 @@ def test_verify_valid_signed_text_returns_200(client, monkeypatch) -> None:
     assert payload["data"]["signer_id"] == signer_id
 
 
-def test_verify_invalid_api_key_returns_401(client, monkeypatch) -> None:
+def test_verify_invalid_token_falls_back_to_public(client, monkeypatch) -> None:
+    """Invalid auth token should fall back to unauthenticated public verification."""
     dummy_response = _DummyResponse(401, {"detail": "Invalid or expired API key"})
 
     monkeypatch.setattr(
@@ -252,7 +253,8 @@ def test_verify_invalid_api_key_returns_401(client, monkeypatch) -> None:
         json={"text": "hello"},
         headers={"Authorization": "Bearer invalid-api-key"},
     )
-    assert response.status_code == 401
+    # Verify is public; invalid auth falls back to unauthenticated access
+    assert response.status_code == 200
 
 
 def test_verify_untrusted_signer_returns_warning_code(client, monkeypatch) -> None:
