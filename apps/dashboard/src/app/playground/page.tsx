@@ -133,7 +133,7 @@ const tierLabels: Record<Tier, string> = {
   enterprise: 'Enterprise',
 };
 
-function CopyPasteSurvivalTester({ apiKey }: { apiKey: string }) {
+function CopyPasteSurvivalTester({ apiKey, accessToken }: { apiKey: string; accessToken?: string }) {
   const [inputText, setInputText] = useState('');
   const [signedText, setSignedText] = useState('');
   const [pastedText, setPastedText] = useState('');
@@ -147,11 +147,12 @@ function CopyPasteSurvivalTester({ apiKey }: { apiKey: string }) {
     setSigning(true);
     setSurvivalResult(null);
     try {
+      const authToken = apiKey || accessToken;
       const resp = await fetch(`${API_BASE}/sign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': apiKey,
+          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify({ text: inputText }),
       });
@@ -221,7 +222,7 @@ function CopyPasteSurvivalTester({ apiKey }: { apiKey: string }) {
         />
         <Button
           onClick={handleSign}
-          disabled={signing || !inputText.trim() || !apiKey}
+          disabled={signing || !inputText.trim() || (!apiKey && !accessToken)}
           size="sm"
         >
           {signing ? 'Signing...' : 'Sign text'}
@@ -322,14 +323,24 @@ export default function PlaygroundPage() {
     enabled: Boolean(accessToken),
   });
 
-  const [selectedApiKey, setSelectedApiKey] = useState<string>('custom');
+  // Default to session auth when logged in (no key management needed)
+  const [selectedApiKey, setSelectedApiKey] = useState<string>(accessToken ? 'session' : 'custom');
   const [customApiKey, setCustomApiKey] = useState<string>('');
   const [generatedApiKey, setGeneratedApiKey] = useState<string>('');
   const [isGeneratingKey, setIsGeneratingKey] = useState<boolean>(false);
+  const [authExpanded, setAuthExpanded] = useState<boolean>(!accessToken);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
   const [showQuickStart, setShowQuickStart] = useState<boolean>(true);
   const [quickStartStep, setQuickStartStep] = useState<number>(0);
   const [lastSignedContent, setLastSignedContent] = useState<string | null>(null);
+
+  // Auto-select session auth when access token becomes available (async load)
+  useEffect(() => {
+    if (accessToken && selectedApiKey === 'custom' && !customApiKey.trim()) {
+      setSelectedApiKey('session');
+      setAuthExpanded(false);
+    }
+  }, [accessToken]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Guided Tour State (4 steps: 0=API Key, 1=Sign, 2=Copy, 3=Verify)
   const [tourActive, setTourActive] = useState<boolean>(false);
@@ -590,15 +601,48 @@ export default function PlaygroundPage() {
     }
   };
 
-  // Guided Tour: Start the 4-step tour (API Key → Sign → Copy → Verify)
+  // Guided Tour: Start the tour (skip API key step if session is available)
   const startGuidedTour = () => {
     setTourActive(true);
-    setTourStep(0);
-    setQuickStartStep(0);
     setLastSignedContent(null);
-    setSelectedApiKey('generated'); // Auto-select "Generate" option
     localStorage.setItem('playground_tour_active', 'true');
-    toast.success('Welcome to the guided tour! Let\'s create your API key first.');
+
+    if (accessToken && selectedApiKey === 'session') {
+      // Session auth already active -- skip key generation, start at Sign
+      setTourStep(1);
+      setQuickStartStep(1);
+      const signEndpoint = endpoints.find(e => e.id === 'sign');
+      if (signEndpoint) {
+        preserveRequestBodyOnEndpointChangeRef.current = true;
+        setSelectedEndpoint(signEndpoint);
+        setRequestEditorMode('form');
+        setFormValues((prev) => ({
+          ...prev,
+          text: DEMO_SIGN_SAMPLE.text,
+          document_title: DEMO_SIGN_SAMPLE.document_title,
+          document_type: DEMO_SIGN_SAMPLE.document_type,
+          segmentation_level: DEMO_SIGN_SAMPLE.segmentation_level,
+          manifest_mode: DEMO_SIGN_SAMPLE.manifest_mode,
+          embedding_strategy: DEMO_SIGN_SAMPLE.embedding_strategy,
+        }));
+        setRequestBody(JSON.stringify({
+          text: DEMO_SIGN_SAMPLE.text,
+          document_title: DEMO_SIGN_SAMPLE.document_title,
+          options: {
+            document_type: DEMO_SIGN_SAMPLE.document_type,
+            segmentation_level: DEMO_SIGN_SAMPLE.segmentation_level,
+            manifest_mode: DEMO_SIGN_SAMPLE.manifest_mode,
+          },
+        }, null, 2));
+      }
+      toast.success('Session auth active. Let\'s sign some content!');
+    } else {
+      // No session -- start at API key generation
+      setTourStep(0);
+      setQuickStartStep(0);
+      setSelectedApiKey('generated');
+      toast.success('Welcome to the guided tour! Let\'s create your API key first.');
+    }
   };
 
   const skipTour = () => {
@@ -714,10 +758,6 @@ export default function PlaygroundPage() {
       } else if ((selectedApiKey === 'custom' || selectedApiKey === 'generated') && effectiveApiKey) {
         // API Key - use Bearer format
         headers['Authorization'] = `Bearer ${effectiveApiKey}`;
-      }
-
-      if (selectedEndpoint.authType === 'apikey' && selectedApiKey === 'session') {
-        toast.warning('This endpoint requires an API key');
       }
 
       if (selectedEndpoint.requiresAuth && !headers['Authorization']) {
@@ -864,7 +904,7 @@ export default function PlaygroundPage() {
       {playgroundMode === 'copy-paste-test' ? (
         <Card>
           <CardContent className="pt-6">
-            <CopyPasteSurvivalTester apiKey={effectiveApiKey} />
+            <CopyPasteSurvivalTester apiKey={effectiveApiKey} accessToken={accessToken} />
           </CardContent>
         </Card>
       ) : (<>
@@ -934,8 +974,8 @@ export default function PlaygroundPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-delft-blue dark:text-white">Guided Tour: API Key → Sign → Verify</h3>
-                    <p className="text-sm text-muted-foreground">Complete walkthrough in 4 steps</p>
+                    <h3 className="font-semibold text-delft-blue dark:text-white">{accessToken ? 'Guided Tour: Sign → Verify' : 'Guided Tour: API Key → Sign → Verify'}</h3>
+                    <p className="text-sm text-muted-foreground">{accessToken ? 'Complete walkthrough in 3 steps' : 'Complete walkthrough in 4 steps'}</p>
                   </div>
                 </div>
                 <span className="ml-4 text-xs text-muted-foreground md:hidden">Step {tourStep + 1}/4</span>
@@ -1157,41 +1197,44 @@ export default function PlaygroundPage() {
           {/* Authentication */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Authentication</CardTitle>
-              {selectedEndpoint.authType && (
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                  {selectedEndpoint.authType === 'session' && (
-                    <>
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                      This endpoint uses session auth
-                    </>
-                  )}
-                  {selectedEndpoint.authType === 'apikey' && (
-                    <>
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
-                      This endpoint requires an API key
-                    </>
-                  )}
-                  {selectedEndpoint.authType === 'both' && (
-                    <>
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                      Supports both session and API key
-                    </>
-                  )}
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Authentication</CardTitle>
+                {selectedApiKey === 'session' && accessToken && (
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    Authenticated
+                  </span>
+                )}
+              </div>
+              {selectedApiKey === 'session' && accessToken && !authExpanded && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Using your dashboard session. Requests count against your org quota.{' '}
+                  <button
+                    onClick={() => setAuthExpanded(true)}
+                    className="text-blue-ncs hover:underline"
+                  >
+                    Change method
+                  </button>
                 </p>
               )}
             </CardHeader>
+            {(authExpanded || selectedApiKey !== 'session' || !accessToken) && (
             <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Authentication Method</label>
                 <select
                   value={selectedApiKey}
-                  onChange={(e) => setSelectedApiKey(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedApiKey(e.target.value);
+                    if (e.target.value === 'session' && accessToken) {
+                      setAuthExpanded(false);
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs"
                 >
+                  <option value="session">Auto (Session)</option>
                   <option value="generated">API Key (Generate for Playground)</option>
                   <option value="custom">API Key (Paste Below)</option>
-                  <option value="session">Session Token (Dashboard Only)</option>
                 </select>
                 <p className="text-xs text-muted-foreground mt-2">
                   All playground requests use authentication so they appear in your activity timeline.
@@ -1228,7 +1271,7 @@ export default function PlaygroundPage() {
                   {generatedApiKey ? (
                     <div className="space-y-2">
                       <p className="text-xs text-green-600 dark:text-green-400">
-                        ✓ Generated key is ready to use in this playground.
+                        Generated key is ready to use in this playground.
                       </p>
                       <Input
                         type="text"
@@ -1262,20 +1305,18 @@ export default function PlaygroundPage() {
                 <div className="space-y-2">
                   {accessToken ? (
                     <p className="text-xs text-green-600 dark:text-green-400">
-                      ✓ Session token available. This works for dashboard endpoints (API Keys, Auth).
+                      Session active. Your dashboard login is used automatically for all API requests.
                     </p>
                   ) : (
                     <p className="text-xs text-amber-600 dark:text-amber-400">
                       <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                      No session token available. You may have logged in via OAuth. Use an API key for authentication, or log out and log in with email/password.
+                      No session available. Please log in or use an API key instead.
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    Session tokens are for dashboard endpoints. Use an API key for signing.
-                  </p>
                 </div>
               )}
             </CardContent>
+            )}
           </Card>
         </div>
 

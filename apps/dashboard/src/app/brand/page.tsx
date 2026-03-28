@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { EncypherMark, EncypherLoader, BRAND_COLORS } from '@encypher/icons';
@@ -24,7 +24,7 @@ const SVG_ASSETS = [
   { label: 'Favicon (SVG)', file: 'favicon.svg' },
 ] as const;
 
-const MARK_COLORS = ['navy', 'azure', 'teal', 'white'] as const;
+const MARK_COLORS = ['navy', 'azure', 'white'] as const;
 const LOADER_COLORS = ['navy', 'white'] as const;
 const LOADER_SIZES = ['sm', 'md', 'lg', 'xl'] as const;
 
@@ -44,22 +44,70 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function DownloadButton({ href, filename }: { href: string; filename: string }) {
+const PNG_SIZES = [128, 256, 512] as const;
+
+function DownloadDropdown({ svgHref, svgFilename, pngBasename }: {
+  svgHref: string;
+  svgFilename: string;
+  pngBasename: string | null;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
   return (
-    <a
-      href={href}
-      download={filename}
-      className="px-2 py-1 text-xs rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/40 transition-colors"
-    >
-      Download
-    </a>
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="px-2 py-1 text-xs rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800/40 transition-colors inline-flex items-center gap-1"
+      >
+        Download
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg py-1 min-w-[140px]">
+          <a
+            href={svgHref}
+            download={svgFilename}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+          >
+            SVG (vector)
+          </a>
+          {pngBasename && PNG_SIZES.map((size) => (
+            <a
+              key={size}
+              href={`/assets/png/${size}/${pngBasename}.png`}
+              download={`${pngBasename}-${size}.png`}
+              onClick={() => setOpen(false)}
+              className="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+            >
+              PNG {size}x{size}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
 function AssetCard({ label, src, bgMode }: { label: string; src: string; bgMode: BgMode }) {
   const isDark = bgMode === 'dark';
   const isWordmark = label.toLowerCase().includes('wordmark');
-  const embedUrl = `https://encypher.com/brand/${src.split('/').pop()}`;
+  const filename = src.split('/').pop() || '';
+  const basename = filename.replace('.svg', '');
+  const embedUrl = `https://encypher.com/brand/${filename}`;
+  const hasPng = basename.startsWith('mark-');
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
@@ -80,7 +128,11 @@ function AssetCard({ label, src, bgMode }: { label: string; src: string; bgMode:
       <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
         <p className="text-sm font-medium text-slate-900 dark:text-white mb-2">{label}</p>
         <div className="flex items-center gap-2 flex-wrap">
-          <DownloadButton href={src} filename={src.split('/').pop() || ''} />
+          <DownloadDropdown
+            svgHref={src}
+            svgFilename={filename}
+            pngBasename={hasPng ? basename : null}
+          />
           <CopyButton text={embedUrl} />
         </div>
       </div>
@@ -196,7 +248,7 @@ export default function BrandAssetsPage() {
             <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">
               EncypherMark
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               {MARK_COLORS.map((color) => (
                 <div key={color} className="space-y-3">
                   {/* Without background */}

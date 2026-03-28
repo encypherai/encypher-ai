@@ -7,7 +7,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Sign text with invisible C2PA provenance. We recommend sentence-level segmentation so each sentence gets its own signature — if someone edits one sentence, you can pinpoint exactly which one changed.',
     category: 'Signing',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
       {
@@ -65,7 +65,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Advanced verification with enriched provenance and policy diagnostics.',
     category: 'Verification',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     minTier: 'enterprise',
     docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
@@ -84,7 +84,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Stream signing progress via Server-Sent Events.',
     category: 'Streaming',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     minTier: 'enterprise',
     docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
@@ -105,7 +105,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'OpenAI-compatible streaming chat with signed response.',
     category: 'Streaming',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     minTier: 'enterprise',
     docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
@@ -142,7 +142,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Subscribe to streaming events for a session.',
     category: 'Streaming',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     minTier: 'enterprise',
     docsUrl: 'https://api.encypher.com/docs',
   },
@@ -154,7 +154,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Create a streaming session.',
     category: 'Streaming',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     minTier: 'enterprise',
     docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
@@ -179,7 +179,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Close a streaming session.',
     category: 'Streaming',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     docsUrl: 'https://api.encypher.com/docs',
   },
   {
@@ -190,7 +190,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Fetch streaming run state.',
     category: 'Streaming',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     docsUrl: 'https://api.encypher.com/docs',
   },
   {
@@ -201,7 +201,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Streaming usage statistics.',
     category: 'Streaming',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     docsUrl: 'https://api.encypher.com/docs',
   },
   {
@@ -212,7 +212,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Check revocation status for a document.',
     category: 'Status & Revocation',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     minTier: 'enterprise',
     docsUrl: 'https://api.encypher.com/docs',
   },
@@ -224,7 +224,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Revoke a signed document.',
     category: 'Status & Revocation',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     minTier: 'enterprise',
     docsUrl: 'https://api.encypher.com/docs',
     sampleBody: JSON.stringify(
@@ -244,7 +244,7 @@ export const PLAYGROUND_ENDPOINTS = [
     description: 'Reinstate a revoked document.',
     category: 'Status & Revocation',
     requiresAuth: true,
-    authType: 'apikey',
+    authType: 'both',
     minTier: 'enterprise',
     docsUrl: 'https://api.encypher.com/docs',
   },

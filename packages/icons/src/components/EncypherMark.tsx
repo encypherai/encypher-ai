@@ -56,7 +56,7 @@ export const EncypherMark: React.FC<EncypherMarkProps> = ({
       <g
         transform={
           withBackground
-            ? "translate(13.56,9.593) scale(0.85)"
+            ? "translate(12.651,9.162) scale(0.85)"
             : MARK_GROUP_TRANSFORM
         }
       >
