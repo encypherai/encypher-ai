@@ -22,6 +22,23 @@ logger = logging.getLogger(__name__)
 
 _DEMO_PRIVATE_KEY: Optional[ed25519.Ed25519PrivateKey] = None
 
+
+def extract_private_key_bytes(private_key: SigningKey) -> bytes:
+    """Extract raw private key bytes for HMAC key derivation.
+
+    Supports Ed25519, EC, and RSA key types. For Ed25519 keys, returns the
+    32-byte seed. For EC/RSA keys, returns DER-encoded PKCS8 bytes (since
+    Raw encoding is only supported for Ed25519/X25519).
+    """
+    if isinstance(private_key, ed25519.Ed25519PrivateKey):
+        return private_key.private_bytes_raw()
+    return private_key.private_bytes(
+        encoding=serialization.Encoding.DER,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+
 _ENCRYPTED_KEY_PREFIX = b"EPK1"
 _ENCRYPTED_KEY_NONCE_LEN = 12
 _ENCRYPTED_SECRET_PREFIX = b"EPS1"

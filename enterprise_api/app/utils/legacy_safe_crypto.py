@@ -45,6 +45,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac as crypto_hmac
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from encypher.core.signing import SigningKey
+
+from app.utils.crypto_utils import extract_private_key_bytes
 
 # ---------------------------------------------------------------------------
 # Alphabet
@@ -298,6 +301,6 @@ def create_embedded_sentence(
 # ---------------------------------------------------------------------------
 
 
-def derive_signing_key_from_private_key(private_key: Ed25519PrivateKey) -> bytes:
-    """Derive a 32-byte HMAC signing key from an Ed25519 private key."""
-    return hashlib.sha256(b"encypher-hmac-key:" + private_key.private_bytes_raw()).digest()
+def derive_signing_key_from_private_key(private_key: SigningKey) -> bytes:
+    """Derive a 32-byte HMAC signing key from a private key (Ed25519, EC, or RSA)."""
+    return hashlib.sha256(b"encypher-hmac-key:" + extract_private_key_bytes(private_key)).digest()

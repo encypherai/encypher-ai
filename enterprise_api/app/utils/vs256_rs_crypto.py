@@ -38,6 +38,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac as crypto_hmac
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from encypher.core.signing import SigningKey
+
+from app.utils.crypto_utils import extract_private_key_bytes
 from reedsolo import ReedSolomonError, RSCodec
 
 # Re-use the VS256 alphabet and log_id from vs256_crypto
@@ -75,9 +78,9 @@ CONTENT_COMMITMENT_BYTES = 8
 # =============================================================================
 
 
-def derive_signing_key_from_private_key(private_key: Ed25519PrivateKey) -> bytes:
-    """Derive a 32-byte HMAC signing key from an Ed25519 private key."""
-    raw = private_key.private_bytes_raw()
+def derive_signing_key_from_private_key(private_key: SigningKey) -> bytes:
+    """Derive a 32-byte HMAC signing key from a private key (Ed25519, EC, or RSA)."""
+    raw = extract_private_key_bytes(private_key)
     return hashlib.sha256(raw + b"vs256_rs_signing_key").digest()
 
 

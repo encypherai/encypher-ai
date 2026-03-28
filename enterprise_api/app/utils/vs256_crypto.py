@@ -36,6 +36,9 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac as crypto_hmac
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from encypher.core.signing import SigningKey
+
+from app.utils.crypto_utils import extract_private_key_bytes
 
 from app.utils.legacy_safe_crypto import (
     TRAILING_PUNCTUATION,
@@ -386,20 +389,21 @@ def remove_markers(text: str) -> str:
 # =============================================================================
 
 
-def derive_signing_key_from_private_key(private_key: Ed25519PrivateKey) -> bytes:
+def derive_signing_key_from_private_key(private_key: SigningKey) -> bytes:
     """
-    Derive a 32-byte HMAC signing key from an Ed25519 private key.
+    Derive a 32-byte HMAC signing key from a private key.
 
     Uses the same derivation as legacy_safe_crypto.py to ensure key compatibility.
     The same org key works for both legacy_safe and vs256_embedding modes.
+    Supports Ed25519, EC, and RSA key types.
 
     Args:
-        private_key: Ed25519 private key
+        private_key: Private key (Ed25519, EC, or RSA)
 
     Returns:
         32-byte signing key for HMAC operations
     """
-    private_bytes = private_key.private_bytes_raw()
+    private_bytes = extract_private_key_bytes(private_key)
     return hashlib.sha256(b"encypher-hmac-key:" + private_bytes).digest()
 
 
