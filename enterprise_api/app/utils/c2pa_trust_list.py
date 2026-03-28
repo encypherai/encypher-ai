@@ -458,59 +458,113 @@ def validate_certificate_chain(
 
     Returns: (is_valid, error_message, parsed_certificate)
     """
+    is_valid, msgs, parsed_cert = validate_certificate_for_upload(cert_pem, chain_pem, required_eku_oids=required_eku_oids)
+    if not is_valid:
+        # Hard failure -- extract first error message
+        return False, msgs[0] if msgs else "Unknown validation error", None
+    # Upload validation passed; check for trust warnings (strict mode)
+    if msgs:
+        return False, msgs[0], parsed_cert
+    return True, None, parsed_cert
+
+
+def validate_certificate_for_upload(
+    cert_pem: str,
+    chain_pem: Optional[str] = None,
+    *,
+    required_eku_oids: Optional[list[str]] = None,
+) -> Tuple[bool, Optional[list[str]], Optional[Certificate]]:
+    """
+    Validate a certificate for upload (structural + optional trust check).
+
+    Hard failures (return is_valid=False):
+    - Invalid PEM format
+    - Missing required EKU
+    - Revoked by internal denylist
+    - Expired or not yet valid
+    - Broken chain signatures
+
+    Soft warnings (return is_valid=True with warnings list):
+    - Does not chain to a C2PA trust list root
+
+    Returns: (is_valid, warnings_or_error, parsed_certificate)
+      - On hard failure: (False, [error_message], None)
+      - On success: (True, [warnings] or None, parsed_certificate)
+    """
     try:
         cert = x509.load_pem_x509_certificate(cert_pem.encode(), default_backend())
     except Exception as e:
-        return False, f"Invalid certificate format: {e}", None
+        return False, [f"Invalid certificate format: {e}"], None
 
     effective_eku_oids = required_eku_oids if required_eku_oids is not None else [C2PA_CLAIM_SIGNING_EKU_OID]
     if not _certificate_has_required_eku(cert, effective_eku_oids):
-        return False, "Certificate missing required EKU", None
+        return False, ["Certificate missing required EKU"], None
 
     if _is_revoked_by_internal_denylist(cert):
-        return False, "Certificate revoked by internal denylist", None
+        return False, ["Certificate revoked by internal denylist"], None
 
-    chain_certs = []
+    if not _is_certificate_valid_now(cert):
+        return False, ["Certificate is expired or not yet valid"], None
+
+    chain_certs: list[Certificate] = []
     if chain_pem:
         chain_certs = load_trust_anchors_from_pem(chain_pem)
 
-    trust_anchors = get_trust_anchors()
-    if not trust_anchors:
-        return False, "C2PA trust list not loaded", None
-
-    candidates = chain_certs + trust_anchors
-    trust_fps = {_fingerprint_sha256(a) for a in trust_anchors}
-
+    # Validate chain signatures (structural integrity)
+    # Include trust anchors as candidates so chains can walk up to a trusted root
+    trust_anchors = get_trust_anchors() or []
     current = cert
     seen: set[bytes] = set()
+    candidates = list(chain_certs) + list(trust_anchors)
 
     for _ in range(20):
         fp = _fingerprint_sha256(current)
         if fp in seen:
-            return False, "Certificate chain loop detected", None
+            break  # Reached a self-signed root or loop -- stop walking
         seen.add(fp)
 
-        if not _is_certificate_valid_now(current):
-            return False, "Certificate is expired or not yet valid", None
-
-        if fp in trust_fps:
-            if current.subject == current.issuer and not _verify_cert_signature(subject=current, issuer=current):
-                return False, "Trust anchor certificate signature invalid", None
-            if not _is_ca_certificate(current):
-                return False, "Trust anchor is not a CA certificate", None
-            return True, None, cert
+        # Self-signed root -- verify its own signature and stop
+        if current.subject == current.issuer:
+            if not _verify_cert_signature(subject=current, issuer=current):
+                return False, ["Chain root certificate signature invalid"], None
+            break
 
         issuer_subject = current.issuer
         issuer_cert = next((c for c in candidates if c.subject == issuer_subject), None)
         if issuer_cert is None:
-            return False, f"Cannot find issuer: {issuer_subject}", None
+            break  # Can't walk further -- trust check below will handle this
 
         if not _is_ca_certificate(issuer_cert):
-            return False, "Issuer certificate is not a CA", None
+            return False, ["Issuer certificate is not a CA"], None
 
         if not _verify_cert_signature(subject=current, issuer=issuer_cert):
-            return False, "Certificate signature verification failed", None
+            return False, ["Certificate signature verification failed"], None
+
+        if not _is_certificate_valid_now(issuer_cert):
+            return False, ["Intermediate certificate is expired or not yet valid"], None
 
         current = issuer_cert
 
-    return False, "Certificate chain too long", None
+    # Trust list check (soft -- produces warning, not failure)
+    if trust_anchors:
+        trust_fps = {_fingerprint_sha256(a) for a in trust_anchors}
+        all_chain_fps = seen
+        # Also check chain certs provided by the user
+        for c in chain_certs:
+            all_chain_fps.add(_fingerprint_sha256(c))
+
+        trusted = bool(all_chain_fps & trust_fps)
+        if not trusted:
+            root_cn = current.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
+            root_name = root_cn[0].value if root_cn else str(current.subject)
+            warnings = [
+                f"Certificate does not chain to a C2PA-trusted root CA. "
+                f"Chain root: {root_name}. Signatures made with this certificate "
+                f"may not be verifiable by C2PA validators. "
+                f"See GET /byok/trusted-cas for the list of trusted CAs."
+            ]
+            return True, warnings, cert
+    else:
+        return True, ["C2PA trust list not loaded; trust status unknown"], cert
+
+    return True, None, cert

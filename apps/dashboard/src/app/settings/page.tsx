@@ -322,6 +322,11 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
   const [revokeKeyId, setRevokeKeyId] = useState<string | null>(null);
   const [revokeReason, setRevokeReason] = useState('');
   const [showTrustedCas, setShowTrustedCas] = useState(false);
+  const [showCertForm, setShowCertForm] = useState(false);
+  const [certPemInput, setCertPemInput] = useState('');
+  const [chainPemInput, setChainPemInput] = useState('');
+  const [certKeyName, setCertKeyName] = useState('');
+  const [showChainField, setShowChainField] = useState(false);
 
   const { activeOrganization } = useOrganization();
   const isEnterpriseTier = activeOrganization?.tier === 'enterprise' || activeOrganization?.tier === 'strategic_partner';
@@ -365,6 +370,28 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
       setRevokeReason('');
     },
     onError: (err: Error) => toast.error(err.message || 'Failed to revoke key'),
+  });
+
+  const certUploadMutation = useMutation({
+    mutationFn: () => apiClient.uploadCertificate(
+      accessToken!, certPemInput, chainPemInput || undefined, certKeyName || undefined
+    ),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['byok-keys', orgId] });
+      const expiresAt = response.data?.expires_at
+        ? new Date(response.data.expires_at).toLocaleDateString()
+        : 'unknown';
+      toast.success(`Certificate registered. Issuer: ${response.data?.issuer ?? 'unknown'}. Expires: ${expiresAt}.`);
+      if (response.warnings?.length) {
+        response.warnings.forEach((w) => toast.warning(w));
+      }
+      setCertPemInput('');
+      setChainPemInput('');
+      setCertKeyName('');
+      setShowCertForm(false);
+      setShowChainField(false);
+    },
+    onError: (err: Error) => toast.error(err.message || 'Failed to upload certificate'),
   });
 
   if (!orgId) return null;
@@ -430,6 +457,77 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
                 {registerMutation.isPending ? 'Registering...' : 'Register Key'}
               </Button>
               <Button variant="outline" onClick={() => { setShowRegisterForm(false); setPemInput(''); setKeyName(''); }}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Upload CA-Signed Certificate */}
+        {!showCertForm ? (
+          <Button variant="outline" onClick={() => setShowCertForm(true)}>
+            Upload CA-Signed Certificate
+          </Button>
+        ) : (
+          <div className="rounded-lg border border-border p-4 space-y-4">
+            <h4 className="text-sm font-semibold">Upload CA-Signed Certificate</h4>
+            <p className="text-xs text-muted-foreground">
+              Upload an X.509 certificate issued by a C2PA-trusted CA for production signing.
+              The certificate must chain to a trusted root (see Trusted CAs below).
+            </p>
+            <div>
+              <label className="block text-sm font-medium mb-1">Display Name (optional)</label>
+              <Input
+                value={certKeyName}
+                onChange={(e) => setCertKeyName(e.target.value)}
+                placeholder="e.g. Production C2PA Certificate"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Certificate (PEM)</label>
+              <textarea
+                value={certPemInput}
+                onChange={(e) => setCertPemInput(e.target.value)}
+                placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
+                rows={6}
+                className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+            {!showChainField ? (
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
+                onClick={() => setShowChainField(true)}
+              >
+                + Add intermediate certificate chain
+              </button>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium mb-1">Intermediate Chain (PEM, optional)</label>
+                <textarea
+                  value={chainPemInput}
+                  onChange={(e) => setChainPemInput(e.target.value)}
+                  placeholder={"-----BEGIN CERTIFICATE-----\n(intermediate cert)\n-----END CERTIFICATE-----"}
+                  rows={4}
+                  className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button
+                variant="primary"
+                onClick={() => certUploadMutation.mutate()}
+                disabled={certUploadMutation.isPending || !certPemInput.trim()}
+              >
+                {certUploadMutation.isPending ? 'Uploading...' : 'Upload Certificate'}
+              </Button>
+              <Button variant="outline" onClick={() => {
+                setShowCertForm(false);
+                setCertPemInput('');
+                setChainPemInput('');
+                setCertKeyName('');
+                setShowChainField(false);
+              }}>
                 Cancel
               </Button>
             </div>

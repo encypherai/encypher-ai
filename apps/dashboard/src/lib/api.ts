@@ -1554,6 +1554,29 @@ const apiClient = {
   },
 
   /**
+   * Upload a CA-signed X.509 certificate for C2PA signing (enterprise tier)
+   */
+  async uploadCertificate(
+    accessToken: string,
+    certificatePem: string,
+    chainPem?: string,
+    keyName?: string,
+  ): Promise<ByokCertificateUploadResponse> {
+    return fetchWithAuth<ByokCertificateUploadResponse>(
+      `${API_BASE_URL}/byok/certificates`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          certificate_pem: certificatePem,
+          chain_pem: chainPem || undefined,
+          key_name: keyName || undefined,
+        }),
+      }
+    );
+  },
+
+  /**
    * Get trusted Certificate Authorities for BYOK
    */
   async getTrustedCas(accessToken: string): Promise<ByokTrustedCasResponse> {
@@ -3394,6 +3417,20 @@ interface ByokRegisterResponse {
   data: ByokPublicKeyInfo | null;
 }
 
+interface ByokCertificateUploadResponse {
+  success: boolean;
+  data: {
+    key_id: string;
+    subject: string;
+    issuer: string;
+    algorithm: string;
+    expires_at: string;
+    fingerprint: string;
+  } | null;
+  error?: string;
+  warnings?: string[];
+}
+
 interface ByokTrustedCasResponse {
   success: boolean;
   trusted_cas: string[];
@@ -3517,6 +3554,7 @@ export type {
   ByokPublicKeyInfo,
   ByokKeyListData,
   ByokRegisterResponse,
+  ByokCertificateUploadResponse,
   ByokTrustedCasResponse,
   // Print Leak Detection
   PrintFingerprintDocument,

@@ -20,7 +20,7 @@ from app.utils.c2pa_trust_list import (
     get_trust_anchor_subjects,
     get_trust_list_metadata,
     get_tsa_trust_list_metadata,
-    validate_certificate_chain,
+    validate_certificate_for_upload,
 )
 
 logger = logging.getLogger(__name__)
@@ -183,6 +183,7 @@ class CertificateUploadResponse(BaseModel):
     success: bool = True
     data: Optional[dict] = None
     error: Optional[str] = None
+    warnings: Optional[list[str]] = None
 
 
 class TrustListResponse(BaseModel):
@@ -271,21 +272,25 @@ async def upload_certificate(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization ID missing")
     org_id = cast(str, org_id)
 
-    # Validate certificate chains to C2PA trust anchor
-    is_valid, error_msg, parsed_cert = validate_certificate_chain(
+    # Validate certificate structure, expiry, EKU, and chain integrity.
+    # Trust list check is a soft warning -- untrusted certs can still be uploaded.
+    is_valid, warnings_or_errors, parsed_cert = validate_certificate_for_upload(
         cert_pem=request.certificate_pem,
         chain_pem=request.chain_pem,
         required_eku_oids=settings.c2pa_required_signer_eku_oids_list,
     )
 
     if not is_valid:
+        error_msg = warnings_or_errors[0] if warnings_or_errors else "Unknown validation error"
         logger.warning(f"Certificate validation failed for org {org_id}: {error_msg}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Certificate validation failed: {error_msg}. "
-            f"Certificate must chain to a C2PA-trusted CA. "
-            f"See GET /byok/trusted-cas for the list of trusted CAs.",
+            detail=f"Certificate validation failed: {error_msg}",
         )
+
+    trust_warnings: list[str] = warnings_or_errors if warnings_or_errors else []
+    if trust_warnings:
+        logger.info(f"Certificate uploaded with warnings for org {org_id}: {trust_warnings}")
 
     # Extract certificate info
     from cryptography.hazmat.primitives import serialization
@@ -370,4 +375,5 @@ async def upload_certificate(
             "expires_at": cert_expiry.isoformat(),
             "fingerprint": result["data"]["key_fingerprint"],
         },
+        warnings=trust_warnings or None,
     )
