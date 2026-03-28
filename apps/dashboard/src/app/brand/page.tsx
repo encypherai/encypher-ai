@@ -215,7 +215,7 @@ function AssetCard({ label, src, bgMode }: { label: string; src: string; bgMode:
   const filename = src.split('/').pop() || '';
   const basename = filename.replace('.svg', '');
   const embedUrl = `https://encypher.com/brand/${filename}`;
-  const aspectRatio = isLockup ? 950 / 240 : isWordmark ? 134 / 24 : 1;
+  const aspectRatio = isLockup ? 680 / 240 : isWordmark ? 134 / 24 : 1;
 
   return (
     <div className={`rounded-xl border border-slate-200 dark:border-slate-700 ${isLockup ? 'sm:col-span-2 lg:col-span-3' : ''}`}>
