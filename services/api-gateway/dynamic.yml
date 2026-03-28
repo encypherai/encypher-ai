@@ -184,6 +184,16 @@ http:
       middlewares:
         - cors
 
+    # Alert Service - alerting and incident management
+    api-alerts:
+      rule: "PathPrefix(`/api/v1/alerts`)"
+      service: alert-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
     # API docs (Swagger/ReDoc/OpenAPI) - handled by enterprise-api
     api-docs:
       rule: "PathPrefix(`/docs`) || PathPrefix(`/internal`) || Path(`/redoc`) || Path(`/openapi.json`)"
@@ -247,6 +257,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://web-service.railway.internal:8080"
+
+    alert-service:
+      loadBalancer:
+        servers:
+          - url: "http://alert-service.railway.internal:8080"
 
     enterprise-api:
       loadBalancer:

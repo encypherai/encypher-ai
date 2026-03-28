@@ -63,6 +63,13 @@ scrape_configs:
     metrics_path: '/metrics'
     scrape_interval: 15s
 
+  - job_name: 'alert-service'
+    static_configs:
+      - targets: ['alert-service-production.up.railway.app:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
 # Alerting rules
 rule_files:
   - 'alerts.yml'
