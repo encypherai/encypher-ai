@@ -1,6 +1,5 @@
 """Customer-facing BYOK (Bring Your Own Key) endpoints."""
 
-import hashlib
 import logging
 from datetime import datetime
 from typing import Optional, cast
@@ -382,7 +381,7 @@ async def upload_certificate(
             # Key exists (possibly revoked) -- reactivate it
             from sqlalchemy import text as sa_text
 
-            fingerprint = f"SHA256:{hashlib.sha256(public_key_pem.encode()).hexdigest()}"
+            fingerprint = PublicKeyService.compute_key_fingerprint(public_key_pem)
             await db.execute(
                 sa_text("""
                     UPDATE byok_public_keys
