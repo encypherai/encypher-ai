@@ -51,11 +51,83 @@ function svgToCanvas(svgUrl: string, width: number, height: number): Promise<HTM
   });
 }
 
+// CRC32 lookup table for PNG chunk checksums
+const crcTable = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c;
+  }
+  return t;
+})();
+
+function crc32(buf: Uint8Array): number {
+  let c = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) c = crcTable[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+
+function makePngChunk(type: string, data: Uint8Array): Uint8Array {
+  const chunk = new Uint8Array(12 + data.length);
+  new DataView(chunk.buffer).setUint32(0, data.length);
+  for (let i = 0; i < 4; i++) chunk[4 + i] = type.charCodeAt(i);
+  chunk.set(data, 8);
+  new DataView(chunk.buffer).setUint32(8 + data.length, crc32(chunk.subarray(4, 8 + data.length)));
+  return chunk;
+}
+
+function makeTextChunk(keyword: string, value: string): Uint8Array {
+  const enc = new TextEncoder();
+  const kw = enc.encode(keyword);
+  const val = enc.encode(value);
+  const data = new Uint8Array(kw.length + 1 + val.length);
+  data.set(kw);
+  data[kw.length] = 0; // null separator
+  data.set(val, kw.length + 1);
+  return makePngChunk('tEXt', data);
+}
+
+const PNG_METADATA: Array<[string, string]> = [
+  ['Author', 'Encypher Corporation'],
+  ['Source', 'https://encypher.com'],
+  ['Copyright', 'Copyright Encypher Corporation. All rights reserved.'],
+];
+
+function patchPng(dataUrl: string): Blob {
+  const bin = atob(dataUrl.split(',')[1]);
+  const src = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) src[i] = bin.charCodeAt(i);
+
+  // Build chunks to insert after IHDR: pHYs (300 DPI) + tEXt metadata
+  const ppm = Math.round(300 * 39.3701); // 300 DPI in pixels per meter
+  const physData = new Uint8Array(9);
+  new DataView(physData.buffer).setUint32(0, ppm);
+  new DataView(physData.buffer).setUint32(4, ppm);
+  physData[8] = 1; // unit = meter
+  const chunks = [makePngChunk('pHYs', physData)];
+  for (const [key, val] of PNG_METADATA) chunks.push(makeTextChunk(key, val));
+
+  const extraLen = chunks.reduce((sum, c) => sum + c.length, 0);
+  const ihdrLen = new DataView(src.buffer).getUint32(8);
+  const insertAt = 8 + 12 + ihdrLen; // after signature + IHDR
+
+  const out = new Uint8Array(src.length + extraLen);
+  out.set(src.subarray(0, insertAt));
+  let offset = insertAt;
+  for (const chunk of chunks) { out.set(chunk, offset); offset += chunk.length; }
+  out.set(src.subarray(insertAt), offset);
+
+  return new Blob([out], { type: 'image/png' });
+}
+
 function downloadCanvas(canvas: HTMLCanvasElement, filename: string) {
+  const blob = patchPng(canvas.toDataURL('image/png'));
   const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
+  a.href = URL.createObjectURL(blob);
   a.download = filename;
   a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 function CopyButton({ text }: { text: string }) {
