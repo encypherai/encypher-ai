@@ -325,6 +325,7 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
   const [showCertForm, setShowCertForm] = useState(false);
   const [certPemInput, setCertPemInput] = useState('');
   const [chainPemInput, setChainPemInput] = useState('');
+  const [privateKeyPemInput, setPrivateKeyPemInput] = useState('');
   const [certKeyName, setCertKeyName] = useState('');
   const [showChainField, setShowChainField] = useState(false);
 
@@ -374,7 +375,7 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
 
   const certUploadMutation = useMutation({
     mutationFn: () => apiClient.uploadCertificate(
-      accessToken!, certPemInput, chainPemInput || undefined, certKeyName || undefined
+      accessToken!, certPemInput, chainPemInput || undefined, certKeyName || undefined, privateKeyPemInput || undefined
     ),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['byok-keys', orgId] });
@@ -387,6 +388,7 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
       }
       setCertPemInput('');
       setChainPemInput('');
+      setPrivateKeyPemInput('');
       setCertKeyName('');
       setShowCertForm(false);
       setShowChainField(false);
@@ -513,6 +515,19 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
                 />
               </div>
             )}
+            <div>
+              <label className="block text-sm font-medium mb-1">Private Key (PEM, optional)</label>
+              <textarea
+                value={privateKeyPemInput}
+                onChange={(e) => setPrivateKeyPemInput(e.target.value)}
+                placeholder={"-----BEGIN PRIVATE KEY-----\n(PKCS8 private key)\n-----END PRIVATE KEY-----"}
+                rows={4}
+                className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Required for the API to sign with this certificate. Encrypted at rest.
+              </p>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="primary"
@@ -525,6 +540,7 @@ function ByokKeyManagementCard({ orgId, accessToken }: { orgId: string | null | 
                 setShowCertForm(false);
                 setCertPemInput('');
                 setChainPemInput('');
+                setPrivateKeyPemInput('');
                 setCertKeyName('');
                 setShowChainField(false);
               }}>

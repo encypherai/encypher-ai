@@ -165,6 +165,10 @@ class CertificateUploadRequest(BaseModel):
         None,
         description="PEM-encoded intermediate certificates (if not included in certificate_pem)",
     )
+    private_key_pem: Optional[str] = Field(
+        None,
+        description="PEM-encoded private key matching the certificate. Required for the API to sign with this certificate.",
+    )
     key_name: Optional[str] = Field(
         None,
         description="Friendly name for this certificate",
@@ -175,6 +179,12 @@ class CertificateUploadRequest(BaseModel):
         if "-----BEGIN CERTIFICATE-----" not in v:
             raise ValueError("Certificate must be in PEM format")
         return v.strip()
+
+    @validator("private_key_pem")
+    def validate_private_key_format(cls, v):
+        if v and "-----BEGIN" not in v:
+            raise ValueError("Private key must be in PEM format")
+        return v.strip() if v else v
 
 
 class CertificateUploadResponse(BaseModel):
@@ -321,6 +331,41 @@ async def upload_certificate(
     else:
         key_algorithm = "Unknown"
 
+    # Validate and encrypt private key if provided
+    encrypted_private_key: Optional[bytes] = None
+    if request.private_key_pem:
+        from cryptography.hazmat.backends import default_backend as _default_backend
+
+        from app.utils.crypto_utils import encrypt_private_key_pem
+
+        try:
+            private_key = serialization.load_pem_private_key(request.private_key_pem.encode(), password=None, backend=_default_backend())
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid private key: {e}",
+            )
+
+        # Verify the private key matches the certificate's public key
+        private_pub_bytes = private_key.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        cert_pub_bytes = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        if private_pub_bytes != cert_pub_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Private key does not match the certificate's public key",
+            )
+
+        encrypted_private_key = encrypt_private_key_pem(private_key)
+        logger.info(f"Private key encrypted for org {org_id} (algorithm: {key_algorithm})")
+    else:
+        trust_warnings.append("No private key provided. The API cannot sign with this certificate until a matching private key is uploaded.")
+
     # Register the public key
     result = await PublicKeyService.register_public_key(
         db=db,
@@ -336,28 +381,50 @@ async def upload_certificate(
             detail=result.get("error", "Failed to register certificate"),
         )
 
-    # Also update organization's certificate fields for verification
+    # Update organization's certificate and optionally private key
     from sqlalchemy import text
 
     try:
-        await db.execute(
-            text("""
-                UPDATE organizations
-                SET certificate_pem = :cert_pem,
-                    certificate_chain = :chain_pem,
-                    certificate_status = 'active',
-                    certificate_rotated_at = :now,
-                    certificate_expiry = :expiry
-                WHERE id = :org_id
-            """),
-            {
-                "cert_pem": request.certificate_pem,
-                "chain_pem": request.chain_pem or "",
-                "now": datetime.utcnow(),
-                "expiry": cert_expiry,
-                "org_id": org_id,
-            },
-        )
+        if encrypted_private_key:
+            await db.execute(
+                text("""
+                    UPDATE organizations
+                    SET certificate_pem = :cert_pem,
+                        certificate_chain = :chain_pem,
+                        private_key_encrypted = :private_key_encrypted,
+                        certificate_status = 'active',
+                        certificate_rotated_at = :now,
+                        certificate_expiry = :expiry
+                    WHERE id = :org_id
+                """),
+                {
+                    "cert_pem": request.certificate_pem,
+                    "chain_pem": request.chain_pem or "",
+                    "private_key_encrypted": encrypted_private_key,
+                    "now": datetime.utcnow(),
+                    "expiry": cert_expiry,
+                    "org_id": org_id,
+                },
+            )
+        else:
+            await db.execute(
+                text("""
+                    UPDATE organizations
+                    SET certificate_pem = :cert_pem,
+                        certificate_chain = :chain_pem,
+                        certificate_status = 'active',
+                        certificate_rotated_at = :now,
+                        certificate_expiry = :expiry
+                    WHERE id = :org_id
+                """),
+                {
+                    "cert_pem": request.certificate_pem,
+                    "chain_pem": request.chain_pem or "",
+                    "now": datetime.utcnow(),
+                    "expiry": cert_expiry,
+                    "org_id": org_id,
+                },
+            )
         await db.commit()
     except Exception as e:
         logger.error(f"Failed to update organization certificate: {e}")

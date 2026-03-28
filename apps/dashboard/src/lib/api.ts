@@ -1561,6 +1561,7 @@ const apiClient = {
     certificatePem: string,
     chainPem?: string,
     keyName?: string,
+    privateKeyPem?: string,
   ): Promise<ByokCertificateUploadResponse> {
     return fetchWithAuth<ByokCertificateUploadResponse>(
       `${API_BASE_URL}/byok/certificates`,
@@ -1571,6 +1572,7 @@ const apiClient = {
           certificate_pem: certificatePem,
           chain_pem: chainPem || undefined,
           key_name: keyName || undefined,
+          private_key_pem: privateKeyPem || undefined,
         }),
       }
     );

@@ -200,7 +200,7 @@ def generate_ed25519_keypair() -> tuple[ed25519.Ed25519PrivateKey, ed25519.Ed255
 
 def encrypt_private_key(private_key: ed25519.Ed25519PrivateKey) -> bytes:
     """
-    Encrypt private key for secure storage.
+    Encrypt Ed25519 private key for secure storage (legacy format).
 
     Args:
         private_key: Ed25519 private key to encrypt
@@ -223,6 +223,32 @@ def encrypt_private_key(private_key: ed25519.Ed25519PrivateKey) -> bytes:
     return _ENCRYPTED_KEY_PREFIX + nonce + encrypted
 
 
+_ENCRYPTED_PEM_KEY_PREFIX = b"EPK2"
+
+
+def encrypt_private_key_pem(private_key: SigningKey) -> bytes:
+    """
+    Encrypt any private key (Ed25519, EC, RSA) for secure storage using PKCS8 PEM.
+
+    Args:
+        private_key: Private key to encrypt (Ed25519, EC, or RSA)
+
+    Returns:
+        bytes: Encrypted private key with EPK2 prefix
+    """
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+    aesgcm = AESGCM(settings.key_encryption_key_bytes)
+    nonce = os.urandom(_ENCRYPTED_KEY_NONCE_LEN)
+    encrypted = aesgcm.encrypt(nonce, private_pem, None)
+
+    return _ENCRYPTED_PEM_KEY_PREFIX + nonce + encrypted
+
+
 def encrypt_sensitive_value(value: str) -> bytes:
     """Encrypt a short UTF-8 secret for secure storage."""
     plaintext = value.encode("utf-8")
@@ -232,15 +258,18 @@ def encrypt_sensitive_value(value: str) -> bytes:
     return _ENCRYPTED_SECRET_PREFIX + nonce + ciphertext
 
 
-def decrypt_private_key(encrypted_key: bytes) -> ed25519.Ed25519PrivateKey:
+def decrypt_private_key(encrypted_key: bytes) -> SigningKey:
     """
     Decrypt private key from encrypted storage.
+
+    Handles both legacy Ed25519 raw format (EPK1 prefix) and
+    PKCS8 PEM format (EPK2 prefix) for EC/RSA/Ed25519 keys.
 
     Args:
         encrypted_key: Encrypted private key bytes
 
     Returns:
-        Ed25519PrivateKey: Decrypted private key
+        SigningKey: Decrypted private key (Ed25519, EC, or RSA)
 
     Raises:
         ValueError: If decryption fails
@@ -248,6 +277,18 @@ def decrypt_private_key(encrypted_key: bytes) -> ed25519.Ed25519PrivateKey:
     try:
         aesgcm = AESGCM(settings.key_encryption_key_bytes)
 
+        # EPK2 format: PKCS8 PEM (supports all key types)
+        if encrypted_key.startswith(_ENCRYPTED_PEM_KEY_PREFIX):
+            offset = len(_ENCRYPTED_PEM_KEY_PREFIX)
+            nonce = encrypted_key[offset : offset + _ENCRYPTED_KEY_NONCE_LEN]
+            ciphertext = encrypted_key[offset + _ENCRYPTED_KEY_NONCE_LEN :]
+            private_pem = aesgcm.decrypt(nonce, ciphertext, None)
+            key = serialization.load_pem_private_key(private_pem, password=None, backend=default_backend())
+            if not isinstance(key, (ed25519.Ed25519PrivateKey, ec.EllipticCurvePrivateKey, rsa.RSAPrivateKey)):
+                raise ValueError(f"Unsupported key type: {type(key)}")
+            return key
+
+        # Legacy EPK1 format: Ed25519 raw bytes
         if encrypted_key.startswith(_ENCRYPTED_KEY_PREFIX) and len(encrypted_key) > (len(_ENCRYPTED_KEY_PREFIX) + _ENCRYPTED_KEY_NONCE_LEN):
             offset = len(_ENCRYPTED_KEY_PREFIX)
             nonce = encrypted_key[offset : offset + _ENCRYPTED_KEY_NONCE_LEN]
