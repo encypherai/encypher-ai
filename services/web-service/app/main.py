@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 # Import database startup utilities
 from encypher_commercial_shared.db import ensure_database_ready
+from encypher_commercial_shared.metrics import MetricsClient, MetricsMiddleware
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -17,6 +18,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+metrics_client = MetricsClient(redis_url=settings.REDIS_URL, service_name="web-service")
 
 
 class RequestMetaMiddleware(BaseHTTPMiddleware):
@@ -36,6 +38,8 @@ class RequestMetaMiddleware(BaseHTTPMiddleware):
 async def lifespan(app: FastAPI):
     logger.info("Starting web-service")
 
+    await metrics_client.connect()
+
     # Ensure database is ready and run migrations
     db_url = str(settings.SQLALCHEMY_DATABASE_URI) if settings.SQLALCHEMY_DATABASE_URI else None
     if db_url:
@@ -48,6 +52,8 @@ async def lifespan(app: FastAPI):
         )
 
     yield
+
+    await metrics_client.disconnect()
     logger.info("Shutting down web-service")
 
 
@@ -79,6 +85,8 @@ elif settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+app.add_middleware(MetricsMiddleware, metrics_client=metrics_client)
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
 

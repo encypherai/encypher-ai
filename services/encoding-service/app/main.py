@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from .core.config import settings
 from .api.v1.endpoints import router as v1_router
 from .middleware.logging import RequestLoggingMiddleware
+from encypher_commercial_shared.metrics import MetricsClient, MetricsMiddleware, set_metrics_client
 
 # Import database startup utilities
 from encypher_commercial_shared.db import ensure_database_ready
@@ -23,6 +24,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+metrics_client = MetricsClient(redis_url=settings.REDIS_URL, service_name=settings.SERVICE_NAME)
 
 
 @asynccontextmanager
@@ -30,6 +32,9 @@ async def lifespan(app: FastAPI):
     """Lifespan events"""
     # Startup
     logger.info("Starting %s", settings.SERVICE_NAME)
+
+    await metrics_client.connect()
+    set_metrics_client(metrics_client)
 
     # Ensure database is ready and run migrations
     ensure_database_ready(
@@ -41,6 +46,8 @@ async def lifespan(app: FastAPI):
     )
 
     yield
+
+    await metrics_client.disconnect()
 
     # Shutdown
     logger.info("Shutting down %s", settings.SERVICE_NAME)
@@ -66,6 +73,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(MetricsMiddleware, metrics_client=metrics_client)
 
 
 # ---------------------------------------------------------------------------

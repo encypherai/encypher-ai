@@ -82,6 +82,9 @@ class Settings(BaseSettings):
     ANALYTICS_ENABLED: bool = True
     ANALYTICS_DB_URI: PostgresDsn | None = None
 
+    # Redis
+    REDIS_URL: str | None = None
+
     # Environment
     ENVIRONMENT: str = "development"
     DEBUG: bool = True

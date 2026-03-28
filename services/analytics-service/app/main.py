@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 # Import database startup utilities
 from encypher_commercial_shared.db import ensure_database_ready
+from encypher_commercial_shared.metrics import MetricsClient, MetricsMiddleware, set_metrics_client
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,11 +21,15 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
+metrics_client = MetricsClient(redis_url=settings.REDIS_URL, service_name=settings.SERVICE_NAME)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.SERVICE_NAME}")
+
+    await metrics_client.connect()
+    set_metrics_client(metrics_client)
 
     # Ensure database is ready and run migrations
     ensure_database_ready(
@@ -59,6 +64,8 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"Error stopping stream consumer: {e}")
 
+    await metrics_client.disconnect()
+
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 
 
@@ -76,6 +83,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(MetricsMiddleware, metrics_client=metrics_client)
 
 # Add request logging middleware
 app.add_middleware(RequestLoggingMiddleware)
