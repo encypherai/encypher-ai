@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from ...db.models import AlertEvent, Incident
 from ...db.session import get_db
-from ...services import discord_notifier, incident_service
+from ...services import cc_trigger, discord_notifier, incident_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -214,6 +214,7 @@ async def receive_alertmanager(payload: AlertmanagerPayload, db: Session = Depen
 
         if is_new:
             await discord_notifier.notify_alertmanager(alert_name, severity, summary, description, alert.labels, db)
+            await cc_trigger.trigger_if_critical(incident)
 
         processed += 1
 
@@ -240,6 +241,7 @@ async def receive_direct_event(event: DirectEventRequest, db: Session = Depends(
 
     if is_new:
         await discord_notifier.notify_new_incident(incident, db)
+        await cc_trigger.trigger_if_critical(incident)
 
     return {
         "incident_id": incident.id,

@@ -21,6 +21,16 @@ class Settings(BaseSettings):
     # Discord webhook for notifications
     DISCORD_WEBHOOK_URL: str = ""
 
+    # Discord bot (slash commands)
+    DISCORD_BOT_TOKEN: str = ""
+    DISCORD_GUILD_ID: str = ""
+
+    # Claude Code investigation trigger
+    CC_WEBHOOK_URL: str = ""
+    CC_WEBHOOK_SECRET: str = ""
+    CC_AUTO_INVESTIGATE: bool = True
+    ALERT_SERVICE_URL: str = ""
+
     # Email escalation (optional)
     NOTIFICATION_SERVICE_URL: str = ""
     ALERT_EMAIL_RECIPIENT: str = ""

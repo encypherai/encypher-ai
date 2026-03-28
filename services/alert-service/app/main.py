@@ -51,6 +51,17 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning("Failed to start pattern detector: %s", e)
 
+    # Start Discord bot
+    discord_bot_running = False
+    if settings.DISCORD_BOT_TOKEN:
+        try:
+            from .services.discord_bot import start_discord_bot, stop_discord_bot
+
+            await start_discord_bot()
+            discord_bot_running = True
+        except Exception as e:
+            logger.warning("Failed to start Discord bot: %s", e)
+
     yield
 
     # Shutdown
@@ -69,6 +80,14 @@ async def lifespan(app: FastAPI):
             await stop_pattern_detector()
         except Exception as e:
             logger.error("Error stopping pattern detector: %s", e)
+
+    if discord_bot_running:
+        try:
+            from .services.discord_bot import stop_discord_bot
+
+            await stop_discord_bot()
+        except Exception as e:
+            logger.error("Error stopping Discord bot: %s", e)
 
     logger.info("Shutting down %s", settings.SERVICE_NAME)
 
