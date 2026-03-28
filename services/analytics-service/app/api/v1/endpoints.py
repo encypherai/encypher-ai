@@ -647,10 +647,16 @@ _rl_store: Dict[tuple, list] = {}
 
 
 def _client_ip(request: Request) -> str:
-    """Extract the real client IP from X-Forwarded-For or the direct connection."""
+    """Extract real client IP from X-Forwarded-For (rightmost entry).
+
+    Behind a reverse proxy, the proxy appends the real client IP as the last
+    entry in X-Forwarded-For. Earlier entries may be spoofed by the client.
+    """
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        ips = [ip.strip() for ip in forwarded.split(",") if ip.strip()]
+        if ips:
+            return ips[-1]
     return request.client.host if request.client else "unknown"
 
 

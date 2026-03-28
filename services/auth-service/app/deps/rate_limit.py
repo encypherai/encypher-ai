@@ -15,10 +15,12 @@ _lock = Lock()
 
 def rate_limiter(route: str, limit: int = 10, window_sec: int = 60) -> Callable:
     def _dep(request: Request):
-        # prefer X-Forwarded-For if present
-        ip = request.headers.get("x-forwarded-for")
-        if ip:
-            ip = ip.split(",")[0].strip()
+        # Use rightmost X-Forwarded-For entry (appended by trusted proxy).
+        # Earlier entries may be spoofed by the client.
+        xff = request.headers.get("x-forwarded-for")
+        if xff:
+            ips = [i.strip() for i in xff.split(",") if i.strip()]
+            ip = ips[-1] if ips else (request.client.host if request.client else "unknown")
         else:
             ip = request.client.host if request.client else "unknown"
         now = time.time()

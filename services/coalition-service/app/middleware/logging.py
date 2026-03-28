@@ -11,6 +11,20 @@ import structlog
 logger = structlog.get_logger()
 
 
+def _resolve_client_ip(request: Request) -> str:
+    """Extract real client IP from X-Forwarded-For (rightmost entry).
+
+    Behind a reverse proxy, the proxy appends the real client IP as the last
+    entry in X-Forwarded-For. Earlier entries may be spoofed by the client.
+    """
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        ips = [ip.strip() for ip in forwarded_for.split(",") if ip.strip()]
+        if ips:
+            return ips[-1]
+    return request.client.host if request.client else "unknown"
+
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
     Middleware to log all incoming requests and responses
@@ -28,7 +42,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             request_id=request_id,
             method=request.method,
             url=str(request.url),
-            client_host=request.client.host if request.client else None,
+            client_ip=_resolve_client_ip(request),
         )
 
         # Process request

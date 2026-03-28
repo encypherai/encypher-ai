@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_content_db, get_db
+from app.dependencies import _get_client_ip
 from app.middleware.api_key_auth import authenticate_api_key, get_api_key_from_header
 from app.middleware.public_rate_limiter import public_rate_limiter
 from app.models.content_reference import ContentReference
@@ -398,6 +399,8 @@ async def verify_embedding(
                 actor_id=reference.organization_id,
                 actor_type="system",
                 resource_id=reference.document_id,
+                ip_address=_get_client_ip(request),
+                user_agent=request.headers.get("user-agent"),
             )
         )
 

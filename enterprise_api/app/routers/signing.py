@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_content_db, get_db
-from app.dependencies import require_sign_permission
+from app.dependencies import _get_client_ip, require_sign_permission
 from app.middleware.api_rate_limiter import api_rate_limiter
 from app.observability.metrics import increment
 from app.routers.audit import AuditAction, write_api_audit_log
@@ -423,6 +423,8 @@ async def sign_content(
                     actor_id=org_id,
                     resource_id=doc_id,
                     details=_audit_details,
+                    ip_address=_get_client_ip(http_request),
+                    user_agent=http_request.headers.get("user-agent"),
                 )
             )
         elif data.get("documents"):
@@ -443,6 +445,8 @@ async def sign_content(
                     resource_type="batch",
                     actor_id=org_id,
                     details={**_audit_details, "batch_size": len(data["documents"])},
+                    ip_address=_get_client_ip(http_request),
+                    user_agent=http_request.headers.get("user-agent"),
                 )
             )
 

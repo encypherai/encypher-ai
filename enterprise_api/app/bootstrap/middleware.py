@@ -16,6 +16,20 @@ from app.utils.request_logging import should_log_request
 logger = logging.getLogger(__name__)
 
 
+def _resolve_client_ip(request: Request) -> str:
+    """Extract real client IP from X-Forwarded-For using rightmost entry.
+
+    Behind Traefik, the proxy appends the real client IP as the last entry
+    in X-Forwarded-For. Earlier entries may be spoofed by the client.
+    """
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        ips = [ip.strip() for ip in forwarded_for.split(",") if ip.strip()]
+        if ips:
+            return ips[-1]
+    return request.client.host if request.client else "unknown"
+
+
 def build_cors_settings() -> dict[str, object]:
     origins = [origin.strip() for origin in settings.allowed_origins.split(",") if origin.strip()]
     allow_credentials = True
@@ -175,7 +189,7 @@ def register_middleware(app: FastAPI) -> None:
                 log_health_checks=settings.log_health_checks,
                 slow_request_threshold_ms=settings.slow_request_threshold_ms,
             ):
-                client_host = request.client.host if request.client else "unknown"
+                client_host = _resolve_client_ip(request)
                 logger.error(
                     "%s %s - Status: 500 - Time: %.4fs - Client: %s",
                     request.method,
@@ -197,7 +211,7 @@ def register_middleware(app: FastAPI) -> None:
             log_health_checks=settings.log_health_checks,
             slow_request_threshold_ms=settings.slow_request_threshold_ms,
         ):
-            client_host = request.client.host if request.client else "unknown"
+            client_host = _resolve_client_ip(request)
             log_method = logger.warning if response.status_code >= 500 else logger.info
             log_method(
                 "%s %s - Status: %s - Time: %.4fs - Client: %s",

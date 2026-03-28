@@ -18,14 +18,16 @@ logger = logging.getLogger(__name__)
 
 
 def get_client_ip(request: Request) -> str | None:
-    """Extract client IP address from request headers or socket."""
+    """Extract real client IP from X-Forwarded-For (rightmost entry).
+
+    Behind a reverse proxy, the proxy appends the real client IP as the last
+    entry in X-Forwarded-For. Earlier entries may be spoofed by the client.
+    """
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
-        return forwarded.split(",")[0].strip()
-
-    real_ip = request.headers.get("X-Real-IP")
-    if real_ip:
-        return real_ip
+        ips = [ip.strip() for ip in forwarded.split(",") if ip.strip()]
+        if ips:
+            return ips[-1]
 
     if request.client:
         return request.client.host

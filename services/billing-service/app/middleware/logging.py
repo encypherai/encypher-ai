@@ -9,6 +9,20 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
 
+def _resolve_client_ip(request: Request) -> str:
+    """Extract real client IP from X-Forwarded-For (rightmost entry).
+
+    Behind a reverse proxy, the proxy appends the real client IP as the last
+    entry in X-Forwarded-For. Earlier entries may be spoofed by the client.
+    """
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        ips = [ip.strip() for ip in forwarded_for.split(",") if ip.strip()]
+        if ips:
+            return ips[-1]
+    return request.client.host if request.client else "unknown"
+
+
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
     Middleware to add request IDs and structured logging to all requests.
@@ -35,7 +49,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             request_id=request_id,
             method=request.method,
             path=request.url.path,
-            client_ip=request.client.host if request.client else None,
+            client_ip=_resolve_client_ip(request),
             user_agent=request.headers.get("user-agent", "unknown"),
         )
 
