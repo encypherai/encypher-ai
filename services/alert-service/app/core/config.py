@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     SPIKE_MIN_EVENTS: int = 5
     AUTO_RESOLVE_AFTER_MINUTES: int = 30
     PATTERN_CHECK_INTERVAL_SECONDS: int = 60
+    WARNING_NOTIFY_THRESHOLD: int = 10  # 4xx: notify after N occurrences of same error
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -26,14 +26,19 @@ _SEVERITY_EMOJI = {
 
 
 async def notify_new_incident(incident: Incident, db_session) -> Optional[str]:
-    """Send a Discord embed for a new incident."""
+    """Send a Discord embed for a new or threshold-crossing incident."""
     if not settings.DISCORD_WEBHOOK_URL and not settings.DISCORD_STATUS_CHANNEL_ID:
         return None
 
     color = _SEVERITY_COLORS.get(incident.severity, 0x808080)
+    is_threshold = incident.occurrence_count > 1
+
+    title = incident.title[:256]
+    if is_threshold:
+        title = f"{title} [{incident.occurrence_count}x]"
 
     embed = {
-        "title": incident.title[:256],
+        "title": title[:256],
         "color": color,
         "fields": [
             {"name": "Service", "value": incident.service_name or "unknown", "inline": True},
@@ -44,6 +49,16 @@ async def notify_new_incident(incident: Incident, db_session) -> Optional[str]:
         "timestamp": datetime.utcnow().isoformat(),
         "footer": {"text": f"Incident {incident.id}"},
     }
+
+    if is_threshold:
+        embed["fields"].insert(
+            0,
+            {
+                "name": "Repeated Error",
+                "value": f"This error has occurred {incident.occurrence_count} times since {incident.first_seen_at.strftime('%H:%M UTC') if incident.first_seen_at else 'unknown'}",
+                "inline": False,
+            },
+        )
 
     if incident.sample_error:
         error_preview = incident.sample_error[:500]

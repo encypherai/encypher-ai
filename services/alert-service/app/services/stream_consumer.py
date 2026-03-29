@@ -194,7 +194,7 @@ class AlertStreamConsumer:
 
         db = SessionLocal()
         try:
-            incident, is_new = ingest_error_event(
+            incident, is_new, should_notify = ingest_error_event(
                 db=db,
                 source="redis_stream",
                 service_name=data.get("service_name", "unknown"),
@@ -211,6 +211,7 @@ class AlertStreamConsumer:
 
             if is_new:
                 logger.info("New incident created: %s - %s", incident.id, incident.title)
+            if should_notify:
                 await notify_new_incident(incident, db)
         except Exception as e:
             logger.error("Failed to ingest error event: %s", e)

@@ -67,10 +67,14 @@ def ingest_error_event(
     request_id: Optional[str] = None,
     stack_trace: Optional[str] = None,
     raw_payload: Optional[dict] = None,
-) -> tuple[Incident, bool]:
+) -> tuple[Incident, bool, bool]:
     """Ingest an error event, creating or updating an incident.
 
-    Returns (incident, is_new) where is_new indicates a new incident was created.
+    Returns (incident, is_new, should_notify):
+    - is_new: a new incident was created
+    - should_notify: this event warrants a Discord notification
+      Critical (5xx): notify on first occurrence
+      Warning (4xx): notify when occurrence count crosses WARNING_NOTIFY_THRESHOLD
     """
     fingerprint = compute_fingerprint(service_name, endpoint, error_code, status_code)
     severity = classify_severity(error_code, status_code)
@@ -89,8 +93,10 @@ def ingest_error_event(
     )
 
     is_new = existing is None
+    should_notify = False
 
     if existing:
+        prev_count = existing.occurrence_count
         existing.occurrence_count += 1
         existing.last_seen_at = now
         existing.sample_error = (error_message or "")[:2000]
@@ -104,6 +110,11 @@ def ingest_error_event(
         if _severity_rank(severity) > _severity_rank(existing.severity):
             existing.severity = severity
         incident = existing
+
+        # Notify when a non-critical incident crosses the threshold
+        threshold = settings.WARNING_NOTIFY_THRESHOLD
+        if severity != "critical" and prev_count < threshold <= existing.occurrence_count:
+            should_notify = True
     else:
         normalized = normalize_endpoint(endpoint or "")
         title = f"[{severity.upper()}] {service_name}: {error_code or f'HTTP {status_code}'} on {normalized or 'unknown'}"
@@ -126,6 +137,10 @@ def ingest_error_event(
         db.add(incident)
         db.flush()
 
+        # Critical errors notify immediately; non-critical wait for threshold
+        if severity == "critical":
+            should_notify = True
+
     # Store the raw event
     event = AlertEvent(
         incident_id=incident.id,
@@ -143,7 +158,7 @@ def ingest_error_event(
     db.add(event)
     db.commit()
 
-    return incident, is_new
+    return incident, is_new, should_notify
 
 
 def auto_resolve_stale_incidents(db: Session) -> int:

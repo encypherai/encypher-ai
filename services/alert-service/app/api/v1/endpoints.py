@@ -202,7 +202,7 @@ async def receive_alertmanager(payload: AlertmanagerPayload, db: Session = Depen
         description = alert.annotations.get("description", "")
         service = alert.labels.get("job", "unknown")
 
-        incident, is_new = incident_service.ingest_error_event(
+        incident, is_new, should_notify = incident_service.ingest_error_event(
             db=db,
             source="alertmanager",
             service_name=service,
@@ -212,7 +212,7 @@ async def receive_alertmanager(payload: AlertmanagerPayload, db: Session = Depen
             raw_payload={"alert": alert.model_dump(), "receiver": payload.receiver},
         )
 
-        if is_new:
+        if should_notify:
             await discord_notifier.notify_alertmanager(alert_name, severity, summary, description, alert.labels, db)
             await cc_trigger.trigger_if_critical(incident)
 
@@ -224,7 +224,7 @@ async def receive_alertmanager(payload: AlertmanagerPayload, db: Session = Depen
 @router.post("/events", status_code=status.HTTP_201_CREATED)
 async def receive_direct_event(event: DirectEventRequest, db: Session = Depends(get_db)):
     """Receive a direct error/event push from a service."""
-    incident, is_new = incident_service.ingest_error_event(
+    incident, is_new, should_notify = incident_service.ingest_error_event(
         db=db,
         source="direct_push",
         service_name=event.service_name,
@@ -239,7 +239,7 @@ async def receive_direct_event(event: DirectEventRequest, db: Session = Depends(
         raw_payload=event.metadata,
     )
 
-    if is_new:
+    if should_notify:
         await discord_notifier.notify_new_incident(incident, db)
         await cc_trigger.trigger_if_critical(incident)
 
