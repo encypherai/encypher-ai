@@ -227,6 +227,10 @@ apps/dashboard/middleware.ts
 generate-image-temp.mjs
 blog-header-temp.html
 
+# Generated output artifacts
+enterprise_api/output/
+tools/encypher-pdf/examples/output/
+
 # Dashboard build/test artifacts
 apps/dashboard/storybook-static/
 apps/dashboard/test-results/
