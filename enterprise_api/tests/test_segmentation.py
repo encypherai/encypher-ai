@@ -16,6 +16,7 @@ from app.utils.segmentation import (
     build_hierarchical_structure,
     segment_paragraphs,
     segment_sections,
+    segment_sentences,
     segment_sentences_default,  # Use spaCy-based default
 )
 
@@ -359,3 +360,79 @@ El texto en español funciona correctamente. También 中文 和 日本語."""
 
         assert segmenter.count_segments("sentence") >= 3
         assert segmenter.count_segments("paragraph") >= 2
+
+
+class TestZeroDropGuarantee:
+    """
+    Verify that no non-empty segment is silently dropped with default arguments.
+
+    These tests encode the core copy-paste verification requirement: every piece
+    of content must receive a per-segment marker so that excerpts can always be
+    verified via the ZWC fallback path.
+    """
+
+    def test_short_paragraph_not_dropped(self):
+        """A paragraph shorter than the old 10-char default is never dropped."""
+        text = "Short.\n\nThis is a longer paragraph."
+        paragraphs = segment_paragraphs(text)
+        assert len(paragraphs) == 2
+        assert "Short." in paragraphs
+
+    def test_single_word_paragraph_not_dropped(self):
+        """A one-word paragraph is not dropped."""
+        text = "OK.\n\nThis is the rest of the content."
+        paragraphs = segment_paragraphs(text)
+        assert len(paragraphs) == 2
+        assert any("OK." in p for p in paragraphs)
+
+    def test_short_section_not_dropped(self):
+        """A section shorter than the old 50-char default is never dropped."""
+        text = "# Summary\nYes.\n\n# Detail\nThis section has more content explaining things."
+        sections = segment_sections(text)
+        assert len(sections) == 2
+        assert any("Summary" in s for s in sections)
+        assert any("Detail" in s for s in sections)
+
+    def test_heading_only_section_not_dropped(self):
+        """A heading with a very short body is not dropped."""
+        text = "# Hi\nYes.\n\n# Longer Section\nThis section has enough content to matter."
+        sections = segment_sections(text)
+        assert len(sections) == 2
+
+    def test_short_sentence_not_dropped(self):
+        """A sentence shorter than the old 3-char regex default is not dropped."""
+        sentences = segment_sentences("Hi. This is the rest of the content.")
+        assert any("Hi." in s for s in sentences)
+
+    def test_all_sections_included_in_hierarchical_segmenter(self):
+        """HierarchicalSegmenter returns all sections regardless of length."""
+        text = "# A\nShort.\n\n# B\nAlso short.\n\n# Long Section Title\nThis one has much more content to verify."
+        segmenter = HierarchicalSegmenter(text)
+        assert segmenter.count_segments("section") == 3
+
+    def test_all_paragraphs_included_in_hierarchical_segmenter(self):
+        """HierarchicalSegmenter returns all paragraphs regardless of length."""
+        text = "Hi.\n\nOK.\n\nThis is a longer third paragraph with real content."
+        segmenter = HierarchicalSegmenter(text)
+        assert segmenter.count_segments("paragraph") == 3
+
+    def test_tweet_length_paragraph(self):
+        """Tweet-length content (under 280 chars) produces a signed-eligible segment."""
+        tweet = "Breaking: major discovery announced today. Scientists confirm groundbreaking findings."
+        paragraphs = segment_paragraphs(tweet)
+        assert len(paragraphs) == 1
+        assert paragraphs[0] == tweet
+
+    def test_caption_length_section(self):
+        """A short caption-length section is not dropped."""
+        text = "# Photo Caption\nCity at dusk."
+        sections = segment_sections(text)
+        assert len(sections) == 1
+        assert "Caption" in sections[0]
+
+    def test_explicit_min_length_still_respected(self):
+        """Callers that pass explicit min_length still get filtering behavior."""
+        text = "Short.\n\nThis is a longer paragraph that definitely meets the minimum."
+        paragraphs = segment_paragraphs(text, min_length=20)
+        assert len(paragraphs) == 1
+        assert "longer paragraph" in paragraphs[0]

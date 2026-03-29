@@ -8,7 +8,7 @@ import re
 from typing import List
 
 
-def segment_paragraphs(text: str, min_length: int = 10) -> List[str]:
+def segment_paragraphs(text: str, min_length: int = 1) -> List[str]:
     """
     Segment text into paragraphs.
 
@@ -19,7 +19,7 @@ def segment_paragraphs(text: str, min_length: int = 10) -> List[str]:
 
     Args:
         text: Input text to segment
-        min_length: Minimum paragraph length in characters (default: 10)
+        min_length: Minimum paragraph length in characters (default: 1)
 
     Returns:
         List of paragraphs

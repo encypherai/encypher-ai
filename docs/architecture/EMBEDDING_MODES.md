@@ -1,14 +1,19 @@
 # Embedding Modes Reference
 
 **Version 2.0 | March 2026**
-**Status:** Current — reflects production implementation
+**Status:** Current -- reflects production implementation
+
+> **Terminology:** See `TERMINOLOGY.md` for canonical names. Customer/marketing term:
+> **provenance markers** (consistent with "Content Provenance" positioning). Technical terms:
+> **VS markers** (`legacy_safe=false`, recommended default, C2PA-aligned) and **ZWC markers**
+> (`legacy_safe=true`, legacy-compatible, Microsoft Word-safe).
 
 ---
 
 ## Overview
 
 Encypher supports two `manifest_mode` values for signing text content: `full` and `micro`.
-Both modes embed cryptographically signed provenance data using invisible Unicode characters.
+Both modes embed cryptographically signed provenance data using invisible Unicode markers.
 
 All modes share the same core architecture:
 - **Sentence-level Merkle tree** authentication (patent-pending ENC0100)

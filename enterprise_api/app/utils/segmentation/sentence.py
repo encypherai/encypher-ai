@@ -8,7 +8,7 @@ import re
 from typing import List
 
 
-def segment_sentences(text: str, min_length: int = 3) -> List[str]:
+def segment_sentences(text: str, min_length: int = 1) -> List[str]:
     """
     Segment text into sentences.
 
@@ -22,7 +22,7 @@ def segment_sentences(text: str, min_length: int = 3) -> List[str]:
 
     Args:
         text: Input text to segment
-        min_length: Minimum sentence length in characters (default: 3)
+        min_length: Minimum sentence length in characters (default: 1)
 
     Returns:
         List of sentences

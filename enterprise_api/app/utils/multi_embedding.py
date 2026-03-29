@@ -414,9 +414,9 @@ async def extract_and_verify_all_embeddings(
 
                 if expected_leaf_hash is not None and leaf_index is not None:
                     # Re-segment clean text to get proper sentence boundaries
-                    from app.utils.segmentation.sentence import segment_sentences
+                    from app.utils.segmentation import segment_sentences_default
 
-                    clean_sentences = segment_sentences(result.clean_text)
+                    clean_sentences = segment_sentences_default(result.clean_text)
 
                     if 0 <= leaf_index < len(clean_sentences):
                         # Get the sentence at this leaf_index

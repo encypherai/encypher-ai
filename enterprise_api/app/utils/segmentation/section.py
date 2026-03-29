@@ -8,7 +8,7 @@ import re
 from typing import Any, Dict, List
 
 
-def segment_sections(text: str, min_length: int = 50) -> List[str]:
+def segment_sections(text: str, min_length: int = 1) -> List[str]:
     """
     Segment text into sections.
 
@@ -20,7 +20,7 @@ def segment_sections(text: str, min_length: int = 50) -> List[str]:
 
     Args:
         text: Input text to segment
-        min_length: Minimum section length in characters (default: 50)
+        min_length: Minimum section length in characters (default: 1)
 
     Returns:
         List of sections
