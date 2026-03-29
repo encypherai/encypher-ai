@@ -786,6 +786,7 @@ function showSigningUI(editor, editorType, button, selection) {
           <label for="encypher-document-type">Document type</label>
           <select id="encypher-document-type" class="encypher-sign-ui__select">
             <option value="article">Article / Blog / Email</option>
+            <option value="social_media">Social Media Post</option>
             <option value="legal_brief">Legal</option>
             <option value="contract">Contract</option>
             <option value="ai_output">AI Output</option>

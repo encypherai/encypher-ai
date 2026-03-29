@@ -141,7 +141,7 @@ class SignOptions(BaseModel):
     # === Free Tier (All) ===
     document_type: str = Field(
         default="article",
-        description="Document type: article, legal_brief, contract, ai_output",
+        description="Document type: article, social_media, legal_brief, contract, ai_output",
     )
     claim_generator: Optional[str] = Field(
         default=None,
