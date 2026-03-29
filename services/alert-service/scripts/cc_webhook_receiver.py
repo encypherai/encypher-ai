@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """Claude Code investigation webhook receiver.
 
-Run this on a machine where Claude Code CLI is available.
-It listens for webhooks from the alert-service and starts
-CC sessions to investigate incidents.
+Receives webhooks from the alert-service and launches investigation
+sessions via AgentDesk (claude-chat-manager). Each investigation runs
+as a managed tmux session visible in the AgentDesk UI.
 
 Usage:
     # Set required env vars
     export CC_WEBHOOK_SECRET="your-shared-secret"  # pragma: allowlist secret
-    export ALERT_SERVICE_URL="https://alert-service-production.up.railway.app"
+    export ALERT_SERVICE_URL="https://alert-service-production-8e3b.up.railway.app"
+    export AGENTDESK_URL="https://localhost:2222"
+    export AGENTDESK_USERNAME="developer"
+    export AGENTDESK_PASSWORD="your-password"  # pragma: allowlist secret
 
     # Optional
-    export CC_RECEIVER_PORT=9090
-    export CC_PROJECT_DIR="/path/to/encypherai-commercial"
-    export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+    export CC_RECEIVER_PORT=2225
+    export CC_MAX_CONCURRENT=2
+    export AGENTDESK_COMPANY_ID="cd54680f-db82-437c-8902-6e7bea00d2c7"
+    export AGENTDESK_AGENT_ID="db31e77d-015d-4376-a63f-c67ee1625057"
 
     # Run
     python cc_webhook_receiver.py
@@ -24,9 +28,9 @@ import hmac
 import json
 import logging
 import os
-import subprocess
-import sys
+import ssl
 import threading
+import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 logging.basicConfig(
@@ -37,12 +41,50 @@ logger = logging.getLogger("cc-receiver")
 
 WEBHOOK_SECRET = os.environ.get("CC_WEBHOOK_SECRET", "")
 ALERT_SERVICE_URL = os.environ.get("ALERT_SERVICE_URL", "http://localhost:8011")
-PROJECT_DIR = os.environ.get("CC_PROJECT_DIR", os.getcwd())
-RECEIVER_PORT = int(os.environ.get("CC_RECEIVER_PORT", "9090"))
+AGENTDESK_URL = os.environ.get("AGENTDESK_URL", "https://localhost:2222")
+AGENTDESK_USERNAME = os.environ.get("AGENTDESK_USERNAME", "encypher-ops-bot")
+AGENTDESK_PASSWORD = os.environ.get("AGENTDESK_PASSWORD", "")
+AGENTDESK_COMPANY_ID = os.environ.get("AGENTDESK_COMPANY_ID", "cd54680f-db82-437c-8902-6e7bea00d2c7")
+AGENTDESK_AGENT_ID = os.environ.get("AGENTDESK_AGENT_ID", "97843438-0f13-4464-8d60-b8df68a7698b")
+RECEIVER_PORT = int(os.environ.get("CC_RECEIVER_PORT", "2225"))
 MAX_CONCURRENT = int(os.environ.get("CC_MAX_CONCURRENT", "2"))
 
-_active_investigations: dict[str, threading.Thread] = {}
+_active_investigations: dict[str, str] = {}  # incident_id -> agentdesk session_id
 _lock = threading.Lock()
+
+# Trust local self-signed certs from AgentDesk
+_ssl_ctx = ssl.create_default_context()
+_ssl_ctx.check_hostname = False
+_ssl_ctx.verify_mode = ssl.CERT_NONE
+
+_auth_cookie: str | None = None
+
+
+def _agentdesk_login() -> str:
+    """Authenticate with AgentDesk and return the JWT cookie value."""
+    global _auth_cookie
+    url = f"{AGENTDESK_URL}/api/auth/login"
+    payload = json.dumps({"username": AGENTDESK_USERNAME, "password": AGENTDESK_PASSWORD}).encode()
+    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"}, method="POST")
+
+    resp = urllib.request.urlopen(req, timeout=10, context=_ssl_ctx)
+    cookie_header = resp.headers.get("Set-Cookie", "")
+    for part in cookie_header.split(";"):
+        part = part.strip()
+        if part.startswith("ccm-token="):
+            _auth_cookie = part.split("=", 1)[1]
+            logger.info("AgentDesk login successful")
+            return _auth_cookie
+
+    raise RuntimeError("AgentDesk login succeeded but no cookie returned")
+
+
+def _get_cookie() -> str:
+    """Get a valid auth cookie, logging in if needed."""
+    global _auth_cookie
+    if _auth_cookie:
+        return _auth_cookie
+    return _agentdesk_login()
 
 
 def verify_signature(payload: bytes, signature: str) -> bool:
@@ -60,7 +102,7 @@ def build_investigation_prompt(data: dict) -> str:
     """Build a Claude Code prompt for investigating an incident."""
     alert_url = data.get("alert_service_url", ALERT_SERVICE_URL)
 
-    prompt = f"""You are investigating an incident detected by the Encypher alert-service.
+    return f"""You are investigating a production incident detected by the Encypher alert-service.
 
 INCIDENT DETAILS:
 - ID: {data.get('incident_id', 'unknown')}
@@ -98,75 +140,88 @@ Post at least two updates:
 2. Your diagnosis and recommended fix
 
 If you determine a fix is needed, describe it clearly but do NOT apply it automatically.
-If the issue is transient (e.g., a dependency timeout), note that and recommend monitoring.
-"""
-    return prompt
+If the issue is transient (e.g., a dependency timeout), note that and recommend monitoring."""
 
 
-def run_investigation(data: dict) -> None:
-    """Run a Claude Code investigation in a subprocess."""
+def launch_agentdesk_session(data: dict) -> str | None:
+    """Launch an investigation session via AgentDesk API.
+
+    Returns the session ID if successful, None otherwise.
+    """
     incident_id = data.get("incident_id", "unknown")
     short_id = incident_id[:8]
-
-    logger.info("Starting CC investigation for %s", short_id)
-
     prompt = build_investigation_prompt(data)
 
-    try:
-        result = subprocess.run(
-            ["claude", "--print", "--dangerously-skip-permissions", "-p", prompt],
-            cwd=PROJECT_DIR,
-            capture_output=True,
-            text=True,
-            timeout=300,  # 5 minute timeout
+    url = f"{AGENTDESK_URL}/api/companies/{AGENTDESK_COMPANY_ID}/agents/{AGENTDESK_AGENT_ID}/session"
+    payload = json.dumps({"message": prompt}).encode()
+
+    for attempt in range(2):
+        cookie = _get_cookie()
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Cookie": f"ccm-token={cookie}",
+            },
+            method="POST",
         )
 
-        if result.returncode == 0:
-            logger.info("CC investigation completed for %s", short_id)
-            # Post the final result as an investigation update
-            _post_update(
-                data,
-                f"Investigation complete.\n\n{result.stdout[-1500:] if len(result.stdout) > 1500 else result.stdout}",
-            )
-        else:
-            logger.error("CC investigation failed for %s: %s", short_id, result.stderr[:500])
-            _post_update(data, f"Investigation failed: {result.stderr[:500]}")
+        try:
+            resp = urllib.request.urlopen(req, timeout=30, context=_ssl_ctx)
+            # AgentDesk returns SSE stream - read the first few events to get session ID
+            session_id = None
+            for line in resp:
+                line = line.decode("utf-8", errors="replace").strip()
+                if line.startswith("data: "):
+                    try:
+                        event = json.loads(line[6:])
+                        if event.get("type") == "session_id":
+                            session_id = event.get("sessionId")
+                            break
+                        if "sessionId" in event:
+                            session_id = event["sessionId"]
+                            break
+                    except json.JSONDecodeError:
+                        continue
+            resp.close()
 
-    except subprocess.TimeoutExpired:
-        logger.warning("CC investigation timed out for %s", short_id)
-        _post_update(data, "Investigation timed out after 5 minutes.")
-    except FileNotFoundError:
-        logger.error("Claude Code CLI not found. Install it: npm install -g @anthropic-ai/claude-code")
-        _post_update(data, "Investigation failed: Claude Code CLI not found on this machine.")
-    except Exception as exc:
-        logger.error("CC investigation error for %s: %s", short_id, exc)
-        _post_update(data, f"Investigation error: {str(exc)[:300]}")
-    finally:
-        with _lock:
-            _active_investigations.pop(incident_id, None)
+            if session_id:
+                logger.info("AgentDesk session started for %s: %s", short_id, session_id)
+                return session_id
+            else:
+                logger.warning("AgentDesk session started for %s but no session ID returned", short_id)
+                return "unknown"
+
+        except urllib.error.HTTPError as e:
+            if e.code == 401 and attempt == 0:
+                logger.info("AgentDesk cookie expired, re-authenticating...")
+                global _auth_cookie
+                _auth_cookie = None
+                continue
+            logger.error("AgentDesk API error for %s: HTTP %d", short_id, e.code)
+            return None
+        except Exception as exc:
+            logger.error("AgentDesk session launch error for %s: %s", short_id, exc)
+            return None
+
+    return None
 
 
-def _post_update(data: dict, message: str) -> None:
+def _post_alert_update(data: dict, message: str) -> None:
     """Post an investigation update back to the alert-service."""
-    import urllib.request
-
     alert_url = data.get("alert_service_url", ALERT_SERVICE_URL)
     incident_id = data.get("incident_id", "unknown")
     url = f"{alert_url}/api/v1/alerts/incidents/{incident_id}/investigate"
 
     payload = json.dumps({"message": message}).encode()
-    req = urllib.request.Request(
-        url,
-        data=payload,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
+    req = urllib.request.Request(url, data=payload, headers={"Content-Type": "application/json"}, method="POST")
 
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
-            logger.info("Posted update for %s: HTTP %d", incident_id[:8], resp.status)
+            logger.info("Posted alert update for %s: HTTP %d", incident_id[:8], resp.status)
     except Exception as exc:
-        logger.error("Failed to post update for %s: %s", incident_id[:8], exc)
+        logger.error("Failed to post alert update for %s: %s", incident_id[:8], exc)
 
 
 class WebhookHandler(BaseHTTPRequestHandler):
@@ -202,52 +257,63 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
         with _lock:
             if incident_id in _active_investigations:
-                self.send_response(200)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": "already_running"}).encode())
+                self._json_response(200, {"status": "already_running", "session_id": _active_investigations[incident_id]})
                 return
 
             if len(_active_investigations) >= MAX_CONCURRENT:
-                self.send_response(429)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(json.dumps({"status": "too_many_investigations"}).encode())
+                self._json_response(429, {"status": "too_many_investigations"})
                 return
 
-            thread = threading.Thread(
-                target=run_investigation,
-                args=(data,),
-                name=f"cc-{incident_id[:8]}",
-                daemon=True,
-            )
-            _active_investigations[incident_id] = thread
+        # Launch session via AgentDesk (blocking but fast - just starts the session)
+        session_id = launch_agentdesk_session(data)
 
-        thread.start()
-
-        self.send_response(202)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(json.dumps({"status": "accepted", "incident_id": incident_id}).encode())
+        if session_id:
+            with _lock:
+                _active_investigations[incident_id] = session_id
+            _post_alert_update(data, f"Investigation session launched (AgentDesk: {session_id[:12] if len(session_id) > 12 else session_id})")
+            self._json_response(202, {"status": "accepted", "incident_id": incident_id, "session_id": session_id})
+        else:
+            self._json_response(500, {"status": "failed", "error": "Could not start AgentDesk session"})
 
     def do_GET(self):
         """Health check and active investigation status."""
         with _lock:
-            active = list(_active_investigations.keys())
+            active = dict(_active_investigations)
 
-        self.send_response(200)
+        self._json_response(
+            200,
+            {
+                "status": "running",
+                "active_investigations": len(active),
+                "investigations": {k[:8]: v for k, v in active.items()},
+                "max_concurrent": MAX_CONCURRENT,
+            },
+        )
+
+    def do_DELETE(self):
+        """Clear a completed investigation from tracking."""
+        content_length = int(self.headers.get("Content-Length", 0))
+        body = self.rfile.read(content_length) if content_length else b"{}"
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            self.send_error(400, "Invalid JSON")
+            return
+
+        incident_id = data.get("incident_id", "")
+        with _lock:
+            removed = _active_investigations.pop(incident_id, None)
+
+        if removed:
+            self._json_response(200, {"status": "removed", "incident_id": incident_id})
+        else:
+            self._json_response(404, {"status": "not_found"})
+
+    def _json_response(self, code: int, data: dict) -> None:
+        self.send_response(code)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
-        self.wfile.write(
-            json.dumps(
-                {
-                    "status": "running",
-                    "active_investigations": len(active),
-                    "investigation_ids": [i[:8] for i in active],
-                    "max_concurrent": MAX_CONCURRENT,
-                }
-            ).encode()
-        )
+        self.wfile.write(json.dumps(data).encode())
 
     def log_message(self, format, *args):
         logger.info(format, *args)
@@ -255,11 +321,19 @@ class WebhookHandler(BaseHTTPRequestHandler):
 
 def main():
     logger.info("CC Webhook Receiver starting on port %d", RECEIVER_PORT)
-    logger.info("Project dir: %s", PROJECT_DIR)
+    logger.info("AgentDesk: %s (agent: %s)", AGENTDESK_URL, AGENTDESK_AGENT_ID)
     logger.info("Alert service: %s", ALERT_SERVICE_URL)
     logger.info("Max concurrent: %d", MAX_CONCURRENT)
     if not WEBHOOK_SECRET:
         logger.warning("CC_WEBHOOK_SECRET not set - webhooks will not be authenticated!")
+    if not AGENTDESK_PASSWORD:
+        logger.error("AGENTDESK_PASSWORD not set - cannot authenticate with AgentDesk!")
+
+    # Pre-authenticate
+    try:
+        _agentdesk_login()
+    except Exception as exc:
+        logger.error("Initial AgentDesk login failed: %s (will retry on first webhook)", exc)
 
     server = HTTPServer(("0.0.0.0", RECEIVER_PORT), WebhookHandler)
     try:
