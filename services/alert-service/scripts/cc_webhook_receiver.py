@@ -29,7 +29,9 @@ import json
 import logging
 import os
 import ssl
+import subprocess
 import threading
+import time
 import urllib.request
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -51,6 +53,7 @@ MAX_CONCURRENT = int(os.environ.get("CC_MAX_CONCURRENT", "2"))
 
 _active_investigations: dict[str, str] = {}  # incident_id -> agentdesk session_id
 _lock = threading.Lock()
+REAPER_INTERVAL = int(os.environ.get("CC_REAPER_INTERVAL", "30"))  # seconds
 
 # Trust local self-signed certs from AgentDesk
 _ssl_ctx = ssl.create_default_context()
@@ -319,6 +322,43 @@ class WebhookHandler(BaseHTTPRequestHandler):
         logger.info(format, *args)
 
 
+def _get_live_ccm_sessions() -> set[str]:
+    """Return the set of active ccm-* tmux session names."""
+    try:
+        result = subprocess.run(
+            ["tmux", "list-sessions", "-F", "#{session_name}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        return {s for s in result.stdout.strip().splitlines() if s.startswith("ccm-")}
+    except Exception:
+        return set()
+
+
+def _reaper_loop() -> None:
+    """Periodically remove finished investigations from the tracking dict."""
+    while True:
+        time.sleep(REAPER_INTERVAL)
+        try:
+            live_sessions = _get_live_ccm_sessions()
+            with _lock:
+                to_remove = []
+                for incident_id, session_id in _active_investigations.items():
+                    # AgentDesk session IDs match tmux session names (ccm-<timestamp>)
+                    tmux_name = f"ccm-{session_id}" if not session_id.startswith("ccm-") else session_id
+                    if tmux_name not in live_sessions and session_id != "unknown":
+                        to_remove.append(incident_id)
+                    elif session_id == "unknown" and not live_sessions:
+                        to_remove.append(incident_id)
+
+                for incident_id in to_remove:
+                    removed = _active_investigations.pop(incident_id, None)
+                    logger.info("Reaped finished investigation: %s (session: %s)", incident_id[:8], removed)
+        except Exception as exc:
+            logger.error("Reaper error: %s", exc)
+
+
 def main():
     logger.info("CC Webhook Receiver starting on port %d", RECEIVER_PORT)
     logger.info("AgentDesk: %s (agent: %s)", AGENTDESK_URL, AGENTDESK_AGENT_ID)
@@ -334,6 +374,11 @@ def main():
         _agentdesk_login()
     except Exception as exc:
         logger.error("Initial AgentDesk login failed: %s (will retry on first webhook)", exc)
+
+    # Start reaper thread to clean up finished investigations
+    reaper = threading.Thread(target=_reaper_loop, daemon=True)
+    reaper.start()
+    logger.info("Investigation reaper started (interval=%ds)", REAPER_INTERVAL)
 
     server = HTTPServer(("0.0.0.0", RECEIVER_PORT), WebhookHandler)
     try:
