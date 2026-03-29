@@ -1,3 +1,53 @@
+/* ===== Design-system tokens (mirrors packages/design-system/src/styles/theme.css) ===== */
+:root {
+  /* Brand palette */
+  --ency-delft-blue:      #1b2f50;
+  --ency-blue-ncs:        #2a87c4;
+  --ency-columbia-blue:   #b7d5ed;
+  --ency-cyber-teal:      #00ced1;
+  --ency-neutral-gray:    #a7afbc;
+  --ency-white:           #ffffff;
+
+  /* Semantic - surfaces */
+  --ency-bg:              var(--ency-white);
+  --ency-bg-muted:        #f1f5f9;
+
+  /* Semantic - foreground */
+  --ency-fg:              var(--ency-delft-blue);
+  --ency-fg-muted:        #475569;
+  --ency-fg-subtle:       #64748b;
+  --ency-fg-on-dark:      #f1f5f9;
+  --ency-fg-on-dark-muted:#94a3b8;
+
+  /* Semantic - borders */
+  --ency-border:          #e2e8f0;
+
+  /* Semantic - actions */
+  --ency-accent:          var(--ency-blue-ncs);
+
+  /* Status */
+  --ency-success:         #10b981;
+  --ency-success-muted-fg:#059669;
+  --ency-error:           #ef4444;
+  --ency-error-dark:      #dc2626;
+  --ency-warning:         #f59e0b;
+  --ency-warning-dark:    #d97706;
+
+  /* Typography */
+  --ency-font-sans:       'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --ency-font-mono:       'Roboto Mono', 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ency-bg:              var(--ency-delft-blue);
+    --ency-bg-muted:        #334155;
+    --ency-fg:              #f1f5f9;
+    --ency-fg-muted:        #94a3b8;
+    --ency-border:          #334155;
+  }
+}
+
 /**
  * Encypher Verify - Badge Styles
  *
@@ -19,7 +69,7 @@
   height: 22px;
   border-radius: 50%;
   cursor: pointer;
-  font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--ency-font-sans);
   font-size: 14px;
   font-weight: bold;
   box-shadow: 0 1px 4px rgba(27, 47, 80, 0.2);
@@ -40,36 +90,36 @@
 }
 
 .encypher-badge:focus {
-  outline: 2px solid #2A87C4;
+  outline: 2px solid var(--ency-accent);
   outline-offset: 2px;
 }
 
 /* Status colors — brand-aligned */
 .encypher-badge--verified {
-  background: linear-gradient(135deg, #2A87C4 0%, #1B2F50 100%);
-  color: white;
-  border: 1.5px solid #B7D5ED;
+  background: linear-gradient(135deg, var(--ency-blue-ncs) 0%, var(--ency-delft-blue) 100%);
+  color: var(--ency-white);
+  border: 1.5px solid var(--ency-columbia-blue);
 }
 
 .encypher-badge--pending {
-  background: linear-gradient(135deg, #B7D5ED 0%, #2A87C4 100%);
-  color: #1B2F50;
+  background: linear-gradient(135deg, var(--ency-columbia-blue) 0%, var(--ency-blue-ncs) 100%);
+  color: var(--ency-delft-blue);
   animation: encypher-pulse 1.5s ease-in-out infinite;
 }
 
 .encypher-badge--invalid {
-  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--ency-error) 0%, var(--ency-error-dark) 100%);
+  color: var(--ency-white);
 }
 
 .encypher-badge--revoked {
-  background: linear-gradient(135deg, #A7AFBC 0%, #a7afbc 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--ency-neutral-gray) 0%, var(--ency-neutral-gray) 100%);
+  color: var(--ency-white);
 }
 
 .encypher-badge--error {
-  background: linear-gradient(135deg, #a7afbc 0%, #475569 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--ency-neutral-gray) 0%, var(--ency-fg-muted) 100%);
+  color: var(--ency-white);
 }
 
 /* Badge icon - Encypher logo */
@@ -84,11 +134,11 @@
 .encypher-badge__icon svg {
   width: 100%;
   height: 100%;
-  color: white;
+  color: var(--ency-white);
 }
 
 .encypher-badge--pending .encypher-badge__icon svg {
-  color: #1B2F50;
+  color: var(--ency-delft-blue);
 }
 
 /* Status overlay for non-verified states */
@@ -98,26 +148,26 @@
   right: -2px;
   width: 11px;
   height: 11px;
-  background: #EF4444;
+  background: var(--ency-error);
   border-radius: 50%;
   font-size: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid white;
+  border: 1px solid var(--ency-white);
 }
 
 .encypher-badge--pending .encypher-badge__status {
-  background: #2A87C4;
-  color: white;
+  background: var(--ency-blue-ncs);
+  color: var(--ency-white);
 }
 
 .encypher-badge--revoked .encypher-badge__status {
-  background: #A7AFBC;
+  background: var(--ency-neutral-gray);
 }
 
 .encypher-badge--error .encypher-badge__status {
-  background: #a7afbc;
+  background: var(--ency-neutral-gray);
 }
 
 /* Tooltip */
@@ -125,7 +175,7 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  color: white;
+  color: var(--ency-white);
   font-weight: normal;
   line-height: 1.4;
   opacity: 0;
@@ -188,12 +238,12 @@
 }
 
 .encypher-badge__tooltip-label {
-  color: #A7AFBC;
+  color: var(--ency-neutral-gray);
   font-size: 11px;
 }
 
 .encypher-badge__tooltip-value {
-  color: #f1f5f9;
+  color: var(--ency-fg-on-dark);
   font-size: 12px;
   word-break: break-word;
 }
@@ -202,7 +252,7 @@
   margin-top: 2px;
   padding-top: 6px;
   border-top: 1px solid rgba(183, 213, 237, 0.18);
-  color: #B7D5ED;
+  color: var(--ency-columbia-blue);
   font-size: 11px;
   font-style: italic;
 }
@@ -233,11 +283,11 @@
   position: absolute;
   z-index: 2147483647;
   width: 320px;
-  background: #1B2F50;
-  color: #f1f5f9;
+  background: var(--ency-delft-blue);
+  color: var(--ency-fg-on-dark);
   border-radius: 10px;
   box-shadow: 0 8px 32px rgba(27, 47, 80, 0.5), 0 0 0 1px rgba(42, 135, 196, 0.15);
-  font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--ency-font-sans);
   font-size: 13px;
   line-height: 1.5;
   overflow: hidden;
@@ -254,8 +304,8 @@
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: linear-gradient(135deg, #2A87C4 0%, #1B2F50 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--ency-blue-ncs) 0%, var(--ency-delft-blue) 100%);
+  color: var(--ency-white);
 }
 
 .encypher-detail-panel__logo {
@@ -267,7 +317,7 @@
 .encypher-detail-panel__logo svg {
   width: 100%;
   height: 100%;
-  color: white;
+  color: var(--ency-white);
 }
 
 .encypher-detail-panel__title {
@@ -279,7 +329,7 @@
 .encypher-detail-panel__close {
   background: none;
   border: none;
-  color: white;
+  color: var(--ency-white);
   font-size: 20px;
   cursor: pointer;
   padding: 0 4px;
@@ -309,19 +359,19 @@
 }
 
 .encypher-detail-panel__label {
-  color: #A7AFBC;
+  color: var(--ency-neutral-gray);
   font-size: 12px;
   min-width: 90px;
   flex-shrink: 0;
 }
 
 .encypher-detail-panel__value {
-  color: #f1f5f9;
+  color: var(--ency-fg-on-dark);
   word-break: break-word;
 }
 
 .encypher-detail-panel__mono {
-  font-family: 'Roboto Mono', 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  font-family: var(--ency-font-mono);
   font-size: 11px;
 }
 
@@ -339,7 +389,7 @@
   cursor: pointer;
   list-style: none;
   padding: 7px 10px;
-  color: #B7D5ED;
+  color: var(--ency-columbia-blue);
   font-size: 12px;
   font-weight: 600;
 }
@@ -356,7 +406,7 @@
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #e2e8f0;
+  color: var(--ency-fg-on-dark);
   font-size: 11px;
   line-height: 1.4;
 }
@@ -368,7 +418,7 @@
 }
 
 .encypher-detail-panel__footer a {
-  color: #00CED1;
+  color: var(--ency-cyber-teal);
   text-decoration: none;
   font-size: 11px;
   opacity: 0.8;
