@@ -10,6 +10,9 @@
     "test:all": "npm run test && npm run test:e2e",
     "lint": "eslint .",
     "build": "node scripts/build.js",
+    "build:edge": "node scripts/build.js --target=edge",
+    "build:firefox": "node scripts/build.js --target=firefox",
+    "build:all": "node scripts/build.js && node scripts/build.js --target=edge && node scripts/build.js --target=firefox",
     "serve:test": "npx http-server tests/fixtures -p 8080 -c-1"
   },
   "devDependencies": {

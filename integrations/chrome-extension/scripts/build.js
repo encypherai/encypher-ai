@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 /**
- * Build script for Encypher Verify Chrome Extension.
+ * Build script for Encypher Verify browser extension.
  *
- * Produces a production-ready .zip in dist/ that can be uploaded directly
- * to the Chrome Web Store.  The zip contains only the files Chrome needs —
- * no tests, no node_modules, no dev tooling.
+ * Produces a production-ready .zip in dist/ that can be uploaded to the
+ * Chrome Web Store, Edge Add-ons, or Firefox AMO.
  *
  * Usage:
- *   node scripts/build.js            # production build (no localhost)
- *   node scripts/build.js --dev      # dev build (keeps localhost permissions)
+ *   node scripts/build.js                        # Chrome production build
+ *   node scripts/build.js --dev                   # Chrome dev build
+ *   node scripts/build.js --target=edge           # Edge production build
+ *   node scripts/build.js --target=firefox        # Firefox production build
+ *   node scripts/build.js --target=firefox --dev  # Firefox dev build
  *
- * Output: dist/encypher-verify-v<version>.zip
+ * Output: dist/encypher-verify-v<version>[-<target>][-dev].zip
  */
 
 import fs from 'fs';
@@ -22,6 +24,16 @@ const ROOT = path.resolve(__dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 
 const isDev = process.argv.includes('--dev');
+const VALID_TARGETS = ['chrome', 'edge', 'firefox'];
+const target = (() => {
+  const arg = process.argv.find(a => a.startsWith('--target='));
+  const t = arg ? arg.split('=')[1] : 'chrome';
+  if (!VALID_TARGETS.includes(t)) {
+    console.error(`Invalid target "${t}". Valid targets: ${VALID_TARGETS.join(', ')}`);
+    process.exit(1);
+  }
+  return t;
+})();
 
 // Files and directories to include in the zip (relative to ROOT)
 const INCLUDE = [
@@ -98,6 +110,33 @@ function buildManifest() {
     }
   }
 
+  // Firefox-specific manifest transforms
+  if (target === 'firefox') {
+    // background.service_worker -> background.scripts (Firefox MV3)
+    if (raw.background?.service_worker) {
+      raw.background = {
+        scripts: [raw.background.service_worker],
+        type: raw.background.type,
+      };
+    }
+
+    // Firefox does not support externally_connectable
+    delete raw.externally_connectable;
+
+    // Firefox does not support match_origin_as_fallback
+    for (const cs of raw.content_scripts || []) {
+      delete cs.match_origin_as_fallback;
+    }
+
+    // Required for AMO submission
+    raw.browser_specific_settings = {
+      gecko: {
+        id: 'verify@encypher.com',
+        strict_min_version: '128.0',
+      },
+    };
+  }
+
   return JSON.stringify(raw, null, 2);
 }
 
@@ -105,10 +144,11 @@ async function build() {
   const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8'));
   const version = manifest.version;
   const mode = isDev ? 'dev' : 'prod';
-  const zipName = `encypher-verify-v${version}${isDev ? '-dev' : ''}.zip`;
+  const targetSuffix = target !== 'chrome' ? `-${target}` : '';
+  const zipName = `encypher-verify-v${version}${targetSuffix}${isDev ? '-dev' : ''}.zip`;
   const zipPath = path.join(DIST, zipName);
 
-  console.log(`\nBuilding Encypher Verify v${version} (${mode})...\n`);
+  console.log(`\nBuilding Encypher Verify v${version} (${target}, ${mode})...\n`);
 
   // Ensure dist/ exists and is clean for this build
   fs.mkdirSync(DIST, { recursive: true });
@@ -248,12 +288,22 @@ async function build() {
   console.log(`  ✓ Output: dist/${zipName} (${kb} KB)\n`);
 
   if (!isDev) {
+    const storeUrls = {
+      chrome: 'https://chrome.google.com/webstore/devconsole',
+      edge: 'https://partner.microsoft.com/en-us/dashboard/microsoftedge/',
+      firefox: 'https://addons.mozilla.org/en-US/developers/',
+    };
     console.log('Next steps:');
-    console.log('  1. Upload dist/' + zipName + ' to https://chrome.google.com/webstore/devconsole');
+    console.log(`  1. Upload dist/${zipName} to ${storeUrls[target]}`);
     console.log('  2. Fill in store listing details (see STORE_LISTING.md)');
     console.log('  3. Set privacy policy URL: https://encypher.com/privacy');
     console.log('  4. Upload store-assets/ screenshots and promo images');
     console.log('  5. Submit for review\n');
+    if (target === 'firefox') {
+      console.log('Firefox notes:');
+      console.log('  - Dashboard API key handoff is not available (externally_connectable unsupported)');
+      console.log('  - Users must enter their API key manually via the options page\n');
+    }
   }
 }
 

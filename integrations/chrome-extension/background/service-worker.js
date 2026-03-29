@@ -84,20 +84,24 @@ async function handleDashboardApiKeyHandoff(message, sender) {
   return { success: true, source: 'dashboard_handoff', identity };
 }
 
-chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-  if (message?.type !== 'DASHBOARD_API_KEY_HANDOFF') {
-    sendResponse({ success: false, error: 'Unknown external message type.' });
-    return false;
-  }
+// Firefox does not support externally_connectable / onMessageExternal.
+// On Firefox, users enter their API key manually via the options page.
+if (chrome.runtime.onMessageExternal) {
+  chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+    if (message?.type !== 'DASHBOARD_API_KEY_HANDOFF') {
+      sendResponse({ success: false, error: 'Unknown external message type.' });
+      return false;
+    }
 
-  handleDashboardApiKeyHandoff(message, sender).then((result) => {
-    sendResponse(result);
-  }).catch((error) => {
-    sendResponse({ success: false, error: error?.message || 'Dashboard handoff failed.' });
+    handleDashboardApiKeyHandoff(message, sender).then((result) => {
+      sendResponse(result);
+    }).catch((error) => {
+      sendResponse({ success: false, error: error?.message || 'Dashboard handoff failed.' });
+    });
+
+    return true;
   });
-
-  return true;
-});
+}
 
 function buildDashboardAuthUrl(mode = 'login', provider = '') {
   const authPath = mode === 'signup' ? '/signup' : '/login';
@@ -2180,8 +2184,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
 
     case 'DEV_RELOAD':
-      // Store the active tab ID so we can reload it after the extension restarts
-      chrome.storage.session.set({ _devReloadTabId: message.tabId ?? null }).then(() => {
+      // Store the active tab ID so we can reload it after the extension restarts.
+      // chrome.storage.session is unavailable in Firefox; fall back to local.
+      (chrome.storage.session || chrome.storage.local).set({ _devReloadTabId: message.tabId ?? null }).then(() => {
         sendResponse({ ok: true });
         chrome.runtime.reload();
       });
@@ -2240,12 +2245,15 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   tabState.delete(tabId);
 });
 
-// Dev reload — keyboard shortcut handler (Alt+Shift+R)
+// Dev reload — keyboard shortcut handler (Alt+Shift+R).
+// chrome.storage.session is unavailable in Firefox; fall back to local.
+const _devStorage = chrome.storage.session || chrome.storage.local;
+
 chrome.commands.onCommand.addListener((command) => {
   if (command === 'dev-reload') {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tabId = tabs[0]?.id ?? null;
-      chrome.storage.session.set({ _devReloadTabId: tabId }).then(() => {
+      _devStorage.set({ _devReloadTabId: tabId }).then(() => {
         chrome.runtime.reload();
       });
     });
@@ -2253,9 +2261,9 @@ chrome.commands.onCommand.addListener((command) => {
 });
 
 // After a dev reload, re-inject content scripts into the tab that was active
-chrome.storage.session.get('_devReloadTabId', ({ _devReloadTabId }) => {
+_devStorage.get('_devReloadTabId', ({ _devReloadTabId }) => {
   if (!_devReloadTabId) return;
-  chrome.storage.session.remove('_devReloadTabId');
+  _devStorage.remove('_devReloadTabId');
   chrome.tabs.reload(_devReloadTabId);
 });
 
