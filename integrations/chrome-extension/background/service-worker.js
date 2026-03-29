@@ -379,10 +379,10 @@ function updateIcon(tabId, state) {
   // Use base icons for all states (colored variants not yet created)
   // State is communicated via badge text + badge color below
   const baseIcons = {
-    16: 'icons/icon16.png',
-    32: 'icons/icon32.png',
-    48: 'icons/icon48.png',
-    128: 'icons/icon128.png'
+    16: 'icons/icon-16.png',
+    32: 'icons/icon-32.png',
+    48: 'icons/icon-48.png',
+    128: 'icons/icon-128.png',
   };
 
   chrome.action.setIcon({
@@ -2028,51 +2028,55 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'VERIFY_CONTENT':
       verifyContent(message.text).then(result => {
-        // Update tab state
-        if (tabId) {
-          const current = tabState.get(tabId) || {
-            verified: 0,
-            invalid: 0,
-            revoked: 0,
-            pending: 0,
-            details: [],
-            url: message.pageUrl
-          };
-          const state = updateTabStateWithVerification(current, result);
-          state.url = message.pageUrl || state.url;
+        // Post-processing must not prevent sendResponse from firing
+        try {
+          if (tabId) {
+            const current = tabState.get(tabId) || {
+              verified: 0,
+              invalid: 0,
+              revoked: 0,
+              pending: 0,
+              details: [],
+              url: message.pageUrl
+            };
+            const state = updateTabStateWithVerification(current, result);
+            state.url = message.pageUrl || state.url;
 
-          const detail = buildVerificationDetail({
-            markerType: message.markerType,
-            result,
-            detectionId: message.detectionId || null,
-          });
-          state.details = appendVerificationDetail(state.details, detail);
+            const detail = buildVerificationDetail({
+              markerType: message.markerType,
+              result,
+              detectionId: message.detectionId || null,
+            });
+            state.details = appendVerificationDetail(state.details, detail);
 
-          tabState.set(tabId, state);
+            tabState.set(tabId, state);
+            updateIcon(tabId, getIconStateForTab(state));
 
-          // Update icon based on overall state
-          updateIcon(tabId, getIconStateForTab(state));
-
-          // Track discovery for analytics (phone home)
-          trackEmbeddingDiscovery({
-            pageUrl: message.pageUrl || state.url,
-            pageDomain: message.pageDomain,
-            pageTitle: message.pageTitle,
-            signerId: result.data?.signer_id,
-            signerName: result.data?.signer_name,
-            organizationId: result.data?.organization_id,
-            documentId: result.data?.document_id,
-            originalDomain: result.data?.original_domain || result.data?.signing_domain,
-            verified: result.success,
-            status: result.success ? 'verified' : (result.revoked ? 'revoked' : 'invalid'),
-            markerType: message.markerType,
-            embeddingCount: message.embeddingCount || 1,
-            visibleTextLength: message.visibleTextLength,
-            embeddingByteLength: message.embeddingByteLength,
-            discoverySource: message.discoverySource || 'page_scan',
-          });
+            trackEmbeddingDiscovery({
+              pageUrl: message.pageUrl || state.url,
+              pageDomain: message.pageDomain,
+              pageTitle: message.pageTitle,
+              signerId: result.data?.signer_id,
+              signerName: result.data?.signer_name,
+              organizationId: result.data?.organization_id,
+              documentId: result.data?.document_id,
+              originalDomain: result.data?.original_domain || result.data?.signing_domain,
+              verified: result.success,
+              status: result.success ? 'verified' : (result.revoked ? 'revoked' : 'invalid'),
+              markerType: message.markerType,
+              embeddingCount: message.embeddingCount || 1,
+              visibleTextLength: message.visibleTextLength,
+              embeddingByteLength: message.embeddingByteLength,
+              discoverySource: message.discoverySource || 'page_scan',
+            });
+          }
+        } catch (err) {
+          debugLog.error('verify', 'Post-processing failed', { error: err.message });
         }
         sendResponse(result);
+      }).catch(err => {
+        debugLog.error('verify', 'Verification rejected', { error: err.message });
+        sendResponse({ success: false, error: err.message || 'Internal extension error' });
       });
       return true; // async response
 
@@ -2087,26 +2091,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         : mediaType === 'document' ? 'c2pa_document'
         : 'c2pa_image';
       verifyFn(message.url).then(result => {
-        if (tabId) {
-          const current = tabState.get(tabId) || {
-            verified: 0, invalid: 0, revoked: 0, pending: 0, details: [], url: message.pageUrl,
-          };
-          const state = updateTabStateWithVerification(current, result);
-          state.url = message.pageUrl || state.url;
+        try {
+          if (tabId) {
+            const current = tabState.get(tabId) || {
+              verified: 0, invalid: 0, revoked: 0, pending: 0, details: [], url: message.pageUrl,
+            };
+            const state = updateTabStateWithVerification(current, result);
+            state.url = message.pageUrl || state.url;
 
-          const detail = buildVerificationDetail({
-            markerType,
-            result,
-            detectionId: message.detectionId || null,
-          });
-          detail.contentType = mediaType;
-          detail.mediaUrl = message.url;
-          state.details = appendVerificationDetail(state.details, detail);
+            const detail = buildVerificationDetail({
+              markerType,
+              result,
+              detectionId: message.detectionId || null,
+            });
+            detail.contentType = mediaType;
+            detail.mediaUrl = message.url;
+            state.details = appendVerificationDetail(state.details, detail);
 
-          tabState.set(tabId, state);
-          updateIcon(tabId, getIconStateForTab(state));
+            tabState.set(tabId, state);
+            updateIcon(tabId, getIconStateForTab(state));
+          }
+        } catch (err) {
+          debugLog.error('verify-media', 'Post-processing failed', { error: err.message });
         }
         sendResponse(result);
+      }).catch(err => {
+        debugLog.error('verify-media', 'Media verification rejected', { error: err.message });
+        sendResponse({ success: false, error: err.message || 'Internal extension error' });
       });
       return true; // async response
     }
@@ -2114,6 +2125,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'CHECK_C2PA_HEADER':
       _checkC2paHeader(message.url).then(hasC2pa => {
         sendResponse({ hasC2pa });
+      }).catch(() => {
+        sendResponse({ hasC2pa: false });
       });
       return true; // async response
 
@@ -2132,18 +2145,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'SIGN_CONTENT':
       signContent(message.text, message.title, message.options || {}).then(result => {
         sendResponse(result);
+      }).catch(err => {
+        sendResponse({ success: false, error: err.message || 'Signing failed' });
       });
       return true; // async response
 
     case 'GET_ACCOUNT_INFO':
       getAccountInfo(message.apiKey).then(result => {
         sendResponse(result);
+      }).catch(err => {
+        sendResponse({ success: false, error: err.message || 'Account lookup failed' });
       });
       return true; // async response
 
     case 'AUTO_PROVISION_EXTENSION_USER':
       autoProvisionExtensionUser(message.email).then(result => {
         sendResponse(result);
+      }).catch(err => {
+        sendResponse({ success: false, error: err.message || 'Provisioning failed' });
       });
       return true; // async response
 
@@ -2172,15 +2191,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     case 'GET_DEBUG_LOGS':
-      debugLog.getLogs().then(logs => sendResponse({ logs }));
+      debugLog.getLogs().then(logs => sendResponse({ logs })).catch(() => sendResponse({ logs: [] }));
       return true; // async response
 
     case 'CLEAR_DEBUG_LOGS':
-      debugLog.clearLogs().then(() => sendResponse({ cleared: true }));
+      debugLog.clearLogs().then(() => sendResponse({ cleared: true })).catch(() => sendResponse({ cleared: false }));
       return true;
 
     case 'GET_DEV_MODE':
-      debugLog.isDevMode().then(devMode => sendResponse({ devMode }));
+      debugLog.isDevMode().then(devMode => sendResponse({ devMode })).catch(() => sendResponse({ devMode: false }));
       return true;
 
     case 'DEV_RELOAD':
@@ -2230,6 +2249,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'FLUSH_ANALYTICS':
       flushAnalytics().then(() => {
         sendResponse({ received: true, flushed: true });
+      }).catch(() => {
+        sendResponse({ received: true, flushed: false });
       });
       return true; // async response
 
