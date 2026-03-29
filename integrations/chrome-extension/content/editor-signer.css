@@ -4,8 +4,6 @@
 
 /* ===== Design-system tokens (mirrors packages/design-system/src/styles/theme.css) ===== */
 :root {
-  color-scheme: light;
-
   /* Brand palette */
   --ency-delft-blue:      #1b2f50;
   --ency-blue-ncs:        #2a87c4;
@@ -51,7 +49,6 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    color-scheme: dark;
     --ency-bg:              var(--ency-delft-blue);
     --ency-bg-muted:        #334155;
     --ency-bg-card:         #1e293b;
@@ -159,6 +156,7 @@
 
 /* Signing UI Modal */
 .encypher-sign-ui {
+  color-scheme: light;
   background: var(--ency-bg);
   color: var(--ency-fg);
   border-radius: 12px;
@@ -611,6 +609,7 @@
    Only elements needing values beyond the variable set are listed here. */
 @media (prefers-color-scheme: dark) {
   .encypher-sign-ui {
+    color-scheme: dark;
     background: var(--ency-bg-card);
   }
 
