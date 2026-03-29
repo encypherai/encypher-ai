@@ -573,6 +573,19 @@ const ENCYPHER_LOGO_SVG = `<svg viewBox="0 0 264.58334 264.58333" xmlns="http://
 globalThis.ENCYPHER_LOGO_SVG = ENCYPHER_LOGO_SVG;
 
 /**
+ * Inline SVG status indicators for badge overlays.
+ * Designed at 16x16 viewbox, rendered at 7px by CSS. Use currentColor
+ * so badge CSS controls the fill/stroke via the parent's color property.
+ */
+const _STATUS_SVG = {
+  // Pending uses a 270-degree arc spinner matching the EncypherLoader brand pattern
+  pending: '<svg class="ency-status-spin" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><path d="M8 2a6 6 0 0 1 6 6 6 6 0 0 1-6 6 6 6 0 0 1-5.2-3"/></svg>',
+  invalid: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>',
+  revoked: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6"/><line x1="3.5" y1="12.5" x2="12.5" y2="3.5"/></svg>',
+  error: '<svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="6.5" y="2" width="3" height="8" rx="1.5"/><circle cx="8" cy="13" r="1.8"/></svg>',
+};
+
+/**
  * Escape HTML to prevent XSS in badge detail panel
  */
 function _escapeHtml(str) {
@@ -916,10 +929,10 @@ function injectBadge(element, status, details) {
   // Use Encypher logo for verified, status indicators for others
   const statusOverlay = {
     verified: '',
-    pending: '<span class="encypher-badge__status">&#x22EF;</span>',
-    invalid: '<span class="encypher-badge__status">&#x2717;</span>',
-    revoked: '<span class="encypher-badge__status">&#x2298;</span>',
-    error: '<span class="encypher-badge__status">!</span>'
+    pending: `<span class="encypher-badge__status">${_STATUS_SVG.pending}</span>`,
+    invalid: `<span class="encypher-badge__status">${_STATUS_SVG.invalid}</span>`,
+    revoked: `<span class="encypher-badge__status">${_STATUS_SVG.revoked}</span>`,
+    error: `<span class="encypher-badge__status">${_STATUS_SVG.error}</span>`,
   };
 
   badge.innerHTML = `
@@ -1480,10 +1493,10 @@ function injectImageBadge(imgElement, status, details) {
 
   const statusOverlay = {
     verified: '',
-    pending: '<span class="encypher-badge__status">&#x22EF;</span>',
-    invalid: '<span class="encypher-badge__status">&#x2717;</span>',
-    revoked: '<span class="encypher-badge__status">&#x2298;</span>',
-    error: '<span class="encypher-badge__status">!</span>'
+    pending: `<span class="encypher-badge__status">${_STATUS_SVG.pending}</span>`,
+    invalid: `<span class="encypher-badge__status">${_STATUS_SVG.invalid}</span>`,
+    revoked: `<span class="encypher-badge__status">${_STATUS_SVG.revoked}</span>`,
+    error: `<span class="encypher-badge__status">${_STATUS_SVG.error}</span>`,
   };
 
   badge.innerHTML = `
@@ -1723,10 +1736,10 @@ function injectMediaBadge(mediaElement, status, details) {
 
   const statusOverlay = {
     verified: '',
-    pending: '<span class="encypher-badge__status">&#x22EF;</span>',
-    invalid: '<span class="encypher-badge__status">&#x2717;</span>',
-    revoked: '<span class="encypher-badge__status">&#x2298;</span>',
-    error: '<span class="encypher-badge__status">!</span>'
+    pending: `<span class="encypher-badge__status">${_STATUS_SVG.pending}</span>`,
+    invalid: `<span class="encypher-badge__status">${_STATUS_SVG.invalid}</span>`,
+    revoked: `<span class="encypher-badge__status">${_STATUS_SVG.revoked}</span>`,
+    error: `<span class="encypher-badge__status">${_STATUS_SVG.error}</span>`,
   };
 
   badge.innerHTML = `
@@ -1920,10 +1933,10 @@ function injectDocumentBadge(docElement, status, details) {
 
   const statusOverlay = {
     verified: '',
-    pending: '<span class="encypher-badge__status">&#x22EF;</span>',
-    invalid: '<span class="encypher-badge__status">&#x2717;</span>',
-    revoked: '<span class="encypher-badge__status">&#x2298;</span>',
-    error: '<span class="encypher-badge__status">!</span>'
+    pending: `<span class="encypher-badge__status">${_STATUS_SVG.pending}</span>`,
+    invalid: `<span class="encypher-badge__status">${_STATUS_SVG.invalid}</span>`,
+    revoked: `<span class="encypher-badge__status">${_STATUS_SVG.revoked}</span>`,
+    error: `<span class="encypher-badge__status">${_STATUS_SVG.error}</span>`,
   };
 
   badge.innerHTML = `

@@ -150,11 +150,26 @@
   height: 11px;
   background: var(--ency-error);
   border-radius: 50%;
-  font-size: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--ency-white);
+  color: var(--ency-white);
+}
+
+.encypher-badge__status svg {
+  width: 7px;
+  height: 7px;
+}
+
+/* Pending spinner matches EncypherLoader brand animation (2.5s) */
+@keyframes ency-status-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.encypher-badge__status svg.ency-status-spin {
+  animation: ency-status-spin 2.5s linear infinite;
 }
 
 .encypher-badge--pending .encypher-badge__status {

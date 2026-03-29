@@ -2,6 +2,13 @@
  * Encypher Verify - Popup Script
  */
 
+// Inline SVG icons for media type inventory (14px, currentColor)
+const _MEDIA_ICON = {
+  audio: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><line x1="2" y1="6" x2="2" y2="10"/><line x1="5" y1="4" x2="5" y2="12"/><line x1="8" y1="2" x2="8" y2="14"/><line x1="11" y1="4" x2="11" y2="12"/><line x1="14" y1="6" x2="14" y2="10"/></svg>',
+  video: '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M4 2.5v11l9-5.5z"/></svg>',
+  document: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 1h5l4 4v10H4z"/><path d="M9 1v4h4"/></svg>',
+};
+
 // DOM elements - Verify tab
 const loadingEl = document.getElementById('loading');
 const noContentEl = document.getElementById('no-content');
@@ -453,7 +460,7 @@ function renderMediaSection(imageData, audioVideoData, documentData) {
       : 'Not verified';
 
     const filename = av.src.split('/').pop().split('?')[0].slice(0, 30) || av.mediaType;
-    const typeIcon = av.mediaType === 'audio' ? '&#x266B;' : '&#x25B6;';
+    const typeIcon = av.mediaType === 'audio' ? _MEDIA_ICON.audio : _MEDIA_ICON.video;
 
     const actionHtml = av.status
       ? `<span class="popup__media-status popup__media-status--${statusClass}">${statusLabel}</span>`
@@ -510,7 +517,7 @@ function renderMediaSection(imageData, audioVideoData, documentData) {
       : 'Not verified';
 
     const filename = doc.src.split('/').pop().split('?')[0].slice(0, 30) || 'document';
-    const typeIcon = '&#x1F4C4;';
+    const typeIcon = _MEDIA_ICON.document;
 
     const actionHtml = doc.status
       ? `<span class="popup__media-status popup__media-status--${statusClass}">${statusLabel}</span>`
