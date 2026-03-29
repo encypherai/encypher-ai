@@ -2,6 +2,7 @@
 
 import { Button, Input } from '@encypher/design-system';
 import { Suspense, useMemo, useState } from 'react';
+import { BrandedLoadingScreen } from '../../components/ui/BrandedLoadingScreen';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -312,20 +313,7 @@ function SignupPageContent() {
 export default function SignupPage() {
   return (
     <Suspense
-      fallback={
-        <main className="flex min-h-screen bg-background">
-          <section className="w-full md:w-1/2 flex flex-col justify-center items-center px-4 py-12 min-h-screen">
-            <div className="w-full max-w-md rounded-2xl bg-card border border-border p-8">
-              <div className="h-9 w-36 bg-muted rounded animate-pulse mb-8" />
-              <div className="h-8 w-48 bg-muted rounded animate-pulse mb-2" />
-              <div className="h-4 w-64 bg-muted rounded animate-pulse" />
-            </div>
-          </section>
-          <section className="hidden md:flex w-1/2 bg-background relative overflow-hidden min-h-screen">
-            <div className="absolute inset-0 bg-gradient-to-br from-columbia-blue via-blue-ncs to-delft-blue opacity-80" />
-          </section>
-        </main>
-      }
+      fallback={<BrandedLoadingScreen />}
     >
       <SignupPageContent />
     </Suspense>

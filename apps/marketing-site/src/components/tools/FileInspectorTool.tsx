@@ -4,6 +4,7 @@
 // TEAM_241: Added image (JPEG/PNG/WebP) support with XMP + C2PA inspection
 // TEAM_280: Expanded to all C2PA media formats (audio, video, all images)
 import React, { useState, useRef, useCallback } from "react";
+import { EncypherLoader } from "@encypher/icons";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -941,7 +942,7 @@ export default function FileInspectorTool() {
           {loading && selectedFile && (
             <Card className="min-h-[400px] flex items-center justify-center">
               <CardContent className="text-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
+                <EncypherLoader size="xl" className="mb-4" />
                 <p className="text-lg font-semibold mb-1">Inspecting file...</p>
                 <p className="text-sm text-muted-foreground">
                   {selectedFile.name} ({formatFileSize(selectedFile.size)})

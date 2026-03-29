@@ -13,6 +13,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { EncypherLoader } from '@encypher/icons';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import {
@@ -80,7 +81,7 @@ export function ApiAccessGate({ children }: ApiAccessGateProps) {
   if (statusQuery.isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-ncs"></div>
+        <EncypherLoader size="lg" />
       </div>
     );
   }

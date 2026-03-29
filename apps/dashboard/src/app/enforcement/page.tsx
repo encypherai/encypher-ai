@@ -14,6 +14,7 @@ import {
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { EmptyState } from '../../components/ui/empty-state';
+import { EncypherLoader } from '@encypher/icons';
 import apiClient from '../../lib/api';
 import type { FormalNotice } from '../../lib/api';
 
@@ -150,7 +151,7 @@ export default function EnforcementPage() {
           <CardContent>
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-blue-500" />
+                <EncypherLoader size="md" />
               </div>
             ) : !notices || notices.length === 0 ? (
               <EmptyState

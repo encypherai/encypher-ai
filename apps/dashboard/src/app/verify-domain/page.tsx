@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { BrandedLoadingScreen } from '../../components/ui/BrandedLoadingScreen';
+import { EncypherLoader } from '@encypher/icons';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -52,7 +54,7 @@ function VerifyDomainContent() {
 
         {state === 'loading' && (
           <div className="text-center space-y-3">
-            <div className="w-8 h-8 border-2 border-blue-ncs border-t-transparent rounded-full animate-spin mx-auto" />
+            <EncypherLoader size="lg" />
             <p className="text-sm text-muted-foreground">Confirming your request&hellip;</p>
           </div>
         )}
@@ -116,11 +118,7 @@ function VerifyDomainContent() {
 export default function VerifyDomainPage() {
   return (
     <Suspense
-      fallback={
-        <main className="flex min-h-screen items-center justify-center">
-          <div className="w-8 h-8 border-2 border-blue-ncs border-t-transparent rounded-full animate-spin" />
-        </main>
-      }
+      fallback={<BrandedLoadingScreen />}
     >
       <VerifyDomainContent />
     </Suspense>

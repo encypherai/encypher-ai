@@ -7,6 +7,7 @@ import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { DashboardLayout } from '../../../components/layout/DashboardLayout';
 import apiClient, { type DomainClaimInfo, type OrganizationInfo, type OrganizationInvitationInfo, type OrganizationMemberInfo, type OrganizationSeatInfo } from '../../../lib/api';
+import { EncypherLoader } from '@encypher/icons';
 
 type OrganizationOption = {
   id: string;
@@ -220,7 +221,7 @@ export default function AdminOrganizationsPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-ncs"></div>
+          <EncypherLoader size="lg" />
         </div>
       </DashboardLayout>
     );

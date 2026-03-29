@@ -17,6 +17,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 import { EmptyState } from '../../components/ui/empty-state';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { EncypherLoader } from '@encypher/icons';
 import apiClient from '../../lib/api';
 
 // -- Types --------------------------------------------------------------------
@@ -393,7 +394,7 @@ function AttestationsTab() {
 
       {/* Table */}
       {isLoading && (
-        <Card><CardContent className="py-12"><div className="flex flex-col items-center gap-3 text-sm text-muted-foreground"><div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-blue-500" /><span>Loading attestations...</span></div></CardContent></Card>
+        <Card><CardContent className="py-12"><div className="flex flex-col items-center gap-3 text-sm text-muted-foreground"><EncypherLoader size="md" /><span>Loading attestations...</span></div></CardContent></Card>
       )}
       {error && <p className="text-red-500 dark:text-red-400">Failed to load attestations.</p>}
 

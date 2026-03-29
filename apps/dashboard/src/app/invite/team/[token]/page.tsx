@@ -7,6 +7,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input } from '@encyph
 import { toast } from 'sonner';
 import Image from 'next/image';
 import Link from 'next/link';
+import { BrandedLoadingScreen } from '../../../../components/ui/BrandedLoadingScreen';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypher.com/api/v1').replace(/\/$/, '');
 
@@ -140,14 +141,7 @@ export default function TeamInvitePage() {
 
   // Loading
   if (loading || sessionStatus === 'loading') {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-ncs mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading invitation...</p>
-        </div>
-      </div>
-    );
+    return <BrandedLoadingScreen message="Loading invitation..." />;
   }
 
   // Error / not found

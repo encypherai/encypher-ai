@@ -2,6 +2,7 @@
 
 import { Button, Input } from '@encypher/design-system';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { BrandedLoadingScreen } from '../../components/ui/BrandedLoadingScreen';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 import apiClient from '../../lib/api';
@@ -400,18 +401,7 @@ function LoginPageContent() {
 export default function LoginPage() {
   return (
     <Suspense
-      fallback={
-        <main className="flex min-h-screen">
-          <section className="w-full lg:w-1/2 flex flex-col justify-center px-8 py-12 bg-white dark:bg-gray-950">
-            <div className="w-full max-w-sm mx-auto">
-              <div className="h-9 w-36 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-10" />
-              <div className="h-8 w-48 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-2" />
-              <div className="h-4 w-64 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
-            </div>
-          </section>
-          <section className="hidden lg:block lg:w-1/2" style={{ background: 'linear-gradient(135deg, #1a2332 0%, #1e3a5f 40%, #1b2f50 100%)' }} />
-        </main>
-      }
+      fallback={<BrandedLoadingScreen />}
     >
       <LoginPageContent />
     </Suspense>

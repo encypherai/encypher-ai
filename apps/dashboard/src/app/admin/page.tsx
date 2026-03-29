@@ -12,6 +12,7 @@ import apiClient, {
   AdminNewsletterSubscriber,
 } from '../../lib/api';
 import UserActivityModal from '../../components/UserActivityModal';
+import { EncypherLoader } from '@encypher/icons';
 
 // Stat card component matching dashboard design
 function StatCard({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
@@ -411,7 +412,7 @@ export default function AdminPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-ncs"></div>
+          <EncypherLoader size="lg" />
         </div>
       </DashboardLayout>
     );
@@ -420,11 +421,9 @@ export default function AdminPage() {
   if (superAdminQuery.isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-ncs mx-auto mb-4"></div>
-            <p className="text-slate-500 dark:text-slate-400">Checking permissions...</p>
-          </div>
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+          <EncypherLoader size="lg" />
+          <p className="text-sm text-muted-foreground">Checking permissions...</p>
         </div>
       </DashboardLayout>
     );

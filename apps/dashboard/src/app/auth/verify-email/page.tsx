@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { BrandedLoadingScreen } from '../../../components/ui/BrandedLoadingScreen';
 import {
   Card,
   CardHeader,
@@ -227,14 +228,7 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={
-      <main className="min-h-screen bg-gradient-to-br from-columbia-blue via-blue-ncs to-delft-blue flex items-center justify-center p-4">
-        <div className="w-full max-w-md text-center text-white">
-          <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-4" />
-          <p>Loading...</p>
-        </div>
-      </main>
-    }>
+    <Suspense fallback={<BrandedLoadingScreen />}>
       <VerifyEmailContent />
     </Suspense>
   );

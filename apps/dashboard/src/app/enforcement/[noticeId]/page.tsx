@@ -13,6 +13,7 @@ import {
   Badge,
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../../components/layout/DashboardLayout';
+import { EncypherLoader } from '@encypher/icons';
 import apiClient from '../../../lib/api';
 
 // -- Helpers ------------------------------------------------------------------
@@ -143,7 +144,7 @@ export default function NoticeDetailPage() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-24">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-blue-500" />
+          <EncypherLoader size="lg" />
         </div>
       </DashboardLayout>
     );

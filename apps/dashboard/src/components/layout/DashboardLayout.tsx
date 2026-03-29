@@ -14,6 +14,7 @@ import apiClient from '../../lib/api';
 import { useOrganization } from '../../contexts/OrganizationContext';
 import { SetupWizard } from '../onboarding/SetupWizard';
 import { Breadcrumb } from '@/components/ui/breadcrumb';
+import { BrandedLoadingScreen } from '@/components/ui/BrandedLoadingScreen';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -395,14 +396,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   if (!isAuthReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-blue-ncs dark:border-slate-700 dark:border-t-columbia-blue" />
-          <span>Checking your session...</span>
-        </div>
-      </div>
-    );
+    return <BrandedLoadingScreen message="Checking your session..." />;
   }
 
   return (
