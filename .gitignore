@@ -230,3 +230,4 @@ blog-header-temp.html
 # Dashboard build/test artifacts
 apps/dashboard/storybook-static/
 apps/dashboard/test-results/
+.env.receiver
