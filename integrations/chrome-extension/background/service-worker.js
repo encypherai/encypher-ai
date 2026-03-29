@@ -24,6 +24,7 @@ let API_CONFIG = {
   imageVerifyEndpoint: '/api/v1/verify/image',
   audioVerifyEndpoint: '/api/v1/verify/audio',
   videoVerifyEndpoint: '/api/v1/verify/video',
+  mediaVerifyEndpoint: '/api/v1/verify/media',
   signEndpoint: '/api/v1/sign',
   provisioningEndpoint: '/api/v1/provisioning/auto-provision',
   analyticsEndpoint: '/api/v1/analytics/discovery',
@@ -153,6 +154,31 @@ let _accountInfoCache = {
   data: null,
   expiresAt: 0,
 };
+
+// Cached API key to avoid chrome.storage.local.get on every verify call.
+// Populated on first use and refreshed via storage.onChanged listener.
+let _cachedApiKey = null;
+let _apiKeyCacheReady = false;
+
+async function _getCachedApiKey() {
+  if (_apiKeyCacheReady) return _cachedApiKey;
+  try {
+    const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
+    _cachedApiKey = apiKey || '';
+    _apiKeyCacheReady = true;
+  } catch {
+    _cachedApiKey = '';
+  }
+  return _cachedApiKey;
+}
+
+// Keep the cache fresh when the user changes their API key
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.apiKey) {
+    _cachedApiKey = changes.apiKey.newValue || '';
+    _apiKeyCacheReady = true;
+  }
+});
 
 function normalizeDomain(value) {
   const raw = String(value || '').trim().toLowerCase();
@@ -424,7 +450,7 @@ async function verifyContent(text, options = {}) {
       }
 
       // Get API key if available (for enhanced features)
-      const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
+      const apiKey = await _getCachedApiKey();
       const headers = { 'Content-Type': 'application/json' };
       if (apiKey) {
         headers['Authorization'] = `Bearer ${apiKey}`;
@@ -596,25 +622,77 @@ async function _checkC2paHeader(imageUrl) {
 }
 
 /**
- * Scan raw bytes for JUMBF C2PA markers.
- * JPEG: Look for APP11 marker (0xFF 0xEB) containing 'jumb' or 'jumd' box types.
- * PNG: Look for 'caBX' chunk type.
+ * Scan raw bytes for JUMBF C2PA markers across all supported media formats.
+ *
+ * Format families and their C2PA container locations:
+ *   JPEG         - APP11 marker (0xFF 0xEB) containing 'jumb'/'jumd'
+ *   PNG          - 'caBX' chunk type
+ *   ISO BMFF     - 'uuid' box with C2PA UUID (covers AVIF, HEIC, HEIF, MP4, MOV, M4V, M4A)
+ *   RIFF         - 'C2PA' or JUMBF in RIFF sub-chunks (covers WebP, WAV, AVI)
+ *   GIF          - Application Extension block with 'C2PA' identifier
+ *   PDF          - C2PA cross-reference marker in header region
+ *   MP3/ID3      - ID3v2 GEOB frame containing JUMBF
+ *   EBML         - EBML header magic (covers WebM, MKV)
+ *   TIFF/DNG     - 'II' or 'MM' byte order + scan for JUMBF box bytes
  */
 function _hasJumbfMarker(bytes) {
   if (bytes.length < 12) return false;
 
-  // JPEG detection: starts with 0xFF 0xD8
+  // JPEG: starts with 0xFF 0xD8
   if (bytes[0] === 0xFF && bytes[1] === 0xD8) {
     return _scanJpegForC2pa(bytes);
   }
 
-  // PNG detection: starts with PNG signature (89 50 4E 47)
+  // PNG: starts with 0x89 0x50 0x4E 0x47 (89 P N G)
   if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
     return _scanPngForC2pa(bytes);
   }
 
-  // TIFF detection: II (little-endian) or MM (big-endian)
-  // C2PA in TIFF is rare but possible; skip for now
+  // ISO BMFF: 'ftyp' box at offset 4 (covers AVIF, HEIC, HEIF, MP4, MOV, M4V, M4A)
+  if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+    return _scanIsoBmffForC2pa(bytes);
+  }
+
+  // RIFF: starts with 'RIFF' (covers WebP, WAV, AVI)
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+    return _scanRiffForC2pa(bytes);
+  }
+
+  // GIF: starts with 'GIF87a' or 'GIF89a'
+  if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) {
+    return _scanGifForC2pa(bytes);
+  }
+
+  // PDF: starts with '%PDF'
+  if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
+    return _scanPdfForC2pa(bytes);
+  }
+
+  // MP3 with ID3v2 tag: starts with 'ID3'
+  if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+    return _scanId3ForC2pa(bytes);
+  }
+
+  // EBML (WebM/MKV): starts with 0x1A 0x45 0xDF 0xA3
+  if (bytes[0] === 0x1A && bytes[1] === 0x45 && bytes[2] === 0xDF && bytes[3] === 0xA3) {
+    // EBML-based formats can carry C2PA in extension elements.
+    // A full EBML parse exceeds what a 4KB header check can do reliably,
+    // but the magic bytes confirm the format. Return true to let the server
+    // do the full verification (these files are rare enough that a false
+    // positive here is acceptable).
+    return _scanBytesForJumbfSignature(bytes);
+  }
+
+  // TIFF/DNG: 'II' (little-endian) or 'MM' (big-endian) byte order
+  if ((bytes[0] === 0x49 && bytes[1] === 0x49) || (bytes[0] === 0x4D && bytes[1] === 0x4D)) {
+    return _scanBytesForJumbfSignature(bytes);
+  }
+
+  // FLAC: starts with 'fLaC'
+  if (bytes[0] === 0x66 && bytes[1] === 0x4C && bytes[2] === 0x61 && bytes[3] === 0x43) {
+    return _scanBytesForJumbfSignature(bytes);
+  }
+
   return false;
 }
 
@@ -672,6 +750,149 @@ function _scanPngForC2pa(bytes) {
 
     // Move to next chunk: 4 (length) + 4 (type) + chunkLength (data) + 4 (CRC)
     offset += 12 + chunkLength;
+  }
+  return false;
+}
+
+// C2PA UUID bytes: 'd8fec3d6-1b0e-483c-9297-5857ef620c64' (the standard C2PA JUMBF UUID)
+const _C2PA_UUID = [
+  0xd8, 0xfe, 0xc3, 0xd6, 0x1b, 0x0e, 0x48, 0x3c,
+  0x92, 0x97, 0x58, 0x57, 0xef, 0x62, 0x0c, 0x64,
+];
+
+/**
+ * Scan ISO BMFF bytes for a 'uuid' box containing the C2PA UUID.
+ * Covers: AVIF, HEIC, HEIF, MP4, MOV, M4V, M4A.
+ * ISO BMFF files start with a 'ftyp' box at offset 4.
+ */
+function _scanIsoBmffForC2pa(bytes) {
+  let offset = 0;
+  while (offset < bytes.length - 8) {
+    // Box size is big-endian uint32 at current offset
+    const size = (bytes[offset] << 24) | (bytes[offset+1] << 16) | (bytes[offset+2] << 8) | bytes[offset+3];
+    const type = String.fromCharCode(bytes[offset+4], bytes[offset+5], bytes[offset+6], bytes[offset+7]);
+
+    if (type === 'uuid' && size >= 24 && offset + 8 + 16 <= bytes.length) {
+      // Check if the 16-byte UUID matches the C2PA UUID
+      let match = true;
+      for (let i = 0; i < 16; i++) {
+        if (bytes[offset + 8 + i] !== _C2PA_UUID[i]) { match = false; break; }
+      }
+      if (match) return true;
+    }
+
+    // Also check for 'c2pa' or 'c2ma' box types (some implementations)
+    if (type === 'c2pa' || type === 'c2ma') return true;
+
+    // Advance to next box
+    if (size < 8) break; // invalid box size, stop
+    offset += size;
+  }
+  return false;
+}
+
+/**
+ * Scan RIFF bytes for C2PA JUMBF data.
+ * Covers: WebP, WAV, AVI.
+ * RIFF files have a 12-byte header: 'RIFF' + size + format (e.g., 'WEBP', 'WAVE', 'AVI ').
+ * C2PA data is stored in a 'C2PA' sub-chunk.
+ */
+function _scanRiffForC2pa(bytes) {
+  if (bytes.length < 12) return false;
+  // Scan sub-chunks starting at offset 12
+  let offset = 12;
+  while (offset < bytes.length - 8) {
+    const chunkId = String.fromCharCode(bytes[offset], bytes[offset+1], bytes[offset+2], bytes[offset+3]);
+    const chunkSize = bytes[offset+4] | (bytes[offset+5] << 8) | (bytes[offset+6] << 16) | (bytes[offset+7] << 24);
+
+    if (chunkId === 'C2PA' || chunkId === 'c2pa') return true;
+
+    // LIST chunks can contain nested sub-chunks; scan the 'jumb'/'jumd' signature
+    if (chunkId === 'LIST' || chunkId === 'JUMB') return true;
+
+    // Advance: 8 (id + size) + chunkSize, padded to even
+    const advance = 8 + chunkSize + (chunkSize % 2);
+    if (advance < 8) break;
+    offset += advance;
+  }
+  // Fallback: brute-force scan for JUMBF signature in available bytes
+  return _scanBytesForJumbfSignature(bytes);
+}
+
+/**
+ * Scan GIF bytes for a C2PA Application Extension block.
+ * GIF89a supports Application Extension blocks (0x21 0xFF) where C2PA
+ * stores its manifest using the 'C2PA' application identifier.
+ */
+function _scanGifForC2pa(bytes) {
+  // GIF header is 6 bytes, then logical screen descriptor, then blocks.
+  // Scan for Application Extension introducer: 0x21 0xFF
+  for (let i = 6; i < bytes.length - 14; i++) {
+    if (bytes[i] === 0x21 && bytes[i+1] === 0xFF) {
+      // Block size at i+2 should be 11 for standard Application Extension
+      if (bytes[i+2] === 0x0B) {
+        const appId = String.fromCharCode(
+          bytes[i+3], bytes[i+4], bytes[i+5], bytes[i+6]
+        );
+        if (appId === 'C2PA' || appId === 'c2pa') return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Scan PDF header bytes for C2PA cross-reference marker.
+ * C2PA in PDF uses a JUMBF-based manifest embedded as an incremental update.
+ * In the first 4KB we look for 'C2PA_Manifest' or JUMBF box signatures.
+ */
+function _scanPdfForC2pa(bytes) {
+  // Convert to string for pattern matching (safe for ASCII markers in first 4KB)
+  const header = String.fromCharCode.apply(null, bytes.subarray(0, Math.min(bytes.length, 4096)));
+  if (header.includes('C2PA_Manifest') || header.includes('c2pa_manifest')) return true;
+  if (header.includes('c2pa.') || header.includes('C2PA.')) return true;
+  // Also look for JUMBF box type bytes
+  return _scanBytesForJumbfSignature(bytes);
+}
+
+/**
+ * Scan ID3v2 tag bytes for a GEOB frame containing JUMBF C2PA data.
+ * MP3 files with C2PA store the manifest in an ID3v2 GEOB (General Encapsulated Object) frame.
+ */
+function _scanId3ForC2pa(bytes) {
+  if (bytes.length < 10) return false;
+  // ID3v2 header: 'ID3' + version (2 bytes) + flags (1 byte) + size (4 bytes syncsafe)
+  const id3Size = ((bytes[6] & 0x7F) << 21) | ((bytes[7] & 0x7F) << 14) |
+                  ((bytes[8] & 0x7F) << 7) | (bytes[9] & 0x7F);
+  const searchEnd = Math.min(10 + id3Size, bytes.length - 4);
+
+  // Look for 'GEOB' frame header, then check for C2PA/JUMBF content
+  for (let i = 10; i < searchEnd; i++) {
+    if (bytes[i] === 0x47 && bytes[i+1] === 0x45 && bytes[i+2] === 0x4F && bytes[i+3] === 0x42) {
+      // Found GEOB frame; check nearby bytes for JUMBF signature
+      const geobEnd = Math.min(i + 200, bytes.length - 4);
+      for (let j = i + 4; j < geobEnd; j++) {
+        if ((bytes[j] === 0x6A && bytes[j+1] === 0x75 && bytes[j+2] === 0x6D && bytes[j+3] === 0x62) ||
+            (bytes[j] === 0x6A && bytes[j+1] === 0x75 && bytes[j+2] === 0x6D && bytes[j+3] === 0x64)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Generic fallback: brute-force scan available bytes for JUMBF box signatures
+ * ('jumb' or 'jumd'). Used for formats where structured parsing is impractical
+ * within a 4KB header window (TIFF, DNG, FLAC, EBML).
+ */
+function _scanBytesForJumbfSignature(bytes) {
+  for (let i = 0; i < bytes.length - 4; i++) {
+    if ((bytes[i] === 0x6A && bytes[i+1] === 0x75 && bytes[i+2] === 0x6D && bytes[i+3] === 0x62) ||
+        (bytes[i] === 0x6A && bytes[i+1] === 0x75 && bytes[i+2] === 0x6D && bytes[i+3] === 0x64)) {
+      return true;
+    }
   }
   return false;
 }
@@ -802,10 +1023,20 @@ async function verifyImage(imageUrl) {
 }
 
 function _guessMimeType(url) {
-  const ext = String(url).split('?')[0].split('.').pop().toLowerCase();
+  const ext = String(url).split('?')[0].split('#')[0].split('.').pop().toLowerCase();
   const map = {
-    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-    webp: 'image/webp', tiff: 'image/tiff', tif: 'image/tiff',
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', jpe: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    tiff: 'image/tiff', tif: 'image/tiff',
+    gif: 'image/gif',
+    avif: 'image/avif',
+    heic: 'image/heic', heics: 'image/heic-sequence',
+    heif: 'image/heif', heifs: 'image/heif-sequence',
+    svg: 'image/svg+xml', svgz: 'image/svg+xml',
+    jxl: 'image/jxl',
+    dng: 'image/x-adobe-dng',
+    bmp: 'image/bmp',
   };
   return map[ext] || 'image/jpeg';
 }
@@ -820,21 +1051,59 @@ function _uint8ToBase64(uint8) {
 }
 
 function _guessAudioMimeType(url) {
-  const ext = String(url).split('?')[0].split('.').pop().toLowerCase();
+  const ext = String(url).split('?')[0].split('#')[0].split('.').pop().toLowerCase();
   const map = {
-    wav: 'audio/wav', mp3: 'audio/mpeg', m4a: 'audio/mp4',
-    aac: 'audio/mp4', ogg: 'audio/ogg', flac: 'audio/flac',
+    wav: 'audio/wav', wave: 'audio/wav',
+    mp3: 'audio/mpeg', mpa: 'audio/mpeg',
+    m4a: 'audio/mp4', aac: 'audio/aac',
+    ogg: 'audio/ogg', oga: 'audio/ogg', opus: 'audio/ogg',
+    flac: 'audio/flac',
+    weba: 'audio/webm', webm: 'audio/webm',
   };
   return map[ext] || 'audio/mpeg';
 }
 
 function _guessVideoMimeType(url) {
-  const ext = String(url).split('?')[0].split('.').pop().toLowerCase();
+  const ext = String(url).split('?')[0].split('#')[0].split('.').pop().toLowerCase();
   const map = {
-    mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/mp4',
-    avi: 'video/x-msvideo', webm: 'video/webm',
+    mp4: 'video/mp4', m4v: 'video/x-m4v',
+    mov: 'video/quicktime',
+    avi: 'video/x-msvideo',
+    webm: 'video/webm',
+    mkv: 'video/x-matroska',
+    ogv: 'video/ogg', ogg: 'video/ogg',
+    mpg: 'video/mpeg', mpeg: 'video/mpeg',
   };
   return map[ext] || 'video/mp4';
+}
+
+function _guessDocumentMimeType(url) {
+  const ext = String(url).split('?')[0].split('#')[0].split('.').pop().toLowerCase();
+  const map = {
+    pdf: 'application/pdf',
+    epub: 'application/epub+zip',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    odt: 'application/vnd.oasis.opendocument.text',
+    oxps: 'application/oxps',
+  };
+  return map[ext] || null;
+}
+
+function _extFromMime(mimeType) {
+  const map = {
+    'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp',
+    'image/tiff': '.tiff', 'image/gif': '.gif', 'image/avif': '.avif',
+    'image/heic': '.heic', 'image/heif': '.heif', 'image/svg+xml': '.svg',
+    'image/jxl': '.jxl', 'image/x-adobe-dng': '.dng', 'image/bmp': '.bmp',
+    'audio/wav': '.wav', 'audio/mpeg': '.mp3', 'audio/mp4': '.m4a',
+    'audio/aac': '.aac', 'audio/ogg': '.ogg', 'audio/flac': '.flac',
+    'audio/webm': '.weba',
+    'video/mp4': '.mp4', 'video/quicktime': '.mov', 'video/x-msvideo': '.avi',
+    'video/webm': '.webm', 'video/x-matroska': '.mkv', 'video/ogg': '.ogv',
+    'video/mpeg': '.mpg', 'video/x-m4v': '.m4v',
+    'application/pdf': '.pdf', 'application/epub+zip': '.epub',
+  };
+  return map[mimeType] || '';
 }
 
 async function verifyAudio(audioUrl) {
@@ -1065,11 +1334,127 @@ async function verifyVideo(videoUrl) {
 }
 
 function _videoExtFromMime(mimeType) {
-  const map = {
-    'video/mp4': '.mp4', 'video/quicktime': '.mov',
-    'video/x-msvideo': '.avi', 'video/webm': '.webm',
+  return _extFromMime(mimeType) || '.mp4';
+}
+
+/**
+ * Verify a document or other media via the unified /verify/media endpoint.
+ * Uses multipart/form-data upload. Handles PDFs, EPUBs, and any format the
+ * API supports that does not have a dedicated extension endpoint.
+ */
+async function verifyDocument(docUrl) {
+  const cacheKey = hashContent(docUrl);
+  const cached = verificationCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.result;
+  }
+
+  const inFlight = verificationInFlight.get(cacheKey);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const runVerification = async () => {
+    try {
+      const docResponse = await fetch(docUrl);
+      if (!docResponse.ok) {
+        return {
+          success: false,
+          error: `Failed to fetch document: HTTP ${docResponse.status}`,
+          contentType: 'document',
+        };
+      }
+
+      const contentType = docResponse.headers.get('Content-Type') || '';
+      const mimeType = contentType.split(';')[0].trim() || _guessDocumentMimeType(docUrl) || 'application/octet-stream';
+
+      const arrayBuffer = await docResponse.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+
+      // 50MB limit
+      if (bytes.length > 50 * 1024 * 1024) {
+        return {
+          success: false,
+          error: 'Document exceeds 50MB size limit',
+          contentType: 'document',
+        };
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout * 3);
+
+      const verifyUrl = `${API_CONFIG.baseUrl}${API_CONFIG.mediaVerifyEndpoint}`;
+      debugLog.api('verify-document', `POST ${verifyUrl}`, { mimeType, sizeBytes: bytes.length });
+
+      const formData = new FormData();
+      const blob = new Blob([bytes], { type: mimeType });
+      const ext = _extFromMime(mimeType) || '.bin';
+      formData.append('file', blob, 'document' + ext);
+
+      const response = await fetch(verifyUrl, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        debugLog.error('verify-document', `HTTP ${response.status}`, errorData);
+        return {
+          success: false,
+          error: errorData.detail || errorData.error || `HTTP ${response.status}`,
+          contentType: 'document',
+          status: response.status,
+        };
+      }
+
+      const data = await response.json();
+      debugLog.api('verify-document', 'Response OK', { valid: data.valid });
+
+      return {
+        success: data.valid === true,
+        revoked: false,
+        contentType: 'document',
+        data: {
+          valid: data.valid,
+          c2pa_manifest_valid: data.c2pa_manifest_valid || false,
+          hash_matches: data.hash_matches || false,
+          c2pa_instance_id: data.c2pa_instance_id || null,
+          signer: data.signer || null,
+          signed_at: data.signed_at || null,
+          manifest_data: data.manifest_data || null,
+          verified_at: data.verified_at || null,
+          mime_type: mimeType,
+        },
+        correlation_id: data.correlation_id,
+        error: data.error,
+      };
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return { success: false, error: 'Request timed out', contentType: 'document' };
+      }
+      return { success: false, error: error.message || 'Network error', contentType: 'document' };
+    }
   };
-  return map[mimeType] || '.mp4';
+
+  const verifyPromise = (async () => {
+    let result = await runVerification();
+    if (!result.success && shouldRetryVerification(result)) {
+      debugLog.info('verify-document', 'Retrying document verification after transient failure');
+      result = await runVerification();
+    }
+    verificationCache.set(cacheKey, { result, timestamp: Date.now() });
+    return result;
+  })();
+
+  verificationInFlight.set(cacheKey, verifyPromise);
+  try {
+    return await verifyPromise;
+  } finally {
+    verificationInFlight.delete(cacheKey);
+  }
 }
 
 /**
@@ -1087,8 +1472,8 @@ async function signContent(text, title, options = {}) {
       options.useMerkle = false;
     }
 
-    // Get API key from storage
-    const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
+    // Get API key from cache
+    const apiKey = await _getCachedApiKey();
 
     if (!apiKey) {
       return {
@@ -1354,7 +1739,7 @@ async function flushAnalytics() {
 
   try {
     // Get API key if available (for authenticated analytics)
-    const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
+    const apiKey = await _getCachedApiKey();
 
     const headers = {
       'Content-Type': 'application/json'
@@ -1691,9 +2076,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const mediaType = message.mediaType || 'image';
       const verifyFn = mediaType === 'audio' ? verifyAudio
         : mediaType === 'video' ? verifyVideo
+        : mediaType === 'document' ? verifyDocument
         : verifyImage;
       const markerType = mediaType === 'audio' ? 'c2pa_audio'
         : mediaType === 'video' ? 'c2pa_video'
+        : mediaType === 'document' ? 'c2pa_document'
         : 'c2pa_image';
       verifyFn(message.url).then(result => {
         if (tabId) {
@@ -1936,6 +2323,13 @@ chrome.runtime.onInstalled.addListener((details) => {
     title: 'Verify video with Encypher',
     contexts: ['video']
   });
+
+  // Verify linked document (PDF, EPUB, DOCX) C2PA provenance
+  chrome.contextMenus.create({
+    id: 'verify-document-link',
+    title: 'Verify linked document with Encypher',
+    contexts: ['link']
+  });
 });
 
 const CONTEXT_SCRIPT_FILES = ['content/detector.js', 'content/editor-signer.js'];
@@ -2064,6 +2458,45 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     } catch (error) {
       console.error('Error verifying video:', error);
       await showPageToast(tab.id, 'Unable to verify video in this frame', 'error');
+    }
+    return;
+  }
+
+  if (info.menuItemId === 'verify-document-link') {
+    const linkUrl = info.linkUrl;
+    if (!linkUrl) return;
+    // Only handle known document extensions
+    const docExt = linkUrl.split('?')[0].split('#')[0].split('.').pop().toLowerCase();
+    const docExts = new Set(['pdf', 'epub', 'docx', 'odt', 'oxps']);
+    if (!docExts.has(docExt)) {
+      await showPageToast(tab.id, 'Not a recognized document format', 'error');
+      return;
+    }
+    try {
+      await showPageToast(tab.id, 'Verifying document...', 'info');
+      // Verify directly from service worker (no content script needed for link URLs)
+      const result = await verifyDocument(linkUrl);
+      if (tab.id) {
+        const current = tabState.get(tab.id) || {
+          verified: 0, invalid: 0, revoked: 0, pending: 0, details: [], url: tab.url,
+        };
+        const state = updateTabStateWithVerification(current, result);
+        const detail = buildVerificationDetail({
+          markerType: 'c2pa_document',
+          result,
+          detectionId: `doc-ctx-${Date.now()}`,
+        });
+        detail.contentType = 'document';
+        detail.mediaUrl = linkUrl;
+        state.details = appendVerificationDetail(state.details, detail);
+        tabState.set(tab.id, state);
+        updateIcon(tab.id, getIconStateForTab(state));
+      }
+      const status = result?.success ? 'Document verified' : (result?.error || 'Document verification failed');
+      await showPageToast(tab.id, status, result?.success ? 'success' : 'error');
+    } catch (error) {
+      console.error('Error verifying document:', error);
+      await showPageToast(tab.id, 'Unable to verify document', 'error');
     }
     return;
   }

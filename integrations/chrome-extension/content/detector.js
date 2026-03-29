@@ -67,6 +67,11 @@ const _processedAudioVideo = new Set();
 // Map media src -> { element, detectionId, status, details, mediaType }
 const _audioVideoVerificationState = new Map();
 
+// Track processed document embeds (by src URL) to avoid duplicates.
+const _processedDocuments = new Set();
+// Map document src -> { element, detectionId, status, details }
+const _documentVerificationState = new Map();
+
 // Track in-flight verifications by textHash → Promise<{status, details}>.
 // When a DOM expansion (e.g. LinkedIn "see more") reveals a new element whose
 // content is already being verified, the new element subscribes to the existing
@@ -1211,16 +1216,16 @@ function _resolveWaitingElements(textHash, status, details) {
  * existing promise instead of starting a duplicate API call. This prevents the
  * stuck "Verifying..." pending badge that would otherwise never resolve.
  */
+const _VERIFY_CONCURRENCY = 4; // max parallel text verification API calls
+
 async function _verifyDetections(detections) {
   if (detections.length === 0) return;
 
+  // Phase 1: partition into new verifications vs. in-flight subscriptions
+  const toVerify = [];
   for (const detection of detections) {
-    // Mark as processed immediately to prevent duplicate work
     _processedElements.add(detection.element);
 
-    // If a verification for this exact hash is already in-flight (e.g. the page
-    // expanded a truncated section while we were verifying the truncated version),
-    // subscribe this element to the existing promise and skip a new API call.
     if (_verificationInFlight.has(detection.textHash)) {
       injectBadge(detection.element, 'pending', {
         message: 'Verifying...',
@@ -1233,100 +1238,123 @@ async function _verifyDetections(detections) {
       continue;
     }
 
-    // Show pending badge
-    const markerLabel = detection.markerType === 'micro' ? 'micro-embedding' : detection.markerType;
-    _debugLog('INFO', 'detector', `Verifying ${markerLabel} (${detection.bytes.length} bytes)`);
-    injectBadge(detection.element, 'pending', {
-      message: 'Verifying...',
-      markerType: detection.markerType
-    });
-    // Track the pending badge so we can remove it if verification completes on a
-    // different element (e.g. LinkedIn expands the section after the pending badge
-    // was injected on the truncated element).
-    {
-      const pendingBadge = detection.element.querySelector('.encypher-badge--pending');
-      if (pendingBadge) {
-        const existing = _pendingBadgesByHash.get(detection.textHash) || new Set();
-        existing.add(pendingBadge);
-        _pendingBadgesByHash.set(detection.textHash, existing);
-      }
-    }
-
-    // Build the verification promise and register it as in-flight
-    const verifyPromise = (async () => {
-      try {
-        const response = await Promise.race([
-          _safeSendMessage({
-            type: 'VERIFY_CONTENT',
-            detectionId: detection.detectionId,
-            text: detection.text,
-            visibleText: detection.visibleText,
-            markerType: detection.markerType,
-            pageUrl: window.location.href,
-            pageDomain: window.location.hostname,
-            pageTitle: document.title,
-            discoverySource: 'page_scan',
-            embeddingCount: 1,
-            visibleTextLength: detection.visibleText?.length || 0,
-            embeddingByteLength: detection.bytes?.length || 0,
-          }),
-          new Promise((resolve) => setTimeout(() => resolve(null), 15000)),
-        ]);
-
-        if (!response) {
-          const errDetails = { error: 'Extension disconnected', markerType: detection.markerType };
-          injectBadge(detection.element, 'error', errDetails);
-          return { status: 'error', details: errDetails };
-        }
-
-        const { status, details } = _buildBadgeDetails(response, detection.markerType);
-        details.detectionId = detection.detectionId;
-        details.visibleTextLength = detection.visibleText?.length || 0;
-        details.embeddingByteLength = detection.bytes?.length || 0;
-
-        // Store in local browser cache
-        _verificationCache.set(detection.textHash, {
-          status,
-          details,
-          timestamp: Date.now()
-        });
-
-        injectBadge(detection.element, status, details);
-        return { status, details };
-      } catch (error) {
-        const errDetails = { error: error.message || 'Verification error', markerType: detection.markerType };
-        injectBadge(detection.element, 'error', errDetails);
-        return { status: 'error', details: errDetails };
-      }
-    })();
-
-    _verificationInFlight.set(detection.textHash, verifyPromise);
-
-    const result = await verifyPromise;
-
-    _verificationInFlight.delete(detection.textHash);
-
-    // Remove any orphaned pending badges for this hash (e.g. the truncated element
-    // that LinkedIn hid when the user clicked "see more" — its pending badge would
-    // otherwise remain stuck since verification completed on the expanded element).
-    const orphanedPending = _pendingBadgesByHash.get(detection.textHash);
-    if (orphanedPending) {
-      for (const orphan of orphanedPending) {
-        if (orphan.isConnected && orphan.classList.contains('encypher-badge--pending')) {
-          orphan.remove();
-        }
-      }
-      _pendingBadgesByHash.delete(detection.textHash);
-    }
-
-    // Sweep any remaining pending badges that are inside hidden/invisible ancestors.
-    // This catches the cross-hash case: LinkedIn truncated element has a different
-    // textHash than the expanded element, so hash-based cleanup above won't find it,
-    // but the truncated element is now display:none so the sweep removes it.
-    _sweepOrphanedPendingBadges();
-
-    _resolveWaitingElements(detection.textHash, result.status, result.details);
+    toVerify.push(detection);
   }
+
+  if (toVerify.length === 0) return;
+
+  // Phase 2: launch verifications concurrently with a concurrency cap.
+  // Instead of awaiting each one sequentially, we use a semaphore pattern
+  // to run up to _VERIFY_CONCURRENCY verifications in parallel.
+  let active = 0;
+  let nextIndex = 0;
+  const results = new Array(toVerify.length);
+
+  await new Promise((resolveAll) => {
+    function startNext() {
+      while (active < _VERIFY_CONCURRENCY && nextIndex < toVerify.length) {
+        const idx = nextIndex++;
+        const detection = toVerify[idx];
+        active++;
+
+        const markerLabel = detection.markerType === 'micro' ? 'micro-embedding' : detection.markerType;
+        _debugLog('INFO', 'detector', `Verifying ${markerLabel} (${detection.bytes.length} bytes)`);
+        injectBadge(detection.element, 'pending', {
+          message: 'Verifying...',
+          markerType: detection.markerType
+        });
+        {
+          const pendingBadge = detection.element.querySelector('.encypher-badge--pending');
+          if (pendingBadge) {
+            const existing = _pendingBadgesByHash.get(detection.textHash) || new Set();
+            existing.add(pendingBadge);
+            _pendingBadgesByHash.set(detection.textHash, existing);
+          }
+        }
+
+        const verifyPromise = _verifySingleDetection(detection);
+        _verificationInFlight.set(detection.textHash, verifyPromise);
+
+        verifyPromise.then((result) => {
+          results[idx] = result;
+          _verificationInFlight.delete(detection.textHash);
+          _cleanupAfterVerification(detection.textHash, result);
+          active--;
+          startNext();
+        });
+      }
+      if (active === 0) resolveAll();
+    }
+    startNext();
+  });
+}
+
+/**
+ * Execute a single text embedding verification. Extracted from _verifyDetections
+ * to allow concurrent dispatch.
+ */
+async function _verifySingleDetection(detection) {
+  try {
+    const response = await Promise.race([
+      _safeSendMessage({
+        type: 'VERIFY_CONTENT',
+        detectionId: detection.detectionId,
+        text: detection.text,
+        visibleText: detection.visibleText,
+        markerType: detection.markerType,
+        pageUrl: window.location.href,
+        pageDomain: window.location.hostname,
+        pageTitle: document.title,
+        discoverySource: 'page_scan',
+        embeddingCount: 1,
+        visibleTextLength: detection.visibleText?.length || 0,
+        embeddingByteLength: detection.bytes?.length || 0,
+      }),
+      new Promise((resolve) => setTimeout(() => resolve(null), 15000)),
+    ]);
+
+    if (!response) {
+      const errDetails = { error: 'Extension disconnected', markerType: detection.markerType };
+      injectBadge(detection.element, 'error', errDetails);
+      return { status: 'error', details: errDetails };
+    }
+
+    const { status, details } = _buildBadgeDetails(response, detection.markerType);
+    details.detectionId = detection.detectionId;
+    details.visibleTextLength = detection.visibleText?.length || 0;
+    details.embeddingByteLength = detection.bytes?.length || 0;
+
+    _verificationCache.set(detection.textHash, {
+      status,
+      details,
+      timestamp: Date.now()
+    });
+
+    injectBadge(detection.element, status, details);
+    return { status, details };
+  } catch (error) {
+    const errDetails = { error: error.message || 'Verification error', markerType: detection.markerType };
+    injectBadge(detection.element, 'error', errDetails);
+    return { status: 'error', details: errDetails };
+  }
+}
+
+/**
+ * Post-verification cleanup: remove orphaned pending badges and resolve
+ * waiting elements. Shared by the concurrent verification pipeline.
+ */
+function _cleanupAfterVerification(textHash, result) {
+  const orphanedPending = _pendingBadgesByHash.get(textHash);
+  if (orphanedPending) {
+    for (const orphan of orphanedPending) {
+      if (orphan.isConnected && orphan.classList.contains('encypher-badge--pending')) {
+        orphan.remove();
+      }
+    }
+    _pendingBadgesByHash.delete(textHash);
+  }
+  _sweepOrphanedPendingBadges();
+  _resolveWaitingElements(textHash, result.status, result.details);
 }
 
 // ---------------------------------------------------------------------------
@@ -1335,7 +1363,7 @@ async function _verifyDetections(detections) {
 
 const MIN_IMAGE_DIMENSION = 50;
 const AUTO_SCAN_MAX_IMAGES = 20;
-const AUTO_SCAN_MAX_CONCURRENT = 3;
+const AUTO_SCAN_MAX_CONCURRENT = 6;
 const AUTO_SCAN_BANDWIDTH_LIMIT = 10 * 1024 * 1024; // 10MB per page
 const AUTO_SCAN_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -1354,23 +1382,40 @@ try {
 /**
  * Scan a DOM subtree for images, build an inventory, and trigger
  * automatic C2PA header checks for newly discovered images.
+ *
+ * Detects images from:
+ *   - <img> elements (src and currentSrc)
+ *   - <picture> elements (extracts best <source> or fallback <img>)
+ *   - <source> elements inside <picture> (srcset first entry)
+ *
  * Returns the count of newly discovered images.
  */
 function _scanImages(root) {
-  const imgs = (root || document.body).querySelectorAll('img');
+  const searchRoot = root || document.body;
   let newCount = 0;
+
+  // Collect candidate image URLs from <img> elements
+  const imgs = searchRoot.querySelectorAll('img');
   for (const img of imgs) {
     const src = img.src || img.currentSrc;
-    if (!src) continue;
-    // Skip tiny images (icons, spacers), data URIs, and extension-injected images
-    if (src.startsWith('data:') || src.startsWith('blob:')) continue;
-    if (img.closest('.encypher-badge, .encypher-detail-panel')) continue;
-    if ((img.naturalWidth || img.width) > 0 && (img.naturalWidth || img.width) < MIN_IMAGE_DIMENSION) continue;
-    if ((img.naturalHeight || img.height) > 0 && (img.naturalHeight || img.height) < MIN_IMAGE_DIMENSION) continue;
-    if (_processedImages.has(src)) continue;
+    if (_addImageCandidate(src, img)) newCount++;
+  }
 
-    _processedImages.add(src);
-    newCount++;
+  // Collect from <picture> elements: prefer <source> srcset, fall back to <img>
+  const pictures = searchRoot.querySelectorAll('picture');
+  for (const picture of pictures) {
+    // Use the <img> child for dimension checks (picture itself has no dimensions)
+    const imgChild = picture.querySelector('img');
+    const dimensionRef = imgChild || picture;
+    const sources = picture.querySelectorAll('source');
+    for (const source of sources) {
+      const srcsetUrl = _firstSrcsetUrl(source.srcset);
+      if (srcsetUrl && _addImageCandidate(srcsetUrl, dimensionRef)) {
+        newCount++;
+        break; // one URL per <picture> is enough for verification
+      }
+    }
+    // If no <source> matched, the <img> inside <picture> was already caught above
   }
 
   // Trigger auto-scan after inventory is updated
@@ -1379,6 +1424,33 @@ function _scanImages(root) {
   }
 
   return newCount;
+}
+
+/**
+ * Validate and add an image URL to the processed set.
+ * Returns true if the URL is new and passes all filters.
+ */
+function _addImageCandidate(src, element) {
+  if (!src) return false;
+  if (src.startsWith('data:') || src.startsWith('blob:')) return false;
+  if (element.closest('.encypher-badge, .encypher-detail-panel')) return false;
+  const w = element.naturalWidth || element.width || 0;
+  const h = element.naturalHeight || element.height || 0;
+  if (w > 0 && w < MIN_IMAGE_DIMENSION) return false;
+  if (h > 0 && h < MIN_IMAGE_DIMENSION) return false;
+  if (_processedImages.has(src)) return false;
+  _processedImages.add(src);
+  return true;
+}
+
+/**
+ * Extract the first URL from a srcset attribute value.
+ * srcset format: "url1 1x, url2 2x" or "url1 300w, url2 600w"
+ */
+function _firstSrcsetUrl(srcset) {
+  if (!srcset) return null;
+  const first = srcset.split(',')[0].trim().split(/\s+/)[0];
+  return first || null;
 }
 
 /**
@@ -1577,22 +1649,16 @@ async function _autoScanImages() {
     }
   };
 
-  // Use requestIdleCallback to avoid blocking rendering
+  // Yield to the event loop between batches to avoid blocking rendering,
+  // but use setTimeout(0) instead of requestIdleCallback so batches resume
+  // promptly rather than waiting for a full idle period.
   const runBatch = () => {
     if (queue.length === 0) return;
-    if (typeof requestIdleCallback === 'function') {
-      requestIdleCallback(() => {
-        processNext().then(() => {
-          if (queue.length > 0) runBatch();
-        });
+    setTimeout(() => {
+      processNext().then(() => {
+        if (queue.length > 0) runBatch();
       });
-    } else {
-      setTimeout(() => {
-        processNext().then(() => {
-          if (queue.length > 0) runBatch();
-        });
-      }, 100);
-    }
+    }, 0);
   };
 
   runBatch();
@@ -1741,6 +1807,198 @@ async function _verifyMediaAndBadge(mediaElement, srcUrl, mediaType) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Document scanning and verification (PDF, EPUB, DOCX embedded in pages)
+// ---------------------------------------------------------------------------
+
+const _DOCUMENT_EXTENSIONS = new Set(['pdf', 'epub', 'docx', 'odt', 'oxps']);
+
+/**
+ * Extract a URL's file extension (lowercase, without query/hash).
+ * Uses URL pathname to avoid matching dots in the hostname.
+ */
+function _urlExtension(url) {
+  try {
+    const pathname = new URL(url, window.location.href).pathname;
+    const lastSegment = pathname.split('/').pop() || '';
+    const dotIndex = lastSegment.lastIndexOf('.');
+    return dotIndex > 0 ? lastSegment.slice(dotIndex + 1).toLowerCase() : '';
+  } catch { return ''; }
+}
+
+/**
+ * Scan a DOM subtree for embedded documents (PDF viewers, embed/object elements).
+ *
+ * Detects documents from:
+ *   - <embed> elements with document type or src
+ *   - <object> elements with document data attribute
+ *   - <iframe> elements loading PDFs (src ending in .pdf or with PDF MIME)
+ *
+ * Returns the count of newly discovered document embeds.
+ */
+function _scanDocuments(root) {
+  const searchRoot = root || document.body;
+  let newCount = 0;
+
+  // <embed> elements (common for inline PDFs)
+  const embeds = searchRoot.querySelectorAll('embed');
+  for (const embed of embeds) {
+    const src = embed.src || embed.getAttribute('src') || '';
+    if (_isDocumentUrl(src, embed.type)) {
+      if (_addDocumentCandidate(src, embed)) newCount++;
+    }
+  }
+
+  // <object> elements with data attribute
+  const objects = searchRoot.querySelectorAll('object');
+  for (const obj of objects) {
+    const data = obj.data || obj.getAttribute('data') || '';
+    if (_isDocumentUrl(data, obj.type)) {
+      if (_addDocumentCandidate(data, obj)) newCount++;
+    }
+  }
+
+  // <iframe> elements loading PDFs
+  const iframes = searchRoot.querySelectorAll('iframe');
+  for (const iframe of iframes) {
+    const src = iframe.src || '';
+    if (_isDocumentUrl(src, '')) {
+      if (_addDocumentCandidate(src, iframe)) newCount++;
+    }
+  }
+
+  return newCount;
+}
+
+/**
+ * Check if a URL points to a known document format.
+ */
+function _isDocumentUrl(url, mimeType) {
+  if (!url || url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('about:')) return false;
+  const ext = _urlExtension(url);
+  if (_DOCUMENT_EXTENSIONS.has(ext)) return true;
+  const mime = String(mimeType || '').toLowerCase();
+  if (mime.includes('pdf') || mime.includes('epub') || mime.includes('document')) return true;
+  return false;
+}
+
+/**
+ * Validate and add a document URL to the processed set.
+ */
+function _addDocumentCandidate(src, element) {
+  if (!src) return false;
+  if (element.closest('.encypher-badge, .encypher-detail-panel')) return false;
+  if (_processedDocuments.has(src)) return false;
+  _processedDocuments.add(src);
+  return true;
+}
+
+/**
+ * Inject a floating verification badge near a document embed element.
+ * Similar to image/media badges but adapted for embed/object/iframe containers.
+ */
+function injectDocumentBadge(docElement, status, details) {
+  const src = docElement.src || docElement.data || docElement.getAttribute('src') || docElement.getAttribute('data') || '';
+  if (!src) return;
+
+  // Remove existing badge
+  const existingWrapper = docElement.closest('.encypher-document-badge-wrapper');
+  if (existingWrapper) {
+    const existing = existingWrapper.querySelector('.encypher-badge');
+    if (existing) {
+      if (status === 'pending' && !existing.classList.contains('encypher-badge--pending')) return;
+      existing.remove();
+    }
+  }
+
+  const badge = document.createElement('div');
+  badge.className = `encypher-badge encypher-badge--${status} encypher-badge--media`;
+  badge.setAttribute('role', 'button');
+  badge.setAttribute('aria-label', `Encypher document verification: ${status}`);
+  badge.setAttribute('tabindex', '0');
+  badge.dataset.encypherMediaSrc = src;
+
+  const statusOverlay = {
+    verified: '',
+    pending: '<span class="encypher-badge__status">&#x22EF;</span>',
+    invalid: '<span class="encypher-badge__status">&#x2717;</span>',
+    revoked: '<span class="encypher-badge__status">&#x2298;</span>',
+    error: '<span class="encypher-badge__status">!</span>'
+  };
+
+  badge.innerHTML = `
+    <span class="encypher-badge__icon">${ENCYPHER_LOGO_SVG}</span>
+    ${statusOverlay[status] || ''}
+  `;
+
+  const fullDetails = { ...details, _status: status, mediaType: 'document' };
+
+  badge.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    _showDetailPanel(badge, fullDetails);
+  });
+  badge.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      _showDetailPanel(badge, fullDetails);
+    }
+  });
+
+  let wrapper = docElement.closest('.encypher-document-badge-wrapper');
+  if (!wrapper) {
+    wrapper = document.createElement('span');
+    wrapper.className = 'encypher-document-badge-wrapper';
+    wrapper.style.display = 'block';
+    wrapper.style.position = 'relative';
+    docElement.parentNode.insertBefore(wrapper, docElement);
+    wrapper.appendChild(docElement);
+  }
+
+  wrapper.appendChild(badge);
+
+  _documentVerificationState.set(src, {
+    element: docElement,
+    detectionId: details?.detectionId || null,
+    status,
+    details: fullDetails,
+  });
+}
+
+/**
+ * Verify a document embed by URL via the service worker and inject a badge.
+ */
+async function _verifyDocumentAndBadge(docElement, srcUrl) {
+  const detectionId = `doc-${++_detectionSequence}`;
+
+  injectDocumentBadge(docElement, 'pending', { detectionId });
+
+  try {
+    const result = await chrome.runtime.sendMessage({
+      type: 'VERIFY_MEDIA',
+      mediaType: 'document',
+      url: srcUrl,
+      detectionId,
+      pageUrl: window.location.href,
+    });
+
+    const status = result?.success ? 'verified' : (result?.error ? 'error' : 'invalid');
+    const details = {
+      detectionId,
+      valid: result?.success || false,
+      signer: result?.data?.signer || null,
+      date: result?.data?.verified_at || null,
+      c2pa_manifest_valid: result?.data?.c2pa_manifest_valid || false,
+      manifest_data: result?.data?.manifest_data || null,
+      error: result?.error || null,
+    };
+
+    injectDocumentBadge(docElement, status, details);
+  } catch (error) {
+    injectDocumentBadge(docElement, 'error', { detectionId, error: error?.message || 'Verification failed' });
+  }
+}
+
 /**
  * Scan the page (or a subtree) for C2PA embeddings and verify them.
  * Uses local browser cache to avoid re-hitting the API for already-verified content.
@@ -1801,10 +2059,13 @@ async function scanPage(root = document.body) {
     });
   }
 
-  if (uncached.length > 0) {
-    await _verifyDetections(uncached);
-  } else if (totalFound === 0 && root === document.body && _verificationCache.size === 0) {
-    // Only send NO_EMBEDDINGS on initial full-page scan with zero results
+  // Run text verification and media scanning concurrently.
+  // Text API calls should not block image/audio/video/document inventory.
+  const textVerifyPromise = uncached.length > 0
+    ? _verifyDetections(uncached)
+    : Promise.resolve();
+
+  if (totalFound === 0 && uncached.length === 0 && root === document.body && _verificationCache.size === 0) {
     _debugLog('DEBUG', 'detector', 'No embeddings found on page');
     _safeSendMessage({
       type: 'NO_EMBEDDINGS',
@@ -1812,11 +2073,11 @@ async function scanPage(root = document.body) {
     });
   }
 
-  // Scan images (inventory + auto-scan for C2PA headers)
+  // Scan images (inventory + auto-scan for C2PA headers) -- runs immediately,
+  // does not wait for text verification to complete.
   const newImages = _scanImages(root);
   if (newImages > 0) {
     _debugLog('INFO', 'detector', `Image scan: ${newImages} new images inventoried (${_processedImages.size} total)`);
-    // Trigger auto-scan after inventory (non-blocking)
     _autoScanImages();
   }
 
@@ -1825,6 +2086,16 @@ async function scanPage(root = document.body) {
   if (newAudioVideo > 0) {
     _debugLog('INFO', 'detector', `Audio/video scan: ${newAudioVideo} new elements inventoried (${_processedAudioVideo.size} total)`);
   }
+
+  // Scan embedded documents (PDF, EPUB, DOCX in embed/object/iframe)
+  const newDocs = _scanDocuments(root);
+  if (newDocs > 0) {
+    _debugLog('INFO', 'detector', `Document scan: ${newDocs} new embeds inventoried (${_processedDocuments.size} total)`);
+  }
+
+  // Wait for text verification to finish before returning (callers like RESCAN
+  // expect scanPage to resolve after all verifications complete).
+  await textVerifyPromise;
 
   return totalFound;
 }
@@ -1869,6 +2140,7 @@ function _getOnlineEditorRoots() {
 function observeDOM() {
   let pendingNodes = [];
   let debounceTimer = null;
+  let maxWaitTimer = null;
   let pendingInputRoots = [];
   let inputDebounceTimer = null;
 
@@ -1891,19 +2163,29 @@ function observeDOM() {
     }
 
     if (pendingNodes.length > 0) {
-      // Debounce: wait for mutations to settle (handles rapid infinite-scroll loads)
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
+      // Flush pending nodes and scan their subtrees.
+      const flushNodes = () => {
+        clearTimeout(debounceTimer);
+        clearTimeout(maxWaitTimer);
+        debounceTimer = null;
+        maxWaitTimer = null;
         const nodesToScan = pendingNodes;
         pendingNodes = [];
-
-        // Scan only the newly added subtrees
         for (const node of nodesToScan) {
           if (node.isConnected) {
             scanPage(node);
           }
         }
-      }, 500);
+      };
+
+      // Debounce: wait for mutations to settle (handles rapid infinite-scroll loads)
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(flushNodes, 500);
+
+      // Max-wait cap: flush after 2s even if mutations keep arriving
+      if (!maxWaitTimer) {
+        maxWaitTimer = setTimeout(flushNodes, 2000);
+      }
     }
   });
 
@@ -1938,20 +2220,32 @@ function observeDOM() {
   }, true);
 }
 
-// Initialize after page load without blocking rendering.
-// requestIdleCallback defers scanning until the browser is idle.
-function _initDetector() {
-  const startScan = () => {
-    scanPage();
+// Start the MutationObserver as soon as document.body exists so dynamic
+// content injected during page load (ads, lazy loaders, social embeds) is
+// caught immediately rather than waiting for DOMContentLoaded + idle.
+function _ensureEarlyObserver() {
+  if (document.body) {
     observeDOM();
-  };
-  // Use requestIdleCallback if available (defers to idle time, doesn't block paint)
-  if (typeof requestIdleCallback === 'function') {
-    requestIdleCallback(startScan, { timeout: 2000 });
-  } else {
-    setTimeout(startScan, 100);
+    return;
   }
+  // body not yet created (document_start injection) -- watch for it
+  const watcher = new MutationObserver(() => {
+    if (document.body) {
+      watcher.disconnect();
+      observeDOM();
+    }
+  });
+  watcher.observe(document.documentElement, { childList: true });
 }
+
+// Full-page scan runs once at DOMContentLoaded with no idle delay.
+// All HTML is parsed at this point so text nodes and image elements are
+// complete. Async verification (fetch) does not block rendering.
+function _initDetector() {
+  scanPage();
+}
+
+_ensureEarlyObserver();
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', _initDetector);
@@ -1969,6 +2263,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     _imageVerificationState.clear();
     _processedAudioVideo.clear();
     _audioVideoVerificationState.clear();
+    _processedDocuments.clear();
+    _documentVerificationState.clear();
     _autoScanBytesUsed = 0;
     _autoScanCheckedCount = 0;
     _autoScanPageCooldown.clear();
@@ -1985,6 +2281,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const media = wrapper.querySelector('audio, video');
       if (media && wrapper.parentNode) {
         wrapper.parentNode.insertBefore(media, wrapper);
+        wrapper.remove();
+      }
+    });
+    document.querySelectorAll('.encypher-document-badge-wrapper').forEach(wrapper => {
+      const doc = wrapper.querySelector('embed, object, iframe');
+      if (doc && wrapper.parentNode) {
+        wrapper.parentNode.insertBefore(doc, wrapper);
         wrapper.remove();
       }
     });
@@ -2050,9 +2353,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ received: true });
   }
 
+  // Document verification triggered by context menu or popup
+  if (message.type === 'VERIFY_DOCUMENT_CONTEXT') {
+    const srcUrl = message.srcUrl;
+    if (srcUrl) {
+      const el = document.querySelector(
+        `embed[src="${CSS.escape(srcUrl)}"], object[data="${CSS.escape(srcUrl)}"], iframe[src="${CSS.escape(srcUrl)}"]`
+      );
+      if (el) {
+        _verifyDocumentAndBadge(el, srcUrl);
+      }
+    }
+    sendResponse({ received: true });
+  }
+
   // Focus on a verified media element (from popup "Locate on page")
   if (message.type === 'FOCUS_MEDIA') {
-    const entry = _imageVerificationState.get(message.mediaUrl) || _audioVideoVerificationState.get(message.mediaUrl);
+    const entry = _imageVerificationState.get(message.mediaUrl) || _audioVideoVerificationState.get(message.mediaUrl) || _documentVerificationState.get(message.mediaUrl);
     if (entry?.element?.isConnected) {
       entry.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
       const origOutline = entry.element.style.outline;
@@ -2105,6 +2422,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
     }
     sendResponse({ media, total: _processedAudioVideo.size });
+  }
+
+  // Return document inventory for popup
+  if (message.type === 'GET_PAGE_DOCUMENTS') {
+    const documents = [];
+    for (const [src, state] of _documentVerificationState.entries()) {
+      documents.push({
+        src,
+        detectionId: state.detectionId,
+        status: state.status,
+        details: state.details,
+      });
+    }
+    for (const src of _processedDocuments) {
+      if (!_documentVerificationState.has(src)) {
+        documents.push({ src, detectionId: null, status: null, details: null });
+      }
+    }
+    sendResponse({ documents, total: _processedDocuments.size });
   }
 });
 

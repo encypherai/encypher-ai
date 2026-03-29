@@ -26,7 +26,7 @@ body {
 /* Header */
 .popup__header {
   padding: 14px 16px 0;
-  background: linear-gradient(135deg, #1B2F50 0%, #243d66 100%);
+  background: linear-gradient(135deg, #1B2F50 0%, #2A87C4 100%);
 }
 
 .popup__logo-icon {
@@ -78,21 +78,21 @@ body {
   padding: 24px 16px;
 }
 
-/* Spinner */
-.spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid #B7D5ED;
-  border-top-color: #2A87C4;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+/* Branded loader - spinning outer ring with static inner mark */
+.encypher-loader {
+  width: 40px;
+  height: 40px;
   margin-bottom: 12px;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.encypher-loader__ring {
+  animation: encypher-loader-spin 2.5s linear infinite;
+  transform-origin: -0.7657px 3.3383px;
+}
+
+@keyframes encypher-loader-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Icons */
@@ -108,8 +108,8 @@ body {
 }
 
 .popup__icon--gray {
-  background: #F3F4F6;
-  color: #9CA3AF;
+  background: #f1f5f9;
+  color: #a7afbc;
 }
 
 .popup__icon--green {
@@ -126,20 +126,20 @@ body {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 4px;
-  color: #1F2937;
+  color: #1b2f50;
 }
 
 .popup__state p {
   font-size: 13px;
-  color: #6B7280;
+  color: #a7afbc;
 }
 
 .popup__auth-setup {
   width: 100%;
   margin-top: 14px;
   padding: 10px;
-  border: 1px solid #DBEAFE;
-  background: #F8FBFF;
+  border: 1px solid #b7d5ed;
+  background: #f1f5f9;
   border-radius: 8px;
   text-align: left;
 }
@@ -148,7 +148,7 @@ body {
   margin: 0 0 8px;
   font-size: 12px;
   font-weight: 700;
-  color: #1E3A8A;
+  color: #1b2f50;
 }
 
 .popup__auth-actions {
@@ -166,9 +166,9 @@ body {
 }
 
 .popup__oauth-btn {
-  border: 1px solid #BFDBFE;
+  border: 1px solid #b7d5ed;
   background: #FFFFFF;
-  color: #1D4ED8;
+  color: #2A87C4;
   border-radius: 6px;
   min-height: 32px;
   font-size: 11px;
@@ -178,8 +178,8 @@ body {
 }
 
 .popup__oauth-btn:hover {
-  border-color: #60A5FA;
-  background: #EFF6FF;
+  border-color: #2A87C4;
+  background: rgba(183, 213, 237, 0.15);
 }
 
 .popup__auth-guidance {
@@ -207,14 +207,14 @@ body {
   display: block;
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
+  color: #1b2f50;
   margin-bottom: 6px;
 }
 
 .popup__onboarding-input {
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid #D1D5DB;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 13px;
   margin-bottom: 10px;
@@ -231,7 +231,7 @@ body {
   margin-top: 8px;
   font-size: 12px;
   line-height: 1.4;
-  color: #6B7280;
+  color: #a7afbc;
 }
 
 .popup__onboarding-status--success {
@@ -243,19 +243,19 @@ body {
 }
 
 .popup__onboarding-status--neutral {
-  color: #374151;
+  color: #1b2f50;
 }
 
 .popup__or-separator {
   margin-top: 8px;
   font-size: 12px;
-  color: #9CA3AF;
+  color: #a7afbc;
 }
 
 .popup__sign-identity {
   margin: 8px 0 10px;
   font-size: 12px;
-  color: #334155;
+  color: #475569;
   text-align: left;
   width: 100%;
 }
@@ -273,7 +273,7 @@ body {
   padding: 12px 6px;
   border-radius: 8px;
   text-align: center;
-  background: #F8F9FA;
+  background: #f1f5f9;
 }
 
 .popup__stat-value {
@@ -298,13 +298,13 @@ body {
 }
 
 .popup__stat--revoked .popup__stat-value {
-  color: #6B7280;
+  color: #a7afbc;
 }
 
 .popup__stat-label {
   font-size: 10px;
   font-weight: 500;
-  color: #9CA3AF;
+  color: #a7afbc;
   margin-top: 2px;
 }
 
@@ -324,7 +324,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 10px 0;
-  border-bottom: 1px solid #F3F4F6;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .popup__detail-item:last-child {
@@ -353,7 +353,7 @@ body {
 
 .popup__detail-icon--revoked {
   background: rgba(107, 114, 128, 0.12);
-  color: #6B7280;
+  color: #a7afbc;
 }
 
 .popup__detail-info {
@@ -364,7 +364,7 @@ body {
 .popup__detail-signer {
   font-weight: 600;
   font-size: 13px;
-  color: #1F2937;
+  color: #1b2f50;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -372,20 +372,20 @@ body {
 
 .popup__detail-date {
   font-size: 12px;
-  color: #6B7280;
+  color: #a7afbc;
 }
 
 .popup__detail-meta {
   margin-top: 2px;
   font-size: 11px;
-  color: #4B5563;
+  color: #475569;
   font-weight: 500;
 }
 
 .popup__detail-link {
   display: inline-block;
   margin-top: 4px;
-  color: #2563EB;
+  color: #2A87C4;
   font-size: 12px;
   text-decoration: none;
   font-weight: 500;
@@ -398,9 +398,9 @@ body {
 .popup__verify-cta {
   margin-top: 12px;
   padding: 10px;
-  border: 1px solid #DBEAFE;
+  border: 1px solid #b7d5ed;
   border-radius: 8px;
-  background: #EFF6FF;
+  background: rgba(183, 213, 237, 0.15);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -409,14 +409,14 @@ body {
 
 .popup__verify-cta-text {
   font-size: 12px;
-  color: #1E3A8A;
+  color: #1b2f50;
   font-weight: 500;
 }
 
 /* Footer */
 .popup__footer {
   padding: 10px 16px 12px;
-  border-top: 1px solid #F3F4F6;
+  border-top: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -445,12 +445,12 @@ body {
 }
 
 .popup__btn--secondary {
-  background: #F3F4F6;
-  color: #374151;
+  background: #f1f5f9;
+  color: #1b2f50;
 }
 
 .popup__btn--secondary:hover {
-  background: #E5E7EB;
+  background: #e2e8f0;
 }
 
 .popup__btn--icon {
@@ -460,7 +460,7 @@ body {
 }
 
 .popup__btn--icon:hover {
-  background: #E5E7EB;
+  background: #e2e8f0;
 }
 
 .popup__btn--full {
@@ -531,7 +531,7 @@ body {
   display: block;
   font-size: 12px;
   font-weight: 500;
-  color: #374151;
+  color: #1b2f50;
   margin-bottom: 4px;
 }
 
@@ -539,7 +539,7 @@ body {
 .popup__sign-form input {
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid #D1D5DB;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 13px;
   font-family: inherit;
@@ -571,11 +571,11 @@ body {
 #signed-output {
   width: 100%;
   padding: 8px;
-  border: 1px solid #D1D5DB;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 11px;
   font-family: monospace;
-  background: #F9FAFB;
+  background: #f1f5f9;
   resize: none;
   margin-top: 8px;
 }
@@ -586,17 +586,17 @@ body {
 }
 
 .popup__details::-webkit-scrollbar-track {
-  background: #F3F4F6;
+  background: #f1f5f9;
   border-radius: 3px;
 }
 
 .popup__details::-webkit-scrollbar-thumb {
-  background: #D1D5DB;
+  background: #e2e8f0;
   border-radius: 3px;
 }
 
 .popup__details::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF;
+  background: #a7afbc;
 }
 
 /* Tier Badge */
@@ -605,7 +605,7 @@ body {
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: #F3F4F6;
+  background: #f1f5f9;
   border-radius: 16px;
   font-size: 12px;
   font-weight: 500;
@@ -614,12 +614,12 @@ body {
 }
 
 .popup__tier-badge--free {
-  background: #F3F4F6;
+  background: #f1f5f9;
   color: #A7AFBC;
 }
 
 .popup__tier-badge--enterprise {
-  background: #E8F4FD;
+  background: rgba(183, 213, 237, 0.3);
   color: #2A87C4;
 }
 
@@ -630,7 +630,7 @@ body {
 /* Advanced Options */
 .popup__advanced-options {
   margin-bottom: 12px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -641,17 +641,17 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: #F9FAFB;
+  background: #f1f5f9;
   border: none;
   font-size: 12px;
   font-weight: 500;
-  color: #6B7280;
+  color: #a7afbc;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .popup__advanced-toggle:hover {
-  background: #F3F4F6;
+  background: #f1f5f9;
 }
 
 .popup__advanced-arrow {
@@ -666,7 +666,7 @@ body {
 .popup__advanced-panel {
   padding: 12px;
   background: white;
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid #e2e8f0;
 }
 
 .popup__advanced-panel[hidden] {
@@ -686,7 +686,7 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #374151;
+  color: #1b2f50;
   cursor: pointer;
 }
 
@@ -700,7 +700,7 @@ body {
 .popup__advanced-panel select {
   width: 100%;
   padding: 6px 8px;
-  border: 1px solid #D1D5DB;
+  border: 1px solid #e2e8f0;
   border-radius: 4px;
   font-size: 12px;
   margin-top: 4px;
@@ -716,7 +716,7 @@ body {
 .popup__enterprise-feature {
   margin-top: 12px;
   padding: 10px;
-  background: linear-gradient(135deg, #E8F4FD 0%, #B7D5ED 100%);
+  background: linear-gradient(135deg, rgba(183, 213, 237, 0.3) 0%, #B7D5ED 100%);
   border-radius: 6px;
   border: 1px solid rgba(42, 135, 196, 0.2);
 }
@@ -767,10 +767,10 @@ body {
   flex-direction: column;
   gap: 6px;
   padding: 8px 12px;
-  background: #F9FAFB;
+  background: #f1f5f9;
   border-radius: 6px;
   margin-bottom: 12px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e2e8f0;
 }
 
 .popup__usage-info {
@@ -782,7 +782,7 @@ body {
 .popup__usage-bar {
   width: 100%;
   height: 6px;
-  background: #E5E7EB;
+  background: #e2e8f0;
   border-radius: 3px;
   overflow: hidden;
 }
@@ -870,7 +870,7 @@ body {
 
 .debug-panel__btn {
   padding: 4px 8px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e2e8f0;
   border-radius: 4px;
   background: white;
   font-size: 12px;
@@ -879,7 +879,7 @@ body {
 }
 
 .debug-panel__btn:hover {
-  background: #F3F4F6;
+  background: #f1f5f9;
 }
 
 .debug-panel__filters {
@@ -890,34 +890,34 @@ body {
 
 .debug-panel__filter {
   padding: 3px 8px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
   background: white;
   font-size: 10px;
   font-weight: 500;
   cursor: pointer;
-  color: #6B7280;
+  color: #a7afbc;
   transition: all 0.15s;
 }
 
 .debug-panel__filter:hover {
-  background: #F3F4F6;
+  background: #f1f5f9;
 }
 
 .debug-panel__filter--active {
-  background: #1F2937;
+  background: #1b2f50;
   color: white;
-  border-color: #1F2937;
+  border-color: #1b2f50;
 }
 
 .debug-panel__logs {
   max-height: 300px;
   overflow-y: auto;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   background: #0F172A;
   padding: 6px;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: 'Roboto Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
   font-size: 10px;
   line-height: 1.5;
 }
@@ -972,7 +972,7 @@ body {
   font-size: 9px;
 }
 
-.debug-log__level--API { background: #1E3A5F; color: #60A5FA; }
+.debug-log__level--API { background: rgba(42, 135, 196, 0.2); color: #b7d5ed; }
 .debug-log__level--MSG { background: #3B2F63; color: #A78BFA; }
 .debug-log__level--ERROR { background: #5C1D1D; color: #FCA5A5; }
 .debug-log__level--WARN { background: #5C4813; color: #FCD34D; }
@@ -1018,7 +1018,7 @@ body {
 .debug-panel__count {
   margin-top: 6px;
   font-size: 10px;
-  color: #9CA3AF;
+  color: #a7afbc;
   text-align: right;
 }
 
@@ -1029,13 +1029,13 @@ body {
 .popup__media-section {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid #e2e8f0;
 }
 
 .popup__media-title {
   font-size: 12px;
   font-weight: 600;
-  color: #6B7280;
+  color: #a7afbc;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
@@ -1052,9 +1052,9 @@ body {
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
-  background: #F9FAFB;
+  background: #f1f5f9;
   border-radius: 6px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e2e8f0;
 }
 
 .popup__media-thumb {
@@ -1072,17 +1072,17 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 4px;
-  background: #E5E7EB;
+  background: #e2e8f0;
   color: #1B2F50;
   font-size: 16px;
   flex-shrink: 0;
-  background: #E5E7EB;
+  background: #e2e8f0;
 }
 
 .popup__media-name {
   flex: 1;
   font-size: 12px;
-  color: #374151;
+  color: #1b2f50;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1102,11 +1102,11 @@ body {
 }
 
 .popup__media-verify-btn:hover {
-  background: #1B6FA0;
+  background: #1b2f50;
 }
 
 .popup__media-verify-btn:disabled {
-  background: #9CA3AF;
+  background: #a7afbc;
   cursor: default;
 }
 
@@ -1141,8 +1141,8 @@ body {
   justify-content: center;
   flex-shrink: 0;
   font-size: 16px;
-  color: #6B7280;
-  background: #F3F4F6;
+  color: #a7afbc;
+  background: #f1f5f9;
   border-radius: 4px;
 }
 
@@ -1152,7 +1152,7 @@ body {
 
 @media (prefers-color-scheme: dark) {
   body {
-    color: #F9FAFB;
+    color: #f1f5f9;
     background: #1e293b;
   }
 
@@ -1164,7 +1164,7 @@ body {
   }
 
   .popup__state h2 {
-    color: #F9FAFB;
+    color: #f1f5f9;
   }
 
   .popup__state p {
@@ -1193,7 +1193,7 @@ body {
   }
 
   .popup__stat-value {
-    color: #F9FAFB;
+    color: #f1f5f9;
   }
 
   .popup__stat--verified .popup__stat-value {
@@ -1225,7 +1225,7 @@ body {
   }
 
   .popup__detail-signer {
-    color: #F9FAFB;
+    color: #f1f5f9;
   }
 
   .popup__detail-date {
@@ -1258,7 +1258,7 @@ body {
 
   .popup__btn--secondary {
     background: #334155;
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   .popup__btn--secondary:hover {
@@ -1297,7 +1297,7 @@ body {
   }
 
   .popup__media-name {
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   .popup__media-type-icon {
@@ -1322,14 +1322,14 @@ body {
 
   /* Sign form */
   .popup__sign-form label {
-    color: #E5E7EB;
+    color: #e2e8f0;
   }
 
   .popup__sign-form textarea,
   .popup__sign-form input {
     background: #334155;
     border-color: #475569;
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   .popup__sign-form textarea:focus,
@@ -1373,13 +1373,13 @@ body {
   }
 
   .popup__advanced-panel label {
-    color: #E5E7EB;
+    color: #e2e8f0;
   }
 
   .popup__advanced-panel select {
     background: #334155;
     border-color: #475569;
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   .popup__advanced-panel select:focus {
@@ -1393,7 +1393,7 @@ body {
   }
 
   .popup__enterprise-options label {
-    color: #E5E7EB;
+    color: #e2e8f0;
   }
 
   .popup__enterprise-link {
@@ -1418,7 +1418,7 @@ body {
   #signed-output {
     background: #334155;
     border-color: #475569;
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   /* Auth setup */
@@ -1446,14 +1446,26 @@ body {
     color: #94a3b8;
   }
 
+  .popup__onboarding-status--neutral {
+    color: #f1f5f9;
+  }
+
+  .popup__auth-guidance {
+    color: #94a3b8;
+  }
+
+  .popup__identity-hint {
+    color: #94a3b8;
+  }
+
   .popup__onboarding-label {
-    color: #E5E7EB;
+    color: #e2e8f0;
   }
 
   .popup__onboarding-input {
     background: #334155;
     border-color: #475569;
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   .popup__onboarding-input:focus {

@@ -508,7 +508,7 @@ describe('service worker: C2PA header detection', () => {
 describe('detector: auto-scan pipeline', () => {
   it('defines auto-scan configuration constants', () => {
     assert.match(detectorSource, /AUTO_SCAN_MAX_IMAGES\s*=\s*20/);
-    assert.match(detectorSource, /AUTO_SCAN_MAX_CONCURRENT\s*=\s*3/);
+    assert.match(detectorSource, /AUTO_SCAN_MAX_CONCURRENT\s*=\s*6/);
     assert.match(detectorSource, /AUTO_SCAN_BANDWIDTH_LIMIT/);
     assert.match(detectorSource, /AUTO_SCAN_COOLDOWN_MS/);
   });

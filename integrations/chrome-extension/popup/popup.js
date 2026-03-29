@@ -193,9 +193,22 @@ function markerTypeLabel(markerType) {
   if (marker === 'c2pa_image') return 'C2PA Image';
   if (marker === 'c2pa_audio') return 'C2PA Audio';
   if (marker === 'c2pa_video') return 'C2PA Video';
+  if (marker === 'c2pa_document') return 'C2PA Document';
   if (marker === 'encypher') return 'Encypher';
   if (marker === 'micro') return 'Micro';
   return 'Unknown';
+}
+
+function _mediaTypeLabel(detail) {
+  const ct = String(detail?.contentType || '').toLowerCase();
+  if (ct === 'audio') return 'Audio';
+  if (ct === 'video') return 'Video';
+  if (ct === 'document') return 'Document';
+  const mt = String(detail?.markerType || '').toLowerCase();
+  if (mt === 'c2pa_audio') return 'Audio';
+  if (mt === 'c2pa_video') return 'Video';
+  if (mt === 'c2pa_document') return 'Document';
+  return 'Image';
 }
 
 function buildVerificationLink(documentId) {
@@ -276,6 +289,20 @@ async function verifyMediaFromPopup(srcUrl, mediaType) {
   }
 }
 
+async function verifyDocumentFromPopup(srcUrl) {
+  if (!srcUrl || !currentTabId) return;
+
+  try {
+    await chrome.tabs.sendMessage(currentTabId, {
+      type: 'VERIFY_DOCUMENT_CONTEXT',
+      srcUrl,
+    });
+    setTimeout(loadTabState, 3000);
+  } catch (error) {
+    console.error('Error verifying document from popup:', error);
+  }
+}
+
 /**
  * Render detail items
  */
@@ -292,7 +319,7 @@ function renderDetails(details) {
 
     const iconClass = detail.revoked ? 'revoked' : (detail.valid ? 'verified' : 'invalid');
     const statusLabel = detail.revoked ? 'Revoked' : (detail.valid ? 'Verified' : 'Invalid');
-    const isMedia = detail.contentType === 'image' || detail.contentType === 'audio' || detail.contentType === 'video' || detail.markerType === 'c2pa_image' || detail.markerType === 'c2pa_audio' || detail.markerType === 'c2pa_video';
+    const isMedia = detail.contentType === 'image' || detail.contentType === 'audio' || detail.contentType === 'video' || detail.contentType === 'document' || detail.markerType === 'c2pa_image' || detail.markerType === 'c2pa_audio' || detail.markerType === 'c2pa_video' || detail.markerType === 'c2pa_document';
     const markerLabel = markerTypeLabel(detail.markerType);
     const detailDate = formatDetailDate(detail.date);
     const verificationUrl = safeExternalUrl(detail.verificationUrl) || safeExternalUrl(buildVerificationLink(detail.documentId));
@@ -315,7 +342,7 @@ function renderDetails(details) {
       <div class="popup__detail-info">
         <div class="popup__detail-signer">${detail.signer || 'Unknown Signer'}</div>
         <div class="popup__detail-date">${detailDate}</div>
-        <div class="popup__detail-meta">${isMedia ? 'Image · ' : ''}${statusLabel} · ${markerLabel}</div>
+        <div class="popup__detail-meta">${isMedia ? _mediaTypeLabel(detail) + ' · ' : ''}${statusLabel} · ${markerLabel}</div>
         ${locateButtonHtml}
         ${verificationLinkHtml}
       </div>
@@ -344,16 +371,17 @@ function renderDetails(details) {
 }
 
 /**
- * Render the media (images, audio, video) section in the popup verify tab
+ * Render the media (images, audio, video, documents) section in the popup verify tab
  */
-function renderMediaSection(imageData, audioVideoData) {
+function renderMediaSection(imageData, audioVideoData, documentData) {
   const mediaSectionEl = document.getElementById('media-section');
   const mediaListEl = document.getElementById('media-list');
   if (!mediaSectionEl || !mediaListEl) return;
 
   const imageTotal = imageData?.total || 0;
   const avTotal = audioVideoData?.total || 0;
-  const totalMedia = imageTotal + avTotal;
+  const docTotal = documentData?.total || 0;
+  const totalMedia = imageTotal + avTotal + docTotal;
 
   if (totalMedia === 0) {
     mediaSectionEl.hidden = true;
@@ -465,6 +493,62 @@ function renderMediaSection(imageData, audioVideoData) {
 
     mediaListEl.appendChild(item);
   }
+
+  // Show document entries
+  const docItems = (documentData?.documents || []).slice(0, 10);
+  for (const doc of docItems) {
+    const item = document.createElement('div');
+    item.className = 'popup__media-item';
+
+    const statusClass = doc.status === 'verified' ? 'verified'
+      : doc.status === 'invalid' ? 'invalid'
+      : doc.status === 'error' ? 'invalid'
+      : 'pending';
+
+    const statusLabel = doc.status
+      ? (doc.status === 'verified' ? 'Verified' : (doc.status === 'error' ? 'Error' : 'Invalid'))
+      : 'Not verified';
+
+    const filename = doc.src.split('/').pop().split('?')[0].slice(0, 30) || 'document';
+    const typeIcon = '&#x1F4C4;';
+
+    const actionHtml = doc.status
+      ? `<span class="popup__media-status popup__media-status--${statusClass}">${statusLabel}</span>`
+      : `<button class="popup__media-verify-btn" type="button" data-action="verify-document" data-src="${doc.src}">Verify</button>`;
+
+    item.innerHTML = `
+      <span class="popup__media-type-icon">${typeIcon}</span>
+      <span class="popup__media-name" title="${doc.src}">${filename}</span>
+      ${actionHtml}
+    `;
+
+    const verifyBtn = item.querySelector('[data-action="verify-document"]');
+    if (verifyBtn) {
+      verifyBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        verifyDocumentFromPopup(doc.src);
+        verifyBtn.textContent = '...';
+        verifyBtn.disabled = true;
+      });
+    }
+
+    if (doc.status && doc.status !== 'pending') {
+      const locateBtn = document.createElement('button');
+      locateBtn.className = 'popup__media-verify-btn';
+      locateBtn.type = 'button';
+      locateBtn.dataset.action = 'locate-media';
+      locateBtn.textContent = 'Locate';
+      locateBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        locateMediaOnPage(doc.src);
+      });
+      item.appendChild(locateBtn);
+    }
+
+    mediaListEl.appendChild(item);
+  }
 }
 
 /**
@@ -507,10 +591,17 @@ async function loadTabState() {
       audioVideoData = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_MEDIA' });
     } catch { /* content script may not be ready */ }
 
+    // Fetch document inventory from content script
+    let documentData = null;
+    try {
+      documentData = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_DOCUMENTS' });
+    } catch { /* content script may not be ready */ }
+
     const hasImages = imageData && imageData.total > 0;
     const hasAudioVideo = audioVideoData && audioVideoData.total > 0;
+    const hasDocuments = documentData && documentData.total > 0;
 
-    if (!state || (state.count === 0 && !hasDetails && !hasImages && !hasAudioVideo)) {
+    if (!state || (state.count === 0 && !hasDetails && !hasImages && !hasAudioVideo && !hasDocuments)) {
       showState('empty');
     } else {
       showState('found');
@@ -521,8 +612,8 @@ async function loadTabState() {
         renderDetails(state.details);
       }
 
-      // Render media section
-      renderMediaSection(imageData, audioVideoData);
+      // Render media section (images, audio, video, documents)
+      renderMediaSection(imageData, audioVideoData, documentData);
     }
   } catch (error) {
     console.error('Error loading tab state:', error);

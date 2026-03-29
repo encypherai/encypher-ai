@@ -99,8 +99,8 @@ describe('detector: auto-scan pipeline', () => {
     assert.match(detectorSource, /AUTO_SCAN_MAX_IMAGES\s*=\s*20/);
   });
 
-  it('has concurrency limit (AUTO_SCAN_MAX_CONCURRENT = 3)', () => {
-    assert.match(detectorSource, /AUTO_SCAN_MAX_CONCURRENT\s*=\s*3/);
+  it('has concurrency limit (AUTO_SCAN_MAX_CONCURRENT = 6)', () => {
+    assert.match(detectorSource, /AUTO_SCAN_MAX_CONCURRENT\s*=\s*6/);
   });
 
   it('calls _autoScanImages after image inventory in scanPage', () => {

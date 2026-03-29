@@ -13,7 +13,7 @@ body {
   font-size: 14px;
   line-height: 1.5;
   color: #1B2F50;
-  background: #F9FAFB;
+  background: #f1f5f9;
   min-height: 100vh;
 }
 
@@ -30,7 +30,7 @@ body {
   gap: 16px;
   margin-bottom: 32px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .options__logo {
@@ -70,7 +70,7 @@ body {
 
 .options__description {
   font-size: 13px;
-  color: #6B7280;
+  color: #a7afbc;
   margin-bottom: 16px;
 }
 
@@ -96,7 +96,7 @@ body {
   display: block;
   font-size: 13px;
   font-weight: 500;
-  color: #374151;
+  color: #1b2f50;
   margin-bottom: 6px;
 }
 
@@ -107,10 +107,10 @@ body {
 .options__field select {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #D1D5DB;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 14px;
-  color: #1F2937;
+  color: #1b2f50;
   background: white;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -133,7 +133,7 @@ body {
 
 .options__hint {
   font-size: 12px;
-  color: #6B7280;
+  color: #a7afbc;
   margin-top: 4px;
 }
 
@@ -142,17 +142,17 @@ body {
   align-items: flex-start;
   gap: 10px;
   padding: 10px 14px;
-  background: #F8F9FA;
+  background: #f1f5f9;
   border-radius: 8px;
   border-left: 3px solid #2A87C4;
   font-size: 12px;
-  color: #374151;
+  color: #1b2f50;
   line-height: 1.6;
 }
 
 .options__identity {
   font-size: 12px;
-  color: #334155;
+  color: #475569;
   margin-top: 6px;
 }
 
@@ -167,7 +167,7 @@ body {
 .options__setup-state {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid #e2e8f0;
 }
 
 /* Checkbox fields */
@@ -199,7 +199,7 @@ body {
 .options__field--checkbox label span {
   display: block;
   font-size: 12px;
-  color: #6B7280;
+  color: #a7afbc;
   font-weight: normal;
 }
 
@@ -224,13 +224,13 @@ body {
 }
 
 .options__btn--secondary {
-  background: #F3F4F6;
-  color: #374151;
+  background: #f1f5f9;
+  color: #1b2f50;
   margin-right: 8px;
 }
 
 .options__btn--secondary:hover {
-  background: #E5E7EB;
+  background: #e2e8f0;
 }
 
 .options__btn--danger {
@@ -244,26 +244,26 @@ body {
 
 .options__btn--icon {
   padding: 10px 12px;
-  background: #F3F4F6;
-  color: #6B7280;
+  background: #f1f5f9;
+  color: #a7afbc;
 }
 
 .options__btn--icon:hover {
-  background: #E5E7EB;
+  background: #e2e8f0;
 }
 
 /* Footer */
 .options__footer {
   margin-top: 32px;
   padding-top: 16px;
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid #e2e8f0;
   text-align: center;
   font-size: 12px;
-  color: #9CA3AF;
+  color: #a7afbc;
 }
 
 .options__footer a:not(.options__support-btn) {
-  color: #6B7280;
+  color: #a7afbc;
   text-decoration: none;
 }
 
@@ -299,7 +299,7 @@ body {
 
 @media (prefers-color-scheme: dark) {
   body {
-    color: #F9FAFB;
+    color: #f1f5f9;
     background: #1b2f50;
   }
 
@@ -309,7 +309,7 @@ body {
   }
 
   .options__header h1 {
-    color: #F9FAFB;
+    color: #f1f5f9;
   }
 
   .options__logo {
@@ -336,7 +336,7 @@ body {
 
   /* Fields */
   .options__field label {
-    color: #E5E7EB;
+    color: #e2e8f0;
   }
 
   .options__field input[type="text"],
@@ -346,7 +346,7 @@ body {
   .options__field select {
     background: #334155;
     border-color: #475569;
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   .options__field input:focus,
@@ -369,7 +369,7 @@ body {
 
   /* Checkbox fields */
   .options__field--checkbox label strong {
-    color: #F9FAFB;
+    color: #f1f5f9;
   }
 
   .options__field--checkbox label span {
@@ -380,13 +380,13 @@ body {
   .options__analytics-info {
     background: #334155;
     border-left-color: #2A87C4;
-    color: #E5E7EB;
+    color: #e2e8f0;
   }
 
   /* Buttons */
   .options__btn--secondary {
     background: #334155;
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   .options__btn--secondary:hover {

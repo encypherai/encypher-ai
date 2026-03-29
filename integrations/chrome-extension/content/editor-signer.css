@@ -12,7 +12,7 @@
    color: white;
    border: none;
    border-radius: 6px;
-   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+   font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
    font-size: 13px;
    font-weight: 500;
    cursor: pointer;
@@ -98,7 +98,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1);
   width: 320px;
   max-width: calc(100vw - 32px);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   z-index: 10002;
   overflow: hidden;
   animation: encypher-slide-in 0.2s ease;
@@ -179,7 +179,7 @@
 .encypher-sign-ui__identity {
   font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: #1b2f50;
   margin-bottom: 6px;
 }
 
@@ -187,9 +187,9 @@
   display: inline-block;
   font-size: 11px;
   font-weight: 600;
-  color: #1D4ED8;
-  background: #EFF6FF;
-  border: 1px solid #BFDBFE;
+  color: #2A87C4;
+  background: rgba(183, 213, 237, 0.15);
+  border: 1px solid #b7d5ed;
   border-radius: 4px;
   padding: 2px 8px;
   margin-bottom: 10px;
@@ -198,7 +198,7 @@
 .encypher-sign-ui__trust {
   font-size: 12px;
   line-height: 1.5;
-  color: #6B7280;
+  color: #a7afbc;
   margin-bottom: 14px;
 }
 
@@ -210,19 +210,19 @@
   display: block;
   font-size: 12px;
   font-weight: 500;
-  color: #6B7280;
+  color: #a7afbc;
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .encypher-sign-ui__text {
-  background: #F9FAFB;
-  border: 1px solid #E5E7EB;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   padding: 10px 12px;
   font-size: 13px;
-  color: #374151;
+  color: #1b2f50;
   line-height: 1.5;
   max-height: 100px;
   overflow-y: auto;
@@ -231,21 +231,21 @@
 
 .encypher-sign-ui__meta {
   font-size: 11px;
-  color: #9CA3AF;
+  color: #a7afbc;
   margin-top: 6px;
 }
 
 .encypher-sign-ui__shortcut {
   font-size: 11px;
-  color: #6B7280;
+  color: #a7afbc;
   margin-bottom: 10px;
 }
 
 .encypher-sign-ui__toggle {
   appearance: none;
-  border: 1px solid #D1D5DB;
-  background: #F9FAFB;
-  color: #374151;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  color: #1b2f50;
   border-radius: 8px;
   padding: 8px 10px;
   width: 100%;
@@ -257,15 +257,15 @@
 }
 
 .encypher-sign-ui__toggle:hover {
-  background: #F3F4F6;
+  background: #f1f5f9;
 }
 
 .encypher-sign-ui__advanced {
   margin-bottom: 12px;
   padding: 12px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  background: #FAFAFA;
+  background: #f1f5f9;
 }
 
 .encypher-sign-ui__options {
@@ -277,14 +277,14 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #374151;
+  color: #1b2f50;
   cursor: pointer;
 }
 
 .encypher-sign-ui__options input[type="text"] {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #D1D5DB;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 13px;
   margin-top: 6px;
@@ -311,7 +311,7 @@
   display: block;
   font-size: 11px;
   font-weight: 500;
-  color: #6B7280;
+  color: #a7afbc;
   margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -320,11 +320,11 @@
 .encypher-sign-ui__select {
   width: 100%;
   padding: 7px 28px 7px 10px;
-  border: 1px solid #D1D5DB;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 13px;
   font-family: inherit;
-  color: #374151;
+  color: #1b2f50;
   background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B7280'/%3E%3C/svg%3E") no-repeat right 10px center;
   appearance: none;
   -webkit-appearance: none;
@@ -342,8 +342,8 @@
   display: flex;
   gap: 8px;
   padding: 12px 16px;
-  background: #F9FAFB;
-  border-top: 1px solid #E5E7EB;
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
 }
 
 .encypher-sign-ui__btn {
@@ -373,12 +373,12 @@
 
 .encypher-sign-ui__btn--secondary {
   background: white;
-  color: #374151;
-  border: 1px solid #D1D5DB;
+  color: #1b2f50;
+  border: 1px solid #e2e8f0;
 }
 
 .encypher-sign-ui__btn--secondary:hover {
-  background: #F3F4F6;
+  background: #f1f5f9;
 }
 
 .encypher-sign-ui__btn-loading {
@@ -427,14 +427,14 @@
   justify-content: space-between;
   gap: 12px;
   font-size: 12px;
-  color: #6B7280;
-  border-top: 1px solid #E5E7EB;
+  color: #a7afbc;
+  border-top: 1px solid #e2e8f0;
   padding-top: 10px;
   margin-top: 10px;
 }
 
 .encypher-sign-ui__meta-row strong {
-  color: #111827;
+  color: #1b2f50;
   font-weight: 600;
   word-break: break-all;
   text-align: right;
@@ -443,7 +443,7 @@
 .encypher-sign-ui__link {
   display: inline-flex;
   margin-top: 10px;
-  color: #1D4ED8;
+  color: #2A87C4;
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
@@ -462,10 +462,10 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: #1F2937;
+  background: #1b2f50;
   color: white;
   border-radius: 8px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   z-index: 10003;
@@ -517,14 +517,14 @@
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background: #F3F4F6;
+  background: #f1f5f9;
   border-radius: 4px;
   font-size: 12px;
-  color: #6B7280;
+  color: #a7afbc;
 }
 
 .encypher-sign-status--signing {
-  background: #E8F4FD;
+  background: rgba(183, 213, 237, 0.3);
   color: #2A87C4;
 }
 
@@ -542,11 +542,11 @@
 @media (prefers-color-scheme: dark) {
   .encypher-sign-ui {
     background: #1e293b;
-    color: #F9FAFB;
+    color: #f1f5f9;
   }
 
   .encypher-sign-ui__identity {
-    color: #F9FAFB;
+    color: #f1f5f9;
   }
 
   .encypher-sign-ui__trust,
@@ -558,13 +558,13 @@
   .encypher-sign-ui__text {
     background: #334155;
     border-color: #475569;
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   .encypher-sign-ui__toggle {
     background: #0f172a;
     border-color: #334155;
-    color: #E5E7EB;
+    color: #e2e8f0;
   }
 
   .encypher-sign-ui__toggle:hover {
@@ -577,13 +577,13 @@
   }
 
   .encypher-sign-ui__options label {
-    color: #E5E7EB;
+    color: #e2e8f0;
   }
 
   .encypher-sign-ui__options input[type="text"] {
     background: #334155;
     border-color: #475569;
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   .encypher-sign-ui__select-group label {
@@ -593,7 +593,7 @@
   .encypher-sign-ui__select {
     background-color: #334155;
     border-color: #475569;
-    color: #F3F4F6;
+    color: #f1f5f9;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
   }
 
@@ -609,11 +609,56 @@
   }
 
   .encypher-sign-ui__meta-row strong {
-    color: #F3F4F6;
+    color: #f1f5f9;
   }
 
   .encypher-sign-ui__link {
     color: #b7d5ed;
+  }
+
+  .encypher-sign-ui__footer {
+    background: #0f172a;
+    border-top-color: #334155;
+  }
+
+  .encypher-sign-ui__btn--secondary {
+    background: #334155;
+    color: #f1f5f9;
+    border-color: #475569;
+  }
+
+  .encypher-sign-ui__btn--secondary:hover {
+    background: #475569;
+  }
+
+  .encypher-sign-ui__selection-badge {
+    color: #b7d5ed;
+    background: rgba(42, 135, 196, 0.15);
+    border-color: rgba(42, 135, 196, 0.3);
+  }
+
+  .encypher-sign-ui__preview label {
+    color: #94a3b8;
+  }
+
+  .encypher-sign-status {
+    background: #334155;
+    color: #94a3b8;
+  }
+
+  .encypher-sign-status--signing {
+    background: rgba(42, 135, 196, 0.15);
+    color: #b7d5ed;
+  }
+
+  .encypher-sign-status--signed {
+    background: rgba(16, 185, 129, 0.15);
+    color: #6EE7B7;
+  }
+
+  .encypher-sign-status--error {
+    background: rgba(239, 68, 68, 0.15);
+    color: #FCA5A5;
   }
 }
 
