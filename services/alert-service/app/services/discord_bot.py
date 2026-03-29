@@ -29,8 +29,20 @@ class AlertBot(discord.Client):
         if settings.DISCORD_GUILD_ID:
             guild = discord.Object(id=int(settings.DISCORD_GUILD_ID))
             self.tree.copy_global_to(guild=guild)
-            await self.tree.sync(guild=guild)
-            logger.info("Synced slash commands to guild %s", settings.DISCORD_GUILD_ID)
+            try:
+                await self.tree.sync(guild=guild)
+                logger.info("Synced slash commands to guild %s", settings.DISCORD_GUILD_ID)
+            except discord.Forbidden:
+                logger.warning(
+                    "Cannot sync commands to guild %s - bot lacks 'applications.commands' scope. "
+                    "Re-invite the bot with both 'bot' and 'applications.commands' scopes.",
+                    settings.DISCORD_GUILD_ID,
+                )
+                try:
+                    await self.tree.sync()
+                    logger.info("Fell back to global command sync (may take up to 1 hour to propagate)")
+                except discord.Forbidden:
+                    logger.error("Cannot sync commands globally either - check bot token and permissions")
         else:
             await self.tree.sync()
             logger.info("Synced slash commands globally")
@@ -223,6 +235,35 @@ async def start_discord_bot() -> None:
     _bot = _build_bot()
     asyncio.create_task(_bot.start(settings.DISCORD_BOT_TOKEN))
     logger.info("Discord bot starting...")
+
+
+async def post_to_status_channel(
+    content: Optional[str] = None,
+    embed: Optional[discord.Embed] = None,
+) -> bool:
+    """Post a message or embed to the configured status-updates channel.
+
+    Returns True if the message was sent, False otherwise.
+    """
+    if not _bot or not _bot.is_ready():
+        return False
+    if not settings.DISCORD_STATUS_CHANNEL_ID:
+        return False
+
+    channel = _bot.get_channel(int(settings.DISCORD_STATUS_CHANNEL_ID))
+    if not channel:
+        try:
+            channel = await _bot.fetch_channel(int(settings.DISCORD_STATUS_CHANNEL_ID))
+        except Exception as exc:
+            logger.error("Cannot fetch status channel %s: %s", settings.DISCORD_STATUS_CHANNEL_ID, exc)
+            return False
+
+    try:
+        await channel.send(content=content, embed=embed)
+        return True
+    except Exception as exc:
+        logger.error("Failed to post to status channel: %s", exc)
+        return False
 
 
 async def stop_discord_bot() -> None:

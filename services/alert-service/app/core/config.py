@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     # Discord bot (slash commands)
     DISCORD_BOT_TOKEN: str = ""
     DISCORD_GUILD_ID: str = ""
+    DISCORD_STATUS_CHANNEL_ID: str = ""
 
     # Claude Code investigation trigger
     CC_WEBHOOK_URL: str = ""

@@ -6,17 +6,17 @@ if [ -n "$TS_AUTHKEY" ]; then
     echo "Starting Tailscale..."
     tailscaled --tun=userspace-networking --state=/tmp/tailscale-state --socket=/tmp/tailscale.sock &
     sleep 2
-    tailscale --socket=/tmp/tailscale.sock up \
+    if tailscale --socket=/tmp/tailscale.sock up \
         --authkey="$TS_AUTHKEY" \
         --hostname="alert-service" \
-        --accept-routes
-    echo "Tailscale connected"
-
-    # Set CC_WEBHOOK_URL to use the Tailscale IP of the local server
-    # if not already set to a Tailscale address
-    if [ -n "$TS_WEBHOOK_TARGET" ]; then
-        export CC_WEBHOOK_URL="http://${TS_WEBHOOK_TARGET}:${CC_WEBHOOK_PORT:-2225}"
-        echo "CC_WEBHOOK_URL set to $CC_WEBHOOK_URL (via Tailscale)"
+        --accept-routes; then
+        echo "Tailscale connected"
+        if [ -n "$TS_WEBHOOK_TARGET" ]; then
+            export CC_WEBHOOK_URL="http://${TS_WEBHOOK_TARGET}:${CC_WEBHOOK_PORT:-2225}"
+            echo "CC_WEBHOOK_URL set to $CC_WEBHOOK_URL (via Tailscale)"
+        fi
+    else
+        echo "WARNING: Tailscale failed to connect (bad auth key?). Continuing without mesh."
     fi
 else
     echo "TS_AUTHKEY not set, skipping Tailscale"
