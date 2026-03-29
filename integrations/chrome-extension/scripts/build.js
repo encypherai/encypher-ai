@@ -86,6 +86,16 @@ function buildManifest() {
         (p) => !p.includes('localhost') && !p.includes('127.0.0.1')
       );
     }
+
+    // Strip dev-only commands from production builds
+    if (raw.commands) {
+      for (const [key, cmd] of Object.entries(raw.commands)) {
+        if (cmd.description && /\bdev\b/i.test(cmd.description)) {
+          delete raw.commands[key];
+        }
+      }
+      if (Object.keys(raw.commands).length === 0) delete raw.commands;
+    }
   }
 
   return JSON.stringify(raw, null, 2);
