@@ -336,6 +336,46 @@ function _markerTypeLabel(markerType, compact = false) {
     : 'Unknown';
 }
 
+/**
+ * Extract canonical detail fields from a c2pa manifest JSON object.
+ * Works for both the /verify/image response shape (c2pa_manifest with
+ * validation_results at top level) and the audio/video/document shape
+ * (manifest_data from c2pa_verifier_core).
+ */
+function _extractC2paDetailsFromManifest(manifestData) {
+  if (!manifestData || typeof manifestData !== 'object') return {};
+
+  const activeLabel = manifestData.active_manifest;
+  const manifests = manifestData.manifests || {};
+  const active = (activeLabel && manifests[activeLabel]) || {};
+
+  const sigInfo = active.signature_info || {};
+  const assertions = active.assertions || [];
+  const claimGen = active.claim_generator_info;
+  const generator = Array.isArray(claimGen) && claimGen.length > 0
+    ? claimGen[0].name || null : null;
+
+  // Extract signer from signature_info
+  const signer = sigInfo.issuer || sigInfo.common_name || null;
+
+  // Extract title
+  const title = active.title || null;
+
+  // Validation state (Trusted / Valid / Invalid)
+  const validationState = manifestData.validation_state || null;
+
+  return {
+    signer,
+    title,
+    generator,
+    c2paManifest: manifestData,
+    c2paAssertions: assertions,
+    c2paValidated: validationState === 'Trusted' || validationState === 'Valid',
+    c2paValidationType: validationState ? `C2PA ${validationState}` : null,
+    signatureAlgorithm: sigInfo.alg || null,
+  };
+}
+
 function _buildC2paManifestDisclosure(details) {
   const manifest = details.c2paManifest;
   const assertions = details.c2paAssertions;
@@ -345,6 +385,62 @@ function _buildC2paManifestDisclosure(details) {
     return '';
   }
 
+  // Build a human-readable summary of key manifest fields
+  let summaryRows = '';
+
+  if (hasManifest) {
+    const activeLabel = manifest.active_manifest;
+    const active = activeLabel && manifest.manifests?.[activeLabel];
+
+    // Generator (e.g. "ChatGPT")
+    const claimGen = active?.claim_generator_info;
+    const generator = Array.isArray(claimGen) && claimGen.length > 0
+      ? claimGen[0].name : null;
+    if (generator) {
+      summaryRows += `<div class="encypher-detail-panel__row">
+        <span class="encypher-detail-panel__label">Generator</span>
+        <span class="encypher-detail-panel__value">${_escapeHtml(generator)}</span>
+      </div>`;
+    }
+
+    // Actions (e.g. "Created by GPT-4o")
+    const actionsAssertion = (active?.assertions || [])
+      .find(a => a.label && a.label.startsWith('c2pa.actions'));
+    const actions = actionsAssertion?.data?.actions;
+    if (Array.isArray(actions) && actions.length > 0) {
+      const actionSummary = actions.map(a => {
+        const verb = (a.action || '').replace('c2pa.', '');
+        const agent = a.softwareAgent?.name;
+        return agent ? `${verb} (${agent})` : verb;
+      }).join(', ');
+      summaryRows += `<div class="encypher-detail-panel__row">
+        <span class="encypher-detail-panel__label">Actions</span>
+        <span class="encypher-detail-panel__value">${_escapeHtml(actionSummary)}</span>
+      </div>`;
+    }
+
+    // Validation state
+    const validationState = manifest.validation_state;
+    if (validationState) {
+      const stateColor = validationState === 'Trusted' ? '#4ade80'
+        : validationState === 'Valid' ? '#60a5fa' : '#f87171';
+      summaryRows += `<div class="encypher-detail-panel__row">
+        <span class="encypher-detail-panel__label">Trust Status</span>
+        <span class="encypher-detail-panel__value" style="color:${stateColor};font-weight:600">${_escapeHtml(validationState)}</span>
+      </div>`;
+    }
+
+    // Ingredients count
+    const ingredients = active?.ingredients;
+    if (Array.isArray(ingredients) && ingredients.length > 0) {
+      summaryRows += `<div class="encypher-detail-panel__row">
+        <span class="encypher-detail-panel__label">Ingredients</span>
+        <span class="encypher-detail-panel__value">${ingredients.length} parent asset${ingredients.length > 1 ? 's' : ''}</span>
+      </div>`;
+    }
+  }
+
+  // Full manifest JSON in expandable section
   let payload = hasManifest ? manifest : { assertions };
   if (!hasManifest && hasAssertions && details.c2paValidated !== undefined) {
     payload = {
@@ -356,6 +452,7 @@ function _buildC2paManifestDisclosure(details) {
 
   const serialized = _escapeHtml(JSON.stringify(payload, null, 2));
   return `<div class="encypher-detail-panel__manifest">
+    ${summaryRows}
     <details>
       <summary>View full C2PA manifest</summary>
       <pre>${serialized}</pre>
@@ -1644,30 +1741,22 @@ async function _verifyImageAndBadge(imgElement, srcUrl) {
     });
 
     const status = result?.success ? 'verified' : (result?.error ? 'error' : 'invalid');
-    const c2paManifest = result?.data?.c2pa_manifest || null;
-
-    // Extract signer from the active manifest's signature_info
-    let signer = null;
-    if (c2paManifest) {
-      const activeLabel = c2paManifest.active_manifest;
-      const activeManifest = activeLabel && c2paManifest.manifests?.[activeLabel];
-      const sigInfo = activeManifest?.signature_info;
-      if (sigInfo) {
-        signer = sigInfo.issuer || sigInfo.common_name || null;
-      }
-    }
+    const c2paFields = _extractC2paDetailsFromManifest(result?.data?.c2pa_manifest);
 
     const details = {
       detectionId,
       valid: result?.success || false,
-      markerType: c2paManifest ? 'c2pa_image' : undefined,
-      signer,
-      date: result?.data?.verified_at || null,
-      overall_status: result?.data?.overall_status || null,
-      c2pa_manifest: c2paManifest,
+      markerType: c2paFields.c2paManifest ? 'c2pa_image' : undefined,
+      signer: c2paFields.signer || null,
+      title: c2paFields.title || null,
+      timestamp: result?.data?.verified_at || null,
+      documentId: result?.data?.document_id || null,
+      c2paManifest: c2paFields.c2paManifest || null,
+      c2paAssertions: c2paFields.c2paAssertions || null,
+      c2paValidated: c2paFields.c2paValidated,
+      c2paValidationType: c2paFields.c2paValidationType || null,
       cryptographically_verified: result?.data?.cryptographically_verified || false,
       hash: result?.data?.hash || null,
-      document_id: result?.data?.document_id || null,
       error: result?.error || null,
     };
 
@@ -1993,18 +2082,7 @@ async function _verifyMediaAndBadge(mediaElement, srcUrl, mediaType) {
     });
 
     const status = result?.success ? 'verified' : (result?.error ? 'error' : 'invalid');
-    const manifestData = result?.data?.manifest_data || null;
-
-    // Extract signer from the active manifest's signature_info
-    let signer = result?.data?.signer || null;
-    if (!signer && manifestData) {
-      const activeLabel = manifestData.active_manifest;
-      const activeManifest = activeLabel && manifestData.manifests?.[activeLabel];
-      const sigInfo = activeManifest?.signature_info;
-      if (sigInfo) {
-        signer = sigInfo.issuer || sigInfo.common_name || null;
-      }
-    }
+    const c2paFields = _extractC2paDetailsFromManifest(result?.data?.manifest_data);
 
     const c2paMarkerType = mediaType === 'audio' ? 'c2pa_audio'
       : mediaType === 'video' ? 'c2pa_video'
@@ -2013,12 +2091,14 @@ async function _verifyMediaAndBadge(mediaElement, srcUrl, mediaType) {
     const details = {
       detectionId,
       valid: result?.success || false,
-      markerType: manifestData ? c2paMarkerType : undefined,
-      signer,
-      date: result?.data?.verified_at || null,
-      c2pa_manifest_valid: result?.data?.c2pa_manifest_valid || false,
-      c2pa_instance_id: result?.data?.c2pa_instance_id || null,
-      manifest_data: manifestData,
+      markerType: c2paFields.c2paManifest ? c2paMarkerType : undefined,
+      signer: c2paFields.signer || result?.data?.signer || null,
+      title: c2paFields.title || null,
+      timestamp: result?.data?.verified_at || result?.data?.signed_at || null,
+      c2paManifest: c2paFields.c2paManifest || null,
+      c2paAssertions: c2paFields.c2paAssertions || null,
+      c2paValidated: c2paFields.c2paValidated,
+      c2paValidationType: c2paFields.c2paValidationType || null,
       error: result?.error || null,
     };
 
@@ -2286,27 +2366,19 @@ async function _verifyDocumentAndBadge(docElement, srcUrl) {
     });
 
     const status = result?.success ? 'verified' : (result?.error ? 'error' : 'invalid');
-    const manifestData = result?.data?.manifest_data || null;
-
-    // Extract signer from the active manifest's signature_info
-    let signer = result?.data?.signer || null;
-    if (!signer && manifestData) {
-      const activeLabel = manifestData.active_manifest;
-      const activeManifest = activeLabel && manifestData.manifests?.[activeLabel];
-      const sigInfo = activeManifest?.signature_info;
-      if (sigInfo) {
-        signer = sigInfo.issuer || sigInfo.common_name || null;
-      }
-    }
+    const c2paFields = _extractC2paDetailsFromManifest(result?.data?.manifest_data);
 
     const details = {
       detectionId,
       valid: result?.success || false,
-      markerType: manifestData ? 'c2pa_document' : undefined,
-      signer,
-      date: result?.data?.verified_at || null,
-      c2pa_manifest_valid: result?.data?.c2pa_manifest_valid || false,
-      manifest_data: manifestData,
+      markerType: c2paFields.c2paManifest ? 'c2pa_document' : undefined,
+      signer: c2paFields.signer || result?.data?.signer || null,
+      title: c2paFields.title || null,
+      timestamp: result?.data?.verified_at || result?.data?.signed_at || null,
+      c2paManifest: c2paFields.c2paManifest || null,
+      c2paAssertions: c2paFields.c2paAssertions || null,
+      c2paValidated: c2paFields.c2paValidated,
+      c2paValidationType: c2paFields.c2paValidationType || null,
       error: result?.error || null,
     };
 
