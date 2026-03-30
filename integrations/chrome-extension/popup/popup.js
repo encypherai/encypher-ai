@@ -588,23 +588,21 @@ async function loadTabState() {
 
     const hasDetails = Array.isArray(state.details) && state.details.length > 0;
 
-    // Fetch image inventory from content script
+    // Fetch inventories via service worker relay (re-injects content script if needed)
     let imageData = null;
-    try {
-      imageData = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_IMAGES' });
-    } catch { /* content script may not be ready */ }
-
-    // Fetch audio/video inventory from content script
     let audioVideoData = null;
-    try {
-      audioVideoData = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_MEDIA' });
-    } catch { /* content script may not be ready */ }
-
-    // Fetch document inventory from content script
     let documentData = null;
     try {
-      documentData = await chrome.tabs.sendMessage(tab.id, { type: 'GET_PAGE_DOCUMENTS' });
-    } catch { /* content script may not be ready */ }
+      const relay = (payload) => chrome.runtime.sendMessage({
+        type: 'RELAY_TO_TAB', tabId: tab.id, payload,
+      }).then(r => r?._relayError ? null : r);
+
+      [imageData, audioVideoData, documentData] = await Promise.all([
+        relay({ type: 'GET_PAGE_IMAGES' }).catch(() => null),
+        relay({ type: 'GET_PAGE_MEDIA' }).catch(() => null),
+        relay({ type: 'GET_PAGE_DOCUMENTS' }).catch(() => null),
+      ]);
+    } catch { /* content script unreachable */ }
 
     const hasImages = imageData && imageData.total > 0;
     const hasAudioVideo = audioVideoData && audioVideoData.total > 0;
@@ -646,8 +644,17 @@ async function rescanPage() {
       return;
     }
 
-    // Send rescan message to content script
-    await chrome.tabs.sendMessage(tab.id, { type: 'RESCAN' });
+    // Route through service worker so it can re-inject the content script
+    // if it was disconnected (common on SPA sites like Gemini, ChatGPT, etc.)
+    const relayResult = await chrome.runtime.sendMessage({
+      type: 'RELAY_TO_TAB',
+      tabId: tab.id,
+      payload: { type: 'RESCAN' },
+    });
+
+    if (relayResult?._relayError) {
+      throw new Error(relayResult._relayError);
+    }
 
     // Wait a moment for verification to complete
     setTimeout(loadTabState, 1000);

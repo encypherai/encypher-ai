@@ -341,7 +341,7 @@ Before diving into competitors, it is worth framing what Encypher does that is d
 
 **Founding members:** Adobe, Arm, Intel, Microsoft, Truepic
 
-**Steering committee:** Now includes Google, plus original founders
+**Current Steering Committee (as of March 2026):** Adobe, Amazon, BBC, Google, Meta, Microsoft, OpenAI (low meeting engagement), Publicis, Sony, Truepic. Note: OpenAI holds a seat but rarely attends meetings. Encypher is preparing an application for an available SC seat.
 
 **Text-specific provisions:**
 - C2PA manifests can be embedded in ZIP-based text formats (EPUB, OOXML, ODF)
