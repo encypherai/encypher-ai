@@ -123,7 +123,9 @@ async def sign_video(
         builder = c2pa.Builder(manifest_dict)
 
         if ingredient_data and ingredient_mime:
-            ingredient_json = {"title": title, "relationship": "parentOf"}
+            from app.utils.c2pa_manifest import INGREDIENT_PARENT_LABEL
+
+            ingredient_json = {"title": title, "relationship": "parentOf", "label": INGREDIENT_PARENT_LABEL}
             builder.add_ingredient(ingredient_json, ingredient_mime, BytesIO(ingredient_data))
             logger.info("Added ingredient to video manifest: mime=%s size=%d", ingredient_mime, len(ingredient_data))
 

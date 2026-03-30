@@ -13,6 +13,10 @@ _TS_FMT = "%Y-%m-%dT%H:%M:%SZ"
 _PRODUCT_NAME = "Encypher Enterprise API"
 _PRODUCT_VERSION = "1.0"
 
+# Stable label for the parent ingredient in provenance chain workflows.
+# Used as the lookup key for c2pa-rs ingredientIds -> HashedUri resolution.
+INGREDIENT_PARENT_LABEL = "encypher_parent"
+
 # IPTC digital source type vocabulary (short name -> full URI)
 DIGITAL_SOURCE_TYPES = {
     "trainedAlgorithmicMedia": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
@@ -78,11 +82,10 @@ def build_c2pa_manifest_dict(
 
     # C2PA spec Section 15.4.1 (MUST): the first action must be
     # c2pa.created or c2pa.opened. For ingredient workflows
-    # (c2pa.edited), prepend c2pa.opened to satisfy this constraint.
-    # Note: Section 15.4.3 says c2pa.opened SHOULD include
-    # parameters.ingredients, but c2pa-python's Builder cannot resolve
-    # HashedUri references at manifest-definition time. The
-    # ingredientMismatch validation status is informational (SHOULD).
+    # (c2pa.edited), prepend c2pa.opened. Section 15.4.3 requires
+    # parameters.ingredients on c2pa.opened; we use c2pa-rs's
+    # ingredientIds symbolic placeholder which resolves to real
+    # HashedUri references during Builder.sign().
     actions_list = []
     if action not in ("c2pa.created", "c2pa.opened"):
         actions_list.append(
@@ -92,6 +95,9 @@ def build_c2pa_manifest_dict(
                 "softwareAgent": {
                     "name": _PRODUCT_NAME,
                     "version": _PRODUCT_VERSION,
+                },
+                "parameters": {
+                    "ingredientIds": [INGREDIENT_PARENT_LABEL],
                 },
             }
         )

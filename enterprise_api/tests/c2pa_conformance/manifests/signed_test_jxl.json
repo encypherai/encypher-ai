@@ -1,7 +1,7 @@
 {
-  "active_manifest": "urn:c2pa:494d0074-5902-44e8-b581-18c067918f15",
+  "active_manifest": "urn:c2pa:c80ab19d-1563-47fc-bb34-5b960bbccf45",
   "manifests": {
-    "urn:c2pa:494d0074-5902-44e8-b581-18c067918f15": {
+    "urn:c2pa:c80ab19d-1563-47fc-bb34-5b960bbccf45": {
       "claim_generator_info": [
         {
           "name": "Encypher",
@@ -9,7 +9,7 @@
         }
       ],
       "title": "C2PA Conformance Test -- JXL",
-      "instance_id": "xmp:iid:82a98da9-6ed7-407b-b13c-7986a99745a0",
+      "instance_id": "xmp:iid:cecf3994-2c58-4932-905a-4bd859861cb0",
       "assertions": [
         {
           "label": "c2pa.actions.v2",
@@ -17,7 +17,7 @@
             "actions": [
               {
                 "action": "c2pa.created",
-                "when": "2026-03-30T20:05:07Z",
+                "when": "2026-03-30T20:19:00Z",
                 "softwareAgent": {
                   "name": "Encypher Enterprise API",
                   "version": "2.0"
@@ -48,13 +48,13 @@
           "data": {
             "organization_id": "encypher-conformance",
             "document_id": "conformance-jxl",
-            "document_asset_id": "27c218b2-f4d1-4106-9f15-2c7fa726c2df",
-            "signed_at": "2026-03-30T20:05:07Z"
+            "document_asset_id": "61f498c5-0a28-4888-b904-abf6e1e55f2e",
+            "signed_at": "2026-03-30T20:19:00Z"
           },
           "created": true
         }
       ],
-      "label": "urn:c2pa:494d0074-5902-44e8-b581-18c067918f15",
+      "label": "urn:c2pa:c80ab19d-1563-47fc-bb34-5b960bbccf45",
       "claim_version": 2,
       "signature_info": {
         "alg": "Es256",

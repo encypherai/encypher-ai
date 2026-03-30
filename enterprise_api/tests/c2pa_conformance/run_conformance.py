@@ -745,9 +745,12 @@ def sign_with_c2pa_builder(
 
         # Add ingredient if provided (provenance chain)
         if ingredient_bytes and ingredient_mime:
+            from app.utils.c2pa_manifest import INGREDIENT_PARENT_LABEL
+
             ingredient_json = {
                 "title": f"C2PA Conformance Test -- {fmt.name} (original)",
                 "relationship": "parentOf",
+                "label": INGREDIENT_PARENT_LABEL,
             }
             builder.add_ingredient(
                 ingredient_json,

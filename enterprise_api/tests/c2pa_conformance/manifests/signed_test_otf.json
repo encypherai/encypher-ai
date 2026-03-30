@@ -1,7 +1,7 @@
 {
-  "active_manifest": "urn:c2pa:8e7aa586-26c2-40b5-9e62-8534249fe99a",
+  "active_manifest": "urn:c2pa:bd840bda-a83b-40a0-b766-4f2581642c6d",
   "manifests": {
-    "urn:c2pa:8e7aa586-26c2-40b5-9e62-8534249fe99a": {
+    "urn:c2pa:bd840bda-a83b-40a0-b766-4f2581642c6d": {
       "claim_generator_info": [
         {
           "name": "Encypher",
@@ -9,7 +9,7 @@
         }
       ],
       "title": "C2PA Conformance Test -- OTF",
-      "instance_id": "xmp:iid:f2c93d22-2f62-4d50-94ce-1b874654ef0a",
+      "instance_id": "xmp:iid:b822be40-3d6e-4ba2-ac7d-f23b33f473e4",
       "assertions": [
         {
           "label": "c2pa.actions.v2",
@@ -17,7 +17,7 @@
             "actions": [
               {
                 "action": "c2pa.created",
-                "when": "2026-03-30T20:05:13Z",
+                "when": "2026-03-30T20:19:06Z",
                 "softwareAgent": {
                   "name": "Encypher Enterprise API",
                   "version": "2.0"
@@ -48,13 +48,13 @@
           "data": {
             "organization_id": "encypher-conformance",
             "document_id": "conformance-otf",
-            "document_asset_id": "f41d26e5-b0d6-4e85-af92-504cdf48d3b4",
-            "signed_at": "2026-03-30T20:05:13Z"
+            "document_asset_id": "e17166e3-42d3-495a-9dea-1e3725e86faf",
+            "signed_at": "2026-03-30T20:19:06Z"
           },
           "created": true
         }
       ],
-      "label": "urn:c2pa:8e7aa586-26c2-40b5-9e62-8534249fe99a",
+      "label": "urn:c2pa:bd840bda-a83b-40a0-b766-4f2581642c6d",
       "claim_version": 2,
       "signature_info": {
         "alg": "Es256",
