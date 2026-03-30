@@ -357,6 +357,7 @@ const tabState = new Map();
 const NOISY_DEBUG_MESSAGE_TYPES = new Set([
   'GET_DEBUG_LOGS',
   'GET_TAB_STATE',
+  'THEME_CHANGED',
 ]);
 
 /**
@@ -375,19 +376,20 @@ function hashContent(text) {
 /**
  * Update extension icon based on tab state
  */
-function updateIcon(tabId, state) {
-  // Use base icons for all states (colored variants not yet created)
-  // State is communicated via badge text + badge color below
-  const baseIcons = {
-    16: 'icons/icon-16.png',
-    32: 'icons/icon-32.png',
-    48: 'icons/icon-48.png',
-    128: 'icons/icon-128.png',
-  };
+// Theme-aware icon paths. Content scripts report the OS color scheme;
+// the service worker swaps the action icon (which also drives context menus).
+const LIGHT_ICONS = { 16: 'icons/icon-16.png', 32: 'icons/icon-32.png', 48: 'icons/icon-48.png', 128: 'icons/icon-128.png' };
+const DARK_ICONS  = { 16: 'icons/icon-dark-16.png', 32: 'icons/icon-dark-32.png', 48: 'icons/icon-dark-48.png', 128: 'icons/icon-dark-128.png' };
+let _prefersDark = false;
 
+function _getIconSet() {
+  return _prefersDark ? DARK_ICONS : LIGHT_ICONS;
+}
+
+function updateIcon(tabId, state) {
   chrome.action.setIcon({
     tabId: tabId,
-    path: baseIcons
+    path: _getIconSet()
   }).catch(() => {
     // Tab may have been closed
   });
@@ -1921,6 +1923,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   switch (message.type) {
+    case 'THEME_CHANGED': {
+      const wasDark = _prefersDark;
+      _prefersDark = Boolean(message.dark);
+      if (wasDark !== _prefersDark) {
+        // Refresh the default (no-tab) action icon
+        chrome.action.setIcon({ path: _getIconSet() }).catch(() => {});
+        // Refresh every tracked tab so context menus update immediately
+        for (const [tid] of tabState) {
+          const existing = tabState.get(tid);
+          const iconState = existing ? getIconStateForTab(existing) : 'none';
+          updateIcon(tid, iconState);
+        }
+      }
+      sendResponse({ received: true });
+      break;
+    }
+
     case 'EMBEDDINGS_DETECTED':
       if (tabId) {
         tabState.set(tabId, {
