@@ -1,7 +1,7 @@
 {
-  "active_manifest": "urn:c2pa:63284269-d6f4-43c7-98e7-781f6f84a699",
+  "active_manifest": "urn:c2pa:2458e28f-3f1f-4c20-897d-8db6822c8f0f",
   "manifests": {
-    "urn:c2pa:63284269-d6f4-43c7-98e7-781f6f84a699": {
+    "urn:c2pa:2458e28f-3f1f-4c20-897d-8db6822c8f0f": {
       "claim_generator_info": [
         {
           "name": "Encypher",
@@ -9,7 +9,7 @@
         }
       ],
       "title": "C2PA Conformance Test -- DOCX",
-      "instance_id": "xmp:iid:b70e38ec-2454-43a6-801a-3342a838be97",
+      "instance_id": "xmp:iid:0c006edc-bd32-434d-91bb-42c44533fef1",
       "assertions": [
         {
           "label": "c2pa.actions.v2",
@@ -17,7 +17,7 @@
             "actions": [
               {
                 "action": "c2pa.created",
-                "when": "2026-03-28T12:45:27Z",
+                "when": "2026-03-30T20:05:13Z",
                 "softwareAgent": {
                   "name": "Encypher Enterprise API",
                   "version": "2.0"
@@ -34,19 +34,19 @@
             "uris": [
               {
                 "uri": "[Content_Types].xml",
-                "hash": "f737bf0cb91ef2c43870cf2267ee00cbabda9837b80892b47a5fb8934c25a27c"
+                "hash": "f2fd7144b0efda89452cef2b7e9daf454d12092ca985d38f6fd6a0e9e4c68cf3"
               },
               {
                 "uri": "_rels/.rels",
-                "hash": "92286daa378dcac6b89ff2906b7c8c458719440dbafb9de94b0ff7218d951970"
+                "hash": "6e406817a89b2ffb7f8b79f262e719816472079afc200cd2e88449748c221e89"
               },
               {
                 "uri": "word/document.xml",
-                "hash": "d0fc04a16245da6e96509bab0e7ae9304c8bc533bee7ccac2f4b2cd84ce9a9d8"
+                "hash": "35e6024e4a6059ecfca75f7f2dc3c0e777e7a539555cc65ca5b9b56a2de386a8"
               }
             ],
             "alg": "sha256",
-            "zip_central_directory_hash": "015d84a47d2c80422912b8fe644f3c8f82e2335f20275d58b703cb4aea108ef6"
+            "zip_central_directory_hash": "45fc3bc236686bb945c22e0e8feaad9e7b0f585e91a8169d7d92e3070b656945"
           },
           "created": true
         },
@@ -55,13 +55,13 @@
           "data": {
             "organization_id": "encypher-conformance",
             "document_id": "conformance-docx",
-            "document_asset_id": "3b0215d8-ba0d-48d0-81ca-5afc957b136e",
-            "signed_at": "2026-03-28T12:45:27Z"
+            "document_asset_id": "06ff22bf-19cb-4782-b98a-ab55ced0810b",
+            "signed_at": "2026-03-30T20:05:13Z"
           },
           "created": true
         }
       ],
-      "label": "urn:c2pa:63284269-d6f4-43c7-98e7-781f6f84a699",
+      "label": "urn:c2pa:2458e28f-3f1f-4c20-897d-8db6822c8f0f",
       "claim_version": 2,
       "signature_info": {
         "alg": "Es256",

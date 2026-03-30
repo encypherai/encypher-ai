@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-03-28T12:45:27Z",
-  "total_formats": 31,
-  "sign_success": 30,
-  "verify_success": 30,
+  "timestamp": "2026-03-30T20:05:13Z",
+  "total_formats": 29,
+  "sign_success": 29,
+  "verify_success": 29,
   "results": [
     {
       "name": "JPEG",
@@ -15,7 +15,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:eaf98bc2-6af7-4e4d-afad-81a194cb593e",
+      "instance_id": "urn:uuid:2ed2eec0-76e2-420e-853c-e2d512fe2d8f",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -77,7 +77,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:48b0d8fe-d8b2-4330-a7d6-346424d915db",
+      "instance_id": "urn:uuid:df4314fa-b80c-4867-9232-056b8428bc71",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -139,7 +139,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:06d20644-3cb8-42a4-85a9-b97b0d65cc95",
+      "instance_id": "urn:uuid:a5eb266d-3f0f-415d-9820-44896c15b864",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -201,7 +201,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:efe4ff08-6465-40c4-b742-d026e565c930",
+      "instance_id": "urn:uuid:25f240ac-7772-4c9b-b669-4a58a1c68ca7",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -263,7 +263,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:2d7658d1-6b35-4f6c-b329-7b2f66299e41",
+      "instance_id": "urn:uuid:96d36fca-6c72-42c0-b660-2a33dc4decb2",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -320,7 +320,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:99906764-0854-43b6-8620-e2330baef830",
+      "instance_id": "urn:uuid:d90ab0c5-481f-4b2d-8c98-2d1af4537c98",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -377,7 +377,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:5cae68ee-edd3-4d38-9715-aa555a709d6c",
+      "instance_id": "urn:uuid:efa9a8d3-751d-464d-8818-4fc15743b022",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -434,7 +434,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:0278aa74-7123-4b6d-b5ed-3c68912b5f68",
+      "instance_id": "urn:uuid:62ebf112-49af-4cba-b196-fb17d0340463",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -491,7 +491,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:32ffaa30-77c9-476e-a4b2-7cd71d72e1fc",
+      "instance_id": "urn:uuid:41ab8efd-492d-42ba-8781-62e3b6f5473d",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -548,7 +548,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:532f3067-9da3-4437-b7e0-126cd3f3cfe6",
+      "instance_id": "urn:uuid:387b8e14-3de5-4680-9afc-44aa8b6ec770",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -611,7 +611,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:704a22c6-2cdb-4033-b656-5dfc51c67ec0",
+      "manifest_label": "urn:c2pa:494d0074-5902-44e8-b581-18c067918f15",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -631,7 +631,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:68dd22bd-aaa3-406e-8968-230b3b6c5ae9",
+      "instance_id": "urn:uuid:30155cfb-1335-434b-9dc0-39e684994718",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -688,7 +688,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:9ff401e0-7f6f-49b8-8d44-5b8e74bd556d",
+      "instance_id": "urn:uuid:a342d715-f7d4-43cb-8f0d-05ba382cad46",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -745,7 +745,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:19f25d4d-3e6e-4a39-89ba-4f35d6f62f12",
+      "instance_id": "urn:uuid:85ef99e9-d74c-499f-90ba-801d6f92f8dc",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -802,7 +802,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:334dab42-f1d7-457c-b54a-b4dc91f8fbff",
+      "instance_id": "urn:uuid:b60b49de-53dd-4860-b775-ee874bdf1151",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -859,7 +859,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:129bcf88-9f9f-44a2-9831-506d4f483c3e",
+      "instance_id": "urn:uuid:430cc9e0-bf47-4436-a278-3e66eed248e2",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -916,7 +916,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:d438ee3c-1df5-4b6b-9362-44676bce21a0",
+      "instance_id": "urn:uuid:5aa93446-920c-4d75-99e4-1b3a1f51a408",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -973,7 +973,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:421d867d-25e6-4d82-83b7-01033093837a",
+      "instance_id": "urn:uuid:2654ebb2-e4fb-49fa-88ff-70d8c3907b0d",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -1030,7 +1030,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:f4598833-71af-4d72-9d18-8f17d6fe2029",
+      "instance_id": "urn:uuid:06cc3899-0cb1-4699-9d0f-e163bf6257e9",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -1087,7 +1087,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:82a1184a-8911-4e87-b6e3-0fc7cdeb0582",
+      "instance_id": "urn:uuid:2643b7af-eddf-41a5-a6d5-ec8820fafd75",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -1145,7 +1145,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:b15b7bf3-aa45-4deb-8c05-6ffed14a0713",
+      "manifest_label": "urn:c2pa:caa6cc50-0d50-4caa-b5ac-f225f9ad4c4a",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1165,7 +1165,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:840ea2ff-7180-4a4d-a312-586408fd6e45",
+      "instance_id": "urn:uuid:c54540e5-6b39-483b-b57c-94a69a8ce42f",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -1222,7 +1222,7 @@
       "sign_error": null,
       "verify_success": true,
       "verify_error": null,
-      "instance_id": "urn:uuid:72554575-c0bc-4301-bafe-206b33e892e9",
+      "instance_id": "urn:uuid:78372267-31fe-4a44-b262-763b7a414e8b",
       "manifest_label": null,
       "validation_codes": [
         {
@@ -1280,7 +1280,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:8856e341-0143-4351-85c5-d4800d1fc5e9",
+      "manifest_label": "urn:c2pa:7e254cb7-0318-42bc-9b8d-3dfd9a670c37",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1301,7 +1301,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:e7e75c51-eaf8-4801-9502-3bf873186667",
+      "manifest_label": "urn:c2pa:fc7bb12d-1c04-4e02-9339-2dedf52af4db",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1322,7 +1322,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:63284269-d6f4-43c7-98e7-781f6f84a699",
+      "manifest_label": "urn:c2pa:2458e28f-3f1f-4c20-897d-8db6822c8f0f",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1343,7 +1343,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:3f9c9827-8dc2-42ff-aa6c-6b4bef1b1268",
+      "manifest_label": "urn:c2pa:ec2796e5-3200-4cb1-be09-39af4064cf2f",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1364,7 +1364,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:1151a708-4046-46c2-8db2-b63d7e6e5220",
+      "manifest_label": "urn:c2pa:9d6c82d3-98d3-4d1d-962e-046a91a2f67b",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1385,7 +1385,7 @@
       "verify_success": true,
       "verify_error": null,
       "instance_id": "",
-      "manifest_label": "urn:c2pa:1f70ab2f-fa14-4cbd-8f7c-3a9789de6f2d",
+      "manifest_label": "urn:c2pa:8e7aa586-26c2-40b5-9e62-8534249fe99a",
       "validation_codes": [
         {
           "code": "structural.jumbfPresent",
@@ -1393,43 +1393,6 @@
         }
       ],
       "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.otf"
-    },
-    {
-      "name": "TTF",
-      "extension": ".ttf",
-      "mime_type": "font/ttf",
-      "category": "font",
-      "fixture_size": 60,
-      "signed_size": 65612,
-      "sign_success": true,
-      "sign_error": null,
-      "verify_success": true,
-      "verify_error": null,
-      "instance_id": "",
-      "manifest_label": "urn:c2pa:6aa04e28-0079-4caf-a3fb-324ef55fd777",
-      "validation_codes": [
-        {
-          "code": "structural.jumbfPresent",
-          "success": true
-        }
-      ],
-      "signed_file": "/home/developer/code/encypherai-commercial/enterprise_api/tests/c2pa_conformance/signed/signed_test.ttf"
-    },
-    {
-      "name": "SFNT",
-      "extension": ".sfnt",
-      "mime_type": "font/sfnt",
-      "category": "font",
-      "fixture_size": 0,
-      "signed_size": 0,
-      "sign_success": false,
-      "sign_error": "No generator for SFNT",
-      "verify_success": false,
-      "verify_error": null,
-      "instance_id": null,
-      "manifest_label": null,
-      "validation_codes": [],
-      "signed_file": null
     }
   ]
 }

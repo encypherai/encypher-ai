@@ -1,7 +1,7 @@
 {
-  "active_manifest": "urn:c2pa:e7e75c51-eaf8-4801-9502-3bf873186667",
+  "active_manifest": "urn:c2pa:fc7bb12d-1c04-4e02-9339-2dedf52af4db",
   "manifests": {
-    "urn:c2pa:e7e75c51-eaf8-4801-9502-3bf873186667": {
+    "urn:c2pa:fc7bb12d-1c04-4e02-9339-2dedf52af4db": {
       "claim_generator_info": [
         {
           "name": "Encypher",
@@ -9,7 +9,7 @@
         }
       ],
       "title": "C2PA Conformance Test -- EPUB",
-      "instance_id": "xmp:iid:ab0d6412-bfd9-4be6-80a6-162468bd73f0",
+      "instance_id": "xmp:iid:e6c337a5-d62a-4766-a1ac-64ed203d4aa0",
       "assertions": [
         {
           "label": "c2pa.actions.v2",
@@ -17,7 +17,7 @@
             "actions": [
               {
                 "action": "c2pa.created",
-                "when": "2026-03-28T12:45:27Z",
+                "when": "2026-03-30T20:05:13Z",
                 "softwareAgent": {
                   "name": "Encypher Enterprise API",
                   "version": "2.0"
@@ -38,19 +38,19 @@
               },
               {
                 "uri": "META-INF/container.xml",
-                "hash": "03bac064ee689c0332d800132d691727ba48bb20b100eea33c86e37dc76bdddb"
+                "hash": "cd03ce14736ac6ded7e6066c44f6e3bf6fe5cc1cb308ac8c595524a08167c96c"
               },
               {
                 "uri": "content.opf",
-                "hash": "2ae3fee0fbcbcf2710a7187e52a70836044a9d0f8db2a574d3862239607812d8"
+                "hash": "53c9e240f8c3a25bf5a66fa4f7c2209401671ace7e7cec159b8805272b59b3b6"
               },
               {
                 "uri": "chapter1.xhtml",
-                "hash": "b297a558a1e119bc9167e90c405f40f237d14344f23494c7b7e5be2e91a4cc2f"
+                "hash": "10022b5ea710efc5aa28fe84068f513dc59eb42107143aeb284ececfff9400df"
               }
             ],
             "alg": "sha256",
-            "zip_central_directory_hash": "51e1d85e33584105b01d7ff866bf93e6dbb71851a6023833034f385d051dd6dd"
+            "zip_central_directory_hash": "6198fc0d285cef504102da68c1f3c8431e4b6faf219edecb7090a8e53470ddb5"
           },
           "created": true
         },
@@ -59,13 +59,13 @@
           "data": {
             "organization_id": "encypher-conformance",
             "document_id": "conformance-epub",
-            "document_asset_id": "cfab9f45-4c55-43e6-8336-03792757f9e7",
-            "signed_at": "2026-03-28T12:45:27Z"
+            "document_asset_id": "422dbe21-507d-42a0-bcfb-c765ae6360c0",
+            "signed_at": "2026-03-30T20:05:13Z"
           },
           "created": true
         }
       ],
-      "label": "urn:c2pa:e7e75c51-eaf8-4801-9502-3bf873186667",
+      "label": "urn:c2pa:fc7bb12d-1c04-4e02-9339-2dedf52af4db",
       "claim_version": 2,
       "signature_info": {
         "alg": "Es256",

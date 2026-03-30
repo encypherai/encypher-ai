@@ -76,6 +76,27 @@ def build_c2pa_manifest_dict(
             )
         action_entry["digitalSourceType"] = dst
 
+    # C2PA spec Section 15.4.1 (MUST): the first action must be
+    # c2pa.created or c2pa.opened. For ingredient workflows
+    # (c2pa.edited), prepend c2pa.opened to satisfy this constraint.
+    # Note: Section 15.4.3 says c2pa.opened SHOULD include
+    # parameters.ingredients, but c2pa-python's Builder cannot resolve
+    # HashedUri references at manifest-definition time. The
+    # ingredientMismatch validation status is informational (SHOULD).
+    actions_list = []
+    if action not in ("c2pa.created", "c2pa.opened"):
+        actions_list.append(
+            {
+                "action": "c2pa.opened",
+                "when": now_iso,
+                "softwareAgent": {
+                    "name": _PRODUCT_NAME,
+                    "version": _PRODUCT_VERSION,
+                },
+            }
+        )
+    actions_list.append(action_entry)
+
     # Every assertion must have "created": True so c2pa-rs places it in
     # created_assertions (not gathered_assertions) in the claim CBOR.
     # The per-assertion flag is the only mechanism c2pa-rs respects;
@@ -84,7 +105,7 @@ def build_c2pa_manifest_dict(
         {
             "label": "c2pa.actions.v2",
             "data": {
-                "actions": [action_entry],
+                "actions": actions_list,
             },
             "created": True,
         },
