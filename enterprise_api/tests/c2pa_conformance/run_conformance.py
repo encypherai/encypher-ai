@@ -704,8 +704,16 @@ def sign_with_c2pa_builder(
     fmt: FormatSpec,
     private_key_pem: str,
     cert_chain_pem: str,
+    *,
+    ingredient_bytes: Optional[bytes] = None,
+    ingredient_mime: Optional[str] = None,
+    action: str = "c2pa.created",
 ) -> tuple[bytes, Optional[str], Optional[str]]:
-    """Sign using c2pa-python Builder. Returns (signed_bytes, instance_id, manifest_label)."""
+    """Sign using c2pa-python Builder. Returns (signed_bytes, instance_id, manifest_label).
+
+    When ingredient_bytes is provided, the signed file references the ingredient
+    via a c2pa.ingredient assertion (provenance chain / c2pa.edited workflow).
+    """
     import c2pa
 
     from app.utils.c2pa_manifest import build_c2pa_manifest_dict
@@ -724,7 +732,7 @@ def sign_with_c2pa_builder(
         document_id=f"conformance-{fmt.name.lower()}",
         asset_id=str(uuid.uuid4()),
         asset_id_key=asset_id_key,
-        action="c2pa.created",
+        action=action,
         custom_assertions=[],
         rights_data={},
         digital_source_type="digitalCapture",
@@ -734,6 +742,19 @@ def sign_with_c2pa_builder(
     builder_mime = _BUILDER_MIME_CANONICAL.get(mime_type, mime_type)
     try:
         builder = c2pa.Builder(manifest_dict)
+
+        # Add ingredient if provided (provenance chain)
+        if ingredient_bytes and ingredient_mime:
+            ingredient_json = {
+                "title": f"C2PA Conformance Test -- {fmt.name} (original)",
+                "relationship": "parentOf",
+            }
+            builder.add_ingredient(
+                ingredient_json,
+                _BUILDER_MIME_CANONICAL.get(ingredient_mime, ingredient_mime),
+                io.BytesIO(ingredient_bytes),
+            )
+
         dest = io.BytesIO()
         builder.sign(signer, builder_mime, io.BytesIO(fixture_bytes), dest)
         dest.seek(0)
@@ -1104,6 +1125,27 @@ def run() -> list[FormatResult]:
             log.error("  Sign error: %s", e)
             results.append(result)
             continue
+
+        # Step 2b: Re-sign with ingredient (provenance chain / c2pa.edited)
+        # Takes the signed output and re-signs it, referencing the original as an ingredient.
+        if fmt.pipeline == "c2pa_builder":
+            try:
+                ingredient_signed, ingredient_iid, _ = sign_with_c2pa_builder(
+                    signed_bytes,  # use the signed file as both source and ingredient
+                    fmt.mime_type,
+                    fmt,
+                    private_key_pem,
+                    cert_chain_pem,
+                    ingredient_bytes=signed_bytes,
+                    ingredient_mime=fmt.mime_type,
+                    action="c2pa.edited",
+                )
+                ingredient_stem = fmt.output_stem or "signed_test"
+                ingredient_path = SIGNED_DIR / f"{ingredient_stem}_ingredient{fmt.extension}"
+                ingredient_path.write_bytes(ingredient_signed)
+                log.info("  Ingredient re-sign: %d bytes -> %s", len(ingredient_signed), ingredient_path.name)
+            except Exception as e:
+                log.warning("  Ingredient re-sign failed (non-fatal): %s", e)
 
         # Step 3: Verify
         try:

@@ -44,6 +44,8 @@ async def sign_image(
     action: str = "c2pa.created",
     image_quality: int = 95,
     digital_source_type: Optional[str] = None,
+    ingredient_data: Optional[bytes] = None,
+    ingredient_mime: Optional[str] = None,
 ) -> SignedImageResult:
     """
     Sign an image with a C2PA manifest (JUMBF embedding).
@@ -163,6 +165,13 @@ async def sign_image(
         # The original mime_type is preserved in the returned SignedImageResult.
         c2pa_mime = canonicalize_mime_type(mime_type)
         builder = c2pa.Builder(manifest_dict)
+
+        # Add ingredient if provided (C2PA provenance chain)
+        if ingredient_data and ingredient_mime:
+            ingredient_json = {"title": title, "relationship": "parentOf"}
+            builder.add_ingredient(ingredient_json, ingredient_mime, BytesIO(ingredient_data))
+            logger.info("Added ingredient to image manifest: mime=%s size=%d", ingredient_mime, len(ingredient_data))
+
         dest = BytesIO()
         manifest_bytes = builder.sign(
             signer,

@@ -35,6 +35,7 @@ def build_c2pa_manifest_dict(
     custom_assertions: List[dict],
     rights_data: dict,
     digital_source_type: Optional[str] = None,
+    ingredient_title: Optional[str] = None,
 ) -> dict:
     """Build a C2PA manifest definition dict for signing.
 

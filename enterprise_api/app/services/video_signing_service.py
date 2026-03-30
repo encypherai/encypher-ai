@@ -43,6 +43,8 @@ async def sign_video(
     signer_cert_chain_pem: str,
     action: str = "c2pa.created",
     digital_source_type: Optional[str] = None,
+    ingredient_data: Optional[bytes] = None,
+    ingredient_mime: Optional[str] = None,
 ) -> SignedVideoResult:
     """Sign a video file with a C2PA manifest.
 
@@ -119,6 +121,12 @@ async def sign_video(
 
     try:
         builder = c2pa.Builder(manifest_dict)
+
+        if ingredient_data and ingredient_mime:
+            ingredient_json = {"title": title, "relationship": "parentOf"}
+            builder.add_ingredient(ingredient_json, ingredient_mime, BytesIO(ingredient_data))
+            logger.info("Added ingredient to video manifest: mime=%s size=%d", ingredient_mime, len(ingredient_data))
+
         dest = BytesIO()
         manifest_bytes = builder.sign(
             signer,
