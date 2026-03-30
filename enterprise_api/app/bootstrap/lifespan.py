@@ -134,10 +134,12 @@ def _apply_content_database_schema_patches(primary_db_url: str) -> None:
 
 async def _load_trust_lists() -> None:
     from app.utils.c2pa_trust_list import (
+        C2PA_ALLOWED_LIST_URL,
         C2PA_TRUST_LIST_URL,
         C2PA_TSA_TRUST_LIST_URL,
         get_trust_list_metadata,
         get_tsa_trust_list_metadata,
+        refresh_allowed_list,
         refresh_trust_list,
         refresh_tsa_trust_list,
         set_revocation_denylist,
@@ -147,6 +149,7 @@ async def _load_trust_lists() -> None:
 
     trust_list_url = settings.c2pa_trust_list_url or C2PA_TRUST_LIST_URL
     tsa_trust_list_url = settings.c2pa_tsa_trust_list_url or C2PA_TSA_TRUST_LIST_URL
+    allowed_list_url = settings.c2pa_allowed_list_url or C2PA_ALLOWED_LIST_URL
 
     set_revocation_denylist(
         serial_numbers=settings.c2pa_revoked_certificate_serials_set,
@@ -184,6 +187,12 @@ async def _load_trust_lists() -> None:
         tsa_count,
         tsa_metadata.get("fingerprint"),
     )
+
+    try:
+        allowed_count = await refresh_allowed_list(url=allowed_list_url)
+        logger.info("C2PA allowed end-entity list loaded: %s certificates", allowed_count)
+    except Exception as exc:
+        logger.warning("Failed to fetch C2PA allowed list: %s", exc)
 
 
 @asynccontextmanager

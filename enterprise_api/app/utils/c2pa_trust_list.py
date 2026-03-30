@@ -1,11 +1,12 @@
 """
 C2PA Trust List for certificate chain validation.
 
-Trusted CAs from https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem:
-- Google (C2PA Root CA G3)
-- SSL.com (C2PA RSA/ECC Root CA 2025)
-- DigiCert (RSA4096/ECC P384 Root for C2PA G1)
-- Adobe, Trufo, vivo, Xiaomi, Irdeto
+Trust anchors sourced from https://github.com/contentauth/verify-site/tree/main/static/trust
+(the same trust store used by https://contentcredentials.org/verify):
+- anchors.pem: root CA trust anchors (Google, SSL.com, DigiCert, Adobe, Truepic,
+  Leica, Microsoft, Canon, Nikon, Sony, Samsung, Fujifilm, and others)
+- allowed.pem: explicitly trusted end-entity certificates
+- store.cfg: accepted EKU OIDs
 """
 
 import hashlib
@@ -26,9 +27,22 @@ from cryptography.x509 import Certificate, ocsp as x509_ocsp
 
 logger = logging.getLogger(__name__)
 
-C2PA_TRUST_LIST_URL = "https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TRUST-LIST.pem"
+C2PA_TRUST_LIST_URL = "https://raw.githubusercontent.com/contentauth/verify-site/main/static/trust/anchors.pem"
 C2PA_TSA_TRUST_LIST_URL = "https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TSA-TRUST-LIST.pem"
+C2PA_ALLOWED_LIST_URL = "https://raw.githubusercontent.com/contentauth/verify-site/main/static/trust/allowed.pem"
 C2PA_CLAIM_SIGNING_EKU_OID = "1.3.6.1.4.1.62558.2.1"
+
+# EKU OIDs accepted by the C2PA ecosystem (from verify-site store.cfg)
+C2PA_TRUST_CONFIG = "\n".join(
+    [
+        "1.3.6.1.5.5.7.3.4",  # id-kp-emailProtection
+        "1.3.6.1.5.5.7.3.36",  # id-kp-documentSigning
+        "1.3.6.1.5.5.7.3.8",  # id-kp-timeStamping
+        "1.3.6.1.5.5.7.3.9",  # id-kp-OCSPSigning
+        "1.3.6.1.4.1.311.76.59.1.9",  # MS C2PA Signing
+        "1.3.6.1.4.1.62558.2.1",  # c2pa-claim_signing OID
+    ]
+)
 
 _trust_anchors: Optional[List[Certificate]] = None
 _trust_anchors_pem: Optional[str] = None
@@ -41,6 +55,9 @@ _tsa_trust_anchors_pem: Optional[str] = None
 _tsa_trust_list_fingerprint: Optional[str] = None
 _tsa_trust_list_loaded_at: Optional[datetime] = None
 _tsa_trust_list_source: Optional[str] = None
+
+_allowed_list_pem: Optional[str] = None
+_allowed_list_loaded_at: Optional[datetime] = None
 
 _revoked_serial_numbers: set[str] = set()
 _revoked_fingerprints: set[str] = set()
@@ -156,6 +173,32 @@ def set_revocation_denylist(*, serial_numbers: set[str], fingerprints: set[str])
 def get_trust_anchors() -> List[Certificate]:
     """Get loaded trust anchors."""
     return _trust_anchors or []
+
+
+def get_trust_anchors_pem() -> Optional[str]:
+    """Get loaded trust anchors as a PEM string (for passing to c2pa-python)."""
+    return _trust_anchors_pem
+
+
+def set_allowed_list_pem(pem_data: str) -> int:
+    """Set the allowed end-entity certificate list. Returns count loaded."""
+    global _allowed_list_pem, _allowed_list_loaded_at
+    _allowed_list_pem = pem_data
+    _allowed_list_loaded_at = datetime.now(timezone.utc)
+    count = pem_data.count("-----BEGIN CERTIFICATE-----")
+    logger.info("Loaded %d C2PA allowed end-entity certificates", count)
+    return count
+
+
+def get_allowed_list_pem() -> Optional[str]:
+    """Get loaded allowed list as a PEM string (for passing to c2pa-python)."""
+    return _allowed_list_pem
+
+
+async def refresh_allowed_list(*, url: str) -> int:
+    """Fetch and load the allowed end-entity certificate list."""
+    pem_data = await fetch_trust_list(url)
+    return set_allowed_list_pem(pem_data)
 
 
 def get_tsa_trust_anchors() -> List[Certificate]:

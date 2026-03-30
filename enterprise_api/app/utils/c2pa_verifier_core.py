@@ -113,7 +113,34 @@ def verify_c2pa(
     try:
         import c2pa
 
-        reader = c2pa.Reader(effective_mime, io.BytesIO(data))
+        from app.utils.c2pa_trust_list import (
+            C2PA_TRUST_CONFIG,
+            get_allowed_list_pem,
+            get_trust_anchors_pem,
+        )
+
+        context = None
+        trust_pem = get_trust_anchors_pem()
+        if trust_pem:
+            trust_settings: dict = {
+                "trust_anchors": trust_pem,
+                "trust_config": C2PA_TRUST_CONFIG,
+            }
+            allowed_pem = get_allowed_list_pem()
+            if allowed_pem:
+                trust_settings["allowed_list"] = allowed_pem
+
+            settings = c2pa.Settings.from_dict(
+                {
+                    "trust": trust_settings,
+                    "verify": {
+                        "verify_trust": True,
+                    },
+                }
+            )
+            context = c2pa.Context(settings=settings)
+
+        reader = c2pa.Reader(effective_mime, io.BytesIO(data), context=context)
         manifest_json = reader.json()
         manifest_data = json.loads(manifest_json) if manifest_json else {}
 
