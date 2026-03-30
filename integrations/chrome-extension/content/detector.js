@@ -318,11 +318,19 @@ function _getStatusMetadata(status) {
 function _markerTypeLabel(markerType, compact = false) {
   if (compact) {
     return markerType === 'c2pa' ? 'C2PA'
+      : markerType === 'c2pa_image' ? 'C2PA'
+      : markerType === 'c2pa_audio' ? 'C2PA'
+      : markerType === 'c2pa_video' ? 'C2PA'
+      : markerType === 'c2pa_document' ? 'C2PA'
       : markerType === 'encypher' ? 'Encypher'
       : markerType === 'micro' ? 'Micro-Embedding'
       : '';
   }
   return markerType === 'c2pa' ? 'C2PA Text Manifest'
+    : markerType === 'c2pa_image' ? 'C2PA Image Manifest'
+    : markerType === 'c2pa_audio' ? 'C2PA Audio Manifest'
+    : markerType === 'c2pa_video' ? 'C2PA Video Manifest'
+    : markerType === 'c2pa_document' ? 'C2PA Document Manifest'
     : markerType === 'encypher' ? 'Encypher Format'
     : markerType === 'micro' ? 'Encypher Micro-Embedding'
     : 'Unknown';
@@ -1636,13 +1644,27 @@ async function _verifyImageAndBadge(imgElement, srcUrl) {
     });
 
     const status = result?.success ? 'verified' : (result?.error ? 'error' : 'invalid');
+    const c2paManifest = result?.data?.c2pa_manifest || null;
+
+    // Extract signer from the active manifest's signature_info
+    let signer = null;
+    if (c2paManifest) {
+      const activeLabel = c2paManifest.active_manifest;
+      const activeManifest = activeLabel && c2paManifest.manifests?.[activeLabel];
+      const sigInfo = activeManifest?.signature_info;
+      if (sigInfo) {
+        signer = sigInfo.issuer || sigInfo.common_name || null;
+      }
+    }
+
     const details = {
       detectionId,
       valid: result?.success || false,
-      signer: null,
+      markerType: c2paManifest ? 'c2pa_image' : undefined,
+      signer,
       date: result?.data?.verified_at || null,
       overall_status: result?.data?.overall_status || null,
-      c2pa_manifest: result?.data?.c2pa_manifest || null,
+      c2pa_manifest: c2paManifest,
       cryptographically_verified: result?.data?.cryptographically_verified || false,
       hash: result?.data?.hash || null,
       document_id: result?.data?.document_id || null,
@@ -1971,14 +1993,32 @@ async function _verifyMediaAndBadge(mediaElement, srcUrl, mediaType) {
     });
 
     const status = result?.success ? 'verified' : (result?.error ? 'error' : 'invalid');
+    const manifestData = result?.data?.manifest_data || null;
+
+    // Extract signer from the active manifest's signature_info
+    let signer = result?.data?.signer || null;
+    if (!signer && manifestData) {
+      const activeLabel = manifestData.active_manifest;
+      const activeManifest = activeLabel && manifestData.manifests?.[activeLabel];
+      const sigInfo = activeManifest?.signature_info;
+      if (sigInfo) {
+        signer = sigInfo.issuer || sigInfo.common_name || null;
+      }
+    }
+
+    const c2paMarkerType = mediaType === 'audio' ? 'c2pa_audio'
+      : mediaType === 'video' ? 'c2pa_video'
+      : undefined;
+
     const details = {
       detectionId,
       valid: result?.success || false,
-      signer: result?.data?.signer || null,
+      markerType: manifestData ? c2paMarkerType : undefined,
+      signer,
       date: result?.data?.verified_at || null,
       c2pa_manifest_valid: result?.data?.c2pa_manifest_valid || false,
       c2pa_instance_id: result?.data?.c2pa_instance_id || null,
-      manifest_data: result?.data?.manifest_data || null,
+      manifest_data: manifestData,
       error: result?.error || null,
     };
 
@@ -2246,13 +2286,27 @@ async function _verifyDocumentAndBadge(docElement, srcUrl) {
     });
 
     const status = result?.success ? 'verified' : (result?.error ? 'error' : 'invalid');
+    const manifestData = result?.data?.manifest_data || null;
+
+    // Extract signer from the active manifest's signature_info
+    let signer = result?.data?.signer || null;
+    if (!signer && manifestData) {
+      const activeLabel = manifestData.active_manifest;
+      const activeManifest = activeLabel && manifestData.manifests?.[activeLabel];
+      const sigInfo = activeManifest?.signature_info;
+      if (sigInfo) {
+        signer = sigInfo.issuer || sigInfo.common_name || null;
+      }
+    }
+
     const details = {
       detectionId,
       valid: result?.success || false,
-      signer: result?.data?.signer || null,
+      markerType: manifestData ? 'c2pa_document' : undefined,
+      signer,
       date: result?.data?.verified_at || null,
       c2pa_manifest_valid: result?.data?.c2pa_manifest_valid || false,
-      manifest_data: result?.data?.manifest_data || null,
+      manifest_data: manifestData,
       error: result?.error || null,
     };
 
