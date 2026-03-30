@@ -1091,26 +1091,10 @@ function getSiteAdapter(editor) {
     }
   }
 
-  if (hostname === 'chatgpt.com' || hostname === 'chat.openai.com') {
-    const threadBottom = document.querySelector('#thread-bottom-container');
-    const sendButton = threadBottom?.querySelector('[data-testid="send-button"]');
-    const footerActions = threadBottom?.querySelector('[data-testid="composer-footer-actions"]');
-    return {
-      key: 'chatgpt',
-      tryAttach(button) {
-        const cluster = sendButton?.parentElement;
-        if (cluster && sendButton && !cluster.contains(button)) {
-          cluster.insertBefore(button, sendButton);
-          return true;
-        }
-        if (footerActions && !footerActions.contains(button)) {
-          footerActions.appendChild(button);
-          return true;
-        }
-        return false;
-      }
-    };
-  }
+  // ChatGPT: intentionally NOT hosted inline.  ChatGPT's React reconciliation
+  // replaces the send-button cluster on every keystroke, which detaches any
+  // foreign element we inject there.  The floating positioner (position: fixed
+  // on document.body) is immune to React DOM churn.
 
   if (hostname === 'claude.ai') {
     const root = editor?.closest?.('[data-testid="chat-input-grid-container"]')
@@ -1277,8 +1261,6 @@ function shouldPreferHostedPlacement() {
     || hostname === 'x.com'
     || hostname === 'twitter.com'
     || hostname === 'medium.com'
-    || hostname === 'chatgpt.com'
-    || hostname === 'chat.openai.com'
     || hostname === 'claude.ai'
     || hostname === 'www.linkedin.com'
     || hostname === 'linkedin.com'
