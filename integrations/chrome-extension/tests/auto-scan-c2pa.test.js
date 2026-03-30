@@ -192,3 +192,104 @@ describe('options: auto-scan images toggle', () => {
     assert.match(optionsJs, /saveSetting\(['"]autoScanImages['"]/);
   });
 });
+
+// -----------------------------------------------------------------------
+// Auto-Scan Media Pipeline (audio/video)
+// -----------------------------------------------------------------------
+describe('detector: auto-scan media pipeline', () => {
+  it('defines _autoScanMedia function', () => {
+    assert.match(detectorSource, /async function _autoScanMedia\(\)/);
+  });
+
+  it('has configurable media scan limit (AUTO_SCAN_MAX_MEDIA = 10)', () => {
+    assert.match(detectorSource, /AUTO_SCAN_MAX_MEDIA\s*=\s*10/);
+  });
+
+  it('checks autoScanMedia setting before running', () => {
+    assert.match(detectorSource, /autoScanMedia/);
+  });
+
+  it('calls _autoScanMedia after audio/video inventory in scanPage', () => {
+    const scanPageStart = detectorSource.indexOf('async function scanPage');
+    const scanPageEnd = detectorSource.indexOf('function _getOnlineEditorRoots') > scanPageStart
+      ? detectorSource.indexOf('function _getOnlineEditorRoots')
+      : detectorSource.length;
+    const scanPageFn = detectorSource.slice(scanPageStart, scanPageEnd);
+    assert.match(scanPageFn, /_autoScanMedia\(\)/);
+  });
+
+  it('auto-verifies media where C2PA header is detected', () => {
+    const fnStart = detectorSource.indexOf('async function _autoScanMedia');
+    const fnEnd = detectorSource.indexOf('function _scanAudioVideo', fnStart);
+    const mediaFn = detectorSource.slice(fnStart, fnEnd);
+    assert.match(mediaFn, /_verifyMediaAndBadge/);
+  });
+
+  it('triggers _autoScanMedia from _scanAudioVideo when new elements found', () => {
+    const fnStart = detectorSource.indexOf('function _scanAudioVideo');
+    const fnEnd = detectorSource.indexOf('function injectMediaBadge', fnStart);
+    const avFn = detectorSource.slice(fnStart, fnEnd);
+    assert.match(avFn, /_autoScanMedia\(\)/);
+  });
+});
+
+// -----------------------------------------------------------------------
+// Auto-Scan Documents Pipeline
+// -----------------------------------------------------------------------
+describe('detector: auto-scan documents pipeline', () => {
+  it('defines _autoScanDocuments function', () => {
+    assert.match(detectorSource, /async function _autoScanDocuments\(\)/);
+  });
+
+  it('has configurable document scan limit (AUTO_SCAN_MAX_DOCUMENTS = 5)', () => {
+    assert.match(detectorSource, /AUTO_SCAN_MAX_DOCUMENTS\s*=\s*5/);
+  });
+
+  it('calls _autoScanDocuments after document inventory in scanPage', () => {
+    const scanPageStart = detectorSource.indexOf('async function scanPage');
+    const scanPageEnd = detectorSource.indexOf('function _getOnlineEditorRoots') > scanPageStart
+      ? detectorSource.indexOf('function _getOnlineEditorRoots')
+      : detectorSource.length;
+    const scanPageFn = detectorSource.slice(scanPageStart, scanPageEnd);
+    assert.match(scanPageFn, /_autoScanDocuments\(\)/);
+  });
+
+  it('auto-verifies documents where C2PA header is detected', () => {
+    const fnStart = detectorSource.indexOf('async function _autoScanDocuments');
+    const fnEnd = detectorSource.indexOf('function _isDocumentUrl', fnStart);
+    const docFn = detectorSource.slice(fnStart, fnEnd);
+    assert.match(docFn, /_verifyDocumentAndBadge/);
+  });
+
+  it('triggers _autoScanDocuments from _scanDocuments when new elements found', () => {
+    const fnStart = detectorSource.indexOf('function _scanDocuments');
+    const fnEnd = detectorSource.indexOf('async function _autoScanDocuments', fnStart);
+    const scanFn = detectorSource.slice(fnStart, fnEnd);
+    assert.match(scanFn, /_autoScanDocuments\(\)/);
+  });
+});
+
+// -----------------------------------------------------------------------
+// Options: auto-scan media toggle
+// -----------------------------------------------------------------------
+describe('options: auto-scan media toggle', () => {
+  it('has autoScanMedia checkbox in options HTML', () => {
+    assert.match(optionsHtml, /id="autoScanMedia"/);
+  });
+
+  it('labels the toggle for audio, video, and documents', () => {
+    assert.match(optionsHtml, /Auto-scan audio, video, and documents for C2PA provenance/);
+  });
+
+  it('options JS reads autoScanMedia setting', () => {
+    assert.match(optionsJs, /autoScanMedia/);
+  });
+
+  it('options JS includes autoScanMedia in DEFAULT_SETTINGS', () => {
+    assert.match(optionsJs, /autoScanMedia:\s*true/);
+  });
+
+  it('options JS saves autoScanMedia on change', () => {
+    assert.match(optionsJs, /saveSetting\(['"]autoScanMedia['"]/);
+  });
+});

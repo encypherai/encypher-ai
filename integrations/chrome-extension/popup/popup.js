@@ -246,7 +246,9 @@ async function locateEmbeddingOnPage(detectionId) {
     });
 
     if (!response?.found) {
-      await rescanPage();
+      // Element no longer in DOM (dynamic page content). Do not rescan
+      // automatically - the user can press Rescan manually if needed.
+      console.warn(`[Encypher] Element ${detectionId} not found on page`);
     }
   } catch (error) {
     console.error('Error locating embedding:', error);

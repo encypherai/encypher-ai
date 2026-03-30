@@ -185,42 +185,18 @@
   background: var(--ency-neutral-gray);
 }
 
-/* Tooltip */
+/* Tooltip — mounted on document.body to escape host-page stacking contexts.
+   Visibility is controlled by JS (display: none / display: ''). */
 .encypher-badge__tooltip {
   position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
   color: var(--ency-white);
   font-weight: normal;
   line-height: 1.4;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
   z-index: 2147483647;
   text-align: left;
   pointer-events: none;
-}
-
-.encypher-badge__tooltip::before {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  right: 8px;
-  border: 6px solid transparent;
-  border-bottom-color: rgba(27, 47, 80, 0.95);
-}
-
-.encypher-badge:hover .encypher-badge__tooltip,
-.encypher-badge:focus .encypher-badge__tooltip:hover {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Hide hover tooltip when the click detail panel is open */
-.encypher-badge--panel-open .encypher-badge__tooltip {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
+  font-family: var(--ency-font-sans);
+  font-size: 13px;
 }
 
 .encypher-badge__tooltip-card {
@@ -476,12 +452,6 @@
 .encypher-badge--media .encypher-badge__icon {
   width: 14px;
   height: 14px;
-}
-
-/* Ensure the tooltip opens below/beside the badge without overlapping the image */
-.encypher-badge--media .encypher-badge__tooltip {
-  right: 0;
-  top: calc(100% + 6px);
 }
 
 /* ------------------------------------------------------------------ */

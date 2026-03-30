@@ -217,12 +217,19 @@ function isVariationSelector(codePoint) {
 // LRM (0x200E) / RLM (0x200F) are the discriminating chars vs base-4 ZW.
 const LEGACY_SAFE_CHARS = new Set([0x200C, 0x200D, 0x034F, 0x180E, 0x200E, 0x200F]);
 
+// Minimum legacy-safe chars required to consider text a candidate embedding.
+// Real ZWC embeddings use 25+ base-6 digits. Legitimate bidi text has 1-3 LRM/RLM
+// per text node (e.g. Google's language selector appends one LRM to each option).
+const _LEGACY_SAFE_MIN_CHARS = 8;
+
 function _hasLegacySafeChars(text) {
+  let count = 0;
   for (const char of text) {
     const cp = char.codePointAt(0);
     // CGJ, MVS, LRM, RLM are strong indicators — much rarer than ZWNJ/ZWJ in normal text
     if (cp === 0x034F || cp === 0x180E || cp === 0x200E || cp === 0x200F) {
-      return true;
+      count++;
+      if (count >= _LEGACY_SAFE_MIN_CHARS) return true;
     }
   }
   return false;
@@ -348,30 +355,92 @@ function _buildC2paManifestDisclosure(details) {
   </div>`;
 }
 
-function _buildHoverTooltipHtml({ details, status }) {
+/**
+ * Global hover tooltip - mounted on document.body so it escapes any
+ * stacking context the host page creates around badge ancestors.
+ */
+let _globalTooltip = null;
+let _tooltipHideTimer = null;
+
+function _getGlobalTooltip() {
+  if (_globalTooltip && _globalTooltip.isConnected) return _globalTooltip;
+  const mountRoot = _getBadgeMountRoot();
+  if (!mountRoot) return null;
+  _globalTooltip = document.createElement('div');
+  _globalTooltip.className = 'encypher-badge__tooltip';
+  _globalTooltip.setAttribute('role', 'status');
+  _globalTooltip.setAttribute('aria-live', 'polite');
+  _globalTooltip.style.display = 'none';
+  mountRoot.appendChild(_globalTooltip);
+  return _globalTooltip;
+}
+
+function _showBadgeTooltip(badge) {
+  if (badge.classList.contains('encypher-badge--panel-open')) return;
+  const tip = _getGlobalTooltip();
+  if (!tip) return;
+  clearTimeout(_tooltipHideTimer);
+
+  const status = badge._encypherStatus || 'unknown';
+  const details = badge._encypherDetails || {};
   const statusMeta = _getStatusMetadata(status);
   const signingIdentity = _resolveSigningIdentity(details);
   const identityValue = signingIdentity ? _escapeHtml(signingIdentity) : 'Unknown signer';
 
-  return `<span class="encypher-badge__tooltip" role="status" aria-live="polite">
-    <div class="encypher-badge__tooltip-card">
-      <div class="encypher-detail-panel__header">
-        <span class="encypher-detail-panel__logo">${ENCYPHER_LOGO_SVG}</span>
-        <span class="encypher-detail-panel__title">Encypher Verification</span>
-      </div>
-      <div class="encypher-badge__tooltip-body">
-        <div class="encypher-badge__tooltip-row">
-          <span class="encypher-badge__tooltip-label">Status</span>
-          <span class="encypher-badge__tooltip-value" style="color:${statusMeta.color};font-weight:600">${_escapeHtml(statusMeta.label)}</span>
-        </div>
-        <div class="encypher-badge__tooltip-row">
-          <span class="encypher-badge__tooltip-label">Signing Identity</span>
-          <span class="encypher-badge__tooltip-value">${identityValue}</span>
-        </div>
-        <div class="encypher-badge__tooltip-hint">Click for more information</div>
-      </div>
+  tip.innerHTML = `<div class="encypher-badge__tooltip-card">
+    <div class="encypher-detail-panel__header">
+      <span class="encypher-detail-panel__logo">${ENCYPHER_LOGO_SVG}</span>
+      <span class="encypher-detail-panel__title">Encypher Verification</span>
     </div>
-  </span>`;
+    <div class="encypher-badge__tooltip-body">
+      <div class="encypher-badge__tooltip-row">
+        <span class="encypher-badge__tooltip-label">Status</span>
+        <span class="encypher-badge__tooltip-value" style="color:${statusMeta.color};font-weight:600">${_escapeHtml(statusMeta.label)}</span>
+      </div>
+      <div class="encypher-badge__tooltip-row">
+        <span class="encypher-badge__tooltip-label">Signing Identity</span>
+        <span class="encypher-badge__tooltip-value">${identityValue}</span>
+      </div>
+      <div class="encypher-badge__tooltip-hint">Click for more information</div>
+    </div>
+  </div>`;
+
+  // Position using fixed coordinates from badge bounding rect
+  const { x: iframeX, y: iframeY } = _getIframeOffset();
+  const mountWin = (_isEditableBodyFrame() ? (() => { try { return window.parent; } catch(e) { return window; } })() : window);
+  const rect = badge.getBoundingClientRect();
+  const tipWidth = 270; // matches .encypher-badge__tooltip-card width
+
+  let top = rect.bottom + iframeY + mountWin.scrollY + 8;
+  let left = rect.right + iframeX + mountWin.scrollX - tipWidth;
+  if (left < 8) left = 8;
+  if (left + tipWidth > mountWin.innerWidth - 8) {
+    left = mountWin.innerWidth - tipWidth - 8;
+  }
+  // Flip above badge if it would overflow the viewport bottom
+  tip.style.display = '';
+  const tipHeight = tip.offsetHeight || 100;
+  if (top + tipHeight > mountWin.innerHeight + mountWin.scrollY - 8) {
+    top = rect.top + iframeY + mountWin.scrollY - tipHeight - 8;
+  }
+
+  tip.style.top = `${top}px`;
+  tip.style.left = `${left}px`;
+}
+
+function _hideBadgeTooltip() {
+  _tooltipHideTimer = setTimeout(() => {
+    if (_globalTooltip) _globalTooltip.style.display = 'none';
+  }, 80);
+}
+
+function _attachBadgeTooltip(badge, details, status) {
+  badge._encypherStatus = status;
+  badge._encypherDetails = details;
+  badge.addEventListener('mouseenter', () => _showBadgeTooltip(badge));
+  badge.addEventListener('mouseleave', _hideBadgeTooltip);
+  badge.addEventListener('focus', () => _showBadgeTooltip(badge));
+  badge.addEventListener('blur', _hideBadgeTooltip);
 }
 
 function _dedupeDetectionsByElement(detections) {
@@ -938,7 +1007,6 @@ function injectBadge(element, status, details) {
   badge.innerHTML = `
     <span class="encypher-badge__icon">${ENCYPHER_LOGO_SVG}</span>
     ${statusOverlay[status] || ''}
-    ${_buildHoverTooltipHtml({ details, status })}
   `;
 
   // Store full details on the badge for the click handler
@@ -958,6 +1026,9 @@ function injectBadge(element, status, details) {
       _showDetailPanel(badge, fullDetails);
     }
   });
+
+  // Hover tooltip (mounted on body to escape stacking contexts)
+  _attachBadgeTooltip(badge, fullDetails, status);
 
   // In an editable-body iframe (e.g. Zoho Mail compose), document.body IS the
   // email content, so we must never append badges there. Use the parent-frame
@@ -1376,19 +1447,23 @@ function _cleanupAfterVerification(textHash, result) {
 
 const MIN_IMAGE_DIMENSION = 50;
 const AUTO_SCAN_MAX_IMAGES = 20;
+const AUTO_SCAN_MAX_MEDIA = 10;       // audio + video combined
+const AUTO_SCAN_MAX_DOCUMENTS = 5;    // embedded PDFs, EPUB, DOCX
 const AUTO_SCAN_MAX_CONCURRENT = 6;
 const AUTO_SCAN_BANDWIDTH_LIMIT = 10 * 1024 * 1024; // 10MB per page
 const AUTO_SCAN_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 
 let _autoScanBytesUsed = 0;
 let _autoScanEnabled = true;
+let _autoScanMediaEnabled = true;
 let _autoScanCheckedCount = 0;
 let _autoScanPageCooldown = new Map(); // url -> timestamp
 
-// Load auto-scan setting from storage
+// Load auto-scan settings from storage
 try {
-  chrome.storage.sync.get({ autoScanImages: true }, (result) => {
+  chrome.storage.sync.get({ autoScanImages: true, autoScanMedia: true }, (result) => {
     _autoScanEnabled = result.autoScanImages !== false;
+    _autoScanMediaEnabled = result.autoScanMedia !== false;
   });
 } catch { /* storage may not be available in tests */ }
 
@@ -1517,6 +1592,8 @@ function injectImageBadge(imgElement, status, details) {
       _showDetailPanel(badge, fullDetails);
     }
   });
+
+  _attachBadgeTooltip(badge, fullDetails, status);
 
   // Wrap the image if not already wrapped
   let wrapper = imgElement.closest('.encypher-image-badge-wrapper');
@@ -1678,8 +1755,91 @@ async function _autoScanImages() {
 }
 
 /**
+ * Run the auto-scan pipeline on inventoried audio/video elements.
+ * Uses lightweight Range requests to detect C2PA headers, then auto-verifies
+ * media that likely has manifests.
+ */
+async function _autoScanMedia() {
+  if (!_autoScanMediaEnabled) return;
+
+  // Cooldown: don't rescan same page within 5 minutes
+  const cooldownKey = window.location.href + ':media';
+  const lastScan = _autoScanPageCooldown.get(cooldownKey);
+  if (lastScan && Date.now() - lastScan < AUTO_SCAN_COOLDOWN_MS) return;
+  _autoScanPageCooldown.set(cooldownKey, Date.now());
+
+  // Load setting
+  try {
+    const settings = await chrome.storage.sync.get({ autoScanMedia: true });
+    if (!settings.autoScanMedia) return;
+  } catch { return; }
+
+  // Collect unverified media up to the limit
+  const candidates = [];
+  for (const src of _processedAudioVideo) {
+    if (_audioVideoVerificationState.has(src)) continue;
+    if (candidates.length >= AUTO_SCAN_MAX_MEDIA) break;
+    candidates.push(src);
+  }
+
+  if (candidates.length === 0) return;
+
+  _debugLog('INFO', 'detector', `Auto-scan: checking ${candidates.length} audio/video elements for C2PA headers`);
+
+  // Process in batches with concurrency limit
+  let active = 0;
+  const queue = [...candidates];
+
+  const processNext = async () => {
+    while (queue.length > 0 && active < AUTO_SCAN_MAX_CONCURRENT) {
+      if (_autoScanBytesUsed > AUTO_SCAN_BANDWIDTH_LIMIT) {
+        _debugLog('WARN', 'detector', `Auto-scan: bandwidth limit reached (${_autoScanBytesUsed} bytes), stopping`);
+        return;
+      }
+
+      const src = queue.shift();
+      if (!src || _audioVideoVerificationState.has(src)) continue;
+
+      active++;
+
+      try {
+        const hasC2pa = await _checkC2paHeader(src);
+        if (hasC2pa) {
+          _debugLog('INFO', 'detector', `Auto-scan: C2PA header detected in media ${src.slice(0, 80)}`);
+          // Find the DOM element - check direct src and <source> children
+          let mediaEl = document.querySelector(`audio[src="${CSS.escape(src)}"], video[src="${CSS.escape(src)}"]`);
+          if (!mediaEl) {
+            const sourceEl = document.querySelector(`audio source[src="${CSS.escape(src)}"], video source[src="${CSS.escape(src)}"]`);
+            if (sourceEl) mediaEl = sourceEl.closest('audio, video');
+          }
+          if (mediaEl) {
+            const mediaType = mediaEl.tagName.toLowerCase();
+            _verifyMediaAndBadge(mediaEl, src, mediaType);
+          }
+        }
+      } catch {
+        // Skip failed header checks
+      } finally {
+        active--;
+      }
+    }
+  };
+
+  const runBatch = () => {
+    if (queue.length === 0) return;
+    setTimeout(() => {
+      processNext().then(() => {
+        if (queue.length > 0) runBatch();
+      });
+    }, 0);
+  };
+
+  runBatch();
+}
+
+/**
  * Scan a DOM subtree for audio and video elements and build an inventory.
- * Does NOT auto-verify -- elements are verified on-demand via context menu or popup.
+ * Triggers automatic C2PA header checks for newly discovered elements.
  * Returns the count of newly discovered audio/video elements.
  */
 function _scanAudioVideo(root) {
@@ -1700,6 +1860,12 @@ function _scanAudioVideo(root) {
     _processedAudioVideo.add(src);
     newCount++;
   }
+
+  // Trigger auto-scan after inventory is updated
+  if (_autoScanMediaEnabled && newCount > 0) {
+    _autoScanMedia();
+  }
+
   return newCount;
 }
 
@@ -1760,6 +1926,8 @@ function injectMediaBadge(mediaElement, status, details) {
       _showDetailPanel(badge, fullDetails);
     }
   });
+
+  _attachBadgeTooltip(badge, fullDetails, status);
 
   // Wrap the element
   let wrapper = mediaElement.closest('.encypher-media-badge-wrapper');
@@ -1880,7 +2048,87 @@ function _scanDocuments(root) {
     }
   }
 
+  // Trigger auto-scan after inventory is updated
+  if (_autoScanMediaEnabled && newCount > 0) {
+    _autoScanDocuments();
+  }
+
   return newCount;
+}
+
+/**
+ * Run the auto-scan pipeline on inventoried document embeds.
+ * Uses lightweight Range requests to detect C2PA headers, then auto-verifies
+ * documents that likely have manifests.
+ */
+async function _autoScanDocuments() {
+  if (!_autoScanMediaEnabled) return;
+
+  const cooldownKey = window.location.href + ':documents';
+  const lastScan = _autoScanPageCooldown.get(cooldownKey);
+  if (lastScan && Date.now() - lastScan < AUTO_SCAN_COOLDOWN_MS) return;
+  _autoScanPageCooldown.set(cooldownKey, Date.now());
+
+  try {
+    const settings = await chrome.storage.sync.get({ autoScanMedia: true });
+    if (!settings.autoScanMedia) return;
+  } catch { return; }
+
+  const candidates = [];
+  for (const src of _processedDocuments) {
+    if (_documentVerificationState.has(src)) continue;
+    if (candidates.length >= AUTO_SCAN_MAX_DOCUMENTS) break;
+    candidates.push(src);
+  }
+
+  if (candidates.length === 0) return;
+
+  _debugLog('INFO', 'detector', `Auto-scan: checking ${candidates.length} documents for C2PA headers`);
+
+  let active = 0;
+  const queue = [...candidates];
+
+  const processNext = async () => {
+    while (queue.length > 0 && active < AUTO_SCAN_MAX_CONCURRENT) {
+      if (_autoScanBytesUsed > AUTO_SCAN_BANDWIDTH_LIMIT) {
+        _debugLog('WARN', 'detector', `Auto-scan: bandwidth limit reached (${_autoScanBytesUsed} bytes), stopping`);
+        return;
+      }
+
+      const src = queue.shift();
+      if (!src || _documentVerificationState.has(src)) continue;
+
+      active++;
+
+      try {
+        const hasC2pa = await _checkC2paHeader(src);
+        if (hasC2pa) {
+          _debugLog('INFO', 'detector', `Auto-scan: C2PA header detected in document ${src.slice(0, 80)}`);
+          const docEl = document.querySelector(
+            `embed[src="${CSS.escape(src)}"], object[data="${CSS.escape(src)}"], iframe[src="${CSS.escape(src)}"]`
+          );
+          if (docEl) {
+            _verifyDocumentAndBadge(docEl, src);
+          }
+        }
+      } catch {
+        // Skip failed header checks
+      } finally {
+        active--;
+      }
+    }
+  };
+
+  const runBatch = () => {
+    if (queue.length === 0) return;
+    setTimeout(() => {
+      processNext().then(() => {
+        if (queue.length > 0) runBatch();
+      });
+    }, 0);
+  };
+
+  runBatch();
 }
 
 /**
@@ -1957,6 +2205,8 @@ function injectDocumentBadge(docElement, status, details) {
       _showDetailPanel(badge, fullDetails);
     }
   });
+
+  _attachBadgeTooltip(badge, fullDetails, status);
 
   let wrapper = docElement.closest('.encypher-document-badge-wrapper');
   if (!wrapper) {
@@ -2094,16 +2344,18 @@ async function scanPage(root = document.body) {
     _autoScanImages();
   }
 
-  // Scan audio/video elements (inventory only -- on-demand verification)
+  // Scan audio/video elements (inventory + auto-scan for C2PA headers)
   const newAudioVideo = _scanAudioVideo(root);
   if (newAudioVideo > 0) {
     _debugLog('INFO', 'detector', `Audio/video scan: ${newAudioVideo} new elements inventoried (${_processedAudioVideo.size} total)`);
+    _autoScanMedia();
   }
 
-  // Scan embedded documents (PDF, EPUB, DOCX in embed/object/iframe)
+  // Scan embedded documents (inventory + auto-scan for C2PA headers)
   const newDocs = _scanDocuments(root);
   if (newDocs > 0) {
     _debugLog('INFO', 'detector', `Document scan: ${newDocs} new embeds inventoried (${_processedDocuments.size} total)`);
+    _autoScanDocuments();
   }
 
   // Wait for text verification to finish before returning (callers like RESCAN

@@ -384,29 +384,52 @@ describe('embedBytes helper', () => {
 
 // Replicated here because detector.js is a content script, not an ES module.
 const LEGACY_SAFE_STRONG_INDICATORS = new Set([0x034F, 0x180E, 0x200E, 0x200F]);
+const _LEGACY_SAFE_MIN_CHARS = 8;
 
 function hasLegacySafeChars(text) {
+  let count = 0;
   for (const char of text) {
-    if (LEGACY_SAFE_STRONG_INDICATORS.has(char.codePointAt(0))) return true;
+    if (LEGACY_SAFE_STRONG_INDICATORS.has(char.codePointAt(0))) {
+      count++;
+      if (count >= _LEGACY_SAFE_MIN_CHARS) return true;
+    }
   }
   return false;
 }
 
+// Helper: build a string with N legacy-safe indicator chars interspersed in text
+function _buildLegacyText(charCode, n) {
+  return 'text' + String.fromCodePoint(charCode).repeat(n) + 'end';
+}
+
 describe('_hasLegacySafeChars', () => {
-  it('returns true for CGJ (U+034F)', () => {
-    assert.strictEqual(hasLegacySafeChars('hello\u034Fworld'), true);
+  it('returns false for a single LRM (bidi control, not an embedding)', () => {
+    // Google language selector appends one LRM per option — must not trigger
+    assert.strictEqual(hasLegacySafeChars('Afrikaans\u200E'), false);
   });
 
-  it('returns true for MVS (U+180E)', () => {
-    assert.strictEqual(hasLegacySafeChars('test\u180Etext'), true);
+  it('returns false for a single RLM (bidi control, not an embedding)', () => {
+    assert.strictEqual(hasLegacySafeChars('marked\u200F'), false);
   });
 
-  it('returns true for LRM (U+200E)', () => {
-    assert.strictEqual(hasLegacySafeChars('\u200Emarked'), true);
+  it('returns false for a few scattered LRM/RLM (legitimate bidi usage)', () => {
+    assert.strictEqual(hasLegacySafeChars('\u200EHebrew\u200F text \u200Ewith\u200F bidi'), false);
   });
 
-  it('returns true for RLM (U+200F)', () => {
-    assert.strictEqual(hasLegacySafeChars('marked\u200F'), true);
+  it('returns true when >= 8 legacy-safe chars present (real embedding)', () => {
+    assert.strictEqual(hasLegacySafeChars(_buildLegacyText(0x200E, 8)), true);
+    assert.strictEqual(hasLegacySafeChars(_buildLegacyText(0x034F, 8)), true);
+    assert.strictEqual(hasLegacySafeChars(_buildLegacyText(0x180E, 8)), true);
+    assert.strictEqual(hasLegacySafeChars(_buildLegacyText(0x200F, 8)), true);
+  });
+
+  it('returns false at 7 legacy-safe chars (just under threshold)', () => {
+    assert.strictEqual(hasLegacySafeChars(_buildLegacyText(0x200E, 7)), false);
+  });
+
+  it('returns true for mixed indicator chars totalling >= 8', () => {
+    const mixed = 'signed\u034F\u034F\u180E\u180E\u200E\u200E\u200F\u200Ftext';
+    assert.strictEqual(hasLegacySafeChars(mixed), true);
   });
 
   it('returns false for plain text with no ZWC markers', () => {
@@ -421,11 +444,5 @@ describe('_hasLegacySafeChars', () => {
   it('returns false for variation selector chars (VS mode, not legacy_safe)', () => {
     const vsText = String.fromCodePoint(0xFE00, 0xFE01, 0xE0100);
     assert.strictEqual(hasLegacySafeChars(vsText), false);
-  });
-
-  it('returns true when legacy_safe marker is embedded in normal text', () => {
-    // Simulate a sentence with an embedded legacy_safe marker containing LRM
-    const textWithMarker = 'This is a signed sentence.\u200Csome\u200Dmore\u200Echars';
-    assert.strictEqual(hasLegacySafeChars(textWithMarker), true);
   });
 });

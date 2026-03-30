@@ -7,9 +7,11 @@ const detectorPath = path.resolve(process.cwd(), 'content', 'detector.js');
 const detectorSource = fs.readFileSync(detectorPath, 'utf8');
 
 describe('detector UI contract', () => {
-  it('defines a compact hover tooltip builder using detail-panel header styling', () => {
-    assert.match(detectorSource, /function\s+_buildHoverTooltipHtml\s*\(/);
-    assert.match(detectorSource, /encypher-detail-panel__header/);
+  it('defines a global hover tooltip system mounted on body to escape stacking contexts', () => {
+    assert.match(detectorSource, /function\s+_getGlobalTooltip\s*\(/);
+    assert.match(detectorSource, /function\s+_showBadgeTooltip\s*\(/);
+    assert.match(detectorSource, /function\s+_hideBadgeTooltip\s*\(/);
+    assert.match(detectorSource, /function\s+_attachBadgeTooltip\s*\(/);
     assert.match(detectorSource, /Signing Identity/);
     assert.match(detectorSource, /Click for more information/);
   });
