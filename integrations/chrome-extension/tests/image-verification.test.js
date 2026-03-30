@@ -507,7 +507,7 @@ describe('service worker: C2PA header detection', () => {
 
 describe('detector: auto-scan pipeline', () => {
   it('defines auto-scan configuration constants', () => {
-    assert.match(detectorSource, /AUTO_SCAN_MAX_IMAGES\s*=\s*20/);
+    assert.match(detectorSource, /AUTO_SCAN_MAX_IMAGES\s*=\s*50/);
     assert.match(detectorSource, /AUTO_SCAN_MAX_CONCURRENT\s*=\s*6/);
     assert.match(detectorSource, /AUTO_SCAN_BANDWIDTH_LIMIT/);
     assert.match(detectorSource, /AUTO_SCAN_COOLDOWN_MS/);
@@ -522,8 +522,8 @@ describe('detector: auto-scan pipeline', () => {
   });
 
   it('respects bandwidth circuit breaker', () => {
-    assert.match(detectorSource, /AUTO_SCAN_BANDWIDTH_LIMIT/);
-    assert.match(detectorSource, /_autoScanBytesUsed/);
+    assert.match(detectorSource, /AUTO_SCAN_BANDWIDTH_LIMIT_IMAGES/);
+    assert.match(detectorSource, /_autoScanImageBytes/);
   });
 
   it('respects cooldown period', () => {
@@ -548,7 +548,7 @@ describe('detector: auto-scan pipeline', () => {
   });
 
   it('resets auto-scan state on RESCAN', () => {
-    assert.match(detectorSource, /_autoScanBytesUsed\s*=\s*0/);
+    assert.match(detectorSource, /_autoScanImageBytes\s*=\s*0/);
     assert.match(detectorSource, /_autoScanCheckedCount\s*=\s*0/);
     assert.match(detectorSource, /_autoScanPageCooldown\.clear\(\)/);
   });

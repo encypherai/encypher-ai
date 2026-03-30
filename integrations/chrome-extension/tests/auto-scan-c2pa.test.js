@@ -21,7 +21,7 @@ const optionsJs = fs.readFileSync(
 // -----------------------------------------------------------------------
 describe('detector: _checkC2paHeader delegation', () => {
   it('defines _checkC2paHeader function in detector', () => {
-    assert.match(detectorSource, /async function _checkC2paHeader\(imageUrl\)/);
+    assert.match(detectorSource, /async function _checkC2paHeader\(url, mediaCategory\)/);
   });
 
   it('delegates to service worker via CHECK_C2PA_HEADER message', () => {
@@ -29,7 +29,7 @@ describe('detector: _checkC2paHeader delegation', () => {
   });
 
   it('tracks approximate bandwidth cost (4096 bytes per check)', () => {
-    assert.match(detectorSource, /_autoScanBytesUsed\s*\+=\s*4096/);
+    assert.match(detectorSource, /_autoScanImageBytes\s*\+=\s*cost/);
   });
 
   it('returns boolean from service worker response', () => {
@@ -95,8 +95,8 @@ describe('detector: auto-scan pipeline', () => {
     assert.match(detectorSource, /async function _autoScanImages\(\)/);
   });
 
-  it('has configurable scan limit (AUTO_SCAN_MAX_IMAGES = 20)', () => {
-    assert.match(detectorSource, /AUTO_SCAN_MAX_IMAGES\s*=\s*20/);
+  it('has configurable scan limit (AUTO_SCAN_MAX_IMAGES = 50)', () => {
+    assert.match(detectorSource, /AUTO_SCAN_MAX_IMAGES\s*=\s*50/);
   });
 
   it('has concurrency limit (AUTO_SCAN_MAX_CONCURRENT = 6)', () => {
@@ -134,16 +134,22 @@ describe('detector: auto-scan pipeline', () => {
 // Performance and Bandwidth
 // -----------------------------------------------------------------------
 describe('detector: auto-scan bandwidth and circuit breaker', () => {
-  it('tracks total bandwidth with _autoScanBytesUsed', () => {
-    assert.match(detectorSource, /let _autoScanBytesUsed\s*=\s*0/);
+  it('tracks per-type bandwidth counters', () => {
+    assert.match(detectorSource, /let _autoScanImageBytes\s*=\s*0/);
+    assert.match(detectorSource, /let _autoScanMediaBytes\s*=\s*0/);
+    assert.match(detectorSource, /let _autoScanDocumentBytes\s*=\s*0/);
   });
 
-  it('has bandwidth limit of 10MB (AUTO_SCAN_BANDWIDTH_LIMIT)', () => {
-    assert.match(detectorSource, /AUTO_SCAN_BANDWIDTH_LIMIT\s*=\s*10\s*\*\s*1024\s*\*\s*1024/);
+  it('has per-type bandwidth limits of 10MB/10MB/5MB', () => {
+    assert.match(detectorSource, /AUTO_SCAN_BANDWIDTH_LIMIT_IMAGES\s*=\s*10\s*\*\s*1024\s*\*\s*1024/);
+    assert.match(detectorSource, /AUTO_SCAN_BANDWIDTH_LIMIT_MEDIA\s*=\s*10\s*\*\s*1024\s*\*\s*1024/);
+    assert.match(detectorSource, /AUTO_SCAN_BANDWIDTH_LIMIT_DOCUMENTS\s*=\s*5\s*\*\s*1024\s*\*\s*1024/);
   });
 
-  it('stops scanning when bandwidth limit exceeded (circuit breaker)', () => {
-    assert.match(detectorSource, /_autoScanBytesUsed\s*>\s*AUTO_SCAN_BANDWIDTH_LIMIT/);
+  it('stops scanning when per-type bandwidth limit exceeded (circuit breaker)', () => {
+    assert.match(detectorSource, /_autoScanImageBytes\s*>\s*AUTO_SCAN_BANDWIDTH_LIMIT_IMAGES/);
+    assert.match(detectorSource, /_autoScanMediaBytes\s*>\s*AUTO_SCAN_BANDWIDTH_LIMIT_MEDIA/);
+    assert.match(detectorSource, /_autoScanDocumentBytes\s*>\s*AUTO_SCAN_BANDWIDTH_LIMIT_DOCUMENTS/);
   });
 
   it('has scan cooldown of 5 minutes', () => {
@@ -163,7 +169,9 @@ describe('detector: auto-scan bandwidth and circuit breaker', () => {
   });
 
   it('resets auto-scan state on RESCAN', () => {
-    assert.match(detectorSource, /_autoScanBytesUsed\s*=\s*0/);
+    assert.match(detectorSource, /_autoScanImageBytes\s*=\s*0/);
+    assert.match(detectorSource, /_autoScanMediaBytes\s*=\s*0/);
+    assert.match(detectorSource, /_autoScanDocumentBytes\s*=\s*0/);
     assert.match(detectorSource, /_autoScanPageCooldown\.clear\(\)/);
   });
 });
@@ -201,8 +209,8 @@ describe('detector: auto-scan media pipeline', () => {
     assert.match(detectorSource, /async function _autoScanMedia\(\)/);
   });
 
-  it('has configurable media scan limit (AUTO_SCAN_MAX_MEDIA = 10)', () => {
-    assert.match(detectorSource, /AUTO_SCAN_MAX_MEDIA\s*=\s*10/);
+  it('has configurable media scan limit (AUTO_SCAN_MAX_MEDIA = 20)', () => {
+    assert.match(detectorSource, /AUTO_SCAN_MAX_MEDIA\s*=\s*20/);
   });
 
   it('checks autoScanMedia setting before running', () => {
@@ -241,8 +249,8 @@ describe('detector: auto-scan documents pipeline', () => {
     assert.match(detectorSource, /async function _autoScanDocuments\(\)/);
   });
 
-  it('has configurable document scan limit (AUTO_SCAN_MAX_DOCUMENTS = 5)', () => {
-    assert.match(detectorSource, /AUTO_SCAN_MAX_DOCUMENTS\s*=\s*5/);
+  it('has configurable document scan limit (AUTO_SCAN_MAX_DOCUMENTS = 15)', () => {
+    assert.match(detectorSource, /AUTO_SCAN_MAX_DOCUMENTS\s*=\s*15/);
   });
 
   it('calls _autoScanDocuments after document inventory in scanPage', () => {

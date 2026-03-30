@@ -446,3 +446,220 @@ describe('_hasLegacySafeChars', () => {
     assert.strictEqual(hasLegacySafeChars(vsText), false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Shadow DOM helper tests
+// ---------------------------------------------------------------------------
+
+// Mirror of _collectShadowRoots from detector.js
+const _SHADOW_DOM_MAX_DEPTH = 3;
+const _SHADOW_DOM_MAX_ROOTS = 50;
+
+function _collectShadowRoots(root, depth = 0) {
+  if (depth >= _SHADOW_DOM_MAX_DEPTH) return [];
+  const roots = [];
+  const elements = root.querySelectorAll ? root.querySelectorAll('*') : [];
+  for (const el of elements) {
+    if (roots.length >= _SHADOW_DOM_MAX_ROOTS) break;
+    if (el.shadowRoot) {
+      roots.push(el.shadowRoot);
+      roots.push(..._collectShadowRoots(el.shadowRoot, depth + 1));
+    }
+  }
+  return roots;
+}
+
+describe('_collectShadowRoots', () => {
+  it('returns empty array for a plain object with no shadowRoot', () => {
+    // Simulate a root with no elements
+    const mockRoot = { querySelectorAll: () => [] };
+    assert.deepStrictEqual(_collectShadowRoots(mockRoot), []);
+  });
+
+  it('respects depth limit', () => {
+    const mockRoot = { querySelectorAll: () => [] };
+    // At max depth, should return empty immediately
+    assert.deepStrictEqual(_collectShadowRoots(mockRoot, _SHADOW_DOM_MAX_DEPTH), []);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Document extension tests
+// ---------------------------------------------------------------------------
+
+const _DOCUMENT_EXTENSIONS = new Set([
+  'pdf', 'epub', 'docx', 'odt', 'oxps',
+  'pptx', 'xlsx', 'xps',
+]);
+
+const _STREAMING_EXTENSIONS = new Set(['m3u8', 'mpd']);
+
+describe('_DOCUMENT_EXTENSIONS', () => {
+  it('includes original document formats', () => {
+    assert.ok(_DOCUMENT_EXTENSIONS.has('pdf'));
+    assert.ok(_DOCUMENT_EXTENSIONS.has('epub'));
+    assert.ok(_DOCUMENT_EXTENSIONS.has('docx'));
+    assert.ok(_DOCUMENT_EXTENSIONS.has('odt'));
+    assert.ok(_DOCUMENT_EXTENSIONS.has('oxps'));
+  });
+
+  it('includes new document formats (pptx, xlsx, xps)', () => {
+    assert.ok(_DOCUMENT_EXTENSIONS.has('pptx'));
+    assert.ok(_DOCUMENT_EXTENSIONS.has('xlsx'));
+    assert.ok(_DOCUMENT_EXTENSIONS.has('xps'));
+  });
+
+  it('does not include non-document extensions', () => {
+    assert.ok(!_DOCUMENT_EXTENSIONS.has('jpg'));
+    assert.ok(!_DOCUMENT_EXTENSIONS.has('mp4'));
+    assert.ok(!_DOCUMENT_EXTENSIONS.has('html'));
+  });
+});
+
+describe('_STREAMING_EXTENSIONS', () => {
+  it('includes HLS manifest extension', () => {
+    assert.ok(_STREAMING_EXTENSIONS.has('m3u8'));
+  });
+
+  it('includes DASH manifest extension', () => {
+    assert.ok(_STREAMING_EXTENSIONS.has('mpd'));
+  });
+
+  it('does not include regular video extensions', () => {
+    assert.ok(!_STREAMING_EXTENSIONS.has('mp4'));
+    assert.ok(!_STREAMING_EXTENSIONS.has('webm'));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Blob URL / media source resolution tests
+// ---------------------------------------------------------------------------
+
+// Mirror of _resolveMediaSource from detector.js
+function _resolveMediaSource(el) {
+  const attrSrc = el.getAttribute ? el.getAttribute('src') : null;
+  if (attrSrc && !attrSrc.startsWith('blob:') && !attrSrc.startsWith('data:')) {
+    return attrSrc;
+  }
+  const dataAttrs = ['data-src', 'data-original-src', 'data-video-src', 'data-audio-src',
+                     'data-stream-url', 'data-hls', 'data-dash', 'data-url', 'data-source'];
+  for (const attr of dataAttrs) {
+    const val = el.getAttribute ? el.getAttribute(attr) : null;
+    if (val && !val.startsWith('blob:') && !val.startsWith('data:')) return val;
+  }
+  const sources = el.querySelectorAll ? el.querySelectorAll('source') : [];
+  for (const s of sources) {
+    const sSrc = s.src || (s.getAttribute ? s.getAttribute('src') : null);
+    if (sSrc && !sSrc.startsWith('blob:') && !sSrc.startsWith('data:')) return sSrc;
+  }
+  return null;
+}
+
+describe('_resolveMediaSource', () => {
+  it('returns null when element has no resolvable source', () => {
+    const el = {
+      getAttribute: () => null,
+      querySelectorAll: () => [],
+      tagName: 'VIDEO',
+    };
+    assert.strictEqual(_resolveMediaSource(el), null);
+  });
+
+  it('returns src attribute if it is a real URL', () => {
+    const el = {
+      getAttribute: (attr) => attr === 'src' ? 'https://example.com/video.mp4' : null,
+      querySelectorAll: () => [],
+      tagName: 'VIDEO',
+    };
+    assert.strictEqual(_resolveMediaSource(el), 'https://example.com/video.mp4');
+  });
+
+  it('skips blob: src and falls back to data attributes', () => {
+    const el = {
+      getAttribute: (attr) => {
+        if (attr === 'src') return 'blob:https://example.com/abc';
+        if (attr === 'data-src') return 'https://cdn.example.com/video.mp4';
+        return null;
+      },
+      querySelectorAll: () => [],
+      tagName: 'VIDEO',
+    };
+    assert.strictEqual(_resolveMediaSource(el), 'https://cdn.example.com/video.mp4');
+  });
+
+  it('skips blob: and data: in data attributes', () => {
+    const el = {
+      getAttribute: (attr) => {
+        if (attr === 'src') return 'blob:https://example.com/abc';
+        if (attr === 'data-src') return 'blob:https://example.com/def';
+        if (attr === 'data-url') return 'https://real.example.com/media.webm';
+        return null;
+      },
+      querySelectorAll: () => [],
+      tagName: 'VIDEO',
+    };
+    assert.strictEqual(_resolveMediaSource(el), 'https://real.example.com/media.webm');
+  });
+
+  it('resolves from <source> children as last resort', () => {
+    const el = {
+      getAttribute: (attr) => attr === 'src' ? 'blob:https://example.com/abc' : null,
+      querySelectorAll: (sel) => {
+        if (sel === 'source') {
+          return [{ src: 'https://cdn.example.com/stream.mp4', getAttribute: () => null }];
+        }
+        return [];
+      },
+      tagName: 'VIDEO',
+    };
+    assert.strictEqual(_resolveMediaSource(el), 'https://cdn.example.com/stream.mp4');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CSS background-image URL extraction tests
+// ---------------------------------------------------------------------------
+
+const _cssBackgroundUrlRe = /url\(["']?(https?:\/\/[^"')]+)["']?\)/g;
+
+describe('CSS background-image URL extraction', () => {
+  it('extracts URL from url("...")', () => {
+    const bg = 'url("https://example.com/hero.jpg")';
+    _cssBackgroundUrlRe.lastIndex = 0;
+    const match = _cssBackgroundUrlRe.exec(bg);
+    assert.ok(match);
+    assert.strictEqual(match[1], 'https://example.com/hero.jpg');
+  });
+
+  it('extracts URL without quotes', () => {
+    const bg = 'url(https://example.com/bg.png)';
+    _cssBackgroundUrlRe.lastIndex = 0;
+    const match = _cssBackgroundUrlRe.exec(bg);
+    assert.ok(match);
+    assert.strictEqual(match[1], 'https://example.com/bg.png');
+  });
+
+  it('extracts multiple URLs from multi-background', () => {
+    const bg = 'url("https://a.com/1.jpg"), url("https://b.com/2.png")';
+    _cssBackgroundUrlRe.lastIndex = 0;
+    const urls = [];
+    let match;
+    while ((match = _cssBackgroundUrlRe.exec(bg)) !== null) {
+      urls.push(match[1]);
+    }
+    assert.deepStrictEqual(urls, ['https://a.com/1.jpg', 'https://b.com/2.png']);
+  });
+
+  it('ignores data: URLs', () => {
+    const bg = 'url(data:image/png;base64,abc)';
+    _cssBackgroundUrlRe.lastIndex = 0;
+    const match = _cssBackgroundUrlRe.exec(bg);
+    assert.strictEqual(match, null);
+  });
+
+  it('returns null for "none"', () => {
+    _cssBackgroundUrlRe.lastIndex = 0;
+    const match = _cssBackgroundUrlRe.exec('none');
+    assert.strictEqual(match, null);
+  });
+});

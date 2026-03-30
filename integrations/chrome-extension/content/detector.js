@@ -1551,14 +1551,23 @@ function _cleanupAfterVerification(textHash, result) {
 // ---------------------------------------------------------------------------
 
 const MIN_IMAGE_DIMENSION = 50;
-const AUTO_SCAN_MAX_IMAGES = 20;
-const AUTO_SCAN_MAX_MEDIA = 10;       // audio + video combined
-const AUTO_SCAN_MAX_DOCUMENTS = 5;    // embedded PDFs, EPUB, DOCX
+const AUTO_SCAN_MAX_IMAGES = 50;
+const AUTO_SCAN_MAX_MEDIA = 20;       // audio + video combined
+const AUTO_SCAN_MAX_DOCUMENTS = 15;   // embedded PDFs, EPUB, DOCX, PPTX, XLSX
 const AUTO_SCAN_MAX_CONCURRENT = 6;
-const AUTO_SCAN_BANDWIDTH_LIMIT = 10 * 1024 * 1024; // 10MB per page
+const AUTO_SCAN_BANDWIDTH_LIMIT_IMAGES = 10 * 1024 * 1024;    // 10MB for images
+const AUTO_SCAN_BANDWIDTH_LIMIT_MEDIA = 10 * 1024 * 1024;     // 10MB for audio/video
+const AUTO_SCAN_BANDWIDTH_LIMIT_DOCUMENTS = 5 * 1024 * 1024;  // 5MB for documents
 const AUTO_SCAN_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 
-let _autoScanBytesUsed = 0;
+// Per-media-type bandwidth counters prevent one category from starving others
+let _autoScanImageBytes = 0;
+let _autoScanMediaBytes = 0;
+let _autoScanDocumentBytes = 0;
+
+// Shadow DOM traversal limits
+const _SHADOW_DOM_MAX_DEPTH = 3;
+const _SHADOW_DOM_MAX_ROOTS = 50;
 let _autoScanEnabled = true;
 let _autoScanMediaEnabled = true;
 let _autoScanCheckedCount = 0;
@@ -1571,6 +1580,89 @@ try {
     _autoScanMediaEnabled = result.autoScanMedia !== false;
   });
 } catch { /* storage may not be available in tests */ }
+
+// ---------------------------------------------------------------------------
+// Shadow DOM traversal
+// ---------------------------------------------------------------------------
+
+/**
+ * Collect open shadow roots reachable from a DOM subtree.
+ * Respects depth and count limits to avoid runaway traversal on complex pages.
+ */
+function _collectShadowRoots(root, depth = 0) {
+  if (depth >= _SHADOW_DOM_MAX_DEPTH) return [];
+  const roots = [];
+  const elements = root.querySelectorAll('*');
+  for (const el of elements) {
+    if (roots.length >= _SHADOW_DOM_MAX_ROOTS) break;
+    if (el.shadowRoot) {
+      roots.push(el.shadowRoot);
+      roots.push(..._collectShadowRoots(el.shadowRoot, depth + 1));
+    }
+  }
+  return roots;
+}
+
+/**
+ * querySelectorAll that also descends into open shadow roots.
+ */
+function _querySelectorDeep(root, selector) {
+  const results = [...root.querySelectorAll(selector)];
+  for (const shadowRoot of _collectShadowRoots(root)) {
+    results.push(...shadowRoot.querySelectorAll(selector));
+  }
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// Blob URL / MSE source resolution
+// ---------------------------------------------------------------------------
+
+/**
+ * HLS/DASH streaming extensions that indicate adaptive streaming manifests.
+ * These are fetched as Range requests like other media, allowing C2PA header detection
+ * on servers that embed provenance in manifest responses.
+ */
+const _STREAMING_EXTENSIONS = new Set(['m3u8', 'mpd']);
+
+/**
+ * Attempt to resolve a real (non-blob) source URL for a media element.
+ * MSE-based players (YouTube, Netflix) set currentSrc to a blob: URL,
+ * but often store the original URL in data attributes or ancestor elements.
+ */
+function _resolveMediaSource(el) {
+  // 1. Direct src attribute (may differ from currentSrc for MSE)
+  const attrSrc = el.getAttribute('src');
+  if (attrSrc && !attrSrc.startsWith('blob:') && !attrSrc.startsWith('data:')) {
+    return attrSrc;
+  }
+
+  // 2. Common data-attribute patterns used by video players
+  const dataAttrs = ['data-src', 'data-original-src', 'data-video-src', 'data-audio-src',
+                     'data-stream-url', 'data-hls', 'data-dash', 'data-url', 'data-source'];
+  for (const attr of dataAttrs) {
+    const val = el.getAttribute(attr);
+    if (val && !val.startsWith('blob:') && !val.startsWith('data:')) return val;
+  }
+
+  // 3. <source> children with real URLs
+  const sources = el.querySelectorAll('source');
+  for (const s of sources) {
+    const sSrc = s.src || s.getAttribute('src');
+    if (sSrc && !sSrc.startsWith('blob:') && !sSrc.startsWith('data:')) return sSrc;
+  }
+
+  // 4. poster attribute (video thumbnail - not the video itself, but may have C2PA)
+  if (el.tagName === 'VIDEO' && el.poster && !el.poster.startsWith('data:')) {
+    return null; // Don't use poster as media source; it's just a thumbnail
+  }
+
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Media scanning and verification
+// ---------------------------------------------------------------------------
 
 /**
  * Scan a DOM subtree for images, build an inventory, and trigger
@@ -1587,15 +1679,15 @@ function _scanImages(root) {
   const searchRoot = root || document.body;
   let newCount = 0;
 
-  // Collect candidate image URLs from <img> elements
-  const imgs = searchRoot.querySelectorAll('img');
+  // Collect candidate image URLs from <img> elements (including shadow DOM)
+  const imgs = _querySelectorDeep(searchRoot, 'img');
   for (const img of imgs) {
     const src = img.src || img.currentSrc;
     if (_addImageCandidate(src, img)) newCount++;
   }
 
   // Collect from <picture> elements: prefer <source> srcset, fall back to <img>
-  const pictures = searchRoot.querySelectorAll('picture');
+  const pictures = _querySelectorDeep(searchRoot, 'picture');
   for (const picture of pictures) {
     // Use the <img> child for dimension checks (picture itself has no dimensions)
     const imgChild = picture.querySelector('img');
@@ -1609,6 +1701,12 @@ function _scanImages(root) {
       }
     }
     // If no <source> matched, the <img> inside <picture> was already caught above
+  }
+
+  // Scan CSS background images on elements with explicit dimensions.
+  // Only runs on full-page scans to avoid performance overhead on subtree mutations.
+  if (searchRoot === document.body) {
+    newCount += _scanCssBackgroundImages(searchRoot);
   }
 
   // Trigger auto-scan after inventory is updated
@@ -1625,7 +1723,8 @@ function _scanImages(root) {
  */
 function _addImageCandidate(src, element) {
   if (!src) return false;
-  if (src.startsWith('data:') || src.startsWith('blob:')) return false;
+  // Skip data: URIs (inline base64) but allow blob: (from createObjectURL)
+  if (src.startsWith('data:')) return false;
   if (element.closest('.encypher-badge, .encypher-detail-panel')) return false;
   const w = element.naturalWidth || element.width || 0;
   const h = element.naturalHeight || element.height || 0;
@@ -1644,6 +1743,38 @@ function _firstSrcsetUrl(srcset) {
   if (!srcset) return null;
   const first = srcset.split(',')[0].trim().split(/\s+/)[0];
   return first || null;
+}
+
+/**
+ * Scan elements with CSS background-image for image URLs.
+ * Targets elements with explicit dimensions (hero images, gallery items, cards).
+ * Limited to 200 elements to avoid performance impact on large pages.
+ */
+const _CSS_BG_SCAN_LIMIT = 200;
+const _cssBackgroundUrlRe = /url\(["']?(https?:\/\/[^"')]+)["']?\)/g;
+
+function _scanCssBackgroundImages(root) {
+  let newCount = 0;
+  let checked = 0;
+  // Target common containers likely to use background images
+  const candidates = root.querySelectorAll(
+    'div[style*="background"], section[style*="background"], ' +
+    'figure[style*="background"], span[style*="background"], ' +
+    'a[style*="background"], header[style*="background"]'
+  );
+  for (const el of candidates) {
+    if (checked >= _CSS_BG_SCAN_LIMIT) break;
+    checked++;
+    const bg = getComputedStyle(el).backgroundImage;
+    if (!bg || bg === 'none') continue;
+    _cssBackgroundUrlRe.lastIndex = 0;
+    let match;
+    while ((match = _cssBackgroundUrlRe.exec(bg)) !== null) {
+      const url = match[1];
+      if (_addImageCandidate(url, el)) newCount++;
+    }
+  }
+  return newCount;
 }
 
 /**
@@ -1771,14 +1902,57 @@ async function _verifyImageAndBadge(imgElement, srcUrl) {
  * Delegates to the service worker which can do cross-origin Range requests.
  * Returns true if C2PA indicators are found.
  */
-async function _checkC2paHeader(imageUrl) {
+async function _checkC2paHeader(url, mediaCategory) {
+  // For blob: URLs, fetch in-page and send bytes to service worker for analysis
+  if (url.startsWith('blob:')) {
+    return _checkC2paHeaderLocal(url, mediaCategory);
+  }
   try {
     const response = await chrome.runtime.sendMessage({
       type: 'CHECK_C2PA_HEADER',
-      url: imageUrl,
+      url,
     });
-    _autoScanBytesUsed += 4096; // Approximate Range request cost
+    const cost = 4096;
+    if (mediaCategory === 'media') _autoScanMediaBytes += cost;
+    else if (mediaCategory === 'document') _autoScanDocumentBytes += cost;
+    else _autoScanImageBytes += cost;
     return response?.hasC2pa === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Check C2PA headers for blob: URLs by fetching in-page (content script context)
+ * and sending raw bytes to the service worker for JUMBF analysis.
+ * blob: URLs are same-origin to the page and accessible from content scripts,
+ * but not from the extension's service worker.
+ */
+async function _checkC2paHeaderLocal(blobUrl, mediaCategory) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch(blobUrl, {
+      headers: { 'Range': 'bytes=0-4095' },
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    if (!response.ok && response.status !== 206) return false;
+    const buffer = await response.arrayBuffer();
+    const cost = buffer.byteLength;
+    if (mediaCategory === 'media') _autoScanMediaBytes += cost;
+    else if (mediaCategory === 'document') _autoScanDocumentBytes += cost;
+    else _autoScanImageBytes += cost;
+    // Encode bytes as base64 and send to service worker for JUMBF analysis
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    const base64 = btoa(binary);
+    const result = await chrome.runtime.sendMessage({
+      type: 'CHECK_C2PA_BYTES',
+      base64,
+    });
+    return result?.hasC2pa === true;
   } catch {
     return false;
   }
@@ -1822,9 +1996,9 @@ async function _autoScanImages() {
 
   const processNext = async () => {
     while (queue.length > 0 && active < AUTO_SCAN_MAX_CONCURRENT) {
-      // Circuit breaker: stop if bandwidth limit exceeded
-      if (_autoScanBytesUsed > AUTO_SCAN_BANDWIDTH_LIMIT) {
-        _debugLog('WARN', 'detector', `Auto-scan: bandwidth limit reached (${_autoScanBytesUsed} bytes), stopping`);
+      // Circuit breaker: stop if image bandwidth limit exceeded
+      if (_autoScanImageBytes > AUTO_SCAN_BANDWIDTH_LIMIT_IMAGES) {
+        _debugLog('WARN', 'detector', `Auto-scan: image bandwidth limit reached (${_autoScanImageBytes} bytes), stopping`);
         return;
       }
 
@@ -1834,10 +2008,19 @@ async function _autoScanImages() {
       active++;
 
       try {
-        const hasC2pa = await _checkC2paHeader(src);
+        const hasC2pa = await _checkC2paHeader(src, 'image');
         if (hasC2pa) {
           _debugLog('INFO', 'detector', `Auto-scan: C2PA header detected in ${src.slice(0, 80)}`);
-          const img = document.querySelector(`img[src="${CSS.escape(src)}"]`);
+          let img = document.querySelector(`img[src="${CSS.escape(src)}"]`);
+          // Fallback: currentSrc may differ from the src attribute
+          if (!img) {
+            for (const el of document.querySelectorAll('img')) {
+              if (el.currentSrc === src || el.src === src) {
+                img = el;
+                break;
+              }
+            }
+          }
           if (img) {
             _verifyImageAndBadge(img, src);
           }
@@ -1903,8 +2086,8 @@ async function _autoScanMedia() {
 
   const processNext = async () => {
     while (queue.length > 0 && active < AUTO_SCAN_MAX_CONCURRENT) {
-      if (_autoScanBytesUsed > AUTO_SCAN_BANDWIDTH_LIMIT) {
-        _debugLog('WARN', 'detector', `Auto-scan: bandwidth limit reached (${_autoScanBytesUsed} bytes), stopping`);
+      if (_autoScanMediaBytes > AUTO_SCAN_BANDWIDTH_LIMIT_MEDIA) {
+        _debugLog('WARN', 'detector', `Auto-scan: media bandwidth limit reached (${_autoScanMediaBytes} bytes), stopping`);
         return;
       }
 
@@ -1914,14 +2097,24 @@ async function _autoScanMedia() {
       active++;
 
       try {
-        const hasC2pa = await _checkC2paHeader(src);
+        const hasC2pa = await _checkC2paHeader(src, 'media');
         if (hasC2pa) {
           _debugLog('INFO', 'detector', `Auto-scan: C2PA header detected in media ${src.slice(0, 80)}`);
-          // Find the DOM element - check direct src and <source> children
+          // Find the DOM element - check src attribute, <source> children, and currentSrc
           let mediaEl = document.querySelector(`audio[src="${CSS.escape(src)}"], video[src="${CSS.escape(src)}"]`);
           if (!mediaEl) {
             const sourceEl = document.querySelector(`audio source[src="${CSS.escape(src)}"], video source[src="${CSS.escape(src)}"]`);
             if (sourceEl) mediaEl = sourceEl.closest('audio, video');
+          }
+          // Fallback: currentSrc may differ from the src attribute (e.g. blob: rewritten
+          // by the page, or src set programmatically). Walk all media elements.
+          if (!mediaEl) {
+            for (const el of document.querySelectorAll('audio, video')) {
+              if (el.currentSrc === src || el.src === src) {
+                mediaEl = el;
+                break;
+              }
+            }
           }
           if (mediaEl) {
             const mediaType = mediaEl.tagName.toLowerCase();
@@ -1954,7 +2147,8 @@ async function _autoScanMedia() {
  * Returns the count of newly discovered audio/video elements.
  */
 function _scanAudioVideo(root) {
-  const elements = (root || document.body).querySelectorAll('audio, video');
+  const searchRoot = root || document.body;
+  const elements = _querySelectorDeep(searchRoot, 'audio, video');
   let newCount = 0;
   for (const el of elements) {
     // Get source URL from src attribute or first <source> child
@@ -1963,8 +2157,22 @@ function _scanAudioVideo(root) {
       const sourceChild = el.querySelector('source');
       if (sourceChild) src = sourceChild.src;
     }
+
+    // For blob:/data: URLs (common with MSE players), try to resolve the real source
+    if (src && (src.startsWith('blob:') || src.startsWith('data:'))) {
+      const resolved = _resolveMediaSource(el);
+      if (resolved) {
+        src = resolved;
+      } else if (src.startsWith('blob:')) {
+        // blob: URLs from createObjectURL(blob) are fetchable; keep them
+        // blob: URLs from createObjectURL(mediaSource) will fail at fetch time
+        _debugLog('DEBUG', 'detector', `Keeping blob: URL for C2PA check: ${src.slice(0, 60)}`);
+      } else {
+        continue; // data: URIs with no resolution - skip
+      }
+    }
+
     if (!src) continue;
-    if (src.startsWith('data:') || src.startsWith('blob:')) continue;
     if (el.closest('.encypher-badge, .encypher-detail-panel')) continue;
     if (_processedAudioVideo.has(src)) continue;
 
@@ -2112,7 +2320,10 @@ async function _verifyMediaAndBadge(mediaElement, srcUrl, mediaType) {
 // Document scanning and verification (PDF, EPUB, DOCX embedded in pages)
 // ---------------------------------------------------------------------------
 
-const _DOCUMENT_EXTENSIONS = new Set(['pdf', 'epub', 'docx', 'odt', 'oxps']);
+const _DOCUMENT_EXTENSIONS = new Set([
+  'pdf', 'epub', 'docx', 'odt', 'oxps',
+  'pptx', 'xlsx', 'xps',
+]);
 
 /**
  * Extract a URL's file extension (lowercase, without query/hash).
@@ -2141,8 +2352,8 @@ function _scanDocuments(root) {
   const searchRoot = root || document.body;
   let newCount = 0;
 
-  // <embed> elements (common for inline PDFs)
-  const embeds = searchRoot.querySelectorAll('embed');
+  // <embed> elements (common for inline PDFs) - includes shadow DOM
+  const embeds = _querySelectorDeep(searchRoot, 'embed');
   for (const embed of embeds) {
     const src = embed.src || embed.getAttribute('src') || '';
     if (_isDocumentUrl(src, embed.type)) {
@@ -2150,8 +2361,8 @@ function _scanDocuments(root) {
     }
   }
 
-  // <object> elements with data attribute
-  const objects = searchRoot.querySelectorAll('object');
+  // <object> elements with data attribute - includes shadow DOM
+  const objects = _querySelectorDeep(searchRoot, 'object');
   for (const obj of objects) {
     const data = obj.data || obj.getAttribute('data') || '';
     if (_isDocumentUrl(data, obj.type)) {
@@ -2159,12 +2370,23 @@ function _scanDocuments(root) {
     }
   }
 
-  // <iframe> elements loading PDFs
-  const iframes = searchRoot.querySelectorAll('iframe');
+  // <iframe> elements loading documents - includes shadow DOM
+  const iframes = _querySelectorDeep(searchRoot, 'iframe');
   for (const iframe of iframes) {
     const src = iframe.src || '';
     if (_isDocumentUrl(src, '')) {
       if (_addDocumentCandidate(src, iframe)) newCount++;
+    }
+  }
+
+  // <a> elements linking to HLS/DASH streaming manifests
+  const links = _querySelectorDeep(searchRoot, 'a[href]');
+  for (const link of links) {
+    const href = link.href;
+    if (!href) continue;
+    const ext = _urlExtension(href);
+    if (_STREAMING_EXTENSIONS.has(ext)) {
+      if (_addDocumentCandidate(href, link)) newCount++;
     }
   }
 
@@ -2210,8 +2432,8 @@ async function _autoScanDocuments() {
 
   const processNext = async () => {
     while (queue.length > 0 && active < AUTO_SCAN_MAX_CONCURRENT) {
-      if (_autoScanBytesUsed > AUTO_SCAN_BANDWIDTH_LIMIT) {
-        _debugLog('WARN', 'detector', `Auto-scan: bandwidth limit reached (${_autoScanBytesUsed} bytes), stopping`);
+      if (_autoScanDocumentBytes > AUTO_SCAN_BANDWIDTH_LIMIT_DOCUMENTS) {
+        _debugLog('WARN', 'detector', `Auto-scan: document bandwidth limit reached (${_autoScanDocumentBytes} bytes), stopping`);
         return;
       }
 
@@ -2221,7 +2443,7 @@ async function _autoScanDocuments() {
       active++;
 
       try {
-        const hasC2pa = await _checkC2paHeader(src);
+        const hasC2pa = await _checkC2paHeader(src, 'document');
         if (hasC2pa) {
           _debugLog('INFO', 'detector', `Auto-scan: C2PA header detected in document ${src.slice(0, 80)}`);
           const docEl = document.querySelector(
@@ -2259,7 +2481,8 @@ function _isDocumentUrl(url, mimeType) {
   const ext = _urlExtension(url);
   if (_DOCUMENT_EXTENSIONS.has(ext)) return true;
   const mime = String(mimeType || '').toLowerCase();
-  if (mime.includes('pdf') || mime.includes('epub') || mime.includes('document')) return true;
+  if (mime.includes('pdf') || mime.includes('epub') || mime.includes('document') ||
+      mime.includes('presentation') || mime.includes('spreadsheet')) return true;
   return false;
 }
 
@@ -2543,6 +2766,12 @@ function observeDOM() {
             pendingNodes.push(node);
           }
         }
+      } else if (mutation.type === 'attributes') {
+        // Catch in-place src/srcset/data changes (lazy-loaded images, dynamic players)
+        const target = mutation.target;
+        if (target?.nodeType === Node.ELEMENT_NODE) {
+          pendingNodes.push(target);
+        }
       } else if (mutation.type === 'characterData') {
         // In-place edits in contenteditable/WYSIWYG often update text nodes
         // without adding/removing elements.
@@ -2583,6 +2812,8 @@ function observeDOM() {
   observer.observe(document.body, {
     childList: true,
     characterData: true,
+    attributes: true,
+    attributeFilter: ['src', 'srcset', 'data', 'href', 'data-src', 'data-original-src'],
     subtree: true
   });
 
@@ -2644,6 +2875,39 @@ if (document.readyState === 'loading') {
   _initDetector();
 }
 
+// ---------------------------------------------------------------------------
+// SPA navigation detection
+// ---------------------------------------------------------------------------
+// SPAs use pushState/replaceState + popstate for navigation without full page
+// loads. The MutationObserver catches DOM changes, but cooldown timers keyed
+// by URL prevent rescans. Detecting URL changes clears cooldowns so new
+// content is scanned after SPA route transitions.
+
+let _lastKnownUrl = window.location.href;
+
+function _onSpaNavigation() {
+  const currentUrl = window.location.href;
+  if (currentUrl === _lastKnownUrl) return;
+  _lastKnownUrl = currentUrl;
+  _debugLog('INFO', 'detector', `SPA navigation detected: ${currentUrl}`);
+  // Clear cooldowns so the new "page" gets a fresh scan
+  _autoScanPageCooldown.clear();
+  scanPage();
+}
+
+// popstate fires on back/forward navigation
+window.addEventListener('popstate', _onSpaNavigation);
+// hashchange fires on fragment-only navigation
+window.addEventListener('hashchange', _onSpaNavigation);
+
+// pushState/replaceState don't fire any event. Poll the URL to catch them.
+// 2-second interval is a balance between responsiveness and overhead.
+setInterval(() => {
+  if (window.location.href !== _lastKnownUrl) {
+    _onSpaNavigation();
+  }
+}, 2000);
+
 // Listen for messages from popup or service worker
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'RESCAN') {
@@ -2656,7 +2920,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     _audioVideoVerificationState.clear();
     _processedDocuments.clear();
     _documentVerificationState.clear();
-    _autoScanBytesUsed = 0;
+    _autoScanImageBytes = 0;
+    _autoScanMediaBytes = 0;
+    _autoScanDocumentBytes = 0;
     _autoScanCheckedCount = 0;
     _autoScanPageCooldown.clear();
     document.querySelectorAll('.encypher-badge').forEach(b => b.remove());

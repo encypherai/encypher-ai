@@ -591,6 +591,7 @@ async function _checkC2paHeader(imageUrl) {
 
     const response = await fetch(imageUrl, {
       headers: { 'Range': `bytes=0-${_C2PA_HEADER_BYTES - 1}` },
+      credentials: 'include',
       signal: controller.signal,
     });
 
@@ -905,8 +906,8 @@ async function verifyImage(imageUrl) {
 
   const runVerification = async () => {
     try {
-      // Fetch the image bytes
-      const imgResponse = await fetch(imageUrl);
+      // Fetch the image bytes (credentials needed for authenticated CDNs)
+      const imgResponse = await fetch(imageUrl, { credentials: 'include' });
       if (!imgResponse.ok) {
         return {
           success: false,
@@ -1109,7 +1110,7 @@ async function verifyAudio(audioUrl) {
 
   const runVerification = async () => {
     try {
-      const audioResponse = await fetch(audioUrl);
+      const audioResponse = await fetch(audioUrl, { credentials: 'include' });
       if (!audioResponse.ok) {
         return {
           success: false,
@@ -1221,7 +1222,7 @@ async function verifyVideo(videoUrl) {
 
   const runVerification = async () => {
     try {
-      const videoResponse = await fetch(videoUrl);
+      const videoResponse = await fetch(videoUrl, { credentials: 'include' });
       if (!videoResponse.ok) {
         return {
           success: false,
@@ -1345,7 +1346,7 @@ async function verifyDocument(docUrl) {
 
   const runVerification = async () => {
     try {
-      const docResponse = await fetch(docUrl);
+      const docResponse = await fetch(docUrl, { credentials: 'include' });
       if (!docResponse.ok) {
         return {
           success: false,
@@ -2114,6 +2115,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ hasC2pa: false });
       });
       return true; // async response
+
+    // Analyze raw bytes for C2PA/JUMBF markers (used for blob: URLs that the
+    // service worker cannot fetch directly).
+    case 'CHECK_C2PA_BYTES': {
+      try {
+        const binary = atob(message.base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        sendResponse({ hasC2pa: _hasJumbfMarker(bytes) });
+      } catch {
+        sendResponse({ hasC2pa: false });
+      }
+      return true;
+    }
+
+    // Relay a message to a tab's content script, re-injecting if disconnected.
+    // Used by the popup to avoid "Unable to scan page" on SPA sites.
+    case 'RELAY_TO_TAB': {
+      const targetTabId = message.tabId;
+      const innerPayload = message.payload;
+      if (!targetTabId || !innerPayload) {
+        sendResponse({ error: 'Missing tabId or payload' });
+        break;
+      }
+      sendFrameMessageWithFallback(targetTabId, 0, innerPayload)
+        .then(response => sendResponse(response))
+        .catch(err => sendResponse({ _relayError: err.message || 'Content script unreachable' }));
+      return true; // async response
+    }
 
     case 'GET_TAB_STATE': {
       const state = tabState.get(message.tabId) || { count: 0, verified: 0, invalid: 0, revoked: 0, pending: 0, details: [] };
