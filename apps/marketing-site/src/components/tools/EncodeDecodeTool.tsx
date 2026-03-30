@@ -43,6 +43,7 @@ interface C2PAInfo {
   validation_type?: string | null;
   manifest_hash?: string | null;
   assertions?: Array<Record<string, unknown>> | null;
+  manifest_data?: Record<string, unknown> | null;
 }
 
 interface EmbeddingResult {
@@ -727,6 +728,14 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                                       <strong className="text-slate-400">Assertions:</strong>
                                       <pre className="mt-1 whitespace-pre-wrap break-all overflow-x-auto text-slate-300 bg-slate-800 p-2 rounded">
                                         {JSON.stringify(lastDecodeResponse.c2pa.assertions, null, 2)}
+                                      </pre>
+                                    </div>
+                                  )}
+                                  {lastDecodeResponse.c2pa.manifest_data && (
+                                    <div className="mt-2">
+                                      <strong className="text-slate-400">Full C2PA Manifest:</strong>
+                                      <pre className="mt-1 whitespace-pre-wrap break-all overflow-x-auto text-slate-300 bg-slate-800 p-2 rounded max-h-96 overflow-y-auto">
+                                        {JSON.stringify(lastDecodeResponse.c2pa.manifest_data, null, 2)}
                                       </pre>
                                     </div>
                                   )}

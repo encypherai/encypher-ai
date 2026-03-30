@@ -204,6 +204,93 @@ describe("enterpriseApiTools", () => {
     expect(decoded.c2pa).toBeNull();
   });
 
+  it("mapVerifyResponseToDecodeToolResponse handles UnifiedVerifyResponse flat format", () => {
+    const c2paManifest = {
+      "@context": "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+      instance_id: "abc-123",
+      claim_label: "c2pa.claim.v2",
+      claim_generator: "encypher-enterprise-api/1.0",
+      assertions: [
+        { label: "c2pa.actions.v2", kind: "Actions", data: { actions: [] } },
+        { label: "c2pa.metadata", kind: "Metadata", data: { identifier: "doc_1" } },
+      ],
+    };
+
+    const decoded = mapVerifyResponseToDecodeToolResponse({
+      success: true,
+      correlation_id: "req-flat-1",
+      error: null,
+      // No data wrapper -- flat UnifiedVerifyResponse
+      valid: true,
+      tampered: false,
+      reason_code: "OK",
+      signer: { organization_id: "org_flat", organization_name: "Flat Org" },
+      content: {
+        manifest_mode: "micro",
+        embeddings_found: 3,
+        manifest_data: c2paManifest,
+      },
+      details: {
+        manifest: {
+          manifest_mode: "micro",
+          log_id: "aabbccdd",
+          document_id: "doc_1",
+          total_signatures: 3,
+          total_segments: 10,
+          manifest_data: c2paManifest,
+        },
+      },
+    } as any);
+
+    expect(decoded.verification_status).toBe("Success");
+    expect(decoded.raw_hidden_data?.valid).toBe(true);
+    expect(decoded.raw_hidden_data?.reason_code).toBe("OK");
+    expect(decoded.raw_hidden_data?.signer_id).toBe("org_flat");
+    expect(decoded.raw_hidden_data?.signer_name).toBe("Flat Org");
+    expect(decoded.embeddings_found).toBe(3);
+
+    // Full C2PA manifest surfaced via c2pa field
+    expect(decoded.c2pa).toBeDefined();
+    expect(decoded.c2pa!.validated).toBe(true);
+    expect(decoded.c2pa!.validation_type).toBe("db_backed_manifest");
+    expect(decoded.c2pa!.assertions).toHaveLength(2);
+    expect(decoded.c2pa!.manifest_data).toEqual(c2paManifest);
+  });
+
+  it("mapVerifyResponseToDecodeToolResponse synthesizes c2pa from manifest_data when no explicit c2pa", () => {
+    const manifest_data = {
+      assertions: [{ label: "c2pa.actions.v2", data: {} }],
+      instance_id: "synth-test",
+    };
+
+    const decoded = mapVerifyResponseToDecodeToolResponse({
+      success: true,
+      correlation_id: "req-synth",
+      error: null,
+      data: {
+        valid: true,
+        tampered: false,
+        reason_code: "OK",
+        signer_id: "org_test",
+        details: {
+          manifest: {
+            total_signatures: 1,
+            manifest_data,
+          },
+        },
+        embeddings_found: 1,
+        all_embeddings: null,
+      },
+    });
+
+    // c2pa synthesized from details.manifest.manifest_data
+    expect(decoded.c2pa).toBeDefined();
+    expect(decoded.c2pa!.validated).toBe(true);
+    expect(decoded.c2pa!.validation_type).toBe("db_backed_manifest");
+    expect(decoded.c2pa!.manifest_data).toEqual(manifest_data);
+    expect(decoded.c2pa!.assertions).toHaveLength(1);
+  });
+
   it("mapVerifyResponseToDecodeToolResponse resolves signer label from manifest when signer_name is unavailable", () => {
     const decoded = mapVerifyResponseToDecodeToolResponse({
       success: true,

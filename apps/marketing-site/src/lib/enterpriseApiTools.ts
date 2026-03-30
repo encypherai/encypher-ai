@@ -52,43 +52,53 @@ export type C2PAInfoLike = {
   validation_type?: string | null;
   manifest_hash?: string | null;
   assertions?: Array<Record<string, unknown>> | null;
+  manifest_data?: Record<string, unknown> | null;
 };
 
-export type VerifyResponseLike = {
-  success: boolean;
-  correlation_id: string;
-  error: null | { code: string; message: string; hint?: string | null };
-  data:
+// Fields shared by both the legacy data wrapper and the UnifiedVerifyResponse flat shape
+type VerifyVerdictFields = {
+  valid: boolean;
+  tampered: boolean;
+  reason_code: string;
+  signer_id?: string | null;
+  signer_name?: string | null;
+  timestamp?: string | null;
+  details?: { manifest?: Record<string, unknown> } & Record<string, unknown>;
+  embeddings_found?: number;
+  embeddings?: EmbeddingDetailLike[] | null;
+  total_embeddings?: number | null;
+  total_segments_in_document?: number | null;
+  c2pa?: C2PAInfoLike | null;
+  all_embeddings?:
     | null
-    | {
+    | Array<{
+        index: number;
         valid: boolean;
         tampered: boolean;
         reason_code: string;
         signer_id?: string | null;
         signer_name?: string | null;
         timestamp?: string | null;
-        details?: { manifest?: Record<string, unknown> } & Record<string, unknown>;
-        embeddings_found?: number;
-        embeddings?: EmbeddingDetailLike[] | null;
-        total_embeddings?: number | null;
-        total_segments_in_document?: number | null;
-        c2pa?: C2PAInfoLike | null;
-        all_embeddings?:
-          | null
-          | Array<{
-              index: number;
-              valid: boolean;
-              tampered: boolean;
-              reason_code: string;
-              signer_id?: string | null;
-              signer_name?: string | null;
-              timestamp?: string | null;
-              text_span?: [number, number] | null;
-              clean_text?: string | null;
-              manifest?: Record<string, unknown> | null;
-            }>;
-      };
+        text_span?: [number, number] | null;
+        clean_text?: string | null;
+        manifest?: Record<string, unknown> | null;
+      }>;
 };
+
+export type VerifyResponseLike = {
+  success: boolean;
+  correlation_id: string;
+  error: null | { code: string; message: string; hint?: string | null };
+  // Legacy format: verdict nested inside data wrapper
+  data?: VerifyVerdictFields | null;
+  // UnifiedVerifyResponse flat format (TEAM_273)
+  signer?: { organization_id?: string; organization_name?: string; trust_level?: string } | null;
+  content?: {
+    manifest_mode?: string | null;
+    embeddings_found?: number | null;
+    manifest_data?: Record<string, unknown> | null;
+  } | null;
+} & Partial<VerifyVerdictFields>;
 
 export type DecodeToolResponseLike = {
   metadata?: Record<string, unknown> | null;
@@ -263,19 +273,36 @@ export function mapVerifyResponseToDecodeToolResponse(
     };
   }
 
-  const data = verify.data;
-  const verdict = data || {
-    valid: false,
-    tampered: false,
-    reason_code: "UNKNOWN",
-  };
+  // Normalize: handle both legacy VerifyResponse (data wrapper) and
+  // UnifiedVerifyResponse (flat, TEAM_273) where verdict fields live at
+  // the top level alongside signer/content objects.
+  const wrapped = verify.data;
+  const isFlat = !wrapped && (verify as any).valid !== undefined;
+  const verdict: VerifyVerdictFields = wrapped || (isFlat
+    ? {
+        valid: (verify as any).valid,
+        tampered: (verify as any).tampered,
+        reason_code: (verify as any).reason_code,
+        signer_id: verify.signer?.organization_id ?? undefined,
+        signer_name: verify.signer?.organization_name ?? undefined,
+        details: (verify as any).details,
+        embeddings_found: verify.content?.embeddings_found ?? undefined,
+      }
+    : { valid: false, tampered: false, reason_code: "UNKNOWN" });
 
-  const manifest = (data && data.details && (data.details as any).manifest) || undefined;
+  const manifest = verdict.details?.manifest as Record<string, unknown> | undefined;
 
-  const embeddingsFound = data?.total_embeddings ?? data?.embeddings_found ?? (manifest ? 1 : 0);
+  // Full C2PA manifest stored in DB: available via content.manifest_data
+  // (UnifiedVerifyResponse) or nested inside details.manifest.manifest_data
+  const manifestData: Record<string, unknown> | null =
+    (verify.content?.manifest_data as Record<string, unknown>) ??
+    (manifest?.manifest_data as Record<string, unknown>) ??
+    null;
 
-  const allEmbeddings = data?.all_embeddings
-    ? data.all_embeddings.map((emb) => ({
+  const embeddingsFound = verdict.total_embeddings ?? verdict.embeddings_found ?? (manifest ? 1 : 0);
+
+  const allEmbeddings = verdict.all_embeddings
+    ? verdict.all_embeddings.map((emb) => ({
         index: emb.index,
         metadata: emb.manifest || null,
         verification_status: emb.valid ? "Success" : "Failure",
@@ -297,6 +324,20 @@ export function mapVerifyResponseToDecodeToolResponse(
       }))
     : null;
 
+  // Build c2pa info: prefer explicit c2pa from response, then synthesize
+  // from the full DB-backed manifest_data if available.
+  const c2pa: C2PAInfoLike | null =
+    verdict.c2pa ??
+    (manifestData
+      ? {
+          validated: true,
+          validation_type: "db_backed_manifest",
+          manifest_hash: (manifest?.c2pa_manifest_hash as string) ?? null,
+          assertions: (manifestData.assertions as Array<Record<string, unknown>>) ?? null,
+          manifest_data: manifestData,
+        }
+      : null);
+
   return {
     metadata: manifest ? { manifest } : null,
     verification_status: verdict.valid ? "Success" : "Failure",
@@ -305,19 +346,19 @@ export function mapVerifyResponseToDecodeToolResponse(
       valid: verdict.valid,
       tampered: verdict.tampered,
       reason_code: verdict.reason_code,
-      signer_id: (verdict as any).signer_id,
+      signer_id: verdict.signer_id,
       signer_name: resolveSignerName({
-        signerId: (verdict as any).signer_id,
-        signerName: (verdict as any).signer_name,
+        signerId: verdict.signer_id,
+        signerName: verdict.signer_name,
         manifest,
       }),
-      timestamp: (verdict as any).timestamp,
-      details: (verdict as any).details,
+      timestamp: verdict.timestamp,
+      details: verdict.details,
     },
     embeddings_found: embeddingsFound,
     all_embeddings: allEmbeddings,
-    segment_embeddings: data?.embeddings || null,
-    total_segments_in_document: data?.total_segments_in_document || null,
-    c2pa: data?.c2pa || null,
+    segment_embeddings: verdict.embeddings || null,
+    total_segments_in_document: verdict.total_segments_in_document || null,
+    c2pa,
   };
 }
