@@ -2644,16 +2644,6 @@ if (document.readyState === 'loading') {
   _initDetector();
 }
 
-// Report OS color scheme so the service worker can swap the action icon
-// (which also drives context menu icons) between light and dark variants.
-try {
-  const _darkMq = window.matchMedia('(prefers-color-scheme: dark)');
-  chrome.runtime.sendMessage({ type: 'THEME_CHANGED', dark: _darkMq.matches }).catch(() => {});
-  _darkMq.addEventListener('change', (e) => {
-    chrome.runtime.sendMessage({ type: 'THEME_CHANGED', dark: e.matches }).catch(() => {});
-  });
-} catch { /* matchMedia unavailable or extension context invalidated */ }
-
 // Listen for messages from popup or service worker
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'RESCAN') {

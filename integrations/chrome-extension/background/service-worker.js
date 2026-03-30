@@ -357,7 +357,6 @@ const tabState = new Map();
 const NOISY_DEBUG_MESSAGE_TYPES = new Set([
   'GET_DEBUG_LOGS',
   'GET_TAB_STATE',
-  'THEME_CHANGED',
 ]);
 
 /**
@@ -376,32 +375,7 @@ function hashContent(text) {
 /**
  * Update extension icon based on tab state
  */
-// Theme-aware icon paths (root-relative so they resolve from the extension
-// root, not from background/ where the service worker lives).
-const LIGHT_ICONS = { 16: '/icons/icon-16.png', 32: '/icons/icon-32.png', 48: '/icons/icon-48.png', 128: '/icons/icon-128.png' };
-const DARK_ICONS  = { 16: '/icons/icon-dark-16.png', 32: '/icons/icon-dark-32.png', 48: '/icons/icon-dark-48.png', 128: '/icons/icon-dark-128.png' };
-let _prefersDark = false;
-
-// Restore persisted theme on service worker startup so the icon is correct
-// before any content script has a chance to report.
-chrome.storage.local.get({ prefersDark: false }, (result) => {
-  _prefersDark = Boolean(result.prefersDark);
-  if (_prefersDark) {
-    chrome.action.setIcon({ path: DARK_ICONS }).catch(() => {});
-  }
-});
-
-function _getIconSet() {
-  return _prefersDark ? DARK_ICONS : LIGHT_ICONS;
-}
-
 function updateIcon(tabId, state) {
-  chrome.action.setIcon({
-    tabId: tabId,
-    path: _getIconSet()
-  }).catch(() => {
-    // Tab may have been closed
-  });
 
   // Update badge text
   const badgeText = {
@@ -1932,25 +1906,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   switch (message.type) {
-    case 'THEME_CHANGED': {
-      const wasDark = _prefersDark;
-      _prefersDark = Boolean(message.dark);
-      if (wasDark !== _prefersDark) {
-        // Persist so the correct icon loads on next service worker startup
-        chrome.storage.local.set({ prefersDark: _prefersDark }).catch(() => {});
-        // Refresh the default (no-tab) action icon
-        chrome.action.setIcon({ path: _getIconSet() }).catch(() => {});
-        // Refresh every tracked tab so context menus update immediately
-        for (const [tid] of tabState) {
-          const existing = tabState.get(tid);
-          const iconState = existing ? getIconStateForTab(existing) : 'none';
-          updateIcon(tid, iconState);
-        }
-      }
-      sendResponse({ received: true });
-      break;
-    }
-
     case 'EMBEDDINGS_DETECTED':
       if (tabId) {
         tabState.set(tabId, {
@@ -2390,24 +2345,6 @@ chrome.runtime.onInstalled.addListener((details) => {
     contexts: ['link']
   });
 
-  // Detect OS color scheme at install/reload so the icon is correct before
-  // any content script has a chance to report via THEME_CHANGED.
-  chrome.tabs.query({ active: true, currentWindow: true }).then(async (tabs) => {
-    const tab = tabs[0];
-    if (!tab?.id || !tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) return;
-    try {
-      const results = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: () => window.matchMedia('(prefers-color-scheme: dark)').matches
-      });
-      const dark = Boolean(results?.[0]?.result);
-      if (dark !== _prefersDark) {
-        _prefersDark = dark;
-        chrome.storage.local.set({ prefersDark: dark }).catch(() => {});
-        chrome.action.setIcon({ path: _getIconSet() }).catch(() => {});
-      }
-    } catch { /* tab may not be scriptable */ }
-  }).catch(() => {});
 });
 
 const CONTEXT_SCRIPT_FILES = ['content/detector.js', 'content/editor-signer.js'];
