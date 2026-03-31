@@ -237,7 +237,8 @@ export default function RightsManagementPage() {
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
             Every document you sign embeds machine-readable licensing terms. AI companies discover
-            your terms automatically. You control scraping, RAG, and training — separately.
+            your terms automatically. You control scraping, RAG, and training - separately.
+            Powered by <Link href="/c2pa-standard" className="text-primary underline underline-offset-2 hover:no-underline">C2PA</Link> and built on <Link href="/content-provenance" className="text-primary underline underline-offset-2 hover:no-underline">content provenance</Link> infrastructure.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold">
@@ -333,7 +334,7 @@ export default function RightsManagementPage() {
                 Enforcement
               </p>
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                Transform Unauthorized Use<br />into Willful Infringement
+                Transform Unauthorized Use<br />into <Link href="/cryptographic-watermarking/legal-implications" className="text-primary underline underline-offset-2 hover:no-underline">Willful Infringement</Link>
               </h2>
               <p className="text-muted-foreground mb-4">
                 AI companies can no longer claim ignorance. When your rights profile is embedded in

@@ -155,7 +155,7 @@ export default function PlatformPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              C2PA Text Infrastructure Stack
+              <Link href="/c2pa-standard/media-types" className="text-primary underline underline-offset-2 hover:no-underline">C2PA</Link> Text Infrastructure Stack
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
               Six layers that take content from signing through licensing.
@@ -413,6 +413,7 @@ export default function PlatformPage() {
           <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
             Free signing infrastructure for every publisher. Add enforcement tools when you are ready to license.
             Enterprise plans for organizations that need unlimited volume and dedicated support.
+            Read our guide to <Link href="/content-provenance/verification" className="text-primary underline underline-offset-2 hover:no-underline">content provenance verification</Link>.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold">

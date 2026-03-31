@@ -38,7 +38,7 @@ export default function DeepfakeDetectionPage() {
               Beyond Deepfake Detection: Mathematical Proof
             </h1>
             <p className="text-sm xs:text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 text-shadow-md max-w-3xl mx-auto leading-relaxed px-2">
-              Deepfake detection analyzes patterns after content is created. Encypher embeds cryptographic proof at creation.<br />
+              Deepfake detection analyzes patterns after content is created. Encypher embeds <Link href="/cryptographic-watermarking" className="text-primary underline underline-offset-2 hover:no-underline">cryptographic watermarking</Link> proof at creation.<br />
               <strong>The difference? Detection guesses. Authentication knows.</strong>
             </p>
 
@@ -321,7 +321,7 @@ export default function DeepfakeDetectionPage() {
             Move Beyond Detection to Authentication
           </h2>
           <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
-            See how cryptographic authentication provides the certainty deepfake detection can't deliver.
+            See how cryptographic authentication provides the certainty deepfake detection can&apos;t deliver. Compare <Link href="/compare/content-provenance-vs-content-detection" className="text-primary underline underline-offset-2 hover:no-underline">content provenance vs. content detection</Link> in depth.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
             <Button asChild size="lg" className="w-full sm:w-auto shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>

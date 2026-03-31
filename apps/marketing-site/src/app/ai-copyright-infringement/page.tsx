@@ -38,8 +38,8 @@ export default function AICopyrightInfringementPage() {
               From AI Copyright Infringement to Licensing Revenue
             </h1>
             <p className="text-sm xs:text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 text-shadow-md max-w-3xl mx-auto leading-relaxed px-2">
-              AI companies train on your content without permission. You know it's happening but can't prove it in court. AI detectors fail with 26% accuracy.<br />
-              <strong>Encypher provides cryptographic proof with 100% accuracy.</strong>
+              AI companies train on your content without permission. You know it&apos;s happening but can&apos;t prove it in court. AI detectors fail with 26% accuracy.<br />
+              <strong>Encypher provides <Link href="/cryptographic-watermarking" className="text-primary underline underline-offset-2 hover:no-underline">cryptographic watermarking</Link> proof with 100% accuracy.</strong>
             </p>
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center items-center px-2">
@@ -258,7 +258,7 @@ export default function AICopyrightInfringementPage() {
             Why Publishers Choose Encypher
           </h2>
           <p className="text-lg text-center text-muted-foreground mb-12 max-w-3xl mx-auto">
-            We authored Section A.7 of the C2PA 2.3 specification. We built the proof infrastructure. We enable the licensing economy.
+            We authored Section A.7 of the <Link href="/c2pa-standard" className="text-primary underline underline-offset-2 hover:no-underline">C2PA</Link> 2.3 specification. We built the proof infrastructure. We enable the licensing economy.
           </p>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -305,7 +305,7 @@ export default function AICopyrightInfringementPage() {
             Ready to Transform AI Copyright Infringement Into Revenue?
           </h2>
           <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
-            See how cryptographic proof with sentence-level tracking provides the evidence you need to win cases and establish licensing terms.
+            See how cryptographic proof with sentence-level tracking provides the evidence you need to win cases and establish licensing terms. Understand the <Link href="/cryptographic-watermarking/legal-implications" className="text-primary underline underline-offset-2 hover:no-underline">legal implications of cryptographic watermarking</Link> and the full <Link href="/content-provenance" className="text-primary underline underline-offset-2 hover:no-underline">content provenance</Link> picture.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
             <Button asChild size="lg" className="w-full sm:w-auto shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>

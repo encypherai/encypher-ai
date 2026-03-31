@@ -58,7 +58,7 @@ export default function EnterprisePage() {
             Law firms, consulting firms, and regulated enterprises face a new question on
             every document: which sentences came from AI, which came from humans, and
             which were AI-drafted then edited? An AI policy does not answer that question.
-            Cryptographic provenance does.
+            <Link href="/content-provenance" className="text-primary underline underline-offset-2 hover:no-underline">Cryptographic content provenance</Link> does.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
@@ -307,7 +307,7 @@ export default function EnterprisePage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold mt-0.5">+</span>
-                  EU AI Act compliance for customer-facing AI outputs
+                  <Link href="/content-provenance/eu-ai-act" className="text-primary underline underline-offset-2 hover:no-underline">EU AI Act</Link> compliance for customer-facing AI outputs
                 </li>
               </ul>
             </div>
@@ -369,7 +369,7 @@ export default function EnterprisePage() {
                 <AccordionContent>
                   When your AI assistant generates a passage -- or when an attorney
                   or analyst writes one -- the document is signed via the Encypher API.
-                  The C2PA manifest records: who signed, at what time, whether the
+                  The <Link href="/c2pa-standard/implementation-guide" className="text-primary underline underline-offset-2 hover:no-underline">C2PA</Link> manifest records: who signed, at what time, whether the
                   content was AI-generated or human-authored, and which model produced it
                   (if AI). This happens at the moment of production, not retroactively.
                   <br /><br />

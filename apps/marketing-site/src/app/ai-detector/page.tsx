@@ -35,7 +35,7 @@ export default function AIDetectorPage() {
             </h1>
             <p className="text-sm xs:text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 text-shadow-md max-w-3xl mx-auto leading-relaxed px-2">
               Stop guessing with 26% accurate AI detectors.<br />
-              Start proving with 100% accurate cryptographic authentication.<br />
+              Start proving with 100% accurate cryptographic authentication via <Link href="/content-provenance" className="text-primary underline underline-offset-2 hover:no-underline">content provenance</Link>.<br />
               <strong>The difference? Detection guesses. Proof knows.</strong>
             </p>
 
@@ -358,7 +358,7 @@ export default function AIDetectorPage() {
             Stop Guessing. Start Proving.
           </h2>
           <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
-            See how cryptographic authentication provides 100% accuracy with zero false positives—the certainty AI detectors can't deliver.
+            See how cryptographic authentication provides 100% accuracy with zero false positives - the certainty AI detectors can&apos;t deliver. Compare <Link href="/compare/encypher-vs-detection-tools" className="text-primary underline underline-offset-2 hover:no-underline">Encypher vs. detection tools</Link> directly.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
             <Button asChild size="lg" className="w-full sm:w-auto shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>

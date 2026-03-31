@@ -50,9 +50,9 @@ export default function PublishersPage() {
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button 
+            <Button
               onClick={() => setShowContactModal(true)}
-              size="lg" 
+              size="lg"
               variant="ghost"
               className="font-semibold"
             >
@@ -132,7 +132,7 @@ export default function PublishersPage() {
                   The Legal Landscape Has Changed
                 </h2>
                 <p className="text-muted-foreground">
-                  US copyright law distinguishes between innocent and willful infringement. Cryptographic proof of ownership -- and of when your content was published -- directly affects which applies.
+                  US copyright law distinguishes between innocent and <Link href="/cryptographic-watermarking/legal-implications" className="text-primary underline underline-offset-2 hover:no-underline">willful infringement</Link>. Cryptographic proof of ownership -- and of when your content was published -- directly affects which applies.
                 </p>
               </div>
             </div>
@@ -350,9 +350,9 @@ export default function PublishersPage() {
                   View Full Pricing <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button 
+              <Button
                 onClick={() => setShowContactModal(true)}
-                size="lg" 
+                size="lg"
                 variant="outline"
                 className="font-semibold py-3 px-6 rounded-lg"
               >
@@ -514,7 +514,7 @@ export default function PublishersPage() {
           </h2>
           <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
             Free signing infrastructure. See which AI companies are using your content from day one.
-            Enforcement tools available when you are ready.
+            Enforcement tools available when you are ready. Read the full <Link href="/content-provenance/for-publishers" className="text-primary underline underline-offset-2 hover:no-underline">publisher content provenance guide</Link>.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold py-3 px-6 rounded-lg shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
@@ -542,8 +542,8 @@ export default function PublishersPage() {
       {/* Sales Contact Modal */}
       <AnimatePresence>
         {showContactModal && (
-          <SalesContactModal 
-            onClose={() => setShowContactModal(false)} 
+          <SalesContactModal
+            onClose={() => setShowContactModal(false)}
             context="publisher"
           />
         )}

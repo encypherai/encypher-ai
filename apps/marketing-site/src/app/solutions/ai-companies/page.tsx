@@ -58,7 +58,7 @@ export default function AiCompaniesPage() {
             AI companies that license publisher content through Encypher get three things at once:
             access to a growing publisher coalition, cryptographic proof of compliance for
             regulators, and performance intelligence that shows which content actually moves
-            your product metrics. Built collaboratively through C2PA -- OpenAI, Google, Adobe,
+            your product metrics. Built collaboratively through <Link href="/c2pa-standard" className="text-primary underline underline-offset-2 hover:no-underline">C2PA</Link> -- OpenAI, Google, Adobe,
             and Microsoft are members.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -131,7 +131,7 @@ export default function AiCompaniesPage() {
               <Shield className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-lg font-semibold mb-3">Regulatory Compliance</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                EU AI Act Article 52(1) output disclosure, China watermarking mandate, and
+                <Link href="/content-provenance/eu-ai-act" className="text-primary underline underline-offset-2 hover:no-underline">EU AI Act</Link> Article 52(1) output disclosure, China watermarking mandate, and
                 C2PA provenance -- all from the same API call. Stay compliant across
                 jurisdictions as regulations evolve.
               </p>
@@ -235,7 +235,7 @@ export default function AiCompaniesPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold mt-0.5">+</span>
-                  Automated pre-publish hallucination check on citations
+                  Automated pre-publish hallucination check on citations -- see <Link href="/content-provenance/verification" className="text-primary underline underline-offset-2 hover:no-underline">content provenance verification</Link>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold mt-0.5">+</span>

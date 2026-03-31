@@ -110,6 +110,34 @@ export function Navbar() {
           <Link href="/blog" className="text-sm font-medium hover:text-primary">
             Blog
           </Link>
+          {/* Resources Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="text-sm font-medium hover:text-primary px-2">
+                Resources
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-popover text-popover-foreground shadow-lg border border-border">
+              <DropdownMenuItem asChild>
+                <Link href="/content-provenance">Content Provenance</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/c2pa-standard">C2PA Standard</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/cryptographic-watermarking">Cryptographic Watermarking</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/glossary">Glossary</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/compare">Compare</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/blog">Blog</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Link href="/pricing" className="text-sm font-medium hover:text-primary">
             Pricing
           </Link>
@@ -272,6 +300,43 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Blog
+            </Link>
+            {/* Mobile Resources Links */}
+            <span className="text-sm font-medium">Resources</span>
+            <Link
+              href="/content-provenance"
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Content Provenance
+            </Link>
+            <Link
+              href="/c2pa-standard"
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              C2PA Standard
+            </Link>
+            <Link
+              href="/cryptographic-watermarking"
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Cryptographic Watermarking
+            </Link>
+            <Link
+              href="/glossary"
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Glossary
+            </Link>
+            <Link
+              href="/compare"
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Compare
             </Link>
             <Link
               href="/pricing"

@@ -40,9 +40,9 @@ export default function HomePage() {
       />
       <AISummary
         title="Encypher – Machine-Readable Rights for Your Content"
-        whatWeDo="Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text). We embed invisible cryptographic proof directly into text so ownership and licensing terms travel with content through copy-paste, syndication, scraping, and AI training."
+        whatWeDo="Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text). We embed invisible cryptographic proof directly into text so ownership and licensing terms travel with content through copy-paste, syndication, scraping, and AI training. Primary resource: /content-provenance. C2PA standard guide: /c2pa-standard."
         whoItsFor="Publishers who need enforceable machine-readable rights, competitor scraping visibility, and provable ownership evidence."
-        keyDifferentiator="Not AI detection and not front-door-only controls. Encypher embeds cryptographic proof into the content itself, so provenance survives distribution and can be independently verified."
+        keyDifferentiator="Not AI detection and not front-door-only controls. Encypher embeds cryptographic proof into the content itself, so provenance survives distribution and can be independently verified. Technical deep-dive: /cryptographic-watermarking."
         primaryValue="Protect content at publish time, track where it appears, and enforce your licensing terms with cryptographic evidence. Encypher co-chairs the C2PA Text Provenance Task Force."
         pagePath="/"
       />
@@ -142,10 +142,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Infrastructure for Content Rights. Built on the C2PA Standard.
+              Infrastructure for Content Rights. Built on the <Link href="/c2pa-standard" className="text-primary underline underline-offset-2 hover:no-underline">C2PA Standard</Link>.
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Publisher-first infrastructure that protects content ownership across syndication, competitor copying, and AI usage.
+              Publisher-first infrastructure that protects <Link href="/content-provenance" className="text-primary underline underline-offset-2 hover:no-underline">content provenance</Link> across syndication, competitor copying, and AI usage.
             </p>
           </div>
 
@@ -219,7 +219,7 @@ export default function HomePage() {
               </div>
               <h4 className="text-lg font-bold mb-3">AI Content Governance at Scale</h4>
               <p className="text-sm text-muted-foreground mb-4">
-                When your organization generates or ingests AI content, you need provenance infrastructure that meets regulatory requirements - EU AI Act, China watermarking mandates, and emerging US frameworks.
+                When your organization generates or ingests AI content, you need provenance infrastructure that meets regulatory requirements - <Link href="/content-provenance/eu-ai-act" className="text-primary underline underline-offset-2 hover:no-underline">EU AI Act</Link>, China watermarking mandates, and emerging US frameworks.
               </p>
               <ul className="space-y-2 mb-5">
                 <li className="flex items-start gap-2">
