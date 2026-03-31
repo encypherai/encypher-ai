@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { AnimatePresence } from 'framer-motion';
-import { ArrowRight, FileText, CheckCircle2, Bot, Building2 } from 'lucide-react';
+import { ArrowRight, FileText, Bot, Building2 } from 'lucide-react';
+import { EncypherMark, BRAND_COLORS } from '@encypher/icons';
 import MetadataBackground from '@/components/hero/MetadataBackground';
 import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
@@ -161,20 +162,20 @@ export default function HomePage() {
               </p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-5 w-5 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Cryptographic proof survives copy-paste, scraping, and syndication</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-5 w-5 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Detect competitor and aggregator reuse with cryptographic certainty</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-5 w-5 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Set machine-readable licensing terms: your content, your rules</span>
                 </li>
               </ul>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Button asChild className="shadow-lg btn-blue-hover" size="lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                <Button asChild className="shadow-lg btn-blue-hover" size="lg" style={{ backgroundColor: BRAND_COLORS.azure, color: BRAND_COLORS.white }}>
                   <Link href="/solutions/publishers">
                     See Publisher Demo <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
@@ -193,15 +194,15 @@ export default function HomePage() {
               </p>
               <ul className="space-y-2 mb-5">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">One integration for the entire publisher ecosystem</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Quote integrity verification - prove &quot;According to [Source]&quot; is accurate</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Standards-based - we co-authored the spec</span>
                 </li>
               </ul>
@@ -223,15 +224,15 @@ export default function HomePage() {
               </p>
               <ul className="space-y-2 mb-5">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">C2PA 2.3 compliant - standard published January 8, 2026</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Sentence-level authentication for audit trails</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">On-premise or cloud deployment with SSO and custom SLAs</span>
                 </li>
               </ul>

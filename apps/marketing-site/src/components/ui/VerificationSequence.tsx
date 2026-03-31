@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { EncypherMark, EncypherLoader } from '@encypher/icons';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -90,9 +90,9 @@ export function VerificationSequence({
       {steps.map((step, i) => (
         <div key={i} className="flex items-center gap-2.5 text-sm">
           {i < activeIndex ? (
-            <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+            <EncypherMark color="azure" className="h-4 w-4 flex-shrink-0" />
           ) : i === activeIndex ? (
-            <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
+            <EncypherLoader size="sm" color="current" className="!mx-0 text-primary flex-shrink-0" />
           ) : (
             <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/20 flex-shrink-0" />
           )}

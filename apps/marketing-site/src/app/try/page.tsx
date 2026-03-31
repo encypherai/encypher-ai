@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   RotateCcw,
 } from 'lucide-react';
+import { EncypherMark, EncypherLoader } from '@encypher/icons';
 import {
   VerificationSequence,
   SIGN_STEPS,
@@ -106,7 +107,7 @@ function StepBadge({ n, done, active }: { n: number; done: boolean; active: bool
   if (done)
     return (
       <div className={`${base} bg-primary text-primary-foreground`}>
-        <CheckCircle2 className="w-4 h-4" />
+        <EncypherMark color="white" className="w-4 h-4" />
       </div>
     );
   if (active)
@@ -383,7 +384,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
                     >
                       {stage === 'verifying' ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <EncypherLoader size="sm" color="current" className="!mx-0 mr-2" />
                           Verifying...
                         </>
                       ) : (
@@ -410,7 +411,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
             <div className="space-y-6">
               <div className="rounded-lg border-2 border-green-500 bg-green-50 dark:bg-green-950/20 overflow-hidden">
                 <div className="flex items-center gap-3 px-6 py-4 bg-green-500 text-white">
-                  <CheckCircle2 className="w-6 h-6 flex-shrink-0" />
+                  <EncypherMark color="white" className="w-6 h-6 flex-shrink-0" />
                   <div>
                     <p className="font-bold text-lg">Verified Authentic</p>
                     <p className="text-green-100 text-sm">
