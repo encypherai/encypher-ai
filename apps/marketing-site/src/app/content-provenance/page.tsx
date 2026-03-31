@@ -417,9 +417,9 @@ export default function ContentProvenancePage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     REST API with SDKs in Python, TypeScript, Go, and Rust. Sign a document in a single POST request. Batch endpoints for bulk archive signing. Under 50ms p99 latency.
                   </p>
-                  <Link href="/api" className="text-sm underline hover:opacity-80" style={{ color: '#2a87c4' }}>
+                  <a href="https://api.encypher.com/docs" target="_blank" rel="noopener noreferrer" className="text-sm underline hover:opacity-80" style={{ color: '#2a87c4' }}>
                     API documentation &rarr;
-                  </Link>
+                  </a>
                 </div>
                 <div className="bg-muted/30 p-6 rounded-lg border border-border">
                   <h3 className="font-semibold mb-3">WordPress Plugin</h3>

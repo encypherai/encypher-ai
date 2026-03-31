@@ -72,6 +72,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/c2pa-standard/vs-synthid`, lastModified: now, priority: 0.7 },
     { url: `${base}/c2pa-standard/manifest-structure`, lastModified: now, priority: 0.7 },
     { url: `${base}/c2pa-standard/media-types`, lastModified: now, priority: 0.7 },
+    { url: `${base}/c2pa-standard/conformance`, lastModified: now, priority: 0.7 },
     // Cryptographic watermarking cluster pages
     { url: `${base}/cryptographic-watermarking/how-it-works`, lastModified: now, priority: 0.7 },
     { url: `${base}/cryptographic-watermarking/vs-statistical-watermarking`, lastModified: now, priority: 0.7 },

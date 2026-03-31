@@ -412,9 +412,9 @@ export default function C2PAStandardPage() {
 
               <div className="flex gap-4">
                 <Button asChild size="sm" className="font-semibold" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                  <Link href="/api">
+                  <a href="https://api.encypher.com/docs" target="_blank" rel="noopener noreferrer">
                     Full API Documentation <Code className="ml-2 h-4 w-4" />
-                  </Link>
+                  </a>
                 </Button>
                 <Button asChild size="sm" variant="outline" className="font-semibold">
                   <Link href="/auth/signin?mode=signup&source=c2pa-quickstart">
@@ -447,6 +447,10 @@ export default function C2PAStandardPage() {
                 <Link href="/content-provenance/eu-ai-act" className="block bg-muted/30 p-5 rounded-lg border border-border hover:border-primary/50 transition-colors group">
                   <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">C2PA and EU AI Act</h3>
                   <p className="text-sm text-muted-foreground">How C2PA satisfies Article 52 machine-readable marking requirements before the August 2, 2026 deadline.</p>
+                </Link>
+                <Link href="/c2pa-standard/conformance" className="block bg-muted/30 p-5 rounded-lg border border-border hover:border-primary/50 transition-colors group">
+                  <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">Conformance Explorer</h3>
+                  <p className="text-sm text-muted-foreground">Browse all products that have passed C2PA conformance testing. Search by company, product type, or media format.</p>
                 </Link>
               </div>
             </div>

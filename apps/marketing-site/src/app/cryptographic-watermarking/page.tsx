@@ -424,9 +424,9 @@ export default function CryptographicWatermarkingPage() {
                   </Link>
                 </Button>
                 <Button asChild size="sm" variant="outline" className="font-semibold">
-                  <Link href="/api">
+                  <a href="https://api.encypher.com/docs" target="_blank" rel="noopener noreferrer">
                     API Documentation <FileText className="ml-2 h-4 w-4" />
-                  </Link>
+                  </a>
                 </Button>
               </div>
             </div>
