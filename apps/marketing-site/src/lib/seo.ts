@@ -15,7 +15,7 @@ export const siteConfig = {
   name: "Encypher",
   url: "https://encypher.com",
   tagline: "Machine-Readable Rights for Your Content",
-  description: "Encypher authored the C2PA text authentication standard. Patent-pending granular content attribution with Merkle tree authentication for tamper-evident documentation.",
+  description: "Encypher authored Section A.7 of the C2PA 2.3 specification, the text provenance standard. Patent-pending granular content attribution with Merkle tree authentication for tamper-evident documentation.",
 
   // OG Images by audience
   images: {
@@ -110,7 +110,68 @@ export const keywords = {
     "AI licensing framework",
     "publisher coalition",
     "content provenance standard",
-  ]
+  ],
+
+  // Content provenance keyword cluster
+  contentProvenance: [
+    "content provenance",
+    "what is content provenance",
+    "content provenance standard",
+    "content provenance API",
+    "content provenance verification",
+    "content provenance for publishers",
+    "content provenance for AI",
+  ],
+
+  // C2PA keyword cluster
+  c2pa: [
+    "C2PA",
+    "C2PA standard",
+    "C2PA 2.3",
+    "C2PA Section A.7",
+    "C2PA text provenance",
+    "C2PA specification",
+    "C2PA manifest",
+    "C2PA implementation",
+    "C2PA members",
+  ],
+
+  // Cryptographic watermarking keyword cluster
+  watermarking: [
+    "cryptographic watermarking",
+    "text watermarking",
+    "invisible watermarking",
+    "digital watermarking",
+    "watermarking vs detection",
+    "AI watermarking technology",
+  ],
+
+  // Comparison keyword cluster
+  comparison: [
+    "Encypher vs SynthID",
+    "C2PA vs blockchain",
+    "content provenance vs content detection",
+    "cryptographic vs statistical watermarking",
+  ],
+
+  // Media format keyword cluster
+  mediaFormats: [
+    "JPEG provenance",
+    "PDF provenance",
+    "MP4 provenance",
+    "audio provenance",
+    "video provenance",
+    "image provenance",
+    "document provenance",
+  ],
+
+  // Regulatory keyword cluster
+  regulatory: [
+    "EU AI Act content provenance",
+    "EU AI Act August 2026",
+    "AI Act compliance",
+    "AI transparency requirements",
+  ],
 };
 
 // Combined keyword array for general use
@@ -121,6 +182,12 @@ export const allKeywords = [
   ...keywords.enterprises,
   ...keywords.technical,
   ...keywords.market,
+  ...keywords.contentProvenance,
+  ...keywords.c2pa,
+  ...keywords.watermarking,
+  ...keywords.comparison,
+  ...keywords.mediaFormats,
+  ...keywords.regulatory,
 ];
 
 // ============================================================================
@@ -410,7 +477,7 @@ export const faqSchema = {
       "name": "What is Encypher?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Encypher authored the C2PA text authentication standard and provides sentence-level content tracking infrastructure for publishers and AI labs. We provide technical infrastructure for content licensing through cryptographic verification."
+        "text": "Encypher authored Section A.7 of the C2PA 2.3 specification (text provenance) and provides sentence-level content tracking infrastructure for publishers and AI labs. We provide technical infrastructure for content licensing through cryptographic verification."
       }
     },
     {
@@ -418,7 +485,7 @@ export const faqSchema = {
       "name": "What is the C2PA text standard?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The C2PA (Coalition for Content Provenance and Authenticity) text standard, authored by Encypher, defines how text content is cryptographically authenticated. It enables verification of content origin, modifications, and usage with mathematical certainty."
+        "text": "The C2PA (Coalition for Content Provenance and Authenticity) specification, whose text provenance section (A.7) was authored by Encypher, defines how text content is cryptographically authenticated. It enables verification of content origin, modifications, and usage with mathematical certainty."
       }
     },
     {
@@ -682,8 +749,8 @@ export function getBlogListSchema(
     "@type": "ItemList",
     "name": tag ? `Encypher Blog - ${tag}` : "Encypher Blog",
     "description": tag
-      ? `Articles about ${tag} from the authors of the C2PA Text Standard.`
-      : "From the authors of the C2PA text standard: infrastructure for AI content authentication and licensing.",
+      ? `Articles about ${tag} from the authors of C2PA Section A.7 (text provenance).`
+      : "From the authors of C2PA Section A.7 (text provenance): infrastructure for AI content authentication and licensing.",
     "url": listUrl,
     "itemListElement": posts.slice(0, 10).map((post, i) => ({
       "@type": "ListItem",
@@ -864,6 +931,179 @@ export function getAISearchSummary(props: AISearchSummaryProps) {
 }
 
 // ============================================================================
+// PILLAR, COMPARISON, GLOSSARY, FORMAT, AND VERTICAL METADATA GENERATORS
+// ============================================================================
+
+/**
+ * Pillar page metadata
+ */
+export function getPillarMetadata(pillar: 'content-provenance' | 'c2pa-standard' | 'cryptographic-watermarking'): Metadata {
+  const config = {
+    'content-provenance': {
+      title: "What Is Content Provenance? The Definitive Guide | Encypher",
+      description: "Content provenance embeds cryptographic proof of origin into digital content. Learn how C2PA manifests, cryptographic watermarking, and free verification work across 31 media types.",
+      path: "/content-provenance",
+      keywords: [...keywords.contentProvenance, ...keywords.core],
+    },
+    'c2pa-standard': {
+      title: "The C2PA Standard: How Content Provenance Works | Encypher",
+      description: "C2PA is the open standard for content provenance, backed by Adobe, Microsoft, Google, BBC, and OpenAI. Encypher authored Section A.7 (text provenance) and co-chairs the task force.",
+      path: "/c2pa-standard",
+      keywords: [...keywords.c2pa, ...keywords.core],
+    },
+    'cryptographic-watermarking': {
+      title: "Cryptographic Watermarking: Proof Embedded in Content | Encypher",
+      description: "Cryptographic watermarking embeds deterministic proof of origin into text, images, audio, and video. Survives copy-paste, B2B distribution, and scraping. Not statistical guessing.",
+      path: "/cryptographic-watermarking",
+      keywords: [...keywords.watermarking, ...keywords.core],
+    },
+  };
+  const c = config[pillar];
+  return generateMetadata(c.title, c.description, c.path, undefined, c.keywords);
+}
+
+/**
+ * Comparison page metadata
+ */
+export function getCompareMetadata(comparison: string, title: string, description: string): Metadata {
+  return generateMetadata(title, description, `/compare/${comparison}`, undefined, keywords.comparison);
+}
+
+/**
+ * Glossary page metadata
+ */
+export function getGlossaryMetadata(): Metadata {
+  return generateMetadata(
+    "Content Provenance Glossary: Key Terms and Definitions | Encypher",
+    "Definitions for content provenance, C2PA, cryptographic watermarking, Merkle tree authentication, willful infringement, and 40+ terms in the content provenance ecosystem.",
+    "/glossary",
+    undefined,
+    [...keywords.contentProvenance, ...keywords.c2pa]
+  );
+}
+
+/**
+ * Programmatic format page metadata
+ */
+export function getFormatPageMetadata(formatName: string, mimeType: string, category: string): Metadata {
+  const slug = formatName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+  return generateMetadata(
+    `${formatName} Content Provenance: Sign, Embed, Verify | Encypher`,
+    `How C2PA manifests are embedded in ${formatName} files. Sign ${category} content with cryptographic provenance and verify for free using the Encypher API.`,
+    `/content-provenance/${slug}`,
+    undefined,
+    [...keywords.mediaFormats, ...keywords.core]
+  );
+}
+
+/**
+ * Industry vertical page metadata
+ */
+export function getVerticalMetadata(vertical: string, title: string, description: string): Metadata {
+  return generateMetadata(title, description, `/content-provenance/${vertical}`, undefined, [...keywords.contentProvenance, ...keywords.core]);
+}
+
+// ============================================================================
+// STRUCTURED DATA SCHEMAS - EXTENDED
+// ============================================================================
+
+/**
+ * BreadcrumbList schema generator
+ */
+export function getBreadcrumbSchema(items: Array<{ name: string; url: string }>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": items.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      "item": item.url,
+    })),
+  };
+}
+
+/**
+ * TechArticle schema for pillar and technical guide pages
+ */
+export function getTechArticleSchema(article: {
+  title: string;
+  description: string;
+  url: string;
+  author?: string;
+  datePublished?: string;
+  dateModified?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": article.title,
+    "description": article.description,
+    "url": article.url,
+    "author": {
+      "@type": "Person",
+      "name": article.author || "Erik Svilich",
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Encypher",
+      "url": siteConfig.url,
+    },
+    "datePublished": article.datePublished || new Date().toISOString(),
+    "dateModified": article.dateModified || new Date().toISOString(),
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": article.url,
+    },
+  };
+}
+
+/**
+ * DefinedTermSet schema for glossary page
+ */
+export function getGlossarySchema(terms: Array<{ name: string; description: string }>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DefinedTermSet",
+    "name": "Content Provenance Glossary",
+    "description": "Key terms and definitions in the content provenance ecosystem.",
+    "url": `${siteConfig.url}/glossary`,
+    "hasDefinedTerm": terms.map(term => ({
+      "@type": "DefinedTerm",
+      "name": term.name,
+      "description": term.description,
+    })),
+  };
+}
+
+/**
+ * Person schema for author pages (E-E-A-T)
+ */
+export function getAuthorSchema(author: {
+  name: string;
+  jobTitle: string;
+  description: string;
+  url: string;
+  credentials: string[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": author.name,
+    "jobTitle": author.jobTitle,
+    "description": author.description,
+    "url": author.url,
+    "worksFor": {
+      "@type": "Organization",
+      "name": "Encypher",
+      "url": siteConfig.url,
+    },
+    "knowsAbout": author.credentials,
+    "sameAs": [],
+  };
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -886,4 +1126,13 @@ export default {
   getBlogListSchema,
   getWebPageSchema,
   getAISearchSummary,
+  getPillarMetadata,
+  getCompareMetadata,
+  getGlossaryMetadata,
+  getFormatPageMetadata,
+  getVerticalMetadata,
+  getBreadcrumbSchema,
+  getTechArticleSchema,
+  getGlossarySchema,
+  getAuthorSchema,
 };

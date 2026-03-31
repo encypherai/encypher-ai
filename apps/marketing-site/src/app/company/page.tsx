@@ -32,7 +32,7 @@ export default function CompanyPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
             getAISearchSummary({
-              whatWeDo: 'Sentence-level content authentication and licensing infrastructure. Encypher authored the C2PA text provenance specification.',
+              whatWeDo: 'Sentence-level content authentication and licensing infrastructure. Encypher authored Section A.7 of the C2PA 2.3 specification (text provenance).',
               whoItsFor: 'Publishers seeking licensing infrastructure and AI labs optimizing performance and compliance.',
               keyDifferentiator: 'Cryptographic verification at sentence-level vs probabilistic detection.',
               primaryValue: 'Provides technical infrastructure for content licensing with tamper-evident documentation and ecosystem integration.'
@@ -56,7 +56,7 @@ export default function CompanyPage() {
 
           <div className="text-center pt-8">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-8">
-              Co-Authors of the C2PA Text Standard
+              Authors of C2PA Section A.7, Co-Chairs of the Text Provenance Task Force
             </h3>
             <div className="flex justify-center items-center gap-12 md:gap-16 flex-wrap">
               <div className="relative h-12 w-48">

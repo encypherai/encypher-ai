@@ -111,7 +111,7 @@ export default function EnterprisePage() {
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
             Everything in the Free tier — with no limits. Plus exclusive capabilities for streaming LLM signing,
             advanced attribution, court-ready evidence, and enterprise-grade security.
-            Custom implementation from the authors of the C2PA text standard.
+            Custom implementation from the authors of C2PA Section A.7 (text provenance).
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button

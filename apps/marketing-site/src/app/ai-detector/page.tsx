@@ -27,7 +27,7 @@ export default function AIDetectorPage() {
       {/* Hero Section */}
       <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
         <MetadataBackground />
-        
+
         <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20 lg:py-28 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6">
             <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-3 sm:mb-4 md:mb-6 text-shadow-md leading-tight px-2">
@@ -38,7 +38,7 @@ export default function AIDetectorPage() {
               Start proving with 100% accurate cryptographic authentication.<br />
               <strong>The difference? Detection guesses. Proof knows.</strong>
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center items-center px-2">
               <Button asChild size="lg" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
                 <Link href="/demo">
@@ -55,11 +55,11 @@ export default function AIDetectorPage() {
                 </Link>
               </Button>
             </div>
-            
+
             {/* Standards Authority */}
             <div className="mt-8 sm:mt-12 md:mt-16 text-center">
               <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6 text-shadow-sm px-2">
-                From the Authors of the C2PA Text Standard
+                Authors of C2PA Section A.7 (Text Provenance)
               </h3>
               <div className="flex justify-center items-center gap-6 sm:gap-8 md:gap-12 flex-wrap">
                 <div className="relative h-8 w-28 sm:h-10 sm:w-32 md:h-12 md:w-36 flex-shrink-0">
@@ -244,7 +244,7 @@ export default function AIDetectorPage() {
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             AI Detectors vs. Cryptographic Proof: Side-by-Side
           </h2>
-          
+
           <div className="max-w-4xl mx-auto overflow-x-auto">
             <table className="w-full bg-card rounded-lg border border-border">
               <thead>
@@ -307,7 +307,7 @@ export default function AIDetectorPage() {
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             Who Needs Better Than AI Detection
           </h2>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <div className="bg-card p-6 rounded-lg border border-border text-center">
               <h3 className="font-bold mb-2">Publishers</h3>
@@ -315,21 +315,21 @@ export default function AIDetectorPage() {
                 Prove copyright infringement with court-admissible evidence
               </p>
             </div>
-            
+
             <div className="bg-card p-6 rounded-lg border border-border text-center">
               <h3 className="font-bold mb-2">Enterprises</h3>
               <p className="text-sm text-muted-foreground">
                 EU AI Act compliance without false positives
               </p>
             </div>
-            
+
             <div className="bg-card p-6 rounded-lg border border-border text-center">
               <h3 className="font-bold mb-2">Platforms</h3>
               <p className="text-sm text-muted-foreground">
                 Content moderation with zero wrongful accusations
               </p>
             </div>
-            
+
             <div className="bg-card p-6 rounded-lg border border-border text-center">
               <h3 className="font-bold mb-2">AI Companies</h3>
               <p className="text-sm text-muted-foreground">
@@ -366,10 +366,10 @@ export default function AIDetectorPage() {
                 See Demo <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button 
+            <Button
               onClick={() => setShowContactModal(true)}
-              size="lg" 
-              className="w-full sm:w-auto shadow-lg btn-blue-hover" 
+              size="lg"
+              className="w-full sm:w-auto shadow-lg btn-blue-hover"
               style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}
             >
               Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
@@ -381,8 +381,8 @@ export default function AIDetectorPage() {
       {/* Sales Contact Modal */}
       <AnimatePresence>
         {showContactModal && (
-          <SalesContactModal 
-            onClose={() => setShowContactModal(false)} 
+          <SalesContactModal
+            onClose={() => setShowContactModal(false)}
             context="ai"
           />
         )}

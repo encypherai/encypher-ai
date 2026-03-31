@@ -38,5 +38,19 @@ Allow: /
 User-agent: CCBot
 Allow: /
 
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+# Extended AI summary: https://encypher.com/llms-full.txt
+
 # Sitemap
 Sitemap: https://encypher.com/sitemap.xml

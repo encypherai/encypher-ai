@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "Machine-Readable Rights for Your Content | Encypher",
-    description: "Authors of the C2PA text standard. Patent-pending granular attribution transforms litigation into licensing. Court-admissible evidence at sentence level.",
+    description: "Authors of C2PA Section A.7 (text provenance). Patent-pending granular attribution transforms litigation into licensing. Court-admissible evidence at sentence level.",
     images: ['/og-image.png'],
     creator: '@encypherai',
   },
