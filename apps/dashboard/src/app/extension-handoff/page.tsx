@@ -154,21 +154,23 @@ function ExtensionHandoffContent() {
     setError('');
 
     try {
-      let response;
-      try {
-        response = await apiClient.createApiKey(
-          accessToken,
-          'Encypher Verify Extension Key',
-          ['sign', 'verify', 'read'],
-          activeOrganization?.id ?? null
-        );
-      } catch (apiErr: unknown) {
-        const status = (apiErr as { statusCode?: number })?.statusCode;
-        if (status === 401 || status === 403) {
-          throw new Error('Your session has expired. Please refresh this page and try again.');
-        }
-        throw apiErr;
+      // Revoke any existing extension key to avoid hitting the key limit.
+      // Free tier allows 2 active keys; reconnecting the extension should
+      // replace the old key rather than accumulate new ones.
+      const existingKeys = await apiClient.getApiKeys(accessToken, activeOrganization?.id);
+      const extensionKey = existingKeys.find(
+        (k) => k.name?.startsWith('Encypher Verify Extension Key') && !k.is_revoked
+      );
+      if (extensionKey) {
+        await apiClient.deleteApiKey(accessToken, extensionKey.id);
       }
+
+      const response = await apiClient.createApiKey(
+        accessToken,
+        'Encypher Verify Extension Key',
+        ['sign', 'verify', 'read'],
+        activeOrganization?.id ?? null
+      );
       const fullKey = extractFullKey(response);
       if (!fullKey) {
         throw new Error('Could not create an API key for extension setup.');

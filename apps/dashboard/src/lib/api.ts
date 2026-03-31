@@ -587,6 +587,9 @@ function extractDetail(detail: unknown): string | null {
   if (detail && typeof detail === 'object' && 'msg' in detail) {
     return (detail as { msg: string }).msg;
   }
+  if (detail && typeof detail === 'object' && 'message' in detail) {
+    return (detail as { message: string }).message;
+  }
   return null;
 }
 
@@ -650,6 +653,9 @@ async function fetchWithAuth<T>(
       } else {
         // Legacy format: { detail: "..." } or FastAPI validation { detail: [...] }
         errorMessage = extractDetail(errorData.detail) || errorData.message || errorMessage;
+        if (errorData.detail && typeof errorData.detail === 'object' && errorData.detail.code) {
+          code = errorData.detail.code;
+        }
       }
     } catch {
       // Ignore JSON parse errors
