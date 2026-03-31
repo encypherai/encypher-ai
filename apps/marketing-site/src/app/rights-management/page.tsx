@@ -171,7 +171,7 @@ const AI_COMPANY_FEATURES = [
 const FAQS = [
   {
     q: 'Is Encypher compatible with RSL (Rights Signals Language)?',
-    a: "Yes. Encypher is fully RSL 1.0 compatible and adds an extra layer of protection on top. RSL defines how rights signals are expressed in a machine-readable format -- Encypher embeds those signals cryptographically inside every document so they travel with the content itself, not just as a flag on a server. RSL tells AI companies what your terms are. Encypher makes it impossible for them to claim they never saw them.",
+    a: "Yes. Encypher is fully RSL 1.0 compatible and adds an extra layer of protection on top. RSL defines how rights signals are expressed in a machine-readable format - Encypher embeds those signals cryptographically inside every document so they travel with the content itself, not just as a flag on a server. RSL tells AI companies what your terms are. Encypher makes it impossible for them to claim they never saw them.",
   },
   {
     q: 'Is Encypher compatible with C2PA?',
@@ -179,27 +179,27 @@ const FAQS = [
   },
   {
     q: 'Does Encypher work alongside Tollbit, ProRata, or Cloudflare bot management?',
-    a: "Yes, and it is actually a deeper layer of security. Think of Tollbit, ProRata, and Cloudflare as locking your front door -- they control who gets in at the server level. Encypher locks every individual piece of content, so your rights terms travel with the content across the internet even after it leaves your site. If an AI company scrapes through a cache, a third-party aggregator, or a data broker, your signed content still carries your rights profile. The two approaches are complementary, not competing.",
+    a: "Yes, and it is actually a deeper layer of security. Think of Tollbit, ProRata, and Cloudflare as locking your front door - they control who gets in at the server level. Encypher locks every individual piece of content, so your rights terms travel with the content across the internet even after it leaves your site. If an AI company scrapes through a cache, a third-party aggregator, or a data broker, your signed content still carries your rights profile. The two approaches are complementary, not competing.",
   },
   {
     q: 'Do I need a developer to set this up?',
-    a: "No. If you publish on WordPress or Ghost, setup is a plugin or webhook -- no code required. If you use a different CMS or publish directly, Encypher provides a simple REST API. Most publishers are fully set up within a day. Once configured, signing happens automatically in the background every time you publish.",
+    a: "No. If you publish on WordPress or Ghost, setup is a plugin or webhook - no code required. If you use a different CMS or publish directly, Encypher provides a simple REST API. Most publishers are fully set up within a day. Once configured, signing happens automatically in the background every time you publish.",
   },
   {
     q: 'Will this affect how my content looks or my search rankings?',
-    a: "No. The cryptographic watermark is invisible -- it is embedded in zero-width Unicode characters between words, not in the visible text. Your content reads exactly the same to human visitors. Search engines are not affected. There is no change to your HTML structure, page speed, or SEO.",
+    a: "No. The cryptographic watermark is invisible - it is embedded in zero-width Unicode characters between words, not in the visible text. Your content reads exactly the same to human visitors. Search engines are not affected. There is no change to your HTML structure, page speed, or SEO.",
   },
   {
     q: 'What about content I published before signing up?',
-    a: "You can backfill existing content through the Encypher API or CMS integration. New content is signed automatically going forward. We recommend starting with your highest-value archives first -- evergreen articles, research, and long-form content are the most valuable to AI training datasets and the most worth protecting.",
+    a: "You can backfill existing content through the Encypher API or CMS integration. New content is signed automatically going forward. We recommend starting with your highest-value archives first - evergreen articles, research, and long-form content are the most valuable to AI training datasets and the most worth protecting.",
   },
   {
     q: 'What if an AI company strips the watermark?',
-    a: "Deliberate removal of a cryptographic watermark is itself evidence of willful infringement -- it demonstrates they knew the content was marked and chose to circumvent it. Encypher's evidence system logs the signed state of every document at time of publication. If a stripped version appears in a training dataset, the original signed version is the proof of ownership. Stripping the mark makes the legal case stronger, not weaker.",
+    a: "Deliberate removal of a cryptographic watermark is itself evidence of willful infringement - it demonstrates they knew the content was marked and chose to circumvent it. Encypher's evidence system logs the signed state of every document at time of publication. If a stripped version appears in a training dataset, the original signed version is the proof of ownership. Stripping the mark makes the legal case stronger, not weaker.",
   },
   {
     q: 'Do AI companies actually check these rights terms?',
-    a: "Leading AI companies -- including those building legal compliance programs ahead of the EU AI Act -- are actively building systems to read machine-readable rights signals. The EU AI Act (effective August 2026) requires AI providers to respect machine-readable rights reservations. RSL and C2PA are the two formats being adopted industry-wide. Encypher supports both. Even for companies not yet checking today, having signed content establishes a documented record that your terms were available -- which is what converts unauthorized use into actionable willful infringement.",
+    a: "Leading AI companies - including those building legal compliance programs ahead of the EU AI Act - are actively building systems to read machine-readable rights signals. The EU AI Act (effective August 2026) requires AI providers to respect machine-readable rights reservations. RSL and C2PA are the two formats being adopted industry-wide. Encypher supports both. Even for companies not yet checking today, having signed content establishes a documented record that your terms were available - which is what converts unauthorized use into actionable willful infringement.",
   },
 ];
 

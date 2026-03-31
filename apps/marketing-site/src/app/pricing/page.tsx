@@ -316,9 +316,9 @@ export default function PricingPage() {
                   </p>
                   <div className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
                     {[
-                      'External domain detections -- where your content appears outside your site',
-                      'AI company usage patterns -- training, RAG, direct reproduction',
-                      'Content spread timeline -- track velocity over time',
+                      'External domain detections - where your content appears outside your site',
+                      'AI company usage patterns - training, RAG, direct reproduction',
+                      'Content spread timeline - track velocity over time',
                       'Export targeting lists for formal notice campaigns',
                     ].map((f) => (
                       <div key={f} className="flex items-start gap-2">

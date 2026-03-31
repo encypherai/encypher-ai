@@ -50,7 +50,7 @@ export default function CompanyPage() {
           {/* Mission Statement */}
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 mt-8">
             <p className="text-lg font-medium text-center">
-              We believe AI and creators can thrive together. Our mission is to build the infrastructure that makes this possible -- open standards that enable attribution, licensing, and trust at scale.
+              We believe AI and creators can thrive together. Our mission is to build the infrastructure that makes this possible, open standards that enable attribution, licensing, and trust at scale.
             </p>
           </div>
 
@@ -82,18 +82,18 @@ export default function CompanyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">Our Story</h2>
             <p className="text-muted-foreground mb-4">
-              When the industry needed a standard for AI content authenticity, we wrote it. As co-authors of the C2PA text specification, we work alongside Adobe, Microsoft, Google, OpenAI, and the BBC to define how digital content is authenticated.
+              When the industry needed a text provenance standard, we wrote it. As authors of Section A.7 of the C2PA 2.3 specification, we work alongside Adobe, Microsoft, Google, OpenAI, and the BBC to define how digital content is authenticated.
             </p>
             <p className="text-muted-foreground mb-4">
-              But standards alone don't solve problems -- infrastructure does. Publishers need provable ownership. AI labs need performance intelligence and compliance infrastructure. The ecosystem needs interoperability.
+              But standards alone don't solve problems - infrastructure does. Publishers need provable ownership. AI labs need performance intelligence and compliance infrastructure. The ecosystem needs interoperability.
             </p>
             <p className="text-muted-foreground mb-4">
-              So we built it. Sentence-level tracking with cryptographic certainty. Open-source foundations with commercial capabilities. Infrastructure that serves both creators and AI companies -- because the future isn't adversarial, it's collaborative.
+              So we built it. Sentence-level tracking with cryptographic certainty. Open-source foundations with commercial capabilities. Infrastructure that serves both creators and AI companies, because the future isn't adversarial, it's collaborative.
             </p>
             <ul className="space-y-2 mb-4">
               <li className="text-muted-foreground"><strong>For Publishers:</strong> Transform unmarked content into provably owned assets with licensing capability.</li>
               <li className="text-muted-foreground"><strong>For AI Labs:</strong> Performance intelligence on your models + regulatory compliance infrastructure.</li>
-              <li className="text-muted-foreground"><strong>For Developers:</strong> Open-source SDK implementing the standard we co-authored.</li>
+              <li className="text-muted-foreground"><strong>For Developers:</strong> Open-source SDK implementing C2PA Section A.7, the text provenance standard we authored.</li>
             </ul>
             <p className="text-muted-foreground">
               The coalition is growing. The infrastructure is ready. We're building the trust layer for the AI economy.

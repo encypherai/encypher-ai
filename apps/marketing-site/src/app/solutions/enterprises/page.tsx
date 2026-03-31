@@ -40,9 +40,9 @@ export default function EnterprisePage() {
       />
       <AISummary
         title="Encypher for Enterprise Governance"
-        whatWeDo="Authors of C2PA Section A.7. Patent-pending API and SDKs for sentence-level document provenance. Cryptographic proof of which passages were AI-generated, AI-assisted, or human-written -- exportable as tamper-evident evidence packages."
+        whatWeDo="Authors of C2PA Section A.7. Patent-pending API and SDKs for sentence-level document provenance. Cryptographic proof of which passages were AI-generated, AI-assisted, or human-written - exportable as tamper-evident evidence packages."
         whoItsFor="Law firms, consulting firms, financial services, and regulated enterprises that produce documents where AI provenance is legally or professionally significant."
-        keyDifferentiator="Sentence-level Merkle tree authentication. Prove exactly which paragraph was AI-generated on which date by which model -- independently verifiable without trusting Encypher."
+        keyDifferentiator="Sentence-level Merkle tree authentication. Prove exactly which paragraph was AI-generated on which date by which model - independently verifiable without trusting Encypher."
         primaryValue="Turn AI governance from a policy document into cryptographic proof. Court-ready evidence packages. BYOK for attorney-client privilege."
       />
 
@@ -129,7 +129,7 @@ export default function EnterprisePage() {
                     <p className="font-semibold text-sm">Prove retroactively</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Without provenance embedded at creation time, any claim about
-                      a document's origin is unverifiable -- and therefore contestable.
+                      a document's origin is unverifiable - and therefore contestable.
                     </p>
                   </div>
                 </li>
@@ -177,7 +177,7 @@ export default function EnterprisePage() {
                   <div>
                     <p className="font-semibold text-sm">Tamper-evident export</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Evidence packages are independently verifiable -- the proof is
+                      Evidence packages are independently verifiable - the proof is
                       embedded in the document itself, not on Encypher's servers.
                     </p>
                   </div>
@@ -226,7 +226,7 @@ export default function EnterprisePage() {
                 to certify AI use in filings. Bar associations are publishing ethics guidance
                 on disclosure obligations. Attorneys using AI assistants (Harvey, Westlaw AI,
                 Copilot) need to certify not just "AI may have been used" but which specific
-                passages -- and that those passages were reviewed.
+                passages - and that those passages were reviewed.
               </p>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
@@ -254,7 +254,7 @@ export default function EnterprisePage() {
                 <h3 className="text-lg font-semibold">Consulting and Advisory Firms</h3>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Enterprise clients -- especially in regulated industries -- are adding AI
+                Enterprise clients - especially in regulated industries - are adding AI
                 disclosure requirements to engagement terms. A strategy memo or due diligence
                 report that contains AI-synthesized sections without disclosure creates
                 professional liability. Firms need to demonstrate exactly what was
@@ -367,8 +367,8 @@ export default function EnterprisePage() {
               <AccordionItem value="step-1">
                 <AccordionTrigger>Step 1: Sign at Creation</AccordionTrigger>
                 <AccordionContent>
-                  When your AI assistant generates a passage -- or when an attorney
-                  or analyst writes one -- the document is signed via the Encypher API.
+                  When your AI assistant generates a passage - or when an attorney
+                  or analyst writes one - the document is signed via the Encypher API.
                   The <Link href="/c2pa-standard/implementation-guide" className="text-primary underline underline-offset-2 hover:no-underline">C2PA</Link> manifest records: who signed, at what time, whether the
                   content was AI-generated or human-authored, and which model produced it
                   (if AI). This happens at the moment of production, not retroactively.
@@ -396,8 +396,8 @@ export default function EnterprisePage() {
               <AccordionItem value="step-3">
                 <AccordionTrigger>Step 3: Export a Tamper-Evident Evidence Package</AccordionTrigger>
                 <AccordionContent>
-                  When provenance needs to be produced -- for a court certification,
-                  regulatory inquiry, client request, or internal audit -- Encypher
+                  When provenance needs to be produced - for a court certification,
+                  regulatory inquiry, client request, or internal audit - Encypher
                   exports a tamper-evident evidence package containing:
                   <br /><br />
                   - SHA-256 hash of each signed passage<br />
@@ -498,7 +498,7 @@ export default function EnterprisePage() {
                 <AccordionContent className="text-muted-foreground leading-relaxed">
                   Court AI disclosure orders vary significantly by jurisdiction and judge.
                   Most require attorneys to certify that AI-generated content was reviewed
-                  and that citations were verified -- they do not specify the technical
+                  and that citations were verified - they do not specify the technical
                   mechanism. Encypher provides the provenance record that supports such
                   a certification: which passages were AI-generated, when, by which model,
                   and that the document is unmodified since signing.
@@ -518,12 +518,12 @@ export default function EnterprisePage() {
                   The typical integration is through your AI drafting tool or document
                   management system. When an AI assistant generates a passage, the
                   output is signed via the Encypher API before it is inserted into the
-                  document -- the manifest records the model, timestamp, and generation
+                  document - the manifest records the model, timestamp, and generation
                   context. When an attorney writes a passage, it can be signed as
                   human-authored with the attorney&apos;s credentials.
                   <br /><br />
                   For existing workflows, Encypher also supports batch signing of
-                  completed documents -- though this produces a document-level signature
+                  completed documents - though this produces a document-level signature
                   rather than sentence-level provenance. The strongest provenance comes
                   from signing at the point of generation, not retroactively.
                   <br /><br />
@@ -540,7 +540,7 @@ export default function EnterprisePage() {
                   The record shows both events. The original AI-generated passage has its
                   own signed manifest (model, timestamp, generation context). When the
                   attorney edits and re-signs, the updated passage carries the attorney&apos;s
-                  credentials and a new timestamp -- with the prior AI-generation manifest
+                  credentials and a new timestamp - with the prior AI-generation manifest
                   preserved in the chain.
                   <br /><br />
                   This gives you a precise answer to "was this passage AI-generated?":
@@ -555,14 +555,14 @@ export default function EnterprisePage() {
                   Can opposing counsel or regulators independently verify the provenance claims?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
-                  Yes -- and this is a deliberate design property. The C2PA standard is
+                  Yes - and this is a deliberate design property. The C2PA standard is
                   open and the verification libraries are open source. Any party with
                   the signed document and your organization&apos;s public key can
                   independently verify every provenance claim without Encypher&apos;s
                   involvement.
                   <br /><br />
                   With BYOK, the signature is against your own certificate. Encypher
-                  is not in the verification chain -- you are. This matters in adversarial
+                  is not in the verification chain - you are. This matters in adversarial
                   contexts where a party might argue the provenance record is
                   self-serving or could have been manufactured. An independently
                   verifiable cryptographic signature from your own key is much harder
@@ -581,8 +581,8 @@ export default function EnterprisePage() {
                   transaction. Enterprise customers receive a standard data processing
                   agreement.
                   <br /><br />
-                  For the highest isolation -- appropriate for matters with strict
-                  attorney-client privilege or data residency requirements -- Encypher
+                  For the highest isolation - appropriate for matters with strict
+                  attorney-client privilege or data residency requirements - Encypher
                   supports on-premises deployment and BYOK configurations where signing
                   runs entirely within your infrastructure. In this configuration,
                   document content never leaves your environment. Contact us to discuss
@@ -598,12 +598,12 @@ export default function EnterprisePage() {
                   Encypher provides a REST API and SDKs (Python, TypeScript) that can
                   be integrated into any document workflow. For common document
                   management systems (iManage, NetDocuments, SharePoint), integration
-                  is typically built at the document save or export event -- when a
+                  is typically built at the document save or export event - when a
                   document is finalized, it is signed and the evidence package is
                   stored alongside the document.
                   <br /><br />
                   For real-time sentence-level provenance, the integration is at the
-                  AI drafting tool level -- connecting the AI output to the signing
+                  AI drafting tool level - connecting the AI output to the signing
                   API before it enters the document. Word and Google Docs add-ins
                   that support this workflow are available for enterprise customers.
                   Contact us to discuss your specific DMS and AI tooling environment.
@@ -615,7 +615,7 @@ export default function EnterprisePage() {
                   What happens if we need to prove provenance for documents created before we integrated Encypher?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
-                  Retroactive signing is possible but produces a different -- and weaker --
+                  Retroactive signing is possible but produces a different - and weaker --
                   type of proof. A document signed today carries a timestamp of today,
                   regardless of when it was created. This proves the document&apos;s
                   current state is unchanged since today&apos;s signing, not that
@@ -626,7 +626,7 @@ export default function EnterprisePage() {
                   on other evidence (email chains, version history, system logs) to
                   establish prior provenance. Encypher does not help with retroactive claims.
                   <br /><br />
-                  This is why signing at creation is the correct approach -- the value
+                  This is why signing at creation is the correct approach - the value
                   of provenance proof is built prospectively, before it is needed.
                 </AccordionContent>
               </AccordionItem>

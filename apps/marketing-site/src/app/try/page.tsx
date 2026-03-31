@@ -223,7 +223,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
         <div className="container mx-auto px-4 max-w-2xl space-y-10">
 
           {/* ----------------------------------------------------------------
-              STEP 1 -- Input
+              STEP 1 - Input
           ---------------------------------------------------------------- */}
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -288,7 +288,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
           </div>
 
           {/* ----------------------------------------------------------------
-              STEP 2 -- Signed output
+              STEP 2 - Signed output
           ---------------------------------------------------------------- */}
           {showStep2 && (
             <div>
@@ -336,7 +336,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
                   <p className="text-xs text-muted-foreground">
                     Visually identical to what you pasted. The watermark lives
                     in invisible Unicode variation selectors woven between
-                    characters -- undetectable by readers, machine-readable on
+                    characters - undetectable by readers, machine-readable on
                     verification.
                   </p>
                 </div>
@@ -345,7 +345,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
           )}
 
           {/* ----------------------------------------------------------------
-              STEP 3 -- Verify
+              STEP 3 - Verify
           ---------------------------------------------------------------- */}
           {showStep3 && (
             <div>
@@ -360,7 +360,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
 
               <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-sm mb-4 dark:bg-amber-950/20 dark:border-amber-800 dark:text-amber-100">
                 <strong>Skeptic test:</strong> Copy the signed text above, paste
-                it into a Google Doc, email, or Slack message -- then copy it
+                it into a Google Doc, email, or Slack message - then copy it
                 back below and verify. Or just click Verify to see it work
                 in-page.
               </div>
@@ -401,7 +401,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
           )}
 
           {/* ----------------------------------------------------------------
-              RESULT -- Verified
+              RESULT - Verified
           ---------------------------------------------------------------- */}
           {stage === 'verified' && (
             <div className="space-y-6">
@@ -420,7 +420,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
                     [
                       ['Signed by', signerName],
                       ['Signed at', signedAt],
-                      ['Standard', 'C2PA 2.3 (Section A.7 -- authored by Encypher)'],
+                      ['Standard', 'C2PA 2.3 (Section A.7 - authored by Encypher)'],
                       ['Content integrity', 'Unmodified since signing'],
                     ] as [string, string][]
                   ).map(([label, value]) => (
@@ -443,7 +443,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
               <div className="p-5 bg-muted/50 rounded-lg border border-border text-sm text-muted-foreground leading-relaxed">
                 That watermark survives copy-paste, email, Slack, Google Docs,
                 web scraping, and AI ingestion pipelines. When an AI system
-                reads your content, it reads the C2PA manifest too -- which
+                reads your content, it reads the C2PA manifest too - which
                 means{' '}
                 <strong className="text-foreground">
                   they cannot claim they did not know it was licensed
@@ -483,7 +483,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
           )}
 
           {/* ----------------------------------------------------------------
-              RESULT -- Tampered
+              RESULT - Tampered
           ---------------------------------------------------------------- */}
           {stage === 'tampered' && (
             <div className="space-y-4">
@@ -500,13 +500,13 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
                 </div>
                 <div className="p-6 text-sm text-muted-foreground space-y-3">
                   <p>
-                    The manifest is still present -- proving the original
+                    The manifest is still present - proving the original
                     content existed and was owned. The modification is now
                     provably documented.
                   </p>
                   <p>
                     In a real enforcement scenario this is evidence of
-                    unauthorized modification -- stronger than simple use.
+                    unauthorized modification - stronger than simple use.
                   </p>
                 </div>
               </div>
@@ -523,7 +523,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
           )}
 
           {/* ----------------------------------------------------------------
-              RESULT -- Unsigned
+              RESULT - Unsigned
           ---------------------------------------------------------------- */}
           {stage === 'unsigned' && (
             <div className="space-y-4">
@@ -531,7 +531,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
                 <p className="font-medium">No watermark found in this text.</p>
                 <p className="text-muted-foreground">
                   This is what an AI company sees when content has no
-                  provenance -- no proof of ownership, no licensing terms, no
+                  provenance - no proof of ownership, no licensing terms, no
                   evidence of willful infringement. Unsigned content has no
                   leverage.
                 </p>
@@ -549,7 +549,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
           )}
 
           {/* ----------------------------------------------------------------
-              RESULT -- Error
+              RESULT - Error
           ---------------------------------------------------------------- */}
           {stage === 'error' && (
             <div className="space-y-4">
@@ -574,7 +574,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
         </div>
       </section>
 
-      {/* Context strip -- shown only on input stage */}
+      {/* Context strip - shown only on input stage */}
       {stage === 'input' && (
         <section className="py-12 border-t border-border bg-muted/20">
           <div className="container mx-auto px-4 max-w-2xl">

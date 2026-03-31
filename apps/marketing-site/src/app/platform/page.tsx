@@ -60,7 +60,7 @@ const CORE_CAPABILITIES = [
     icon: Globe,
     title: 'Coalition Licensing',
     description:
-      'Auto-enrolled in the Encypher Coalition. Content is indexed for licensing deals. Publishers receive the majority of revenue on every deal -- same splits across all tiers.',
+      'Auto-enrolled in the Encypher Coalition. Content is indexed for licensing deals. Publishers receive the majority of revenue on every deal - same splits across all tiers.',
   },
 ];
 
