@@ -47,7 +47,7 @@ Third, the Code is still in draft form and could change before finalization. Thi
 
 ## The Timeline Math
 
-The practical problem is not whether multi-layer marking will be required. It is whether organizations have enough time to implement it.
+The remaining question is implementation timeline, not regulatory direction.
 
 The feedback period on the Second Draft closed yesterday. The final Code is expected in early June 2026. Enforcement begins August 2, 2026. Organizations that have not begun multi-layer implementation face a sequence that leaves little margin: final requirements confirmed in June, enforcement two months later.
 
@@ -55,4 +55,4 @@ Large AI providers with dedicated compliance engineering teams can absorb this t
 
 Three steps apply regardless of where an organization sits in this landscape. First, audit the current marking approach against the two-layer requirement. If the compliance plan involves metadata without watermarking, or watermarking without structured metadata, it does not meet the Code's baseline. Second, evaluate content provenance solutions that combine C2PA metadata with imperceptible marking. These are the two specific layers the Code describes. Third, prepare for the presumption-of-compliance framework. Signing the Code is the most direct path to demonstrating compliance. Not signing it means building and defending an equivalence argument that regulators have no obligation to accept.
 
-The Commission has stated what Article 50 compliance looks like. Two layers, not one. Metadata and watermarking, not metadata or watermarking. The organizations that read only the statute and not the Code of Practice will discover in August that their single-layer solution does not satisfy the standard the Commission has set. The technical infrastructure to meet both layers exists today. Three federal enforcement dates in the next six months will determine which organizations built it in time.
+The Commission has stated what Article 50 compliance looks like. The gap between the statutory text and the Code of Practice catches organizations that treat the two as interchangeable. The statute requires machine-readable marking. The Code specifies two distinct layers to achieve it. C2PA metadata combined with sentence-level imperceptible marking satisfies both. The August 2, 2026 enforcement date will show which organizations recognized that distinction in time to act on it.
