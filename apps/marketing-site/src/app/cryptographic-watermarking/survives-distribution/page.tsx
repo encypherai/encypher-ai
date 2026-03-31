@@ -27,7 +27,7 @@ export default function SurvivesDistributionPage() {
         title="How Cryptographic Watermarking Survives Distribution"
         whatWeDo="Encypher's cryptographic watermarks persist through the key distribution scenarios that matter for publisher protection: copy-paste from web, B2B wire service distribution, aggregator scraping, social media sharing, and AI training corpus ingestion."
         whoItsFor="Publishers evaluating whether cryptographic watermarking is durable enough to be useful across their actual distribution workflows. Legal and compliance teams assessing what scenarios produce verifiable provenance records."
-        keyDifferentiator="Unicode variation selector characters are preserved by Unicode-compliant text processors in copy operations. JUMBF container manifests are preserved by file processing tools that do not understand them. Both properties make cryptographic provenance durable by default."
+        keyDifferentiator="Embedded provenance data is preserved by Unicode-compliant text processors in copy operations. JUMBF container manifests are preserved by file processing tools that do not understand them. Both properties make cryptographic provenance durable by default."
         primaryValue="Scenario-by-scenario analysis of watermark durability across real distribution workflows."
         pagePath="/cryptographic-watermarking/survives-distribution"
         pageType="WebPage"
@@ -81,9 +81,9 @@ export default function SurvivesDistributionPage() {
           <h2 className="text-2xl font-bold mb-4">Scenario 1: Copy-Paste from Web</h2>
           <p className="text-muted-foreground mb-4">
             A reader copies text from a signed article and pastes it into an email, a document,
-            or a social media post. The variation selector characters between words copy with
-            the text. This is standard Unicode copy behavior: the clipboard stores the
-            Unicode character stream, and the paste operation inserts the same stream.
+            or a social media post. The embedded provenance data copies with the text. This
+            is standard Unicode copy behavior: the clipboard stores the Unicode character stream,
+            and the paste operation inserts the same stream.
           </p>
           <p className="text-muted-foreground mb-4">
             The pasted text contains the provenance markers. If the recipient subsequently
@@ -92,10 +92,9 @@ export default function SurvivesDistributionPage() {
           </p>
           <p className="text-muted-foreground">
             Confirmed environments: Chrome, Firefox, Safari, Edge, Gmail, Outlook, Apple Mail,
-            Google Docs, Microsoft Word (with ZWC encoding), Slack, Teams. There are edge cases
-            in some processing pipelines that explicitly strip non-printing characters, but
-            these are not standard behaviors in the distribution scenarios that matter for
-            publisher protection.
+            Google Docs, Microsoft Word, Slack, Teams. There are edge cases in some processing
+            pipelines that explicitly strip non-printing characters, but these are not standard
+            behaviors in the distribution scenarios that matter for publisher protection.
           </p>
         </section>
 
@@ -108,7 +107,7 @@ export default function SurvivesDistributionPage() {
           </p>
           <p className="text-muted-foreground mb-4">
             XML processing preserves Unicode character data. The article body extracted from
-            the XML feed contains the variation selectors embedded in the original text. The
+            the XML feed contains the provenance markers embedded in the original text. The
             CMS stores the character stream intact. The published article contains the markers.
           </p>
           <p className="text-muted-foreground">
@@ -126,7 +125,7 @@ export default function SurvivesDistributionPage() {
             An aggregator scrapes article text from the publisher's website. Most scraping
             tools work by fetching HTML and using a parser to extract text content. HTML
             parsers handle Unicode character data correctly - they preserve all Unicode
-            characters in the text content, including variation selectors.
+            characters in the text content, including embedded provenance markers.
           </p>
           <p className="text-muted-foreground mb-4">
             The scraped text contains the markers. Unless the scraper explicitly filters
@@ -174,11 +173,11 @@ export default function SurvivesDistributionPage() {
           <p className="text-muted-foreground mb-4">
             Processing pipelines that convert HTML to plain text use parsers that preserve
             Unicode characters. The text content in AI training corpora derived from web
-            pages typically includes variation selectors that were present in the original
+            pages typically includes provenance markers that were present in the original
             HTML text content.
           </p>
           <p className="text-muted-foreground mb-4">
-            There is no industry standard for stripping variation selectors during corpus
+            There is no industry standard for stripping embedded provenance data during corpus
             preprocessing. Some pipelines may normalize Unicode - applying Unicode normalization
             forms (NFC, NFKC) that could modify or eliminate certain character sequences.
             The extent to which this occurs varies by implementation and is an area of
@@ -214,7 +213,7 @@ export default function SurvivesDistributionPage() {
             </li>
             <li className="p-3 bg-muted/30 rounded-lg">
               <h3 className="font-semibold text-sm mb-1">Explicit Stripping</h3>
-              <p className="text-muted-foreground text-sm">A party that deliberately filters Unicode variation selectors from text will remove the markers. This is detectable (the text then verifies as unsigned) but not preventable. The act of stripping is itself evidence of awareness.</p>
+              <p className="text-muted-foreground text-sm">A party that deliberately filters embedded provenance data from text will remove the markers. This is detectable (the text then verifies as unsigned) but not preventable. The act of stripping is itself evidence of awareness.</p>
             </li>
           </ul>
         </section>

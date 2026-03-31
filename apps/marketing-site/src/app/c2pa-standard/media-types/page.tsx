@@ -42,7 +42,7 @@ export default function MediaTypesPage() {
         title="C2PA Supported Media Types"
         whatWeDo="Encypher supports C2PA provenance across 31 MIME types: 13 image formats, 6 audio formats, 4 video formats, 5 document formats, and 3 font formats. Each format has a specific embedding method defined by the C2PA specification."
         whoItsFor="Developers and integration engineers evaluating format coverage for content provenance. Publishers and enterprises determining whether their content types are supported."
-        keyDifferentiator="31 MIME types in a single API. Format-specific embedding using container-native methods for each format type. Images use JUMBF, audio uses RIFF/ID3/ISO BMFF, video uses ISO BMFF, text uses Unicode variation selectors."
+        keyDifferentiator="31 MIME types in a single API. Format-specific embedding using container-native methods for each format type. Images use JUMBF, audio uses RIFF/ID3/ISO BMFF, video uses ISO BMFF, text uses proprietary invisible encoding."
         primaryValue="Complete format coverage reference. All supported MIME types, embedding methods, and links to format-specific documentation."
         pagePath="/c2pa-standard/media-types"
         pageType="WebPage"

@@ -119,7 +119,7 @@ The [C2PA standard](/content-provenance) provides the infrastructure for content
 
 For text, C2PA 2.3 Section A.7, which I authored as Co-Chair of the C2PA Text Provenance Task Force, defines how manifests are embedded using Unicode variation selectors. The manifest travels with the text through copy-paste, wire distribution, and web publication.
 
-Encypher extends the C2PA foundation with sentence-level granularity. Rather than signing a document as a whole, our implementation signs individual sentences using a Merkle tree structure. This means any sentence can be verified independently, and any sentence that has been modified, removed, or replaced is detectable without access to the full original document.
+Encypher extends the C2PA foundation with sentence-level granularity. Rather than signing a document as a whole, Encypher's proprietary technology enables cryptographic verification of individual sentences, not just whole documents. Any sentence can be verified independently, and any sentence that has been modified, removed, or replaced is detectable without access to the full original document.
 
 This is beyond what any detection tool can provide. Detection tells you the document looks AI-generated. Sentence-level provenance tells you exactly which sentences have been altered from the signed original and which have not.
 

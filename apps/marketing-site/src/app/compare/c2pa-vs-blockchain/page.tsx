@@ -193,7 +193,7 @@ export default function C2PAVsBlockchainPage() {
             The signing model uses COSE (CBOR Object Signing and Encryption), an IETF standard for cryptographic signing and encryption. Each provenance claim is signed with the creator's or publisher's private key. A C2PA manifest can contain multiple claim generators, representing the chain of custody from original creation through any subsequent processing.
           </p>
           <p className="mb-4">
-            For text content, the C2PA Section A.7 specification - contributed by Encypher, with co-chair Erik Svilich leading the Text Provenance Task Force - defines how sentence-level granularity is achieved. Rather than signing the document as a whole, Section A.7 enables signing at individual content segment level, producing a Merkle tree where each node represents a segment and the root represents the document.
+            For text content, the C2PA Section A.7 specification - contributed by Encypher, with co-chair Erik Svilich leading the Text Provenance Task Force - defines how sentence-level granularity is achieved. Rather than signing the document as a whole, Section A.7 enables signing at individual content segment level, enabling cryptographic verification at the individual content segment level.
           </p>
           <p className="mb-4">
             Verification against a C2PA manifest requires the signed content, the manifest, and the signer's public key (or a certificate chain to a trusted root). The Content Credentials infrastructure maintained by the C2PA provides a public lookup for signer certificates, but verification of the signature itself is local - no network call required.

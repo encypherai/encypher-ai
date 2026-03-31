@@ -162,7 +162,7 @@ export default function ForEnterprisesPage() {
             </li>
             <li className="p-4 bg-muted/30 rounded-lg">
               <h3 className="font-semibold mb-1">Fingerprinting</h3>
-              <p className="text-muted-foreground text-sm">Enterprise-tier fingerprinting embeds unique, recipient-specific markers into distributed content using HMAC-based pseudorandom positioning. When content leaks, fingerprint analysis identifies the distribution channel. Useful for confidential documents, pre-publication content, and internal communications.</p>
+              <p className="text-muted-foreground text-sm">Enterprise-tier fingerprinting embeds unique, recipient-specific markers into distributed content. When content leaks, forensic analysis identifies the distribution channel. Useful for confidential documents, pre-publication content, and internal communications.</p>
             </li>
             <li className="p-4 bg-muted/30 rounded-lg">
               <h3 className="font-semibold mb-1">Bring Your Own Key (BYOK)</h3>

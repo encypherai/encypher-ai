@@ -29,15 +29,15 @@ const faqItems = [
   },
   {
     question: 'Does cryptographic watermarking survive copy-paste?',
-    answer: 'For text using Encypher\'s variation selector encoding, yes. Unicode variation selectors are preserved through copy-paste in browsers, email clients, Slack, and most text editors. They are stripped by some aggressive text normalization pipelines - this is a known limitation and an active area of technical development. For images, C2PA manifests are stored in the file container and survive most distribution pathways, but aggressive JPEG recompression can sometimes strip the manifest.',
+    answer: 'For text using Encypher\'s proprietary encoding, yes. The embedded provenance data is preserved through copy-paste in browsers, email clients, Slack, and most text editors. It is stripped by some aggressive text normalization pipelines - this is a known limitation and an active area of technical development. For images, C2PA manifests are stored in the file container and survive most distribution pathways, but aggressive JPEG recompression can sometimes strip the manifest.',
   },
   {
     question: 'What is the difference between cryptographic watermarking and C2PA?',
-    answer: 'C2PA is a standard - it defines how provenance manifests are structured and verified. Cryptographic watermarking is a technique - the method of embedding proof. Encypher uses cryptographic watermarking to implement C2PA for images, audio, and video (JUMBF container embedding) and a proprietary extension for text (variation selector encoding). The two concepts are complementary, not competing.',
+    answer: 'C2PA is a standard - it defines how provenance manifests are structured and verified. Cryptographic watermarking is a technique - the method of embedding proof. Encypher uses cryptographic watermarking to implement C2PA for images, audio, and video (JUMBF container embedding) and a proprietary extension for text. The two concepts are complementary, not competing.',
   },
   {
     question: 'Can cryptographic watermarks be removed?',
-    answer: 'Removal is technically possible but consequential. For text, stripping variation selector markers changes the byte sequence of the content, which breaks any hash-based verification against the original. For images, stripping a JUMBF container requires rewriting the file format. The act of removal is itself evidence of tampering in a legal context - a signed content item that loses its manifest has been intentionally altered.',
+    answer: 'Removal is technically possible but consequential. For text, stripping provenance markers alters the content in ways that break cryptographic verification against the original source. For images, stripping a JUMBF container requires rewriting the file format. The act of removal is itself evidence of tampering in a legal context - a signed content item that loses its manifest has been intentionally altered.',
   },
   {
     question: 'How does cryptographic watermarking establish willful infringement?',
@@ -45,7 +45,7 @@ const faqItems = [
   },
   {
     question: 'What media types support cryptographic watermarking?',
-    answer: 'Text: Encypher\'s proprietary variation selector encoding, compatible with C2PA Section A.7. Images: JUMBF container embedding for 13 MIME types including JPEG, PNG, WebP, HEIC, and AVIF. Audio: C2PA manifest embedding for WAV, MP3, AAC, FLAC, AIFF, and M4A. Video: C2PA manifest embedding for MP4, MOV, M4V, and MKV.',
+    answer: 'Text: Encypher\'s proprietary encoding, compatible with C2PA Section A.7. Images: JUMBF container embedding for 13 MIME types including JPEG, PNG, WebP, HEIC, and AVIF. Audio: C2PA manifest embedding for WAV, MP3, AAC, FLAC, AIFF, and M4A. Video: C2PA manifest embedding for MP4, MOV, M4V, and MKV.',
   },
 ];
 
@@ -64,7 +64,7 @@ export default function CryptographicWatermarkingPage() {
     <>
       <AISummary
         title="Cryptographic Watermarking: Proof Embedded in Content"
-        whatWeDo="Cryptographic watermarking embeds a cryptographically signed record of content origin directly into the content file. Verification is deterministic - it succeeds or fails with certainty, with no false positives. Encypher implements cryptographic watermarking for text (via proprietary variation selector encoding), images, audio, and video (via C2PA JUMBF manifests)."
+        whatWeDo="Cryptographic watermarking embeds a cryptographically signed record of content origin directly into the content file. Verification is deterministic - it succeeds or fails with certainty, with no false positives. Encypher implements cryptographic watermarking for text (via proprietary invisible encoding), images, audio, and video (via C2PA JUMBF manifests)."
         whoItsFor="Publishers who need proof of ownership that travels with content, AI companies satisfying EU AI Act Article 52 marking requirements, enterprises building tamper-evident audit trails, and anyone who needs to prove origin without relying on probabilistic detection."
         keyDifferentiator="Deterministic proof versus probabilistic detection. A cryptographic watermark does not produce a probability score - it produces a verified signature or a failed verification. This is the distinction that makes it suitable for legal proceedings, regulatory compliance, and licensing enforcement."
         primaryValue="Content provenance proof that survives distribution, establishes formal notice for copyright purposes, satisfies EU AI Act Article 52 machine-readable marking, and enables sentence-level attribution at a granularity no other implementation offers."
@@ -107,7 +107,7 @@ export default function CryptographicWatermarkingPage() {
                 Cryptographic watermarking embeds a signed, verifiable record of content origin directly into the file. Unlike statistical watermarking, it produces proof - not probabilities.
               </p>
               <p className="text-base max-w-3xl mx-auto text-muted-foreground mb-10">
-                Encypher implements cryptographic watermarking for text using proprietary variation selector encoding and for images, audio, and video using <Link href="/c2pa-standard" className="underline hover:text-foreground transition-colors">C2PA manifests</Link>. The proof travels with the content wherever it goes.
+                Encypher implements cryptographic watermarking for text using proprietary invisible encoding and for images, audio, and video using <Link href="/c2pa-standard" className="underline hover:text-foreground transition-colors">C2PA manifests</Link>. The proof travels with the content wherever it goes.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button asChild size="lg" className="font-semibold py-3 px-6 rounded-lg shadow-lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
@@ -220,16 +220,13 @@ export default function CryptographicWatermarkingPage() {
                 Text watermarking presents a harder problem than image or video watermarking. Plain text has no binary container. Adding visible characters changes the content. Steganographic approaches must work within the character encoding itself.
               </p>
               <p className="text-muted-foreground mb-6 text-base leading-relaxed">
-                Encypher's proprietary approach uses Unicode variation selectors - control characters in the Unicode standard designed to modify the visual rendering of the preceding character. In practice, standard variation selectors are invisible between words. Encypher uses 256 variation selectors (VS1-VS256) to encode binary data, embedding the manifest payload across word boundaries in the text.
-              </p>
-              <p className="text-muted-foreground mb-6 text-base leading-relaxed">
-                The result: a signed text document that carries its C2PA manifest invisibly, survives copy-paste, and can be verified by anyone with the publisher's public key. Readers see no difference. The byte sequence differs from a plain-text version of the same content, which is how verification works.
+                Encypher's proprietary encoding embeds the C2PA manifest invisibly within text content. The encoding is undetectable to readers, survives copy-paste across platforms, and can be verified by anyone using Encypher's verification tools. Readers see no difference. Verification is cryptographic and deterministic.
               </p>
 
               <div className="bg-muted/30 p-6 rounded-lg border border-border mb-6">
                 <h3 className="font-semibold mb-3">Sentence-Level Merkle Tree Attribution</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                  Encypher's proprietary sentence-level technology builds a Merkle tree over the sentences of a document. Each leaf node is the hash of one sentence. The tree root is signed. This structure makes it possible to prove that a specific sentence - not just a document - came from a specific source, and that the sentence has not been altered.
+                  Encypher's proprietary sentence-level technology enables cryptographic proof at the individual sentence level. Each sentence can be independently verified as originating from a specific source, without needing the full document. This granularity is what makes licensing and enforcement practical at scale.
                 </p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   C2PA authenticates documents as a whole. Sentence-level attribution is Encypher's proprietary layer on top of C2PA. It is the technology that turns "this document was used" into "sentence 47 from this article was used." That granularity is what makes licensing and enforcement practical at scale.
@@ -303,7 +300,7 @@ export default function CryptographicWatermarkingPage() {
                   {
                     scenario: 'Copy-paste across platforms',
                     detection: 'Loss of context. Most detectors require the full text. Partial text produces unreliable scores.',
-                    watermark: 'Variation selector markers copy with the text. A 500-word excerpt carries the same manifest as the full article.',
+                    watermark: 'Provenance markers copy with the text. A 500-word excerpt carries the same manifest as the full article.',
                   },
                   {
                     scenario: 'B2B data licensing',
@@ -313,7 +310,7 @@ export default function CryptographicWatermarkingPage() {
                   {
                     scenario: 'AI training corpus',
                     detection: 'Training pipelines apply normalization that removes detection-relevant patterns. Content in a training corpus is undetectable.',
-                    watermark: 'Unicode variation selectors survive standard normalization. The manifest persists in the training data.',
+                    watermark: 'Embedded provenance data survives standard normalization. The manifest persists in the training data.',
                   },
                   {
                     scenario: 'Paraphrasing and summarization',

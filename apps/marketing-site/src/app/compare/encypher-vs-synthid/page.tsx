@@ -192,7 +192,7 @@ export default function EncypherVsSynthIDPage() {
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-4">How Encypher's Cryptographic Approach Differs</h2>
           <p className="mb-4">
-            Encypher embeds a cryptographic signature in content using invisible Unicode variation selectors. The signature encodes the publisher's identity, publication timestamp, content hash, and licensing terms. Verification checks the signature against the publisher's public key - a deterministic pass or fail, not a probability.
+            Encypher embeds a cryptographic signature invisibly within content. The signature encodes the publisher's identity, publication timestamp, content hash, and licensing terms. Verification is deterministic - a pass or fail, not a probability.
           </p>
           <p className="mb-4">
             Because the signature is tied to the exact content via a cryptographic hash, any modification to the signed text is detectable: verification fails, and the failure itself indicates tampering. This is the tamper-evident property that statistical watermarks cannot provide.

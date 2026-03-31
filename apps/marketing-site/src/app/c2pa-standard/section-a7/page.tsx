@@ -8,14 +8,14 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 
 export const metadata: Metadata = seoMetadata(
   'C2PA Section A.7: Text Provenance Specification | Encypher',
-  'Deep dive on C2PA 2.3 Section A.7 - embedding manifests into unstructured text. Three encoding approaches, Unicode variation selectors, and Encypher\'s role in authoring the specification.',
+  'C2PA 2.3 Section A.7 defines how C2PA manifests are embedded into unstructured text. Encypher authored Section A.7 and leads the C2PA Text Provenance Task Force.',
   '/c2pa-standard/section-a7'
 );
 
 export default function SectionA7Page() {
   const techArticle = getTechArticleSchema({
     title: 'C2PA Section A.7: Text Provenance Specification',
-    description: "C2PA 2.3 Section A.7 defines how C2PA manifests are embedded into unstructured text. Three encoding approaches using Unicode characters invisible to readers. Encypher authored the section.",
+    description: "C2PA 2.3 Section A.7 defines how C2PA manifests are embedded into unstructured text. Encypher authored the section and co-chairs the C2PA Text Provenance Task Force.",
     url: `${siteConfig.url}/c2pa-standard/section-a7`,
     author: 'Erik Svilich',
     datePublished: '2026-03-31',
@@ -25,10 +25,10 @@ export default function SectionA7Page() {
     <>
       <AISummary
         title="C2PA Section A.7: Text Provenance Specification"
-        whatWeDo="C2PA Section A.7 defines the standard for embedding provenance manifests into unstructured text. Encypher, through Erik Svilich, contributed Section A.7 to the C2PA 2.3 specification. This is the foundational standard for text content provenance."
+        whatWeDo="C2PA Section A.7 defines the standard for embedding provenance manifests into unstructured text. Encypher, through Erik Svilich, authored Section A.7 of the C2PA 2.3 specification. This is the foundational open standard for text content provenance."
         whoItsFor="Developers implementing text provenance. Standards researchers and engineers working with C2PA. Publishers and enterprises evaluating text provenance infrastructure. Anyone seeking to understand the technical foundation of text provenance."
-        keyDifferentiator="Encypher contributed the text provenance specification to C2PA. Erik Svilich co-chairs the C2PA Text Provenance Task Force. The section defines the encoding approaches that Encypher implements, ensuring full compliance with the open standard."
-        primaryValue="Understanding the open standard that governs text provenance. Three encoding approaches for different deployment environments. Direct link to the specification for independent review."
+        keyDifferentiator="Encypher authored the text provenance specification for C2PA. Erik Svilich co-chairs the C2PA Text Provenance Task Force. Encypher's implementation extends C2PA's document-level authentication to individual sentence granularity, a capability proprietary to Encypher."
+        primaryValue="Understanding the open standard that governs text provenance. Two encoding modes for different deployment environments. Direct link to the specification for independent review."
         pagePath="/c2pa-standard/section-a7"
         pageType="WebPage"
       />
@@ -51,7 +51,7 @@ export default function SectionA7Page() {
         </h1>
         <p className="text-xl text-muted-foreground mb-4">
           Section A.7 of the C2PA 2.3 specification defines how C2PA manifests are embedded
-          into unstructured text. Erik Svilich, Encypher's founder, contributed this section
+          into unstructured text. Erik Svilich, Encypher's founder, authored this section
           and co-chairs the C2PA Text Provenance Task Force.
         </p>
         <p className="text-muted-foreground mb-12">
@@ -82,119 +82,94 @@ export default function SectionA7Page() {
             produce visible output in standard text rendering environments.
           </p>
           <p className="text-muted-foreground">
-            Three encoding approaches are defined, each optimized for different deployment
-            environments. All three approaches produce text that is visually identical to
-            unsigned text. All three can be decoded by C2PA-compliant verification software.
+            Two encoding modes are defined, each optimized for different deployment environments.
+            Both produce text that is visually identical to unsigned text. Both can be decoded
+            by C2PA-compliant verification software.
           </p>
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Approach 1: Variation Selector Encoding</h2>
+          <h2 className="text-2xl font-bold mb-4">Encoding Mode 1: Web and Digital Distribution</h2>
           <p className="text-muted-foreground mb-4">
-            The variation selector encoding uses Unicode variation selectors to encode binary
-            data. Unicode allocates 256 variation selector code points:
-          </p>
-          <ul className="list-disc list-inside text-muted-foreground mb-4 space-y-2 ml-4">
-            <li>VS1-VS16: U+FE00 through U+FE0F (16 characters)</li>
-            <li>VS17-VS256: U+E0100 through U+E01EF (240 characters)</li>
-          </ul>
-          <p className="text-muted-foreground mb-4">
-            Variation selectors are designed to specify which glyph variant to use when
-            rendering the preceding character. When no variant mapping exists for the
-            character-selector combination, the selector is ignored by renderers. Encypher
-            uses this property: variation selectors placed between words in English text
-            have no rendering effect because no variant glyphs are defined for common
-            Latin characters in this range.
+            The default encoding mode is optimized for web and digital distribution. It uses
+            Unicode characters that are invisible to readers and have no rendering effect in
+            standard web browsers, email clients, and text processing systems that comply
+            with Unicode standards.
           </p>
           <p className="text-muted-foreground mb-4">
-            The 256 variation selectors encode 8 bits per character. Manifest data is
-            encoded as a sequence of variation selectors placed at defined positions within
-            the text. The encoding is deterministic - the same manifest always produces
-            the same character sequence.
+            This mode achieves high information density, allowing full C2PA manifests to be
+            embedded without meaningfully expanding the character count of the document. The
+            encoding is deterministic: the same manifest always produces the same embedded
+            character sequence, and the same character sequence always decodes to the same
+            manifest.
           </p>
           <p className="text-muted-foreground">
-            This approach is the recommended default in Section A.7 and is Encypher's
-            primary encoding path. It works correctly in all major web browsers, email
-            clients, and text processing systems that comply with Unicode standards.
+            Embedded content survives copy-paste, email forwarding, and CMS processing. A
+            signed passage either passes verification or fails - there is no probabilistic
+            uncertainty. This is Encypher's primary encoding path and the recommended default
+            in Section A.7.
           </p>
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Approach 2: Zero-Width Character Encoding</h2>
+          <h2 className="text-2xl font-bold mb-4">Encoding Mode 2: Microsoft Word Compatibility</h2>
           <p className="text-muted-foreground mb-4">
-            The zero-width character encoding uses a set of Unicode characters with zero
-            visual width. These characters are placed between visible characters and are
-            not rendered, but are present in the character stream and survive most text
-            operations.
+            The second encoding mode is optimized for Microsoft Word and Office-format
+            processing environments. Word applies its own normalization to Unicode characters
+            during document operations, which can strip or alter certain character ranges that
+            the default mode relies on.
           </p>
           <p className="text-muted-foreground mb-4">
-            Section A.7 defines a character set for this encoding:
-          </p>
-          <ul className="list-disc list-inside text-muted-foreground mb-4 space-y-2 ml-4">
-            <li>ZWNJ (Zero Width Non-Joiner, U+200C) - assigned value 0</li>
-            <li>ZWJ (Zero Width Joiner, U+200D) - assigned value 1</li>
-            <li>CGJ (Combining Grapheme Joiner, U+034F) - assigned value 2</li>
-            <li>MVS (Mongolian Vowel Separator, U+180E) - assigned value 3</li>
-            <li>LRM (Left-to-Right Mark, U+200E) - assigned value 4</li>
-            <li>RLM (Right-to-Left Mark, U+200F) - assigned value 5</li>
-          </ul>
-          <p className="text-muted-foreground mb-4">
-            The six-character set enables base-6 (senary) encoding. This encoding is optimized
-            for Microsoft Word and other Office-format processing environments where some Unicode
-            ranges behave unexpectedly. Word compatibility is achieved by avoiding the Zero Width
-            Space (U+200B), which Word strips, and selecting characters from ranges that Word
-            preserves during document operations.
+            This mode selects characters from Unicode ranges that Word preserves reliably,
+            ensuring that content signed for Word distribution remains verifiable after
+            round-trips through Word's editing and save operations. The trade-off is lower
+            information density compared to the default mode.
           </p>
           <p className="text-muted-foreground">
-            This is Encypher's secondary encoding path, used when content is destined for
-            Word format distribution. The signing API accepts an encoding parameter to select
-            this path.
+            Encypher's signing API accepts a parameter to select this mode. Use it when content
+            is destined for Word format distribution or any environment where Office-format
+            compatibility is required.
           </p>
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Approach 3: Whitespace Width Encoding</h2>
+          <h2 className="text-2xl font-bold mb-4">Encoding Durability</h2>
           <p className="text-muted-foreground mb-4">
-            The whitespace width encoding uses variations in whitespace character widths to
-            encode data. Unicode includes multiple whitespace characters with different
-            nominal widths: standard space (U+0020), thin space (U+2009), hair space (U+200A),
-            and others. By selecting from these width variants, binary data can be encoded
-            in the sequence of spaces between words.
-          </p>
-          <p className="text-muted-foreground mb-4">
-            This approach has lower information density than the variation selector encoding
-            but survives environments that strip zero-width characters. Its primary use case
-            is print-to-scan pipelines - documents that will be printed and then digitized
-            via OCR. The width differences are small enough to be visually imperceptible
-            but measurable in the resulting pixel data.
+            Both encoding modes are designed to survive the operations that text undergoes in
+            normal distribution: copy-paste between applications, email forwarding through
+            standard mail servers, publication through CMS platforms, and aggregation by
+            content syndication systems. The embedded manifest travels with the text through
+            these operations without requiring any special handling by intermediaries.
           </p>
           <p className="text-muted-foreground">
-            This encoding path corresponds to the "Print Leak Detection" feature in the
-            Encypher enterprise tier, designed for detecting which distribution channel
-            produced a physical copy that was scanned and leaked.
+            Verification is deterministic. A signed passage either passes or fails. There is
+            no probabilistic threshold or confidence score - the cryptographic signature either
+            validates against the content or it does not. This makes text provenance suitable
+            for compliance and legal contexts where binary verification outcomes are required.
           </p>
         </section>
 
         <section className="mb-12">
-          <h2 className="text-2xl font-bold mb-4">Manifest Encoding Structure</h2>
+          <h2 className="text-2xl font-bold mb-4">Encypher's Extension: Sentence-Level Attribution</h2>
           <p className="text-muted-foreground mb-4">
-            Regardless of which encoding approach is used, the manifest data encoded
-            in the text follows the same C2PA structure: a CBOR-serialized C2PA manifest
-            containing claims, assertions, and a COSE signature. The only difference
-            between text embedding and file container embedding is the physical mechanism
-            used to store the manifest data alongside the content.
+            C2PA Section A.7 defines document-level authentication: a manifest that covers
+            the text document as a whole. A verification check confirms that the entire signed
+            text is authentic and unmodified. This matches how C2PA handles images and other
+            media formats.
           </p>
           <p className="text-muted-foreground mb-4">
-            Section A.7 defines the positioning algorithm: where in the text the manifest
-            characters are placed, how the manifest is split across multiple encoding
-            positions, and how verification software should search for and extract the
-            manifest from a text string.
+            Encypher's implementation extends this with proprietary sentence-level attribution.
+            Each sentence in a signed document carries its own attribution data, allowing
+            verification at the granularity of individual sentences rather than the document
+            as a whole. This means a passage extracted from a larger article can be verified
+            on its own, and a document that mixes authentic and modified sentences can identify
+            exactly which sentences remain intact.
           </p>
           <p className="text-muted-foreground">
-            Encypher's implementation of Section A.7 extends the positioning algorithm
-            with sentence-level Merkle tree integration. Each sentence boundary in the
-            text becomes an encoding position anchor, ensuring that the markers for each
-            sentence's Merkle leaf are co-located with the sentence content.
+            This sentence-level capability is Encypher's proprietary technology, built on top
+            of the C2PA standard. Content signed by Encypher passes standard C2PA document-level
+            verification with any compliant tool. The sentence-level attribution requires
+            Encypher's verification infrastructure to resolve.
           </p>
         </section>
 
@@ -207,16 +182,15 @@ export default function SectionA7Page() {
             requirements evolve.
           </p>
           <p className="text-muted-foreground mb-4">
-            The contribution was accepted into C2PA 2.3, which is the current version of
-            the specification. C2PA 2.3 is available at spec.c2pa.org. Section A.7 begins
+            The contribution was accepted into C2PA 2.3, the current version of the
+            specification. C2PA 2.3 is available at spec.c2pa.org. Section A.7 begins
             at the "Embedding Manifests into Unstructured Text" section.
           </p>
           <p className="text-muted-foreground">
             Encypher's implementation fully complies with Section A.7. Content signed by
             Encypher can be verified by any C2PA 2.3 compliant verification tool. The
-            sentence-level Merkle tree extension is implemented as a compatible addition
-            to the standard manifest structure, not as a modification that breaks
-            standard verification.
+            sentence-level extension is implemented as a compatible addition to the standard
+            manifest structure, not as a modification that breaks standard verification.
           </p>
         </section>
 
@@ -243,8 +217,9 @@ export default function SectionA7Page() {
         <section className="text-center py-8">
           <h2 className="text-2xl font-bold mb-4">Implement Section A.7 Text Provenance</h2>
           <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-            Encypher's API implements all three Section A.7 encoding approaches.
-            Python and TypeScript SDKs available. Free tier for up to 1,000 documents per month.
+            Encypher's API implements both Section A.7 encoding modes with sentence-level
+            attribution. Python and TypeScript SDKs available. Free tier for up to 1,000
+            documents per month.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>

@@ -37,7 +37,7 @@ const faqItems = [
   },
   {
     question: 'Does content provenance work after copy-paste?',
-    answer: 'For text, yes. Encypher embeds provenance markers using Unicode variation selectors that survive copy-paste across browsers, email clients, and text editors. For images and documents, C2PA manifests are embedded in the file container and survive most distribution pathways. Compression and format conversion can sometimes strip manifests from images - this is an active area of development in the C2PA community.',
+    answer: 'For text, yes. Encypher embeds provenance markers using proprietary encoding that survives copy-paste across browsers, email clients, and text editors. For images and documents, C2PA manifests are embedded in the file container and survive most distribution pathways. Compression and format conversion can sometimes strip manifests from images - this is an active area of development in the C2PA community.',
   },
   {
     question: 'What does the EU AI Act require for content provenance?',
@@ -53,7 +53,7 @@ const faqItems = [
   },
   {
     question: 'What happens if someone removes the content provenance record?',
-    answer: 'Removal is itself evidence. If a C2PA manifest was present when the content was signed but is absent when the content appears elsewhere, that absence documents tampering. For text embedded using Encypher\'s proprietary variation selector markers, an attempt to strip the markers changes the byte sequence and breaks any hash-based provenance check at the original source.',
+    answer: 'Removal is itself evidence. If a C2PA manifest was present when the content was signed but is absent when the content appears elsewhere, that absence documents tampering. For text embedded using Encypher\'s proprietary provenance markers, an attempt to strip the markers alters the content in ways that break cryptographic verification against the original source.',
   },
   {
     question: 'How do I add content provenance to my content?',
@@ -207,7 +207,7 @@ export default function ContentProvenancePage() {
                   <div>
                     <h3 className="font-semibold mb-2">Manifest Embedding</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      For images, audio, and video, the C2PA manifest is embedded in the file's binary container using a JUMBF (JPEG Universal Metadata Box Format) structure. For text, Encypher uses a proprietary method: Unicode variation selectors embedded between words. These characters are invisible to readers but persist through copy-paste, email, and most distribution pathways. The manifest contains the signed claim, the public key certificate chain, and any ingredient references (links to source content used to create the piece).
+                      For images, audio, and video, the C2PA manifest is embedded in the file's binary container using a JUMBF (JPEG Universal Metadata Box Format) structure. For text, Encypher uses proprietary invisible embedding that persists through copy-paste, email, and most distribution pathways. The embedded data includes the signed claim, the public key certificate chain, and any ingredient references (links to source content used to create the piece).
                     </p>
                   </div>
                 </div>

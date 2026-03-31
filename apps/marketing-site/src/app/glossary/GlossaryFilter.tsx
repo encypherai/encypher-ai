@@ -107,7 +107,7 @@ export function GlossaryFilter({ terms }: GlossaryFilterProps) {
             </h2>
             <div className="space-y-8">
               {groupedByLetter[letter].map(term => (
-                <div key={term.id} id={term.id} className="scroll-mt-32">
+                <div key={term.id} id={term.id} className="scroll-mt-52">
                   <h3 className="text-lg font-semibold mb-2">{term.name}</h3>
                   <p className="text-muted-foreground text-sm leading-relaxed mb-3">{term.definition}</p>
                   {term.relatedLinks && term.relatedLinks.length > 0 && (

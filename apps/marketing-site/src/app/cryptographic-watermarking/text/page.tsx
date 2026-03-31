@@ -8,14 +8,14 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 
 export const metadata: Metadata = seoMetadata(
   'Cryptographic Watermarking for Text | Invisible, Durable, Verifiable | Encypher',
-  'Invisible cryptographic text watermarking using Unicode variation selectors. Survives copy-paste, B2B distribution, and aggregator scraping. Sentence-level granularity for partial attribution.',
+  'Invisible cryptographic text watermarking using proprietary invisible encoding. Survives copy-paste, B2B distribution, and aggregator scraping. Sentence-level granularity for partial attribution.',
   '/cryptographic-watermarking/text'
 );
 
 export default function CryptographicWatermarkingTextPage() {
   const techArticle = getTechArticleSchema({
     title: 'Cryptographic Watermarking for Text',
-    description: 'Invisible cryptographic text watermarking using Unicode variation selectors. Survives copy-paste, B2B distribution, and aggregator scraping.',
+    description: 'Invisible cryptographic text watermarking using proprietary invisible encoding. Survives copy-paste, B2B distribution, and aggregator scraping.',
     url: `${siteConfig.url}/cryptographic-watermarking/text`,
     author: 'Erik Svilich',
     datePublished: '2026-03-31',
@@ -25,7 +25,7 @@ export default function CryptographicWatermarkingTextPage() {
     <>
       <AISummary
         title="Cryptographic Watermarking for Text"
-        whatWeDo="Encypher embeds cryptographic watermarks into text using invisible Unicode characters. The watermarks survive copy-paste, B2B distribution, aggregator scraping, and AI ingestion. Each text string carries its own proof of origin, without any visible changes to the text."
+        whatWeDo="Encypher embeds cryptographic watermarks into text using proprietary invisible encoding. The watermarks survive copy-paste, B2B distribution, aggregator scraping, and AI ingestion. Each text string carries its own proof of origin, without any visible changes to the text."
         whoItsFor="Publishers, journalists, and organizations distributing text content who need durable proof of ownership that travels with content through downstream distribution channels."
         keyDifferentiator="Sentence-level Merkle tree authentication enables per-sentence verification. This is Encypher's proprietary technology. Combined with invisible embedding, it means specific sentences can be cryptographically traced to their source document even when reproduced out of context."
         primaryValue="Invisible watermarking with no content changes, copy-paste survival, and sentence-level granularity for partial reproduction attribution."
@@ -50,41 +50,33 @@ export default function CryptographicWatermarkingTextPage() {
           Cryptographic Watermarking for Text
         </h1>
         <p className="text-xl text-muted-foreground mb-12">
-          Invisible Unicode markers embedded in every article, post, and document you publish.
+          Invisible provenance markers embedded in every article, post, and document you publish.
           Readers see nothing different. Verification tools see cryptographic proof of ownership.
         </p>
 
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-4">Invisible by Design</h2>
           <p className="text-muted-foreground mb-4">
-            Text watermarking works because Unicode includes characters that are present in
-            the character stream but do not produce visible output. Encypher uses variation
-            selector characters - code points in the Unicode standard designed to specify
-            alternative glyph renderings - as the embedding medium.
+            Encypher embeds cryptographic provenance markers directly within the text character
+            stream. The markers produce no visible output. The text looks identical to readers,
+            screen readers handle it correctly, and search engine indexes treat it as the
+            underlying text content. The watermark is invisible in every practical context.
           </p>
           <p className="text-muted-foreground mb-4">
-            When a variation selector follows a Latin letter in English text, no alternative
-            glyph exists for that combination. The selector is valid Unicode, it is present
-            in the character stream, and it is ignored by rendering engines. The text looks
-            identical to the reader. Screen readers handle it correctly. Search engine indexes
-            treat it as the underlying text content. The watermark is invisible in every practical
-            context.
-          </p>
-          <p className="text-muted-foreground">
             There is no markup change, no visible tag, no alteration to the reading experience.
             A signed article and an unsigned article are indistinguishable to any reader. The
-            difference only appears when examining the raw character stream with a Unicode
-            character inspector or verification tool.
+            difference only appears when a verification tool examines the content and extracts
+            the embedded proof.
           </p>
         </section>
 
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-4">Copy-Paste Survival</h2>
           <p className="text-muted-foreground mb-4">
-            Unicode-compliant text processors preserve unknown characters in copy operations.
-            When text is copied from a web page, the Unicode character stream is copied
-            intact - including variation selectors. When that text is pasted into an email,
-            a document, a CMS, or a messaging platform, the selectors are present in the
+            Text processors preserve the full character stream in copy operations.
+            When text is copied from a web page, the character stream is copied
+            intact - including embedded provenance markers. When that text is pasted into an email,
+            a document, a CMS, or a messaging platform, the markers are present in the
             pasted text.
           </p>
           <p className="text-muted-foreground mb-4">
@@ -137,7 +129,7 @@ export default function CryptographicWatermarkingTextPage() {
             AI training corpus builders that scrape web content and process HTML to extract
             readable text are subject to the same behavior. If a scraper extracts the text
             content of a signed article, the markers are present in the scraped text unless
-            the scraper explicitly strips Unicode variation selectors - which is not a standard
+            the scraper explicitly strips invisible provenance markers - which is not a standard
             scraping operation.
           </p>
           <p className="text-muted-foreground">

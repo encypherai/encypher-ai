@@ -148,18 +148,15 @@ export default function ErikSvilichPage() {
             <p>
               Erik authored Section A.7 of the C2PA 2.3 specification, the first open standard
               defining how text content is cryptographically authenticated. Section A.7 specifies
-              the use of Unicode variation selectors for invisible encoding, Ed25519 signatures,
-              sentence-level Merkle tree construction, and tamper-evident provenance chains.
-              The specification was published by the C2PA on January 8, 2026. He co-chairs the
-              C2PA Text Provenance Task Force alongside representatives from Google, BBC, OpenAI,
-              Adobe, and Microsoft.
+              invisible encoding, digital signatures, sentence-level authentication, and
+              tamper-evident provenance chains. The specification was published by the C2PA on
+              January 8, 2026. He co-chairs the C2PA Text Provenance Task Force alongside
+              representatives from Google, BBC, OpenAI, Adobe, and Microsoft.
             </p>
             <p>
               On January 7, 2026, Erik filed patent ENC0100, covering 83 claims related to
-              granular content attribution with Merkle tree authentication. The patent covers
-              the core technical methods underlying Encypher's sentence-level provenance system,
-              including per-sentence Merkle leaf construction, root hash signing, and partial
-              verification of extracted content segments.
+              granular content attribution and sentence-level provenance. The patent covers
+              the core technical methods underlying Encypher's sentence-level provenance system.
             </p>
             <p>
               Prior to Encypher, Erik led a digital transformation initiative that scaled a
@@ -181,7 +178,7 @@ export default function ErikSvilichPage() {
               <p className="text-muted-foreground text-sm leading-relaxed">
                 Authored Section A.7 of the C2PA 2.3 specification, which defines the technical
                 standard for embedding cryptographic provenance in plain text. The section covers
-                variation selector encoding, sentence-level Merkle tree authentication, Ed25519
+                invisible text encoding, sentence-level authentication, digital signatures
                 signature schemes, and verification procedures. Published January 8, 2026.
               </p>
             </div>

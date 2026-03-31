@@ -8,6 +8,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Copy,
+  Loader2,
   Shield,
   AlertTriangle,
   RotateCcw,
@@ -263,7 +264,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
             {stage === 'signing' && (
               <div className="p-5 rounded-lg border border-border bg-card space-y-3">
                 <div className="flex items-center gap-3 text-muted-foreground text-sm">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                  <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
                   Embedding C2PA watermarks sentence by sentence...
                 </div>
                 <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
@@ -334,10 +335,9 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
 
                 <div className="px-4 py-3 bg-muted/30 border-t border-border">
                   <p className="text-xs text-muted-foreground">
-                    Visually identical to what you pasted. The watermark lives
-                    in invisible Unicode variation selectors woven between
-                    characters - undetectable by readers, machine-readable on
-                    verification.
+                    Visually identical to what you pasted. The watermark is
+                    embedded invisibly within the text - undetectable by
+                    readers, machine-readable on verification.
                   </p>
                 </div>
               </div>
@@ -385,7 +385,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
                     >
                       {stage === 'verifying' ? (
                         <>
-                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
                           Verifying...
                         </>
                       ) : (

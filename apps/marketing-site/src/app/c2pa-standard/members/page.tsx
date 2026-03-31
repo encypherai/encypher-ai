@@ -208,16 +208,15 @@ export default function C2PAMembersPage() {
           </p>
           <p className="text-muted-foreground mb-4">
             This contribution means that the text provenance standard reflects Encypher's
-            technical implementation decisions. The encoding approaches defined in Section A.7 -
-            variation selector encoding, zero-width character encoding, and whitespace width
-            encoding - are the approaches that Encypher implements in its API.
+            technical expertise. The encoding approaches defined in Section A.7 are the
+            approaches that Encypher implements in its API.
           </p>
           <p className="text-muted-foreground">
             Encypher also extends the C2PA standard with proprietary capabilities that build
-            on the open foundation: sentence-level Merkle tree authentication, HMAC-based
-            fingerprinting, and pHash attribution search. These extensions are compatible with
-            the C2PA standard (they do not break standard verification) while providing
-            additional capabilities not defined in the current specification.
+            on the open foundation: sentence-level authentication, distribution fingerprinting,
+            and attribution search. These extensions are compatible with the C2PA standard
+            (they do not break standard verification) while providing additional capabilities
+            not defined in the current specification.
           </p>
         </section>
 

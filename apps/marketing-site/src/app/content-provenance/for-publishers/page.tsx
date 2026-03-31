@@ -46,7 +46,7 @@ export default function ForPublishersPage() {
         name: 'Does provenance survive wire service distribution and aggregator scraping?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'For text content, yes. Encypher embeds provenance using invisible Unicode variation selector markers that survive copy-paste, syndication, and re-publication. When AP or Reuters distributes your story to 1,500 subscribers, the provenance markers travel with every copy. For images, C2PA manifests are embedded in the file container and travel with downloads. Both methods give publishers a chain of custody that persists outside their own infrastructure.',
+          text: 'For text content, yes. Encypher embeds provenance using invisible provenance markers that survive copy-paste, syndication, and re-publication. When AP or Reuters distributes your story to 1,500 subscribers, the provenance markers travel with every copy. For images, C2PA manifests are embedded in the file container and travel with downloads. Both methods give publishers a chain of custody that persists outside their own infrastructure.',
         },
       },
       {
@@ -66,7 +66,7 @@ export default function ForPublishersPage() {
         title="Content Provenance for Publishers"
         whatWeDo="Encypher embeds cryptographic C2PA provenance into articles, images, and documents at publication, creating tamper-evident proof of origin that travels with content through wire services, aggregators, and AI ingestion pipelines."
         whoItsFor="News publishers, wire services, trade publishers, and independent media organizations that distribute content through B2B channels and whose archives are at risk of unauthorized AI training use."
-        keyDifferentiator="Provenance that survives distribution. Text provenance uses invisible Unicode variation selector markers at the character level. Image provenance uses C2PA manifests embedded in the file container. Both methods create chain of custody that persists outside publisher-controlled infrastructure."
+        keyDifferentiator="Provenance that survives distribution. Text provenance uses invisible provenance markers at the character level. Image provenance uses C2PA manifests embedded in the file container. Both methods create chain of custody that persists outside publisher-controlled infrastructure."
         primaryValue="Eliminate the 'we did not know' defense in AI licensing disputes. Convert innocent infringement claims to willful infringement claims. Build licensing leverage before litigation is necessary."
         pagePath="/content-provenance/for-publishers"
         pageType="WebPage"
@@ -124,10 +124,9 @@ export default function ForPublishersPage() {
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-4">How Provenance Works for Text</h2>
           <p className="text-muted-foreground mb-4">
-            Encypher uses two complementary techniques for text provenance. The default path uses
-            Unicode variation selector markers - invisible characters drawn from the Unicode
-            variation selector range that are embedded between words and sentences. These markers
-            encode the C2PA manifest data at the character level.
+            Encypher uses two complementary encoding modes for text provenance. The default mode
+            embeds C2PA manifest data invisibly within text content. The encoding is undetectable
+            to readers and survives copy-paste across digital platforms.
           </p>
           <p className="text-muted-foreground mb-4">
             The alternative path uses Zero Width Characters for environments like Microsoft Word

@@ -251,9 +251,9 @@ export default function C2PAStandardPage() {
                 <div className="flex gap-4">
                   <div className="flex-shrink-0 w-2 h-2 rounded-full mt-2" style={{ backgroundColor: '#2a87c4' }}></div>
                   <div>
-                    <h3 className="font-semibold text-sm mb-1">Unicode Variation Selector Encoding</h3>
+                    <h3 className="font-semibold text-sm mb-1">Invisible Text Encoding</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Unicode variation selectors (VS1-VS256) are control characters that modify the visual appearance of the preceding character. In text provenance, they are used to encode binary data - the manifest payload - between visible words. The characters are invisible to readers and survive copy-paste across most applications. This is Encypher's primary text encoding method.
+                      Encypher's text provenance technology embeds C2PA manifest data invisibly within text content. The encoding is undetectable to readers and survives copy-paste across digital platforms. This is Encypher's primary text encoding method.
                     </p>
                   </div>
                 </div>

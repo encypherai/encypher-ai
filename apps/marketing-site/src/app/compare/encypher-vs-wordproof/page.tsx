@@ -145,7 +145,7 @@ export default function EncypherVsWordProofPage() {
             The limitation is that this proof is external. The blockchain record lives on a blockchain. The content lives on your server. When an AI system scrapes your article, it gets the text. It does not get the blockchain record, the lookup link, or any indication that a record exists. The proof stays behind.
           </p>
           <p className="mb-4">
-            Encypher embeds the ownership proof in the text itself, using invisible Unicode variation selectors. When an AI scraper copies your article, the provenance record travels with it. When the scraped text is processed as training data, the embedded signature is there. When a downstream output is examined, the marker identifies the source content. The proof follows the content.
+            Encypher embeds the ownership proof in the text itself, using proprietary invisible encoding. When an AI scraper copies your article, the provenance record travels with it. When the scraped text is processed as training data, the embedded signature is there. When a downstream output is examined, the marker identifies the source content. The proof follows the content.
           </p>
           <div className="bg-muted/30 border border-border rounded-lg p-6 my-6">
             <p className="font-semibold text-lg mb-2">The Distinction in One Line</p>

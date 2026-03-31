@@ -422,7 +422,7 @@ export default function WordPressPage() {
             <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">Are the signatures visible?</h3>
               <p className="text-muted-foreground">
-                No. C2PA manifests are embedded using invisible Unicode variation selectors. They don&apos;t
+                No. C2PA manifests are embedded using invisible encoding. They don&apos;t
                 affect how your content looks but can be extracted for verification.
               </p>
             </div>

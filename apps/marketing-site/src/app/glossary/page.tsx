@@ -135,7 +135,7 @@ const TERMS: GlossaryTerm[] = [
     id: 'cryptographic-watermarking',
     name: 'Cryptographic Watermarking',
     letter: 'C',
-    definition: 'Cryptographic watermarking embeds a cryptographically signed record of content origin directly into the content using a method that survives normal distribution. Unlike statistical watermarking, the result is deterministic: verification either succeeds or fails with certainty. No false positives are possible. For images, audio, and video, Encypher uses C2PA JUMBF container embedding. For text, Encypher uses a proprietary Unicode variation selector encoding. The watermark contains who created the content, when, what rights apply, and a signature that proves the record has not been altered.',
+    definition: 'Cryptographic watermarking embeds a cryptographically signed record of content origin directly into the content using a method that survives normal distribution. Unlike statistical watermarking, the result is deterministic: verification either succeeds or fails with certainty. No false positives are possible. For images, audio, and video, Encypher uses C2PA JUMBF container embedding. For text, Encypher uses proprietary invisible encoding. The watermark contains who created the content, when, what rights apply, and a signature that proves the record has not been altered.',
     relatedLinks: [
       { label: 'Cryptographic Watermarking guide', href: '/cryptographic-watermarking' },
       { label: 'Statistical watermarking', href: '/glossary#statistical-watermarking' },
@@ -230,7 +230,7 @@ const TERMS: GlossaryTerm[] = [
     id: 'invisible-embedding',
     name: 'Invisible Embedding',
     letter: 'I',
-    definition: 'Invisible embedding is the technique of hiding data within content without visible impact on how it appears to readers or viewers. For text, Encypher uses Unicode variation selectors - control characters that are invisible in standard rendering. For images, C2PA manifests are embedded in the binary file container, not in the visible pixel data. For audio, manifests are stored in the file header or a sidecar chunk. Invisible embedding distinguishes watermarking from metadata fields (which are visible in file inspector tools but not in content viewers) and from markup (which alters the content\'s visual presentation).',
+    definition: 'Invisible embedding is the technique of hiding data within content without visible impact on how it appears to readers or viewers. For text, Encypher uses proprietary encoding that is invisible in standard rendering. For images, C2PA manifests are embedded in the binary file container, not in the visible pixel data. For audio, manifests are stored in the file header or a sidecar chunk. Invisible embedding distinguishes watermarking from metadata fields (which are visible in file inspector tools but not in content viewers) and from markup (which alters the content\'s visual presentation).',
     relatedLinks: [
       { label: 'Variation selector markers', href: '/glossary#variation-selector-markers' },
       { label: 'Cryptographic watermarking', href: '/glossary#cryptographic-watermarking' },
@@ -284,7 +284,7 @@ const TERMS: GlossaryTerm[] = [
     id: 'merkle-tree-authentication',
     name: 'Merkle Tree Authentication',
     letter: 'M',
-    definition: 'Merkle tree authentication is a cryptographic technique that builds a tree of hashes from a dataset, where each non-leaf node is the hash of its children. The root of the tree is a single hash that authenticates the entire dataset. Proving that a specific element belongs to the dataset requires only a small number of hashes (a Merkle proof), not the entire dataset. Encypher uses Merkle tree authentication for sentence-level attribution: each sentence is a leaf node, the root is signed, and the signature proves both that the sentence belongs to the document and that it has not been altered.',
+    definition: 'Merkle tree authentication is a cryptographic technique that uses a hierarchical structure of hashes to efficiently verify the integrity of a dataset. In content provenance, Merkle trees enable verification of individual content segments without needing the entire document. Encypher uses Merkle tree authentication for sentence-level attribution, enabling cryptographic proof that a specific sentence belongs to a specific document and has not been altered.',
     relatedLinks: [
       { label: 'Sentence-level attribution', href: '/glossary#sentence-level-attribution' },
       { label: 'Document-level signing', href: '/glossary#document-level-signing' },
@@ -315,7 +315,7 @@ const TERMS: GlossaryTerm[] = [
     id: 'provenance-markers',
     name: 'Provenance Markers',
     letter: 'P',
-    definition: 'Provenance markers is Encypher\'s general term for the invisible Unicode characters used to embed content provenance data in text. This includes variation selector markers (VS markers, the default method using Unicode variation selectors VS1-VS256) and ZWC markers (a legacy method using zero-width characters for compatibility with Microsoft Word). Provenance markers are invisible to readers and carry the signed provenance manifest payload within the text body. The term provenance markers is preferred over "watermark" in technical documentation to distinguish from both visible watermarks and statistical watermarking.',
+    definition: 'Provenance markers is Encypher\'s general term for the invisible encoding used to embed content provenance data in text. This includes variation selector markers (VS markers, the default encoding method) and ZWC markers (an alternative method optimized for compatibility with Microsoft Word). Provenance markers are invisible to readers and carry the signed provenance manifest payload within the text body. The term provenance markers is preferred over "watermark" in technical documentation to distinguish from both visible watermarks and statistical watermarking.',
     relatedLinks: [
       { label: 'Variation selector markers', href: '/glossary#variation-selector-markers' },
       { label: 'ZWC markers', href: '/glossary#zwc-markers' },
@@ -348,7 +348,7 @@ const TERMS: GlossaryTerm[] = [
     id: 'section-a7',
     name: 'Section A.7 (C2PA 2.3)',
     letter: 'S',
-    definition: 'Section A.7 of the C2PA 2.3 specification defines how provenance manifests are embedded in unstructured text content - articles, social posts, and any text-based material. It defines three encoding approaches: Unicode variation selector encoding (where manifest data is encoded using VS characters between words), sidecar manifests (a separate manifest file accompanying the text), and remote references (a URL pointing to a manifest stored externally). Section A.7 was authored by Encypher and published as part of C2PA 2.3 on January 8, 2026. The specification is available at spec.c2pa.org.',
+    definition: 'Section A.7 of the C2PA 2.3 specification defines how provenance manifests are embedded in unstructured text content - articles, social posts, and any text-based material. It defines three encoding approaches: VS marker encoding (invisible inline embedding), sidecar manifests (a separate manifest file accompanying the text), and remote references (a URL pointing to a manifest stored externally). Section A.7 was authored by Encypher and published as part of C2PA 2.3 on January 8, 2026. The specification is available at spec.c2pa.org.',
     relatedLinks: [
       { label: 'C2PA Standard', href: '/c2pa-standard' },
       { label: 'Text Provenance', href: '/glossary#text-provenance' },
@@ -369,7 +369,7 @@ const TERMS: GlossaryTerm[] = [
     id: 'sentence-level-attribution',
     name: 'Sentence-Level Attribution',
     letter: 'S',
-    definition: 'Sentence-level attribution is Encypher\'s proprietary technology for proving that a specific sentence - not just a document - came from a specific source and has not been altered. It uses a Merkle tree built over the sentences of a document: each sentence is a leaf node, and the signed root proves the integrity of each individual sentence. This technology enables the legal claim "sentence 47 of this article was used in this AI output" rather than the weaker claim "some text from this article may have been used." Sentence-level attribution is patent-pending. It operates on top of the C2PA framework but is not defined by C2PA itself.',
+    definition: 'Sentence-level attribution uses Encypher\'s proprietary cryptographic technology to prove that a specific sentence came from a specific source and has not been altered. This enables the legal claim "sentence 47 of this article was used in this AI output" with cryptographic certainty. C2PA authenticates documents as a whole; sentence-level attribution is Encypher\'s proprietary extension. Sentence-level attribution is patent-pending.',
     relatedLinks: [
       { label: 'Merkle tree authentication', href: '/glossary#merkle-tree-authentication' },
       { label: 'Document-level signing', href: '/glossary#document-level-signing' },
@@ -400,7 +400,7 @@ const TERMS: GlossaryTerm[] = [
     id: 'text-provenance',
     name: 'Text Provenance',
     letter: 'T',
-    definition: 'Text provenance is the cryptographic record of a text document\'s origin, authorship, and modification history. The C2PA 2.3 specification Section A.7 - authored by Encypher - defines the framework for text provenance. Unlike images and video, which have binary containers for manifest embedding, text requires special encoding techniques. Encypher\'s primary approach uses Unicode variation selectors embedded between words to carry the manifest payload invisibly. Text provenance enables publishers to prove authorship of articles, claims, and original research - and to detect when AI systems have used their content without a license.',
+    definition: 'Text provenance is the cryptographic record of a text document\'s origin, authorship, and modification history. The C2PA 2.3 specification Section A.7 - authored by Encypher - defines the framework for text provenance. Unlike images and video, which have binary containers for manifest embedding, text requires special encoding techniques. Encypher\'s primary approach uses VS markers embedded invisibly within text to carry the manifest payload. Text provenance enables publishers to prove authorship of articles, claims, and original research - and to detect when AI systems have used their content without a license.',
     relatedLinks: [
       { label: 'Section A.7', href: '/glossary#section-a7' },
       { label: 'Text provenance guide', href: '/content-provenance/text' },
@@ -412,7 +412,7 @@ const TERMS: GlossaryTerm[] = [
     id: 'variation-selector-markers',
     name: 'Variation Selector Markers (VS Markers)',
     letter: 'V',
-    definition: 'Variation selector markers (VS markers) are Encypher\'s primary text encoding method for provenance data. Unicode defines 256 variation selectors (U+FE00 to U+FE0F and U+E0100 to U+E01EF, designated VS1-VS256) as characters that modify the visual rendering of the preceding character. In practice, standard variation selectors used between word boundaries are invisible. Encypher encodes the binary manifest payload as sequences of variation selectors embedded throughout the text. VS markers survive copy-paste across most applications, including web browsers, email clients, and messaging platforms. They are the default encoding method (legacy_safe=false) and are C2PA-aligned.',
+    definition: 'Variation selector markers (VS markers) are Encypher\'s default encoding method for embedding C2PA provenance data invisibly within text. VS markers are undetectable to readers, survive copy-paste and digital distribution, and enable cryptographic verification of text content. They are the default encoding in Encypher\'s API and are C2PA-aligned.',
     relatedLinks: [
       { label: 'ZWC markers', href: '/glossary#zwc-markers' },
       { label: 'Provenance markers', href: '/glossary#provenance-markers' },
@@ -446,7 +446,7 @@ const TERMS: GlossaryTerm[] = [
     id: 'zwc-markers',
     name: 'ZWC Markers (Zero-Width Character Markers)',
     letter: 'Z',
-    definition: 'ZWC markers are Encypher\'s legacy text encoding method for provenance data, designed for compatibility with Microsoft Word and other word processors that strip variation selector characters. ZWC markers use a set of zero-width Unicode characters (ZWNJ U+200C, ZWJ U+200D, CGJ U+034F, MVS U+180E, LRM U+200E, RLM U+200F) to encode binary data. Zero-width space (ZWSP U+200B) is avoided because Word strips it. ZWC markers are selected by setting legacy_safe=true in the Encypher API. They are the recommended encoding when content will pass through Microsoft Word workflows. VS markers are the default for all other contexts.',
+    definition: 'ZWC markers are Encypher\'s alternative encoding method optimized for Microsoft Word and Office document workflows. They use a set of Unicode characters specifically chosen for stability in Word\'s text processing pipeline. ZWC markers are selected via the Encypher API when Word compatibility is required.',
     relatedLinks: [
       { label: 'Variation selector markers', href: '/glossary#variation-selector-markers' },
       { label: 'Provenance markers', href: '/glossary#provenance-markers' },
