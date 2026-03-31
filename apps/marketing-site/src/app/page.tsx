@@ -82,7 +82,7 @@ export default function HomePage() {
             {/* Standards Authority */}
             <div className="mt-8 sm:mt-12 md:mt-16 text-center">
               <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6 text-shadow-sm px-2">
-                From the Authors of the C2PA Text Standard
+                Authors of C2PA Section A.7 (Text Provenance)
               </h3>
               <div className="flex justify-center items-center gap-6 sm:gap-8 md:gap-12 flex-wrap">
                 <div className="relative h-8 w-28 sm:h-10 sm:w-32 md:h-12 md:w-36 flex-shrink-0">
