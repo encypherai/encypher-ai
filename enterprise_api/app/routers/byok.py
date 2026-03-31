@@ -416,7 +416,7 @@ async def upload_certificate(
 
     try:
         if encrypted_private_key:
-            await db.execute(
+            update_result = await db.execute(
                 text("""
                     UPDATE organizations
                     SET certificate_pem = :cert_pem,
@@ -426,6 +426,7 @@ async def upload_certificate(
                         certificate_rotated_at = :now,
                         certificate_expiry = :expiry
                     WHERE id = :org_id
+                    RETURNING id
                 """),
                 {
                     "cert_pem": request.certificate_pem,
@@ -437,7 +438,7 @@ async def upload_certificate(
                 },
             )
         else:
-            await db.execute(
+            update_result = await db.execute(
                 text("""
                     UPDATE organizations
                     SET certificate_pem = :cert_pem,
@@ -446,6 +447,7 @@ async def upload_certificate(
                         certificate_rotated_at = :now,
                         certificate_expiry = :expiry
                     WHERE id = :org_id
+                    RETURNING id
                 """),
                 {
                     "cert_pem": request.certificate_pem,
@@ -455,10 +457,50 @@ async def upload_certificate(
                     "org_id": org_id,
                 },
             )
+
+        updated_row = update_result.fetchone()
+        if not updated_row:
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Certificate upload failed: organization record not updated. The organization ID may not exist in the database.",
+            )
+
         await db.commit()
+
+        # Verify the data was actually persisted by reading it back
+        verify_result = await db.execute(
+            text("""
+                SELECT certificate_pem IS NOT NULL AS has_cert,
+                       private_key_encrypted IS NOT NULL AS has_key,
+                       certificate_status
+                FROM organizations WHERE id = :org_id
+            """),
+            {"org_id": org_id},
+        )
+        verify_row = verify_result.fetchone()
+        if not verify_row or not verify_row.has_cert:
+            logger.error("Post-commit verification failed: certificate_pem is NULL for org %s", org_id)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Certificate upload failed: data did not persist after commit. Contact support.",
+            )
+        if encrypted_private_key and not verify_row.has_key:
+            logger.error("Post-commit verification failed: private_key_encrypted is NULL for org %s", org_id)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Certificate upload failed: private key did not persist after commit. Contact support.",
+            )
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Failed to update organization certificate: {e}")
-        # Don't fail - the public key was registered successfully
+        logger.error(f"Failed to update organization certificate for org {org_id}: {e}", exc_info=True)
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Certificate upload failed: could not store certificate data. Error: {e}",
+        )
 
     logger.info(f"Certificate uploaded for org {org_id}: subject={cert_subject}, issuer={cert_issuer}")
 
@@ -471,6 +513,8 @@ async def upload_certificate(
             "algorithm": key_algorithm,
             "expires_at": cert_expiry.isoformat(),
             "fingerprint": result["data"]["key_fingerprint"],
+            "certificate_stored": True,
+            "private_key_stored": encrypted_private_key is not None,
         },
         warnings=trust_warnings or None,
     )

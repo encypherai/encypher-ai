@@ -176,6 +176,7 @@ async def sign_media(
     cert_chain_pem: str = (cert_pem.strip() + "\n" + chain_only.strip()).strip() if cert_pem else chain_only
 
     private_key_pem: str = ""
+    private_key_error: str = ""
     try:
         from cryptography.hazmat.primitives import serialization
         from app.utils.crypto_utils import load_organization_private_key
@@ -188,7 +189,32 @@ async def sign_media(
                 encryption_algorithm=serialization.NoEncryption(),
             ).decode("utf-8")
     except Exception as exc:
+        private_key_error = str(exc)
         logger.warning("sign_media: could not load private key for org=%s: %s", org_id, exc)
+
+    # Determine passthrough reason (if any) so the response can explain
+    # why c2pa_signed is false. This mirrors the logic in each signing service.
+    from app.config import settings as _settings
+
+    passthrough_reason: Optional[str] = None
+    if _settings.signing_passthrough:
+        passthrough_reason = "settings_override_global"
+    elif category == "image" and _settings.image_signing_passthrough:
+        passthrough_reason = "settings_override_image"
+    elif category == "video" and _settings.video_signing_passthrough:
+        passthrough_reason = "settings_override_video"
+    elif category == "audio" and _settings.audio_signing_passthrough:
+        passthrough_reason = "settings_override_audio"
+    elif not private_key_pem and not cert_chain_pem:
+        passthrough_reason = "no_private_key_and_no_certificate"
+        if private_key_error:
+            passthrough_reason += f": {private_key_error}"
+    elif not private_key_pem:
+        passthrough_reason = "no_private_key"
+        if private_key_error:
+            passthrough_reason += f": {private_key_error}"
+    elif not cert_chain_pem:
+        passthrough_reason = "no_certificate"
 
     document_id = f"doc_{uuid.uuid4().hex[:16]}"
 
@@ -249,6 +275,10 @@ async def sign_media(
         )
     else:
         raise HTTPException(status_code=422, detail=f"Cannot route MIME type: {mime_type}")
+
+    # Attach passthrough_reason when the file was not actually C2PA-signed
+    if not signed_result.get("c2pa_signed") and passthrough_reason:
+        signed_result["passthrough_reason"] = passthrough_reason
 
     return signed_result
 

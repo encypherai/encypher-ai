@@ -13,6 +13,7 @@ from sqlalchemy import (
     Column,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
     Text,
 )
@@ -115,6 +116,10 @@ class Organization(Base):
     )
     certificate_rotated_at = Column(TIMESTAMP(timezone=True), nullable=True)
     certificate_expiry = Column(TIMESTAMP(timezone=True), nullable=True)
+
+    # Signing key storage (AES-256-GCM encrypted, EPK1/EPK2 format)
+    private_key_encrypted = Column(LargeBinary, nullable=True)
+    public_key = Column(LargeBinary, nullable=True)
 
     # AWS KMS Support (Enterprise Tier)
     kms_key_id = Column(String(255), nullable=True)
