@@ -117,6 +117,7 @@ function ExtensionHandoffContent() {
   const accessToken = (session?.user as { accessToken?: string } | undefined)?.accessToken;
   const extensionId = searchParams.get('extensionId') || '';
   const source = searchParams.get('source') || '';
+  const isSignup = searchParams.get('signup') === '1';
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -127,12 +128,15 @@ function ExtensionHandoffContent() {
   const autoRunRef = useRef(false);
 
   const loginHref = useMemo(() => {
-    const params = new URLSearchParams();
-    if (source) params.set('source', source);
-    if (extensionId) params.set('extensionId', extensionId);
-    params.set('callbackUrl', `/extension-handoff?${params.toString()}`);
-    return `/login?${params.toString()}`;
-  }, [extensionId, source]);
+    const callbackParams = new URLSearchParams();
+    if (source) callbackParams.set('source', source);
+    if (extensionId) callbackParams.set('extensionId', extensionId);
+    const callbackUrl = `/extension-handoff?${callbackParams.toString()}`;
+    const loginParams = new URLSearchParams();
+    loginParams.set('callbackUrl', callbackUrl);
+    const authPath = isSignup ? '/signup' : '/login';
+    return `${authPath}?${loginParams.toString()}`;
+  }, [extensionId, source, isSignup]);
 
   const handleCopyFallback = useCallback(async () => {
     if (!generatedKey) return;
@@ -150,12 +154,21 @@ function ExtensionHandoffContent() {
     setError('');
 
     try {
-      const response = await apiClient.createApiKey(
-        accessToken,
-        'Encypher Verify Extension Key',
-        ['sign', 'verify', 'read'],
-        activeOrganization?.id ?? null
-      );
+      let response;
+      try {
+        response = await apiClient.createApiKey(
+          accessToken,
+          'Encypher Verify Extension Key',
+          ['sign', 'verify', 'read'],
+          activeOrganization?.id ?? null
+        );
+      } catch (apiErr: unknown) {
+        const status = (apiErr as { statusCode?: number })?.statusCode;
+        if (status === 401 || status === 403) {
+          throw new Error('Your session has expired. Please refresh this page and try again.');
+        }
+        throw apiErr;
+      }
       const fullKey = extractFullKey(response);
       if (!fullKey) {
         throw new Error('Could not create an API key for extension setup.');

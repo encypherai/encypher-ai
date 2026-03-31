@@ -52,8 +52,11 @@ function deriveDashboardBaseUrl(apiBaseUrl) {
 }
 
 async function handleDashboardApiKeyHandoff(message, sender) {
-  const senderUrl = sender?.url || '';
+  // Chrome provides sender.url for web page senders, but some Chromium variants
+  // (Brave, Arc) may only set sender.origin. Fall back through both.
+  const senderUrl = sender?.url || sender?.origin || '';
   if (!isTrustedExternalSender(senderUrl)) {
+    debugLog(`Handoff rejected: sender.url=${sender?.url}, sender.origin=${sender?.origin}`);
     return { success: false, error: 'Untrusted handoff origin.' };
   }
 
@@ -104,20 +107,16 @@ if (chrome.runtime.onMessageExternal) {
 }
 
 function buildDashboardAuthUrl(mode = 'login', provider = '') {
-  const authPath = mode === 'signup' ? '/signup' : '/login';
   const dashboardBase = API_CONFIG.dashboardBaseUrl || deriveDashboardBaseUrl(API_CONFIG.baseUrl);
 
-  // callbackUrl must be a relative path — the login page sanitizer rejects absolute URLs
-  const callbackParams = new URLSearchParams({ source: 'chrome_extension', extensionId: chrome.runtime.id });
-  const callbackUrl = `/extension-handoff?${callbackParams.toString()}`;
-
-  const url = new URL(`${dashboardBase}${authPath}`);
+  // Navigate directly to the handoff page — it handles its own auth check
+  // and shows a login prompt if the user is not authenticated.
+  // This avoids a redundant login redirect when the user already has a session.
+  const url = new URL(`${dashboardBase}/extension-handoff`);
   url.searchParams.set('source', 'chrome_extension');
   url.searchParams.set('extensionId', chrome.runtime.id);
-  url.searchParams.set('callbackUrl', callbackUrl);
-  if (provider) {
-    url.searchParams.set('provider', provider);
-  }
+  if (mode === 'signup') url.searchParams.set('signup', '1');
+  if (provider) url.searchParams.set('provider', provider);
   return url.toString();
 }
 
@@ -131,7 +130,7 @@ function isTrustedExternalSender(senderUrl) {
   try {
     const origin = new URL(senderUrl).origin;
     return (
-      /^https:\/\/([a-z0-9-]+\.)*encypherai\.com$/i.test(origin) ||
+      /^https:\/\/([a-z0-9-]+\.)*encypher\.com$/i.test(origin) ||
       /^http:\/\/localhost(?::\d+)?$/i.test(origin) ||
       /^http:\/\/127\.0\.0\.1(?::\d+)?$/i.test(origin)
     );
@@ -1754,16 +1753,16 @@ async function flushAnalytics() {
       if (analyticsQueue.length < 100) {
         analyticsQueue.push(...events);
       }
-      console.warn('Analytics flush failed:', response.status);
+      debugLog.warn('analytics', 'Analytics flush failed', { status: response.status });
     } else {
-      console.log(`Analytics: sent ${events.length} discovery events`);
+      debugLog.info('analytics', `Sent ${events.length} discovery events`);
     }
   } catch (error) {
     // Re-queue on network error
     if (analyticsQueue.length < 100) {
       analyticsQueue.push(...events);
     }
-    console.warn('Analytics flush error:', error.message);
+    debugLog.warn('analytics', 'Analytics flush error', { message: error.message });
   }
 }
 
@@ -2152,8 +2151,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     case 'SHOW_DETAILS':
-      // Could open a new tab or popup with full details
-      console.log('Show details:', message.details);
+      debugLog.info('ui', 'Show details requested');
       sendResponse({ received: true });
       break;
 
@@ -2218,12 +2216,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
 
     case 'DEV_RELOAD':
-      // Store the active tab ID so we can reload it after the extension restarts.
-      // chrome.storage.session is unavailable in Firefox; fall back to local.
-      (chrome.storage.session || chrome.storage.local).set({ _devReloadTabId: message.tabId ?? null }).then(() => {
-        sendResponse({ ok: true });
-        chrome.runtime.reload();
-      });
+      // Only allow in dev mode (localhost API). Prevents accidental or malicious reloads in production.
+      debugLog.isDevMode().then(isDev => {
+        if (!isDev) {
+          sendResponse({ ok: false, error: 'Dev reload is only available in development mode' });
+          return;
+        }
+        (chrome.storage.session || chrome.storage.local).set({ _devReloadTabId: message.tabId ?? null }).then(() => {
+          sendResponse({ ok: true });
+          chrome.runtime.reload();
+        });
+      }).catch(() => sendResponse({ ok: false }));
       return true;
 
     case 'SETTINGS_UPDATED':
@@ -2281,22 +2284,26 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   tabState.delete(tabId);
 });
 
-// Dev reload — keyboard shortcut handler (Alt+Shift+R).
-// chrome.storage.session is unavailable in Firefox; fall back to local.
+// Dev reload -- keyboard shortcut handler (Alt+Shift+R).
+// Guarded: only fires when the API URL is localhost (dev mode).
 const _devStorage = chrome.storage.session || chrome.storage.local;
 
 chrome.commands.onCommand.addListener((command) => {
   if (command === 'dev-reload') {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      const tabId = tabs[0]?.id ?? null;
-      _devStorage.set({ _devReloadTabId: tabId }).then(() => {
-        chrome.runtime.reload();
+    debugLog.isDevMode().then(isDev => {
+      if (!isDev) return;
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tabId = tabs[0]?.id ?? null;
+        _devStorage.set({ _devReloadTabId: tabId }).then(() => {
+          chrome.runtime.reload();
+        });
       });
-    });
+    }).catch(() => {});
   }
 });
 
-// After a dev reload, re-inject content scripts into the tab that was active
+// After a dev reload, re-inject content scripts into the tab that was active.
+// Only runs when a _devReloadTabId was stored (which requires dev mode).
 _devStorage.get('_devReloadTabId', ({ _devReloadTabId }) => {
   if (!_devReloadTabId) return;
   _devStorage.remove('_devReloadTabId');
@@ -2632,11 +2639,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           });
         }
       } catch (error) {
-        console.error('Error with sign & copy:', error);
+        debugLog.error('signing', 'Error with sign & copy', { message: error.message });
+        await showPageToast(tab.id, 'Unable to sign and copy text. Try the popup Sign tab.', 'error');
       }
       break;
   }
 });
 
 debugLog.info('init', 'Encypher Verify service worker initialized');
-console.log('Encypher Verify service worker initialized');

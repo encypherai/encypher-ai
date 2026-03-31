@@ -277,14 +277,8 @@ describe('Optional login onboarding + setup tracking', () => {
 
     assert.match(
       workerCode,
-      /callbackUrl/,
-      'Dashboard auth URL builder should include callbackUrl metadata for post-login handoff'
-    );
-
-    assert.match(
-      workerCode,
       /extension-handoff/,
-      'Dashboard auth callback should target the extension handoff route'
+      'Dashboard auth URL builder should navigate directly to the extension handoff route'
     );
   });
 
