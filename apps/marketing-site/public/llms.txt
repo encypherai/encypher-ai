@@ -4,10 +4,10 @@
 
 ## About Encypher
 
-Encypher is the company that authored the C2PA text authentication standard. We provide sentence-level content tracking infrastructure for publishers and AI labs.
+Encypher authored Section A.7 of the C2PA 2.3 specification (text provenance) and provides sentence-level content tracking infrastructure for publishers and AI labs.
 
 ### What We Do
-- Authors of the C2PA text standard (publishing January 8, 2026)
+- Authors of C2PA Section A.7 (text provenance, C2PA 2.3 specification)
 - Sentence-level content authentication with cryptographic proof
 - Court-admissible evidence generation for AI copyright litigation
 - Content licensing infrastructure for the AI economy
@@ -25,11 +25,11 @@ Encypher is the company that authored the C2PA text authentication standard. We 
 - 100% accuracy (cryptographic proof vs 26% accuracy of probabilistic AI detection)
 - Sentence-level granularity (not just document-level)
 - Court-admissible evidence (mathematical certainty, not statistical inference)
-- Standards authority (we wrote the C2PA text standard)
+- Standards authority (we authored Section A.7 of the C2PA specification)
 - Two-sided market (serves both publishers and AI labs)
 
 ### Standards & Affiliations
-- C2PA (Coalition for Content Provenance and Authenticity) - Text Standard Co-Authors
+- C2PA (Coalition for Content Provenance and Authenticity) - Section A.7 Authors and Text Provenance Task Force Co-Chairs
 - CAI (Content Authenticity Initiative) - Members
 - Working alongside Adobe, Microsoft, Google, OpenAI, BBC
 
@@ -80,10 +80,10 @@ The C2PA text standard defines how text content is cryptographically authenticat
 ## Frequently Asked Questions
 
 Q: What is Encypher?
-A: Encypher authored the C2PA text authentication standard and provides sentence-level content tracking infrastructure for publishers and AI labs. We enable litigation evidence and content licensing through cryptographic proof with 100% accuracy.
+A: Encypher authored Section A.7 of the C2PA 2.3 specification (text provenance) and provides sentence-level content tracking infrastructure for publishers and AI labs. We enable litigation evidence and content licensing through cryptographic proof with 100% accuracy.
 
 Q: What is the C2PA text standard?
-A: The C2PA text standard, authored by Encypher, defines how text content is cryptographically authenticated. It enables verification of content origin, modifications, and usage with mathematical certainty. Publishing January 8, 2026.
+A: The C2PA specification, whose text provenance section (A.7) was authored by Encypher, defines how text content is cryptographically authenticated. It enables verification of content origin, modifications, and usage with mathematical certainty.
 
 Q: How is Encypher different from AI detection tools?
 A: AI detection tools provide statistical guessing with ~26% accuracy and high false positive rates. Encypher provides cryptographic proof with 100% accuracy and sentence-level granularity. Our evidence is court-admissible.
@@ -108,7 +108,7 @@ A: EU AI Act (requires AI-generated content identification), China watermarking 
 - /solutions/enterprises - Enterprise AI governance
 - /pricing - Pricing and plans
 - /company - About Encypher and team
-- /blog - Insights from the C2PA text standard authors
+- /blog - Insights from the authors of C2PA Section A.7 (text provenance)
 - /tools - Free encoding/decoding tools
 - /publisher-demo - Interactive publisher demonstration
 - /ai-demo - Interactive AI lab demonstration

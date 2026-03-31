@@ -175,7 +175,7 @@ const FAQS = [
   },
   {
     q: 'Is Encypher compatible with C2PA?',
-    a: "Yes -- we wrote the standard. Encypher co-authors the C2PA text provenance specification (Section A.7) alongside Adobe, Microsoft, Google, OpenAI, and the BBC. Every document signed with Encypher produces a C2PA 2.3-compliant manifest. If you are already using another C2PA tool, Encypher layers on top and adds the rights-resolution URL so AI companies can retrieve your licensing terms automatically.",
+    a: "Yes. Encypher authored Section A.7 of the C2PA 2.3 specification (text provenance) alongside Adobe, Microsoft, Google, OpenAI, and the BBC. Erik Svilich co-chairs the C2PA Text Provenance Task Force. Every document signed with Encypher produces a C2PA 2.3-compliant manifest. If you are already using another C2PA tool, Encypher layers on top and adds the rights-resolution URL so AI companies can retrieve your licensing terms automatically.",
   },
   {
     q: 'Does Encypher work alongside Tollbit, ProRata, or Cloudflare bot management?',

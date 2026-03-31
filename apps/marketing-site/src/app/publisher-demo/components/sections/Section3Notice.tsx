@@ -18,20 +18,20 @@ export default function Section3Notice({ isActive, onComplete, onAnimationStart 
   const [showContent, setShowContent] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [canAnimate, setCanAnimate] = useState(false);
-  
-  const { sectionRef } = useSectionScroll({ 
-    sectionIndex: 3, 
+
+  const { sectionRef } = useSectionScroll({
+    sectionIndex: 3,
     isActive,
     onScrollComplete: () => setCanAnimate(true)
   });
-  
+
   useScrollLock(isAnimating);
 
   useEffect(() => {
     if (canAnimate && !showContent) {
       onAnimationStart();
       setIsAnimating(true);
-      
+
       // Trigger scanner animation in iframe
       setTimeout(() => {
         sendArticleMessage({ type: 'startScan' });
@@ -102,7 +102,7 @@ export default function Section3Notice({ isActive, onComplete, onAnimationStart 
                 transition={{ duration: 0.4, delay: 0.2 }}
               >
                 <p>
-                  We wrote the C2PA text standard. Our infrastructure embeds a persistent, cryptographic notice of your licensing requirements directly into your content.
+                  We authored Section A.7 of the C2PA 2.3 specification. Our infrastructure embeds a persistent, cryptographic notice of your licensing requirements directly into your content.
                 </p>
                 <p className="text-xl font-semibold text-slate-900">
                   Stripping it is a provable act of willfulness.<br />
@@ -157,7 +157,7 @@ export default function Section3Notice({ isActive, onComplete, onAnimationStart 
                   </li>
                 </ol>
               </motion.div>
-              
+
               {/* Scroll to continue indicator */}
               <motion.div
                 className="flex flex-col items-center gap-4 text-slate-600 mt-12"

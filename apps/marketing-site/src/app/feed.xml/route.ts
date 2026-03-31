@@ -28,7 +28,7 @@ export async function GET() {
 <channel>
   <title>Encypher Blog</title>
   <link>${site}/blog</link>
-  <description>From the authors of the C2PA text standard: infrastructure for AI content authentication and licensing.</description>
+  <description>From the authors of C2PA Section A.7 (text provenance): infrastructure for AI content authentication and licensing.</description>
   <language>en-us</language>
   ${items}
 </channel>
