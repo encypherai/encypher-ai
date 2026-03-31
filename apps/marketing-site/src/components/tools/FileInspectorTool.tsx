@@ -4,12 +4,18 @@
 // TEAM_241: Added image (JPEG/PNG/WebP) support with XMP + C2PA inspection
 // TEAM_280: Expanded to all C2PA media formats (audio, video, all images)
 import React, { useState, useRef, useCallback } from "react";
-import { EncypherLoader } from "@encypher/icons";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { trackToolEvent } from "@/lib/toolsAnalytics";
+import {
+  VerificationSequence,
+  VERIFY_TEXT_STEPS,
+  VERIFY_FILE_STEPS,
+  withMinDuration,
+  getStepsDuration,
+} from "@/components/ui/VerificationSequence";
 import {
   SUPPORTED_EXTENSIONS,
   SUPPORTED_FORMATS_BY_CATEGORY,
@@ -490,6 +496,7 @@ export default function FileInspectorTool() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingSteps, setLoadingSteps] = useState(VERIFY_FILE_STEPS);
   const [error, setError] = useState<string | null>(null);
   const [verifyResponse, setVerifyResponse] = useState<DecodeToolResponse | null>(null);
   const [imageVerifyResponse, setImageVerifyResponse] = useState<ImageVerifyResponse | null>(null);
@@ -526,6 +533,10 @@ export default function FileInspectorTool() {
     setLoading(true);
     setError(null);
     const startedAt = Date.now();
+    const kind = getFileKind(file.name, file.type);
+    const steps = kind === 'text' ? VERIFY_TEXT_STEPS : VERIFY_FILE_STEPS;
+    setLoadingSteps(steps);
+    const minMs = getStepsDuration(steps);
 
     trackToolEvent({
       eventName: "tools_inspect_started",
@@ -537,7 +548,7 @@ export default function FileInspectorTool() {
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type || 'unknown',
-        fileKind: getFileKind(file.name, file.type),
+        fileKind: kind,
       },
     });
 
@@ -554,7 +565,7 @@ export default function FileInspectorTool() {
         const b64 = toBase64(buffer);
         const mimeType = resolveMimeType(file.name, file.type);
 
-        const response = await verifyImage(b64, mimeType);
+        const response = await withMinDuration(verifyImage(b64, mimeType), minMs);
 
         trackToolEvent({
           eventName: "tools_inspect_success",
@@ -584,7 +595,7 @@ export default function FileInspectorTool() {
         const b64 = toBase64(buffer);
         const mimeType = resolveMimeType(file.name, file.type);
 
-        const response = await verifyAudio(b64, mimeType);
+        const response = await withMinDuration(verifyAudio(b64, mimeType), minMs);
 
         trackToolEvent({
           eventName: "tools_inspect_success",
@@ -613,7 +624,7 @@ export default function FileInspectorTool() {
         const mimeType = resolveMimeType(file.name, file.type);
         const blob = new Blob([buffer], { type: mimeType });
 
-        const response = await verifyVideo(blob, mimeType);
+        const response = await withMinDuration(verifyVideo(blob, mimeType), minMs);
 
         trackToolEvent({
           eventName: "tools_inspect_success",
@@ -643,7 +654,7 @@ export default function FileInspectorTool() {
         const mimeType = resolveMimeType(file.name, file.type);
         const kind = isFontFile(file.name, file.type) ? 'font' : 'document';
 
-        const response = await verifyDocument(b64, mimeType);
+        const response = await withMinDuration(verifyDocument(b64, mimeType), minMs);
 
         trackToolEvent({
           eventName: "tools_inspect_success",
@@ -688,7 +699,7 @@ export default function FileInspectorTool() {
         return;
       }
 
-      const response = await verifyText(text, pdfB64);
+      const response = await withMinDuration(verifyText(text, pdfB64), minMs);
 
       trackToolEvent({
         eventName: "tools_inspect_success",
@@ -940,11 +951,10 @@ export default function FileInspectorTool() {
 
           {/* Loading state */}
           {loading && selectedFile && (
-            <Card className="min-h-[400px] flex items-center justify-center">
-              <CardContent className="text-center py-12">
-                <EncypherLoader size="xl" className="mb-4" />
-                <p className="text-lg font-semibold mb-1">Inspecting file...</p>
-                <p className="text-sm text-muted-foreground">
+            <Card className="min-h-[300px] flex items-center justify-center">
+              <CardContent className="py-12 w-full max-w-sm">
+                <VerificationSequence steps={loadingSteps} className="mb-6" />
+                <p className="text-sm text-muted-foreground text-center">
                   {selectedFile.name} ({formatFileSize(selectedFile.size)})
                 </p>
               </CardContent>

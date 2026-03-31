@@ -13,6 +13,13 @@ import {
   AlertTriangle,
   RotateCcw,
 } from 'lucide-react';
+import {
+  VerificationSequence,
+  SIGN_STEPS,
+  VERIFY_TEXT_STEPS,
+  withMinDuration,
+  getStepsDuration,
+} from '@/components/ui/VerificationSequence';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -147,7 +154,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
     setStage('signing');
     setErrorMsg(null);
     try {
-      const signed = await apiSign(inputText);
+      const signed = await withMinDuration(apiSign(inputText), getStepsDuration(SIGN_STEPS));
       setSignedText(signed);
       setVerifyInput(signed);
       setStage('signed');
@@ -168,7 +175,7 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
     setStage('verifying');
     setErrorMsg(null);
     try {
-      const result = await apiVerify(verifyInput);
+      const result = await withMinDuration(apiVerify(verifyInput), getStepsDuration(VERIFY_TEXT_STEPS));
       setVerifyResult(result);
       const valid = result.raw_hidden_data?.valid === true;
       const tamperedByApi = result.raw_hidden_data?.tampered === true;
@@ -262,17 +269,8 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
             )}
 
             {stage === 'signing' && (
-              <div className="p-5 rounded-lg border border-border bg-card space-y-3">
-                <div className="flex items-center gap-3 text-muted-foreground text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
-                  Embedding C2PA watermarks sentence by sentence...
-                </div>
-                <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="h-full bg-primary animate-pulse rounded-full"
-                    style={{ width: '65%' }}
-                  />
-                </div>
+              <div className="p-5 rounded-lg border border-border bg-card">
+                <VerificationSequence steps={SIGN_STEPS} />
               </div>
             )}
 
@@ -395,6 +393,11 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
                       )}
                     </Button>
                   </div>
+                  {stage === 'verifying' && (
+                    <div className="mt-4 p-4 rounded-lg border border-border bg-card">
+                      <VerificationSequence steps={VERIFY_TEXT_STEPS} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
