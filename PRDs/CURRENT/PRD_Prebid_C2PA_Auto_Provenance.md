@@ -1,23 +1,46 @@
 # Prebid C2PA Auto-Provenance Distribution
 
-**Status:** Planning
-**Current Goal:** Architecture review and approval
+**Status:** In Progress
+**Current Goal:** Phase 1 complete. Submit upstream PR, then build CDN integration handshake (Phase 2).
 
 ## Overview
 
-Distribute free-tier C2PA text provenance to 70k+ Prebid publisher sites via a lazy signing model. The Prebid RTD module V2 checks for existing provenance on pageload; if absent, it extracts article text, sends it to Encypher's public signing endpoint, caches the manifest URL, and injects provenance signals into OpenRTB bid requests. Encypher auto-provisions one org per domain (1,000 signs/month free tier), manages all certificates (notarization model), and offers S/MIME sub-CA cert issuance as an Enterprise add-on.
+The Prebid RTD module (`encypherRtdProvider.js`) is a distribution channel for C2PA content provenance. It reads existing provenance signals on each pageload and injects them into OpenRTB bid requests at `site.ext.data.c2pa`, making provenance-verified inventory visible to DSPs and SSPs across 70k+ Prebid publisher sites.
 
-This is a supply-side flooding strategy: create enough provenance-verified ad inventory that DSPs begin factoring it into bid decisions, which drives CPM lift, which drives voluntary Enterprise adoption.
+The production path (Path A) reads a `<meta name="c2pa-manifest-url">` tag placed by an upstream signing mechanism: the Encypher CDN worker (see `PRD_CDN_Content_Provenance_Worker.md`), a CMS plugin (WordPress, Ghost), or direct API integration. The CDN worker is the primary adoption carrot because it requires zero publisher code changes (one DNS record).
+
+Path C (auto-sign) serves as an onboarding and demo mechanism. It lets publishers see provenance signals in bid requests immediately, before deploying CDN or CMS integration. This proves the CPM-lift hypothesis and motivates permanent adoption via CDN or CMS.
+
+The strategy: CDN worker creates provenance (upstream). Prebid distributes it to DSPs (downstream). CPM lift from provenance-verified inventory drives voluntary Enterprise conversion.
 
 ## Objectives
 
-- Auto-provision C2PA signing for any Prebid publisher site with zero publisher-side configuration
-- Maintain notarization model: Encypher signs as attester ("this content observed at {url} on {date}"), not as author
-- Lazy org-per-domain provisioning with media company grouping when ownership is known
-- Free tier (1,000 signs/month) naturally gates toward Enterprise conversion for high-volume publishers
-- S/MIME sub-CA cert issuance as Enterprise/add-on upgrade (publisher signs under their own identity)
+- Distribute C2PA provenance signals into the OpenRTB bid stream via Prebid's RTD framework
+- Path A (production): read provenance from upstream signing (CDN worker, CMS plugin, API) and inject into bid requests
+- Path C (onboarding): auto-sign content on first visit so publishers see immediate value before deploying permanent signing
+- Maintain notarization model: Encypher signs as attester ("this content published at {url} on {date}"), not as author or copyright holder
 - Never store publisher content -- only hashes, metadata, and C2PA manifests
-- Ship as two modules: vendor-neutral RTD reader (upstream to Prebid.org) + Encypher signing companion
+- Free tier (1,000 signs/month) naturally gates toward Enterprise conversion for high-volume publishers
+- Ship as a single Encypher-branded RTD module (`encypherRtdProvider.js`); existing V1 read-only module (`c2paProvenanceRtdProvider.js`) stays for WordPress CMS users
+
+## Relationship to CDN Worker
+
+The Prebid RTD module and the CDN Content Provenance Worker (`PRD_CDN_Content_Provenance_Worker.md`) form a two-stage pipeline:
+
+| Stage | Component | Function |
+|-------|-----------|----------|
+| Upstream (signing) | CDN Worker / CMS Plugin / API | Signs content, injects `<meta name="c2pa-manifest-url">` |
+| Downstream (distribution) | Prebid RTD Module (Path A) | Reads meta tag, injects `site.ext.data.c2pa` into bid requests |
+
+**Publisher adoption funnel:**
+1. Publisher installs Prebid RTD module (zero config, included in Prebid.js build)
+2. Path C auto-signs on first visit, publisher sees provenance in bid stream
+3. Publisher sees CPM lift on provenance-verified inventory
+4. Publisher deploys CDN worker (one DNS record) for permanent, production-grade signing
+5. Path A reads CDN-injected meta tag on every pageload (no API calls, no latency)
+6. Enterprise conversion for high-volume publishers who want publisher-identity signing, sentence-level provenance, or rights metadata
+
+**Cross-channel org resolution:** When a publisher uses both CDN and Prebid channels, the org provisioning system checks for existing orgs across both namespaces (`org_prebid_{hash}`, `org_cdn_{hash}`) to share a single quota pool. See CDN Worker PRD Task 5.0.
 
 ## Architecture
 
@@ -27,58 +50,51 @@ This is a supply-side flooding strategy: create enough provenance-verified ad in
 Page Load
   |
   v
-RTD Module V2 (client-side, in Prebid.js)
+encypherRtdProvider.js (client-side, in Prebid.js)
   |
-  +--> 1. Check <meta name="c2pa-manifest-url"> (WordPress plugin, existing CMS integration)
-  |      Found? --> Read manifest, inject site.ext.data.c2pa, done.
+  +--> PATH A (Production): Check <meta name="c2pa-manifest-url">
+  |      Source: CDN worker, CMS plugin (WordPress/Ghost), or direct API
+  |      Found? --> Fetch manifest JSON, inject site.ext.data.c2pa
+  |                 source="cms", no API call, no latency cost
+  |                 Done.
   |
-  +--> 2. Check localStorage cache for canonical URL
-  |      Hit? --> Inject cached manifest_url into site.ext.data.c2pa, done.
+  +--> PATH B (Cache): Check localStorage for canonical URL hash
+  |      Hit and not expired (30-day TTL)?
+  |      --> Inject cached payload into site.ext.data.c2pa
+  |          source="cache", no API call
+  |          Done.
   |
-  +--> 3. Cache miss: Extract article text from DOM
-  |      - Structured data (JSON-LD, schema.org Article.articleBody) preferred
-  |      - Fallback: <article> element innerText
-  |      - Fallback: Readability-style heuristic
-  |
-  +--> 4. POST /api/v1/prebid/sign
-  |      Body: { domain, canonical_url, text_content, page_title }
-  |      No auth required (public endpoint, IP + domain rate-limited)
+  +--> PATH C (Onboarding/Demo): Extract article text, call signing API
+  |      1. Extract text from DOM (JSON-LD > <article> > [role="main"])
+  |      2. POST /api/v1/public/prebid/sign (public, no auth, rate-limited)
+  |      3. Cache result in localStorage
+  |      4. Inject site.ext.data.c2pa, source="auto"
   |
   v
-Prebid Signing Service (server-side, Enterprise API)
+All paths: inject site.ext.data.c2pa into OpenRTB bid request
+All paths: call callback() (never block auction)
+All error branches: call callback() (fail-open)
+```
+
+**Path C server-side flow (Prebid Signing Service):**
+
+```
+POST /api/v1/public/prebid/sign
   |
-  +--> 5. Lookup domain org: org_prebid_{sha256(domain)[:12]}
+  +--> 1. Lookup domain org: org_prebid_{sha256(domain)[:12]}
   |      Not found? --> Auto-provision org (free tier, Encypher-managed cert)
   |
-  +--> 6. Check server-side dedup: content_hash + domain
-  |      Already signed? --> Return existing manifest_url (no quota charge)
+  +--> 2. Check dedup: content_hash + domain in prebid_content_records
+  |      Already signed? --> Return existing manifest_url (cached=true, no quota charge)
   |
-  +--> 7. Check quota (1,000/month for free tier)
-  |      Exceeded? --> Return 429 with upgrade_url
+  +--> 3. Check quota (1,000/month for free tier)
+  |      Exceeded? --> Return error with upgrade_url
   |
-  +--> 8. Sign text content (document-level C2PA, notarization model)
+  +--> 4. Sign via execute_unified_signing (managed signer, notarization model)
   |      - Claim generator: "Encypher Prebid Provenance/1.0"
-  |      - Assertions: c2pa.created, source_domain, canonical_url, content_hash
-  |      - Cert: Encypher-managed Ed25519 (per-org, self-signed)
-  |      - Content NOT stored. Only: hash, manifest, metadata.
+  |      - Content NOT stored. Only: hash, manifest metadata.
   |
-  +--> 9. Store manifest at /.well-known/c2pa/manifests/{record_id}
-  |
-  +--> 10. Return response:
-          {
-            manifest_url: "https://api.encypher.com/.well-known/c2pa/manifests/{id}",
-            signer_tier: "notarized",
-            signed_at: "2026-03-27T...",
-            action: "c2pa.created",
-            org_id: "org_prebid_...",
-            upgrade_url: "https://encypher.com/enterprise?ref=prebid&domain=..."
-          }
-  |
-  v
-RTD Module V2 (client-side)
-  |
-  +--> 11. Cache manifest_url in localStorage (key: canonical_url, TTL: 30 days)
-  +--> 12. Inject site.ext.data.c2pa into OpenRTB bid request
+  +--> 5. Store record in prebid_content_records, return manifest_url
 ```
 
 ### Signer Identity Model
@@ -142,31 +158,28 @@ Max text size sent to API: 100KB (covers virtually all articles). Larger content
 
 ### 1.0 Enterprise API -- Prebid Signing Service
 
-- [ ] 1.1 Add `prebid_content_records` DB model and Alembic migration
-  - [ ] 1.1.1 Fields: id, org_id, domain, canonical_url, content_hash (SHA-256), manifest_store (JSONB), manifest_url, page_title, signed_at, created_at
-  - [ ] 1.1.2 Unique constraint on (domain, content_hash)
-  - [ ] 1.1.3 Index on domain for org lookup
-- [ ] 1.2 Add `prebid_signing_service.py`
-  - [ ] 1.2.1 `sign_or_retrieve(domain, canonical_url, text_content, page_title)` -- main entry point
-  - [ ] 1.2.2 Domain org lookup/provisioning: `_ensure_prebid_org(domain)` using `org_prebid_{hash}` namespace
-  - [ ] 1.2.3 Content dedup: check `prebid_content_records` by (domain, content_hash)
-  - [ ] 1.2.4 Quota check via existing `QuotaManager.check_quota`
-  - [ ] 1.2.5 Delegate to `execute_unified_signing` with notarization assertions
-  - [ ] 1.2.6 Store manifest in `prebid_content_records`
-  - [ ] 1.2.7 Return manifest_url + metadata (no content stored)
-- [ ] 1.3 Add `prebid_schemas.py`
-  - [ ] 1.3.1 `PrebidSignRequest`: domain, canonical_url, text_content, page_title
-  - [ ] 1.3.2 `PrebidSignResponse`: manifest_url, signer_tier, signed_at, action, org_id, upgrade_url, cached (bool)
-- [ ] 1.4 Add `prebid_router.py` at `/api/v1/prebid/`
-  - [ ] 1.4.1 `POST /api/v1/prebid/sign` -- public endpoint, no auth, IP + domain rate-limited
-  - [ ] 1.4.2 `GET /api/v1/prebid/status/{domain}` -- public, returns org signing stats (total signed, quota remaining)
-  - [ ] 1.4.3 `POST /api/v1/prebid/claim` -- authenticated, publisher claims a Prebid-provisioned domain (links to their real org)
-  - [ ] 1.4.4 CORS headers permitting cross-origin requests from any publisher domain
-- [ ] 1.5 Add `signer_tier: "notarized"` to claim generator metadata
-  - [ ] 1.5.1 Update `c2pa_claim_builder.py` to accept and emit `notarized` tier
-  - [ ] 1.5.2 Add `source_domain` and `canonical_url` as custom assertions in manifest
-- [ ] 1.6 Register router in `bootstrap/routers.py`
-- [ ] 1.7 Add domain-based rate limiter (extend existing `public_rate_limiter`)
+- [x] 1.1 Add `prebid_content_records` DB model and Alembic migration
+  - [x] 1.1.1 Fields: id, org_id, domain, canonical_url, content_hash (SHA-256), manifest_store (JSONB), manifest_url, page_title, signer_tier, signed_at, created_at
+  - [x] 1.1.2 Unique constraint on (domain, content_hash)
+  - [x] 1.1.3 Index on organization_id
+- [x] 1.2 Add `prebid_signing_service.py`
+  - [x] 1.2.1 `sign_or_retrieve(db, page_url, text_content, document_title)` -- main entry point
+  - [x] 1.2.2 Domain org lookup/provisioning: `_ensure_prebid_org(domain)` using `org_prebid_{hash}` namespace with ON CONFLICT DO NOTHING
+  - [x] 1.2.3 Content dedup: check `prebid_content_records` by (domain, content_hash)
+  - [x] 1.2.4 Quota check via organizations.documents_signed counter
+  - [x] 1.2.5 Build manifest metadata and store in `prebid_content_records.manifest_store` JSONB
+  - [x] 1.2.6 Return manifest_url + metadata (content text never stored)
+- [x] 1.3 Add `prebid_schemas.py`
+  - [x] 1.3.1 `PrebidSignRequest`: text, page_url, document_title (Pydantic with min_length=50)
+  - [x] 1.3.2 `PrebidSignResponse`: success, manifest_url, signer_tier, signed_at, content_hash, org_id, cached, error, upgrade_url
+- [x] 1.4 Add `app/api/v1/public/prebid.py` router at `/public/prebid/`
+  - [x] 1.4.1 `POST /api/v1/public/prebid/sign` -- public, no auth, IP rate-limited (3600/hr)
+  - [x] 1.4.2 `GET /api/v1/public/prebid/manifest/{record_id}` -- serves stored manifest with CORS headers
+  - [x] 1.4.3 `GET /api/v1/public/prebid/status/{domain}` -- returns org signing stats
+  - [ ] 1.4.4 `POST /api/v1/public/prebid/claim` -- authenticated domain claim (Phase 3)
+- [x] 1.5 Register router in `app/api/v1/api.py`
+- [x] 1.6 Add `prebid_sign` rate limiter entry in `public_rate_limiter.py`
+- [x] 1.7 Wire full C2PA JUMBF signing via `execute_unified_signing` (managed signer, notarization model)
 
 ### 2.0 Enterprise API -- Domain Ownership & Upgrade Path
 
@@ -192,56 +205,57 @@ Max text size sent to API: 100KB (covers virtually all articles). Larger content
 - [ ] 3.3 Dashboard UI for cert request/status (Enterprise orgs only)
 - [ ] 3.4 Trust level automatically upgrades to `ca_verified` (existing logic)
 
-### 4.0 Prebid.js -- RTD Module V2
+### 4.0 Prebid.js -- encypherRtdProvider.js (Single Module)
 
-- [ ] 4.1 Extend `c2paProvenanceRtdProvider.js` with signing companion logic
-  - [ ] 4.1.1 Content extraction: JSON-LD > article element > main role
-  - [ ] 4.1.2 localStorage cache layer (key: canonical_url hash, TTL: 30 days)
-  - [ ] 4.1.3 Content hash computation (SHA-256 of extracted text, via SubtleCrypto)
-  - [ ] 4.1.4 Cache invalidation when content hash changes
-  - [ ] 4.1.5 POST to `/api/v1/prebid/sign` on cache miss
-  - [ ] 4.1.6 Gated behind `params.enableAutoSign: true` (disabled by default for Prebid.org governance)
-- [ ] 4.2 Add `signer_tier: "notarized"` to OpenRTB payload schema
-- [ ] 4.3 Update module docs (c2paProvenanceRtdProvider.md) for V2 capabilities
-- [ ] 4.4 Update Prebid.org docs site (prebid.github.io) for V2
+Garrett (Prebid chairman) confirmed that a single Encypher-branded RTD module is the standard approach. All Prebid RTD modules are vendor-specific. The previously planned two-module split (vendor-neutral reader + companion script) is unnecessary. Conformance and cert management are managed services, not something publishers or Prebid.org would DIY.
 
-### 5.0 Prebid.js -- Signing Companion Script (Standalone)
+The existing V1 `c2paProvenanceRtdProvider.js` (read-only, 7 tests passing) stays in the Prebid.js fork for WordPress CMS users. The new `encypherRtdProvider.js` supersedes it with auto-signing.
 
-- [ ] 5.1 Create `encypher-prebid-companion.js` -- standalone script for publishers who want auto-signing without building custom Prebid
-  - [ ] 5.1.1 Same content extraction logic as 4.1.1
-  - [ ] 5.1.2 Same caching logic as 4.1.2-4.1.4
-  - [ ] 5.1.3 Injects `<meta name="c2pa-manifest-url">` into DOM after signing
-  - [ ] 5.1.4 Existing read-only RTD module picks it up naturally
-- [ ] 5.2 Host companion script on Encypher CDN (or npm package)
-- [ ] 5.3 One-line install: `<script src="https://cdn.encypher.com/prebid-companion.js" async></script>`
+Code lives in private repo: `encypherai/prebid-rtd-provider`
+
+- [x] 4.1 Create private repo scaffold (`package.json`, `.gitignore`, `README.md`)
+- [x] 4.2 Write `encypherRtdProvider.js` with three execution paths:
+  - [x] 4.2.1 Path A (CMS): `<meta name="c2pa-manifest-url">` or `params.manifestUrl` -- fetch manifest, inject `site.ext.data.c2pa`
+  - [x] 4.2.2 Path B (Cache): localStorage hit for canonical URL hash (30-day TTL, djb2 hash, Prebid `getStorageManager` for GDPR)
+  - [x] 4.2.3 Path C (Auto-sign): Extract article text (JSON-LD > `<article>` > `[role="main"]`), POST to `/api/v1/public/prebid/sign`, cache result, inject
+  - [x] 4.2.4 Every path and every error branch calls `callback()` (fail-open)
+- [x] 4.3 Write `encypherRtdProvider_spec.js` (20+ tests, Mocha + assert + server mock)
+  - [x] 4.3.1 init, Path A (5 cases), Path B (2 cases), Path C (7 cases), payload shape, utilities
+- [x] 4.4 Write `encypherRtdProvider.md` (Prebid docs for PR review)
+- [ ] 4.5 Create GitHub private repo and push
+- [ ] 4.6 Copy module + tests into Prebid.js fork and verify (`gulp test`, `gulp build`)
+- [ ] 4.7 Submit upstream PR to `prebid/Prebid.js`
 
 ### 6.0 Testing & Validation
 
-- [ ] 6.1 Unit tests for `prebid_signing_service.py` -- pytest
-  - [ ] 6.1.1 Org auto-provisioning (new domain, existing domain, known media company)
-  - [ ] 6.1.2 Content dedup (same hash returns cached manifest, no quota charge)
-  - [ ] 6.1.3 Quota enforcement (1,000 unique signs/month, 429 on exceed)
-  - [ ] 6.1.4 Rate limiting (IP + domain)
-  - [ ] 6.1.5 Notarization assertions in manifest
-- [ ] 6.2 Unit tests for `prebid_router.py` -- pytest
-  - [ ] 6.2.1 Public endpoint (no auth), CORS headers
-  - [ ] 6.2.2 Domain claim flow with DNS verification
-  - [ ] 6.2.3 Status endpoint
-- [ ] 6.3 Integration test: full signing flow (POST /prebid/sign -> verify manifest) -- pytest
-- [ ] 6.4 RTD module V2 tests -- extend existing 7 tests with auto-signing scenarios
-  - [ ] 6.4.1 Cache miss triggers signing
-  - [ ] 6.4.2 Cache hit skips signing
-  - [ ] 6.4.3 Content hash change triggers re-signing
-  - [ ] 6.4.4 enableAutoSign=false skips signing (backward compat)
-  - [ ] 6.4.5 Signing failure falls back to no-provenance (graceful degradation)
-- [ ] 6.5 Companion script tests
+- [x] 6.1 `test_prebid_signing.py` -- 25 tests passing (pytest)
+  - [x] 6.1.1 Service utilities: extract_domain, hash_content, org ID generation (9 unit tests)
+  - [x] 6.1.2 POST /sign endpoint: new content, dedup, different content, validation, rate limiting, CORS (7 integration tests)
+  - [x] 6.1.3 GET /manifest/{id}: returns signed record, 404 for unknown (2 tests)
+  - [x] 6.1.4 GET /status/{domain}: provisioned and unprovisioned domains (2 tests)
+  - [x] 6.1.5 Service layer: sign_or_retrieve, dedup, invalid URL, idempotent provisioning, quota check (5 tests)
+- [x] 6.2 E2E Puppeteer tests -- 7 tests passing (`prebid-rtd-provider/test/e2e/`)
+  - [x] 6.2.1 Path C: article extraction + signing API call + ortb2 injection
+  - [x] 6.2.2 Path C: JSON-LD extraction priority over article element
+  - [x] 6.2.3 Path A: CMS meta tag (no signing API call)
+  - [x] 6.2.4 No content: graceful degradation (no c2pa injected)
+  - [x] 6.2.5 Path B: cache hit on second visit (no signing API call)
+  - [x] 6.2.6 Auction always completes (fail-open)
+  - [x] 6.2.7 Payload shape validation (all required fields present)
+- [x] 6.4 `encypherRtdProvider_spec.js` -- 20+ tests covering all three paths
+  - [x] 6.4.1 init (returns true, correct name, exposes getBidRequestData)
+  - [x] 6.4.2 Path A: meta tag fetch+inject, params.manifestUrl override, HTTP 500 fail-open, malformed JSON, verified=false
+  - [x] 6.4.3 Path B: cache hit with source='cache' and no XHR, expired cache falls through to Path C
+  - [x] 6.4.4 Path C: article extraction + API call, JSON-LD priority, role=main fallback, API error fail-open, success=false fail-open, no content skip, cache write after signing
+  - [x] 6.4.5 Payload shape (Path A fields, Path C fields including extraction_method)
+  - [x] 6.4.6 Utilities (hashUrl consistency, extractContent null/short-content handling)
 - [ ] 6.6 Load test: simulate 1,000 domains, 100 pages each
 
 ### 7.0 Strategy & Distribution
 
-- [ ] 7.1 Validate Prebid.org governance path with Aditude (AI working group)
-  - [ ] 7.1.1 Read-only RTD module (V1) -- submit upstream PR
-  - [ ] 7.1.2 Auto-signing companion -- determine if bundled (params.enableAutoSign) or separate script
+- [ ] 7.1 Submit `encypherRtdProvider.js` upstream PR to `prebid/Prebid.js`
+  - [x] 7.1.1 Copy module + tests into Prebid.js fork, verify `gulp test` (23 passing) and `gulp build` (3.79 KiB minified)
+  - [ ] 7.1.2 Open PR from `erik-sv/Prebid.js` to `prebid/Prebid.js`
 - [ ] 7.2 Seed `prebid_domain_ownership` table with known media company properties
 - [ ] 7.3 Update internal strategy docs with Prebid distribution play
 - [ ] 7.4 Dashboard: Prebid org view showing domain signing stats and upgrade CTA
@@ -250,42 +264,64 @@ Max text size sent to API: 100KB (covers virtually all articles). Larger content
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
+| Production path | Path A (read meta tag from CDN/CMS) | Zero latency, no API call per pageview. CDN worker or CMS plugin does the signing upstream. |
+| Onboarding path | Path C (auto-sign) as demo mechanism | Lets publishers see value before deploying permanent signing. Proves CPM-lift hypothesis. |
 | Auth model | Public endpoint, no API key | Zero-friction distribution. Rate limiting + domain-based quota prevents abuse. |
-| Signer identity | Notarization (Encypher signs as attester) | No publisher cooperation needed. Honest C2PA manifest. Upgrade path to publisher-signed via sub-CA. |
-| Org namespace | `org_prebid_{hash}` | Avoids collision with email-provisioned orgs. Clear provenance of how org was created. |
+| Signer identity | Notarization (Encypher signs as attester) | No publisher cooperation needed. C2PA Section A.7: attestation of publication, not copyright claim. |
+| IP ownership | Attestation model, not rights claim | Publisher content may include quotes, wire content, facts. Provenance = "published here at this time." Rights metadata is a separate, opt-in layer. |
+| Org namespace | `org_prebid_{hash}` | Avoids collision with email-provisioned orgs. Cross-channel resolution shares org with CDN channel. |
 | Content storage | Never stored. Hash + manifest only. | Legal, privacy, storage cost. Content hash sufficient for dedup and verification. |
-| Module architecture | Two modules (reader + companion) | Prebid.org governance: reader is vendor-neutral, companion is Encypher-specific. |
+| Module architecture | Single Encypher-branded RTD module | Garrett confirmed all Prebid RTD modules are vendor-specific. V1 read-only module stays for CMS users. |
 | Dedup strategy | content_hash + domain | Same article content on same domain only signed once. Re-requests are free (no quota charge). |
 | Cert model | Self-signed Ed25519 per org (free), sub-CA issued (Enterprise) | Existing infra handles free tier. SSL.com client already exists for CA path. |
 
 ## Success Criteria
 
-- Prebid RTD module V2 passes all existing + new tests
+- `encypherRtdProvider.js` passes all 20+ tests in Prebid.js test harness
+- Path A correctly reads CDN-injected `<meta name="c2pa-manifest-url">` and injects into bid requests with zero API calls
+- Path C auto-signs on first visit, proving the onboarding flow
 - Public signing endpoint handles 100 req/sec sustained
 - Org auto-provisioning is idempotent and sub-100ms
+- Cross-channel org resolution correctly shares quota between Prebid and CDN channels
 - Content dedup prevents double-charging quota
 - Manifest is publicly verifiable via existing `/public/verify/media` and CDN manifest endpoints
-- Companion script install is one line of HTML
-- Domain claim flow works with DNS TXT verification
 - Free tier cap naturally identifies high-volume publishers as Enterprise conversion targets
 
 ## Phasing
 
-**Phase 1 (Ship first, 2-3 weeks):** Tasks 1.0, 4.0, 5.0, 6.1-6.5
-- Public signing endpoint + auto-provisioning + RTD module V2 + companion script
-- Notarization model only (Encypher-managed certs)
-- Submit read-only RTD module (V1) upstream to Prebid.org
+**Phase 1 (RTD module + backend + C2PA signing -- COMPLETE):** Tasks 1.0, 4.0, 6.0
+- `encypherRtdProvider.js` written, tested (23 unit + 7 E2E), built (3.79 KiB)
+- Backend: DB model, signing service with real C2PA via `execute_unified_signing`, public router, rate limiting, 25 pytest tests
+- Copied to Prebid.js fork, registered in `.submodules.json`, `gulp test` and `gulp build` green
+- Private repo at `encypherai/prebid-rtd-provider` (GitHub)
+- Task 1.7 complete: `sign_or_retrieve` calls `execute_unified_signing` with managed signer key (notarization model). Manifest endpoint returns `document_id` and `verification_url` from real signing result.
+- Next: submit upstream PR (Task 7.1.2)
 
-**Phase 2 (Upgrade path, 2 weeks):** Tasks 2.0, 7.0
+**Phase 2 (CDN Integration Handshake):** New tasks below
+- Cross-channel org resolution so CDN and Prebid channels share quota
+- RTD module Path A verification against CDN-injected meta tags
+- Shared publisher analytics across both channels
+- Depends on: `PRD_CDN_Content_Provenance_Worker.md` Phase 1
+
+**Phase 3 (Upgrade path):** Tasks 2.0, 7.0
 - Domain claim/verification flow
 - Known media company ownership mapping
 - Dashboard Prebid org view
-- Aditude governance validation for auto-signing
 
-**Phase 3 (Enterprise upsell, 2 weeks):** Task 3.0
+**Phase 4 (Enterprise upsell):** Task 3.0
 - S/MIME sub-CA cert issuance via SSL.com
 - Publisher signs under own identity
 - Sentence-level + media signing unlocked on upgrade
+
+## Value Proposition
+
+| Audience | Value |
+|----------|-------|
+| Publisher | One DNS record (CDN worker), zero code. Content gets C2PA provenance. Prebid distributes it to DSPs. CPM lift follows. |
+| DSP/SSP | `site.ext.data.c2pa` on every bid request from opted-in inventory. Filter for provenance-verified supply. |
+| Encypher | CDN worker is the adoption carrot (zero-friction onboarding). Prebid is the distribution rail (70k sites). Enterprise conversion follows CPM lift. |
+
+**Path C as onboarding tool:** A publisher who installs Prebid with the Encypher RTD module sees provenance signals in bid requests on their first pageload (Path C auto-signs). This proves the concept. When they see CPM lift, they deploy the CDN worker (one DNS record) for permanent, zero-latency signing (Path A reads the CDN-injected meta tag).
 
 ## Completion Notes
 
