@@ -7,6 +7,8 @@ import AISummary from '@/components/seo/AISummary';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { getPillarMetadata, getTechArticleSchema, siteConfig } from '@/lib/seo';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 export const metadata: Metadata = getPillarMetadata('c2pa-standard');
 
 const techArticleSchema = getTechArticleSchema({
@@ -115,7 +117,7 @@ export default function C2PAStandardPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button asChild size="lg" className="font-semibold py-3 px-6 rounded-lg shadow-lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                  <Link href="/auth/signin?mode=signup&source=c2pa-standard">
+                  <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=c2pa-standard`}>
                     Implement C2PA Now <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -417,7 +419,7 @@ export default function C2PAStandardPage() {
                   </a>
                 </Button>
                 <Button asChild size="sm" variant="outline" className="font-semibold">
-                  <Link href="/auth/signin?mode=signup&source=c2pa-quickstart">
+                  <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=c2pa-quickstart`}>
                     Get API Key <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -487,7 +489,7 @@ export default function C2PAStandardPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="font-semibold" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                  <Link href="/auth/signin?mode=signup&source=c2pa-cta">
+                  <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=c2pa-cta`}>
                     Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>

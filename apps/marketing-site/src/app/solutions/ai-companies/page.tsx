@@ -28,6 +28,8 @@ import SalesContactModal from '@/components/forms/SalesContactModal';
 import Script from 'next/script';
 import { aiCompaniesFaqSchema } from '@/lib/seo';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 export default function AiCompaniesPage() {
   const [showContactModal, setShowContactModal] = useState(false);
 
@@ -78,7 +80,7 @@ export default function AiCompaniesPage() {
               variant="outline"
               className="font-semibold py-3 px-6 rounded-lg shadow-lg"
             >
-              <Link href="/auth/signin?mode=signup&source=ai-companies">
+              <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=ai-companies`}>
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

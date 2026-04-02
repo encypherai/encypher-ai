@@ -6,6 +6,8 @@ import { getCompareMetadata, getTechArticleSchema, getBreadcrumbSchema, siteConf
 import type { Metadata } from 'next';
 import { ArrowRight, CheckCircle2, AlertCircle, Layers } from 'lucide-react';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 export const metadata: Metadata = getCompareMetadata(
   'encypher-vs-tollbit',
   'Encypher vs TollBit: Embedded Provenance vs Opt-In Access Gates',
@@ -322,7 +324,7 @@ export default function EncypherVsTollBitPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/auth/signin?mode=signup"
+              href={`${DASHBOARD_URL}/auth/signin?mode=signup`}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-opacity hover:opacity-90"
               style={{ backgroundColor: '#2a87c4' }}
             >

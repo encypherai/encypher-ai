@@ -284,7 +284,7 @@ export default function PricingPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="font-semibold shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                  <Link href={`/auth/signin?mode=signup&source=pricing-free`}>
+                  <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=pricing-free`}>
                     Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>

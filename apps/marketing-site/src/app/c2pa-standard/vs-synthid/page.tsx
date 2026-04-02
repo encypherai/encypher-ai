@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Script from 'next/script';
 import AISummary from '@/components/seo/AISummary';
+import { ArticleShell } from '@/components/content/ArticleShell';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { Button } from '@/components/ui/button';
 import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } from '@/lib/seo';
@@ -39,7 +40,7 @@ export default function VsSynthIDPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(techArticle) }}
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
+      <ArticleShell path="/c2pa-standard/vs-synthid">
         <Breadcrumbs items={[
           { name: 'Home', href: '/' },
           { name: 'C2PA Standard', href: '/c2pa-standard' },
@@ -252,7 +253,7 @@ export default function VsSynthIDPage() {
             </Button>
           </div>
         </section>
-      </div>
+      </ArticleShell>
     </>
   );
 }

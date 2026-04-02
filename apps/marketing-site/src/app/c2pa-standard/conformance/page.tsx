@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Script from 'next/script';
 import { ExternalLink } from 'lucide-react';
 import AISummary from '@/components/seo/AISummary';
+import { ArticleShell } from '@/components/content/ArticleShell';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } from '@/lib/seo';
 import ConformanceExplorer from './ConformanceExplorer';
@@ -39,7 +40,7 @@ export default function ConformancePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(techArticle) }}
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-5xl">
+      <ArticleShell path="/c2pa-standard/conformance">
         <Breadcrumbs
           items={[
             { name: 'Home', href: '/' },
@@ -147,7 +148,7 @@ export default function ConformancePage() {
             </Link>
           </div>
         </section>
-      </div>
+      </ArticleShell>
     </>
   );
 }

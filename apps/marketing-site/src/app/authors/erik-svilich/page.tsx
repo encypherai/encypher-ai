@@ -1,5 +1,6 @@
 import { type Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import Script from 'next/script';
 import { AISummary } from '@/components/seo/AISummary';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
@@ -127,13 +128,23 @@ export default function ErikSvilichPage() {
         />
 
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 text-foreground">
-            Erik Svilich
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Founder and CEO, Encypher | Co-Chair, C2PA Text Provenance Task Force
-          </p>
+        <div className="mb-10 flex items-start gap-6">
+          <Image
+            src="/images/headshots/Erik_Svilich_Headshot.png"
+            alt="Erik Svilich"
+            width={96}
+            height={96}
+            className="h-24 w-24 rounded-full object-cover flex-shrink-0"
+            priority
+          />
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 text-foreground">
+              Erik Svilich
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              Founder and CEO, Encypher | Co-Chair, C2PA Text Provenance Task Force
+            </p>
+          </div>
         </div>
 
         {/* Bio */}

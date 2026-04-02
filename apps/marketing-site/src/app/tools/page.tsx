@@ -28,6 +28,16 @@ export default function ToolsPage() {
           </li>
         ))}
       </ul>
+      {/* Related glossary terms */}
+      <div className="mt-8 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-foreground">Related glossary terms:</span>
+        <Link href="/glossary#content-provenance" className="inline-block rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          Content Provenance
+        </Link>
+        <Link href="/glossary#c2pa" className="inline-block rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+          C2PA Standard
+        </Link>
+      </div>
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import { type Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import Script from 'next/script';
 import { AISummary } from '@/components/seo/AISummary';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
@@ -98,13 +99,23 @@ export default function MattKaminskyPage() {
         />
 
         {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 text-foreground">
-            Matt Kaminsky
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Chief Commercial Officer, Encypher
-          </p>
+        <div className="mb-10 flex items-start gap-6">
+          <Image
+            src="/images/headshots/Matt_Kaminsky_Headshot.png"
+            alt="Matt Kaminsky"
+            width={96}
+            height={96}
+            className="h-24 w-24 rounded-full object-cover flex-shrink-0"
+            priority
+          />
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-3 text-foreground">
+              Matt Kaminsky
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              Chief Commercial Officer, Encypher
+            </p>
+          </div>
         </div>
 
         {/* Bio */}

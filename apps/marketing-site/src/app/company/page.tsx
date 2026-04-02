@@ -4,6 +4,7 @@ import { Github, Linkedin, Code, Mail, MessageSquare } from 'lucide-react';
 import { siteConfig } from "@/config/site";
 import { getSiteUrl } from "@/lib/env";
 import Image from 'next/image';
+import Link from 'next/link';
 import { Metadata } from 'next';
 import Script from 'next/script';
 import { getAISearchSummary } from '@/lib/seo';
@@ -287,6 +288,23 @@ export default function CompanyPage() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </section>
+
+          <section className="border-t border-border pt-12">
+            <div className="rounded-xl bg-muted/30 border border-border p-8 md:p-12 text-center">
+              <h2 className="text-2xl font-semibold mb-3">See Encypher in Action</h2>
+              <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+                Learn how content provenance infrastructure protects publishers, supports AI labs, and enables compliant licensing at scale.
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <Button asChild className="shadow-md btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                  <Link href="/contact">Schedule a Demo</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/platform">Explore the Platform</Link>
+                </Button>
+              </div>
             </div>
           </section>
         </div>

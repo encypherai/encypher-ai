@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Script from 'next/script';
+import { ArticleShell } from '@/components/content/ArticleShell';
 import AISummary from '@/components/seo/AISummary';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { Button } from '@/components/ui/button';
@@ -70,7 +71,7 @@ export default function NewsPublishersPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
+      <ArticleShell path="/content-provenance/news-publishers">
         <Breadcrumbs
           items={[
             { name: 'Home', href: '/' },
@@ -292,7 +293,7 @@ export default function NewsPublishersPage() {
             </Link>
           </div>
         </section>
-      </div>
+      </ArticleShell>
     </>
   );
 }

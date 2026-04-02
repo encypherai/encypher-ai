@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Script from 'next/script';
+import { ArticleShell } from '@/components/content/ArticleShell';
 import AISummary from '@/components/seo/AISummary';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { Button } from '@/components/ui/button';
@@ -75,7 +76,7 @@ export default function LegalImplicationsPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <div className="container mx-auto px-4 py-16 max-w-4xl">
+      <ArticleShell path="/cryptographic-watermarking/legal-implications">
         <Breadcrumbs items={[
           { name: 'Home', href: '/' },
           { name: 'Cryptographic Watermarking', href: '/cryptographic-watermarking' },
@@ -289,7 +290,7 @@ export default function LegalImplicationsPage() {
             </Button>
           </div>
         </section>
-      </div>
+      </ArticleShell>
     </>
   );
 }

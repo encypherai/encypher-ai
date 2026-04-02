@@ -7,6 +7,8 @@ import AISummary from '@/components/seo/AISummary';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { getPillarMetadata, getTechArticleSchema, siteConfig } from '@/lib/seo';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 export const metadata: Metadata = getPillarMetadata('cryptographic-watermarking');
 
 const techArticleSchema = getTechArticleSchema({
@@ -111,7 +113,7 @@ export default function CryptographicWatermarkingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                 <Button asChild size="lg" className="font-semibold py-3 px-6 rounded-lg shadow-lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                  <Link href="/auth/signin?mode=signup&source=cryptographic-watermarking">
+                  <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=cryptographic-watermarking`}>
                     Start Watermarking Content <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -416,7 +418,7 @@ export default function CryptographicWatermarkingPage() {
 
               <div className="flex gap-4">
                 <Button asChild size="sm" className="font-semibold" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                  <Link href="/auth/signin?mode=signup&source=crypto-watermark">
+                  <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=crypto-watermark`}>
                     Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
@@ -485,7 +487,7 @@ export default function CryptographicWatermarkingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="font-semibold" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                  <Link href="/auth/signin?mode=signup&source=crypto-watermark-cta">
+                  <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=crypto-watermark-cta`}>
                     Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>

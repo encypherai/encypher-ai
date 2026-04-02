@@ -28,6 +28,8 @@ import SalesContactModal from '@/components/forms/SalesContactModal';
 import Script from 'next/script';
 import { enterprisesFaqSchema } from '@/lib/seo';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 export default function EnterprisePage() {
   const [showContactModal, setShowContactModal] = useState(false);
 
@@ -69,7 +71,7 @@ export default function EnterprisePage() {
               Schedule Architecture Review <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button asChild variant="outline" size="lg">
-              <Link href="/auth/signin?mode=signup&source=enterprises">
+              <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=enterprises`}>
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

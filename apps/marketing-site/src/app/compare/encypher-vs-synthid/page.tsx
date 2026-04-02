@@ -6,6 +6,8 @@ import { getCompareMetadata, getTechArticleSchema, getBreadcrumbSchema, siteConf
 import type { Metadata } from 'next';
 import { ArrowRight, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 export const metadata: Metadata = getCompareMetadata(
   'encypher-vs-synthid',
   'Encypher vs SynthID: Cryptographic Provenance vs Statistical Watermarking',
@@ -352,7 +354,7 @@ export default function EncypherVsSynthIDPage() {
               View Publisher Demo <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/auth/signin?mode=signup"
+              href={`${DASHBOARD_URL}/auth/signin?mode=signup`}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold border border-border hover:bg-muted/30 transition-colors"
             >
               Get Started Free

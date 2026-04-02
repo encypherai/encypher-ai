@@ -8,6 +8,8 @@ import {
   ENTERPRISE_TIER,
 } from '@/lib/pricing-config';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 export function PricingTable() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -46,7 +48,7 @@ export function PricingTable() {
         </CardContent>
         <CardFooter>
           <Button asChild className="w-full">
-            <a href="/auth/signin?mode=signup&source=pricing-free">Get Started Free</a>
+            <a href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=pricing-free`}>Get Started Free</a>
           </Button>
         </CardFooter>
       </Card>

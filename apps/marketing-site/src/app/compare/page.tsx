@@ -6,6 +6,8 @@ import { generateMetadata as buildMetadata, getBreadcrumbSchema, siteConfig } fr
 import type { Metadata } from 'next';
 import { ArrowRight, Shield, Clock, Lock, Layers, BarChart2, Cpu, FileSearch } from 'lucide-react';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 export const metadata: Metadata = buildMetadata(
   'Compare Content Provenance Solutions | Encypher',
   'Side-by-side technical comparisons of Encypher against SynthID, WordProof, AI detection tools, TollBit, ProRata, and category-level comparisons of C2PA vs blockchain and content provenance vs detection.',
@@ -179,7 +181,7 @@ export default function ComparePage() {
               See the Demo <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/auth/signin?mode=signup"
+              href={`${DASHBOARD_URL}/auth/signin?mode=signup`}
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold border border-border hover:bg-muted/30 transition-colors"
             >
               Get Started Free

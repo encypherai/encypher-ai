@@ -58,6 +58,7 @@ const TERMS: GlossaryTerm[] = [
     definition: 'A C2PA manifest is the data structure embedded in a content file that records its provenance. It contains: one or more claims (the signed provenance records), the signer\'s X.509 certificate chain, assertion data about creation and modification, ingredient references to source files, and any access rules. The manifest is embedded in a JUMBF container for binary media types. For text, it is encoded using the methods defined in Section A.7. The manifest is self-contained: verification does not require querying an external database.',
     relatedLinks: [
       { label: 'C2PA Standard guide', href: '/c2pa-standard' },
+      { label: 'Manifest structure', href: '/c2pa-standard/manifest-structure' },
       { label: 'JUMBF', href: '/glossary#jumbf' },
       { label: 'COSE', href: '/glossary#cose' },
     ],
@@ -78,8 +79,8 @@ const TERMS: GlossaryTerm[] = [
     letter: 'C',
     definition: 'Coalition licensing is a model in which multiple content rights holders - such as publishers - join a collective licensing agreement managed by an intermediary. An AI company signs one agreement with the coalition and gains access to content from all member publishers, without negotiating with each publisher individually. Encypher\'s publisher coalition uses this model: publishers set their licensing tier (Bronze, Silver, Gold) and Encypher handles the licensing relationship with AI companies. Revenue flows back to publishers based on content usage.',
     relatedLinks: [
-      { label: 'For publishers', href: '/content-provenance/for-publishers' },
-      { label: 'For AI companies', href: '/content-provenance/for-ai-companies' },
+      { label: 'For publishers', href: '/solutions/publishers' },
+      { label: 'For AI companies', href: '/solutions/ai-companies' },
     ],
   },
   {
@@ -90,6 +91,7 @@ const TERMS: GlossaryTerm[] = [
     relatedLinks: [
       { label: 'Content Provenance guide', href: '/content-provenance' },
       { label: 'Content Authenticity Initiative', href: '/glossary#cai' },
+      { label: 'Content verification', href: '/content-provenance/verification' },
     ],
   },
   {
@@ -109,6 +111,8 @@ const TERMS: GlossaryTerm[] = [
     relatedLinks: [
       { label: 'Machine-readable rights', href: '/glossary#machine-readable-rights' },
       { label: 'Coalition licensing', href: '/glossary#coalition-licensing' },
+      { label: 'For publishers', href: '/solutions/publishers' },
+      { label: 'Pricing and plans', href: '/pricing' },
     ],
   },
   {
@@ -119,6 +123,7 @@ const TERMS: GlossaryTerm[] = [
     relatedLinks: [
       { label: 'Content Provenance guide', href: '/content-provenance' },
       { label: 'C2PA Standard', href: '/c2pa-standard' },
+      { label: 'Verify content', href: '/tools/verify' },
     ],
   },
   {
@@ -129,6 +134,7 @@ const TERMS: GlossaryTerm[] = [
     relatedLinks: [
       { label: 'C2PA Manifest', href: '/glossary#c2pa-manifest' },
       { label: 'JUMBF', href: '/glossary#jumbf' },
+      { label: 'How cryptographic signing works', href: '/cryptographic-watermarking/how-it-works' },
     ],
   },
   {
@@ -138,6 +144,7 @@ const TERMS: GlossaryTerm[] = [
     definition: 'Cryptographic watermarking embeds a cryptographically signed record of content origin directly into the content using a method that survives normal distribution. Unlike statistical watermarking, the result is deterministic: verification either succeeds or fails with certainty. No false positives are possible. For images, audio, and video, Encypher uses C2PA JUMBF container embedding. For text, Encypher uses proprietary invisible encoding. The watermark contains who created the content, when, what rights apply, and a signature that proves the record has not been altered.',
     relatedLinks: [
       { label: 'Cryptographic Watermarking guide', href: '/cryptographic-watermarking' },
+      { label: 'How it works', href: '/cryptographic-watermarking/how-it-works' },
       { label: 'Statistical watermarking', href: '/glossary#statistical-watermarking' },
     ],
   },
@@ -160,6 +167,7 @@ const TERMS: GlossaryTerm[] = [
     relatedLinks: [
       { label: 'Sentence-level attribution', href: '/glossary#sentence-level-attribution' },
       { label: 'C2PA Manifest', href: '/glossary#c2pa-manifest' },
+      { label: 'How cryptographic signing works', href: '/cryptographic-watermarking/how-it-works' },
     ],
   },
   // E
@@ -278,6 +286,7 @@ const TERMS: GlossaryTerm[] = [
       { label: 'robots.txt', href: '/glossary#robots-txt' },
       { label: 'TDM reservation', href: '/glossary#tdm-reservation' },
       { label: 'Content licensing', href: '/glossary#content-licensing' },
+      { label: 'For AI companies', href: '/solutions/ai-companies' },
     ],
   },
   {
@@ -330,6 +339,7 @@ const TERMS: GlossaryTerm[] = [
     relatedLinks: [
       { label: 'Sentence-level attribution', href: '/glossary#sentence-level-attribution' },
       { label: 'Merkle tree authentication', href: '/glossary#merkle-tree-authentication' },
+      { label: 'Try verifying text', href: '/tools/verify' },
     ],
   },
   // R
@@ -351,6 +361,7 @@ const TERMS: GlossaryTerm[] = [
     definition: 'Section A.7 of the C2PA 2.3 specification defines how provenance manifests are embedded in unstructured text content - articles, social posts, and any text-based material. It defines three encoding approaches: VS marker encoding (invisible inline embedding), sidecar manifests (a separate manifest file accompanying the text), and remote references (a URL pointing to a manifest stored externally). Section A.7 was authored by Encypher and published as part of C2PA 2.3 on January 8, 2026. The specification is available at spec.c2pa.org.',
     relatedLinks: [
       { label: 'C2PA Standard', href: '/c2pa-standard' },
+      { label: 'Section A.7 deep dive', href: '/c2pa-standard/section-a7' },
       { label: 'Text Provenance', href: '/glossary#text-provenance' },
       { label: 'Variation selector markers', href: '/glossary#variation-selector-markers' },
     ],
@@ -363,6 +374,7 @@ const TERMS: GlossaryTerm[] = [
     relatedLinks: [
       { label: 'Coalition licensing', href: '/glossary#coalition-licensing' },
       { label: 'Content licensing', href: '/glossary#content-licensing' },
+      { label: 'Pricing and plans', href: '/pricing' },
     ],
   },
   {
@@ -394,6 +406,7 @@ const TERMS: GlossaryTerm[] = [
     relatedLinks: [
       { label: 'robots.txt', href: '/glossary#robots-txt' },
       { label: 'Machine-readable rights', href: '/glossary#machine-readable-rights' },
+      { label: 'For AI companies', href: '/solutions/ai-companies' },
     ],
   },
   {
@@ -427,6 +440,7 @@ const TERMS: GlossaryTerm[] = [
     relatedLinks: [
       { label: 'Audio and video provenance', href: '/content-provenance/audio-video' },
       { label: 'Live stream provenance', href: '/glossary#live-stream-provenance' },
+      { label: 'Inspect a file', href: '/tools/inspect' },
     ],
   },
   // W

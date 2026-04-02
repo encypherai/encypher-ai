@@ -9,6 +9,8 @@ import AISummary from '@/components/seo/AISummary';
 import type { Metadata } from 'next';
 import { generateMetadata as buildMetadata } from '@/lib/seo';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 export const metadata: Metadata = buildMetadata(
   'AI Copyright Infringement: Court-Admissible Proof | Encypher',
   'Stop guessing with 26% accurate AI detectors. Encypher provides cryptographic proof of AI copyright infringement with 100% accuracy. Transform litigation costs into licensing revenue.',
@@ -51,7 +53,7 @@ export default function AICopyrightInfringementPage() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base">
-                <Link href="/auth/signin?mode=signup&source=ai-copyright">
+                <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=ai-copyright`}>
                   <span className="flex items-center justify-center">
                     Get Started Free <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </span>

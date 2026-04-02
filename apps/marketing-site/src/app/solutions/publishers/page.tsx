@@ -17,6 +17,8 @@ import SalesContactModal from '@/components/forms/SalesContactModal';
 import Script from 'next/script';
 import { publishersFaqSchema } from '@/lib/seo';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 // using real iframe embed (/publisher-demo/embed)
 export default function PublishersPage() {
   const [showContactModal, setShowContactModal] = useState(false);
@@ -46,7 +48,7 @@ export default function PublishersPage() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="font-semibold py-3 px-6 rounded-lg shadow-lg">
-              <Link href="/auth/signin?mode=signup&source=publishers">
+              <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=publishers`}>
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -523,7 +525,7 @@ export default function PublishersPage() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="font-semibold py-3 px-6 rounded-lg">
-              <Link href="/auth/signin?mode=signup&source=publishers">
+              <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=publishers`}>
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
