@@ -11,7 +11,8 @@ const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboar
 export const metadata: Metadata = getCompareMetadata(
   'encypher-vs-detection-tools',
   'Encypher vs AI Detection Tools (GPTZero, Originality.ai): Proof vs Probability',
-  "AI detection tools ask whether content was made by AI. Encypher answers who made this content and provides the cryptographic receipt. Detection is statistical inference. Provenance is deterministic proof."
+  "AI detection tools ask whether content was made by AI. Encypher answers who made this content and provides the cryptographic receipt. Detection is statistical inference. Provenance is deterministic proof.",
+  "Provenance is a signed receipt. Detection is a probability guess."
 );
 
 const PAGE_URL = `${siteConfig.url}/compare/encypher-vs-detection-tools`;

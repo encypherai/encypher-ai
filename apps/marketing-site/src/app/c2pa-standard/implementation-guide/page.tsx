@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'C2PA Implementation Guide for Developers | Encypher API | Encypher',
   'Developer guide for C2PA implementation via the Encypher API. Quickstart with curl, Python SDK, TypeScript SDK, and free verification. Sign text, images, audio, and video.',
-  '/c2pa-standard/implementation-guide'
+  '/c2pa-standard/implementation-guide',
+  undefined,
+  undefined,
+  'Sign and verify content in minutes. curl, Python, TypeScript.'
 );
 
 export default function ImplementationGuidePage() {

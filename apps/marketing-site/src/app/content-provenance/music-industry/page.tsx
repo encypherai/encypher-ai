@@ -10,7 +10,8 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = getVerticalMetadata(
   'music-industry',
   'Content Provenance for Music: Labels, Distributors, Streaming | Encypher',
-  'Embed cryptographic C2PA provenance into WAV, MP3, FLAC, M4A, and AAC audio files. Protect music from unauthorized AI training, document rights ownership, and verify authenticity across streaming and distribution platforms.'
+  'Embed cryptographic C2PA provenance into WAV, MP3, FLAC, M4A, and AAC audio files. Protect music from unauthorized AI training, document rights ownership, and verify authenticity across streaming and distribution platforms.',
+  'C2PA provenance in every audio file. Rights documented, AI-proof.'
 );
 
 export default function MusicIndustryPage() {

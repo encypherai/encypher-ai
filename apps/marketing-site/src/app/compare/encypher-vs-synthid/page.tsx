@@ -11,7 +11,8 @@ const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboar
 export const metadata: Metadata = getCompareMetadata(
   'encypher-vs-synthid',
   'Encypher vs SynthID: Cryptographic Provenance vs Statistical Watermarking',
-  "SynthID marks AI-generated output to prove it was machine-made. Encypher marks human-authored content to prove who owns it. These solve opposite problems - here's the technical breakdown."
+  "SynthID marks AI-generated output to prove it was machine-made. Encypher marks human-authored content to prove who owns it. These solve opposite problems - here's the technical breakdown.",
+  "Encypher proves human ownership. SynthID flags AI output. Opposite problems."
 );
 
 const PAGE_URL = `${siteConfig.url}/compare/encypher-vs-synthid`;

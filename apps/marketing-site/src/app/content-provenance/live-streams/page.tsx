@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Live Stream Content Provenance | C2PA 2.3 Section 19 | Encypher',
   'Real-time provenance for live video streams. C2PA 2.3 Section 19 per-segment manifests with backwards-linked chains. Tamper-evident records for news broadcasts, live events, and government proceedings.',
-  '/content-provenance/live-streams'
+  '/content-provenance/live-streams',
+  undefined,
+  undefined,
+  'C2PA 2.3 per-segment manifests for live video. Tamper-evident, broadcast-ready.'
 );
 
 export default function LiveStreamsPage() {

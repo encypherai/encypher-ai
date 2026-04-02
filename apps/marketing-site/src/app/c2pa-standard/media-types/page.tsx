@@ -11,7 +11,10 @@ import { formats, categoryInfo, getFormatsByCategory } from '@/data/formats';
 export const metadata: Metadata = seoMetadata(
   'C2PA Supported Media Types: All 31 MIME Types | Encypher',
   'Complete reference for all 31 MIME types supported with C2PA provenance. Images (13), Audio (6), Video (4), Documents (5), Fonts (3). Format-specific embedding details.',
-  '/c2pa-standard/media-types'
+  '/c2pa-standard/media-types',
+  undefined,
+  undefined,
+  '31 MIME types with C2PA provenance. Images, audio, video, docs, and fonts.'
 );
 
 export default function MediaTypesPage() {

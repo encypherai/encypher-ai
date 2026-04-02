@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Content Provenance Verification: Free for All Media Types | Encypher',
   'Free verification for 31 MIME types. No authentication required. Public API. Verify text, images, audio, video, and documents instantly. How C2PA manifest verification works.',
-  '/content-provenance/verification'
+  '/content-provenance/verification',
+  undefined,
+  undefined,
+  'Free verification for 31 MIME types. No account required.'
 );
 
 export default function VerificationPage() {

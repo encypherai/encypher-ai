@@ -16,7 +16,8 @@ export const metadata: Metadata = buildMetadata(
   'Stop guessing with 26% accurate AI detectors. Encypher provides cryptographic proof of AI copyright infringement with 100% accuracy. Transform litigation costs into licensing revenue.',
   '/ai-copyright-infringement',
   '/og-image-publishers.png',
-  ['AI copyright infringement', 'AI copyright lawsuit', 'AI art copyright', 'prove AI copyright', 'AI training data copyright']
+  ['AI copyright infringement', 'AI copyright lawsuit', 'AI art copyright', 'prove AI copyright', 'AI training data copyright'],
+  'Cryptographic proof of AI copyright infringement. 100% accuracy.'
 );
 
 export default function AICopyrightInfringementPage() {

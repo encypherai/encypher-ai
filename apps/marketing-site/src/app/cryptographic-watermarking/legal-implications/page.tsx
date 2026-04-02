@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Legal Implications of Cryptographic Watermarking | Willful Infringement | Encypher',
   'How cryptographic watermarking shifts copyright disputes from innocent to willful infringement. Statutory damages, formal notice mechanism, and the evidentiary weight of cryptographic proof.',
-  '/cryptographic-watermarking/legal-implications'
+  '/cryptographic-watermarking/legal-implications',
+  undefined,
+  undefined,
+  'Turns copyright disputes from innocent to willful. Know the stakes.'
 );
 
 export default function LegalImplicationsPage() {

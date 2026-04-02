@@ -11,7 +11,8 @@ const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboar
 export const metadata: Metadata = getCompareMetadata(
   'encypher-vs-prorata',
   'Encypher vs ProRata: Input-Side Provenance vs Output-Side Attribution',
-  "ProRata estimates which sources contributed to an AI output, inside a closed opted-in system. Encypher embeds proof before content enters any AI system. One requires participation. The other works unilaterally."
+  "ProRata estimates which sources contributed to an AI output, inside a closed opted-in system. Encypher embeds proof before content enters any AI system. One requires participation. The other works unilaterally.",
+  "Unilateral proof vs revenue routing inside opted-in AI systems."
 );
 
 const PAGE_URL = `${siteConfig.url}/compare/encypher-vs-prorata`;

@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'C2PA Manifest Structure: JUMBF, COSE, Claims, Assertions | Encypher',
   'Technical explainer of C2PA manifest structure. JUMBF containers, COSE signatures, claim structure, assertion types, certificate chains, and ingredient lists. Accessible to non-engineers.',
-  '/c2pa-standard/manifest-structure'
+  '/c2pa-standard/manifest-structure',
+  undefined,
+  undefined,
+  'JUMBF containers, COSE signatures, claims. How a manifest works.'
 );
 
 export default function ManifestStructurePage() {

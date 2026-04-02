@@ -11,7 +11,8 @@ const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboar
 export const metadata: Metadata = getCompareMetadata(
   'content-provenance-vs-content-detection',
   'Content Provenance vs Content Detection: Proof of Origin vs Identification After the Fact',
-  "Content provenance is cryptographic proof of who created content, established at the moment of creation. Content detection is statistical inference applied after the fact. These answer different questions and have fundamentally different legal and technical properties."
+  "Content provenance is cryptographic proof of who created content, established at the moment of creation. Content detection is statistical inference applied after the fact. These answer different questions and have fundamentally different legal and technical properties.",
+  "Cryptographic proof vs statistical guess. One holds up in court."
 );
 
 const PAGE_URL = `${siteConfig.url}/compare/content-provenance-vs-content-detection`;

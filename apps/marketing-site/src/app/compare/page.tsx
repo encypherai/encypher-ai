@@ -13,7 +13,8 @@ export const metadata: Metadata = buildMetadata(
   'Side-by-side technical comparisons of Encypher against SynthID, WordProof, AI detection tools, TollBit, ProRata, and category-level comparisons of C2PA vs blockchain and content provenance vs detection.',
   '/compare',
   siteConfig.images.default,
-  ['compare content provenance', 'SynthID vs Encypher', 'WordProof vs Encypher', 'C2PA vs blockchain', 'content provenance comparison']
+  ['compare content provenance', 'SynthID vs Encypher', 'WordProof vs Encypher', 'C2PA vs blockchain', 'content provenance comparison'],
+  'See how Encypher stacks up against every major alternative.'
 );
 
 const breadcrumbSchema = getBreadcrumbSchema([

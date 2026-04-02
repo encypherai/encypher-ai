@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Cryptographic Watermarking for Text | Invisible, Durable, Verifiable | Encypher',
   'Invisible cryptographic text watermarking using proprietary invisible encoding. Survives copy-paste, B2B distribution, and aggregator scraping. Sentence-level granularity for partial attribution.',
-  '/cryptographic-watermarking/text'
+  '/cryptographic-watermarking/text',
+  undefined,
+  undefined,
+  'Invisible. Durable. Verifiable. Ownership baked into every sentence.'
 );
 
 export default function CryptographicWatermarkingTextPage() {

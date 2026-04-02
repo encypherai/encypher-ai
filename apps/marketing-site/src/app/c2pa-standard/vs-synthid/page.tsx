@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'C2PA vs. SynthID: Open Standard vs. Proprietary Watermarking | Encypher',
   'C2PA is an open standard backed by 200+ members including Adobe, Microsoft, and OpenAI. SynthID is Google\'s proprietary watermarking. Deterministic vs. probabilistic. Open vs. closed.',
-  '/c2pa-standard/vs-synthid'
+  '/c2pa-standard/vs-synthid',
+  undefined,
+  undefined,
+  "Open standard vs. Google's proprietary watermark. No contest."
 );
 
 export default function VsSynthIDPage() {

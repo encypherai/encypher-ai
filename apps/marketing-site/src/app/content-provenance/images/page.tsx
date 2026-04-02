@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Image Content Provenance: 13 Formats | C2PA | Encypher',
   'Image provenance with C2PA JUMBF manifests across 13 formats: JPEG, PNG, WebP, TIFF, AVIF, HEIC, DNG, GIF, SVG, and more. EXIF strips but provenance survives.',
-  '/content-provenance/images'
+  '/content-provenance/images',
+  undefined,
+  undefined,
+  'C2PA provenance for 13 image formats. EXIF strips; provenance survives.'
 );
 
 const imageFormats = [

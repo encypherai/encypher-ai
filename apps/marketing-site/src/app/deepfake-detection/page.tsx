@@ -14,7 +14,8 @@ export const metadata: Metadata = buildMetadata(
   'Deepfake detection tools guess with statistical analysis. Encypher provides cryptographic proof of content authenticity with 100% accuracy. Mathematical certainty, not pattern matching.',
   '/deepfake-detection',
   undefined,
-  ['deepfake detection', 'deepfake detection tools', 'deepfake verification', 'content authenticity', 'AI content verification']
+  ['deepfake detection', 'deepfake detection tools', 'deepfake verification', 'content authenticity', 'AI content verification'],
+  'Not detection. Cryptographic proof. 100% accurate, zero false positives.'
 );
 
 export default function DeepfakeDetectionPage() {

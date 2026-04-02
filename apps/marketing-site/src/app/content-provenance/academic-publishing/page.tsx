@@ -10,7 +10,8 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = getVerticalMetadata(
   'academic-publishing',
   'Content Provenance for Academic Publishing | Encypher',
-  'Embed cryptographic provenance into journal articles, preprints, and research data. Protect research integrity, document AI-assisted authorship, and trace peer review provenance across the scholarly publishing lifecycle.'
+  'Embed cryptographic provenance into journal articles, preprints, and research data. Protect research integrity, document AI-assisted authorship, and trace peer review provenance across the scholarly publishing lifecycle.',
+  'Embed authorship provenance in research. Protect integrity at source.'
 );
 
 export default function AcademicPublishingPage() {

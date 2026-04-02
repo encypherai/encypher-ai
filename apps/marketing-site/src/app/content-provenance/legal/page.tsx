@@ -10,7 +10,8 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = getVerticalMetadata(
   'legal',
   'Content Provenance for Legal Practice | Encypher',
-  'Cryptographic document provenance for evidence integrity, formal notice requirements, court admissibility, and AI disclosure obligations. Built for law firms and legal departments managing AI content authentication challenges.'
+  'Cryptographic document provenance for evidence integrity, formal notice requirements, court admissibility, and AI disclosure obligations. Built for law firms and legal departments managing AI content authentication challenges.',
+  'Document provenance for evidence integrity and AI disclosure.'
 );
 
 export default function LegalPage() {

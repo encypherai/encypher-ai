@@ -47,7 +47,8 @@ export async function GET(request: NextRequest) {
   const badge = searchParams.get('badge') || '';
 
   const displayTitle = title.length > 55 ? title.slice(0, 52) + '...' : title;
-  const displayDesc = description.length > 70 ? description.slice(0, 67) + '...' : description;
+  // ogDescriptions are pre-validated to <= 80 chars; truncate as safety net
+  const displayDesc = description.length > 80 ? description.slice(0, 77) + '...' : description;
 
   // Aggressive scaling: short titles get huge
   const titleFontSize = displayTitle.length > 40 ? 72 : displayTitle.length > 25 ? 84 : 96;

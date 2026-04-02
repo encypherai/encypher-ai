@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Content Provenance vs. Blockchain Timestamping | Encypher',
   'Why embedded C2PA provenance beats blockchain timestamping for content authentication. Proof that travels with content versus proof that requires an external lookup.',
-  '/content-provenance/vs-blockchain'
+  '/content-provenance/vs-blockchain',
+  undefined,
+  undefined,
+  'Proof that travels with content, not proof that requires a lookup.'
 );
 
 export default function VsBlockchainPage() {

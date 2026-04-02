@@ -11,7 +11,10 @@ import ConformanceExplorer from './ConformanceExplorer';
 export const metadata: Metadata = seoMetadata(
   'C2PA Conformance Explorer: Conformant Products and Implementations | Encypher',
   'Browse all C2PA conformant products and implementations. Search by company, product type, or media format. Live data from the official C2PA conformance program.',
-  '/c2pa-standard/conformance'
+  '/c2pa-standard/conformance',
+  undefined,
+  undefined,
+  'Every C2PA conformant product, searchable. Live data.'
 );
 
 export default function ConformancePage() {

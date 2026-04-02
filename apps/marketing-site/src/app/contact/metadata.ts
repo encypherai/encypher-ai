@@ -1,16 +1,10 @@
-import type { Metadata } from 'next';
+import { generateMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Contact | Talk to Encypher',
-  description: 'Get in touch with Encypher. Publishers, AI labs, and enterprises: discuss content authentication, coalition licensing, C2PA compliance, or custom enterprise implementation.',
-  alternates: {
-    canonical: 'https://encypher.com/contact',
-  },
-  openGraph: {
-    title: 'Contact Encypher',
-    description: 'Talk to the team behind the C2PA text standard. Publishers, AI labs, and enterprises welcome.',
-    url: 'https://encypher.com/contact',
-    images: ['/og-image.png'],
-    type: 'website',
-  },
-};
+export const metadata = generateMetadata(
+  'Contact | Talk to Encypher',
+  'Get in touch with Encypher. Publishers, AI labs, and enterprises: discuss content authentication, coalition licensing, C2PA compliance, or custom enterprise implementation.',
+  '/contact',
+  undefined,
+  undefined,
+  'Talk to the team behind C2PA text provenance.'
+);

@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'C2PA Section A.7: Text Provenance Specification | Encypher',
   'C2PA 2.3 Section A.7 defines how C2PA manifests are embedded into unstructured text. Encypher authored Section A.7 and leads the C2PA Text Provenance Task Force.',
-  '/c2pa-standard/section-a7'
+  '/c2pa-standard/section-a7',
+  undefined,
+  undefined,
+  'We wrote Section A.7. The text provenance spec, explained.'
 );
 
 export default function SectionA7Page() {

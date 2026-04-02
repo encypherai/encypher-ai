@@ -10,7 +10,8 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = getVerticalMetadata(
   'news-publishers',
   'Content Provenance for News Publishers | Encypher',
-  'Embed cryptographic provenance into every article and image you distribute. Wire services, aggregators, and AI companies cannot claim they did not know the source.'
+  'Embed cryptographic provenance into every article and image you distribute. Wire services, aggregators, and AI companies cannot claim they did not know the source.',
+  'Cryptographic source proof in every article and image you send.'
 );
 
 export default function NewsPublishersPage() {

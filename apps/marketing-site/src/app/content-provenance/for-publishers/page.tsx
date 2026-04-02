@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Content Provenance for Publishers | Encypher',
   'Proof of origin that travels with every article, image, and document you distribute. Eliminate the "we did not know" defense. Build licensing leverage with cryptographic evidence.',
-  '/content-provenance/for-publishers'
+  '/content-provenance/for-publishers',
+  undefined,
+  undefined,
+  'Proof of origin that travels with every article you publish.'
 );
 
 export default function ForPublishersPage() {

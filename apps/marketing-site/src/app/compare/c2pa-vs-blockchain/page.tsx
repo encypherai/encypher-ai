@@ -11,7 +11,8 @@ const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboar
 export const metadata: Metadata = getCompareMetadata(
   'c2pa-vs-blockchain',
   'C2PA vs Blockchain for Content Provenance: Embedded Manifests vs External Hash Anchoring',
-  "C2PA manifests are embedded in the file and travel with it. Blockchain proofs are external records that require a lookup. A technical comparison of the two architectural approaches to content provenance."
+  "C2PA manifests are embedded in the file and travel with it. Blockchain proofs are external records that require a lookup. A technical comparison of the two architectural approaches to content provenance.",
+  "Manifests travel with the file. Blockchain records stay on-chain."
 );
 
 const PAGE_URL = `${siteConfig.url}/compare/c2pa-vs-blockchain`;

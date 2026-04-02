@@ -11,7 +11,8 @@ const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboar
 export const metadata: Metadata = getCompareMetadata(
   'encypher-vs-wordproof',
   'Encypher vs WordProof: Embedded Provenance vs Blockchain Timestamping',
-  "WordProof registers a hash on a blockchain to prove content existed at a point in time. Encypher embeds provenance in the text itself. Timestamping proves existence. Provenance proves ownership wherever content appears."
+  "WordProof registers a hash on a blockchain to prove content existed at a point in time. Encypher embeds provenance in the text itself. Timestamping proves existence. Provenance proves ownership wherever content appears.",
+  "Your proof travels with the text. Blockchain timestamps stay behind."
 );
 
 const PAGE_URL = `${siteConfig.url}/compare/encypher-vs-wordproof`;

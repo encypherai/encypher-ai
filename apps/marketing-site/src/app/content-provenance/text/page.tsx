@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Text Content Provenance: How It Works | C2PA Section A.7 | Encypher',
   'Text provenance using C2PA Section A.7 and Encypher\'s proprietary sentence-level attribution. Invisible embedding, copy-paste survival, and quote integrity verification.',
-  '/content-provenance/text'
+  '/content-provenance/text',
+  undefined,
+  undefined,
+  'Sentence-level provenance that survives copy-paste. C2PA + Encypher.'
 );
 
 export default function TextProvenancePage() {

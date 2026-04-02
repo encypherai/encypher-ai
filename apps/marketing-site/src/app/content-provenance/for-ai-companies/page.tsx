@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Content Provenance for AI Companies | Encypher',
   'Collaborative infrastructure for AI companies building with provenance-marked content. Quote integrity verification, performance intelligence, and C2PA compliance in one API.',
-  '/content-provenance/for-ai-companies'
+  '/content-provenance/for-ai-companies',
+  undefined,
+  undefined,
+  'C2PA compliance and quote integrity for AI companies. One API.'
 );
 
 export default function ForAICompaniesPage() {

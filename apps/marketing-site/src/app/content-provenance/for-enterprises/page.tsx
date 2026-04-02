@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Content Provenance for Enterprises | EU AI Act Compliance | Encypher',
   'Enterprise AI governance with content provenance. Audit trails, compliance reporting, and EU AI Act Article 50 compliance before the August 2, 2026 deadline.',
-  '/content-provenance/for-enterprises'
+  '/content-provenance/for-enterprises',
+  undefined,
+  undefined,
+  'Audit trails and EU AI Act compliance for enterprise AI content.'
 );
 
 export default function ForEnterprisesPage() {

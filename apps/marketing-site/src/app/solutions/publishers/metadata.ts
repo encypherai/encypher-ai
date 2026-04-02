@@ -6,5 +6,6 @@ export const metadata: Metadata = generateMetadata(
   'From litigation costs to licensing revenue. Court-admissible evidence with 100% accuracy. Track which sentences were used, where, and when.',
   '/solutions/publishers',
   undefined,
-  keywords.publishers
+  keywords.publishers,
+  'Turn AI content usage into licensing revenue. Court-admissible proof.'
 );

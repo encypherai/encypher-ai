@@ -15,13 +15,17 @@ export async function generateMetadata({ searchParams }: { searchParams: { tag?:
       `Articles about ${tag} from the authors of C2PA Section A.7 (text provenance).`,
       `/blog?tag=${encodeURIComponent(tag)}`,
       undefined,
-      [tag]
+      [tag],
+      `Content provenance insights tagged: ${tag}.`
     );
   }
   return buildMetadata(
     'Encypher Blog – Content Intelligence',
     'From the authors of C2PA Section A.7 (text provenance): infrastructure for AI content authentication and licensing.',
-    '/blog'
+    '/blog',
+    undefined,
+    undefined,
+    'Content provenance insights from the C2PA Text Task Force co-chair.'
   );
 }
 

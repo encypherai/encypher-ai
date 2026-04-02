@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'How Cryptographic Watermarking Works | Technical Deep Dive | Encypher',
   'How Encypher embeds verifiable content provenance: invisible text markers, sentence-level authentication, C2PA manifest embedding for media, and enterprise distribution fingerprinting.',
-  '/cryptographic-watermarking/how-it-works'
+  '/cryptographic-watermarking/how-it-works',
+  undefined,
+  undefined,
+  'Invisible markers. Sentence-level proof. The full technical picture.'
 );
 
 export default function HowItWorksPage() {

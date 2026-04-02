@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'How Cryptographic Watermarking Survives Distribution | Encypher',
   'Why cryptographic watermarks survive copy-paste, wire service distribution, aggregator scraping, and social sharing. The durability proof.',
-  '/cryptographic-watermarking/survives-distribution'
+  '/cryptographic-watermarking/survives-distribution',
+  undefined,
+  undefined,
+  'Proof of origin that travels with your content, everywhere it goes.'
 );
 
 export default function SurvivesDistributionPage() {

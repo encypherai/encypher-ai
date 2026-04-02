@@ -11,7 +11,8 @@ const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboar
 export const metadata: Metadata = getCompareMetadata(
   'encypher-vs-tollbit',
   'Encypher vs TollBit: Embedded Provenance vs Opt-In Access Gates',
-  "TollBit gates AI access for cooperating companies. Encypher embeds proof that works whether AI companies cooperate or not. These are Layer 1 and Layer 2 of the content provenance stack - complementary, not competing."
+  "TollBit gates AI access for cooperating companies. Encypher embeds proof that works whether AI companies cooperate or not. These are Layer 1 and Layer 2 of the content provenance stack - complementary, not competing.",
+  "Gates stop willing crawlers. Provenance covers everyone else."
 );
 
 const PAGE_URL = `${siteConfig.url}/compare/encypher-vs-tollbit`;

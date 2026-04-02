@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'C2PA Members: Who Is Building the Standard | Encypher',
   'Over 200 C2PA member organizations including Adobe, Microsoft, Google, OpenAI, BBC, Reuters, and AP. Why broad adoption matters for content provenance. Encypher co-chairs the Text Provenance Task Force.',
-  '/c2pa-standard/members'
+  '/c2pa-standard/members',
+  undefined,
+  undefined,
+  '200+ members: Adobe, Microsoft, OpenAI, BBC. Why it matters.'
 );
 
 export default function C2PAMembersPage() {

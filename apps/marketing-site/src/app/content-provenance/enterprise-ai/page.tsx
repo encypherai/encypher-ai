@@ -10,7 +10,8 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = getVerticalMetadata(
   'enterprise-ai',
   'Content Provenance for Enterprise AI Governance | Encypher',
-  'EU AI Act Article 50 compliance, AI content audit trails, and enterprise governance infrastructure. Embed cryptographic provenance into AI-generated content before the August 2, 2026 enforcement deadline.'
+  'EU AI Act Article 50 compliance, AI content audit trails, and enterprise governance infrastructure. Embed cryptographic provenance into AI-generated content before the August 2, 2026 enforcement deadline.',
+  'EU AI Act Article 50 compliance via embedded content provenance.'
 );
 
 export default function EnterpriseAIPage() {

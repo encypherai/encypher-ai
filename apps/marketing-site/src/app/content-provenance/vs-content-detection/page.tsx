@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Content Provenance vs. Content Detection | Encypher',
   'Why cryptographic proof of origin beats statistical AI content detection. Deterministic verification with zero false positives versus probabilistic guessing with high error rates.',
-  '/content-provenance/vs-content-detection'
+  '/content-provenance/vs-content-detection',
+  undefined,
+  undefined,
+  'Cryptographic proof beats detection guesswork. Zero false positives.'
 );
 
 export default function VsContentDetectionPage() {

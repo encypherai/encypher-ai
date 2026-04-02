@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'EU AI Act and Content Provenance | August 2026 Compliance | Encypher',
   'EU AI Act Article 50 transparency requirements for AI-generated content. C2PA manifests satisfy machine-readable marking obligations. Full compliance deadline August 2, 2026.',
-  '/content-provenance/eu-ai-act'
+  '/content-provenance/eu-ai-act',
+  undefined,
+  undefined,
+  'Meet EU AI Act Article 50 before August 2026. C2PA-ready.'
 );
 
 export default function EuAiActPage() {

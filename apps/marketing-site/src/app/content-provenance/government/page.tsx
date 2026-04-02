@@ -10,7 +10,8 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = getVerticalMetadata(
   'government',
   'Content Provenance for Government Agencies | Encypher',
-  'Public records authentication, FOIA documentation integrity, regulatory filing provenance, and official document authentication for government agencies using C2PA cryptographic signing.'
+  'Public records authentication, FOIA documentation integrity, regulatory filing provenance, and official document authentication for government agencies using C2PA cryptographic signing.',
+  'Cryptographic provenance for public records and official documents.'
 );
 
 export default function GovernmentPage() {

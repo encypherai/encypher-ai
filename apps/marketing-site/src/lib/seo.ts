@@ -829,7 +829,7 @@ export function getBlogPostSchema(post: {
  */
 export function getOgImageUrl(title: string, description?: string, badge?: string): string {
   const params = new URLSearchParams({ title });
-  if (description) params.set('description', description.slice(0, 90));
+  if (description) params.set('description', description.slice(0, 80));
   if (badge) params.set('badge', badge);
   return `${siteConfig.ogEndpoint}?${params.toString()}`;
 }
@@ -847,10 +847,12 @@ export function generateMetadata(
   description?: string,
   path?: string,
   imageUrl?: string,
-  additionalKeywords?: string[]
+  additionalKeywords?: string[],
+  ogDescription?: string
 ): Metadata {
   const pageUrl = path ? `${siteConfig.url}${path}` : siteConfig.url;
-  const pageImageUrl = imageUrl || getOgImageUrl(title, description || undefined);
+  const ogDesc = ogDescription || description || undefined;
+  const pageImageUrl = imageUrl || getOgImageUrl(title, ogDesc);
   const pageKeywords = additionalKeywords
     ? [...allKeywords, ...additionalKeywords]
     : allKeywords;
@@ -896,7 +898,8 @@ export function getDemoMetadata(audience: 'publisher' | 'ai'): Metadata {
       "See how sentence-level tracking transforms litigation into licensing. 2-minute interactive demonstration.",
       "/publisher-demo",
       siteConfig.images.publishers,
-      keywords.publishers
+      keywords.publishers,
+      "Sentence-level tracking. From litigation to licensing. 2-minute demo."
     );
   } else {
     return generateMetadata(
@@ -904,7 +907,8 @@ export function getDemoMetadata(audience: 'publisher' | 'ai'): Metadata {
       "See which parameters drive viral content. 2-minute interactive demonstration of performance intelligence.",
       "/ai-demo",
       siteConfig.images.ai,
-      keywords.aiLabs
+      keywords.aiLabs,
+      "Performance intelligence for AI content. 2-minute interactive demo."
     );
   }
 }
@@ -961,31 +965,34 @@ export function getPillarMetadata(pillar: 'content-provenance' | 'c2pa-standard'
     'content-provenance': {
       title: "What Is Content Provenance? The Definitive Guide | Encypher",
       description: "Content provenance embeds cryptographic proof of origin into digital content. Learn how C2PA manifests, cryptographic watermarking, and free verification work across 31 media types.",
+      ogDescription: "Cryptographic proof of origin for text, images, audio, and video.",
       path: "/content-provenance",
       keywords: [...keywords.contentProvenance, ...keywords.core],
     },
     'c2pa-standard': {
       title: "The C2PA Standard: How Content Provenance Works | Encypher",
       description: "C2PA is the open standard for content provenance, backed by Adobe, Microsoft, Google, BBC, and OpenAI. Encypher authored Section A.7 (text provenance) and co-chairs the task force.",
+      ogDescription: "The open standard for content provenance. We co-chair the text task force.",
       path: "/c2pa-standard",
       keywords: [...keywords.c2pa, ...keywords.core],
     },
     'cryptographic-watermarking': {
       title: "Cryptographic Watermarking: Proof Embedded in Content | Encypher",
       description: "Cryptographic watermarking embeds deterministic proof of origin into text, images, audio, and video. Survives copy-paste, B2B distribution, and scraping. Not statistical guessing.",
+      ogDescription: "Deterministic proof of origin. Survives copy-paste and distribution.",
       path: "/cryptographic-watermarking",
       keywords: [...keywords.watermarking, ...keywords.core],
     },
   };
   const c = config[pillar];
-  return generateMetadata(c.title, c.description, c.path, undefined, c.keywords);
+  return generateMetadata(c.title, c.description, c.path, undefined, c.keywords, c.ogDescription);
 }
 
 /**
  * Comparison page metadata
  */
-export function getCompareMetadata(comparison: string, title: string, description: string): Metadata {
-  return generateMetadata(title, description, `/compare/${comparison}`, undefined, keywords.comparison);
+export function getCompareMetadata(comparison: string, title: string, description: string, ogDescription?: string): Metadata {
+  return generateMetadata(title, description, `/compare/${comparison}`, undefined, keywords.comparison, ogDescription);
 }
 
 /**
@@ -997,7 +1004,8 @@ export function getGlossaryMetadata(): Metadata {
     "Definitions for content provenance, C2PA, cryptographic watermarking, Merkle tree authentication, willful infringement, and 40+ terms in the content provenance ecosystem.",
     "/glossary",
     undefined,
-    [...keywords.contentProvenance, ...keywords.c2pa]
+    [...keywords.contentProvenance, ...keywords.c2pa],
+    "40+ terms defined. C2PA, Merkle trees, provenance markers, and more."
   );
 }
 
@@ -1011,15 +1019,16 @@ export function getFormatPageMetadata(formatName: string, mimeType: string, cate
     `How C2PA manifests are embedded in ${formatName} files. Sign ${category} content with cryptographic provenance and verify for free using the Encypher API.`,
     `/content-provenance/${slug}`,
     undefined,
-    [...keywords.mediaFormats, ...keywords.core]
+    [...keywords.mediaFormats, ...keywords.core],
+    `Sign and verify ${formatName} files with C2PA provenance.`
   );
 }
 
 /**
  * Industry vertical page metadata
  */
-export function getVerticalMetadata(vertical: string, title: string, description: string): Metadata {
-  return generateMetadata(title, description, `/content-provenance/${vertical}`, undefined, [...keywords.contentProvenance, ...keywords.core]);
+export function getVerticalMetadata(vertical: string, title: string, description: string, ogDescription?: string): Metadata {
+  return generateMetadata(title, description, `/content-provenance/${vertical}`, undefined, [...keywords.contentProvenance, ...keywords.core], ogDescription);
 }
 
 // ============================================================================

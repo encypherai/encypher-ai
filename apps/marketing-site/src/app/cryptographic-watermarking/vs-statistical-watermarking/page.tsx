@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Cryptographic vs. Statistical Watermarking | Encypher vs. SynthID | Encypher',
   'Deterministic cryptographic proof versus probabilistic statistical estimates. Why cryptographic watermarking survives editing and distribution while statistical watermarks degrade.',
-  '/cryptographic-watermarking/vs-statistical-watermarking'
+  '/cryptographic-watermarking/vs-statistical-watermarking',
+  undefined,
+  undefined,
+  'Proof vs. probability. Why cryptographic wins where statistical fails.'
 );
 
 export default function VsStatisticalWatermarkingPage() {

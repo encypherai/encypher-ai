@@ -10,7 +10,10 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 export const metadata: Metadata = seoMetadata(
   'Audio and Video Content Provenance | 10 Formats | Encypher',
   'C2PA provenance for audio and video: 6 audio formats (WAV, MP3, AAC, FLAC, M4A, MPA) and 4 video formats (MP4, MOV, M4V, AVI). Container-embedded manifests that travel with files.',
-  '/content-provenance/audio-video'
+  '/content-provenance/audio-video',
+  undefined,
+  undefined,
+  'C2PA provenance for 10 audio and video formats. Embedded, not linked.'
 );
 
 export default function AudioVideoProvenancePage() {

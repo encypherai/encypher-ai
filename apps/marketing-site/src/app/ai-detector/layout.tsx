@@ -7,7 +7,8 @@ export const metadata: Metadata = buildMetadata(
   'AI detectors provide 26% accuracy with high false positives. Encypher provides cryptographic proof with 100% accuracy and zero false positives. Mathematical certainty, not statistical guessing.',
   '/ai-detector',
   undefined,
-  ['AI detector', 'AI detection tool', 'AI content detection', 'detect AI content', 'AI verification']
+  ['AI detector', 'AI detection tool', 'AI content detection', 'detect AI content', 'AI verification'],
+  'AI detectors guess. Encypher proves. Cryptographic certainty, not statistics.'
 );
 
 export default function AIDetectorLayout({

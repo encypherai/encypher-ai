@@ -1,21 +1,10 @@
-import type { Metadata } from 'next';
+import { generateMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Platform | C2PA Signing, Watermarking & Rights Management | Encypher',
-  description: 'API and SDKs for C2PA document signing, invisible Unicode watermarking, attribution analytics, and rights management. Python, TypeScript, Go, Rust. Built on C2PA Section A.7, co-authored with Google, OpenAI, Adobe, and Microsoft.',
-  alternates: {
-    canonical: 'https://encypher.com/platform',
-  },
-  openGraph: {
-    title: 'Encypher Platform: C2PA Signing, Watermarking & Attribution',
-    description: 'Sentence-level Merkle tree authentication. Patent-pending invisible watermarks that survive copy-paste. Publisher rights profiles travel with content. One API for the full content authentication pipeline.',
-    url: 'https://encypher.com/platform',
-    images: ['/og-image.png'],
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Encypher Platform: C2PA Signing & Attribution',
-    description: 'API and SDKs for C2PA signing, invisible watermarking, and rights management. Authors of C2PA Section A.7 (text provenance), co-authored with Google, OpenAI, Adobe, and Microsoft.',
-  },
-};
+export const metadata = generateMetadata(
+  'Platform | C2PA Signing, Watermarking & Rights Management | Encypher',
+  'API and SDKs for C2PA document signing, invisible Unicode watermarking, attribution analytics, and rights management. Python, TypeScript, Go, Rust. Built on C2PA Section A.7, co-authored with Google, OpenAI, Adobe, and Microsoft.',
+  '/platform',
+  undefined,
+  undefined,
+  'One API for signing, watermarking, attribution, and rights.'
+);
