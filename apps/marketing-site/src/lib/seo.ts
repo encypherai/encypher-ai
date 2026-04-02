@@ -17,12 +17,15 @@ export const siteConfig = {
   tagline: "Machine-Readable Rights for Your Content",
   description: "Encypher authored Section A.7 of the C2PA 2.3 specification, the text provenance standard. Patent-pending granular content attribution with Merkle tree authentication for tamper-evident documentation.",
 
-  // OG Images by audience
+  // OG Images by audience (static fallbacks)
   images: {
     default: "https://encypher.com/og-image.png",
     publishers: "https://encypher.com/og-image-publishers.png",
     ai: "https://encypher.com/og-image-ai.png",
   },
+
+  // Dynamic OG image endpoint
+  ogEndpoint: "https://encypher.com/api/og",
 
   // Social profiles
   social: {
@@ -225,7 +228,7 @@ export const defaultMetadata: Metadata = {
     siteName: siteConfig.name,
     images: [
       {
-        url: siteConfig.images.default,
+        url: getOgImageUrl("Machine-Readable Rights for Your Content"),
         width: 1200,
         height: 630,
         alt: "Encypher - Machine-Readable Rights for Your Content",
@@ -236,7 +239,7 @@ export const defaultMetadata: Metadata = {
     card: "summary_large_image",
     title: "Encypher | Machine-Readable Rights for Your Content",
     description: siteConfig.description,
-    images: [siteConfig.images.default],
+    images: [getOgImageUrl("Machine-Readable Rights for Your Content")],
     creator: siteConfig.social.twitter,
   },
   icons: {
@@ -817,11 +820,27 @@ export function getBlogPostSchema(post: {
 }
 
 // ============================================================================
+// DYNAMIC OG IMAGE
+// ============================================================================
+
+/**
+ * Build a URL to the dynamic OG image endpoint.
+ * Produces a unique 1200x630 social preview per page.
+ */
+export function getOgImageUrl(title: string, description?: string, badge?: string): string {
+  const params = new URLSearchParams({ title });
+  if (description) params.set('description', description.slice(0, 90));
+  if (badge) params.set('badge', badge);
+  return `${siteConfig.ogEndpoint}?${params.toString()}`;
+}
+
+// ============================================================================
 // METADATA GENERATORS
 // ============================================================================
 
 /**
- * Generate page-specific metadata with proper defaults
+ * Generate page-specific metadata with proper defaults.
+ * When no imageUrl is provided, generates a dynamic OG image from the title.
  */
 export function generateMetadata(
   title: string,
@@ -831,7 +850,7 @@ export function generateMetadata(
   additionalKeywords?: string[]
 ): Metadata {
   const pageUrl = path ? `${siteConfig.url}${path}` : siteConfig.url;
-  const pageImageUrl = imageUrl || siteConfig.images.default;
+  const pageImageUrl = imageUrl || getOgImageUrl(title, description || undefined);
   const pageKeywords = additionalKeywords
     ? [...allKeywords, ...additionalKeywords]
     : allKeywords;
