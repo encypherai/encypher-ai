@@ -96,7 +96,7 @@ export default function ForPublishersPage() {
         </h1>
         <p className="text-xl text-muted-foreground mb-12">
           Every article and image you publish can now carry cryptographic proof of origin.
-          That proof travels through wire services, aggregators, and AI training pipelines.
+          That proof travels through wire services and aggregators.
           It cannot be stripped without breaking verification.
         </p>
 

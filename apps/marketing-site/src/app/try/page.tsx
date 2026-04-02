@@ -446,8 +446,8 @@ export default function TryItPage({ embedded = false }: TryItPageProps) {
 
               <div className="p-5 bg-muted/50 rounded-lg border border-border text-sm text-muted-foreground leading-relaxed">
                 That watermark survives copy-paste, email, Slack, Google Docs,
-                web scraping, and AI ingestion pipelines. When an AI system
-                reads your content, it reads the C2PA manifest too - which
+                and web scraping. When an AI system scrapes your content,
+                the provenance markers persist in their training databases - which
                 means{' '}
                 <strong className="text-foreground">
                   they cannot claim they did not know it was licensed

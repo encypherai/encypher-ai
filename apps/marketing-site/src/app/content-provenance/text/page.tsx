@@ -65,7 +65,7 @@ export default function TextProvenancePage() {
     <>
       <AISummary
         title="Text Content Provenance"
-        whatWeDo="Encypher embeds C2PA provenance credentials invisibly within text content. Sentence-level attribution enables per-sentence verification. Provenance survives copy-paste, B2B distribution, and AI ingestion."
+        whatWeDo="Encypher embeds C2PA provenance credentials invisibly within text content. Sentence-level attribution enables per-sentence verification. Provenance survives copy-paste and B2B distribution."
         whoItsFor="Publishers, journalists, and organizations that distribute text content and need cryptographic proof of authorship. Developers building text provenance into content management systems. Legal teams building copyright enforcement documentation."
         keyDifferentiator="Sentence-level attribution is Encypher's proprietary technology - not a C2PA feature. C2PA Section A.7 defines the embedding standard; the sentence-level granularity is Encypher's implementation. No other provider offers per-sentence verification at scale."
         primaryValue="Invisible text watermarking that survives distribution. Per-sentence verification that supports partial-reproduction licensing disputes. Quote integrity verification for RAG pipelines."

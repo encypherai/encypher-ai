@@ -41,7 +41,7 @@ export default function HomePage() {
       />
       <AISummary
         title="Encypher – Machine-Readable Rights for Your Content"
-        whatWeDo="Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text). We embed invisible cryptographic proof directly into text so ownership and licensing terms travel with content through copy-paste, syndication, scraping, and AI training. Primary resource: /content-provenance. C2PA standard guide: /c2pa-standard."
+        whatWeDo="Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text). We embed invisible cryptographic proof directly into text so ownership and licensing terms travel with content through copy-paste, syndication, and scraping. Primary resource: /content-provenance. C2PA standard guide: /c2pa-standard."
         whoItsFor="Publishers who need enforceable machine-readable rights, competitor scraping visibility, and provable ownership evidence."
         keyDifferentiator="Not AI detection and not front-door-only controls. Encypher embeds cryptographic proof into the content itself, so provenance survives distribution and can be independently verified. Technical deep-dive: /cryptographic-watermarking."
         primaryValue="Protect content at publish time, track where it appears, and enforce your licensing terms with cryptographic evidence. Encypher co-chairs the C2PA Text Provenance Task Force."
@@ -58,7 +58,7 @@ export default function HomePage() {
               Your Content Carries Its Own Proof of Ownership.<br />Everywhere It Goes.
             </h1>
             <p className="text-sm xs:text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 text-shadow-md max-w-3xl mx-auto leading-relaxed px-2" style={{ minHeight: '4rem' }}>
-              Invisible cryptographic signatures embed directly into your text content, surviving copy-paste, scraping, syndication, and AI training.<br />
+              Invisible cryptographic signatures embed directly into your text content, surviving copy-paste, scraping, and syndication.<br />
               When someone uses your content, you can prove it&apos;s yours.<br />
               When they ignore your rights, you can prove that too.
             </p>
@@ -263,7 +263,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-semibold mb-3">Mark It</h3>
               <p className="text-muted-foreground text-sm">
-                Free, invisible cryptographic proof embeds directly into your text. Survives copy-paste, scraping, syndication, and AI training with zero visible changes.
+                Free, invisible cryptographic proof embeds directly into your text. Survives copy-paste, scraping, and syndication with zero visible changes.
               </p>
             </div>
 
@@ -346,7 +346,7 @@ export default function HomePage() {
                   <td className="p-4">Yes</td>
                 </tr>
                 <tr className="border-t border-border">
-                  <td className="p-4">Protects in AI training sets</td>
+                  <td className="p-4">Persists in training databases</td>
                   <td className="p-4">No</td>
                   <td className="p-4">Yes</td>
                 </tr>

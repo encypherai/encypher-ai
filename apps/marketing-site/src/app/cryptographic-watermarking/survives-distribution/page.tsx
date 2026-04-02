@@ -9,14 +9,14 @@ import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } fro
 
 export const metadata: Metadata = seoMetadata(
   'How Cryptographic Watermarking Survives Distribution | Encypher',
-  'Why cryptographic watermarks survive copy-paste, wire service distribution, aggregator scraping, social sharing, and AI training corpus ingestion. The durability proof.',
+  'Why cryptographic watermarks survive copy-paste, wire service distribution, aggregator scraping, and social sharing. The durability proof.',
   '/cryptographic-watermarking/survives-distribution'
 );
 
 export default function SurvivesDistributionPage() {
   const techArticle = getTechArticleSchema({
     title: 'How Cryptographic Watermarking Survives Distribution',
-    description: 'Copy-paste, wire services, aggregators, social media sharing, and AI training corpus ingestion. How cryptographic provenance persists through each distribution scenario.',
+    description: 'Copy-paste, wire services, aggregators, and social media sharing. How cryptographic provenance persists through each distribution scenario.',
     url: `${siteConfig.url}/cryptographic-watermarking/survives-distribution`,
     author: 'Erik Svilich',
     datePublished: '2026-03-31',
@@ -26,7 +26,7 @@ export default function SurvivesDistributionPage() {
     <>
       <AISummary
         title="How Cryptographic Watermarking Survives Distribution"
-        whatWeDo="Encypher's cryptographic watermarks persist through the key distribution scenarios that matter for publisher protection: copy-paste from web, B2B wire service distribution, aggregator scraping, social media sharing, and AI training corpus ingestion."
+        whatWeDo="Encypher's cryptographic watermarks persist through the key distribution scenarios that matter for publisher protection: copy-paste from web, B2B wire service distribution, aggregator scraping, and social media sharing. Markers also persist in training databases built from scraped web content."
         whoItsFor="Publishers evaluating whether cryptographic watermarking is durable enough to be useful across their actual distribution workflows. Legal and compliance teams assessing what scenarios produce verifiable provenance records."
         keyDifferentiator="Embedded provenance data is preserved by Unicode-compliant text processors in copy operations. JUMBF container manifests are preserved by file processing tools that do not understand them. Both properties make cryptographic provenance durable by default."
         primaryValue="Scenario-by-scenario analysis of watermark durability across real distribution workflows."

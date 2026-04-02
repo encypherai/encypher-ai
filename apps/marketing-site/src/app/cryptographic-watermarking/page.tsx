@@ -294,7 +294,7 @@ export default function CryptographicWatermarkingPage() {
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold tracking-tight mb-6">Why Cryptographic Watermarking Survives and Detection Does Not</h2>
               <p className="text-muted-foreground mb-8 text-base leading-relaxed">
-                The content lifecycle for publisher material looks like this: original publication, aggregation by news wire services, embedding in newsletters, scraping by AI training pipelines, use in RAG systems, and redistribution in AI-generated summaries that cite the source. Detection tools are applied at a single point in this chain. Watermarks travel through all of it.
+                The content lifecycle for publisher material looks like this: original publication, aggregation by news wire services, embedding in newsletters, and scraping into training databases. Detection tools are applied at a single point in this chain. Watermarks travel through the distribution chain and persist in the scraped data.
               </p>
 
               <div className="space-y-4 mb-8">
@@ -310,9 +310,9 @@ export default function CryptographicWatermarkingPage() {
                     watermark: 'Manifest is embedded in the content body. No header or footer required. Origin traces to the original publisher.',
                   },
                   {
-                    scenario: 'AI training corpus',
+                    scenario: 'Training databases',
                     detection: 'Training pipelines apply normalization that removes detection-relevant patterns. Content in a training corpus is undetectable.',
-                    watermark: 'Embedded provenance data survives standard normalization. The manifest persists in the training data.',
+                    watermark: 'Embedded provenance data survives standard text normalization and persists in scraped training databases.',
                   },
                   {
                     scenario: 'Paraphrasing and summarization',
@@ -483,7 +483,7 @@ export default function CryptographicWatermarkingPage() {
               <Shield className="h-8 w-8 mx-auto mb-4" style={{ color: '#2a87c4' }} />
               <h2 className="text-3xl font-bold tracking-tight mb-4">Embed Proof in Your Content</h2>
               <p className="text-muted-foreground mb-8">
-                Cryptographic watermarking that survives copy-paste, B2B distribution, and AI training pipelines. Free tier for up to 1,000 documents per month.
+                Cryptographic watermarking that survives copy-paste and B2B distribution. Free tier for up to 1,000 documents per month.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="font-semibold" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>

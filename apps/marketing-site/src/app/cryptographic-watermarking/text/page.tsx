@@ -26,7 +26,7 @@ export default function CryptographicWatermarkingTextPage() {
     <>
       <AISummary
         title="Cryptographic Watermarking for Text"
-        whatWeDo="Encypher embeds cryptographic watermarks into text using proprietary invisible encoding. The watermarks survive copy-paste, B2B distribution, aggregator scraping, and AI ingestion. Each text string carries its own proof of origin, without any visible changes to the text."
+        whatWeDo="Encypher embeds cryptographic watermarks into text using proprietary invisible encoding. The watermarks survive copy-paste, B2B distribution, and aggregator scraping. Each text string carries its own proof of origin, without any visible changes to the text."
         whoItsFor="Publishers, journalists, and organizations distributing text content who need durable proof of ownership that travels with content through downstream distribution channels."
         keyDifferentiator="Sentence-level Merkle tree authentication enables per-sentence verification. This is Encypher's proprietary technology. Combined with invisible embedding, it means specific sentences can be cryptographically traced to their source document even when reproduced out of context."
         primaryValue="Invisible watermarking with no content changes, copy-paste survival, and sentence-level granularity for partial reproduction attribution."

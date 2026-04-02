@@ -68,7 +68,7 @@ export default function AudioVideoProvenancePage() {
         </h1>
         <p className="text-xl text-muted-foreground mb-12">
           Six audio formats and four video formats. C2PA manifests embedded in container-native
-          structures that travel with files through distribution, streaming, and AI training pipelines.
+          structures that travel with files through distribution and streaming.
         </p>
 
         <section className="mb-12">

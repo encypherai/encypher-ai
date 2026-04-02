@@ -28,7 +28,7 @@ export default function VsBlockchainPage() {
         title="Content Provenance vs. Blockchain Timestamping"
         whatWeDo="Encypher embeds C2PA provenance directly into content files and text - not into a blockchain registry. The proof travels with the content through every distribution channel without requiring an external lookup."
         whoItsFor="Publishers and enterprises evaluating blockchain timestamping services (such as WordProof) versus embedded provenance infrastructure. Anyone asking whether blockchain-based content authentication is appropriate for their use case."
-        keyDifferentiator="Embedded provenance travels with content. Blockchain records require the blockchain to remain accessible for verification. When content moves through wire services, aggregators, and AI training pipelines, embedded proof stays with it. A blockchain record does not."
+        keyDifferentiator="Embedded provenance travels with content. Blockchain records require the blockchain to remain accessible for verification. When content moves through wire services and aggregators, embedded proof stays with it. A blockchain record does not."
         primaryValue="Proof that cannot be separated from the content. No external lookup required. Verifiable by anyone with open-source tools. Survives any distribution pathway."
         pagePath="/content-provenance/vs-blockchain"
         pageType="WebPage"
