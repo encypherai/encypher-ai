@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     PATTERN_CHECK_INTERVAL_SECONDS: int = 60
     WARNING_NOTIFY_THRESHOLD: int = 10  # 4xx: notify after N occurrences of same error
 
+    # Suppress known-benign errors at ingestion. Comma-separated
+    # "status_code:endpoint_prefix" pairs. Matching events are dropped
+    # before storage, so they never create incidents or feed the spike
+    # detector. Example:
+    #   SUPPRESSED_ENDPOINT_PATTERNS=404:/api/v1/integrations/ghost,404:/api/v1/cdn/cloudflare
+    SUPPRESSED_ENDPOINT_PATTERNS: str = ""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -57,6 +64,23 @@ class Settings(BaseSettings):
     @property
     def allowed_origins_list(self) -> list[str]:
         return [o.strip() for o in self.ALLOWED_ORIGINS.split(",")]
+
+    @property
+    def parsed_suppression_rules(self) -> list[tuple[int, str]]:
+        """Parse SUPPRESSED_ENDPOINT_PATTERNS into (status_code, path_prefix) tuples."""
+        if not self.SUPPRESSED_ENDPOINT_PATTERNS.strip():
+            return []
+        rules = []
+        for entry in self.SUPPRESSED_ENDPOINT_PATTERNS.split(","):
+            entry = entry.strip()
+            if ":" not in entry:
+                continue
+            code_str, path = entry.split(":", 1)
+            try:
+                rules.append((int(code_str.strip()), path.strip()))
+            except ValueError:
+                continue
+        return rules
 
 
 settings = Settings()

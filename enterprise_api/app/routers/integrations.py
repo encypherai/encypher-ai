@@ -460,8 +460,8 @@ def _upsert_install(store: dict, install_id: str, updates: dict) -> dict:
 
     if next_install.get("is_primary"):
         installs = [{**install, "is_primary": False} for install in installs if install.get("install_id") != install_id]
-
-    if existing_index is None:
+        installs.append(next_install)
+    elif existing_index is None:
         installs.append(next_install)
     else:
         installs[existing_index] = next_install

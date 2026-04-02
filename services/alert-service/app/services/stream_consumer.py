@@ -148,12 +148,18 @@ class AlertStreamConsumer:
             await self._redis.xack(self.STREAM_NAME, self.CONSUMER_GROUP, *ack_ids)
 
     def _is_error_event(self, data: dict) -> bool:
-        """Filter for error events worth tracking."""
+        """Filter for error events worth tracking.
+
+        Events matching SUPPRESSED_ENDPOINT_PATTERNS are dropped before
+        storage, preventing incident creation and spike detector noise.
+        """
         status_code = data.get("status_code")
         if status_code:
             try:
                 code = int(status_code)
                 if code >= 400:
+                    if self._is_suppressed(code, data.get("endpoint", "")):
+                        return False
                     return True
             except (ValueError, TypeError):
                 pass
@@ -165,6 +171,21 @@ class AlertStreamConsumer:
         if data.get("error_code") or data.get("error_message"):
             return True
 
+        return False
+
+    @staticmethod
+    def _is_suppressed(status_code: int, endpoint: str) -> bool:
+        """Check whether an event matches a configured suppression rule."""
+        for rule_code, rule_prefix in settings.parsed_suppression_rules:
+            if status_code == rule_code and endpoint.startswith(rule_prefix):
+                logger.debug(
+                    "Suppressed event: %d %s (rule %d:%s)",
+                    status_code,
+                    endpoint,
+                    rule_code,
+                    rule_prefix,
+                )
+                return True
         return False
 
     async def _handle_error_event(self, data: dict) -> None:
