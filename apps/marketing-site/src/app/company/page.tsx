@@ -4,6 +4,7 @@ import { Github, Linkedin, Code, Mail, MessageSquare } from 'lucide-react';
 import { siteConfig } from "@/config/site";
 import { getSiteUrl } from "@/lib/env";
 import Image from 'next/image';
+import Link from 'next/link';
 import { Metadata } from 'next';
 import Script from 'next/script';
 import { getAISearchSummary } from '@/lib/seo';
@@ -32,7 +33,7 @@ export default function CompanyPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
             getAISearchSummary({
-              whatWeDo: 'Sentence-level content authentication and licensing infrastructure. Encypher authored the C2PA text provenance specification.',
+              whatWeDo: 'Sentence-level content authentication and licensing infrastructure. Encypher authored Section A.7 of the C2PA 2.3 specification (text provenance).',
               whoItsFor: 'Publishers seeking licensing infrastructure and AI labs optimizing performance and compliance.',
               keyDifferentiator: 'Cryptographic verification at sentence-level vs probabilistic detection.',
               primaryValue: 'Provides technical infrastructure for content licensing with tamper-evident documentation and ecosystem integration.'
@@ -50,13 +51,13 @@ export default function CompanyPage() {
           {/* Mission Statement */}
           <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 mt-8">
             <p className="text-lg font-medium text-center">
-              We believe AI and creators can thrive together. Our mission is to build the infrastructure that makes this possible -- open standards that enable attribution, licensing, and trust at scale.
+              We believe AI and creators can thrive together. Our mission is to build the infrastructure that makes this possible, open standards that enable attribution, licensing, and trust at scale.
             </p>
           </div>
 
           <div className="text-center pt-8">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-8">
-              Co-Authors of the C2PA Text Standard
+              Authors of C2PA Section A.7, Co-Chairs of the Text Provenance Task Force
             </h3>
             <div className="flex justify-center items-center gap-12 md:gap-16 flex-wrap">
               <div className="relative h-12 w-48">
@@ -82,18 +83,18 @@ export default function CompanyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">Our Story</h2>
             <p className="text-muted-foreground mb-4">
-              When the industry needed a standard for AI content authenticity, we wrote it. As co-authors of the C2PA text specification, we work alongside Adobe, Microsoft, Google, OpenAI, and the BBC to define how digital content is authenticated.
+              When the industry needed a text provenance standard, we wrote it. As authors of Section A.7 of the C2PA 2.3 specification, we work alongside Adobe, Microsoft, Google, OpenAI, and the BBC to define how digital content is authenticated.
             </p>
             <p className="text-muted-foreground mb-4">
-              But standards alone don't solve problems -- infrastructure does. Publishers need provable ownership. AI labs need performance intelligence and compliance infrastructure. The ecosystem needs interoperability.
+              But standards alone don't solve problems - infrastructure does. Publishers need provable ownership. AI labs need performance intelligence and compliance infrastructure. The ecosystem needs interoperability.
             </p>
             <p className="text-muted-foreground mb-4">
-              So we built it. Sentence-level tracking with cryptographic certainty. Open-source foundations with commercial capabilities. Infrastructure that serves both creators and AI companies -- because the future isn't adversarial, it's collaborative.
+              So we built it. Sentence-level tracking with cryptographic certainty. Open-source foundations with commercial capabilities. Infrastructure that serves both creators and AI companies, because the future isn't adversarial, it's collaborative.
             </p>
             <ul className="space-y-2 mb-4">
               <li className="text-muted-foreground"><strong>For Publishers:</strong> Transform unmarked content into provably owned assets with licensing capability.</li>
               <li className="text-muted-foreground"><strong>For AI Labs:</strong> Performance intelligence on your models + regulatory compliance infrastructure.</li>
-              <li className="text-muted-foreground"><strong>For Developers:</strong> Open-source SDK implementing the standard we co-authored.</li>
+              <li className="text-muted-foreground"><strong>For Developers:</strong> Open-source SDK implementing C2PA Section A.7, the text provenance standard we authored.</li>
             </ul>
             <p className="text-muted-foreground">
               The coalition is growing. The infrastructure is ready. We're building the trust layer for the AI economy.
@@ -287,6 +288,23 @@ export default function CompanyPage() {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </section>
+
+          <section className="border-t border-border pt-12">
+            <div className="rounded-xl bg-muted/30 border border-border p-8 md:p-12 text-center">
+              <h2 className="text-2xl font-semibold mb-3">See Encypher in Action</h2>
+              <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+                Learn how content provenance infrastructure protects publishers, supports AI labs, and enables compliant licensing at scale.
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <Button asChild className="shadow-md btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                  <Link href="/contact">Schedule a Demo</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/platform">Explore the Platform</Link>
+                </Button>
+              </div>
             </div>
           </section>
         </div>

@@ -22,6 +22,7 @@ for (const file of envFiles) {
 
 /** @type {import('next').NextConfig} */
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://backend.encypher.com';
+const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
 console.log(`[Next Config] Using API base URL: ${apiBaseUrl}`);
 
 // No longer throwing an error if the variable isn't set - using default value instead
@@ -120,6 +121,9 @@ const nextConfig = {
       { source: '/tools/encode-decode', destination: '/tools/sign-verify', permanent: true },
       { source: '/tools/encode', destination: '/tools/sign', permanent: true },
       { source: '/tools/decode', destination: '/tools/verify', permanent: true },
+
+      { source: '/signup', destination: `${dashboardUrl}/signup`, permanent: false },
+      { source: '/signup/wp', destination: `${dashboardUrl}/signup?source=wordpress`, permanent: false },
     ];
   },
   async rewrites() {

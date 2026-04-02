@@ -17,6 +17,8 @@ import SalesContactModal from '@/components/forms/SalesContactModal';
 import Script from 'next/script';
 import { publishersFaqSchema } from '@/lib/seo';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 // using real iframe embed (/publisher-demo/embed)
 export default function PublishersPage() {
   const [showContactModal, setShowContactModal] = useState(false);
@@ -46,13 +48,13 @@ export default function PublishersPage() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="font-semibold py-3 px-6 rounded-lg shadow-lg">
-              <Link href="/auth/signin?mode=signup&source=publishers">
+              <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=publishers`}>
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button 
+            <Button
               onClick={() => setShowContactModal(true)}
-              size="lg" 
+              size="lg"
               variant="ghost"
               className="font-semibold"
             >
@@ -72,16 +74,16 @@ export default function PublishersPage() {
                   No Engineering Staff Required
                 </h2>
                 <p className="text-muted-foreground mb-6">
-                  Solo newsletter writer or 800-person newsroom -- setup takes under 20 minutes using any publishing platform. Copy your API key, paste it in your CMS settings. Done.
+                  Solo newsletter writer or 800-person newsroom - setup takes under 20 minutes using any publishing platform. Copy your API key, paste it in your CMS settings. Done.
                 </p>
                 <ul className="space-y-3">
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm"><strong>WordPress:</strong> Plugin available -- one-click activation</span>
+                    <span className="text-sm"><strong>WordPress:</strong> Plugin available - one-click activation</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm"><strong>Ghost:</strong> Webhook integration -- automatic signing on publish</span>
+                    <span className="text-sm"><strong>Ghost:</strong> Webhook integration - automatic signing on publish</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
@@ -89,7 +91,7 @@ export default function PublishersPage() {
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm"><strong>Custom CMS or archive:</strong> Python/TypeScript/Go/Rust SDK -- batch-sign your entire back catalog</span>
+                    <span className="text-sm"><strong>Custom CMS or archive:</strong> Python/TypeScript/Go/Rust SDK - batch-sign your entire back catalog</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
@@ -104,7 +106,7 @@ export default function PublishersPage() {
                     'Sign up free (no credit card)',
                     'Copy your API key from dashboard',
                     'Paste into WordPress / Ghost / CMS settings',
-                    'Publish your next article -- signed automatically',
+                    'Publish your next article - signed automatically',
                   ].map((step, i) => (
                     <div key={i} className="flex items-center gap-3 text-sm">
                       <span className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold flex-shrink-0">{i + 1}</span>
@@ -132,7 +134,7 @@ export default function PublishersPage() {
                   The Legal Landscape Has Changed
                 </h2>
                 <p className="text-muted-foreground">
-                  US copyright law distinguishes between innocent and willful infringement. Cryptographic proof of ownership -- and of when your content was published -- directly affects which applies.
+                  US copyright law distinguishes between innocent and <Link href="/cryptographic-watermarking/legal-implications" className="text-primary underline underline-offset-2 hover:no-underline">willful infringement</Link>. Cryptographic proof of ownership - and of when your content was published - directly affects which applies.
                 </p>
               </div>
             </div>
@@ -197,10 +199,10 @@ export default function PublishersPage() {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-10">
               <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
-                See Which AI Companies Are Using Your Content -- Free
+                See Which AI Companies Are Using Your Content - Free
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Your free dashboard shows every external verification event in real time. Licensing revenue builds over months -- but you get proof of value from day one.
+                Your free dashboard shows every external verification event in real time. Licensing revenue builds over months - but you get proof of value from day one.
               </p>
             </div>
             <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -208,14 +210,14 @@ export default function PublishersPage() {
                 <Shield className="h-8 w-8 text-primary mb-3" />
                 <h3 className="font-semibold mb-2">Day 1: Your Free Dashboard</h3>
                 <p className="text-sm text-muted-foreground">
-                  Every article you sign appears in your dashboard immediately. Each time an AI company checks your content&apos;s provenance, you see it -- which company, which article, which day.
+                  Every article you sign appears in your dashboard immediately. Each time an AI company checks your content&apos;s provenance, you see it - which company, which article, which day.
                 </p>
               </div>
               <div className="bg-card p-5 rounded-lg border border-border">
                 <TrendingUp className="h-8 w-8 text-primary mb-3" />
                 <h3 className="font-semibold mb-2">$299/mo: Attribution Analytics</h3>
                 <p className="text-sm text-muted-foreground">
-                  When you want the full picture: detailed breakdown by entity, date, and content category. At 500 verifications you qualify to issue Formal Notice -- Analytics shows you exactly when you hit that threshold.
+                  When you want the full picture: detailed breakdown by entity, date, and content category. At 500 verifications you qualify to issue Formal Notice - Analytics shows you exactly when you hit that threshold.
                 </p>
               </div>
               <div className="bg-card p-5 rounded-lg border border-border">
@@ -242,7 +244,7 @@ export default function PublishersPage() {
                 Set Your Licensing Rules. You Approve Every Deal.
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Granular content licensing is not managed manually -- you set rules once in your rights profile, and Encypher enforces them cryptographically. Licensing requests flow into your dashboard for review and approval.
+                Granular content licensing is not managed manually - you set rules once in your rights profile, and Encypher enforces them cryptographically. Licensing requests flow into your dashboard for review and approval.
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -251,15 +253,15 @@ export default function PublishersPage() {
                 <div className="bg-muted/30 p-4 rounded-lg border border-border font-mono text-xs space-y-3">
                   <div>
                     <span className="text-amber-700 dark:text-amber-500 font-semibold">Bronze (crawling):</span>
-                    <p className="text-muted-foreground mt-1">Permitted -- search indexing fine</p>
+                    <p className="text-muted-foreground mt-1">Permitted - search indexing fine</p>
                   </div>
                   <div>
                     <span className="text-zinc-500 dark:text-zinc-300 font-semibold">Silver (RAG/citation):</span>
-                    <p className="text-muted-foreground mt-1">Permitted -- author name + canonical URL required</p>
+                    <p className="text-muted-foreground mt-1">Permitted - author name + canonical URL required</p>
                   </div>
                   <div>
                     <span className="text-yellow-600 dark:text-yellow-400 font-semibold">Gold (training):</span>
-                    <p className="text-muted-foreground mt-1">License required -- contact licensing@yourorg.com</p>
+                    <p className="text-muted-foreground mt-1">License required - contact licensing@yourorg.com</p>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-3">
@@ -350,9 +352,9 @@ export default function PublishersPage() {
                   View Full Pricing <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button 
+              <Button
                 onClick={() => setShowContactModal(true)}
-                size="lg" 
+                size="lg"
                 variant="outline"
                 className="font-semibold py-3 px-6 rounded-lg"
               >
@@ -408,17 +410,17 @@ export default function PublishersPage() {
               <AccordionItem value="item-0">
                 <AccordionTrigger>Step 0: Protect Your Archive (One-Time Foundation)</AccordionTrigger>
                 <AccordionContent>
-                  Sign your entire content library -- 500 articles or 500,000 -- using our bulk signing API. The Python SDK lets you sign your full archive in a single overnight job. This is a one-time investment that converts your existing content into a provably owned corpus. Every article becomes a citable asset in any licensing or enforcement conversation. Free tier covers 1,000 docs/month; overage is fractions of a cent per document.
+                  Sign your entire content library - 500 articles or 500,000 - using our bulk signing API. The Python SDK lets you sign your full archive in a single overnight job. This is a one-time investment that converts your existing content into a provably owned corpus. Every article becomes a citable asset in any licensing or enforcement conversation. Free tier covers 1,000 docs/month; overage is fractions of a cent per document.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-1">
                 <AccordionTrigger>Step 1: Automatic Signing at Publication</AccordionTrigger>
                 <AccordionContent>
-                  All new articles are watermarked at the moment you hit publish. Integrate via the WordPress plugin, Ghost webhook, or the REST API. No manual steps for your editorial team -- protection begins automatically. Each article carries an invisible, tamper-evident cryptographic signature embedded at the sentence level.
+                  All new articles are watermarked at the moment you hit publish. Integrate via the WordPress plugin, Ghost webhook, or the REST API. No manual steps for your editorial team - protection begins automatically. Each article carries an invisible, tamper-evident cryptographic signature embedded at the sentence level.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger>Step 2: Dashboard -- See Who Is Using Your Content</AccordionTrigger>
+                <AccordionTrigger>Step 2: Dashboard - See Who Is Using Your Content</AccordionTrigger>
                 <AccordionContent>
                   Your free dashboard shows every external verification event: which AI companies are checking your content&apos;s provenance, how often, and which articles. When you reach 500 verifications, you qualify to issue Formal Notice. Upgrade to Attribution Analytics ($299/mo) for detailed breakdown by entity, date, and content category.
                 </AccordionContent>
@@ -426,13 +428,13 @@ export default function PublishersPage() {
               <AccordionItem value="item-3">
                 <AccordionTrigger>Step 3: Enforce and License</AccordionTrigger>
                 <AccordionContent>
-                  Use your evidence package to issue Formal Notice to AI companies using your content without a license. After notice, any continued use is willful infringement -- a meaningfully higher legal threshold. Many publishers find that formal notice opens licensing negotiations rather than litigation. Coalition licensing deals flow in as the network grows -- approved in your dashboard, paid monthly.
+                  Use your evidence package to issue Formal Notice to AI companies using your content without a license. After notice, any continued use is willful infringement - a meaningfully higher legal threshold. Many publishers find that formal notice opens licensing negotiations rather than litigation. Coalition licensing deals flow in as the network grows - approved in your dashboard, paid monthly.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-4">
                 <AccordionTrigger>Bonus: Quote Integrity for Editorial QA</AccordionTrigger>
                 <AccordionContent>
-                  If your team uses AI-assisted writing or research tools, the Quote Integrity API helps catch hallucinated citations before publication. Submit any quote and attribution -- the API checks whether the cited source actually contains that language. Used by editorial teams as a standard pre-publication check for AI-assisted drafts.
+                  If your team uses AI-assisted writing or research tools, the Quote Integrity API helps catch hallucinated citations before publication. Submit any quote and attribution - the API checks whether the cited source actually contains that language. Used by editorial teams as a standard pre-publication check for AI-assisted drafts.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -455,7 +457,7 @@ export default function PublishersPage() {
               {[
                 {
                   q: 'Will my content look different to readers?',
-                  a: 'No. The cryptographic watermark is completely invisible. It is embedded using zero-width Unicode characters between words -- characters that are present in the text but invisible to the human eye. Your readers, your fonts, and your layout are not affected in any way.',
+                  a: 'No. The cryptographic watermark is completely invisible. It is embedded using zero-width Unicode characters between words - characters that are present in the text but invisible to the human eye. Your readers, your fonts, and your layout are not affected in any way.',
                 },
                 {
                   q: 'Will this slow down my website?',
@@ -463,27 +465,27 @@ export default function PublishersPage() {
                 },
                 {
                   q: 'Who gets the licensing revenue?',
-                  a: 'The majority goes to you, the publisher. When an AI company licenses your content through the Encypher Coalition, the split strongly favors publishers -- the same split regardless of whether you are on a free or paid plan. We publish the revenue share terms transparently. Encypher takes a small platform fee.',
+                  a: 'The majority goes to you, the publisher. When an AI company licenses your content through the Encypher Coalition, the split strongly favors publishers - the same split regardless of whether you are on a free or paid plan. We publish the revenue share terms transparently. Encypher takes a small platform fee.',
                 },
                 {
                   q: 'Do I need a lawyer to issue a formal notice?',
-                  a: "No. Encypher generates the formal notice package automatically from your evidence -- a cryptographically-backed letter that you can send directly, or forward to counsel. Many publishers find that receiving a notice is enough to open licensing talks. If it escalates, your lawyer will have everything they need: a complete evidence chain, tamper-evident delivery confirmation, and documentation in standard litigation support formats. You don't need a lawyer to start -- but the package is designed to meet one's requirements when you do.",
+                  a: "No. Encypher generates the formal notice package automatically from your evidence - a cryptographically-backed letter that you can send directly, or forward to counsel. Many publishers find that receiving a notice is enough to open licensing talks. If it escalates, your lawyer will have everything they need: a complete evidence chain, tamper-evident delivery confirmation, and documentation in standard litigation support formats. You don't need a lawyer to start - but the package is designed to meet one's requirements when you do.",
                 },
                 {
                   q: 'What if AI companies just ignore the rights terms?',
-                  a: 'Ignoring machine-readable rights terms that are embedded in every document is what converts innocent infringement into willful infringement under US copyright law. Willful infringement carries statutory damages up to $150,000 per work vs. $30,000 for innocent infringement. EU AI Act compliance (effective August 2026) also requires AI providers to respect machine-readable rights reservations. The terms do not need to be actively accepted -- publishing them and embedding them in the content is sufficient to establish they were available.',
+                  a: 'Ignoring machine-readable rights terms that are embedded in every document is what converts innocent infringement into willful infringement under US copyright law. Willful infringement carries statutory damages up to $150,000 per work vs. $30,000 for innocent infringement. EU AI Act compliance (effective August 2026) also requires AI providers to respect machine-readable rights reservations. The terms do not need to be actively accepted - publishing them and embedding them in the content is sufficient to establish they were available.',
                 },
                 {
                   q: 'Can I sign content from years ago?',
-                  a: 'Yes. You can backfill your entire archive using the Encypher API or our SDK batch tools. The Python and TypeScript SDKs let you sign thousands of articles in a single overnight job. The free tier covers 1,000 documents per month; volume pricing is available for large archives. We recommend starting with your most valuable evergreen content -- the articles most likely to appear in AI training datasets.',
+                  a: 'Yes. You can backfill your entire archive using the Encypher API or our SDK batch tools. The Python and TypeScript SDKs let you sign thousands of articles in a single overnight job. The free tier covers 1,000 documents per month; volume pricing is available for large archives. We recommend starting with your most valuable evergreen content - the articles most likely to appear in AI training datasets.',
                 },
                 {
                   q: 'What happens if I stop using Encypher?',
-                  a: 'All content you signed remains signed -- permanently. The cryptographic signatures are embedded in the text itself and do not depend on Encypher servers to remain valid. The free tier will always exist at $0. If you stop a paid plan, you keep the signing infrastructure and your signed archive. You just lose access to the paid analytics and enforcement tools until you re-subscribe.',
+                  a: 'All content you signed remains signed - permanently. The cryptographic signatures are embedded in the text itself and do not depend on Encypher servers to remain valid. The free tier will always exist at $0. If you stop a paid plan, you keep the signing infrastructure and your signed archive. You just lose access to the paid analytics and enforcement tools until you re-subscribe.',
                 },
                 {
                   q: 'Is my content stored on Encypher servers?',
-                  a: 'No. Encypher signs your content at the moment of publication and returns it to your CMS. We store metadata and cryptographic hashes (fingerprints) for verification purposes -- not the full text of your articles. Your content stays on your servers. We can verify a piece of text is yours using the hash without needing a copy of the original.',
+                  a: 'No. Encypher signs your content at the moment of publication and returns it to your CMS. We store metadata and cryptographic hashes (fingerprints) for verification purposes - not the full text of your articles. Your content stays on your servers. We can verify a piece of text is yours using the hash without needing a copy of the original.',
                 },
               ].map((faq, i) => (
                 <AccordionItem
@@ -514,7 +516,7 @@ export default function PublishersPage() {
           </h2>
           <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
             Free signing infrastructure. See which AI companies are using your content from day one.
-            Enforcement tools available when you are ready.
+            Enforcement tools available when you are ready. Read the full <Link href="/content-provenance/for-publishers" className="text-primary underline underline-offset-2 hover:no-underline">publisher content provenance guide</Link>.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold py-3 px-6 rounded-lg shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
@@ -523,7 +525,7 @@ export default function PublishersPage() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="font-semibold py-3 px-6 rounded-lg">
-              <Link href="/auth/signin?mode=signup&source=publishers">
+              <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=publishers`}>
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -542,8 +544,8 @@ export default function PublishersPage() {
       {/* Sales Contact Modal */}
       <AnimatePresence>
         {showContactModal && (
-          <SalesContactModal 
-            onClose={() => setShowContactModal(false)} 
+          <SalesContactModal
+            onClose={() => setShowContactModal(false)}
             context="publisher"
           />
         )}

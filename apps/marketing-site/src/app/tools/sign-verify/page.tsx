@@ -31,6 +31,19 @@ export default function SignVerifyPage() {
         <Suspense fallback={<div className="text-center py-8">Loading...</div>}>
           <SignVerifyContent />
         </Suspense>
+        {/* Related glossary terms */}
+        <div className="mt-8 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">Related glossary terms:</span>
+          <Link href="/glossary#content-provenance" className="inline-block rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Content Provenance
+          </Link>
+          <Link href="/glossary#c2pa" className="inline-block rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            C2PA
+          </Link>
+          <Link href="/glossary#cryptographic-watermarking" className="inline-block rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Cryptographic Watermarking
+          </Link>
+        </div>
         <div className="mt-6 text-xs text-muted-foreground text-center">
           <Link href="/tools">← All Tools</Link>
         </div>

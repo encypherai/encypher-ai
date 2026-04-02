@@ -9,6 +9,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Copy } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { trackToolEvent } from "@/lib/toolsAnalytics";
+import {
+  VerificationSequence,
+  SIGN_STEPS,
+  VERIFY_TEXT_STEPS,
+  withMinDuration,
+  getStepsDuration,
+} from "@/components/ui/VerificationSequence";
 
 // --- Types matching backend DecodeToolResponse ---
 interface VerifyVerdict {
@@ -187,10 +194,13 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
           },
         };
 
-        const response = await toolsApiCall<{ encoded_text: string, metadata?: any }>("/api/tools/sign", {
-          method: "POST",
-          body: JSON.stringify(body),
-        });
+        const response = await withMinDuration(
+          toolsApiCall<{ encoded_text: string, metadata?: any }>("/api/tools/sign", {
+            method: "POST",
+            body: JSON.stringify(body),
+          }),
+          getStepsDuration(SIGN_STEPS),
+        );
 
         if (response && response.encoded_text) {
           trackToolEvent({
@@ -256,7 +266,10 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
           throw new Error("Signing failed: Invalid response from server.");
         }
       } else { // decode
-        const response = await verifyEncodedText(inputText);
+        const response = await withMinDuration(
+          verifyEncodedText(inputText),
+          getStepsDuration(VERIFY_TEXT_STEPS),
+        );
 
         if (!response) {
           throw new Error("Verification failed: Empty response from server.");
@@ -448,10 +461,15 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
               <em>Note: For demo use only. All signing uses a server-side demo key. Private keys are not required or accepted here.</em>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 space-y-3">
               <Button onClick={handleProcess} disabled={loading || !inputText} className="w-full">
                 {loading ? "Processing..." : (mode === "encode" ? "Sign Text" : "Verify Text")}
               </Button>
+              {loading && (
+                <div className="p-4 rounded-lg border border-border bg-muted/30">
+                  <VerificationSequence steps={mode === "encode" ? SIGN_STEPS : VERIFY_TEXT_STEPS} />
+                </div>
+              )}
             </div>
 
             {error && (

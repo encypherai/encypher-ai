@@ -2,6 +2,7 @@ import React from "react";
 import { Metadata } from "next";
 import { getSiteUrl } from "@/lib/env";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -247,6 +248,65 @@ export default function WordPressPage() {
         </div>
       </section>
 
+      {/* Screenshots */}
+      <section className="py-20 bg-background border-b border-border">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">See It in Your WordPress</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Your readers see a verification badge. Your editors see provenance status in the block editor. You control everything from the settings page.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="rounded-xl border border-border overflow-hidden bg-muted/20">
+              <Image
+                src="/assets/screenshots/wordpress/step6-signed-post.png"
+                alt="WordPress block editor showing Encypher provenance sidebar with signing status, API call usage, and C2PA manifest link"
+                width={800}
+                height={500}
+                className="w-full h-auto"
+              />
+              <div className="p-4">
+                <p className="text-sm font-medium">Block editor integration</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  The Encypher Provenance sidebar shows signing status, API usage, and a link to the C2PA manifest for each post.
+                </p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border overflow-hidden bg-muted/20">
+              <Image
+                src="/assets/screenshots/wordpress/frontend-badge.png"
+                alt="Published WordPress post with Encypher verification badge at the bottom confirming content authenticity"
+                width={800}
+                height={500}
+                className="w-full h-auto"
+              />
+              <div className="p-4">
+                <p className="text-sm font-medium">Reader verification badge</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  A verification badge appears at the bottom of each signed post. Readers click it to confirm the content is authentic.
+                </p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border overflow-hidden bg-muted/20">
+              <Image
+                src="/assets/screenshots/wordpress/step4-options.png"
+                alt="WordPress admin settings page for Encypher plugin showing signature management, C2PA settings, and auto-mark options"
+                width={800}
+                height={500}
+                className="w-full h-auto"
+              />
+              <div className="p-4">
+                <p className="text-sm font-medium">Plugin settings</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Configure signature mode, auto-sign on publish, C2PA manifest format, and which post types to protect.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section className="py-20 bg-background">
         <div className="max-w-6xl mx-auto px-4">
@@ -422,7 +482,7 @@ export default function WordPressPage() {
             <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">Are the signatures visible?</h3>
               <p className="text-muted-foreground">
-                No. C2PA manifests are embedded using invisible Unicode variation selectors. They don&apos;t
+                No. C2PA manifests are embedded using invisible encoding. They don&apos;t
                 affect how your content looks but can be extracted for verification.
               </p>
             </div>

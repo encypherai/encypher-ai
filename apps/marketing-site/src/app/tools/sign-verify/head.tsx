@@ -48,7 +48,7 @@ export default function Head() {
         "name": "What does the Encypher Sign/Verify Tool do?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "It allows you to sign text with secure metadata or verify authenticity using Unicode variation selectors, supporting digital provenance and authenticity."
+          "text": "It allows you to sign text with secure metadata or verify authenticity using invisible encoding, supporting digital provenance and authenticity."
         }
       },
       {

@@ -205,8 +205,12 @@ class TestBuildC2paManifestDict:
         )
 
         actions_assertion = next(a for a in result["assertions"] if a["label"] == "c2pa.actions.v2")
-        assert actions_assertion["data"]["actions"][0]["action"] == "c2pa.dubbed"
-        assert "when" in actions_assertion["data"]["actions"][0]
+        actions = actions_assertion["data"]["actions"]
+        # Section 15.4.1: first action must be c2pa.created or c2pa.opened.
+        # Non-created/opened actions get c2pa.opened prepended automatically.
+        assert actions[0]["action"] == "c2pa.opened"
+        assert actions[1]["action"] == "c2pa.dubbed"
+        assert "when" in actions[1]
 
     def test_actions_uses_v2_label(self):
         from app.utils.c2pa_manifest import build_c2pa_manifest_dict

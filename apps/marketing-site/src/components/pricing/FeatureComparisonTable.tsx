@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 // Feature availability: free, add-on (with price), enterprise-only, or specific value
 type FeatureValue = 'free' | 'enterprise' | 'add-on' | string | boolean;
 
@@ -85,7 +87,7 @@ function renderValue(value: FeatureValue, addOn?: string) {
   return <span className="text-sm font-medium">{value}</span>;
 }
 
-export default function FeatureComparisonTable({ 
+export default function FeatureComparisonTable({
   currentPlan,
 }: FeatureComparisonTableProps) {
   const columns: { id: ColumnId; name: string; price: string }[] = [
@@ -102,7 +104,7 @@ export default function FeatureComparisonTable({
             {columns.map((col) => {
               const isCurrent = currentPlan === col.id;
               return (
-                <th 
+                <th
                   key={col.id}
                   className={cn(
                     'text-center py-4 px-6 font-semibold relative border-l border-border',
@@ -142,7 +144,7 @@ export default function FeatureComparisonTable({
                     const isCurrent = currentPlan === col.id;
                     const value = feature[col.id];
                     return (
-                      <td 
+                      <td
                         key={col.id}
                         className={cn(
                           'text-center py-3 px-6 border-l border-border',
@@ -163,7 +165,7 @@ export default function FeatureComparisonTable({
             <td className="py-4 px-4"></td>
             <td className="text-center py-4 px-6 border-l border-border">
               <Button className="w-full" asChild>
-                <Link href="/auth/signin?mode=signup&source=pricing-free">
+                <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=pricing-free`}>
                   Get Started Free
                 </Link>
               </Button>

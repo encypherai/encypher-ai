@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { AnimatePresence } from 'framer-motion';
-import { ArrowRight, FileText, CheckCircle2, Bot, Building2 } from 'lucide-react';
+import { ArrowRight, FileText, Bot, Building2 } from 'lucide-react';
+import { EncypherMark, BRAND_COLORS } from '@encypher/icons';
 import MetadataBackground from '@/components/hero/MetadataBackground';
 import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
@@ -40,9 +41,9 @@ export default function HomePage() {
       />
       <AISummary
         title="Encypher – Machine-Readable Rights for Your Content"
-        whatWeDo="Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text). We embed invisible cryptographic proof directly into text so ownership and licensing terms travel with content through copy-paste, syndication, scraping, and AI training."
+        whatWeDo="Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text). We embed invisible cryptographic proof directly into text so ownership and licensing terms travel with content through copy-paste, syndication, scraping, and AI training. Primary resource: /content-provenance. C2PA standard guide: /c2pa-standard."
         whoItsFor="Publishers who need enforceable machine-readable rights, competitor scraping visibility, and provable ownership evidence."
-        keyDifferentiator="Not AI detection and not front-door-only controls. Encypher embeds cryptographic proof into the content itself, so provenance survives distribution and can be independently verified."
+        keyDifferentiator="Not AI detection and not front-door-only controls. Encypher embeds cryptographic proof into the content itself, so provenance survives distribution and can be independently verified. Technical deep-dive: /cryptographic-watermarking."
         primaryValue="Protect content at publish time, track where it appears, and enforce your licensing terms with cryptographic evidence. Encypher co-chairs the C2PA Text Provenance Task Force."
         pagePath="/"
       />
@@ -82,7 +83,7 @@ export default function HomePage() {
             {/* Standards Authority */}
             <div className="mt-8 sm:mt-12 md:mt-16 text-center">
               <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6 text-shadow-sm px-2">
-                From the Authors of the C2PA Text Standard
+                Authors of C2PA Section A.7 (Text Provenance)
               </h3>
               <div className="flex justify-center items-center gap-6 sm:gap-8 md:gap-12 flex-wrap">
                 <div className="relative h-8 w-28 sm:h-10 sm:w-32 md:h-12 md:w-36 flex-shrink-0">
@@ -142,10 +143,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Infrastructure for Content Rights. Built on the C2PA Standard.
+              Infrastructure for Content Rights. Built on the <Link href="/c2pa-standard" className="text-primary underline underline-offset-2 hover:no-underline">C2PA Standard</Link>.
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Publisher-first infrastructure that protects content ownership across syndication, competitor copying, and AI usage.
+              Publisher-first infrastructure that protects <Link href="/content-provenance" className="text-primary underline underline-offset-2 hover:no-underline">content provenance</Link> across syndication, competitor copying, and AI usage.
             </p>
           </div>
 
@@ -161,20 +162,20 @@ export default function HomePage() {
               </p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-5 w-5 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Cryptographic proof survives copy-paste, scraping, and syndication</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-5 w-5 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Detect competitor and aggregator reuse with cryptographic certainty</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-5 w-5 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Set machine-readable licensing terms: your content, your rules</span>
                 </li>
               </ul>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Button asChild className="shadow-lg btn-blue-hover" size="lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                <Button asChild className="shadow-lg btn-blue-hover" size="lg" style={{ backgroundColor: BRAND_COLORS.azure, color: BRAND_COLORS.white }}>
                   <Link href="/solutions/publishers">
                     See Publisher Demo <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
@@ -193,15 +194,15 @@ export default function HomePage() {
               </p>
               <ul className="space-y-2 mb-5">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">One integration for the entire publisher ecosystem</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Quote integrity verification - prove &quot;According to [Source]&quot; is accurate</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Standards-based - we co-authored the spec</span>
                 </li>
               </ul>
@@ -219,19 +220,19 @@ export default function HomePage() {
               </div>
               <h4 className="text-lg font-bold mb-3">AI Content Governance at Scale</h4>
               <p className="text-sm text-muted-foreground mb-4">
-                When your organization generates or ingests AI content, you need provenance infrastructure that meets regulatory requirements - EU AI Act, China watermarking mandates, and emerging US frameworks.
+                When your organization generates or ingests AI content, you need provenance infrastructure that meets regulatory requirements - <Link href="/content-provenance/eu-ai-act" className="text-primary underline underline-offset-2 hover:no-underline">EU AI Act</Link>, China watermarking mandates, and emerging US frameworks.
               </p>
               <ul className="space-y-2 mb-5">
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">C2PA 2.3 compliant - standard published January 8, 2026</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Sentence-level authentication for audit trails</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <EncypherMark color="azure" className="h-4 w-4 mt-0.5 flex-shrink-0" />
                   <span className="text-sm">On-premise or cloud deployment with SSO and custom SLAs</span>
                 </li>
               </ul>

@@ -28,6 +28,8 @@ import SalesContactModal from '@/components/forms/SalesContactModal';
 import Script from 'next/script';
 import { aiCompaniesFaqSchema } from '@/lib/seo';
 
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypher.com';
+
 export default function AiCompaniesPage() {
   const [showContactModal, setShowContactModal] = useState(false);
 
@@ -58,7 +60,7 @@ export default function AiCompaniesPage() {
             AI companies that license publisher content through Encypher get three things at once:
             access to a growing publisher coalition, cryptographic proof of compliance for
             regulators, and performance intelligence that shows which content actually moves
-            your product metrics. Built collaboratively through C2PA -- OpenAI, Google, Adobe,
+            your product metrics. Built collaboratively through <Link href="/c2pa-standard" className="text-primary underline underline-offset-2 hover:no-underline">C2PA</Link> - OpenAI, Google, Adobe,
             and Microsoft are members.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -78,7 +80,7 @@ export default function AiCompaniesPage() {
               variant="outline"
               className="font-semibold py-3 px-6 rounded-lg shadow-lg"
             >
-              <Link href="/auth/signin?mode=signup&source=ai-companies">
+              <Link href={`${DASHBOARD_URL}/auth/signin?mode=signup&source=ai-companies`}>
                 Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
@@ -131,8 +133,8 @@ export default function AiCompaniesPage() {
               <Shield className="h-10 w-10 text-primary mb-4" />
               <h3 className="text-lg font-semibold mb-3">Regulatory Compliance</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                EU AI Act Article 52(1) output disclosure, China watermarking mandate, and
-                C2PA provenance -- all from the same API call. Stay compliant across
+                <Link href="/content-provenance/eu-ai-act" className="text-primary underline underline-offset-2 hover:no-underline">EU AI Act</Link> Article 52(1) output disclosure, China watermarking mandate, and
+                C2PA provenance - all from the same API call. Stay compliant across
                 jurisdictions as regulations evolve.
               </p>
             </div>
@@ -174,7 +176,7 @@ export default function AiCompaniesPage() {
                 Every AI output you sign carries a C2PA manifest. When that output is
                 copy-pasted, quoted in a blog post, or cited in a downstream document,
                 Encypher records the provenance check. You see exactly which outputs
-                spread and how far -- the real-world reach your internal evals cannot measure.
+                spread and how far - the real-world reach your internal evals cannot measure.
               </p>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
@@ -228,14 +230,14 @@ export default function AiCompaniesPage() {
               <p className="text-sm text-muted-foreground leading-relaxed">
                 When your model generates "According to Reuters..." Encypher can verify
                 whether that citation matches a signed Reuters document. Catch hallucinated
-                citations before they ship -- and create an audit log proving you made
+                citations before they ship - and create an audit log proving you made
                 the check. This matters when enterprise customers demand citation accuracy
                 guarantees in their SLAs.
               </p>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold mt-0.5">+</span>
-                  Automated pre-publish hallucination check on citations
+                  Automated pre-publish hallucination check on citations - see <Link href="/content-provenance/verification" className="text-primary underline underline-offset-2 hover:no-underline">content provenance verification</Link>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary font-bold mt-0.5">+</span>
@@ -256,7 +258,7 @@ export default function AiCompaniesPage() {
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Every provenance verification creates a cryptographic log entry. When a
                 regulator or enterprise customer asks "show me which content you licensed and
-                when you verified it," you export a tamper-evident evidence package -- not
+                when you verified it," you export a tamper-evident evidence package - not
                 a spreadsheet from your own servers. The proof is embedded in the content itself.
               </p>
               <ul className="space-y-2 text-sm text-muted-foreground">
@@ -330,7 +332,7 @@ export default function AiCompaniesPage() {
                 <AccordionTrigger>Step 1: Connect to the Publisher Coalition</AccordionTrigger>
                 <AccordionContent>
                   A single API integration connects you to Encypher&apos;s growing publisher
-                  coalition. Licensing terms are established at the network level -- no
+                  coalition. Licensing terms are established at the network level - no
                   bilateral negotiations per publisher. Publishers set Bronze (indexing),
                   Silver (RAG / attribution), and Gold (training) tier terms. You access
                   the full catalog under one agreement. As the coalition grows, your
@@ -344,7 +346,7 @@ export default function AiCompaniesPage() {
                   verifies the C2PA watermark and records the provenance check. Latency
                   is under 50ms p99 at enterprise tier and can run async without blocking
                   your user response. This creates an auditable, cryptographic log of
-                  licensed content use -- the documentation regulators, licensing agreements,
+                  licensed content use - the documentation regulators, licensing agreements,
                   and enterprise security questionnaires require.
                 </AccordionContent>
               </AccordionItem>
@@ -355,7 +357,7 @@ export default function AiCompaniesPage() {
                   compliance for your AI-generated outputs, real-world spread analytics
                   showing which outputs get cited and which get corrected, and per-publisher
                   performance data to drive corpus curation decisions. Sign your AI outputs
-                  at generation time -- even streaming responses -- and the C2PA manifest
+                  at generation time - even streaming responses - and the C2PA manifest
                   travels with the content wherever it goes.
                 </AccordionContent>
               </AccordionItem>
@@ -389,7 +391,7 @@ export default function AiCompaniesPage() {
                 </li>
                 <li className="flex items-center gap-3">
                   <Network className="h-5 w-5 text-primary flex-shrink-0" />
-                  <span>Publisher coalition licensing -- one agreement, full network</span>
+                  <span>Publisher coalition licensing - one agreement, full network</span>
                 </li>
               </ul>
             </div>
@@ -439,7 +441,7 @@ export default function AiCompaniesPage() {
                   Do we need to negotiate with each publisher separately?
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
-                  No. The Encypher publisher coalition operates as a network license -- one
+                  No. The Encypher publisher coalition operates as a network license - one
                   agreement with Encypher covers access to all coalition members at the tiers
                   each publisher has set (Bronze, Silver, Gold). You never negotiate directly
                   with individual publishers unless you want a custom bilateral arrangement
@@ -454,14 +456,14 @@ export default function AiCompaniesPage() {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
                   The evidence package contains cryptographic proof that is independently
-                  verifiable -- meaning it does not depend on trusting Encypher&apos;s
+                  verifiable - meaning it does not depend on trusting Encypher&apos;s
                   servers. The signature is embedded in the content itself, verified against
                   the publisher&apos;s own key. Your legal team should treat it as valid
                   documentation of when content was published, who authored it, and what
                   licensing tier it was marked for.
                   <br /><br />
                   The practical path forward is to join the coalition. The formal notice is
-                  resolved as part of the licensing agreement -- the same publisher who sent
+                  resolved as part of the licensing agreement - the same publisher who sent
                   the notice becomes a licensed source. AI companies that resolve notices
                   this way typically complete the process within 60 days.
                 </AccordionContent>
@@ -474,7 +476,7 @@ export default function AiCompaniesPage() {
                 <AccordionContent className="text-muted-foreground leading-relaxed">
                   Verification is a single API call with under 50ms p99 latency at enterprise
                   tier. It can run asynchronously post-inference without blocking the user
-                  response -- you fire the check, return the response, and record the result.
+                  response - you fire the check, return the response, and record the result.
                   For highest throughput, the batch verification endpoint handles up to 10,000
                   documents per request. If you need zero-latency isolation, the C2PA
                   verification logic is available as an open-source library that runs entirely
@@ -488,7 +490,7 @@ export default function AiCompaniesPage() {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
                   The legal landscape is unsettled and active litigation is ongoing. Licensing
-                  is defensible regardless of how copyright law evolves -- it removes the
+                  is defensible regardless of how copyright law evolves - it removes the
                   question entirely. More practically: enterprise customers are now asking
                   about content provenance in security questionnaires. AI companies that can
                   prove they license their content close deals that competitors cannot. The
@@ -504,13 +506,13 @@ export default function AiCompaniesPage() {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
                   robots.txt and noai directives apply at crawl time, on the publisher&apos;s
-                  server. C2PA provenance is embedded in the content itself -- it travels with
+                  server. C2PA provenance is embedded in the content itself - it travels with
                   the text wherever it goes, including content that was already in your training
                   corpus before any crawl directive existed. A publisher who signs their archive
                   retroactively attaches licensing terms to every copy of that content, on any
                   server.
                   <br /><br />
-                  Encypher is not an enforcement mechanism -- it is infrastructure that makes
+                  Encypher is not an enforcement mechanism - it is infrastructure that makes
                   licensing terms machine-readable and verifiable. robots.txt is the crawl
                   signal; C2PA is the content-level signal. Both have a role, but only C2PA
                   works after the content has already left the publisher&apos;s server.
@@ -544,7 +546,7 @@ export default function AiCompaniesPage() {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
                   Encypher&apos;s output watermarking is designed to satisfy Article 52(1)
-                  transparency obligations -- the requirement that AI-generated content be
+                  transparency obligations - the requirement that AI-generated content be
                   detectable as such. The C2PA manifest embedded in each output identifies
                   it as AI-generated, records the generation timestamp, and links to the
                   source model. This is the technical requirement as written.
@@ -564,7 +566,7 @@ export default function AiCompaniesPage() {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed">
                   You can still verify content from publishers who have signed their content
-                  independently -- C2PA is an open standard and any publisher can embed
+                  independently - C2PA is an open standard and any publisher can embed
                   provenance metadata using it. If the content carries a valid C2PA manifest,
                   Encypher can verify it and attribute it to the source, regardless of coalition
                   membership.

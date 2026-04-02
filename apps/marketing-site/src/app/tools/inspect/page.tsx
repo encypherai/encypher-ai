@@ -40,6 +40,16 @@ export default function InspectPage() {
     <div className="min-h-screen bg-background">
       <main className="max-w-6xl mx-auto py-12 px-4">
         <FileInspectorClientWrapper />
+        {/* Related glossary terms */}
+        <div className="mt-8 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted-foreground">Related glossary terms:</span>
+          <Link href="/glossary#c2pa-manifest" className="inline-block rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            C2PA Manifest
+          </Link>
+          <Link href="/glossary#content-provenance" className="inline-block rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Content Provenance
+          </Link>
+        </div>
         <div className="mt-6 text-xs text-muted-foreground text-center">
           <Link href="/tools">← All Tools</Link>
         </div>

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { getSiteUrl } from "@/lib/env";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -198,6 +199,65 @@ export default function ChromeExtensionPage() {
                 <p className="text-muted-foreground">{step.detail}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Screenshots */}
+      <section className="py-20 bg-background border-b border-border">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">See It in Action</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              A visitor sees the verification badge. They click. They see provenance details.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="rounded-xl border border-border overflow-hidden bg-muted/20">
+              <Image
+                src="/assets/screenshots/chrome-extension/screenshot-1-image-verification.png"
+                alt="Encypher Chrome extension verifying an image with C2PA provenance"
+                width={640}
+                height={400}
+                className="w-full h-auto"
+              />
+              <div className="p-4">
+                <p className="text-sm font-medium">Image verification</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  The extension detects a signed image and shows provenance details.
+                </p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border overflow-hidden bg-muted/20">
+              <Image
+                src="/assets/screenshots/chrome-extension/screenshot-4-text-verification.png"
+                alt="Encypher Chrome extension verifying signed text on a webpage"
+                width={640}
+                height={400}
+                className="w-full h-auto"
+              />
+              <div className="p-4">
+                <p className="text-sm font-medium">Text verification</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Signed text is detected automatically. Click the badge to see who signed it and when.
+                </p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-border overflow-hidden bg-muted/20">
+              <Image
+                src="/assets/screenshots/chrome-extension/screenshot-2-context-menu.png"
+                alt="Right-click context menu to verify selected text"
+                width={640}
+                height={400}
+                className="w-full h-auto"
+              />
+              <div className="p-4">
+                <p className="text-sm font-medium">Right-click to verify</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Select any text, right-click, and choose Verify to check provenance on demand.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

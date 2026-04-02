@@ -75,6 +75,24 @@ app.include_router(v1_endpoints.router, prefix="/api/v1/verify", tags=["verifica
 # ---------------------------------------------------------------------------
 
 
+def _sanitize_for_json(obj):
+    """Strip surrogate characters that cannot be encoded to UTF-8.
+
+    Pydantic validation errors echo the raw input, which may contain
+    unpaired surrogates (e.g. truncated variation selectors). Passing
+    those through to JSONResponse.render() raises UnicodeEncodeError.
+    """
+    if isinstance(obj, str):
+        return obj.encode("utf-8", errors="replace").decode("utf-8")
+    if isinstance(obj, dict):
+        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_for_json(item) for item in obj]
+    if isinstance(obj, tuple):
+        return tuple(_sanitize_for_json(item) for item in obj)
+    return obj
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """Return structured 422 with a usage example to guide callers."""
@@ -82,7 +100,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=422,
         content={
             "error": "VALIDATION_ERROR",
-            "detail": exc.errors(),
+            "detail": _sanitize_for_json(exc.errors()),
             "hint": (
                 "Ensure your request body matches the VerifyRequest schema. "
                 "Example: POST /api/v1/verify with body: "

@@ -67,14 +67,34 @@ export function Footer() {
             <h3 className="text-sm font-semibold">Resources</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Blog
+                <Link href="/content-provenance" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Content Provenance
                 </Link>
               </li>
               <li>
-                <a href="https://github.com/encypherai/encypher-ai" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  GitHub
-                </a>
+                <Link href="/c2pa-standard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  C2PA Standard
+                </Link>
+              </li>
+              <li>
+                <Link href="/cryptographic-watermarking" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Cryptographic Watermarking
+                </Link>
+              </li>
+              <li>
+                <Link href="/glossary" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Glossary
+                </Link>
+              </li>
+              <li>
+                <Link href="/compare" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Compare
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Blog
+                </Link>
               </li>
               <li>
                 <a href="https://docs.encypher.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -136,8 +156,13 @@ export function Footer() {
             <h3 className="text-sm font-semibold">Standards</h3>
             <ul className="space-y-2">
               <li>
+                <Link href="/c2pa-standard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  C2PA Guide
+                </Link>
+              </li>
+              <li>
                 <a href="https://c2pa.org" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  C2PA
+                  C2PA (external)
                 </a>
               </li>
               <li>

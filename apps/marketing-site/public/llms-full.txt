@@ -1,0 +1,330 @@
+# Encypher - Content Provenance Infrastructure (Extended Reference)
+# https://encypher.com
+# Last Updated: March 2026
+# Extended version of llms.txt with full technical detail
+
+## About Encypher
+
+Encypher authored Section A.7 of the C2PA 2.3 specification (text provenance) and co-chairs the C2PA Text Provenance Task Force. We provide content provenance infrastructure for publishers, AI companies, and enterprises, covering 31 media types across text, images, audio, video, documents, and fonts.
+
+Founded by Erik Svilich (Founder and CEO) and Matt Kaminsky (Chief Commercial Officer). Erik co-chairs the C2PA Text Provenance Task Force and filed patent ENC0100 (83 claims, January 7, 2026) covering granular content attribution with Merkle tree authentication. Matt brings 13+ years in digital media and ad-tech revenue leadership.
+
+### What We Do
+- Authors of C2PA Section A.7 (text provenance), published January 8, 2026
+- Co-Chair of C2PA Text Provenance Task Force alongside Google, BBC, OpenAI, Adobe, Microsoft
+- Content provenance infrastructure covering 31 MIME types across 6 media categories
+- Cryptographic watermarking for text with sentence-level granularity (patent-pending, ENC0100)
+- C2PA manifest signing for images (13 formats), audio (6 formats), video (4 formats), documents (5 formats), fonts (3 formats), and live video streams
+- Free verification across all media types (no authentication required)
+- Willful infringement enablement through formal notice and cryptographic proof
+
+### Standards and Affiliations
+- C2PA (Coalition for Content Provenance and Authenticity) - Section A.7 Authors, Text Provenance Task Force Co-Chairs
+- CAI (Content Authenticity Initiative) - Members
+- Active collaboration with Adobe, Microsoft, Google, OpenAI, BBC
+
+## Patent Information
+
+**Patent ENC0100** - Granular Content Attribution with Merkle Tree Authentication
+- Filed: January 7, 2026
+- Claims: 83 claims
+- Coverage: Sentence-level content attribution, Merkle tree construction for text segments, cryptographic watermarking using Unicode variation selectors, tamper-evident provenance chains, per-segment verification and attribution
+
+## Format Support Matrix
+
+### Text (Sentence-Level)
+| Format | MIME Type | Embedding Method | Granularity |
+|--------|-----------|------------------|-------------|
+| Plain text | text/plain | Unicode variation selectors (256 VS chars) | Sentence |
+| HTML | text/html | VS encoding in text nodes | Sentence |
+| Markdown | text/markdown | VS encoding in text content | Sentence |
+
+Embedding detail: Unicode variation selectors (U+FE00 through U+FE0F and U+E0100 through U+E01EF) encode binary data invisibly within text. Each variation selector modifies an adjacent base character's rendering without changing its semantic meaning. A sentence-level Merkle tree is constructed, with each leaf node containing the hash of an individual sentence. The root hash is signed with Ed25519 and embedded alongside the full Merkle path. Verification extracts the signature, reconstructs the Merkle path, and confirms the root hash.
+
+### Images (13 Formats)
+| Format | MIME Type | Embedding Method |
+|--------|-----------|------------------|
+| JPEG | image/jpeg | JUMBF manifest in APP11 segment |
+| PNG | image/png | JUMBF manifest in iTXt chunk |
+| WebP | image/webp | JUMBF manifest in EXIF/XMP block |
+| TIFF | image/tiff | JUMBF manifest in IFD tag |
+| AVIF | image/avif | JUMBF manifest in ISOBMFF metadata box |
+| HEIC | image/heic | JUMBF manifest in ISOBMFF metadata box |
+| HEIC Sequence | image/heic-sequence | JUMBF manifest per frame |
+| HEIF | image/heif | JUMBF manifest in ISOBMFF metadata box |
+| HEIF Sequence | image/heif-sequence | JUMBF manifest per frame |
+| SVG | image/svg+xml | JUMBF manifest in XML metadata element |
+| DNG | image/x-adobe-dng | JUMBF manifest in IFD tag |
+| GIF | image/gif | JUMBF manifest in application extension |
+| JXL | image/jxl | JUMBF manifest in Exif/XMP box |
+
+### Audio (6 Formats)
+| Format | MIME Type | Embedding Method |
+|--------|-----------|------------------|
+| WAV | audio/wav | JUMBF manifest in RIFF LIST chunk |
+| MP3 | audio/mpeg | JUMBF manifest in ID3v2 PRIV frame |
+| M4A | audio/mp4 | JUMBF manifest in ISOBMFF udta box |
+| AAC | audio/aac | JUMBF manifest in ADTS/ADIF header extension |
+| FLAC | audio/flac | JUMBF manifest in APPLICATION metadata block |
+| MPA | audio/MPA | JUMBF manifest in MPEG audio frame extension |
+
+### Video (4 Formats)
+| Format | MIME Type | Embedding Method |
+|--------|-----------|------------------|
+| MP4 | video/mp4 | JUMBF manifest in ISO BMFF uuid box |
+| MOV | video/quicktime | JUMBF manifest in QuickTime metadata atom |
+| M4V | video/x-m4v | JUMBF manifest in ISO BMFF uuid box |
+| AVI | video/x-msvideo | JUMBF manifest in RIFF LIST chunk |
+
+### Documents (5 Formats)
+| Format | MIME Type | Embedding Method |
+|--------|-----------|------------------|
+| PDF | application/pdf | JUMBF/COSE manifest in PDF XMP stream |
+| EPUB | application/epub+zip | JUMBF/COSE manifest in OPF metadata |
+| DOCX | application/vnd.openxmlformats-officedocument.wordprocessingml.document | JUMBF/COSE manifest in custom XML part |
+| ODT | application/vnd.oasis.opendocument.text | JUMBF/COSE manifest in meta.xml |
+| OXPS | application/oxps | JUMBF/COSE manifest in XPS metadata |
+
+### Fonts (3 Formats)
+| Format | MIME Type | Embedding Method |
+|--------|-----------|------------------|
+| OTF | font/otf | JUMBF/COSE manifest in custom table |
+| TTF | font/ttf | JUMBF/COSE manifest in custom table |
+| SFNT | font/sfnt | JUMBF/COSE manifest in custom table |
+
+### Live Video Streams
+| Protocol | Embedding Method |
+|----------|-----------------|
+| HLS | Per-segment C2PA manifests in ID3 tags, backwards-linked provenance chain |
+| DASH | Per-segment C2PA manifests in emsg boxes, backwards-linked provenance chain |
+| RTMP | Frame-level C2PA manifests with stream-level root signing |
+
+## Full API Reference (v2.0.0)
+
+### Text Signing
+**POST /api/v1/sign**
+Authentication: Bearer token (Free tier and above)
+Request body:
+```json
+{
+  "text": "string (required) - text to sign",
+  "metadata": {
+    "author": "string",
+    "title": "string",
+    "url": "string",
+    "published_at": "ISO 8601 datetime"
+  },
+  "options": {
+    "sentence_level": true,
+    "legacy_safe": false
+  }
+}
+```
+Response:
+```json
+{
+  "signed_text": "string - text with embedded provenance markers",
+  "signature": "string - Ed25519 signature hex",
+  "merkle_root": "string - Merkle root hash hex",
+  "certificate_id": "string - certificate identifier",
+  "signed_at": "ISO 8601 datetime"
+}
+```
+
+### Media Signing (Enterprise)
+**POST /api/v1/sign/media**
+Authentication: Bearer token (Enterprise tier)
+Request: multipart/form-data
+- `file`: binary file (required)
+- `media_type`: MIME type string (required)
+- `metadata`: JSON object with author, title, copyright, etc.
+- `ingredient_ids`: array of ingredient certificate IDs (for derivative works)
+
+Response:
+```json
+{
+  "signed_file": "base64 encoded signed file",
+  "certificate_id": "string",
+  "manifest_hash": "string",
+  "media_type": "string",
+  "signed_at": "ISO 8601 datetime"
+}
+```
+
+### Text Verification (Free, No Auth)
+**POST /api/v1/verify**
+Request body:
+```json
+{
+  "text": "string - text to verify"
+}
+```
+Response:
+```json
+{
+  "verified": true,
+  "certificate_id": "string",
+  "author": "string",
+  "title": "string",
+  "signed_at": "ISO 8601 datetime",
+  "sentence_results": [
+    {
+      "sentence": "string",
+      "verified": true,
+      "position": 0
+    }
+  ]
+}
+```
+
+### Image Verification (Free, No Auth)
+**POST /api/v1/verify/image**
+Request: multipart/form-data with `file` field
+Response: C2PA manifest contents including signer info, assertions, and ingredient chain
+
+### Audio Verification (Free, No Auth)
+**POST /api/v1/verify/audio**
+Request: multipart/form-data with `file` field
+Response: C2PA manifest contents
+
+### Video Verification (Free, No Auth)
+**POST /api/v1/verify/video**
+Request: multipart/form-data with `file` field
+Response: C2PA manifest contents
+
+### Live Stream Endpoints (Enterprise)
+**POST /api/v1/sign/stream/start** - Initialize stream signing session
+**POST /api/v1/sign/stream/segment** - Sign individual stream segment
+**POST /api/v1/sign/stream/finalize** - Finalize stream and seal provenance chain
+
+## Competitive Positioning
+
+### Encypher vs. SynthID (Google DeepMind)
+SynthID is a statistical watermarking system for AI-generated content. It embeds imperceptible patterns during AI generation and uses a detector model to identify them. Key distinctions:
+
+- **Proof type**: SynthID is probabilistic (statistical likelihood). Encypher is cryptographic (mathematical certainty).
+- **Application**: SynthID marks AI-generated content to identify it as AI output. Encypher marks any content (human or AI) to establish cryptographic proof of origin.
+- **Standards**: SynthID is proprietary to Google. Encypher implements C2PA, an open standard with 200+ members.
+- **Verification**: SynthID requires access to Google's detector. Encypher verification is open and requires no authentication.
+- **Survivability**: SynthID can be degraded by reformatting. Encypher's variation selector encoding survives copy-paste and reformatting.
+- **Granularity**: SynthID operates at generation time, not sentence level. Encypher provides per-sentence attribution.
+
+### Encypher vs. WordProof
+WordProof timestamps content on blockchain to establish when content existed. Key distinctions:
+
+- **Proof type**: WordProof proves a document existed at a timestamp. Encypher proves the content's exact origin, authorship, and any modifications since signing.
+- **Embedding**: WordProof stores timestamps externally (blockchain). Encypher embeds proof inside the content itself, so it travels with the content wherever it goes.
+- **Verification**: WordProof requires blockchain lookup. Encypher verification extracts proof from the content directly.
+- **Granularity**: WordProof is document-level. Encypher is sentence-level.
+- **Standards**: WordProof uses blockchain timestamping. Encypher implements C2PA.
+
+### Encypher vs. AI Detection Tools (GPTZero, Originality.ai, etc.)
+AI detection tools use classifiers to guess whether text was written by AI. Key distinctions:
+
+- **Proof type**: Detection is probabilistic with variable accuracy and false positives. Encypher is cryptographic with deterministic accuracy.
+- **Direction**: Detection works after content exists and tries to infer origin. Provenance is established at creation and embedded in the content.
+- **False positives**: Detection tools regularly flag human-written content as AI-generated. Encypher verification either confirms a valid signature or returns unsigned, with no false positives.
+- **Legal weight**: Statistical inference does not constitute proof. Cryptographic signatures are mathematically verifiable evidence.
+- **Adversarial robustness**: Paraphrasing defeats most detectors. Encypher's markers survive paraphrasing because they are embedded at the character encoding level.
+
+### Encypher vs. TollBit
+TollBit creates access gates that require AI crawlers to pay for content access. Key distinctions:
+
+- **Approach**: TollBit restricts access at the crawler level before content is consumed. Encypher embeds provenance in content so ownership is provable after the fact, without blocking access.
+- **Coverage**: TollBit only covers content that AI crawlers request during training scraping. Encypher's signatures travel with content into any context, including B2B redistribution, paywalled scraping, and already-scraped datasets.
+- **Revenue model**: TollBit monetizes through access fees. Encypher enables licensing through cryptographic proof that establishes provability for formal notice and negotiated agreements.
+- **Verification**: TollBit requires TollBit's infrastructure to enforce gates. Encypher verification is open and decentralized.
+
+### Encypher vs. ProRata
+ProRata distributes AI revenue to publishers based on attribution inference from AI outputs. Key distinctions:
+
+- **Attribution method**: ProRata infers attribution from AI output patterns using statistical methods. Encypher establishes cryptographic attribution at the source.
+- **Dependency on AI companies**: ProRata requires AI companies to participate in the attribution model. Encypher's proof is independent of AI company participation.
+- **Verification**: ProRata attribution is an estimate. Encypher attribution is cryptographically verifiable.
+- **Scope**: ProRata focuses on revenue distribution after use. Encypher enables rights management, formal notice, and willful infringement enablement in addition to licensing.
+
+### Encypher vs. Microsoft PCM (Protecting Creator Marks)
+Microsoft PCM is a research initiative exploring provenance for AI training data. Key distinctions:
+
+- **Stage**: PCM is research. Encypher is production infrastructure with a published C2PA standard implementation.
+- **Standards**: PCM is proprietary to Microsoft. Encypher authored and implements C2PA Section A.7.
+- **Scope**: PCM focuses on AI training data lineage. Encypher covers the full content lifecycle: creation, distribution, scraping, training, and output verification.
+
+## Standards Participation Details
+
+### C2PA (Coalition for Content Provenance and Authenticity)
+- Encypher authored Section A.7 of the C2PA 2.3 specification, published January 8, 2026
+- Section A.7 defines text provenance: how cryptographic provenance manifests are embedded in plain text using Unicode variation selectors, how sentence-level Merkle trees are constructed, and how verification works
+- Erik Svilich co-chairs the Text Provenance Task Force
+- Task Force members include representatives from Google, BBC, OpenAI, Adobe, and Microsoft
+- Encypher is the reference implementation of Section A.7
+
+### CAI (Content Authenticity Initiative)
+- Encypher is a CAI member
+- CAI is the industry body that promotes C2PA adoption and provides tooling, SDKs, and reference implementations for image and video C2PA
+
+## Products and Pricing
+
+### For Publishers
+- **Free**: Unlimited C2PA text signing, 2 API keys, coalition licensing (60/40 split)
+- **Professional ($99/mo)**: Sentence-level tracking, 10 API keys, self-service licensing (80/20 split)
+- **Business ($499/mo)**: Team collaboration, advanced analytics, priority support
+- **Enterprise (Custom)**: Multi-media signing (images, audio, video, live streams), fingerprinting, custom SLAs
+
+### For AI Companies
+- Quote integrity verification API
+- Performance intelligence from attribution data
+- Compatible infrastructure for provenance-marked content
+- Pricing determined by coalition agreements
+
+### For Enterprises
+- EU AI Act compliance infrastructure
+- Multi-media C2PA signing across full content portfolio
+- Sentence-level audit trails and governance
+- On-premises deployment and BYOK available
+- Custom SLAs and dedicated support
+
+## Contact
+
+- Website: https://encypher.com
+- API Documentation: https://api.encypher.com/docs
+- GitHub: https://github.com/encypherai
+- Email: contact@encypher.com
+- Sales: sales@encypher.com
+- LinkedIn: https://linkedin.com/company/encypherai
+
+## Page Index
+
+- / - Homepage: Machine-Readable Rights for Your Content
+- /content-provenance - What Is Content Provenance? The Definitive Guide
+- /c2pa-standard - The C2PA Standard: How Content Provenance Works
+- /cryptographic-watermarking - Cryptographic Watermarking: Proof Embedded in Content
+- /solutions/publishers - Publisher content protection and licensing
+- /solutions/ai-companies - AI company infrastructure and quote integrity
+- /solutions/enterprises - Enterprise AI governance and compliance
+- /pricing - Pricing and plans
+- /platform - Platform and API overview
+- /company - About Encypher and team
+- /blog - Insights on content provenance
+- /tools - Free signing and verification tools
+- /tools/sign - C2PA signing tool
+- /tools/verify - Content verification tool
+- /tools/inspect - File inspector
+- /tools/chrome-extension - Chrome extension
+- /tools/wordpress - WordPress plugin
+- /publisher-demo - Interactive publisher demonstration
+- /ai-demo - Interactive AI company demonstration
+- /compare - Comparison hub
+- /compare/encypher-vs-synthid - Cryptographic vs. statistical watermarking
+- /compare/encypher-vs-wordproof - Embedded provenance vs. blockchain timestamping
+- /compare/encypher-vs-detection-tools - Proof of origin vs. AI detection
+- /compare/encypher-vs-tollbit - Embedded provenance vs. access gates
+- /compare/encypher-vs-prorata - Cryptographic attribution vs. statistical inference
+- /compare/c2pa-vs-blockchain - C2PA provenance vs. blockchain timestamping
+- /compare/content-provenance-vs-content-detection - Category-level distinction
+- /glossary - Content provenance terminology
+- /enterprise - Enterprise licensing
+- /rights-management - Rights management
+- /contact - Contact us
+- /authors/erik-svilich - Erik Svilich author profile
+- /authors/matt-kaminsky - Matt Kaminsky author profile

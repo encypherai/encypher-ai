@@ -50,7 +50,7 @@
       height: calc(100vh - 2rem);
       position: relative;
     }
-    
+
     .article-container::after {
       content: '';
       position: absolute;
@@ -61,7 +61,7 @@
       background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.95));
       pointer-events: none;
     }
-    
+
     @media (min-width: 640px) {
       .article-container {
         padding: 2rem;
@@ -73,7 +73,7 @@
       padding-bottom: 0.75rem;
       margin-bottom: 1.25rem;
     }
-    
+
     @media (max-width: 768px) {
       .header {
         padding-bottom: 0.5rem;
@@ -90,7 +90,7 @@
       letter-spacing: 1px;
       line-height: 1.2;
     }
-    
+
     @media (min-width: 640px) {
       .publication-name {
         font-size: 2.5rem;
@@ -107,7 +107,7 @@
       letter-spacing: 0.5px;
       line-height: 1.2;
     }
-    
+
     @media (min-width: 640px) {
       .tagline {
         font-size: 0.75rem;
@@ -143,18 +143,18 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }
-    
+
     @media (min-width: 640px) {
       .encypher-seal {
         width: 48px;
         height: 48px;
       }
-      
+
       .verified-text {
         font-size: 1.05rem;
       }
     }
-    
+
     .meta-row {
       display: flex;
       align-items: center;
@@ -162,7 +162,7 @@
       gap: 1rem;
       flex-wrap: wrap;
     }
-    
+
     .meta-info {
       display: flex;
       flex-direction: column;
@@ -183,7 +183,7 @@
     .article-meta {
       margin-bottom: 1.25rem;
     }
-    
+
     @media (max-width: 768px) {
       .article-meta {
         margin-bottom: 0.875rem;
@@ -197,7 +197,7 @@
       margin-bottom: 0.75rem;
       color: #000;
     }
-    
+
     @media (max-width: 768px) {
       .article-title {
         font-size: 1.35rem;
@@ -213,7 +213,7 @@
       margin-bottom: 1.5rem;
       font-weight: normal;
     }
-    
+
     @media (max-width: 768px) {
       .article-subtitle {
         font-size: 0.875rem;
@@ -228,7 +228,7 @@
       color: #666;
       margin-bottom: 0.25rem;
     }
-    
+
     @media (max-width: 768px) {
       .byline {
         font-size: 0.7rem;
@@ -241,7 +241,7 @@
       font-size: 0.7rem;
       color: #999;
     }
-    
+
     @media (max-width: 768px) {
       .date-reading-time {
         font-size: 0.625rem;
@@ -277,11 +277,11 @@
       left: 0;
       width: 100%;
       height: 4px;
-      background: linear-gradient(90deg, 
-        transparent 0%, 
-        rgba(0, 102, 255, 0.3) 25%, 
-        rgba(0, 102, 255, 0.8) 50%, 
-        rgba(0, 102, 255, 0.3) 75%, 
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(0, 102, 255, 0.3) 25%,
+        rgba(0, 102, 255, 0.8) 50%,
+        rgba(0, 102, 255, 0.3) 75%,
         transparent 100%);
       box-shadow: 0 0 20px rgba(0, 102, 255, 0.6);
       display: none;
@@ -320,7 +320,7 @@
         font-size: 0.9rem;
         line-height: 1.65;
       }
-      
+
       .article-body p {
         margin-bottom: 0.875rem;
       }
@@ -329,11 +329,11 @@
 </head>
 <body>
   <div class="scanner-overlay" id="scanner"></div>
-  
+
   <div class="sample-banner">
     SAMPLE ARTICLE
   </div>
-  
+
   <div class="article-container">
     <header class="header">
       <h1 class="publication-name">The Encypher Times</h1>
@@ -387,7 +387,7 @@
       </div>
 
       <div class="about-author">
-        <strong>About the Author:</strong> Erik Svilich is the CEO of Encypher, the company that authored the C2PA text standard and provides the core infrastructure for AI content authentication and licensing.
+        <strong>About the Author:</strong> Erik Svilich is the CEO of Encypher, which authored Section A.7 of the C2PA 2.3 specification (text provenance) and provides the core infrastructure for AI content authentication and licensing.
       </div>
     </article>
   </div>

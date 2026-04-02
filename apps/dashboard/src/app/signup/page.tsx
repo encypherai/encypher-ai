@@ -127,6 +127,7 @@ function SignupPageContent() {
           email: rawEmail,
           password: rawPassword,
           turnstileToken,
+          ...(source ? { signup_source: source } : {}),
         }),
       });
 
@@ -210,8 +211,14 @@ function SignupPageContent() {
           </Link>
 
           <div>
-            <h1 className="text-2xl font-bold text-card-foreground mb-1">Create your account</h1>
-            <p className="text-sm text-muted-foreground">Sign up for Encypher and unlock secure, metadata-powered AI workflows.</p>
+            <h1 className="text-2xl font-bold text-card-foreground mb-1">
+              {source === 'wordpress' ? 'Connect Encypher to WordPress' : 'Create your account'}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {source === 'wordpress'
+                ? 'Create your account to get an API key for the WordPress plugin.'
+                : 'Sign up for Encypher and unlock secure, metadata-powered AI workflows.'}
+            </p>
           </div>
 
           <div className="flex flex-row gap-3 w-full">
