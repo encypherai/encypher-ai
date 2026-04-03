@@ -27,22 +27,6 @@ def generate_preview_html() -> str:
 
     # Sample data for each template
     templates = {
-        "Organization Invitation": {
-            "template": "invitation.html",
-            "context": {
-                "subject": "You're invited to join Encypher Editorial on Encypher",
-                "greeting_name": "Erik",
-                "inviter_display": "Test User (test.user@encypherai.com)",
-                "organization_name": "Encypher Editorial",
-                "role": "Owner",
-                "tier": "enterprise",
-                "tier_label": "Enterprise",
-                "trial_months": 2,
-                "message": "We've set up your workspace so you can generate credentials, validate your signing flow, and configure rollout settings with the team.",
-                "invitation_url": "https://dashboard.encypherai.com/invite/example-invite-token",
-                "expires_at_label": "March 24, 2026 at 5:00 PM UTC",
-            },
-        },
         "Email Verification": {
             "template": "email_verification.html",
             "context": {
@@ -93,36 +77,36 @@ def generate_preview_html() -> str:
             padding: 0;
             box-sizing: border-box;
         }}
-
+        
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1b2f50 0%, #2a87c4 100%);
             min-height: 100vh;
             padding: 40px 20px;
         }}
-
+        
         .container {{
             max-width: 1400px;
             margin: 0 auto;
         }}
-
+        
         .header {{
             text-align: center;
             color: white;
             margin-bottom: 40px;
         }}
-
+        
         .header h1 {{
             font-size: 36px;
             font-weight: 600;
             margin-bottom: 12px;
         }}
-
+        
         .header p {{
             font-size: 16px;
             opacity: 0.9;
         }}
-
+        
         .nav {{
             background: white;
             border-radius: 12px;
@@ -130,19 +114,19 @@ def generate_preview_html() -> str:
             margin-bottom: 30px;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
         }}
-
+        
         .nav h2 {{
             font-size: 18px;
             color: #1b2f50;
             margin-bottom: 16px;
         }}
-
+        
         .nav-links {{
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
         }}
-
+        
         .nav-links a {{
             display: inline-block;
             padding: 10px 20px;
@@ -154,13 +138,13 @@ def generate_preview_html() -> str:
             transition: all 0.2s;
             border: 2px solid transparent;
         }}
-
+        
         .nav-links a:hover {{
             background: #2a87c4;
             color: white;
             transform: translateY(-2px);
         }}
-
+        
         .template-section {{
             background: white;
             border-radius: 12px;
@@ -168,7 +152,7 @@ def generate_preview_html() -> str:
             margin-bottom: 30px;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
         }}
-
+        
         .template-header {{
             display: flex;
             justify-content: space-between;
@@ -177,39 +161,39 @@ def generate_preview_html() -> str:
             padding-bottom: 16px;
             border-bottom: 2px solid #e2e8f0;
         }}
-
+        
         .template-header h2 {{
             font-size: 24px;
             color: #1b2f50;
         }}
-
+        
         .template-meta {{
             display: flex;
             gap: 16px;
             font-size: 14px;
             color: #64748b;
         }}
-
+        
         .template-meta span {{
             padding: 6px 12px;
             background: #f8fafc;
             border-radius: 6px;
         }}
-
+        
         .template-preview {{
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             overflow: hidden;
             background: #f4f7fa;
         }}
-
+        
         .template-preview iframe {{
             width: 100%;
             min-height: 600px;
             border: none;
             display: block;
         }}
-
+        
         .brand-check {{
             background: #f8fafc;
             border-left: 4px solid #2a87c4;
@@ -217,30 +201,30 @@ def generate_preview_html() -> str:
             margin-top: 20px;
             border-radius: 4px;
         }}
-
+        
         .brand-check h3 {{
             font-size: 14px;
             color: #1b2f50;
             margin-bottom: 8px;
         }}
-
+        
         .brand-check ul {{
             list-style: none;
             font-size: 13px;
             color: #64748b;
         }}
-
+        
         .brand-check li {{
             padding: 4px 0;
         }}
-
+        
         .brand-check li::before {{
             content: "✓ ";
             color: #2a87c4;
             font-weight: bold;
             margin-right: 8px;
         }}
-
+        
         .footer {{
             text-align: center;
             color: white;
@@ -256,7 +240,7 @@ def generate_preview_html() -> str:
             <h1>📧 Email Templates Preview</h1>
             <p>Generated on {datetime.now().strftime("%B %d, %Y at %I:%M %p")}</p>
         </div>
-
+        
         <div class="nav">
             <h2>Quick Navigation</h2>
             <div class="nav-links">
@@ -284,11 +268,11 @@ def generate_preview_html() -> str:
                     <span>🎨 Brand Colors</span>
                 </div>
             </div>
-
+            
             <div class="template-preview">
                 <iframe srcdoc="{html.replace('"', "&quot;")}"></iframe>
             </div>
-
+            
             <div class="brand-check">
                 <h3>Brand Alignment Checklist:</h3>
                 <ul>

@@ -28,7 +28,7 @@ import logging
 import os
 import sys
 import time
-from typing import Any, Optional
+from typing import Optional
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ def check_database_connection(database_url: str, max_retries: int = 15, retry_de
             raise ValueError(f"Unsupported database scheme: {parsed.scheme}")
     except Exception as e:
         raise DatabaseStartupError(
-            f"[{service_name}] Invalid DATABASE_URL format: {e}. URL should be: postgresql://db.example.invalid:5432/appdb"
+            f"[{service_name}] Invalid DATABASE_URL format: {e}. URL should be: postgresql://user:pass@host:port/dbname"
         ) from e
 
     # Try to connect
@@ -188,52 +188,6 @@ def run_migrations_if_needed(
         raise DatabaseStartupError(f"[{service_name}] Migration failed: {e}") from e
 
 
-def validate_database_schema(database_url: str, model_metadata: Any, service_name: str = "service") -> bool:
-    """Validate that the live database schema contains all tables/columns from SQLAlchemy metadata."""
-    if model_metadata is None:
-        return True
-
-    try:
-        from sqlalchemy import create_engine, inspect
-    except ImportError as e:
-        raise DatabaseStartupError(f"[{service_name}] SQLAlchemy is required for schema validation.") from e
-
-    missing_tables = []
-    missing_columns = {}
-    engine = create_engine(database_url, pool_pre_ping=True)
-
-    try:
-        inspector = inspect(engine)
-        existing_tables = set(inspector.get_table_names())
-
-        for table in model_metadata.sorted_tables:
-            table_name = table.name
-            if table_name not in existing_tables:
-                missing_tables.append(table_name)
-                continue
-
-            existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
-            expected_columns = {column.name for column in table.columns}
-            missing_for_table = sorted(expected_columns - existing_columns)
-            if missing_for_table:
-                missing_columns[table_name] = missing_for_table
-
-        if missing_tables or missing_columns:
-            details = []
-            if missing_tables:
-                details.append(f"missing tables: {', '.join(sorted(missing_tables))}")
-            if missing_columns:
-                details.append(
-                    "missing columns: " + "; ".join(f"{table} -> {', '.join(columns)}" for table, columns in sorted(missing_columns.items()))
-                )
-            raise DatabaseStartupError(f"[{service_name}] Database schema validation failed ({'; '.join(details)})")
-
-        logger.info(f"[{service_name}] ✓ Database schema matches SQLAlchemy metadata")
-        return True
-    finally:
-        engine.dispose()
-
-
 def ensure_database_ready(
     database_url: Optional[str] = None,
     service_name: str = "service",
@@ -241,7 +195,6 @@ def ensure_database_ready(
     max_retries: int = 15,
     retry_delay: float = 3.0,
     run_migrations: bool = True,
-    model_metadata: Any = None,
     exit_on_failure: bool = True,
 ) -> bool:
     """
@@ -257,7 +210,6 @@ def ensure_database_ready(
         max_retries: Maximum number of connection attempts
         retry_delay: Seconds to wait between retries
         run_migrations: If True, run Alembic migrations
-        model_metadata: Optional SQLAlchemy metadata used to validate the live schema after migrations
         exit_on_failure: If True, call sys.exit(1) on failure
 
     Returns:
@@ -278,10 +230,6 @@ def ensure_database_ready(
         # Step 2: Run migrations if requested
         if run_migrations:
             run_migrations_if_needed(alembic_config_path=alembic_config_path, database_url=db_url, service_name=service_name, auto_upgrade=True)
-
-        # Step 3: Validate live schema against expected SQLAlchemy metadata
-        if model_metadata is not None:
-            validate_database_schema(database_url=db_url, model_metadata=model_metadata, service_name=service_name)
 
         logger.info(f"[{service_name}] ✓ Database is ready")
         return True

@@ -33,15 +33,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/encypher_commercial_shared"]
-include = [
-    "src/encypher_commercial_shared/email/templates/*.html",
-]
 
 [tool.hatch.build.targets.sdist]
-include = [
-    "src/encypher_commercial_shared",
-    "src/encypher_commercial_shared/email/templates/*.html",
-]
+include = ["src/encypher_commercial_shared"]
 
 [dependency-groups]
 dev = [

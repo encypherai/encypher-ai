@@ -137,7 +137,7 @@ Go to Dashboard: {dashboard_url}
 
 Need help? Check out our documentation at https://encypherai.com/docs or email support@encypherai.com.
 
-Encipher provides infrastructure for text provenance - cryptographic proof of origin that survives copy-paste and distribution.
+Encypher provides infrastructure for content provenance - cryptographic proof of origin that survives copy-paste and distribution.
 
 - The Encypher Team
 """
