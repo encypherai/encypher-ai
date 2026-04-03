@@ -275,34 +275,34 @@ https://encypherai.com
                             <img src="{LOGO_URL}" alt="Encypher" width="200" style="max-width: 200px; height: auto;">
                         </td>
                     </tr>
-                    
+
                     <!-- Main Content -->
                     <tr>
                         <td style="padding: 40px 30px;">
                             <h2 style="margin: 0 0 8px 0; color: #1b2f50; font-size: 24px; font-weight: 600;">
                                 Hello {name},
                             </h2>
-                            
+
                             <p style="margin: 0 0 24px 0; font-size: 15px; color: #64748b;">
                                 {config["tagline"]}
                             </p>
-                            
+
                             <p style="margin: 0 0 24px 0; color: #1b2f50; font-size: 16px;">
                                 Thank you for your interest. We've received your request and our team will review it shortly.
                             </p>
-                            
+
                             <p style="margin: 0 0 24px 0; color: #1b2f50; font-size: 16px;">
                                 You can expect to hear from us within <strong>24 hours</strong>.
                             </p>
-                            
+
                             <h3 style="margin: 28px 0 12px 0; color: #1b2f50; font-size: 16px; font-weight: 600;">
                                 What happens next?
                             </h3>
-                            
+
                             <ul style="margin: 0 0 28px 0; padding-left: 20px; color: #64748b; font-size: 15px;">
                                 {next_steps_html}
                             </ul>
-                            
+
                             <!-- CTA Buttons -->
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                                 <tr>
@@ -320,14 +320,14 @@ https://encypherai.com
                                     </td>
                                 </tr>
                             </table>
-                            
+
                             <p style="margin: 28px 0 0 0; color: #1b2f50; font-size: 15px;">
                                 Best regards,<br>
                                 <strong>The Encypher Team</strong>
                             </p>
                         </td>
                     </tr>
-                    
+
                     <!-- Footer -->
                     <tr>
                         <td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
@@ -335,7 +335,7 @@ https://encypherai.com
                                 <a href="https://encypherai.com" style="color: #2a87c4; text-decoration: none;">encypherai.com</a>
                             </p>
                             <p style="margin: 0; color: #94a3b8; font-size: 12px;">
-                                &copy; 2025 Encypher Corporation. All rights reserved.
+                                &copy; 2026 Encypher Corporation. All rights reserved.
                             </p>
                         </td>
                     </tr>

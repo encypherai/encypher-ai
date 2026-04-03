@@ -36,7 +36,7 @@ def generate_demo_notification_html() -> str:
     </table>
     <h3 style="margin-top: 20px;">Message:</h3>
     <p style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
-        We're interested in integrating Encypher's AI detection capabilities into our content management platform. 
+        We're interested in integrating Encypher's AI detection capabilities into our content management platform.
         We handle approximately 10,000 articles per day and need a scalable solution.
     </p>
     <p style="color: #666; font-size: 12px; margin-top: 20px;">
@@ -77,34 +77,34 @@ def generate_confirmation_html(
                             <img src="{LOGO_URL}" alt="Encypher" width="200" style="max-width: 200px; height: auto;">
                         </td>
                     </tr>
-                    
+
                     <!-- Main Content -->
                     <tr>
                         <td style="padding: 40px 30px;">
                             <h2 style="margin: 0 0 8px 0; color: #1b2f50; font-size: 24px; font-weight: 600;">
                                 Hello {name},
                             </h2>
-                            
+
                             <p style="margin: 0 0 24px 0; font-size: 15px; color: #64748b;">
                                 {tagline}
                             </p>
-                            
+
                             <p style="margin: 0 0 24px 0; color: #1b2f50; font-size: 16px;">
                                 Thank you for your interest. We've received your request and our team will review it shortly.
                             </p>
-                            
+
                             <p style="margin: 0 0 24px 0; color: #1b2f50; font-size: 16px;">
                                 You can expect to hear from us within <strong>24 hours</strong>.
                             </p>
-                            
+
                             <h3 style="margin: 28px 0 12px 0; color: #1b2f50; font-size: 16px; font-weight: 600;">
                                 What happens next?
                             </h3>
-                            
+
                             <ul style="margin: 0 0 28px 0; padding-left: 20px; color: #64748b; font-size: 15px;">
                                 {next_steps_html}
                             </ul>
-                            
+
                             <!-- CTA Buttons -->
                             <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                                 <tr>
@@ -122,14 +122,14 @@ def generate_confirmation_html(
                                     </td>
                                 </tr>
                             </table>
-                            
+
                             <p style="margin: 28px 0 0 0; color: #1b2f50; font-size: 15px;">
                                 Best regards,<br>
                                 <strong>The Encypher Team</strong>
                             </p>
                         </td>
                     </tr>
-                    
+
                     <!-- Footer -->
                     <tr>
                         <td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
@@ -137,7 +137,7 @@ def generate_confirmation_html(
                                 <a href="https://encypherai.com" style="color: #2a87c4; text-decoration: none;">encypherai.com</a>
                             </p>
                             <p style="margin: 0; color: #94a3b8; font-size: 12px;">
-                                &copy; 2025 Encypher Corporation. All rights reserved.
+                                &copy; 2026 Encypher Corporation. All rights reserved.
                             </p>
                         </td>
                     </tr>
@@ -187,7 +187,7 @@ def generate_publisher_notification_html() -> str:
     </table>
     <h3 style="margin-top: 20px;">Message:</h3>
     <p style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
-        Looking for content protection and attribution solutions for our online publication. 
+        Looking for content protection and attribution solutions for our online publication.
         We publish 500+ articles daily and need to protect our content from unauthorized AI training.
     </p>
     <p style="color: #666; font-size: 12px; margin-top: 20px;">
@@ -235,7 +235,7 @@ def generate_enterprise_notification_html() -> str:
     </table>
     <h3 style="margin-top: 20px;">Message:</h3>
     <p style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
-        We need an enterprise-grade solution for content authentication across our global network. 
+        We need an enterprise-grade solution for content authentication across our global network.
         Looking for API integration, SSO support, and dedicated account management.
     </p>
     <p style="color: #666; font-size: 12px; margin-top: 20px;">
@@ -321,7 +321,7 @@ def generate_index_html(templates: dict[str, str]) -> str:
 <body>
     <h1>📧 Encypher Email Templates</h1>
     <p>Click on any template to preview it in a new tab.</p>
-    
+
     <div class="category">
         <h2>AI Demo Emails</h2>
         <ul class="template-list">
@@ -329,7 +329,7 @@ def generate_index_html(templates: dict[str, str]) -> str:
             <li><a href="ai_demo_confirmation.html" target="_blank">AI Demo - User Confirmation</a></li>
         </ul>
     </div>
-    
+
     <div class="category">
         <h2>Publisher Demo Emails</h2>
         <ul class="template-list">
@@ -337,7 +337,7 @@ def generate_index_html(templates: dict[str, str]) -> str:
             <li><a href="publisher_confirmation.html" target="_blank">Publisher Demo - User Confirmation</a></li>
         </ul>
     </div>
-    
+
     <div class="category">
         <h2>Enterprise Sales Emails</h2>
         <ul class="template-list">
