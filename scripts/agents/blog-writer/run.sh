@@ -463,7 +463,7 @@ ENCYPHER_API_KEY="${ENCYPHER_API_KEY:-${ENYCPHER_API_KEY:-}}"
 if [ -z "$ENCYPHER_API_KEY" ]; then
   log "WARNING: ENCYPHER_API_KEY not set - skipping signing."
 else
-  cd "$REPO_ROOT"
+  cd "$REPO_ROOT_ORIG"
   if uv run python enterprise_api/scripts/sign_blog_posts.py \
       "$NEW_POST_ABS" \
       --api-key "$ENCYPHER_API_KEY" \
@@ -506,6 +506,22 @@ fi
 
 # Clean .next caches so the pre-push build hook doesn't hit permission errors
 (sudo rm -rf "$REPO_ROOT/apps/marketing-site/.next" || rm -rf "$REPO_ROOT/apps/marketing-site/.next") 2>/dev/null
+
+# Symlink node_modules and .venv into the worktree so pre-push hooks
+# (Next.js builds, ruff, pytest) can find dependencies without a full install
+if [ "$REPO_ROOT" != "$REPO_ROOT_ORIG" ]; then
+  for app in marketing-site dashboard ap-demo; do
+    if [ -d "$REPO_ROOT_ORIG/apps/$app/node_modules" ] && [ ! -d "$REPO_ROOT/apps/$app/node_modules" ]; then
+      ln -sfn "$REPO_ROOT_ORIG/apps/$app/node_modules" "$REPO_ROOT/apps/$app/node_modules"
+    fi
+  done
+  if [ -d "$REPO_ROOT_ORIG/.venv" ] && [ ! -d "$REPO_ROOT/.venv" ]; then
+    ln -sfn "$REPO_ROOT_ORIG/.venv" "$REPO_ROOT/.venv"
+  fi
+  if [ -d "$REPO_ROOT_ORIG/node_modules" ] && [ ! -d "$REPO_ROOT/node_modules" ]; then
+    ln -sfn "$REPO_ROOT_ORIG/node_modules" "$REPO_ROOT/node_modules"
+  fi
+fi
 
 git push origin "$BRANCH_NAME"
 
