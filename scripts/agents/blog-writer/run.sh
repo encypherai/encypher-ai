@@ -253,16 +253,26 @@ log "New post: $NEW_POST"
 NEW_POST_ABS="$REPO_ROOT/$NEW_POST"
 
 # =========================================================================
-# Phase 3 -- Sonnet image agent (function, called for initial gen + regen)
+# Phase 3 -- Image generation (function, called for initial gen + regen)
 # =========================================================================
+# Architecture: Sonnet derives SUBTITLE + IMAGE_DESCRIPTION (creative work).
+# Bash does mechanical substitution on a template and runs the Gemini API call.
+# This ensures the full Protocol Modernism system prompt is always byte-for-byte
+# correct - no AI transcription of the 100+ line prompt.
 IMAGE_ABS=""
 IMAGE_REGEN=0
+IMAGE_TEMPLATE="$REPO_ROOT/scripts/agents/blog-writer/generate-image-template.mjs"
 
 generate_image() {
   local feedback="${1:-}"   # optional: feedback from reviewer for regen pass
 
   if [ ! -f "$REPO_ROOT/.env.skills" ]; then
     log "WARNING: .env.skills not found. Skipping image generation."
+    return 0
+  fi
+
+  if [ ! -f "$IMAGE_TEMPLATE" ]; then
+    log "WARNING: Image template not found at $IMAGE_TEMPLATE. Skipping."
     return 0
   fi
 
@@ -283,53 +293,100 @@ generate_image() {
   local full_title
   full_title=$(grep -m1 '^title:' "$NEW_POST_ABS" | sed 's/title:[[:space:]]*//' | tr -d '"')
 
-  log "Phase 3: Sonnet image agent -> $IMAGE_ABS (title: '$full_title')"
+  log "Phase 3: generating image -> $IMAGE_ABS (title: '$full_title')"
 
+  # --- Step 1: Sonnet derives SUBTITLE and IMAGE_DESCRIPTION only ---
   local regen_note=""
   if [ -n "$feedback" ]; then
     regen_note="
 
-IMPORTANT: The previous image was rejected. Here is the reviewer's feedback:
-$feedback
-
-Fix every issue described above. Pay special attention to the title text."
+IMPORTANT: The previous image was rejected by the reviewer. Incorporate this feedback into your IMAGE_DESCRIPTION:
+$feedback"
   fi
 
-  local image_prompt="Read the blog post at $NEW_POST_ABS and the generate-image skill at $REPO_ROOT/.windsurf/workflows/generate-image.md.
+  local DESCRIBE_SCHEMA='{"type":"object","required":["subtitle","image_description"],"properties":{"subtitle":{"type":"string","description":"Blog excerpt truncated to 10-12 words, suitable as image subtitle"},"image_description":{"type":"string","description":"Detailed scene description for Gemini image generation, following the Visual Metaphor Guide"}}}'
 
-Generate a blog-header image for this post:
-1. Read the post frontmatter to get the excerpt (use as subtitle, truncated to ~12 words).
-2. Use this exact title in the image:
-   \"$full_title\"
-3. Derive IMAGE_DESCRIPTION from the Visual Metaphor Guide in the skill doc based on the article topic.
-4. Create the output directory (Linux bash only): mkdir -p $image_dir
-5. Write the generation script to $REPO_ROOT/generate-image-temp.mjs. Substitute ALL placeholders:
-   - TITLE: \"$full_title\"
-   - SUBTITLE: excerpt truncated to ~12 words
-   - IMAGE_DESCRIPTION: from the Visual Metaphor Guide
-   - ASPECT_RATIO: 16:9
-   - IMAGE_SIZE: 2K
-   - LAYOUT_INSTRUCTIONS: blog-header preset from the skill doc
-   - OUTPUT_PATH: $IMAGE_ABS
-   No placeholder text may remain in the script.
-6. Run: node --env-file=$REPO_ROOT/.env.skills $REPO_ROOT/generate-image-temp.mjs
-7. Remove the temp script: rm $REPO_ROOT/generate-image-temp.mjs
-8. Commit: git add $IMAGE_ABS && git commit -m 'feat(blog): add header image $TODAY'
+  local describe_prompt="Read the blog post at $NEW_POST_ABS and the Visual Metaphor Guide in $REPO_ROOT/.windsurf/workflows/generate-image.md (the table under '## Visual Metaphor Guide' and the '## Proven Style' section).
 
-Use Linux bash only. No PowerShell.$regen_note"
+Return a JSON object with two fields:
+1. subtitle: The blog excerpt from frontmatter, truncated to ~10-12 words. Must be a complete thought.
+2. image_description: A detailed scene description for a blog header image. Follow these rules:
+   - Match the article topic to the Visual Metaphor Guide table to select the right scene type.
+   - Prefer the Proven Style (2-3 stage left-to-right pipeline) for any article with a process or mechanism.
+   - Describe specific labeled nodes, arrows, badges, and monospace labels - not abstract concepts.
+   - Use Muted Coral (#E07A5F) badges for problem/failure states, Cyber Teal (#00CED1) for verified states.
+   - Keep to 3-5 visual elements maximum with generous spacing.
+   - The description must be specific to THIS article's thesis, not a generic tech image.
+   - Do NOT include any text styling instructions (font names, colors, sizes) - those are handled by the template.
+$regen_note
 
-  claude -p "$image_prompt" \
-    --allowedTools "Read,Write,Bash(mkdir *),Bash(node *),Bash(rm *),Bash(git add *),Bash(git commit *),Bash(git status *),Bash(ls *)" \
-    --output-format json > /dev/null || {
-    log "WARNING: Image generation failed. Continuing without image."
+Return ONLY the JSON object, no other text."
+
+  local describe_json
+  describe_json=$(claude -p "$describe_prompt" \
+    --allowedTools "Read" \
+    --output-format json \
+    --json-schema "$DESCRIBE_SCHEMA") || {
+    log "WARNING: Image description agent failed. Skipping image generation."
     IMAGE_ABS=""
     return 0
   }
 
+  local describe_data
+  describe_data=$(echo "$describe_json" | jq -r '.structured_output // empty')
+  if [ -z "$describe_data" ]; then
+    log "WARNING: No structured output from describe agent. Skipping image generation."
+    IMAGE_ABS=""
+    return 0
+  fi
+
+  local subtitle
+  subtitle=$(echo "$describe_data" | jq -r '.subtitle // ""')
+  local image_description
+  image_description=$(echo "$describe_data" | jq -r '.image_description // ""')
+
+  if [ -z "$subtitle" ] || [ -z "$image_description" ]; then
+    log "WARNING: Missing subtitle or image_description from agent. Skipping."
+    IMAGE_ABS=""
+    return 0
+  fi
+
+  log "  Subtitle: $subtitle"
+  log "  Image description: ${image_description:0:120}..."
+
+  # --- Step 2: Bash substitutes template and runs Gemini ---
+  mkdir -p "$image_dir"
+
+  # Use awk for substitution to avoid sed delimiter issues with special chars
+  awk -v title="$full_title" \
+      -v subtitle="$subtitle" \
+      -v desc="$image_description" \
+      -v outpath="$IMAGE_ABS" \
+    '{
+      gsub(/__TITLE__/, title)
+      gsub(/__SUBTITLE__/, subtitle)
+      gsub(/__IMAGE_DESCRIPTION__/, desc)
+      gsub(/__OUTPUT_PATH__/, outpath)
+      print
+    }' "$IMAGE_TEMPLATE" > "$REPO_ROOT/generate-image-temp.mjs"
+
+  node --env-file="$REPO_ROOT/.env.skills" "$REPO_ROOT/generate-image-temp.mjs" || {
+    log "WARNING: Gemini image generation failed. Continuing without image."
+    rm -f "$REPO_ROOT/generate-image-temp.mjs"
+    IMAGE_ABS=""
+    return 0
+  }
+
+  rm -f "$REPO_ROOT/generate-image-temp.mjs"
+
   if [ -n "$IMAGE_ABS" ] && [ ! -s "$IMAGE_ABS" ]; then
     log "WARNING: Image file missing or empty after generation."
     IMAGE_ABS=""
+    return 0
   fi
+
+  # --- Step 3: Commit the image ---
+  git add "$IMAGE_ABS" && git commit -m "feat(blog): add header image $TODAY"
 }
 
 generate_image ""
