@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useToast } from '@/components/ui/toastContext';
+import { useToast } from '@encypher/design-system';
 import { signIn as nextAuthSignIn } from 'next-auth/react';
 import { fetchApi } from "../api";
 
@@ -29,7 +29,7 @@ export function useAuth() {
   const [user, setUser] = useState<{ uuid: string; email: string; role: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { showToast } = useToast();
+  const { toast } = useToast();
 
   async function signIn(email: string, password: string) {
     setLoading(true); setError(null);
@@ -43,11 +43,11 @@ export function useAuth() {
       if (!result?.ok) throw new Error(result?.error || 'Sign in failed');
       // Optionally fetch user info from session here
       setUser(null); // Reset user; real user info should be loaded from session
-      showToast('Signed in successfully!', 'success');
+      toast({ title: 'Signed in successfully!', variant: 'success' });
     } catch (e) {
       const err = e as Error;
       setError(err.message);
-      showToast(err.message, 'error');
+      toast({ title: err.message, variant: 'error' });
     } finally {
       setLoading(false);
     }
@@ -57,7 +57,7 @@ export function useAuth() {
     setLoading(true); setError(null);
     if (password !== confirm) {
       setError('Passwords do not match');
-      showToast('Passwords do not match', 'error');
+      toast({ title: 'Passwords do not match', variant: 'error' });
       setLoading(false); return;
     }
     try {
@@ -67,11 +67,11 @@ export function useAuth() {
       }) as AuthResponse;
       if (!res.success) throw new Error(res.error?.message || 'Sign up failed');
       // Do not set user or redirect here; registration requires email verification
-      showToast('Account created! Please verify your email to activate your account.', 'success');
+      toast({ title: 'Account created! Please verify your email to activate your account.', variant: 'success' });
     } catch (e) {
       const err = e as Error;
       setError(err.message);
-      showToast(err.message, 'error');
+      toast({ title: err.message, variant: 'error' });
     } finally {
       setLoading(false);
     }

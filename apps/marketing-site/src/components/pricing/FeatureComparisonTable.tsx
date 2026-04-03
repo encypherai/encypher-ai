@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { Check, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@encypher/design-system';
+import { Badge } from '@encypher/design-system';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 

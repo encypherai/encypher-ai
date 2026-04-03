@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Script from 'next/script';
 import { CheckCircle2, Shield, FileText, Image, Music, Video, BookOpen, ArrowRight, Globe, Lock, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import AISummary from '@/components/seo/AISummary';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import { getPillarMetadata, getTechArticleSchema, siteConfig } from '@/lib/seo';

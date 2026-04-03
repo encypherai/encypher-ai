@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { Input } from '@encypher/design-system';
+import { Label } from '@encypher/design-system';
+import { Button } from '@encypher/design-system';
 import { useSession } from 'next-auth/react';
 import { fetchApi } from '@/lib/api';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@encypher/design-system';
 import { useSearchParams } from 'next/navigation';
 
 /**

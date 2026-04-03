@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import Image from 'next/image';
 import { AnimatePresence } from 'framer-motion';
 import { ArrowRight, FileText, Bot, Building2 } from 'lucide-react';

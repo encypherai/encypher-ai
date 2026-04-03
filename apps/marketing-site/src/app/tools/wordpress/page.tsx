@@ -3,9 +3,9 @@ import { Metadata } from "next";
 import { getSiteUrl } from "@/lib/env";
 import Link from "next/link";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@encypher/design-system";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@encypher/design-system";
+import { Badge } from "@encypher/design-system";
 import { CheckCircle, Shield, Zap, Users, FileText, BarChart3, Lock, Globe, ArrowRight, Download } from "lucide-react";
 import AISummary from "@/components/seo/AISummary";
 

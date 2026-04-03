@@ -20,10 +20,10 @@ import {
 } from 'lucide-react';
 
 // UI Components
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@encypher/design-system';
+import { Button } from '@encypher/design-system';
+import { Skeleton } from '@encypher/design-system';
+import { useToast } from '@encypher/design-system';
 
 // API
 import { getInvestorAccessStats, getInvestorAccessRecords, InvestorAccessRecord } from '@/lib/admin-api';
@@ -32,7 +32,7 @@ export default function AdminDashboardPage() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const { toast } = useToast();
-  
+
   // State
   const [loading, setLoading] = useState<boolean>(true);
   const [stats, setStats] = useState<{
@@ -51,17 +51,17 @@ export default function AdminDashboardPage() {
     expired: 0,
   });
   const [recentRequests, setRecentRequests] = useState<InvestorAccessRecord[]>([]);
-  
+
   // Fetch dashboard stats
   const fetchDashboardStats = useCallback(async () => {
     if (sessionStatus !== 'authenticated' || !session?.accessToken) return;
-    
+
     setLoading(true);
     try {
       // Fetch stats
       const statsData = await getInvestorAccessStats(session.accessToken);
       setStats(statsData);
-      
+
       // Fetch recent requests
       const recentData = await getInvestorAccessRecords(
         session.accessToken,
@@ -81,30 +81,30 @@ export default function AdminDashboardPage() {
       setLoading(false);
     }
   }, [session, sessionStatus, toast]);
-  
+
   // Effect to fetch data when dependencies change
   useEffect(() => {
     if (sessionStatus === 'authenticated') {
       fetchDashboardStats();
     }
   }, [sessionStatus, fetchDashboardStats]);
-  
+
   // Redirect if not authenticated
   if (sessionStatus === 'unauthenticated') {
     router.push('/auth/signin?callbackUrl=/admin/dashboard');
     return null;
   }
-  
+
   // Calculate approval rate
   const approvalRate = stats.total > 0
     ? Math.round((stats.active / stats.total) * 100)
     : 0;
-  
+
   // Calculate rejection rate
   const rejectionRate = stats.total > 0
     ? Math.round((stats.rejected / stats.total) * 100)
     : 0;
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -126,7 +126,7 @@ export default function AdminDashboardPage() {
           </Button>
         </div>
       </div>
-      
+
       {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -145,7 +145,7 @@ export default function AdminDashboardPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
@@ -162,7 +162,7 @@ export default function AdminDashboardPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Investors</CardTitle>
@@ -179,7 +179,7 @@ export default function AdminDashboardPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rejected Requests</CardTitle>
@@ -197,7 +197,7 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
@@ -223,7 +223,7 @@ export default function AdminDashboardPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rejection Rate</CardTitle>
@@ -247,7 +247,7 @@ export default function AdminDashboardPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Other Statuses</CardTitle>
@@ -267,7 +267,7 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Recent Requests */}
       <Card>
         <CardHeader>

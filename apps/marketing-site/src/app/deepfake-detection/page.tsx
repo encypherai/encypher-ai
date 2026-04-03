@@ -1,6 +1,6 @@
 import React from "react";
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import Image from 'next/image';
 import { ArrowRight, Eye, Shield, Zap, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import MetadataBackground from '@/components/hero/MetadataBackground';

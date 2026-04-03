@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encypher Verify v2.0.0 - Store Asset Preview</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #1a1a1a; line-height: 1.6; }
+  .header { background: linear-gradient(135deg, #1B2F50, #2A87C4); color: white; padding: 32px 48px; }
+  .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .header p { font-size: 14px; opacity: 0.8; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px; }
+  .section { margin-bottom: 48px; }
+  .section h2 { font-size: 20px; font-weight: 700; color: #1B2F50; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #2A87C4; }
+  .asset-card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .asset-card h3 { font-size: 16px; font-weight: 600; color: #1B2F50; margin-bottom: 4px; }
+  .asset-filename { font-size: 12px; color: #6b7280; font-family: monospace; margin-bottom: 12px; }
+  .asset-card img { max-width: 100%; border: 1px solid #e5e7eb; border-radius: 4px; }
+  .store-copy { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 14px; line-height: 1.8; white-space: pre-line; }
+  .store-copy strong { color: #1B2F50; }
+  .checklist { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .checklist li { font-size: 14px; padding: 4px 0; list-style: none; }
+  .checklist li::before { content: '[ ] '; font-family: monospace; color: #6b7280; }
+  .tag { display: inline-block; background: #2A87C415; color: #2A87C4; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 4px; margin: 2px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Encypher Verify v2.0.0 - Store Submission Preview</h1>
+  <p>Review all assets and store copy before Chrome Web Store submission</p>
+</div>
+<div class="container">
+  <div class="section">
+    <h2>Store Metadata</h2>
+    <div class="store-copy">
+<strong>Name:</strong> Encypher Verify
+<strong>Short Description (132 chars):</strong> Verify provenance for any text, image, audio, or video on the web. Powered by C2PA - cryptographic proof of origin, free for all.
+<strong>Category:</strong> Productivity / News &amp; Weather
+<strong>Tags:</strong> <span class="tag">C2PA</span> <span class="tag">content authenticity</span> <span class="tag">media provenance</span> <span class="tag">verification</span> <span class="tag">proof of origin</span>
+<strong>Version:</strong> 2.0.0
+<strong>Privacy Policy:</strong> https://encypher.com/privacy
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Promotional Images</h2>
+
+    <div class="asset-card">
+      <h3>Image Verification Badge (1280x800)</h3>
+      <div class="asset-filename">screenshot-1-image-verification-badge.png</div>
+      <img src="screenshot-1-image-verification-badge.png" alt="Image Verification Badge" />
+    </div>
+
+    <div class="asset-card">
+      <h3>Context Menu - Media Verification (1280x800)</h3>
+      <div class="asset-filename">screenshot-2-context-menu-media.png</div>
+      <img src="screenshot-2-context-menu-media.png" alt="Context Menu - Media Verification" />
+    </div>
+
+    <div class="asset-card">
+      <h3>Popup - Media on Page (1280x800)</h3>
+      <div class="asset-filename">screenshot-3-popup-media-section.png</div>
+      <img src="screenshot-3-popup-media-section.png" alt="Popup - Media on Page" />
+    </div>
+
+    <div class="asset-card">
+      <h3>Text Verification Badge (1280x800)</h3>
+      <div class="asset-filename">screenshot-4-text-verification-badge.png</div>
+      <img src="screenshot-4-text-verification-badge.png" alt="Text Verification Badge" />
+    </div>
+
+    <div class="asset-card">
+      <h3>Options - Auto-Scan Toggle (1280x800)</h3>
+      <div class="asset-filename">screenshot-5-options-auto-scan.png</div>
+      <img src="screenshot-5-options-auto-scan.png" alt="Options - Auto-Scan Toggle" />
+    </div>
+
+    <div class="asset-card">
+      <h3>Small Promo Tile (440x280)</h3>
+      <div class="asset-filename">promo-small-440x280.png</div>
+      <img src="promo-small-440x280.png" alt="Small Promo Tile" />
+    </div>
+
+    <div class="asset-card">
+      <h3>Large Promo Tile (920x680)</h3>
+      <div class="asset-filename">promo-large-920x680.png</div>
+      <img src="promo-large-920x680.png" alt="Large Promo Tile" />
+    </div>
+
+    <div class="asset-card">
+      <h3>Marquee Promo Tile (1400x560)</h3>
+      <div class="asset-filename">promo-marquee-1400x560.png</div>
+      <img src="promo-marquee-1400x560.png" alt="Marquee Promo Tile" />
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Detailed Description</h2>
+    <div class="store-copy"><strong>Verify Provenance Across Text, Images, Audio, and Video - Free, No Account Required.</strong>
+
+Every day, content moves across the web without proof of who made it. Encypher Verify brings cryptographic provenance to your browser. Powered by the C2PA standard, it detects and verifies proof of origin in text, images, audio, and video on any website - instantly, at no cost.
+
+Version 2.0 expands far beyond text. Right-click any image, audio element, or video to verify its provenance. Automatic C2PA scanning detects signed images as you browse, with no action required. A new "Media on page" section in the popup shows every detected media element and its verification status at a glance.
+
+<strong>What you can verify:</strong>
+- Text: Detects invisible cryptographic watermarks (C2PA text manifests, zero-width character embeddings) on any webpage. Inline badges show verification status directly in the page.
+- Images: Right-click any image to verify C2PA provenance. Automatic background scanning detects signed images via lightweight header inspection (first 4KB only). Verified images get a floating badge overlay.
+- Audio: Right-click any audio element to verify. Supports files up to 50MB. No authentication required.
+- Video: Right-click any video element to verify. Supports files up to 100MB. No authentication required.
+
+<strong>What you can sign:</strong>
+- Sign your own content directly in the browser with invisible cryptographic watermarks that survive copy-paste and distribution.
+- Works inside Google Docs, ChatGPT, Claude, Gmail, Outlook Web, Slack, LinkedIn, GitHub, X/Twitter, Medium, and dozens of other editors.
+
+<strong>Automatic C2PA scanning:</strong>
+As you browse, Encypher Verify scans images, audio, video, and documents on the page for C2PA provenance markers using lightweight Range requests that inspect only the first 4KB of each file. No full downloads. Per-media-type bandwidth limits prevent any single category from starving others.
+
+All verification is free. No account required for any media type.</div>
+  </div>
+
+  <div class="section">
+    <h2>What's New in v2.0.0</h2>
+    <div class="store-copy">- Image verification: Right-click any image to verify C2PA provenance. Verified images display a floating badge overlay. Supports images served via CSS background-image and blob: URLs.
+- Audio and video verification: Right-click audio or video elements to verify provenance - supports files up to 50MB (audio) and 100MB (video), no authentication required.
+- Document verification: Detects embedded PDFs, EPUB, DOCX, PPTX, XLSX, XPS, and ODT. Recognizes HLS (.m3u8) and DASH (.mpd) streaming manifests.
+- Automatic C2PA scanning: Lightweight header detection identifies signed media as you browse, with per-media-type bandwidth limits and configurable toggle.
+- Shadow DOM traversal: Detects media inside web components and custom elements (depth-limited, capped at 50 shadow roots).
+- SPA navigation: Automatic rescan on pushState/replaceState route changes, popstate, and hashchange events.
+- Dynamic content: Observes src/srcset/data-src attribute mutations to catch lazy-loaded images and dynamically swapped video sources.
+- Media on page: New popup section shows all detected images, audio, video, and documents on the current page with verification status and on-demand verify buttons.
+- All verification is free - no account required for any media type.</div>
+  </div>
+
+  <div class="section">
+    <h2>Pre-Submission Checklist</h2>
+    <ul class="checklist">
+      <li>Extension package (.zip) built and tested</li>
+      <li>All screenshots match current UI</li>
+      <li>Promotional images use v2.0 multimedia messaging</li>
+      <li>Short description within 132 character limit</li>
+      <li>All links in description are valid</li>
+      <li>Privacy policy URL accessible</li>
+      <li>Tested on clean Chrome profile</li>
+      <li>Image/audio/video context menus tested</li>
+      <li>Auto-scan toggle tested in options</li>
+      <li>Popup media section renders correctly</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

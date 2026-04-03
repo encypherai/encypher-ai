@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@encypher/design-system';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@encypher/design-system';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader } from '@encypher/design-system';
+import { Textarea } from '@encypher/design-system';
+import { Input } from '@encypher/design-system';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@encypher/design-system';
 import { Play, Loader2 } from 'lucide-react';
 
 const sampleBodies: Record<'sign' | 'verify', string> = {

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import { ArrowRight, DollarSign, Scale, TrendingUp, CheckCircle2, AlertTriangle, Shield } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -10,7 +10,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
+} from '@encypher/design-system';
 import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';

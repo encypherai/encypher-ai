@@ -1,5 +1,5 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@encypher/design-system';
+import { Card, CardContent } from '@encypher/design-system';
 import { Github, Linkedin, Code, Mail, MessageSquare } from 'lucide-react';
 import { siteConfig } from "@/config/site";
 import { getSiteUrl } from "@/lib/env";

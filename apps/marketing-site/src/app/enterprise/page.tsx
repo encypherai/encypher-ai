@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@encypher/design-system';
+import { Badge } from '@encypher/design-system';
 import {
   ArrowRight,
   CheckCircle2,

@@ -7,15 +7,15 @@ import { useSession } from 'next-auth/react';
 import { Loader2 } from 'lucide-react';
 
 // UI Components
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '@/components/ui/sheet';
-import { Separator } from '@/components/ui/separator';
+} from '@encypher/design-system';
+import { Separator } from '@encypher/design-system';
 
 interface AdminLayoutProps {
   children: ReactNode;

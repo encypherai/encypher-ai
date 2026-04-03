@@ -1,5 +1,5 @@
 "use client";
-import { ToastProvider } from "@/components/ui/use-toast";
+import { ToastProvider } from "@encypher/design-system";
 import { SessionProvider } from "@/components/SessionProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";

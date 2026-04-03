@@ -1,6 +1,6 @@
 import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Input } from '@encypher/design-system';
+import { Label } from '@encypher/design-system';
 
 /**
  * SignInForm Component

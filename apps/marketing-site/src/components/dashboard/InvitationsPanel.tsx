@@ -1,12 +1,12 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@encypher/design-system";
+import { Dialog, DialogContent } from "@encypher/design-system";
 import { fetchApi } from "@/lib/api";
 import type { Invitation } from "@/types/invitation";
 import { useOrganization } from "@/lib/hooks/useOrganization";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@encypher/design-system";
 
 // Add error response type for API error handling
 type ApiErrorResponse = { error: { message: string } };

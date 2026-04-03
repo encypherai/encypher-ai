@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { KeyRound, Pencil, Eye, EyeOff, BadgeCheck, Copy, PlusCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@encypher/design-system";
+import { Textarea } from "@encypher/design-system";
 import { toast } from "sonner";
 import { fetchApi } from "@/lib/api";
 import { useSession } from "next-auth/react";

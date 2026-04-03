@@ -1,10 +1,10 @@
 "use client";
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@encypher/design-system";
+import { Input } from "@encypher/design-system";
 import { useSession } from "next-auth/react";
 import { fetchApi } from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@encypher/design-system";
 
 // Add onSuccess prop for modal integration
 export const PasswordChangeForm: React.FC<{ onSuccess?: () => void }> = ({ onSuccess }) => {

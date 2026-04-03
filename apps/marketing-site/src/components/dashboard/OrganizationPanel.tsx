@@ -6,28 +6,28 @@ import { EditOrgForm } from "@/components/dashboard/EditOrgForm";
 import { OrgPublicKeyCard } from "@/components/dashboard/OrgPublicKeyCard";
 import { useOrganization } from "@/lib/hooks/useOrganization";
 import { useLicense } from "@/lib/hooks/useLicense";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@encypher/design-system";
 import { AlertCircle, PlusCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@encypher/design-system";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@encypher/design-system";
 
 export const OrganizationPanel: React.FC = () => {
   const { org, isLoading: orgLoading, error: orgError } = useOrganization();
   const { license, isLoading: licenseLoading, error: licenseError } = useLicense();
   const [editing, setEditing] = useState(false);
 
-  console.log("[OrganizationPanel] render:", { 
-    org, 
-    orgLoading, 
-    orgError, 
-    license, 
-    licenseLoading, 
-    licenseError 
+  console.log("[OrganizationPanel] render:", {
+    org,
+    orgLoading,
+    orgError,
+    license,
+    licenseLoading,
+    licenseError
   });
 
   // Combined loading state
   const isLoading = orgLoading || licenseLoading;
-  
+
   // Combined error state (excluding expected 404s which are handled as null org)
   const displayError = orgError || licenseError;
 
@@ -59,8 +59,8 @@ export const OrganizationPanel: React.FC = () => {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error Loading Organization</AlertTitle>
             <AlertDescription>
-              {displayError instanceof Error 
-                ? displayError.message 
+              {displayError instanceof Error
+                ? displayError.message
                 : String(displayError)}
             </AlertDescription>
           </Alert>

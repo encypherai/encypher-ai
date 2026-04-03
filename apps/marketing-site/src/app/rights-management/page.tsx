@@ -14,14 +14,14 @@ import {
   ScrollText,
   Users,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@encypher/design-system';
+import { Button } from '@encypher/design-system';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
+} from '@encypher/design-system';
 import AISummary from '@/components/seo/AISummary';
 
 export const metadata: Metadata = {

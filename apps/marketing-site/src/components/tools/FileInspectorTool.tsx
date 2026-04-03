@@ -4,10 +4,10 @@
 // TEAM_241: Added image (JPEG/PNG/WebP) support with XMP + C2PA inspection
 // TEAM_280: Expanded to all C2PA media formats (audio, video, all images)
 import React, { useState, useRef, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useToast } from "@/components/ui/use-toast";
+import { Card, CardContent } from "@encypher/design-system";
+import { Button } from "@encypher/design-system";
+import { Alert, AlertDescription, AlertTitle } from "@encypher/design-system";
+import { useToast } from "@encypher/design-system";
 import { trackToolEvent } from "@/lib/toolsAnalytics";
 import {
   VerificationSequence,

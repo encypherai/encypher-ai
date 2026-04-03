@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Linkedin, Github, FileText, Video, Calendar, ExternalLink } from 'lucide-react';

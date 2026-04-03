@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import MetadataBackground from '@/components/hero/MetadataBackground';
 import { SignInForm } from '@/components/auth/SignInForm';
 import { SignUpForm } from '@/components/auth/SignUpForm';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@encypher/design-system';
 import { fetchApi } from '@/lib/api';
 
 // SVGs for Google and GitHub

@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import Script from 'next/script';
 import { ArrowRight, FileCheck, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import AISummary from '@/components/seo/AISummary';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
 import type { FormatData, categoryInfo as CategoryInfoType } from '@/data/formats';

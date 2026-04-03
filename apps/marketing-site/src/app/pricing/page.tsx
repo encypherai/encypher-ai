@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@encypher/design-system';
+import { Badge } from '@encypher/design-system';
 // Tabs import removed - using custom styled buttons for better active state visibility
 import { AnimatePresence } from 'framer-motion';
 import { ArrowRight, Check, Newspaper, BarChart3, Shield, Award } from 'lucide-react';

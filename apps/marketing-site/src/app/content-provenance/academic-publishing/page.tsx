@@ -3,7 +3,7 @@ import Script from 'next/script';
 import { ArticleShell } from '@/components/content/ArticleShell';
 import AISummary from '@/components/seo/AISummary';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import { getVerticalMetadata } from '@/lib/seo';
 import type { Metadata } from 'next';
 

@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { BadgeInfo, ShieldCheck, AlertTriangle, Clock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@encypher/design-system";
 
 export type LicenseInfoProps = {
   licenseKey: string;

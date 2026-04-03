@@ -4,8 +4,8 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { fetchApi } from "../../../lib/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@encypher/design-system";
+import { Card, CardContent, CardHeader, CardTitle } from "@encypher/design-system";
 import Link from "next/link";
 import Image from 'next/image';
 import { CheckCircle2, XCircle, Loader2, Mail } from "lucide-react";
@@ -52,7 +52,7 @@ function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  
+
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("Verifying your email...");
   const [called, setCalled] = useState(false);
@@ -63,7 +63,7 @@ function VerifyEmailContent() {
       setMessage("Verification token is missing. Please check your email for the correct link.");
       return;
     }
-    
+
     if (called) return;
     setCalled(true);
 
@@ -77,7 +77,7 @@ function VerifyEmailContent() {
         if (response.success && response.data) {
           setStatus("success");
           setMessage(response.data.message || "Your email has been verified successfully!");
-          
+
           // Auto-sign in with the tokens from verification
           if (response.data.access_token && response.data.user) {
             const user = response.data.user;
@@ -90,7 +90,7 @@ function VerifyEmailContent() {
               user_uuid: user.id,
               is_verified: "true",
             });
-            
+
             if (signInResult?.ok) {
               // Redirect to dashboard after successful auto-login
               setTimeout(() => {
@@ -122,7 +122,7 @@ function VerifyEmailContent() {
           <div className="flex items-center justify-center">
             <Image src="/encypher_full_nobg.png" alt="Encypher" width={140} height={70} />
           </div>
-          
+
           {status === "loading" && (
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
           )}
@@ -132,19 +132,19 @@ function VerifyEmailContent() {
           {status === "error" && (
             <XCircle className="h-16 w-16 text-destructive" />
           )}
-          
+
           <CardTitle className="text-center text-2xl">
             {status === "loading" && "Verifying..."}
             {status === "success" && "Email Verified!"}
             {status === "error" && "Verification Failed"}
           </CardTitle>
         </CardHeader>
-        
+
         <CardContent className="text-center space-y-6">
           <p className={`text-lg ${status === "error" ? "text-destructive" : "text-muted-foreground"}`}>
             {message}
           </p>
-          
+
           {status === "success" && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
@@ -161,7 +161,7 @@ function VerifyEmailContent() {
               </Button>
             </div>
           )}
-          
+
           {status === "error" && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
@@ -180,7 +180,7 @@ function VerifyEmailContent() {
               </div>
             </div>
           )}
-          
+
           {status === "loading" && (
             <p className="text-sm text-muted-foreground animate-pulse">
               This should only take a moment...

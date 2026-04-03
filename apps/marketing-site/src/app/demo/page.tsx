@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { Button } from '@encypher/design-system';
+import { Card, CardContent } from '@encypher/design-system';
+import { Input } from '@encypher/design-system';
+import { Textarea } from '@encypher/design-system';
+import { Label } from '@encypher/design-system';
 import { CheckCircle, Loader2, Shield, FileText, Zap, Clock } from 'lucide-react';
 import TurnstileWidget from '@/components/security/TurnstileWidget';
 

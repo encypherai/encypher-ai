@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { NextPage } from 'next';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import { ArrowRight } from 'lucide-react';
 import AISummary from '@/components/seo/AISummary';
 

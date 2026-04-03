@@ -1,6 +1,6 @@
 import React from "react";
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import Image from 'next/image';
 import { ArrowRight, FileText, Scale, AlertTriangle, CheckCircle2, DollarSign, Shield } from 'lucide-react';
 import MetadataBackground from '@/components/hero/MetadataBackground';

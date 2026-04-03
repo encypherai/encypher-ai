@@ -1,7 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@encypher/design-system';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@encypher/design-system';
 import { Check } from 'lucide-react';
 import {
   FREE_TIER,

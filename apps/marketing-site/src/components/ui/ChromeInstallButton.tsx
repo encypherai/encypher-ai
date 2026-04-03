@@ -21,7 +21,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 
 const EXTENSION_ID = 'pbmfpddbafkhdjemgcnegddmniflbjla';

@@ -22,9 +22,9 @@ import {
 import { format } from 'date-fns';
 
 // UI Components
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@encypher/design-system';
+import { Button } from '@encypher/design-system';
+import { Input } from '@encypher/design-system';
 import {
   Table,
   TableBody,
@@ -32,7 +32,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@encypher/design-system';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,14 +40,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@encypher/design-system';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@encypher/design-system';
 import {
   Dialog,
   DialogContent,
@@ -55,11 +55,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+} from '@encypher/design-system';
+import { Badge } from '@encypher/design-system';
 
-import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
+import { Skeleton } from '@encypher/design-system';
+import { useToast } from '@encypher/design-system';
 
 // Utils
 import { exportInvestorRecordsToCSV } from '@/lib/export-utils';
@@ -182,7 +182,7 @@ export default function InvestorRequestsPage() {
       setLoading(false);
       return;
     }
-    
+
     setLoading(true);
 
     try {
@@ -198,7 +198,7 @@ export default function InvestorRequestsPage() {
       console.error('[InvestorRequests] Error fetching investors:', err);
       const newFailCount = fetchFailCount + 1;
       setFetchFailCount(newFailCount);
-      
+
       let description = err instanceof Error ? err.message : 'Failed to fetch investor records';
       if (newFailCount >= MAX_FETCH_ATTEMPTS) {
         description += ' Further automatic fetching is paused for the current view. Please change filters or refresh.';
@@ -212,13 +212,13 @@ export default function InvestorRequestsPage() {
       setLoading(false);
     }
   }, [
-    isAuthenticated, 
-    statusFilter, 
-    currentPage, 
-    pageSize, 
+    isAuthenticated,
+    statusFilter,
+    currentPage,
+    pageSize,
     getInvestorAccessRecords, // This is now stable from useAdminApi
-    toast, 
-    fetchFailCount, 
+    toast,
+    fetchFailCount,
     debouncedSearchQuery // Add debouncedSearchQuery as a dependency
   ]);
 
@@ -236,7 +236,7 @@ export default function InvestorRequestsPage() {
       });
       return;
     }
-    
+
     setExporting(true);
 
     try {

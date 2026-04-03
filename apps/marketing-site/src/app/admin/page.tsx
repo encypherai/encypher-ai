@@ -19,19 +19,19 @@ import {
 } from 'lucide-react';
 
 // UI Components
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@encypher/design-system';
+import { Button } from '@encypher/design-system';
 
 export default function AdminPage() {
   const { status } = useSession();
   const router = useRouter();
-  
+
   // Redirect if not authenticated
   if (status === 'unauthenticated') {
     router.push('/auth/signin?callbackUrl=/admin');
     return null;
   }
-  
+
   // Admin features
   const adminFeatures = [
     {
@@ -81,7 +81,7 @@ export default function AdminPage() {
       disabled: true,
     },
   ];
-  
+
   return (
     <div className="space-y-6">
       <div>
@@ -90,7 +90,7 @@ export default function AdminPage() {
           Welcome to the Encypher admin dashboard. Manage investor access and monitor engagement.
         </p>
       </div>
-      
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {adminFeatures.map((feature) => (
           <Card key={feature.title} className={feature.disabled ? 'opacity-60' : ''}>
@@ -108,9 +108,9 @@ export default function AdminPage() {
               </CardDescription>
             </CardContent>
             <CardFooter>
-              <Button 
-                variant="outline" 
-                className="w-full justify-between" 
+              <Button
+                variant="outline"
+                className="w-full justify-between"
                 asChild={!feature.disabled}
                 disabled={feature.disabled}
               >

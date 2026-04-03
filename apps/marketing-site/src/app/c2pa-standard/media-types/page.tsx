@@ -4,7 +4,7 @@ import Script from 'next/script';
 import AISummary from '@/components/seo/AISummary';
 import { ArticleShell } from '@/components/content/ArticleShell';
 import { Breadcrumbs } from '@/components/seo/Breadcrumbs';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import { generateMetadata as seoMetadata, getTechArticleSchema, siteConfig } from '@/lib/seo';
 import { formats, categoryInfo, getFormatsByCategory } from '@/data/formats';
 

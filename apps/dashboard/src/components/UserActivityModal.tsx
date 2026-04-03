@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import apiClient from '@/lib/api';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Badge } from '@encypher/design-system';
 import { Download, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface UserActivityModalProps {

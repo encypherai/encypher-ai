@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "@encypher/design-system";
+import { Button } from "@encypher/design-system";
+import { Textarea } from "@encypher/design-system";
+import { Label } from "@encypher/design-system";
+import { Alert, AlertDescription, AlertTitle } from "@encypher/design-system";
 import { Copy } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@encypher/design-system";
 import { trackToolEvent } from "@/lib/toolsAnalytics";
 import {
   VerificationSequence,

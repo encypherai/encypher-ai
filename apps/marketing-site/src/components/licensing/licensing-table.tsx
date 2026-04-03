@@ -1,7 +1,7 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@encypher/design-system';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@encypher/design-system';
 
 const tiers = [
   {
@@ -61,8 +61,8 @@ export function LicensingTable() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {tiers.map((tier) => (
-        <Card 
-          key={tier.name} 
+        <Card
+          key={tier.name}
           className={`flex flex-col ${tier.highlighted ? 'border-primary shadow-lg' : ''}`}
         >
           <CardHeader>
@@ -95,9 +95,9 @@ export function LicensingTable() {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button 
-              asChild 
-              className="w-full" 
+            <Button
+              asChild
+              className="w-full"
               variant={tier.highlighted ? 'default' : 'outline'}
             >
               <a href={tier.ctaLink}>{tier.cta}</a>

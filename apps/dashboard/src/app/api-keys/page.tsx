@@ -9,8 +9,8 @@ import {
   CardDescription,
   CardContent,
   Input,
+  Skeleton,
 } from '@encypher/design-system';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useState, useRef, useEffect } from 'react';

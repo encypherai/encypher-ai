@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import Image from 'next/image';
 import { ArrowRight, Search, Shield, Zap, CheckCircle2, XCircle, TrendingDown } from 'lucide-react';
 import MetadataBackground from '@/components/hero/MetadataBackground';

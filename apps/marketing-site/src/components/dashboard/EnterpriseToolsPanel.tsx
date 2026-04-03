@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { fetchApi } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@encypher/design-system";
+import { Input } from "@encypher/design-system";
+import { Textarea } from "@encypher/design-system";
 import { Lock, CheckCircle2, RefreshCw } from "lucide-react";
 
 interface LicenseOut {

@@ -1,12 +1,12 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { KeyRound, Eye, EyeOff, BadgeCheck, Copy, PlusCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@encypher/design-system";
+import { Textarea } from "@encypher/design-system";
 import { useUserKey } from "@/lib/hooks/useUserKey";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@encypher/design-system";
 import { saveAs } from "file-saver";
 import { useOrganization } from "@/lib/hooks/useOrganization";
 

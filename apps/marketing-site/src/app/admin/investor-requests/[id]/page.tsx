@@ -21,11 +21,11 @@ import {
 } from 'lucide-react';
 
 // UI Components
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@encypher/design-system';
+import { Card, CardContent, CardHeader, CardTitle } from '@encypher/design-system';
+import { Badge } from '@encypher/design-system';
+import { Skeleton } from '@encypher/design-system';
+import { useToast } from '@encypher/design-system';
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@encypher/design-system';
 
 // API
 import {
@@ -102,7 +102,7 @@ export default function InvestorRequestDetailPage() {
   const router = useRouter();
   const params = useParams();
   const investorId = params.id as string;
-  
+
   // State
   const [investor, setInvestor] = useState<InvestorAccessRecord | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -110,11 +110,11 @@ export default function InvestorRequestDetailPage() {
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const { toast } = useToast();
-  
+
   // Fetch investor details
   const fetchInvestorDetails = useCallback(async () => {
     if (sessionStatus !== 'authenticated' || !session?.accessToken) return;
-    
+
     setLoading(true);
     try {
       const data = await getInvestorAccessById(session.accessToken, investorId);
@@ -130,11 +130,11 @@ export default function InvestorRequestDetailPage() {
       setLoading(false);
     }
   }, [session, sessionStatus, investorId, toast]);
-  
+
   // Handle approve/reject actions
   const handleAction = async () => {
     if (!investor || !actionType || !session?.accessToken) return;
-    
+
     setActionLoading(true);
     try {
       if (actionType === 'approve') {
@@ -150,7 +150,7 @@ export default function InvestorRequestDetailPage() {
           description: `Investor access for ${investor.investor_email} has been rejected.`,
         });
       }
-      
+
       // Refresh the details
       fetchInvestorDetails();
     } catch (error) {
@@ -166,20 +166,20 @@ export default function InvestorRequestDetailPage() {
       setActionType(null);
     }
   };
-  
+
   // Effect to fetch data when dependencies change
   useEffect(() => {
     if (sessionStatus === 'authenticated' && investorId) {
       fetchInvestorDetails();
     }
   }, [sessionStatus, investorId, fetchInvestorDetails]);
-  
+
   // Redirect if not authenticated
   if (sessionStatus === 'unauthenticated') {
     router.push('/auth/signin?callbackUrl=/admin/investor-requests');
     return null;
   }
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -239,7 +239,7 @@ export default function InvestorRequestDetailPage() {
           )}
         </div>
       </div>
-      
+
       {loading ? (
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
@@ -277,7 +277,7 @@ export default function InvestorRequestDetailPage() {
                   <p className="text-sm text-muted-foreground">Email Address</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-2">
                 <Building className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
@@ -285,7 +285,7 @@ export default function InvestorRequestDetailPage() {
                   <p className="text-sm text-muted-foreground">Company</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-2">
                 <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
@@ -299,7 +299,7 @@ export default function InvestorRequestDetailPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle className="text-xl">Access Status</CardTitle>
@@ -314,7 +314,7 @@ export default function InvestorRequestDetailPage() {
                   <p className="text-sm text-muted-foreground">Current Status</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-2">
                 <Eye className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
@@ -322,7 +322,7 @@ export default function InvestorRequestDetailPage() {
                   <p className="text-sm text-muted-foreground">Visit Count</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-2">
                 <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
@@ -334,7 +334,7 @@ export default function InvestorRequestDetailPage() {
                   <p className="text-sm text-muted-foreground">Last Visited</p>
                 </div>
               </div>
-              
+
               {investor.email_verified_at && (
                 <div className="flex items-start gap-2">
                   <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
@@ -348,7 +348,7 @@ export default function InvestorRequestDetailPage() {
               )}
             </CardContent>
           </Card>
-          
+
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle className="text-xl">Activity Timeline</CardTitle>
@@ -369,7 +369,7 @@ export default function InvestorRequestDetailPage() {
                     Investor {investor.investor_name || investor.investor_email} requested access to the pitch deck.
                   </p>
                 </div>
-                
+
                 {investor.status !== 'PENDING_APPROVAL' && (
                   <div className="relative">
                     <div className={`absolute -left-9 mt-1.5 h-4 w-4 rounded-full ${
@@ -390,7 +390,7 @@ export default function InvestorRequestDetailPage() {
                     </p>
                   </div>
                 )}
-                
+
                 {investor.email_verified_at && (
                   <div className="relative">
                     <div className="absolute -left-9 mt-1.5 h-4 w-4 rounded-full bg-blue-500"></div>
@@ -405,7 +405,7 @@ export default function InvestorRequestDetailPage() {
                     </p>
                   </div>
                 )}
-                
+
                 {investor.last_visited_at && (
                   <div className="relative">
                     <div className="absolute -left-9 mt-1.5 h-4 w-4 rounded-full bg-purple-500"></div>
@@ -440,7 +440,7 @@ export default function InvestorRequestDetailPage() {
           </CardContent>
         </Card>
       )}
-      
+
       {/* Approve/Reject Dialog */}
       <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
         <DialogContent>

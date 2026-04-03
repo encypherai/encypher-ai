@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@encypher/design-system';
+import { Input } from '@encypher/design-system';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from '@encypher/design-system';
 import {
   Card,
   CardContent,
@@ -17,9 +17,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+} from '@encypher/design-system';
+import { Label } from '@encypher/design-system';
+import { useToast } from '@encypher/design-system';
 import type { RevenueTier } from "@/types/organization";
 
 // Define valid revenue tiers (reflecting current product tiers)

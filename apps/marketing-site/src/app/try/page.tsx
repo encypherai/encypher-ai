@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@encypher/design-system';
 import { ChromeInstallButton } from '@/components/ui/ChromeInstallButton';
 import {
   ArrowRight,

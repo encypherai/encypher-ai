@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@encypher/design-system';
+import { Slider } from '@encypher/design-system';
+import { Input } from '@encypher/design-system';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('en-US', {

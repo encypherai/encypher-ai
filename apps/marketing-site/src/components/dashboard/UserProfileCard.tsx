@@ -1,12 +1,12 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@encypher/design-system";
+import { Switch } from "@encypher/design-system";
+import { Button } from "@encypher/design-system";
 import { User2, ShieldCheck, Crown, Lock } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { fetchApi } from "@/lib/api";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@encypher/design-system";
 import { PasswordChangeForm } from "./PasswordChangeForm";
 
 export type UserProfileCardProps = {
