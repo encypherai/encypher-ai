@@ -776,8 +776,9 @@ async def oauth_exchange(
         name=name,
     )
 
-    # Send admin notification for new OAuth signups
+    # Send welcome email and admin notification for new OAuth signups
     if is_new:
+        AuthService.send_welcome_email(user)
         AuthService.send_new_signup_notification(user, signup_method=provider)
 
     access_token, refresh_token = AuthService.create_tokens(user)

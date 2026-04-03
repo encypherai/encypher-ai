@@ -90,6 +90,7 @@ def render_template(template_name: str, **context) -> str:
     base_context = {
         "year": datetime.now().year,
         "brand_name": "Encypher",
+        "preheader": "",
     }
     template_context = {**base_context, **context}
 

@@ -63,6 +63,7 @@ def send_verification_email(
         subject="Verify your email address",
         user_name=safe_user_name,
         verification_url=verification_url,
+        preheader="One click to verify and you're in. Link expires in 24 hours.",
     )
 
     plain_content = f"""
@@ -119,6 +120,7 @@ def send_welcome_email(
         subject="Welcome to Encypher!",
         user_name=safe_user_name,
         dashboard_url=dashboard_url,
+        preheader="Your account is active. Start embedding cryptographic proof of origin today.",
     )
 
     plain_content = f"""
@@ -126,18 +128,18 @@ Welcome to Encypher
 
 Hi{" " + safe_user_name if safe_user_name else ""},
 
-Your email has been verified and your account is now active. You can start embedding cryptographic proof of origin in your content today.
-
-Here's what you can do next:
-- Generate API Keys - Add content provenance to your applications
-- Explore the Dashboard - Monitor your usage and manage your account
-- Read the Docs - Learn how to embed provenance markers in your content
+Your account is active. You can start embedding cryptographic proof of origin in your content today.
 
 Go to Dashboard: {dashboard_url}
 
-Need help? Check out our documentation at https://encypher.com/docs or email support@encypher.com.
+Here's what you can do next:
+1. Generate API Keys - Add content provenance to your applications via the REST API.
+2. Explore the Dashboard - Monitor usage, manage keys, and review signed content.
+3. Read the Docs - Learn how to embed provenance markers and verify content at scale.
 
 Encypher provides infrastructure for content provenance - cryptographic proof of origin that survives copy-paste and distribution.
+
+Need help? Documentation at https://encypher.com/docs or email support@encypher.com.
 
 - The Encypher Team
 """
@@ -186,6 +188,7 @@ def send_password_reset_email(
         user_name=safe_user_name,
         reset_url=reset_url,
         ip_address=ip_address,
+        preheader="Reset link expires in 1 hour. If you didn't request this, ignore this email.",
     )
 
     plain_content = f"""

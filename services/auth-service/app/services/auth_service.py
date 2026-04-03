@@ -488,8 +488,7 @@ class AuthService:
         db.refresh(user)
 
         # Send welcome email
-        config = _get_email_config()
-        _send_welcome_email(config=config, to_email=user.email, user_name=user.name)
+        AuthService.send_welcome_email(user)
 
         return user
 
@@ -512,6 +511,16 @@ class AuthService:
         # Create new token and send email
         token = AuthService.create_verification_token(db, user)
         return AuthService.send_verification_email(user, token)
+
+    @staticmethod
+    def send_welcome_email(user: User) -> bool:
+        """Send welcome email to a newly active user (email verification or OAuth signup)."""
+        config = _get_email_config()
+        try:
+            return _send_welcome_email(config=config, to_email=user.email, user_name=user.name, logger=logger)
+        except Exception as e:
+            logger.error(f"Failed to send welcome email: {e}")
+            return False
 
     @staticmethod
     def send_new_signup_notification(user: User, signup_method: str = "email") -> bool:
