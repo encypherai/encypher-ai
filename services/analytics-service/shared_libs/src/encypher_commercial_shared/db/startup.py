@@ -28,7 +28,7 @@ import logging
 import os
 import sys
 import time
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ def check_database_connection(database_url: str, max_retries: int = 15, retry_de
             raise ValueError(f"Unsupported database scheme: {parsed.scheme}")
     except Exception as e:
         raise DatabaseStartupError(
-            f"[{service_name}] Invalid DATABASE_URL format: {e}. URL should be: postgresql://user:pass@host:port/dbname"
+            f"[{service_name}] Invalid DATABASE_URL format: {e}. Expected: postgresql://user:password@host:port/dbname"  # pragma: allowlist secret
         ) from e
 
     # Try to connect
@@ -188,6 +188,60 @@ def run_migrations_if_needed(
         raise DatabaseStartupError(f"[{service_name}] Migration failed: {e}") from e
 
 
+def validate_database_schema(
+    database_url: str,
+    model_metadata: Any,
+    service_name: str = "service",
+) -> bool:
+    """
+    Validate that the live database schema matches the SQLAlchemy model metadata.
+
+    Checks that every column defined in the models exists in the database.
+    Raises DatabaseStartupError listing missing columns if any are found.
+
+    Args:
+        database_url: PostgreSQL connection URL
+        model_metadata: SQLAlchemy MetaData object from the ORM models
+        service_name: Name of the service (for logging)
+
+    Returns:
+        True if schema is consistent
+
+    Raises:
+        DatabaseStartupError: If any model columns are missing from the database
+    """
+    try:
+        from sqlalchemy import create_engine, inspect
+    except ImportError as e:
+        raise DatabaseStartupError(f"[{service_name}] SQLAlchemy is not installed.") from e
+
+    engine = create_engine(database_url)
+    try:
+        inspector = inspect(engine)
+        live_tables = set(inspector.get_table_names())
+
+        missing: list[str] = []
+        for table_name, table in model_metadata.tables.items():
+            if table_name not in live_tables:
+                # Table itself is absent - each column counts as missing
+                for col in table.columns:
+                    missing.append(f"{table_name} -> {col.name}")
+                continue
+
+            live_columns = {row["name"] for row in inspector.get_columns(table_name)}
+            for col in table.columns:
+                if col.name not in live_columns:
+                    missing.append(f"{table_name} -> {col.name}")
+
+        if missing:
+            raise DatabaseStartupError(f"[{service_name}] Schema validation failed. Missing columns: {', '.join(missing)}")
+
+        logger.info(f"[{service_name}] Schema validation passed.")
+        return True
+    finally:
+        engine.dispose()
+
+
 def ensure_database_ready(
     database_url: Optional[str] = None,
     service_name: str = "service",
@@ -195,6 +249,7 @@ def ensure_database_ready(
     max_retries: int = 15,
     retry_delay: float = 3.0,
     run_migrations: bool = True,
+    model_metadata: Optional[object] = None,
     exit_on_failure: bool = True,
 ) -> bool:
     """
@@ -210,6 +265,7 @@ def ensure_database_ready(
         max_retries: Maximum number of connection attempts
         retry_delay: Seconds to wait between retries
         run_migrations: If True, run Alembic migrations
+        model_metadata: SQLAlchemy MetaData for post-migration schema validation (optional)
         exit_on_failure: If True, call sys.exit(1) on failure
 
     Returns:
@@ -230,6 +286,10 @@ def ensure_database_ready(
         # Step 2: Run migrations if requested
         if run_migrations:
             run_migrations_if_needed(alembic_config_path=alembic_config_path, database_url=db_url, service_name=service_name, auto_upgrade=True)
+
+        # Step 3: Validate schema matches models (if metadata provided)
+        if model_metadata is not None and db_url:
+            validate_database_schema(database_url=db_url, model_metadata=model_metadata, service_name=service_name)
 
         logger.info(f"[{service_name}] ✓ Database is ready")
         return True

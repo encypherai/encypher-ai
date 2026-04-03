@@ -265,6 +265,7 @@ def ensure_database_ready(
         max_retries: Maximum number of connection attempts
         retry_delay: Seconds to wait between retries
         run_migrations: If True, run Alembic migrations
+        model_metadata: SQLAlchemy MetaData for post-migration schema validation (optional)
         exit_on_failure: If True, call sys.exit(1) on failure
 
     Returns:
