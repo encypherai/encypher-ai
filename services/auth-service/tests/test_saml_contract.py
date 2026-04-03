@@ -57,7 +57,9 @@ class TestSamlContract:
         response = client.post("/api/v1/auth/saml/acs", data={"SAMLResponse": saml_response})
         assert response.status_code in {400, 422}
 
-    def test_acs_fails_closed_until_signature_validation_is_implemented(self, client):
+    def test_acs_rejects_missing_relay_state(self, client):
+        # Signature validation is implemented; a valid base64 SAML response
+        # without a RelayState JWT is rejected with 400.
         saml_response = base64.b64encode(b"<saml>ok</saml>").decode("ascii")
         response = client.post("/api/v1/auth/saml/acs", data={"SAMLResponse": saml_response})
-        assert response.status_code == 501
+        assert response.status_code == 400
