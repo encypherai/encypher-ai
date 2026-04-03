@@ -199,34 +199,84 @@ PASS if:
 ## Criterion 8 - Image Visual Review (if image path provided)
 
 If an image path was given, use the Read tool to open and view the image file. Visually
-inspect it.
+inspect it. Set image_ok to false if ANY sub-criterion below fails.
 
-Set image_ok to false if ANY of the following are true:
-- The title text in the image contains repeated or stuttered words (e.g., "License License")
-- The title text is truncated or missing
-- The title text does not match the article title or is significantly garbled
-- The background is not deep navy or a similarly dark professional color
-- The image contains visible logos (Encypher, C2PA, any company)
-- The image contains photorealistic human faces
-- The image has a bright red, neon, or unprofessional color scheme
-- The image appears unrelated to the article topic
+### 8a. Brand Style Compliance (MUST PASS)
+
+The Encypher blog visual identity is "Protocol Modernism": flat, isometric, or 2D technical
+schematics with a matte finish. Every image must look like it belongs in a high-end security
+whitepaper or Bloomberg Terminal interface - not a stock photo library.
+
+FAIL if ANY of the following are true:
+- The image uses 3D rendering, glossy surfaces, glass effects, or reflective materials
+- The image looks like a stock photograph or photorealistic scene (even with a dark overlay)
+- The image uses gradients, lens flare, dramatic shadows, or cinematic lighting
+- The image has a decorative or abstract composition when the article topic has a clear
+  process or mechanism that could be illustrated as a pipeline diagram
+- The visual elements are vague or generic rather than specific to the article's argument
+  (e.g., floating abstract shapes instead of labeled technical nodes)
+
+PASS if:
+- The style is clearly flat, isometric, or 2D schematic
+- Surfaces are matte and non-reflective
+- The composition is structured and grid-based with thin precise lines
+- Visual elements are specific to the article topic (pipeline stages, document nodes,
+  verification flows, compliance checkpoints, network diagrams)
+
+### 8b. Color Palette Compliance (MUST PASS)
+
+FAIL if ANY of the following are true:
+- The background is not Deep Navy (#1B2F50 or visually close dark navy)
+- Primary visual elements are not Azure Blue (#2A87C4) or Light Sky Blue (#B7D5ED)
+- Neon colors, bright red, gold, bronze, warm metallics, or neon purple appear anywhere
+- Pure black (#000000) is used as the background
+- The overall palette does not read as dark, professional, and institutional
+
+### 8c. Text Rendering (MUST PASS)
+
+FAIL if ANY of the following are true:
+- The title text contains repeated, stuttered, or garbled words (e.g., "License License")
+- The title text is truncated, missing, or unreadable at normal viewing size
+- The title text does not match the article title (minor punctuation differences acceptable)
+- The subtitle text is missing, truncated, or unreadable
+- Font names appear as visible text anywhere ("Roboto", "Roboto Mono", "Roboto Bold", etc.)
+- Layout instruction text appears as visible text ("LAYOUT:", "TOP THIRD:", etc.)
+- Title text is not white or near-white
+- Subtitle text is not light blue or near-light-blue
+
+### 8d. Forbidden Elements (MUST PASS)
+
+FAIL if ANY of the following are true:
+- Visible logos of any kind (Encypher, C2PA, any company)
+- Photorealistic human faces or detailed human figures
+- Revenue percentages, split ratios, or revenue language
+- Stock photography elements or scenes
 - The file does not exist or has zero size
 
-Set image_ok to true if:
-- Title and subtitle text are correctly rendered and legible
-- Brand colors are consistent (deep navy background, blue/teal accents)
-- Visual composition is relevant to the article topic
-- No forbidden elements (logos, faces, neon colors)
+### 8e. Technical Diagram Quality (advisory for rejection, required for approval)
 
-CRITICAL: image_ok and image_feedback must be consistent. If you identify ANY image problem,
-you MUST set image_ok to false. Do not describe an image problem in image_feedback and then
-set image_ok to true - that is a contradiction and breaks the pipeline. When in doubt, set
-image_ok to false and describe the issue; it is better to regenerate a good image than to
-approve a bad one.
+For articles describing a process, mechanism, regulation, or comparison, the preferred
+composition is a 2-3 stage left-to-right pipeline diagram with:
+- Distinct labeled nodes (document stacks, cylinders, terminals, window panels)
+- Azure Blue arrows connecting stages with clear direction
+- Monospace technical labels (hash strings, timestamps, status labels)
+- Muted Coral (#E07A5F) badges for problem or failure states
+- Cyber Teal (#00CED1) badges for verified or confirmed states (max 5% of composition)
+- 3-5 elements maximum, generous spacing, no overlapping labels
+
+If the image uses a different composition, it must still be a recognizable technical schematic
+that illustrates the article's core argument. A generic or decorative image that could apply
+to any tech article is not acceptable - the diagram must be specific to this post's thesis.
+
+CRITICAL: image_ok and image_feedback must be consistent. If you identify ANY image problem
+in 8a through 8d, you MUST set image_ok to false. Do not describe a problem in image_feedback
+and then set image_ok to true - that is a contradiction and breaks the pipeline. When in
+doubt, set image_ok to false and describe the issue; it is better to regenerate a good image
+than to approve a bad one.
 
 Always describe specifically what is wrong in image_feedback so the image can be regenerated
-with a targeted fix. State clearly: what the text shows vs. what it should show, and what
-visual element needs to change.
+with a targeted fix. Reference the specific sub-criterion (8a, 8b, 8c, 8d, 8e) that failed
+and state clearly: what the image shows vs. what it should show.
 
 ---
 
