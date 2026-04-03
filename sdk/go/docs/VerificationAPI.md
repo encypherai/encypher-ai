@@ -1,6 +1,6 @@
 # \VerificationAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -61,7 +61,7 @@ Other parameters are passed through a pointer to a apiGetStatsApiV1VerifyStatsGe
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **authorization** | **string** |  | 
+ **authorization** | **string** |  |
 
 ### Return type
 
@@ -102,7 +102,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 	limit := int32(56) // int32 |  (optional) (default to 100)
 
 	configuration := openapiclient.NewConfiguration()
@@ -123,7 +123,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -235,7 +235,7 @@ import (
 )
 
 func main() {
-	verifyAdvancedRequest := *openapiclient.NewVerifyAdvancedRequest("Text_example") // VerifyAdvancedRequest | 
+	verifyAdvancedRequest := *openapiclient.NewVerifyAdvancedRequest("Text_example") // VerifyAdvancedRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -260,7 +260,7 @@ Other parameters are passed through a pointer to a apiVerifyAdvancedApiV1VerifyA
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **verifyAdvancedRequest** | [**VerifyAdvancedRequest**](VerifyAdvancedRequest.md) |  | 
+ **verifyAdvancedRequest** | [**VerifyAdvancedRequest**](VerifyAdvancedRequest.md) |  |
 
 ### Return type
 
@@ -301,7 +301,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -321,7 +321,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -371,7 +371,7 @@ import (
 )
 
 func main() {
-	documentVerify := *openapiclient.NewDocumentVerify("DocumentId_example", "Content_example") // DocumentVerify | 
+	documentVerify := *openapiclient.NewDocumentVerify("DocumentId_example", "Content_example") // DocumentVerify |
 	xForwardedFor := "xForwardedFor_example" // string |  (optional)
 	userAgent := "userAgent_example" // string |  (optional)
 	authorization := "authorization_example" // string |  (optional)
@@ -399,10 +399,10 @@ Other parameters are passed through a pointer to a apiVerifyDocumentApiV1VerifyD
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **documentVerify** | [**DocumentVerify**](DocumentVerify.md) |  | 
- **xForwardedFor** | **string** |  | 
- **userAgent** | **string** |  | 
- **authorization** | **string** |  | 
+ **documentVerify** | [**DocumentVerify**](DocumentVerify.md) |  |
+ **xForwardedFor** | **string** |  |
+ **userAgent** | **string** |  |
+ **authorization** | **string** |  |
 
 ### Return type
 
@@ -443,7 +443,7 @@ import (
 )
 
 func main() {
-	signatureVerify := *openapiclient.NewSignatureVerify("Content_example", "Signature_example", "PublicKeyPem_example") // SignatureVerify | 
+	signatureVerify := *openapiclient.NewSignatureVerify("Content_example", "Signature_example", "PublicKeyPem_example") // SignatureVerify |
 	xForwardedFor := "xForwardedFor_example" // string |  (optional)
 	userAgent := "userAgent_example" // string |  (optional)
 	authorization := "authorization_example" // string |  (optional)
@@ -471,10 +471,10 @@ Other parameters are passed through a pointer to a apiVerifySignatureApiV1Verify
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **signatureVerify** | [**SignatureVerify**](SignatureVerify.md) |  | 
- **xForwardedFor** | **string** |  | 
- **userAgent** | **string** |  | 
- **authorization** | **string** |  | 
+ **signatureVerify** | [**SignatureVerify**](SignatureVerify.md) |  |
+ **xForwardedFor** | **string** |  |
+ **userAgent** | **string** |  |
+ **authorization** | **string** |  |
 
 ### Return type
 
@@ -515,7 +515,7 @@ import (
 )
 
 func main() {
-	verifyRequest := *openapiclient.NewVerifyRequest("Text_example") // VerifyRequest | 
+	verifyRequest := *openapiclient.NewVerifyRequest("Text_example") // VerifyRequest |
 	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -541,8 +541,8 @@ Other parameters are passed through a pointer to a apiVerifyTextApiV1VerifyPostR
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **verifyRequest** | [**VerifyRequest**](VerifyRequest.md) |  | 
- **authorization** | **string** |  | 
+ **verifyRequest** | [**VerifyRequest**](VerifyRequest.md) |  |
+ **authorization** | **string** |  |
 
 ### Return type
 
@@ -560,4 +560,3 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

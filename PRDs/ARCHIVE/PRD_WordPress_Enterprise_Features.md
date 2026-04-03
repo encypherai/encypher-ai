@@ -1,9 +1,9 @@
 # PRD: WordPress Plugin - Enterprise Features
 
-**Status:** In Progress  
-**Priority:** P1 (High)  
-**Owner:** TBD  
-**Created:** November 11, 2025  
+**Status:** In Progress
+**Priority:** P1 (High)
+**Owner:** TBD
+**Created:** November 11, 2025
 **Target Completion:** December 5, 2025
 
 ---
@@ -86,11 +86,11 @@ function encypher_signing_mode_callback() {
 function encypher_sign_content($post_id) {
     $mode = get_option('encypher_signing_mode', 'c2pa');
     $api_key = get_option('encypher_api_key');
-    $api_url = get_option('encypher_api_url', 'https://api.encypherai.com');
-    
+    $api_url = get_option('encypher_api_url', 'https://api.encypher.com');
+
     $post = get_post($post_id);
     $content = $post->post_content;
-    
+
     if ($mode === 'embeddings') {
         // Enhanced embeddings endpoint
         $endpoint = $api_url . '/api/v1/enterprise/embeddings/encode-with-embeddings';
@@ -107,7 +107,7 @@ function encypher_sign_content($post_id) {
             'text' => $content,
         );
     }
-    
+
     $response = wp_remote_post($endpoint, array(
         'headers' => array(
             'Authorization' => 'Bearer ' . $api_key,
@@ -116,13 +116,13 @@ function encypher_sign_content($post_id) {
         'body' => json_encode($body),
         'timeout' => 30,
     ));
-    
+
     if (is_wp_error($response)) {
         return $response;
     }
-    
+
     $data = json_decode(wp_remote_retrieve_body($response), true);
-    
+
     // Store metadata
     if ($mode === 'embeddings') {
         update_post_meta($post_id, '_encypher_embedded_content', $data['embedded_content']);
@@ -133,10 +133,10 @@ function encypher_sign_content($post_id) {
         update_post_meta($post_id, '_encypher_signed_content', $data['signed_content']);
         update_post_meta($post_id, '_encypher_mode', 'c2pa');
     }
-    
+
     update_post_meta($post_id, '_encypher_signed', true);
     update_post_meta($post_id, '_encypher_signed_at', current_time('mysql'));
-    
+
     return $data;
 }
 ```
@@ -163,49 +163,49 @@ function encypher_add_merkle_tree_meta_box() {
 function encypher_merkle_tree_callback($post) {
     $mode = get_post_meta($post->ID, '_encypher_mode', true);
     $is_signed = get_post_meta($post->ID, '_encypher_signed', true);
-    
+
     if (!$is_signed) {
         echo '<p>' . __('This post has not been signed yet.', 'encypher') . '</p>';
         return;
     }
-    
+
     if ($mode !== 'embeddings') {
         echo '<p>' . __('Merkle tree only available for Enhanced Embeddings mode.', 'encypher') . '</p>';
         return;
     }
-    
+
     $merkle_tree = json_decode(get_post_meta($post->ID, '_encypher_merkle_tree', true), true);
     $embeddings = json_decode(get_post_meta($post->ID, '_encypher_embeddings', true), true);
-    
+
     ?>
     <div class="encypher-merkle-tree">
         <div class="encypher-stats">
             <p><strong><?php _e('Root Hash:', 'encypher'); ?></strong><br>
             <code><?php echo esc_html(substr($merkle_tree['root_hash'], 0, 16)); ?>...</code></p>
-            
-            <p><strong><?php _e('Sentences:', 'encypher'); ?></strong> 
+
+            <p><strong><?php _e('Sentences:', 'encypher'); ?></strong>
             <?php echo count($embeddings); ?></p>
-            
-            <p><strong><?php _e('Tree Depth:', 'encypher'); ?></strong> 
+
+            <p><strong><?php _e('Tree Depth:', 'encypher'); ?></strong>
             <?php echo $merkle_tree['depth']; ?></p>
         </div>
-        
+
         <button type="button" class="button" id="encypher-view-tree">
             <?php _e('View Full Tree', 'encypher'); ?>
         </button>
-        
+
         <button type="button" class="button" id="encypher-verify-sentences">
             <?php _e('Verify Sentences', 'encypher'); ?>
         </button>
     </div>
-    
+
     <script>
     jQuery(document).ready(function($) {
         $('#encypher-view-tree').on('click', function() {
             // Open modal with tree visualization
             EncypherTreeViewer.show(<?php echo json_encode($merkle_tree); ?>);
         });
-        
+
         $('#encypher-verify-sentences').on('click', function() {
             // Verify each sentence and highlight results
             EncypherVerifier.verifySentences(<?php echo $post->ID; ?>);
@@ -233,16 +233,16 @@ const EncypherTreeViewer = {
             </div>
         `;
         document.body.appendChild(modal);
-        
+
         // Render tree using D3.js or similar
         this.renderTree(merkleTree, '#encypher-tree-container');
-        
+
         // Close handler
         modal.querySelector('.encypher-modal-close').onclick = function() {
             modal.remove();
         };
     },
-    
+
     renderTree: function(merkleTree, container) {
         // Use D3.js or Canvas to render tree
         // Show nodes, hashes, and relationships
@@ -250,7 +250,7 @@ const EncypherTreeViewer = {
             .append('svg')
             .attr('width', 800)
             .attr('height', 600);
-        
+
         // ... tree rendering logic
     }
 };
@@ -268,24 +268,24 @@ function encypher_highlight_sentences($content) {
     if (!is_single()) {
         return $content;
     }
-    
+
     global $post;
     $mode = get_post_meta($post->ID, '_encypher_mode', true);
-    
+
     if ($mode !== 'embeddings') {
         return $content;
     }
-    
+
     $embeddings = json_decode(get_post_meta($post->ID, '_encypher_embeddings', true), true);
-    
+
     if (empty($embeddings)) {
         return $content;
     }
-    
+
     // Wrap each sentence with verification data
     $sentences = explode('. ', $content);
     $highlighted = '';
-    
+
     foreach ($sentences as $index => $sentence) {
         if (isset($embeddings[$index])) {
             $hash = $embeddings[$index]['hash'];
@@ -299,7 +299,7 @@ function encypher_highlight_sentences($content) {
             $highlighted .= $sentence . '. ';
         }
     }
-    
+
     return $highlighted;
 }
 ```
@@ -311,11 +311,11 @@ function encypher_highlight_sentences($content) {
 const EncypherVerifier = {
     verifySentences: async function(postId) {
         const sentences = document.querySelectorAll('.encypher-sentence');
-        
+
         for (const sentence of sentences) {
             const index = sentence.dataset.index;
             const hash = sentence.dataset.hash;
-            
+
             try {
                 const response = await fetch('/wp-json/encypher/v1/verify-sentence', {
                     method: 'POST',
@@ -329,9 +329,9 @@ const EncypherVerifier = {
                         expected_hash: hash
                     })
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (result.valid) {
                     sentence.classList.add('encypher-verified');
                     sentence.title = 'Verified ✓';
@@ -369,7 +369,7 @@ function encypher_handle_bulk_actions($redirect_to, $action, $post_ids) {
     if ($action === 'encypher_sign') {
         $signed = 0;
         $failed = 0;
-        
+
         foreach ($post_ids as $post_id) {
             $result = encypher_sign_content($post_id);
             if (is_wp_error($result)) {
@@ -378,17 +378,17 @@ function encypher_handle_bulk_actions($redirect_to, $action, $post_ids) {
                 $signed++;
             }
         }
-        
+
         $redirect_to = add_query_arg(array(
             'encypher_signed' => $signed,
             'encypher_failed' => $failed,
         ), $redirect_to);
     }
-    
+
     if ($action === 'encypher_verify') {
         // Similar logic for verification
     }
-    
+
     return $redirect_to;
 }
 
@@ -399,7 +399,7 @@ function encypher_bulk_action_notices() {
     if (!empty($_REQUEST['encypher_signed'])) {
         $signed = intval($_REQUEST['encypher_signed']);
         $failed = intval($_REQUEST['encypher_failed']);
-        
+
         printf(
             '<div class="notice notice-success is-dismissible"><p>%s</p></div>',
             sprintf(
@@ -425,17 +425,17 @@ function encypher_auto_sign($post_id, $post) {
     if (!get_option('encypher_auto_sign', false)) {
         return;
     }
-    
+
     // Skip if already signed
     if (get_post_meta($post_id, '_encypher_signed', true)) {
         return;
     }
-    
+
     // Skip revisions and autosaves
     if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
         return;
     }
-    
+
     // Sign the content
     encypher_sign_content($post_id);
 }
@@ -453,7 +453,7 @@ function encypher_auto_sign_callback() {
     $auto_sign = get_option('encypher_auto_sign', false);
     ?>
     <label>
-        <input type="checkbox" name="encypher_auto_sign" value="1" 
+        <input type="checkbox" name="encypher_auto_sign" value="1"
                <?php checked($auto_sign, true); ?>>
         <?php _e('Automatically sign posts when published', 'encypher'); ?>
     </label>
@@ -473,17 +473,17 @@ function encypher_add_verification_badge($content) {
     if (!is_single()) {
         return $content;
     }
-    
+
     global $post;
     $is_signed = get_post_meta($post->ID, '_encypher_signed', true);
-    
+
     if (!$is_signed) {
         return $content;
     }
-    
+
     $mode = get_post_meta($post->ID, '_encypher_mode', true);
     $signed_at = get_post_meta($post->ID, '_encypher_signed_at', true);
-    
+
     $badge = sprintf(
         '<div class="encypher-verification-badge">
             <div class="encypher-badge-icon">✓</div>
@@ -496,7 +496,7 @@ function encypher_add_verification_badge($content) {
         $mode === 'embeddings' ? __('Sentence-level', 'encypher') : __('Document-level', 'encypher'),
         sprintf(__('Signed %s', 'encypher'), human_time_diff(strtotime($signed_at)))
     );
-    
+
     return $badge . $content;
 }
 ```
@@ -564,7 +564,7 @@ function encypher_add_dashboard_widget() {
 
 function encypher_dashboard_widget_callback() {
     global $wpdb;
-    
+
     // Get stats
     $total_posts = wp_count_posts('post')->publish;
     $signed_posts = $wpdb->get_var("
@@ -575,27 +575,27 @@ function encypher_dashboard_widget_callback() {
         SELECT COUNT(*) FROM {$wpdb->postmeta}
         WHERE meta_key = '_encypher_mode' AND meta_value = 'embeddings'
     ");
-    
+
     $percentage = $total_posts > 0 ? round(($signed_posts / $total_posts) * 100) : 0;
-    
+
     ?>
     <div class="encypher-dashboard-stats">
         <div class="encypher-stat">
             <div class="encypher-stat-value"><?php echo $signed_posts; ?></div>
             <div class="encypher-stat-label"><?php _e('Signed Posts', 'encypher'); ?></div>
         </div>
-        
+
         <div class="encypher-stat">
             <div class="encypher-stat-value"><?php echo $percentage; ?>%</div>
             <div class="encypher-stat-label"><?php _e('Coverage', 'encypher'); ?></div>
         </div>
-        
+
         <div class="encypher-stat">
             <div class="encypher-stat-value"><?php echo $embeddings_posts; ?></div>
             <div class="encypher-stat-label"><?php _e('Enhanced Embeddings', 'encypher'); ?></div>
         </div>
     </div>
-    
+
     <div class="encypher-dashboard-actions">
         <a href="<?php echo admin_url('edit.php?encypher_filter=unsigned'); ?>" class="button">
             <?php _e('View Unsigned Posts', 'encypher'); ?>
@@ -652,5 +652,5 @@ function encypher_dashboard_widget_callback() {
 
 ---
 
-**Last Updated:** November 12, 2025  
+**Last Updated:** November 12, 2025
 **Next Review:** November 19, 2025

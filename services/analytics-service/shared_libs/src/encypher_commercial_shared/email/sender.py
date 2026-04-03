@@ -46,7 +46,7 @@ class EmailConfig:
     smtp_user: str = ""
     smtp_pass: str = ""
     smtp_tls: bool = True
-    email_from: str = "support@encypherai.com"
+    email_from: str = "support@encypher.com"
     email_from_name: str = "Support - Encypher"
     frontend_url: str = "http://localhost:3000"
     dashboard_url: str = ""
@@ -61,7 +61,7 @@ class EmailConfig:
             smtp_user=os.getenv("SMTP_USER", ""),
             smtp_pass=os.getenv("SMTP_PASS", ""),
             smtp_tls=os.getenv("SMTP_TLS", "true").lower() == "true",
-            email_from=os.getenv("EMAIL_FROM", "support@encypherai.com"),
+            email_from=os.getenv("EMAIL_FROM", "support@encypher.com"),
             email_from_name=os.getenv("EMAIL_FROM_NAME", "Support - Encypher"),
             frontend_url=os.getenv("FRONTEND_URL", "http://localhost:3000"),
             dashboard_url=os.getenv("DASHBOARD_URL", ""),

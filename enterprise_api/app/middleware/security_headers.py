@@ -15,7 +15,7 @@ DOCS_CSP = (
     "default-src 'self'; "
     "script-src 'self' 'unsafe-inline' https://unpkg.com; "
     "style-src 'self' 'unsafe-inline' https://unpkg.com; "
-    "img-src 'self' https://encypherai.com data:; "
+    "img-src 'self' https://encypher.com data:; "
     "font-src 'self' https://unpkg.com; "
     "connect-src 'self'; "
     "frame-ancestors 'none'; "

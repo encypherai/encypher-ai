@@ -3,7 +3,7 @@ name = "encypher"
 version = "1.0.2"
 description = "Encypher Enterprise API"
 authors = [
-  {name = "Encypher", email = "sdk@encypherai.com"},
+  {name = "Encypher", email = "sdk@encypher.com"},
 ]
 readme = "README.md"
 license = { text = "MIT" }
@@ -19,8 +19,8 @@ dependencies = [
 
 [project.urls]
 Changelog = "https://github.com/encypherai/encypherai-commercial/releases"
-Documentation = "https://api.encypherai.com/docs"
-Homepage = "https://encypherai.com"
+Documentation = "https://api.encypher.com/docs"
+Homepage = "https://encypher.com"
 Repository = "https://github.com/encypherai/encypherai-commercial"
 [tool.poetry]
 requires-poetry = ">=2.0"

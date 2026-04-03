@@ -35,7 +35,7 @@ Source of truth: `docs/legal/PRIVACY_POLICY.md` (Sections 5 and 7).
 - Data may be retained longer if required by law or during litigation holds.
 
 ## 4. Deletion & Access Requests
-- Requests are handled via privacy@encypherai.com (see Privacy Policy).
+- Requests are handled via privacy@encypher.com (see Privacy Policy).
 - Engineering must support:
   - Account deletion initiation with a 90-day purge window.
   - Audit log retention enforcement for 2 years.

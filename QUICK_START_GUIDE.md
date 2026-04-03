@@ -40,19 +40,19 @@ Before you begin, ensure you have:
 ## Choose Your Path
 
 ### Path 1: CLI Tools (Easiest)
-**Time**: 5 minutes  
+**Time**: 5 minutes
 **Best for**: Testing, auditing, policy validation
 
 ### Path 2: Web Applications
-**Time**: 10 minutes  
+**Time**: 10 minutes
 **Best for**: Frontend development, dashboards
 
 ### Path 3: Enterprise API
-**Time**: 15 minutes  
+**Time**: 15 minutes
 **Best for**: Backend development, API integration
 
 ### Path 4: Microservices
-**Time**: 20 minutes  
+**Time**: 20 minutes
 **Best for**: Full-stack development, architecture
 
 ---
@@ -181,7 +181,7 @@ uv run uvicorn app.main:app --reload --port 9000
 
 # 6. Test the API
 # Local docs (Swagger UI): http://localhost:9000/docs
-# Production docs (once deployed): https://api.encypherai.com/docs
+# Production docs (once deployed): https://api.encypher.com/docs
 ```
 
 **Success:** Enterprise API is running with Swagger docs.
@@ -373,8 +373,8 @@ npm install
 
 ### Support Channels
 - **Internal Team**: Slack #encypher-dev
-- **Enterprise**: enterprise@encypherai.com
-- **API Issues**: api@encypherai.com
+- **Enterprise**: enterprise@encypher.com
+- **API Issues**: api@encypher.com
 
 ---
 

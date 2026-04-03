@@ -1,6 +1,6 @@
 # \VerificationApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -258,4 +258,3 @@ No authorization required
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

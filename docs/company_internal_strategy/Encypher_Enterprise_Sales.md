@@ -470,7 +470,7 @@ Expect detailed follow-up questions on implementation method, systems integratio
 **Document Owner:** Chief Commercial Officer (CCO)
 
 **Key Changes from March 2026 (v5.0):**
-1. Domain migration: encypherai.com -> encypher.com
+1. Domain migration: encypher.com -> encypher.com
 2. Removed "beta" labels from WordPress plugin and Chrome extension (both released)
 3. Marketing posture shifted to active launch
 4. Updated all demo and contact URLs to encypher.com domain

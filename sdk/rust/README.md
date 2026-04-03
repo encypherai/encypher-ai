@@ -22,7 +22,7 @@ encypher = { path = "./encypher" }
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
@@ -300,6 +300,3 @@ cargo doc --open
 ```
 
 ## Author
-
-
-

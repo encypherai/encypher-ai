@@ -74,7 +74,7 @@ async def test_ensure_organization_certificate_uses_signing_key(db, monkeypatch)
         {
             "id": organization_id,
             "name": organization_name,
-            "email": "cert-test@encypherai.com",
+            "email": "cert-test@encypher.com",
             "tier": "starter",
             "monthly_api_limit": 10000,
             "private_key_encrypted": encrypted_private_key,
@@ -199,7 +199,7 @@ async def test_ensure_organization_certificate_handles_naive_expiry(db, monkeypa
         {
             "id": organization_id,
             "name": organization_name,
-            "email": "naive-expiry@encypherai.com",
+            "email": "naive-expiry@encypher.com",
             "tier": "starter",
             "monthly_api_limit": 10000,
             "private_key_encrypted": encrypted_private_key,

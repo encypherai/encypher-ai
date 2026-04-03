@@ -131,7 +131,7 @@ async def populate_demo_public_key():
                     {
                         "id": demo_organization_id,
                         "name": demo_organization_name,
-                        "email": "demo@encypherai.com",
+                        "email": "demo@encypher.com",
                         "tier": "enterprise",
                         "public_key": public_key_bytes,
                     },
@@ -177,7 +177,7 @@ async def populate_demo_public_key():
                         {
                             "id": signer_id,
                             "name": f"Legacy Signer ({signer_id})",
-                            "email": "demo@encypherai.com",
+                            "email": "demo@encypher.com",
                             "tier": "enterprise",
                             "public_key": public_key_bytes,
                         },

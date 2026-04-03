@@ -1,9 +1,9 @@
 # PRD: Python SDK Production Readiness WBS
 
-**Status:** Draft  
-**Owner:** Enterprise SDK Team  
-**Last Updated:** November 12, 2025  
-**Target Release:** December 15, 2025  
+**Status:** Draft
+**Owner:** Enterprise SDK Team
+**Last Updated:** November 12, 2025
+**Target Release:** December 15, 2025
 **Related Docs:** `PRD_Production_Readiness_Checklist.md`, `enterprise_api/README.md`, `enterprise_sdk/SDK_WBS.md`
 
 ---
@@ -134,4 +134,4 @@ The Enterprise Python SDK (`enterprise_sdk/`) must reach feature parity with the
 3. Do we expose streaming utilities as high-level async generators or low-level SSE hooks?
 4. How do we version CLI vs library features (single version or create subcommands per tier)?
 
-Document owner: Enterprise SDK Team (engineering@encypherai.com). Update weekly or whenever scope changes.
+Document owner: Enterprise SDK Team (engineering@encypher.com). Update weekly or whenever scope changes.

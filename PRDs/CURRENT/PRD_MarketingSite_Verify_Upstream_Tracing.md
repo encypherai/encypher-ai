@@ -7,7 +7,7 @@ In Progress
 Expose upstream verifier trace identifiers through the marketing-site `/api/tools/verify` proxy response so production verification failures can be correlated to the exact backend service instance and logs.
 
 ## Overview
-The marketing-site Encode/Decode tool calls its own Next.js API route (`/api/tools/verify`), which then proxies to `https://api.encypherai.com/api/v1/verify`. Railway adds `x-railway-request-id` to the proxy response, but the verifier service also emits its own request ID (`X-Request-ID`) and includes a `correlation_id` field in JSON. Without propagating those upstream identifiers, debugging `SIGNATURE_INVALID` in production cannot reliably confirm which service processed the request.
+The marketing-site Encode/Decode tool calls its own Next.js API route (`/api/tools/verify`), which then proxies to `https://api.encypher.com/api/v1/verify`. Railway adds `x-railway-request-id` to the proxy response, but the verifier service also emits its own request ID (`X-Request-ID`) and includes a `correlation_id` field in JSON. Without propagating those upstream identifiers, debugging `SIGNATURE_INVALID` in production cannot reliably confirm which service processed the request.
 
 ## Objectives
 - Surface upstream `X-Request-ID` from the verifier as a response header on `/api/tools/verify`.

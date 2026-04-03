@@ -523,7 +523,7 @@ UTM_PARAMS = "utm_source=eu_ai_act_filing&utm_medium=document&utm_campaign=publi
 VERIFY_URL = f"https://encypher.com/tools/verify?{UTM_PARAMS}"
 FOOTER_URL = f"https://encypher.com?{UTM_PARAMS}"
 
-ENTERPRISE_API_URL = "https://api.encypherai.com/api/v1/sign"
+ENTERPRISE_API_URL = "https://api.encypher.com/api/v1/sign"
 
 
 def _post_json(url: str, payload: dict[str, Any], headers: Optional[dict[str, str]] = None, timeout: int = 120) -> dict[str, Any]:
@@ -790,7 +790,7 @@ def main() -> None:
     parser.add_argument(
         "--local",
         action="store_true",
-        help="Use local API (localhost:8000) instead of live api.encypherai.com",
+        help="Use local API (localhost:8000) instead of live api.encypher.com",
     )
     parser.add_argument(
         "--no-pdf-sign",
@@ -807,7 +807,7 @@ def main() -> None:
 
     signed_text: Optional[str] = None
     if not args.no_sign:
-        target = "local API" if args.local else "live API (api.encypherai.com)"
+        target = "local API" if args.local else "live API (api.encypher.com)"
         print(f"  Signing text via {target}...")
         signed_text = sign_text(plain_text, use_local=args.local)
         print(f"  Signed text: {len(signed_text):,} characters ({len(signed_text) - len(plain_text):,} invisible markers)")

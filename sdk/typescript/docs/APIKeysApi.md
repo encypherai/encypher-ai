@@ -1,6 +1,6 @@
 # APIKeysApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -36,7 +36,7 @@ import type { CreateKeyApiV1KeysPostRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -108,7 +108,7 @@ import type { CreateKeyApiV1KeysPost0Request } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -180,7 +180,7 @@ import type { ListKeysApiV1KeysGetRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -252,7 +252,7 @@ import type { ListKeysApiV1KeysGet0Request } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -324,7 +324,7 @@ import type { RevokeKeyApiV1KeysKeyIdDeleteRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -396,7 +396,7 @@ import type { RevokeKeyApiV1KeysKeyIdDelete0Request } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -468,7 +468,7 @@ import type { RotateKeyApiV1KeysKeyIdRotatePostRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -540,7 +540,7 @@ import type { RotateKeyApiV1KeysKeyIdRotatePost0Request } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -612,7 +612,7 @@ import type { UpdateKeyApiV1KeysKeyIdPatchRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -687,7 +687,7 @@ import type { UpdateKeyApiV1KeysKeyIdPatch0Request } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -741,4 +741,3 @@ example().catch(console.error);
 | **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-

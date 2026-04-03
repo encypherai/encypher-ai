@@ -314,7 +314,7 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 **Document Owner:** Chief Commercial Officer (CCO)
 
 **Key Changes from March 2026 (v5.0):**
-1. Domain migration: encypherai.com -> encypher.com (all URLs and email addresses)
+1. Domain migration: encypher.com -> encypher.com (all URLs and email addresses)
 2. Removed "beta" labels (Chrome extension v2.0 released, WordPress plugin released)
 3. Section heading updated: Text Provenance -> Content Provenance Infrastructure
 4. Marketing posture shifted to active launch

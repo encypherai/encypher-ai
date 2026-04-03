@@ -7,7 +7,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/encypher-ai.svg)](https://pypi.org/project/encypher-ai/)
 [![GitHub stars](https://img.shields.io/github/stars/encypherai/encypher-ai.svg?style=social&label=Star)](https://github.com/encypherai/encypher-ai)
 [![Python versions](https://img.shields.io/pypi/pyversions/encypher-ai.svg)](https://pypi.org/project/encypher-ai/)
-[![Documentation](https://img.shields.io/badge/docs-docs.encypherai.com-blue)](https://docs.encypherai.com)
+[![Documentation](https://img.shields.io/badge/docs-docs.encypher.com-blue)](https://docs.encypher.com)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Build Status](https://github.com/encypherai/encypher-ai/actions/workflows/python-package.yml/badge.svg)](https://github.com/encypherai/encypher-ai/actions/workflows/python-package.yml)
 
@@ -54,7 +54,7 @@ Key features:
 
 Our implementation uses the official `c2pa-text` library to encode C2PA manifests into invisible Unicode variation selectors, enabling provenance tracking and tamper detection without altering the visible appearance of the text.
 
-Learn more about [Encypher's relationship with C2PA](https://docs.encypherai.com/package/user-guide/c2pa-relationship/) in our documentation.
+Learn more about [Encypher's relationship with C2PA](https://docs.encypher.com/package/user-guide/c2pa-relationship/) in our documentation.
 
 ### C2PA `@context` compatibility configuration (v3.0.3+)
 
@@ -72,7 +72,7 @@ While this library is open source, Encypher offers an **Enterprise API** for:
 - Content production workflows for signing at scale
 - Analytics and tracking for signed content
 
-[Learn more about Encypher Enterprise](https://encypherai.com)
+[Learn more about Encypher Enterprise](https://encypher.com)
 
 ### Cryptography and COSE
 
@@ -89,7 +89,7 @@ Encypher seamlessly integrates with popular LLM providers:
 - **Anthropic Claude**: Claude 3 Opus, Sonnet, Haiku, and other Claude models
 - **LiteLLM**: For unified access to multiple LLM providers
 
-Check our [documentation](https://docs.encypherai.com/package/integration/) for detailed integration examples and code snippets for each provider.
+Check our [documentation](https://docs.encypher.com/package/integration/) for detailed integration examples and code snippets for each provider.
 
 ## Demo Video
 
@@ -361,7 +361,7 @@ uv pip install -e .
 
 ## Migration Guide
 
-If you're upgrading from a previous version, check out our [Migration Guide](https://docs.encypherai.com/package/user-guide/migration-guide/) to learn about the new modular structure introduced in version 2.2.0.
+If you're upgrading from a previous version, check out our [Migration Guide](https://docs.encypher.com/package/user-guide/migration-guide/) to learn about the new modular structure introduced in version 2.2.0.
 
 ## Advanced Usage: C2PA-Inspired Manifests
 
@@ -477,4 +477,4 @@ For more detailed information, see our [Content Hash and Embedding Technical Gui
 
 ## License
 
-This project is licensed under the GNU Affero General Public License v3.0 - see the LICENSE file for details. Commercial licensing options are also available - see our [Licensing Guide](https://docs.encypherai.com/package/user-guide/licensing/) for details.
+This project is licensed under the GNU Affero General Public License v3.0 - see the LICENSE file for details. Commercial licensing options are also available - see our [Licensing Guide](https://docs.encypher.com/package/user-guide/licensing/) for details.

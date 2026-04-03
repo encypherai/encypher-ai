@@ -1,6 +1,6 @@
 # SDK Enhancements for Repository Signing
 
-**Date:** October 29, 2025  
+**Date:** October 29, 2025
 **Status:** Ready for Testing
 
 ## Overview
@@ -163,7 +163,7 @@ def get_metadata(file_path: Path) -> FileMetadata:
             author=frontmatter.get('author'),
             tags=frontmatter.get('tags', [])
         )
-    
+
     # Use git history
     commit = get_last_commit(file_path)
     return FileMetadata(
@@ -184,7 +184,7 @@ async with AsyncEncypherClient(api_key="...") as client:
         client=client,
         max_concurrent=10  # Sign 10 files simultaneously
     )
-    
+
     result = signer.sign_directory(...)
 ```
 
@@ -205,7 +205,7 @@ JSON reports for audit trails:
       "file_path": "article1.md",
       "success": true,
       "document_id": "doc_abc123",
-      "verification_url": "https://encypherai.com/verify/doc_abc123",
+      "verification_url": "https://encypher.com/verify/doc_abc123",
       "processing_time": 0.52
     }
   ]
@@ -442,12 +442,12 @@ signer = RepositorySigner(client)
 
 The SDK now provides **enterprise-grade repository signing** with:
 
-✅ **C2PA 2.2 compliance** - Full manifest support  
-✅ **Batch operations** - Sign entire repositories  
-✅ **Flexible metadata** - Customizable per file  
-✅ **Concurrent processing** - Async support  
-✅ **CLI tools** - Easy command-line usage  
-✅ **Enterprise features** - Merkle trees, attribution, plagiarism detection  
-✅ **Comprehensive examples** - Real-world use cases  
+✅ **C2PA 2.2 compliance** - Full manifest support
+✅ **Batch operations** - Sign entire repositories
+✅ **Flexible metadata** - Customizable per file
+✅ **Concurrent processing** - Async support
+✅ **CLI tools** - Easy command-line usage
+✅ **Enterprise features** - Merkle trees, attribution, plagiarism detection
+✅ **Comprehensive examples** - Real-world use cases
 
 Publishers can now easily sign their entire content repositories with a single command, ensuring all content is authenticated and traceable.

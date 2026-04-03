@@ -92,7 +92,7 @@ async def execute_unified_signing(
             message=f"{denied['display_name']} requires {denied['required_tier'].title()} tier or higher",
             correlation_id=correlation_id,
             tier=tier,
-            hint=f"Upgrade your plan at https://encypherai.com/pricing to access {denied['display_name']}",
+            hint=f"Upgrade your plan at https://encypher.com/pricing to access {denied['display_name']}",
             details={
                 "features_denied": validation.features_denied,
                 "current_tier": tier,

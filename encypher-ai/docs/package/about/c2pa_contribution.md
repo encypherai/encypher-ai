@@ -66,8 +66,8 @@ We invite the C2PA community, researchers, and industry partners to collaborate 
 
 For C2PA-related inquiries and collaboration opportunities:
 
-- Email: c2pa@encypherai.com
-- Website: https://www.encypherai.com/
+- Email: c2pa@encypher.com
+- Website: https://www.encypher.com/
 
 ## Conclusion
 

@@ -1,7 +1,7 @@
 # Web Service Agents Guide
 
 ## Context
-This service handles the backend functionality for the public marketing website (encypherai.com).
+This service handles the backend functionality for the public marketing website (encypher.com).
 It is designed to be a lightweight service separate from the core `enterprise_api`.
 
 **Migrated from**: `encypher_website/backend` (old monolithic backend)

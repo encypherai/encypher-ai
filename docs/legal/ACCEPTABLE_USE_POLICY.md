@@ -1,6 +1,6 @@
 # Acceptable Use Policy (AUP)
 
-**Last Updated:** October 28, 2025  
+**Last Updated:** October 28, 2025
 **Effective Date:** October 28, 2025
 
 This Acceptable Use Policy ("AUP") governs your use of the Encypher Enterprise API (the "Service"). By using the Service, you agree to comply with this AUP.
@@ -149,7 +149,7 @@ You must:
 - Keep API keys confidential and secure
 - Not share API keys with unauthorized parties
 - Rotate API keys regularly
-- Report compromised keys immediately to legal@encypherai.com
+- Report compromised keys immediately to legal@encypher.com
 
 ### 4.3 Error Handling
 
@@ -180,7 +180,7 @@ You must:
 ### 5.3 Responsible Disclosure
 
 If you discover a security vulnerability:
-- Report it immediately to security@encypherai.com
+- Report it immediately to security@encypher.com
 - Do not exploit the vulnerability
 - Do not disclose the vulnerability publicly until we have addressed it
 - Allow reasonable time for remediation (typically 90 days)
@@ -245,7 +245,7 @@ Depending on the severity and frequency of violations, we may:
 ### 7.3 Appeals
 
 If your account is suspended or terminated:
-- You may appeal by emailing legal@encypherai.com
+- You may appeal by emailing legal@encypher.com
 - Provide explanation and evidence
 - We will review appeals within 10 business days
 - Our decision on appeals is final
@@ -260,14 +260,14 @@ Suspension or termination for AUP violations does not entitle you to refunds of 
 
 If you become aware of violations of this AUP:
 
-**Abuse Reports:**  
-Email: abuse@encypherai.com
+**Abuse Reports:**
+Email: abuse@encypher.com
 
-**Security Issues:**  
-Email: security@encypherai.com
+**Security Issues:**
+Email: security@encypher.com
 
-**Legal Issues:**  
-Email: legal@encypherai.com
+**Legal Issues:**
+Email: legal@encypher.com
 
 ### 8.2 Report Contents
 
@@ -338,18 +338,18 @@ This AUP is part of and incorporated into our Terms of Service. In the event of 
 
 For questions about this Acceptable Use Policy:
 
-**Abuse Reports:**  
-Email: abuse@encypherai.com
+**Abuse Reports:**
+Email: abuse@encypher.com
 
-**Security Issues:**  
-Email: security@encypherai.com
+**Security Issues:**
+Email: security@encypher.com
 
-**Legal Questions:**  
-Email: legal@encypherai.com
+**Legal Questions:**
+Email: legal@encypher.com
 
-**General Support:**  
-Email: support@encypherai.com  
-Website: https://encypherai.com
+**General Support:**
+Email: support@encypher.com
+Website: https://encypher.com
 
 ---
 

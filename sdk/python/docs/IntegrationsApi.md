@@ -1,6 +1,6 @@
 # encypher.IntegrationsApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -54,10 +54,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -136,10 +136,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -217,10 +217,10 @@ from encypher.models.word_press_connect_poll_response import WordPressConnectPol
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -285,10 +285,10 @@ from encypher.models.word_press_connect_poll_response import WordPressConnectPol
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -356,10 +356,10 @@ from encypher.models.ghost_integration_response import GhostIntegrationResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -436,10 +436,10 @@ from encypher.models.ghost_integration_response import GhostIntegrationResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -514,10 +514,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -585,10 +585,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -657,10 +657,10 @@ from encypher.models.ghost_integration_response import GhostIntegrationResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -731,10 +731,10 @@ from encypher.models.ghost_integration_response import GhostIntegrationResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -803,10 +803,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -875,10 +875,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -951,10 +951,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -1023,10 +1023,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -1093,10 +1093,10 @@ from encypher.models.ghost_manual_sign_request import GhostManualSignRequest
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1174,10 +1174,10 @@ from encypher.models.ghost_manual_sign_request import GhostManualSignRequest
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1252,10 +1252,10 @@ from encypher.models.word_press_connect_poll_response import WordPressConnectPol
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -1319,10 +1319,10 @@ from encypher.models.word_press_connect_poll_response import WordPressConnectPol
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -1387,10 +1387,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1464,10 +1464,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1542,10 +1542,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1622,10 +1622,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1702,10 +1702,10 @@ from encypher.models.word_press_verification_event_payload import WordPressVerif
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1780,10 +1780,10 @@ from encypher.models.word_press_verification_event_payload import WordPressVerif
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1859,10 +1859,10 @@ from encypher.models.ghost_token_regenerate_response import GhostTokenRegenerate
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1933,10 +1933,10 @@ from encypher.models.ghost_token_regenerate_response import GhostTokenRegenerate
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -2006,10 +2006,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -2084,10 +2084,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -2161,10 +2161,10 @@ from encypher.models.word_press_connect_start_payload import WordPressConnectSta
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -2229,10 +2229,10 @@ from encypher.models.word_press_connect_start_payload import WordPressConnectSta
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -2298,10 +2298,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -2376,10 +2376,10 @@ from encypher.models.word_press_integration_status_response import WordPressInte
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters

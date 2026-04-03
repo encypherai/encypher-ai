@@ -68,7 +68,7 @@ Use this index to jump directly to the documentation you need.
 |----------|---------|
 | [apps/marketing-site/README.md](./apps/marketing-site/README.md) | Setup, development, deployment |
 
-**Domain**: `encypherai.com`
+**Domain**: `encypher.com`
 **Tech**: Next.js, React, Tailwind CSS
 **Status**: Active
 
@@ -78,7 +78,7 @@ Use this index to jump directly to the documentation you need.
 | [apps/dashboard/README.md](./apps/dashboard/README.md) | Setup, features, deployment |
 | [PRDs/dashboard_enhancements.md](./PRDs/dashboard_enhancements.md) | Dashboard enhancement PRD |
 
-**Domain**: `dashboard.encypherai.com`
+**Domain**: `dashboard.encypher.com`
 **Tech**: Next.js, React, Tailwind CSS
 **Features**: API key management, usage tracking, team management, webhooks, notifications, command palette, dark mode, CSV export
 **Status**: Active (Enhanced November 2025)
@@ -202,7 +202,7 @@ Per-segment C2PA manifest signing for live video streams with backwards-linked p
 **Key Features**: Auto-generated from API spec, always in sync, MIT licensed
 **Status**: Generated (not yet published to registries)
 **Tier**: Enterprise
-**API Docs**: [api.encypherai.com/docs](https://api.encypherai.com/docs)
+**API Docs**: [api.encypher.com/docs](https://api.encypher.com/docs)
 
 ---
 

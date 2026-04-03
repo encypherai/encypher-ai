@@ -76,10 +76,10 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASS: str = ""
     SMTP_TLS: bool = True
-    EMAIL_FROM: str = "noreply@encypherai.com"
+    EMAIL_FROM: str = "noreply@encypher.com"
     EMAIL_FROM_NAME: str = "Encypher"
-    ADMIN_EMAIL: str = "erik.svilich@encypherai.com"
-    SUPPORT_EMAIL: str = "support@encypherai.com"  # BCC for signup notifications
+    ADMIN_EMAIL: str = "erik.svilich@encypher.com"
+    SUPPORT_EMAIL: str = "support@encypher.com"  # BCC for signup notifications
     SEND_STARTUP_EMAIL: bool = False
 
     # ===========================================

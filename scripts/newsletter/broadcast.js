@@ -4,7 +4,7 @@ const fs = require('fs');
 const matter = require('gray-matter');
 
 const filePath = process.env.NEW_FILE;
-const siteUrl = 'https://encypherai.com';
+const siteUrl = 'https://encypher.com';
 const webServiceUrl = process.env.WEB_SERVICE_URL;
 const secret = process.env.NEWSLETTER_BROADCAST_SECRET;
 

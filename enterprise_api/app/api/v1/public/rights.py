@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/public/rights", tags=["Public - Rights"])
 
 # Base URL for rights resolution links (injected from settings at runtime)
-_BASE_URL = "https://api.encypherai.com"
+_BASE_URL = "https://api.encypher.com"
 
 
 def _rights_service():
@@ -224,7 +224,7 @@ async def get_org_rights_profile(
             "email": profile.contact_email,
             "url": profile.contact_url,
             "coalition": profile.coalition_member,
-            "coalition_contact": "licensing@encypherai.com" if profile.coalition_member else None,
+            "coalition_contact": "licensing@encypher.com" if profile.coalition_member else None,
         },
         "rights_api_url": f"{_BASE_URL}/api/v1/public/rights/organization/{org_id}",
     }
@@ -732,7 +732,7 @@ def _build_public_rights_response(
             "email": profile.contact_email if profile else None,
             "url": profile.contact_url if profile else None,
             "coalition": profile.coalition_member if profile else False,
-            "coalition_contact": "licensing@encypherai.com" if (profile and profile.coalition_member) else None,
+            "coalition_contact": "licensing@encypher.com" if (profile and profile.coalition_member) else None,
         },
         "verification": {
             "c2pa_valid": True,
@@ -786,7 +786,7 @@ def _build_odrl(document_id: str, profile, rights: Dict[str, Any]) -> Dict[str, 
         }
 
     return {
-        "@context": ["http://www.w3.org/ns/odrl.jsonld", {"encypher": "https://api.encypherai.com/ns/"}],
+        "@context": ["http://www.w3.org/ns/odrl.jsonld", {"encypher": "https://api.encypher.com/ns/"}],
         "@type": "odrl:Policy",
         "uid": f"{_BASE_URL}/api/v1/public/rights/{document_id}/odrl",
         "odrl:target": {"@id": f"urn:encypher:document:{document_id}"},

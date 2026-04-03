@@ -1,6 +1,6 @@
 # \BatchAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -30,7 +30,7 @@ import (
 )
 
 func main() {
-	batchSignRequest := *openapiclient.NewBatchSignRequest("Mode_example", "IdempotencyKey_example", []openapiclient.BatchItemPayload{*openapiclient.NewBatchItemPayload("DocumentId_example", "Text_example")}) // BatchSignRequest | 
+	batchSignRequest := *openapiclient.NewBatchSignRequest("Mode_example", "IdempotencyKey_example", []openapiclient.BatchItemPayload{*openapiclient.NewBatchItemPayload("DocumentId_example", "Text_example")}) // BatchSignRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -55,7 +55,7 @@ Other parameters are passed through a pointer to a apiBatchSignApiV1BatchSignPos
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **batchSignRequest** | [**BatchSignRequest**](BatchSignRequest.md) |  | 
+ **batchSignRequest** | [**BatchSignRequest**](BatchSignRequest.md) |  |
 
 ### Return type
 
@@ -96,7 +96,7 @@ import (
 )
 
 func main() {
-	appSchemasBatchBatchVerifyRequest := *openapiclient.NewAppSchemasBatchBatchVerifyRequest("Mode_example", "IdempotencyKey_example", []openapiclient.BatchItemPayload{*openapiclient.NewBatchItemPayload("DocumentId_example", "Text_example")}) // AppSchemasBatchBatchVerifyRequest | 
+	appSchemasBatchBatchVerifyRequest := *openapiclient.NewAppSchemasBatchBatchVerifyRequest("Mode_example", "IdempotencyKey_example", []openapiclient.BatchItemPayload{*openapiclient.NewBatchItemPayload("DocumentId_example", "Text_example")}) // AppSchemasBatchBatchVerifyRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -121,7 +121,7 @@ Other parameters are passed through a pointer to a apiBatchVerifyApiV1BatchVerif
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **appSchemasBatchBatchVerifyRequest** | [**AppSchemasBatchBatchVerifyRequest**](AppSchemasBatchBatchVerifyRequest.md) |  | 
+ **appSchemasBatchBatchVerifyRequest** | [**AppSchemasBatchBatchVerifyRequest**](AppSchemasBatchBatchVerifyRequest.md) |  |
 
 ### Return type
 
@@ -139,4 +139,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

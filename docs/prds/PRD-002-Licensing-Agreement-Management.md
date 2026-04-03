@@ -1,10 +1,10 @@
 # PRD-002: Licensing Agreement Management System
 
-**Status**: Draft  
-**Priority**: P0 (Critical)  
-**Estimated Effort**: 3-4 weeks  
-**Owner**: Backend Team  
-**Created**: 2025-11-04  
+**Status**: Draft
+**Priority**: P0 (Critical)
+**Estimated Effort**: 3-4 weeks
+**Owner**: Backend Team
+**Created**: 2025-11-04
 **Depends On**: PRD-001 (Coalition Infrastructure)
 
 ---
@@ -154,15 +154,15 @@ def calculate_revenue_distribution(period_start, period_end):
     # 1. Get all active agreements for period
     agreements = get_active_agreements(period_start, period_end)
     total_revenue = sum(a.monthly_value for a in agreements)
-    
+
     # 2. Calculate split
     encypher_share = total_revenue * 0.30  # 30%
     member_pool = total_revenue * 0.70     # 70%
-    
+
     # 3. Get all content access logs
     access_logs = get_access_logs(period_start, period_end)
     total_access_count = len(access_logs)
-    
+
     # 4. Calculate member contributions
     member_contributions = {}
     for log in access_logs:
@@ -174,14 +174,14 @@ def calculate_revenue_distribution(period_start, period_end):
             }
         member_contributions[member_id]["access_count"] += 1
         member_contributions[member_id]["content_ids"].add(log.content_id)
-    
+
     # 5. Distribute based on usage
     for member_id, contribution in member_contributions.items():
         contribution_percentage = (
             contribution["access_count"] / total_access_count * 100
         )
         revenue_amount = member_pool * (contribution_percentage / 100)
-        
+
         create_member_revenue(
             member_id=member_id,
             revenue_amount=revenue_amount,
@@ -203,12 +203,12 @@ def calculate_revenue_distribution(period_start, period_end):
 async def verify_ai_company_api_key(authorization: str):
     # Extract key from "Bearer lic_abc123..."
     api_key = authorization.replace("Bearer ", "")
-    
+
     # Hash and lookup
     for company in ai_companies:
         if bcrypt.verify(api_key, company.api_key_hash):
             return company
-    
+
     raise HTTPException(status_code=401, detail="Invalid API key")
 ```
 
@@ -298,7 +298,7 @@ Authorization: Bearer lic_abc123...
         "word_count": 1500,
         "signed_at": "2025-01-03T10:00:00Z",
         "content_hash": "sha256:abc123...",
-        "verification_url": "https://api.encypherai.com/verify/abc123"
+        "verification_url": "https://api.encypher.com/verify/abc123"
       }
     ],
     "total": 1250,

@@ -160,4 +160,4 @@ While this library is open source, Encypher offers an **Enterprise API** for:
 - Content production workflows for signing at scale
 - Analytics and tracking for signed content
 
-[Learn more about Encypher Enterprise](https://encypherai.com)
+[Learn more about Encypher Enterprise](https://encypher.com)

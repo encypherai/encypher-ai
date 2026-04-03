@@ -1,6 +1,6 @@
 # WebhooksApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -40,7 +40,7 @@ import type { CreateWebhookApiV1WebhooksPostRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -112,7 +112,7 @@ import type { CreateWebhookApiV1WebhooksPost0Request } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -184,7 +184,7 @@ import type { DeleteWebhookApiV1WebhooksWebhookIdDeleteRequest } from '@encypher
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -256,7 +256,7 @@ import type { DeleteWebhookApiV1WebhooksWebhookIdDelete0Request } from '@encyphe
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -328,7 +328,7 @@ import type { GetWebhookApiV1WebhooksWebhookIdGetRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -400,7 +400,7 @@ import type { GetWebhookApiV1WebhooksWebhookIdGet0Request } from '@encypher/sdk'
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -472,7 +472,7 @@ import type { GetWebhookDeliveriesApiV1WebhooksWebhookIdDeliveriesGetRequest } f
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -550,7 +550,7 @@ import type { GetWebhookDeliveriesApiV1WebhooksWebhookIdDeliveriesGet0Request } 
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -628,7 +628,7 @@ import type { ListWebhooksApiV1WebhooksGetRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -691,7 +691,7 @@ import type { ListWebhooksApiV1WebhooksGet0Request } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -754,7 +754,7 @@ import type { TestWebhookApiV1WebhooksWebhookIdTestPostRequest } from '@encypher
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -826,7 +826,7 @@ import type { TestWebhookApiV1WebhooksWebhookIdTestPost0Request } from '@encyphe
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -898,7 +898,7 @@ import type { UpdateWebhookApiV1WebhooksWebhookIdPatchRequest } from '@encypher/
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -973,7 +973,7 @@ import type { UpdateWebhookApiV1WebhooksWebhookIdPatch0Request } from '@encypher
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -1027,4 +1027,3 @@ example().catch(console.error);
 | **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-

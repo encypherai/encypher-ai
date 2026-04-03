@@ -539,7 +539,7 @@ def test_dashboard_includes_support_contact_cta() -> None:
     )
     src = admin_php.read_text(encoding="utf-8")
 
-    assert "wp-support@encypherai.com" in src
+    assert "wp-support@encypher.com" in src
     assert "Need help? Contact support" in src
 
 

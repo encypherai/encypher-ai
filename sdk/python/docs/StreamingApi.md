@@ -1,6 +1,6 @@
 # encypher.StreamingApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -36,10 +36,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -56,7 +56,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StreamingApi(api_client)
-    session_id = 'session_id_example' # str | 
+    session_id = 'session_id_example' # str |
 
     try:
         # Close Streaming Session
@@ -74,7 +74,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **session_id** | **str**|  | 
+ **session_id** | **str**|  |
 
 ### Return type
 
@@ -125,10 +125,10 @@ from encypher.models.body_create_streaming_session_api_v1_sign_stream_sessions_p
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -165,7 +165,7 @@ with encypher.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **session_type** | **str**|  | [optional] [default to &#39;websocket&#39;]
- **body_create_streaming_session_api_v1_sign_stream_sessions_post** | [**BodyCreateStreamingSessionApiV1SignStreamSessionsPost**](BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md)|  | [optional] 
+ **body_create_streaming_session_api_v1_sign_stream_sessions_post** | [**BodyCreateStreamingSessionApiV1SignStreamSessionsPost**](BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md)|  | [optional]
 
 ### Return type
 
@@ -205,10 +205,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -225,7 +225,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StreamingApi(api_client)
-    run_id = 'run_id_example' # str | 
+    run_id = 'run_id_example' # str |
 
     try:
         # Get Stream Run
@@ -243,7 +243,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **run_id** | **str**|  | 
+ **run_id** | **str**|  |
 
 ### Return type
 
@@ -289,10 +289,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -369,10 +369,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -389,7 +389,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StreamingApi(api_client)
-    session_id = 'session_id_example' # str | 
+    session_id = 'session_id_example' # str |
     api_key = 'api_key_example' # str |  (optional)
 
     try:
@@ -408,8 +408,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **session_id** | **str**|  | 
- **api_key** | **str**|  | [optional] 
+ **session_id** | **str**|  |
+ **api_key** | **str**|  | [optional]
 
 ### Return type
 
@@ -450,10 +450,10 @@ from encypher.models.stream_sign_request import StreamSignRequest
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -470,7 +470,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StreamingApi(api_client)
-    stream_sign_request = encypher.StreamSignRequest() # StreamSignRequest | 
+    stream_sign_request = encypher.StreamSignRequest() # StreamSignRequest |
 
     try:
         # Stream Signing
@@ -486,7 +486,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **stream_sign_request** | [**StreamSignRequest**](StreamSignRequest.md)|  | 
+ **stream_sign_request** | [**StreamSignRequest**](StreamSignRequest.md)|  |
 
 ### Return type
 
@@ -509,4 +509,3 @@ void (empty response body)
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

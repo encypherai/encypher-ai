@@ -1,9 +1,9 @@
 # PRD: Marketing-Site Pricing, Coalition Messaging, and OEM Readiness
 
-**Status:** ✅ Complete (17/17 tasks complete, 1 deferred)  
-**Current Goal:** Ready for production — All tasks complete; 2.2 ($30k messaging) deferred to marketing review  
-**Owner:** Marketing / Product  
-**Created:** 2025-12-03  
+**Status:** ✅ Complete (17/17 tasks complete, 1 deferred)
+**Current Goal:** Ready for production — All tasks complete; 2.2 ($30k messaging) deferred to marketing review
+**Owner:** Marketing / Product
+**Created:** 2025-12-03
 **Team:** TEAM_003
 
 ---
@@ -52,7 +52,7 @@ The current marketing site, Enterprise API README, and internal pricing configur
 
 ### 4.0 Links, Navigation & Documentation
 
-- [x] 4.1 Fix the `/pricing` page "API documentation" link (currently `/docs/api`) to point at the canonical API documentation URL (e.g., `https://docs.encypherai.com` or the chosen docs route). — ✅ Updated to https://docs.encypherai.com
+- [x] 4.1 Fix the `/pricing` page "API documentation" link (currently `/docs/api`) to point at the canonical API documentation URL (e.g., `https://docs.encypher.com` or the chosen docs route). — ✅ Updated to https://docs.encypher.com
 - [ ] 4.2 Run a link audit on the marketing site for all pricing, docs, and demo-related links (home, solutions pages, pricing, demos) to ensure there are no 404s or outdated paths. — ⏳ Manual QA step
 - [x] 4.3 Verify that all `/pricing` CTAs correctly route to the dashboard using `NEXT_PUBLIC_DASHBOARD_URL` for:
   - Free Starter signup.

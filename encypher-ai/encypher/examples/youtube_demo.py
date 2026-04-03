@@ -823,7 +823,7 @@ def demo_conclusion():
 
     ## Documentation
 
-    Visit our documentation at https://docs.encypherai.com
+    Visit our documentation at https://docs.encypher.com
 
     ## GitHub Repository
 

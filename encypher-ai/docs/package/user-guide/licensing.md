@@ -78,8 +78,8 @@ Encypher offers several types of commercial licenses:
 
 For information about commercial licensing options, pricing, and terms, please contact:
 
-- Email: licensing@encypherai.com
-- Website: https://www.encypherai.com/licensing
+- Email: licensing@encypher.com
+- Website: https://www.encypher.com/licensing
 
 ## Dual Licensing Strategy
 

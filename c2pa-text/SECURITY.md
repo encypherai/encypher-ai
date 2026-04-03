@@ -6,7 +6,7 @@ Encypher takes the security of the C2PA Text Standard and its reference implemen
 
 If you discover a security vulnerability in this project, please do **not** open a public issue.
 
-Instead, please email **security@encypherai.com**.
+Instead, please email **security@encypher.com**.
 
 We will acknowledge your report within 48 hours and provide an estimated timeline for a fix.
 

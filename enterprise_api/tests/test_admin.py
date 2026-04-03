@@ -136,7 +136,7 @@ class TestPlatformStats:
             "success": True,
             "data": {
                 "id": "user_admin_1",
-                "email": "erik.svilich@encypherai.com",
+                "email": "erik.svilich@encypher.com",
                 "name": "Erik Svilich",
                 "is_super_admin": True,
             },

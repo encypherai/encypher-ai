@@ -2,13 +2,13 @@
 
 <div align="center">
 
-![Encypher Logo](https://encypherai.com/encypher_full_logo_color.svg)
+![Encypher Logo](https://encypher.com/encypher_full_logo_color.svg)
 
 **Production-ready API for C2PA-compliant content signing and verification**
 
-[![Status](https://img.shields.io/badge/status-production-brightgreen)](https://api.encypherai.com)
-[![API Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://docs.encypherai.com)
-[![Uptime](https://img.shields.io/badge/uptime-99.9%25-brightgreen)](https://verify.encypherai.com/status)
+[![Status](https://img.shields.io/badge/status-production-brightgreen)](https://api.encypher.com)
+[![API Version](https://img.shields.io/badge/version-v2.0.0-blue)](https://docs.encypher.com)
+[![Uptime](https://img.shields.io/badge/uptime-99.9%25-brightgreen)](https://verify.encypher.com/status)
 [![License](https://img.shields.io/badge/license-proprietary-red)](../LICENSE)
 
 [Features](#features) |
@@ -567,7 +567,7 @@ Authenticated API requests require an API key in the `Authorization` header.
 Some endpoints are public (no auth required) and support an *optional* API key for higher limits.
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/sign \
+curl -X POST https://api.encypher.com/api/v1/sign \
   -H "Authorization: Bearer encypher_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -578,7 +578,7 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
 
 ### Get Your API Key
 
-1. Sign up at [dashboard.encypherai.com](https://dashboard.encypherai.com)
+1. Sign up at [dashboard.encypher.com](https://dashboard.encypher.com)
 2. Navigate to API Keys
 3. Create new key
 4. Copy and secure your key
@@ -592,13 +592,13 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
 The API exposes interactive OpenAPI documentation:
 
 **Public Docs (recommended):**
-- Production: `https://api.encypherai.com/docs` (branded docs landing page)
-- Swagger UI: `https://api.encypherai.com/docs/swagger`
-- OpenAPI JSON: `https://api.encypherai.com/docs/openapi.json`
+- Production: `https://api.encypher.com/docs` (branded docs landing page)
+- Swagger UI: `https://api.encypher.com/docs/swagger`
+- OpenAPI JSON: `https://api.encypher.com/docs/openapi.json`
 
 **Internal Docs (super admin only):**
-- Swagger UI: `https://api.encypherai.com/internal/docs`
-- OpenAPI JSON: `https://api.encypherai.com/internal/openapi.json`
+- Swagger UI: `https://api.encypher.com/internal/docs`
+- OpenAPI JSON: `https://api.encypher.com/internal/openapi.json`
 
 **Local development (direct to Enterprise API):**
 - `http://localhost:9000/docs`
@@ -662,8 +662,8 @@ When `use_rights_profile: true`, the sign endpoint fetches the publisher's activ
   "success": true,
   "document_id": "doc_abc123xyz",
   "signed_text": "Your content here...",
-  "verification_url": "https://encypherai.com/verify/doc_abc123xyz",
-  "rights_resolution_url": "https://api.encypherai.com/api/v1/public/rights/doc_abc123xyz",
+  "verification_url": "https://encypher.com/verify/doc_abc123xyz",
+  "rights_resolution_url": "https://api.encypher.com/api/v1/public/rights/doc_abc123xyz",
   "manifest": {
     "version": "2.2",
     "claim_generator": "Encypher Enterprise API v1.0",
@@ -994,7 +994,7 @@ Sign live video streams per-segment with backwards-linked provenance chain.
 **1. Start session:**
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/enterprise/video/stream/start \
+curl -X POST https://api.encypher.com/api/v1/enterprise/video/stream/start \
   -H "Authorization: Bearer encypher_..."
 ```
 
@@ -1115,7 +1115,7 @@ Extract embeddings from content and verify them:
 
 ```bash
 # Extract and verify embeddings from text
-curl -X POST https://api.encypherai.com/api/v1/public/extract-and-verify \
+curl -X POST https://api.encypher.com/api/v1/public/extract-and-verify \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Content with invisible embeddings..."
@@ -1639,7 +1639,7 @@ INTERNAL_SERVICE_TOKEN=<shared-secret>
 NOTIFICATION_SERVICE_URL=http://localhost:8005
 
 # Dashboard base URL (used in partner claim email links)
-DASHBOARD_URL=https://dashboard.encypherai.com
+DASHBOARD_URL=https://dashboard.encypher.com
 ```
 
 #### Database Configuration
@@ -1682,10 +1682,10 @@ ENCRYPTION_NONCE=non_real_hex_string
 
 ```bash
 # Comma-separated list of allowed origins
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,https://dashboard.encypherai.com
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,https://dashboard.encypher.com
 
 # Trusted hosts for Host header validation
-ALLOWED_HOSTS=api.encypherai.com
+ALLOWED_HOSTS=api.encypher.com
 
 # Trusted proxy IPs (comma-separated) to honor forwarded headers
 TRUSTED_PROXY_IPS=10.0.0.10,10.0.0.11
@@ -1820,13 +1820,13 @@ This model avoids mandatory per-tenant cert spend while supporting premium tenan
 ## Testing
 
 ### Test Environment
-Base URL: `https://api-staging.encypherai.com/api/v1`
+Base URL: `https://api-staging.encypher.com/api/v1`
 
 Test API keys available in dashboard (no charges applied).
 
 ### Example Test Request
 ```bash
-curl -X POST https://api-staging.encypherai.com/api/v1/sign \
+curl -X POST https://api-staging.encypher.com/api/v1/sign \
   -H "Authorization: Bearer encypher_test_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -1856,7 +1856,7 @@ To show a non-personal publisher name in verify responses and extension identity
 1. **Use an organization-scoped API key when possible**
    - Keys tied to an organization return organization identity fields directly.
 2. **Set your publishing identity in Dashboard**
-   - Open `dashboard.encypherai.com` -> Settings -> Publisher identity.
+   - Open `dashboard.encypher.com` -> Settings -> Publisher identity.
    - Set a `display_name` (for example, your newsroom or brand name).
    - For enterprise/custom identity, set signing identity mode to `custom` and define a custom label.
 3. **Confirm identity fields via API**
@@ -1902,8 +1902,8 @@ For detailed instructions on running local benchmarks and load tests, please ref
 
 ## Documentation
 
-- **API Docs**: [docs.encypherai.com/api](https://docs.encypherai.com/api)
-- **SDK Docs**: [docs.encypherai.com/sdk](https://docs.encypherai.com/sdk)
+- **API Docs**: [docs.encypher.com/api](https://docs.encypher.com/api)
+- **SDK Docs**: [docs.encypher.com/sdk](https://docs.encypher.com/sdk)
 - **Microservices Overview**: [services/README.md](../services/README.md)
 - **Key Service**: [services/key-service/README.md](../services/key-service/README.md)
 - **Coalition Service**: [services/coalition-service/README.md](../services/coalition-service/README.md)
@@ -1922,10 +1922,10 @@ For detailed instructions on running local benchmarks and load tests, please ref
 
 ## Support
 
-- **Email**: api@encypherai.com
-- **Status Page**: [verify.encypherai.com/status](https://verify.encypherai.com/status)
-- **Dashboard**: [dashboard.encypherai.com](https://dashboard.encypherai.com)
-- **Community**: [community.encypherai.com](https://community.encypherai.com)
+- **Email**: api@encypher.com
+- **Status Page**: [verify.encypher.com/status](https://verify.encypher.com/status)
+- **Dashboard**: [dashboard.encypher.com](https://dashboard.encypher.com)
+- **Community**: [community.encypher.com](https://community.encypher.com)
 
 ### SLA (Enterprise Tier)
 
@@ -1958,6 +1958,6 @@ Built with:
 
 **Made by Encypher**
 
-[Website](https://encypherai.com) |[Dashboard](https://dashboard.encypherai.com) |[Docs](https://docs.encypherai.com) |[Status](https://verify.encypherai.com/status)
+[Website](https://encypher.com) |[Dashboard](https://dashboard.encypher.com) |[Docs](https://docs.encypher.com) |[Status](https://verify.encypher.com/status)
 
 </div>

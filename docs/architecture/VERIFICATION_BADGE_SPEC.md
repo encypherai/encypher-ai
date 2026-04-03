@@ -1,6 +1,6 @@
 # Verification Badge Specification
 
-**Version:** 1.0  
+**Version:** 1.0
 **Last Updated:** October 28, 2025
 
 ## Overview
@@ -25,9 +25,9 @@ Publishers add this snippet to their HTML:
 
 ```html
 <!-- Encypher Verification Badge -->
-<script src="https://encypherai.com/embed/verify.js" async></script>
-<div 
-  class="encypher-verify-badge" 
+<script src="https://encypher.com/embed/verify.js" async></script>
+<div
+  class="encypher-verify-badge"
   data-document-id="doc_abc123"
   data-theme="light"
   data-position="bottom-right">
@@ -103,7 +103,7 @@ Publishers add this snippet to their HTML:
   "document_id": "doc_abc123",
   "publisher": {
     "name": "The New York Times",
-    "logo_url": "https://cdn.encypherai.com/logos/nyt.png"
+    "logo_url": "https://cdn.encypher.com/logos/nyt.png"
   },
   "metadata": {
     "title": "Breaking News Article",
@@ -116,7 +116,7 @@ Publishers add this snippet to their HTML:
     "certificate_issuer": "SSL.com",
     "certificate_expiry": "2026-10-28T00:00:00Z"
   },
-  "verification_url": "https://encypherai.com/verify/doc_abc123"
+  "verification_url": "https://encypher.com/verify/doc_abc123"
 }
 ```
 
@@ -145,10 +145,10 @@ Publishers add this snippet to their HTML:
 ```javascript
 (function() {
   'use strict';
-  
-  const ENCYPHER_API = 'https://encypherai.com/api/v1';
+
+  const ENCYPHER_API = 'https://encypher.com/api/v1';
   const CACHE_TTL = 300000; // 5 minutes
-  
+
   class EncypherBadge {
     constructor(element) {
       this.element = element;
@@ -156,13 +156,13 @@ Publishers add this snippet to their HTML:
       this.theme = element.dataset.theme || 'light';
       this.position = element.dataset.position || 'bottom-right';
       this.expanded = false;
-      
+
       this.init();
     }
-    
+
     async init() {
       this.render('loading');
-      
+
       try {
         const data = await this.verify();
         this.data = data;
@@ -172,12 +172,12 @@ Publishers add this snippet to their HTML:
         this.render('error');
       }
     }
-    
+
     async verify() {
       // Check cache first
       const cached = this.getCache();
       if (cached) return cached;
-      
+
       // Fetch from API
       const response = await fetch(
         `${ENCYPHER_API}/badge/verify/${this.documentId}`,
@@ -188,68 +188,68 @@ Publishers add this snippet to their HTML:
           }
         }
       );
-      
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      
+
       const data = await response.json();
       this.setCache(data);
-      
+
       return data;
     }
-    
+
     render(status) {
       const badge = this.createBadge(status);
       this.element.innerHTML = '';
       this.element.appendChild(badge);
-      
+
       // Add click handler
       badge.addEventListener('click', () => this.toggle());
     }
-    
+
     createBadge(status) {
       const badge = document.createElement('div');
       badge.className = `encypher-badge encypher-badge--${status} encypher-badge--${this.theme}`;
-      
+
       const icon = this.getIcon(status);
       const text = this.getText(status);
-      
+
       badge.innerHTML = `
         <div class="encypher-badge__compact">
           <span class="encypher-badge__icon">${icon}</span>
-          <img src="https://encypherai.com/encypher_check_color.svg" 
-               alt="Encypher" 
+          <img src="https://encypher.com/encypher_check_color.svg"
+               alt="Encypher"
                class="encypher-badge__logo">
           <span class="encypher-badge__text">${text}</span>
         </div>
       `;
-      
+
       return badge;
     }
-    
+
     toggle() {
       if (!this.data) return;
-      
+
       this.expanded = !this.expanded;
-      
+
       if (this.expanded) {
         this.showDetails();
       } else {
         this.render(this.data.status);
       }
     }
-    
+
     showDetails() {
       const details = this.createDetails();
       this.element.innerHTML = '';
       this.element.appendChild(details);
     }
-    
+
     createDetails() {
       const details = document.createElement('div');
       details.className = `encypher-details encypher-details--${this.theme}`;
-      
+
       details.innerHTML = `
         <div class="encypher-details__header">
           <span class="encypher-details__status">
@@ -257,7 +257,7 @@ Publishers add this snippet to their HTML:
           </span>
           <button class="encypher-details__close" aria-label="Close">×</button>
         </div>
-        
+
         <div class="encypher-details__body">
           <div class="encypher-details__field">
             <strong>Publisher:</strong> ${this.data.publisher.name}
@@ -268,44 +268,44 @@ Publishers add this snippet to their HTML:
           <div class="encypher-details__field">
             <strong>Document ID:</strong> <code>${this.data.document_id}</code>
           </div>
-          
+
           <div class="encypher-details__stats">
             <div>📊 ${this.data.metadata.sentence_count} sentences verified</div>
             <div>🔐 Signed with ${this.data.signature.algorithm}</div>
             <div>📜 ${this.data.signature.standard} compliant</div>
           </div>
-          
+
           <div class="encypher-details__certificate">
             <strong>Certificate:</strong>
             <div>└─ Issued by: ${this.data.signature.certificate_issuer}</div>
             <div>└─ Valid until: ${this.formatDate(this.data.signature.certificate_expiry)}</div>
           </div>
         </div>
-        
+
         <div class="encypher-details__footer">
-          <a href="${this.data.verification_url}" 
-             target="_blank" 
+          <a href="${this.data.verification_url}"
+             target="_blank"
              class="encypher-details__button">
             View Full Report
           </a>
-          <a href="${this.data.verification_url}/proof" 
-             target="_blank" 
+          <a href="${this.data.verification_url}/proof"
+             target="_blank"
              class="encypher-details__button encypher-details__button--secondary">
             Download Proof
           </a>
         </div>
       `;
-      
+
       // Add close handler
       const closeBtn = details.querySelector('.encypher-details__close');
       closeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.toggle();
       });
-      
+
       return details;
     }
-    
+
     getIcon(status) {
       const icons = {
         'verified': '✅',
@@ -316,7 +316,7 @@ Publishers add this snippet to their HTML:
       };
       return icons[status] || '❓';
     }
-    
+
     getText(status) {
       const texts = {
         'verified': 'Verified',
@@ -327,7 +327,7 @@ Publishers add this snippet to their HTML:
       };
       return texts[status] || 'Unknown';
     }
-    
+
     formatDate(isoString) {
       const date = new Date(isoString);
       return date.toLocaleString('en-US', {
@@ -338,23 +338,23 @@ Publishers add this snippet to their HTML:
         minute: '2-digit'
       });
     }
-    
+
     getCache() {
       const key = `encypher_verify_${this.documentId}`;
       const cached = localStorage.getItem(key);
-      
+
       if (!cached) return null;
-      
+
       const { data, timestamp } = JSON.parse(cached);
-      
+
       if (Date.now() - timestamp > CACHE_TTL) {
         localStorage.removeItem(key);
         return null;
       }
-      
+
       return data;
     }
-    
+
     setCache(data) {
       const key = `encypher_verify_${this.documentId}`;
       localStorage.setItem(key, JSON.stringify({
@@ -363,13 +363,13 @@ Publishers add this snippet to their HTML:
       }));
     }
   }
-  
+
   // Auto-initialize badges on page load
   function initBadges() {
     const badges = document.querySelectorAll('.encypher-verify-badge');
     badges.forEach(badge => new EncypherBadge(badge));
   }
-  
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initBadges);
   } else {
@@ -566,8 +566,8 @@ Publishers add this snippet to their HTML:
 Host `verify.js` on a CDN for global distribution:
 
 ```
-https://encypherai.com/embed/verify.js
-https://cdn.encypherai.com/embed/verify.js (CDN)
+https://encypher.com/embed/verify.js
+https://cdn.encypher.com/embed/verify.js (CDN)
 ```
 
 **CDN Requirements:**
@@ -582,9 +582,9 @@ https://cdn.encypherai.com/embed/verify.js (CDN)
 Support versioned URLs for stability:
 
 ```
-https://encypherai.com/embed/verify.js (latest)
-https://encypherai.com/embed/v1/verify.js (v1)
-https://encypherai.com/embed/v1.0.0/verify.js (specific version)
+https://encypher.com/embed/verify.js (latest)
+https://encypher.com/embed/v1/verify.js (v1)
+https://encypher.com/embed/v1.0.0/verify.js (specific version)
 ```
 
 ### 3. Fallback
@@ -623,18 +623,18 @@ Badge script loads asynchronously:
 
 Publishers need to allow:
 ```
-script-src https://encypherai.com;
-connect-src https://encypherai.com;
-img-src https://encypherai.com https://cdn.encypherai.com;
+script-src https://encypher.com;
+connect-src https://encypher.com;
+img-src https://encypher.com https://cdn.encypher.com;
 ```
 
 ### 2. Subresource Integrity (SRI)
 
 Provide SRI hashes for integrity verification:
 ```html
-<script 
-  src="https://encypherai.com/embed/verify.js" 
-  integrity="sha384-..." 
+<script
+  src="https://encypher.com/embed/verify.js"
+  integrity="sha384-..."
   crossorigin="anonymous">
 </script>
 ```
@@ -699,7 +699,7 @@ Test UI across:
 2. Get your document ID from the API response
 3. Add this code to your HTML:
 
-<script src="https://encypherai.com/embed/verify.js" async></script>
+<script src="https://encypher.com/embed/verify.js" async></script>
 <div class="encypher-verify-badge" data-document-id="YOUR_DOCUMENT_ID"></div>
 
 4. Customize (optional):

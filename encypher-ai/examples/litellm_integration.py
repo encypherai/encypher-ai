@@ -43,7 +43,7 @@ app = FastAPI(
     - Streaming support with real-time metadata encoding
     - Support for all major LLM providers through LiteLLM
 
-    For more information, visit [Encypher Documentation](https://docs.encypherai.com).
+    For more information, visit [Encypher Documentation](https://docs.encypher.com).
     """,
     version="2.3.0",
     docs_url=None,
@@ -108,7 +108,7 @@ async def custom_swagger_ui_html() -> HTMLResponse:
         title=app.title + " - Swagger UI",
         swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-bundle.js",
         swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css",
-        swagger_favicon_url="https://encypherai.com/favicon.ico",
+        swagger_favicon_url="https://encypher.com/favicon.ico",
     )
 
 

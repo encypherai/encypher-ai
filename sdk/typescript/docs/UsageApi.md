@@ -1,6 +1,6 @@
 # UsageApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -28,7 +28,7 @@ import type { GetUsageHistoryApiV1UsageHistoryGetRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -100,7 +100,7 @@ import type { GetUsageStatsApiV1UsageGetRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -142,4 +142,3 @@ This endpoint does not need any parameter.
 | **200** | Successful Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-

@@ -1,6 +1,6 @@
 # \PublicVerificationAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -31,7 +31,7 @@ import (
 )
 
 func main() {
-	batchVerifyRequest := *openapiclient.NewBatchVerifyRequest([]openapiclient.VerifyEmbeddingRequest{*openapiclient.NewVerifyEmbeddingRequest("RefId_example", "Signature_example")}) // BatchVerifyRequest | 
+	batchVerifyRequest := *openapiclient.NewBatchVerifyRequest([]openapiclient.VerifyEmbeddingRequest{*openapiclient.NewVerifyEmbeddingRequest("RefId_example", "Signature_example")}) // BatchVerifyRequest |
 	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -57,8 +57,8 @@ Other parameters are passed through a pointer to a apiBatchVerifyEmbeddingsApiV1
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **batchVerifyRequest** | [**BatchVerifyRequest**](BatchVerifyRequest.md) |  | 
- **authorization** | **string** |  | 
+ **batchVerifyRequest** | [**BatchVerifyRequest**](BatchVerifyRequest.md) |  |
+ **authorization** | **string** |  |
 
 ### Return type
 
@@ -99,7 +99,7 @@ import (
 )
 
 func main() {
-	extractAndVerifyRequest := *openapiclient.NewExtractAndVerifyRequest("Text_example") // ExtractAndVerifyRequest | 
+	extractAndVerifyRequest := *openapiclient.NewExtractAndVerifyRequest("Text_example") // ExtractAndVerifyRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -124,7 +124,7 @@ Other parameters are passed through a pointer to a apiExtractAndVerifyEmbeddingA
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **extractAndVerifyRequest** | [**ExtractAndVerifyRequest**](ExtractAndVerifyRequest.md) |  | 
+ **extractAndVerifyRequest** | [**ExtractAndVerifyRequest**](ExtractAndVerifyRequest.md) |  |
 
 ### Return type
 
@@ -165,7 +165,7 @@ import (
 )
 
 func main() {
-	refId := "refId_example" // string | 
+	refId := "refId_example" // string |
 	signature := "signature_example" // string | HMAC signature (8+ hex characters)
 	authorization := "authorization_example" // string |  (optional)
 
@@ -187,7 +187,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**refId** | **string** |  | 
+**refId** | **string** |  |
 
 ### Other Parameters
 
@@ -197,8 +197,8 @@ Other parameters are passed through a pointer to a apiVerifyEmbeddingApiV1Public
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **signature** | **string** | HMAC signature (8+ hex characters) | 
- **authorization** | **string** |  | 
+ **signature** | **string** | HMAC signature (8+ hex characters) |
+ **authorization** | **string** |  |
 
 ### Return type
 
@@ -216,4 +216,3 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

@@ -13,7 +13,7 @@ from pathlib import Path
 
 # Logo URL - hosted on production site
 # White logo used on blue gradient header background
-LOGO_URL = "https://encypherai.com/encypher_full_logo_white.svg"
+LOGO_URL = "https://encypher.com/encypher_full_logo_white.svg"
 
 
 def generate_demo_notification_html() -> str:
@@ -134,7 +134,7 @@ def generate_confirmation_html(
                     <tr>
                         <td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
                             <p style="margin: 0 0 8px 0; color: #64748b; font-size: 13px;">
-                                <a href="https://encypherai.com" style="color: #2a87c4; text-decoration: none;">encypherai.com</a>
+                                <a href="https://encypher.com" style="color: #2a87c4; text-decoration: none;">encypher.com</a>
                             </p>
                             <p style="margin: 0; color: #94a3b8; font-size: 12px;">
                                 &copy; 2026 Encypher Corporation. All rights reserved.
@@ -161,9 +161,9 @@ def generate_ai_demo_confirmation_html() -> str:
             "Schedule a personalized walkthrough",
         ],
         cta_text="Continue Exploring",
-        cta_url="https://encypherai.com/ai-demo",
+        cta_url="https://encypher.com/ai-demo",
         secondary_cta_text="View Pricing",
-        secondary_cta_url="https://encypherai.com/pricing?tab=ai-labs",
+        secondary_cta_url="https://encypher.com/pricing?tab=ai-labs",
     )
 
 
@@ -209,9 +209,9 @@ def generate_publisher_confirmation_html() -> str:
             "Schedule a personalized demo",
         ],
         cta_text="Continue Exploring",
-        cta_url="https://encypherai.com/publisher-demo",
+        cta_url="https://encypher.com/publisher-demo",
         secondary_cta_text="View Pricing",
-        secondary_cta_url="https://encypherai.com/pricing?tab=publishers",
+        secondary_cta_url="https://encypher.com/pricing?tab=publishers",
     )
 
 
@@ -257,9 +257,9 @@ def generate_enterprise_confirmation_html() -> str:
             "Schedule a technical deep-dive",
         ],
         cta_text="Learn More",
-        cta_url="https://encypherai.com/pricing?tab=enterprises",
+        cta_url="https://encypher.com/pricing?tab=enterprises",
         secondary_cta_text="View Solutions",
-        secondary_cta_url="https://encypherai.com/solutions",
+        secondary_cta_url="https://encypher.com/solutions",
     )
 
 

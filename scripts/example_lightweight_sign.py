@@ -30,7 +30,7 @@ import uuid
 
 import requests
 
-DEFAULT_BASE_URL = "https://api.encypherai.com"
+DEFAULT_BASE_URL = "https://api.encypher.com"
 
 # Example 1-page article for demonstration
 EXAMPLE_ARTICLE = """As Co-Chair of the C2PA Text Provenance Task Force, I authored Section A.7 of the specification-published January 8, 2026-alongside Google, BBC, OpenAI, Adobe, and Microsoft. We built Encypher to implement it in production.
@@ -62,10 +62,10 @@ Let's Connect If:
 - You understand that infrastructure gets built collaboratively, not competitively
 - You want to help define standards for content licensing
 
-→ Publishers: encypherai.com/publisher-demo 
-→ AI Labs: encypherai.com/ai-demo
+→ Publishers: encypher.com/publisher-demo
+→ AI Labs: encypher.com/ai-demo
 
-P.S. Paste this into encypherai.com/tools/verify to see the embedded signature. That's the technology we're building for the entire web."""
+P.S. Paste this into encypher.com/tools/verify to see the embedded signature. That's the technology we're building for the entire web."""
 
 
 def sign_document(base_url: str, api_key: str, text: str, document_id: str) -> dict:

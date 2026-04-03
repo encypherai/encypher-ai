@@ -5,7 +5,7 @@ const res = await fetch("http://localhost:3000/api/auth/callback/credentials", {
     "Accept": "application/json"
   },
   body: JSON.stringify({
-    email: "test_mfa_user@encypherai.com",
+    email: "test_mfa_user@encypher.com",
     password: "Password123!",
     redirect: "false",
     csrfToken: "mock"

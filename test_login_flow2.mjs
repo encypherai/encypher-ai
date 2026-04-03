@@ -1,4 +1,4 @@
-const email = "test_5fc8a3@encypherai.com";
+const email = "test_5fc8a3@encypher.com";
 const password = "Password123!";
 
 const res = await fetch("http://localhost:3000/api/auth/callback/credentials", {

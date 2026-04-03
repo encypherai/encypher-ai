@@ -23,7 +23,7 @@ Benefits of the commercial license include:
 - **Support & Indemnification**: Access to professional support and IP indemnification
 - **Priority Updates**: Early access to new features and security patches
 
-For commercial licensing inquiries, please contact [enterprise@encypherai.com](mailto:enterprise@encypherai.com).
+For commercial licensing inquiries, please contact [enterprise@encypher.com](mailto:enterprise@encypher.com).
 
 ## Which License is Right for You?
 
@@ -46,4 +46,4 @@ When using Encypher under the AGPL-3.0 license, ensure you:
 2. Clearly indicate any changes made to the original code
 3. Make the complete source code available when offering the software as a service
 
-For questions about licensing or compliance, please reach out to our team at [legal@encypherai.com](mailto:legal@encypherai.com).
+For questions about licensing or compliance, please reach out to our team at [legal@encypher.com](mailto:legal@encypher.com).

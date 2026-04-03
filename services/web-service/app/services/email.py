@@ -157,7 +157,7 @@ Request ID: {demo_request.uuid}
 # Logo URL - hosted on production site for email compatibility
 # White logo used on blue gradient header background
 # Must be PNG: SVG is blocked by Gmail, Outlook, and most email clients
-LOGO_URL = "https://encypherai.com/encypher_full_logo_white.png"
+LOGO_URL = "https://encypher.com/encypher_full_logo_white.png"
 
 
 # ICP-specific email content configuration
@@ -167,9 +167,9 @@ ICP_EMAIL_CONFIG = {
         "subject": "We received your demo request",
         "tagline": "Infrastructure for text provenance in AI pipelines",
         "cta_text": "Continue Exploring",
-        "cta_url": "https://encypherai.com/ai-demo",
+        "cta_url": "https://encypher.com/ai-demo",
         "secondary_cta_text": "View Pricing",
-        "secondary_cta_url": "https://encypherai.com/pricing?tab=ai-labs",
+        "secondary_cta_url": "https://encypher.com/pricing?tab=ai-labs",
         "next_steps": [
             "A solutions engineer will reach out within 24 hours",
             "We'll discuss your specific use case",
@@ -180,9 +180,9 @@ ICP_EMAIL_CONFIG = {
         "subject": "We received your demo request",
         "tagline": "Cryptographic proof of origin for your content",
         "cta_text": "Continue Exploring",
-        "cta_url": "https://encypherai.com/publisher-demo",
+        "cta_url": "https://encypher.com/publisher-demo",
         "secondary_cta_text": "View Pricing",
-        "secondary_cta_url": "https://encypherai.com/pricing?tab=publishers",
+        "secondary_cta_url": "https://encypher.com/pricing?tab=publishers",
         "next_steps": [
             "A member of our team will reach out within 24 hours",
             "We'll discuss your content protection needs",
@@ -193,9 +193,9 @@ ICP_EMAIL_CONFIG = {
         "subject": "We received your inquiry",
         "tagline": "Text authentication infrastructure for enterprises",
         "cta_text": "Learn More",
-        "cta_url": "https://encypherai.com/pricing?tab=enterprises",
+        "cta_url": "https://encypher.com/pricing?tab=enterprises",
         "secondary_cta_text": "View Solutions",
-        "secondary_cta_url": "https://encypherai.com/solutions",
+        "secondary_cta_url": "https://encypher.com/solutions",
         "next_steps": [
             "An account manager will reach out within 24 hours",
             "We'll discuss your requirements",
@@ -206,9 +206,9 @@ ICP_EMAIL_CONFIG = {
         "subject": "We received your inquiry",
         "tagline": "Proof of origin for text content",
         "cta_text": "Explore Solutions",
-        "cta_url": "https://encypherai.com",
+        "cta_url": "https://encypher.com",
         "secondary_cta_text": "View Pricing",
-        "secondary_cta_url": "https://encypherai.com/pricing",
+        "secondary_cta_url": "https://encypher.com/pricing",
         "next_steps": [
             "A member of our team will reach out within 24 hours",
             "We'll discuss your specific needs",
@@ -251,7 +251,7 @@ The Encypher Team
 
 ---
 Encypher Corporation
-https://encypherai.com
+https://encypher.com
 """
 
     # HTML version with proper branding
@@ -332,7 +332,7 @@ https://encypherai.com
                     <tr>
                         <td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
                             <p style="margin: 0 0 8px 0; color: #64748b; font-size: 13px;">
-                                <a href="https://encypherai.com" style="color: #2a87c4; text-decoration: none;">encypherai.com</a>
+                                <a href="https://encypher.com" style="color: #2a87c4; text-decoration: none;">encypher.com</a>
                             </p>
                             <p style="margin: 0; color: #94a3b8; font-size: 12px;">
                                 &copy; 2026 Encypher Corporation. All rights reserved.
@@ -369,7 +369,7 @@ Best regards,
 The Encypher Team
 
 ---
-Encypher - https://encypherai.com
+Encypher - https://encypher.com
 """
 
     html = f"""
@@ -399,7 +399,7 @@ Encypher - https://encypherai.com
                 <tr><td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
                     <p style="margin: 0; color: #94a3b8; font-size: 12px;">
                         &copy; 2026 Encypher Corporation. All rights reserved.<br>
-                        <a href="https://encypherai.com" style="color: #2a87c4; text-decoration: none;">encypherai.com</a>
+                        <a href="https://encypher.com" style="color: #2a87c4; text-decoration: none;">encypher.com</a>
                     </p>
                 </td></tr>
             </table>
@@ -419,7 +419,7 @@ def send_newsletter_broadcast(
     excerpt: str,
     post_url: str,
     image_url: str | None = None,
-    site_url: str = "https://encypherai.com",
+    site_url: str = "https://encypher.com",
 ) -> None:
     """Send blog post notification email to a newsletter subscriber."""
     unsubscribe_url = f"{site_url}/newsletter/unsubscribe?token={unsubscribe_token}"
@@ -432,7 +432,7 @@ def send_newsletter_broadcast(
 Read the full post: {post_url}
 
 ---
-You subscribed at encypherai.com/blog.
+You subscribed at encypher.com/blog.
 Unsubscribe: {unsubscribe_url}
 """
 
@@ -473,10 +473,10 @@ Unsubscribe: {unsubscribe_url}
                 </td></tr>
                 <tr><td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
                     <p style="margin: 0; color: #94a3b8; font-size: 12px;">
-                        You subscribed at encypherai.com/blog.<br>
+                        You subscribed at encypher.com/blog.<br>
                         <a href="{unsubscribe_url}" style="color: #94a3b8;">Unsubscribe</a>
                         &nbsp;&middot;&nbsp;
-                        <a href="https://encypherai.com" style="color: #2a87c4; text-decoration: none;">encypherai.com</a><br>
+                        <a href="https://encypher.com" style="color: #2a87c4; text-decoration: none;">encypher.com</a><br>
                         &copy; 2026 Encypher Corporation. All rights reserved.
                     </p>
                 </td></tr>

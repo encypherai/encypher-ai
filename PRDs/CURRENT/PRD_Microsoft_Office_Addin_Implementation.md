@@ -53,7 +53,7 @@ Implement a new Microsoft Office integration under `integrations/microsoft-offic
 - Added new Office Add-in project under `integrations/microsoft-office-addin`.
 - Implemented multi-host manifest (`Document`, `Workbook`, `Presentation`) and task pane command surfaces.
 - Implemented host capabilities matrix and host adapter abstraction for selection/full-document operations.
-- Added sign/verify API integration with strict API base URL validation (`https://*.encypherai.com`).
+- Added sign/verify API integration with strict API base URL validation (`https://*.encypher.com`).
 - Added provenance utilities and roaming-settings provenance persistence with index-based trimming.
 - Added task pane UX for host capability display, actions, settings, provenance summary, and JSON results.
 - Added test suites for API host validation, host capabilities, and provenance logic.

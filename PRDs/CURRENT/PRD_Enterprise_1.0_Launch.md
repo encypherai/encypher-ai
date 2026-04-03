@@ -1,6 +1,6 @@
 # Enterprise 1.0 Launch — Comprehensive Feature PRD
 
-**Status:** 📋 Planning  
+**Status:** 📋 Planning
 **Current Goal:** Define all features required for enterprise publisher launch targeting AP, BBC, Springer, Taylor & Francis, and AI industry partners.
 
 ## Overview
@@ -400,7 +400,7 @@ Enterprise contracts require documented SLAs.
   - [ ] Verify: p50 < 50ms, p99 < 200ms
 - [ ] 6.2.4 Define support response times by tier
 - [ ] 6.2.5 Document incident communication process
-- [ ] 6.2.6 Create status page (verify.encypherai.com/status)
+- [ ] 6.2.6 Create status page (verify.encypher.com/status)
 - [ ] 6.2.7 Set up uptime monitoring (Pingdom, Better Uptime)
 - [ ] 6.2.8 Create incident post-mortem template
 

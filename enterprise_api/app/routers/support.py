@@ -90,7 +90,7 @@ async def submit_support_contact(
 
     payload = {
         "notification_type": "email",
-        "recipient": "support@encypherai.com",
+        "recipient": "support@encypher.com",
         "subject": subject,
         "content": html_content,
         "metadata": {

@@ -58,7 +58,7 @@ The script will:
 
 ### Step 4: Verify
 
-Test with old signed content at https://encypherai.com/tools/decode
+Test with old signed content at https://encypher.com/tools/decode
 
 Expected result:
 ```
@@ -189,7 +189,7 @@ railway run psql $DATABASE_URL -f enterprise_api/migrations/015_add_public_key_t
 railway run uv run python enterprise_api/scripts/populate_demo_public_key.py
 
 # 5. Test
-curl -X POST https://api.encypherai.com/api/v1/tools/decode \
+curl -X POST https://api.encypher.com/api/v1/tools/decode \
   -H "Content-Type: application/json" \
   -d '{"encoded_text": "YOUR_OLD_SIGNED_CONTENT"}'
 ```

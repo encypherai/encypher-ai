@@ -139,5 +139,5 @@ is_valid = verify_signature(public_key, payload_bytes, signature)
 ## Need Help?
 
 If you encounter any issues during migration, please:
-1. Check the [API documentation](https://docs.encypherai.com/package/api-reference/) for detailed information about each module and function.
+1. Check the [API documentation](https://docs.encypher.com/package/api-reference/) for detailed information about each module and function.
 2. Open an issue on our [GitHub repository](https://github.com/encypherai/encypher-ai/issues) if you need assistance.

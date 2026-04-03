@@ -6,7 +6,7 @@ description: Sign one or more blog markdown posts in publish-date order using mi
 - `.env.skills` exists at repo root.
 - `.env.skills` defines:
   - `ENYCPHER_API_KEY=...` (preferred variable name for this workflow)
-  - `ENCYPHER_BASE_URL=api.encypherai.com`
+  - `ENCYPHER_BASE_URL=api.encypher.com`
 - Python dependencies are synced (`uv sync --all-packages`).
 
 ---

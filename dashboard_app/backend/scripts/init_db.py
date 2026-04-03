@@ -37,7 +37,7 @@ async def init_db() -> None:
                 print("Creating sample users...")
                 admin_user = User(
                     username="admin",
-                    email="admin@encypherai.com",
+                    email="admin@encypher.com",
                     full_name="Admin User",
                     is_superuser=True,
                     hashed_password=get_password_hash("admin123"),
@@ -46,7 +46,7 @@ async def init_db() -> None:
 
                 regular_user = User(
                     username="user",
-                    email="user@encypherai.com",
+                    email="user@encypher.com",
                     full_name="Regular User",
                     is_superuser=False,
                     hashed_password=get_password_hash("user123"),
@@ -145,7 +145,7 @@ async def init_db() -> None:
                         "model_id": model_id,
                         "department": department,
                         "purpose": f"Sample purpose for {model_id}",
-                        "created_by": f"user{random.randint(1, 10)}@encypherai.com",
+                        "created_by": f"user{random.randint(1, 10)}@encypher.com",
                         "data_sensitivity": random.choice(["low", "medium", "high"]),
                     }
 

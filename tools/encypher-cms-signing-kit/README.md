@@ -1,6 +1,6 @@
 # Encypher — CMS HTML Signing Kit
 
-Sign your CMS HTML pages with invisible, verifiable content credentials powered by the [Encypher](https://encypherai.com) API. The signed HTML is visually identical to the original — invisible Unicode markers are embedded in the article text, enabling anyone to verify authorship and integrity.
+Sign your CMS HTML pages with invisible, verifiable content credentials powered by the [Encypher](https://encypher.com) API. The signed HTML is visually identical to the original — invisible Unicode markers are embedded in the article text, enabling anyone to verify authorship and integrity.
 
 ## Quick Start
 
@@ -51,7 +51,7 @@ python encypher_sign_html.py page.html page_signed.html
 4. **Verifies** the signature round-trip automatically
 5. **Outputs** the complete HTML page — tags, images, scripts, styles all untouched
 
-The signed HTML can be served directly by your CMS. Readers can verify the content by copying the article text and pasting it into [encypherai.com/tools/verify](https://encypherai.com/tools/verify).
+The signed HTML can be served directly by your CMS. Readers can verify the content by copying the article text and pasting it into [encypher.com/tools/verify](https://encypher.com/tools/verify).
 
 ## Usage
 
@@ -83,7 +83,7 @@ Set these in your `.env` file (see `.env.example`):
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `ENCYPHER_API_KEY` | **Yes** | — | Your Encypher API key |
-| `ENCYPHER_BASE_URL` | No | `https://api.encypherai.com` | API base URL |
+| `ENCYPHER_BASE_URL` | No | `https://api.encypher.com` | API base URL |
 
 Priority order: CLI flags → `.env` file → environment variables.
 
@@ -132,7 +132,7 @@ publish_to_cdn(signed_html)
 
 Readers can verify signed content in two ways:
 
-1. **Web tool**: Copy article text → paste into [encypherai.com/tools/verify](https://encypherai.com/tools/verify)
+1. **Web tool**: Copy article text → paste into [encypher.com/tools/verify](https://encypher.com/tools/verify)
 2. **API**: `POST /api/v1/verify` with the text content
 
 ## Requirements
@@ -148,4 +148,4 @@ This software is proprietary to Encypher AI, Inc. and is licensed for use under 
 
 ## Support
 
-Contact [support@encypherai.com](mailto:support@encypherai.com) for API key provisioning and technical support.
+Contact [support@encypher.com](mailto:support@encypher.com) for API key provisioning and technical support.

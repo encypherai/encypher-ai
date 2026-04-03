@@ -2,10 +2,10 @@
 
 Unified design system for all Encypher properties. Provides consistent branding, components, and styles across:
 
-- `encypherai.com` (Marketing)
-- `dashboard.encypherai.com` (Dashboard)
-- `verify.encypherai.com` (Verification)
-- `docs.encypherai.com` (Documentation)
+- `encypher.com` (Marketing)
+- `dashboard.encypher.com` (Dashboard)
+- `verify.encypher.com` (Verification)
+- `docs.encypher.com` (Documentation)
 
 ## 🎨 Brand Colors
 
@@ -63,18 +63,18 @@ export default function MyPage() {
   return (
     <Card>
       <h1>Welcome to Encypher</h1>
-      
+
       {/* Primary CTA - Columbia Blue with white text */}
       <Button variant="primary" size="lg">
         Get Started Free
       </Button>
-      
+
       {/* Secondary action */}
       <Button variant="outline">
         Learn More
       </Button>
-      
-      <Input 
+
+      <Input
         placeholder="Enter your email"
         leftIcon={<MailIcon />}
       />
@@ -90,7 +90,7 @@ export default function MyPage() {
 High-contrast button with Columbia Blue as the primary CTA color.
 
 ```typescript
-<Button 
+<Button
   variant="primary"    // Columbia Blue (HIGH CONTRAST)
   size="lg"
   fullWidth
@@ -248,7 +248,7 @@ Use semantic color names for better maintainability:
 All components are mobile-first and responsive:
 
 ```typescript
-<Button 
+<Button
   size="sm"           // Mobile
   className="md:h-12" // Tablet+
 >
@@ -284,8 +284,8 @@ import { Button, type ButtonProps } from '@encypher/design-system';
 
 export function CTAButton(props: ButtonProps) {
   return (
-    <Button 
-      variant="primary" 
+    <Button
+      variant="primary"
       size="lg"
       className="shadow-lg hover:shadow-xl transition-shadow"
       {...props}
@@ -307,11 +307,11 @@ export default function HomePage() {
       <h1 className="text-4xl font-bold text-delft-blue mb-4">
         Welcome to Encypher
       </h1>
-      
+
       <p className="text-lg text-muted-foreground mb-8">
         Cryptographic content authentication
       </p>
-      
+
       <div className="flex gap-4">
         <Button variant="primary" size="xl">
           Get Started Free
@@ -363,13 +363,13 @@ export default function SignupForm() {
           placeholder="Email address"
           leftIcon={<MailIcon />}
         />
-        
+
         <Input
           type="password"
           placeholder="Password"
           leftIcon={<LockIcon />}
         />
-        
+
         <Button variant="primary" size="lg" fullWidth>
           Create Account
         </Button>

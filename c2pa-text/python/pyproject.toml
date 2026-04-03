@@ -3,7 +3,7 @@ name = "c2pa-text"
 version = "1.0.3"
 description = "Reference implementation for embedding C2PA manifests in text using Unicode variation selectors"
 authors = [
-    {name = "Encypher Corporation", email = "contact@encypherai.com"},
+    {name = "Encypher Corporation", email = "contact@encypher.com"},
 ]
 readme = "README.md"
 license = {text = "MIT"}

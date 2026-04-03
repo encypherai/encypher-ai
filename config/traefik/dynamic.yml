@@ -1,7 +1,7 @@
 # Traefik Dynamic Configuration
 # Routes requests to appropriate microservices based on host and path
 #
-# API Routing (api.encypherai.com):
+# API Routing (api.encypher.com):
 #   /api/v1/keys/*       -> key-service (8003)
 #   /api/v1/analytics/*  -> analytics-service (8006)
 #   /api/v1/billing/*    -> billing-service (8007)
@@ -16,10 +16,10 @@ http:
   routers:
     # ===========================================
     # VERIFY PORTAL (Host-based) -> Verification Service
-    # Supports public URLs like https://verify.encypherai.com/{document_id}
+    # Supports public URLs like https://verify.encypher.com/{document_id}
     # ===========================================
     verify-portal:
-      rule: "Host(`verify.encypherai.com`)"
+      rule: "Host(`verify.encypher.com`)"
       service: verification-service
       entryPoints:
         - websecure
@@ -31,7 +31,7 @@ http:
     # FRONTEND APPS
     # ===========================================
     dashboard:
-      rule: "Host(`s-dashboard.encypherai.com`) || Host(`localhost`) && PathPrefix(`/dashboard`)"
+      rule: "Host(`s-dashboard.encypher.com`) || Host(`localhost`) && PathPrefix(`/dashboard`)"
       service: dashboard-service
       entryPoints:
         - websecure
@@ -39,7 +39,7 @@ http:
       tls: {}
 
     marketing:
-      rule: "Host(`s-www.encypherai.com`) || Host(`localhost`)"
+      rule: "Host(`s-www.encypher.com`) || Host(`localhost`)"
       service: marketing-service
       entryPoints:
         - websecure
@@ -51,7 +51,7 @@ http:
     # API ROUTING (path-based service selection)
     # ===========================================
     api-keys:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/keys`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/keys`)"
       service: key-service
       entryPoints:
         - websecure
@@ -62,7 +62,7 @@ http:
       priority: 100
 
     api-analytics:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/analytics`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/analytics`)"
       service: analytics-service
       entryPoints:
         - websecure
@@ -73,7 +73,7 @@ http:
       priority: 100
 
     api-billing:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/billing`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/billing`)"
       service: billing-service
       entryPoints:
         - websecure
@@ -84,7 +84,7 @@ http:
       priority: 100
 
     api-billing-webhooks:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/webhooks`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/webhooks`)"
       service: billing-service
       entryPoints:
         - websecure
@@ -95,7 +95,7 @@ http:
       priority: 100
 
     api-users:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/users`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/users`)"
       service: user-service
       entryPoints:
         - websecure
@@ -106,7 +106,7 @@ http:
       priority: 100
 
     api-profile:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/profile`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/profile`)"
       service: user-service
       entryPoints:
         - websecure
@@ -117,7 +117,7 @@ http:
       priority: 100
 
     api-encode:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/encode`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/encode`)"
       service: encoding-service
       entryPoints:
         - websecure
@@ -128,7 +128,7 @@ http:
       priority: 100
 
     api-documents:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/documents`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/documents`)"
       service: encoding-service
       entryPoints:
         - websecure
@@ -140,7 +140,7 @@ http:
 
     # Media Verification - routed to Enterprise API (C2PA + XMP verification)
     api-verify-media:
-      rule: "Host(`api.encypherai.com`) && (PathPrefix(`/api/v1/verify/image`) || PathPrefix(`/api/v1/verify/audio`) || PathPrefix(`/api/v1/verify/video`) || PathPrefix(`/api/v1/verify/media`))"
+      rule: "Host(`api.encypher.com`) && (PathPrefix(`/api/v1/verify/image`) || PathPrefix(`/api/v1/verify/audio`) || PathPrefix(`/api/v1/verify/video`) || PathPrefix(`/api/v1/verify/media`))"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -152,7 +152,7 @@ http:
 
     # Verification Advanced - routed to Enterprise API (advanced/analytics features)
     api-verify-advanced:
-      rule: "Host(`api.encypherai.com`) && Path(`/api/v1/verify/advanced`)"
+      rule: "Host(`api.encypher.com`) && Path(`/api/v1/verify/advanced`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -165,7 +165,7 @@ http:
     # Verification Service - ALL verification endpoints
     # Routes all /api/v1/verify* to verification-service for independent scaling
     api-verify:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/verify`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/verify`)"
       service: verification-service
       entryPoints:
         - websecure
@@ -176,7 +176,7 @@ http:
       priority: 100
 
     api-coalition:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/coalition`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/coalition`)"
       service: coalition-service
       entryPoints:
         - websecure
@@ -187,7 +187,7 @@ http:
       priority: 100
 
     api-notifications:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/notifications`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/notifications`)"
       service: notification-service
       entryPoints:
         - websecure
@@ -199,7 +199,7 @@ http:
 
     # Marketing Web Service (forms + marketing analytics)
     api-web-service:
-      rule: "Host(`api.encypherai.com`) && (PathPrefix(`/api/v1/ai-demo`) || PathPrefix(`/api/v1/publisher-demo`) || PathPrefix(`/api/v1/sales`) || PathPrefix(`/api/v1/demo-requests`) || PathPrefix(`/api/v1/marketing-analytics`))"
+      rule: "Host(`api.encypher.com`) && (PathPrefix(`/api/v1/ai-demo`) || PathPrefix(`/api/v1/publisher-demo`) || PathPrefix(`/api/v1/sales`) || PathPrefix(`/api/v1/demo-requests`) || PathPrefix(`/api/v1/marketing-analytics`))"
       service: web-service
       entryPoints:
         - websecure
@@ -213,7 +213,7 @@ http:
     # ENTERPRISE API ROUTES (C2PA signing/verification)
     # ===========================================
     api-sign:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/sign`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/sign`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -224,7 +224,7 @@ http:
       priority: 100
 
     api-verify-public:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/public`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/public`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -235,7 +235,7 @@ http:
       priority: 100
 
     api-batch:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/batch`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/batch`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -247,7 +247,7 @@ http:
 
 
     api-lookup:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/lookup`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/lookup`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -258,7 +258,7 @@ http:
       priority: 100
 
     api-onboarding:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/onboarding`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/onboarding`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -270,7 +270,7 @@ http:
 
     # Rights management + analytics endpoints used by dashboard (rights profile, crawler analytics, etc.)
     api-rights:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/rights`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/rights`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -282,7 +282,7 @@ http:
 
     # Rights licensing workflows used by dashboard licensing surfaces
     api-rights-licensing:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/rights-licensing`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/rights-licensing`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -294,7 +294,7 @@ http:
 
     # Notice workflows for rights enforcement dashboard pages
     api-notices:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/notices`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/notices`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -306,7 +306,7 @@ http:
 
     # Content discovery/crawler integrations
     api-integrations:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/integrations`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/integrations`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -318,7 +318,7 @@ http:
 
     # CDN integration endpoints powering crawler intelligence views
     api-cdn:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/cdn`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/cdn`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -330,7 +330,7 @@ http:
 
     # Enterprise admin endpoints used by dashboard admin/security tooling
     api-admin:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/admin`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/admin`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -341,7 +341,7 @@ http:
       priority: 100
 
     api-streaming:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/sign/stream`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/sign/stream`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -352,7 +352,7 @@ http:
       priority: 100
 
     api-chat:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/chat`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/chat`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -363,7 +363,7 @@ http:
       priority: 100
 
     api-licensing:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/licensing`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/licensing`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -374,7 +374,7 @@ http:
       priority: 100
 
     api-usage:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/usage`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/usage`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -385,7 +385,7 @@ http:
       priority: 100
 
     api-audit:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/audit`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/audit`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -396,7 +396,7 @@ http:
       priority: 100
 
     api-org:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/org`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/org`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -407,7 +407,7 @@ http:
       priority: 100
 
     api-status:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/status`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/status`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -418,7 +418,7 @@ http:
       priority: 100
 
     api-tools:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/tools`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/tools`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -429,7 +429,7 @@ http:
       priority: 100
 
     api-provisioning:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/provisioning`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/provisioning`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -440,7 +440,7 @@ http:
       priority: 100
 
     api-enterprise:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/enterprise`)"
+      rule: "Host(`api.encypher.com`) && PathPrefix(`/api/v1/enterprise`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -452,7 +452,7 @@ http:
 
     # Health, docs, and root endpoints -> enterprise-api
     api-health:
-      rule: "Host(`api.encypherai.com`) && Path(`/health`)"
+      rule: "Host(`api.encypher.com`) && Path(`/health`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -463,7 +463,7 @@ http:
       priority: 100
 
     api-docs:
-      rule: "Host(`api.encypherai.com`) && (Path(`/docs`) || Path(`/redoc`) || Path(`/openapi.json`))"
+      rule: "Host(`api.encypher.com`) && (Path(`/docs`) || Path(`/redoc`) || Path(`/openapi.json`))"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -474,7 +474,7 @@ http:
       priority: 100
 
     api-root:
-      rule: "Host(`api.encypherai.com`) && Path(`/`)"
+      rule: "Host(`api.encypher.com`) && Path(`/`)"
       service: enterprise-api
       entryPoints:
         - websecure
@@ -486,7 +486,7 @@ http:
 
     # Default: auth-service handles /api/v1/auth/* and fallback
     api-auth:
-      rule: "Host(`api.encypherai.com`)"
+      rule: "Host(`api.encypher.com`)"
       service: auth-service
       entryPoints:
         - websecure
@@ -588,9 +588,9 @@ http:
           - "X-Request-ID"
           - "X-API-Key"
         accessControlAllowOriginList:
-          - "https://encypherai.com"
-          - "https://www.encypherai.com"
-          - "https://dashboard.encypherai.com"
+          - "https://encypher.com"
+          - "https://www.encypher.com"
+          - "https://dashboard.encypher.com"
           - "http://localhost:3000"
           - "http://localhost:3001"
           - "http://localhost:3050"

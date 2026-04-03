@@ -63,7 +63,7 @@ def _require_cdn_provenance(org: Organization) -> None:
             detail={
                 "error": "FeatureNotAvailable",
                 "message": "CDN Provenance is available on Enterprise tier only.",
-                "upgrade_url": "https://dashboard.encypherai.com/billing",
+                "upgrade_url": "https://dashboard.encypher.com/billing",
             },
         )
 

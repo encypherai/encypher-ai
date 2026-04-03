@@ -1,6 +1,6 @@
 # encypher.StreamingMerkleApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -33,10 +33,10 @@ from encypher.models.stream_merkle_segment_response import StreamMerkleSegmentRe
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -53,7 +53,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StreamingMerkleApi(api_client)
-    stream_merkle_segment_request = encypher.StreamMerkleSegmentRequest() # StreamMerkleSegmentRequest | 
+    stream_merkle_segment_request = encypher.StreamMerkleSegmentRequest() # StreamMerkleSegmentRequest |
 
     try:
         # Add Segment To Session
@@ -71,7 +71,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **stream_merkle_segment_request** | [**StreamMerkleSegmentRequest**](StreamMerkleSegmentRequest.md)|  | 
+ **stream_merkle_segment_request** | [**StreamMerkleSegmentRequest**](StreamMerkleSegmentRequest.md)|  |
 
 ### Return type
 
@@ -116,10 +116,10 @@ from encypher.models.stream_merkle_finalize_response import StreamMerkleFinalize
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -136,7 +136,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StreamingMerkleApi(api_client)
-    stream_merkle_finalize_request = encypher.StreamMerkleFinalizeRequest() # StreamMerkleFinalizeRequest | 
+    stream_merkle_finalize_request = encypher.StreamMerkleFinalizeRequest() # StreamMerkleFinalizeRequest |
 
     try:
         # Finalize Streaming Session
@@ -154,7 +154,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **stream_merkle_finalize_request** | [**StreamMerkleFinalizeRequest**](StreamMerkleFinalizeRequest.md)|  | 
+ **stream_merkle_finalize_request** | [**StreamMerkleFinalizeRequest**](StreamMerkleFinalizeRequest.md)|  |
 
 ### Return type
 
@@ -196,10 +196,10 @@ from encypher.models.stream_merkle_status_response import StreamMerkleStatusResp
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -216,7 +216,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StreamingMerkleApi(api_client)
-    stream_merkle_status_request = encypher.StreamMerkleStatusRequest() # StreamMerkleStatusRequest | 
+    stream_merkle_status_request = encypher.StreamMerkleStatusRequest() # StreamMerkleStatusRequest |
 
     try:
         # Get Session Status
@@ -234,7 +234,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **stream_merkle_status_request** | [**StreamMerkleStatusRequest**](StreamMerkleStatusRequest.md)|  | 
+ **stream_merkle_status_request** | [**StreamMerkleStatusRequest**](StreamMerkleStatusRequest.md)|  |
 
 ### Return type
 
@@ -283,10 +283,10 @@ from encypher.models.stream_merkle_start_response import StreamMerkleStartRespon
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -303,7 +303,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.StreamingMerkleApi(api_client)
-    stream_merkle_start_request = encypher.StreamMerkleStartRequest() # StreamMerkleStartRequest | 
+    stream_merkle_start_request = encypher.StreamMerkleStartRequest() # StreamMerkleStartRequest |
 
     try:
         # Start Streaming Merkle Session
@@ -321,7 +321,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **stream_merkle_start_request** | [**StreamMerkleStartRequest**](StreamMerkleStartRequest.md)|  | 
+ **stream_merkle_start_request** | [**StreamMerkleStartRequest**](StreamMerkleStartRequest.md)|  |
 
 ### Return type
 
@@ -344,4 +344,3 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

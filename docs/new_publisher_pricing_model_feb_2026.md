@@ -374,4 +374,4 @@ Annual enforcement spend: ~$12K. Net new revenue: $228K.
 
 ---
 
-*encypherai.com | C2PA Text Provenance Standard — Section A.7 — Published January 8, 2026*
+*encypher.com | C2PA Text Provenance Standard — Section A.7 — Published January 8, 2026*

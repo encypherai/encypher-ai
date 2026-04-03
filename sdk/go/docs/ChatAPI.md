@@ -1,6 +1,6 @@
 # \ChatAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -91,7 +91,7 @@ import (
 )
 
 func main() {
-	chatCompletionRequest := *openapiclient.NewChatCompletionRequest([]openapiclient.ChatMessage{*openapiclient.NewChatMessage("Role_example", "Content_example")}) // ChatCompletionRequest | 
+	chatCompletionRequest := *openapiclient.NewChatCompletionRequest([]openapiclient.ChatMessage{*openapiclient.NewChatMessage("Role_example", "Content_example")}) // ChatCompletionRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -116,7 +116,7 @@ Other parameters are passed through a pointer to a apiOpenaiCompatibleChatApiV1C
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **chatCompletionRequest** | [**ChatCompletionRequest**](ChatCompletionRequest.md) |  | 
+ **chatCompletionRequest** | [**ChatCompletionRequest**](ChatCompletionRequest.md) |  |
 
 ### Return type
 
@@ -134,4 +134,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

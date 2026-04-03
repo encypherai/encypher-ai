@@ -176,7 +176,7 @@ def resolve_api_config(
         or env_values.get("ENCYPHER_API_KEY")
         or os.environ.get("ENCYPHER_API_KEY")
     )
-    resolved_base_url = base_url or env_values.get("ENCYPHER_BASE_URL") or os.environ.get("ENCYPHER_BASE_URL") or "api.encypherai.com"
+    resolved_base_url = base_url or env_values.get("ENCYPHER_BASE_URL") or os.environ.get("ENCYPHER_BASE_URL") or "api.encypher.com"
 
     if not resolved_api_key:
         raise ValueError("Missing API key. Set ENYCPHER_API_KEY (preferred) in .env.skills or pass --api-key.")

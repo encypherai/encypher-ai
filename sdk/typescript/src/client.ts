@@ -1,13 +1,13 @@
 /**
  * Encypher SDK - TypeScript client for the Encypher Enterprise API.
- * 
+ *
  * This is an auto-generated SDK. For the source, see:
  * https://github.com/encypherai/encypherai-commercial/tree/main/sdk
- * 
+ *
  * @example
  * ```typescript
  * import { EncypherClient } from '@encypher/sdk';
- * 
+ *
  * const client = new EncypherClient({ apiKey: 'your_api_key' });
  * const result = await client.sign({ text: 'Hello, world!' });
  * console.log(result.signedText);
@@ -30,7 +30,7 @@ export class EncypherClient {
 
   constructor(options: EncypherClientOptions) {
     this.config = new Configuration({
-      basePath: options.baseUrl || 'https://api.encypherai.com',
+      basePath: options.baseUrl || 'https://api.encypher.com',
       accessToken: options.apiKey,
     });
 

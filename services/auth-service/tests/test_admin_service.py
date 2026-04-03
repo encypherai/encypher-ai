@@ -9,7 +9,7 @@ from app.services.admin_service import AdminService
 
 def test_update_user_tier_creates_org_when_missing_default_org():
     db = MagicMock()
-    user = User(id="user_1", email="test@encypherai.com", default_organization_id=None, is_active=True)
+    user = User(id="user_1", email="test@encypher.com", default_organization_id=None, is_active=True)
     org = MagicMock(spec=Organization)
     org.id = "org_1"
     org.tier = "starter"

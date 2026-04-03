@@ -71,6 +71,6 @@ See `.env.example` for all available configuration options:
 | `POSTGRES_SERVER` | Database host | `localhost` |
 | `POSTGRES_DB` | Database name | `encypher_web` |
 | `EMAILS_ENABLED` | Enable email sending | `false` |
-| `CONTACT_EMAIL` | Primary inbound lead mailbox | `contact@encypherai.com` |
-| `SALES_EMAIL` | Sales notification recipient | `contact@encypherai.com` |
-| `DEMO_EMAIL` | Demo notification recipient | `contact@encypherai.com` |
+| `CONTACT_EMAIL` | Primary inbound lead mailbox | `contact@encypher.com` |
+| `SALES_EMAIL` | Sales notification recipient | `contact@encypher.com` |
+| `DEMO_EMAIL` | Demo notification recipient | `contact@encypher.com` |

@@ -1,6 +1,6 @@
 # 🎨 Encypher Design System - Implementation Guide
 
-**Status:** ✅ Core System Complete  
+**Status:** ✅ Core System Complete
 **Next Steps:** Install dependencies and integrate into apps
 
 ---
@@ -88,7 +88,7 @@ npm run type-check
 
 ## 🔗 Integration into Apps
 
-### For Marketing Site (`encypherai.com`)
+### For Marketing Site (`encypher.com`)
 
 **1. Install design system:**
 
@@ -136,12 +136,12 @@ export default function HomePage() {
       <h1 className="text-4xl font-bold text-delft-blue">
         Welcome to Encypher
       </h1>
-      
+
       {/* High-contrast CTA */}
       <Button variant="primary" size="xl">
         Get Started Free
       </Button>
-      
+
       <Button variant="outline" size="xl">
         Learn More
       </Button>
@@ -150,7 +150,7 @@ export default function HomePage() {
 }
 ```
 
-### For Dashboard (`dashboard.encypherai.com`)
+### For Dashboard (`dashboard.encypher.com`)
 
 Same steps as marketing site, but use dashboard-specific layouts:
 
@@ -175,7 +175,7 @@ export default function DashboardPage() {
 }
 ```
 
-### For Verification Portal (`verify.encypherai.com`)
+### For Verification Portal (`verify.encypher.com`)
 
 Lightweight implementation:
 
@@ -187,7 +187,7 @@ export default function VerifyPage({ documentId }) {
     <Card variant="elevated" padding="lg">
       <h1>Document Verification</h1>
       <p>Document ID: {documentId}</p>
-      
+
       <Button variant="success">
         ✓ Verified Authentic
       </Button>
@@ -237,7 +237,7 @@ export default function VerifyPage({ documentId }) {
 ### Button with Icons
 
 ```typescript
-<Button 
+<Button
   variant="primary"
   leftIcon={<ArrowRightIcon />}
   loading={isLoading}
@@ -254,7 +254,7 @@ export default function VerifyPage({ documentId }) {
     <CardTitle>Dashboard Stats</CardTitle>
     <CardDescription>Your activity this month</CardDescription>
   </CardHeader>
-  
+
   <CardContent>
     <div className="space-y-4">
       <div>
@@ -263,7 +263,7 @@ export default function VerifyPage({ documentId }) {
       </div>
     </div>
   </CardContent>
-  
+
   <CardFooter>
     <Button variant="primary" fullWidth>
       View All Documents
@@ -281,14 +281,14 @@ export default function VerifyPage({ documentId }) {
     placeholder="Email address"
     leftIcon={<MailIcon />}
   />
-  
+
   <Input
     type="password"
     placeholder="Password"
     leftIcon={<LockIcon />}
     error={hasError}
   />
-  
+
   <Button variant="primary" size="lg" fullWidth>
     Create Account
   </Button>
@@ -342,7 +342,7 @@ Use semantic variants:
 All components are responsive:
 
 ```typescript
-<Button 
+<Button
   size="sm"                    // Mobile
   className="md:h-12 md:px-8"  // Tablet+
 >
@@ -518,6 +518,6 @@ module.exports = {
 
 ---
 
-**Status:** ✅ Design System Ready  
-**Next Step:** Install dependencies and start migration  
+**Status:** ✅ Design System Ready
+**Next Step:** Install dependencies and start migration
 **Timeline:** Ready to begin Phase 2 (app extraction)

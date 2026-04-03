@@ -74,7 +74,7 @@ ctx = context.WithValue(context.Background(), encypher.ContextOperationServerVar
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
@@ -378,6 +378,3 @@ Each of these functions takes a value of the given basic type and returns a poin
 * `PtrTime`
 
 ## Author
-
-
-

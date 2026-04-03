@@ -1,6 +1,6 @@
 # encypher.LookupApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -34,10 +34,10 @@ from encypher.models.lookup_response import LookupResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -45,7 +45,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.LookupApi(api_client)
-    lookup_request = encypher.LookupRequest() # LookupRequest | 
+    lookup_request = encypher.LookupRequest() # LookupRequest |
 
     try:
         # Lookup Sentence
@@ -63,7 +63,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **lookup_request** | [**LookupRequest**](LookupRequest.md)|  | 
+ **lookup_request** | [**LookupRequest**](LookupRequest.md)|  |
 
 ### Return type
 
@@ -109,10 +109,10 @@ from encypher.models.lookup_response import LookupResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -120,7 +120,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.LookupApi(api_client)
-    lookup_request = encypher.LookupRequest() # LookupRequest | 
+    lookup_request = encypher.LookupRequest() # LookupRequest |
 
     try:
         # Provenance Lookup
@@ -138,7 +138,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **lookup_request** | [**LookupRequest**](LookupRequest.md)|  | 
+ **lookup_request** | [**LookupRequest**](LookupRequest.md)|  |
 
 ### Return type
 
@@ -161,4 +161,3 @@ No authorization required
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

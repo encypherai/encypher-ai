@@ -1,7 +1,7 @@
 # PRD: Email Verification & Notification System
 
-**Status:** ✅ COMPLETE (Core Features)  
-**Date:** November 26, 2025  
+**Status:** ✅ COMPLETE (Core Features)
+**Date:** November 26, 2025
 **Note:** Zoho CRM integration deferred to future phase
 
 ## Overview
@@ -79,7 +79,7 @@ Implement a comprehensive email system for auth-service with email verification 
 ### Brand Design Guidelines (for email templates)
 - **Primary Color**: #1d3557 (dark blue header)
 - **Accent Color**: #457b9d (CTA buttons)
-- **Logo URL**: https://encypherai.com/encypher_full_nobg.png
+- **Logo URL**: https://encypher.com/encypher_full_nobg.png
 - **Font**: Segoe UI, Arial, sans-serif
 - **Max Width**: 480px container
 

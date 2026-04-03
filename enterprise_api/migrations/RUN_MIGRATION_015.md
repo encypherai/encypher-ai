@@ -84,7 +84,7 @@ Expected output:
 ## Testing
 
 After migration, test with old signed content:
-1. Go to https://encypherai.com/tools/decode
+1. Go to https://encypher.com/tools/decode
 2. Paste old signed content
 3. Should now verify successfully (or show proper verification status)
 

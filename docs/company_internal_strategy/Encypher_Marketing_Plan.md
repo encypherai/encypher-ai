@@ -489,7 +489,7 @@ Roundtable Track: Invite-only (rescheduling in progress)
 **Document Owner:** Chief Commercial Officer (CCO)
 
 **Key Changes from March 2026 (v5.0):**
-1. Domain migration: encypherai.com -> encypher.com
+1. Domain migration: encypher.com -> encypher.com
 2. Subtitle updated: Text Provenance -> Content Provenance Infrastructure
 3. Marketing posture shifted from "held pending landmark deal" to active launch
 4. Q1 goals updated to reflect current pipeline reality

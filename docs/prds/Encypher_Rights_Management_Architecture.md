@@ -1,10 +1,10 @@
 # Encypher Rights Management System — Architecture Specification
 
-**Document Type:** Systems Architecture Specification  
-**Audience:** Systems Architect / Engineering Lead  
-**Version:** 1.0  
-**Date:** February 20, 2026  
-**Author:** Erik Svilich, CEO & Founder  
+**Document Type:** Systems Architecture Specification
+**Audience:** Systems Architect / Engineering Lead
+**Version:** 1.0
+**Date:** February 20, 2026
+**Author:** Erik Svilich, CEO & Founder
 **Status:** DRAFT — For Architecture Review
 
 ---
@@ -22,7 +22,7 @@ This is not DRM — we don't prevent access. This is a **machine-readable deed s
 ```
 PUBLISHER                           ENCYPHER DB                        AI COMPANY / CONSUMER
 ─────────                           ──────────                         ─────────────────────
-                                                                       
+
 1. Signs content via               2. Registry stores:                 4. Encounters marked content
    API / WordPress /                  - Content hashes (Merkle tree)      (scraping, RAG retrieval,
    CLI / platform partner             - Rights & licensing terms          training pipeline, etc.)
@@ -36,7 +36,7 @@ PUBLISHER                           ENCYPHER DB                        AI COMPAN
                                                                           a) License → transaction
                                                                           b) Ignore → willful
                                                                              infringement exposure
-                                                                          c) Strip markers → 
+                                                                          c) Strip markers →
                                                                              spoliation of evidence
 ```
 
@@ -185,9 +185,9 @@ BRONZE TIER — Scraping / Crawling Access
 {
   "tier": "bronze",
   "usage_type": "scraping_crawling",
-  "description": "Automated access to content via web crawlers, scrapers, 
+  "description": "Automated access to content via web crawlers, scrapers,
                   or API-based content retrieval for indexing or caching",
-  
+
   "permissions": {
     "allowed": true | false,
     "requires_license": true | false,
@@ -204,7 +204,7 @@ BRONZE TIER — Scraping / Crawling Access
       "content_age_minimum_days": null
     }
   },
-  
+
   "pricing": {
     "model": "per_request" | "flat_monthly" | "per_article" | "negotiate",
     "indicative_rate": "$0.001/article" | "$500/month" | "contact_us",
@@ -212,14 +212,14 @@ BRONZE TIER — Scraping / Crawling Access
     "minimum_commitment": null,
     "bulk_discount_available": true
   },
-  
+
   "attribution": {
     "required": true,
     "format": "Publisher Name, Original URL",
     "link_back_required": true,
     "brand_usage_allowed": false
   },
-  
+
   "technical_requirements": {
     "respect_robots_txt": true,
     "crawl_delay_seconds": 2,
@@ -235,9 +235,9 @@ SILVER TIER — RAG / Retrieval / Grounding
 {
   "tier": "silver",
   "usage_type": "rag_retrieval_grounding",
-  "description": "Real-time retrieval of content to augment, ground, or 
+  "description": "Real-time retrieval of content to augment, ground, or
                   inform AI-generated responses",
-  
+
   "permissions": {
     "allowed": true | false,
     "requires_license": true | false,
@@ -255,27 +255,27 @@ SILVER TIER — RAG / Retrieval / Grounding
       "requires_quotation_marks": true
     }
   },
-  
+
   "pricing": {
     "model": "per_retrieval" | "per_token_output" | "flat_monthly" | "negotiate",
     "indicative_rate": "$0.01/retrieval" | "$2,000/month" | "contact_us",
     "currency": "USD",
     "revenue_share_on_ai_output": null
   },
-  
+
   "attribution": {
     "required": true,
     "format": "inline_citation" | "footnote" | "source_link",
     "must_include": ["publisher_name", "article_title", "url", "date"],
     "brand_usage_allowed": true,
     "accuracy_verification_required": true,
-    "hallucination_liability": "AI company bears responsibility for 
+    "hallucination_liability": "AI company bears responsibility for
                                 misattributed quotes"
   },
-  
+
   "quote_integrity": {
     "verification_required": true,
-    "verification_endpoint": "https://api.encypherai.com/api/v1/verify",
+    "verification_endpoint": "https://api.encypher.com/api/v1/verify",
     "accuracy_threshold": 0.95,
     "paraphrase_permitted": true,
     "fabrication_prohibited": true
@@ -288,9 +288,9 @@ GOLD TIER — Training / Fine-Tuning
 {
   "tier": "gold",
   "usage_type": "training_fine_tuning",
-  "description": "Incorporation of content into model weights through 
+  "description": "Incorporation of content into model weights through
                   pre-training, fine-tuning, RLHF, or similar processes",
-  
+
   "permissions": {
     "allowed": true | false,
     "requires_license": true | false,
@@ -312,9 +312,9 @@ GOLD TIER — Training / Fine-Tuning
       "exclusive_premium_multiplier": null
     }
   },
-  
+
   "pricing": {
-    "model": "per_article_ingested" | "corpus_license" | 
+    "model": "per_article_ingested" | "corpus_license" |
              "revenue_share" | "flat_annual" | "negotiate",
     "indicative_rate": "$0.10/article" | "$50,000/year" | "contact_us",
     "currency": "USD",
@@ -325,14 +325,14 @@ GOLD TIER — Training / Fine-Tuning
       "specific_sections": "negotiate"
     }
   },
-  
+
   "attribution": {
     "required": true,
     "training_data_disclosure": true,
     "model_card_inclusion": true,
     "output_attribution_preferred": true
   },
-  
+
   "legal": {
     "indemnification": "mutual",
     "liability_cap": "license_fees_paid",
@@ -360,7 +360,7 @@ created_at             TIMESTAMP
 updated_by             UUID FK → users
 
 ── OVERRIDE SCOPE ──
-override_type          ENUM: 'document', 'collection', 'content_type', 
+override_type          ENUM: 'document', 'collection', 'content_type',
                              'date_range', 'section'
 collection_id          UUID (if collection-level override)
 content_type_filter    TEXT (e.g. "opinion", "news", "analysis", "archive")
@@ -369,7 +369,7 @@ date_range_end         TIMESTAMP
 
 ── TIER OVERRIDES ──
 bronze_tier_override   JSONB (null = use publisher default)
-silver_tier_override   JSONB (null = use publisher default)  
+silver_tier_override   JSONB (null = use publisher default)
 gold_tier_override     JSONB (null = use publisher default)
 
 ── SPECIAL FLAGS ──
@@ -386,7 +386,7 @@ When a consumer encounters marked content and queries our API, the rights resolu
 ```
 1. Document-level override (most specific)
    ↓ if none exists
-2. Collection-level override  
+2. Collection-level override
    ↓ if none exists
 3. Content-type override (e.g. "all opinion pieces")
    ↓ if none exists
@@ -491,7 +491,7 @@ GET  /api/v1/public/rights/{document_id}
          email: "licensing@publisher.com",
          url: "https://publisher.com/ai-licensing",
          coalition: true,
-         coalition_contact: "licensing@encypherai.com"
+         coalition_contact: "licensing@encypher.com"
        },
        verification: {
          c2pa_valid: true,
@@ -617,7 +617,7 @@ POST /api/v1/notices/create
          "document_ids": [],
          "date_range": {}
        },
-       "notice_type": "licensing_notice" | "cease_and_desist" | 
+       "notice_type": "licensing_notice" | "cease_and_desist" |
                       "dmca_takedown" | "formal_awareness",
        "demands": {
          "licensing_required": true,
@@ -657,7 +657,7 @@ The existing sign endpoint is extended to include rights information that gets e
   "text": "Full article text here...",
   "segmentation_level": "sentence",
   "manifest_mode": "minimal_uuid",
-  
+
   "metadata": {
     "title": "Article Title",
     "author": "Byline Author",
@@ -667,10 +667,10 @@ The existing sign endpoint is extended to include rights information that gets e
     "section": "politics",
     "url": "https://publisher.com/article-slug"
   },
-  
+
   "rights": {
     "use_profile_defaults": true,
-    
+
     "overrides": {
       "bronze_tier": {
         "embargo_period_hours": 48
@@ -680,7 +680,7 @@ The existing sign endpoint is extended to include rights information that gets e
         "reason": "Exclusive investigative content"
       }
     },
-    
+
     "custom_notice": null
   }
 }
@@ -697,7 +697,7 @@ When `use_profile_defaults: true`, the system pulls the publisher's rights profi
 **Embedded in the C2PA manifest** (attached to or referenced by the document):
 - Publisher identity
 - License type (e.g. "All Rights Reserved")
-- Rights resolution URL (e.g. `https://api.encypherai.com/api/v1/public/rights/{doc_id}`)
+- Rights resolution URL (e.g. `https://api.encypher.com/api/v1/public/rights/{doc_id}`)
 - Formal notice status flag
 - Signing timestamp
 
@@ -722,7 +722,7 @@ WORDPRESS PLUGIN UX FLOW
 
 1. Plugin Settings (one-time setup):
    - "Set your default licensing terms" → Opens rights profile wizard
-   - Pre-built templates: "News Publisher", "Blog/Independent", 
+   - Pre-built templates: "News Publisher", "Blog/Independent",
      "Academic", "All Rights Reserved (Default)"
    - Template populates all three tiers with sensible defaults
    - Publisher can customize any tier
@@ -731,7 +731,7 @@ WORDPRESS PLUGIN UX FLOW
 2. On Post Publish (automatic):
    - Plugin calls /api/v1/sign with use_profile_defaults: true
    - Content is signed, rights are registered, markers embedded
-   - No per-article rights decisions required (unless publisher 
+   - No per-article rights decisions required (unless publisher
      enables "Custom rights per post" in settings)
 
 3. Optional: Per-Post Override
@@ -743,7 +743,7 @@ WORDPRESS PLUGIN UX FLOW
 
 4. Dashboard Widget:
    - "X articles signed this month"
-   - "Y licensing inquiries received"  
+   - "Y licensing inquiries received"
    - "Z formal notices active"
    - Link to full Encypher dashboard
 ```
@@ -791,7 +791,7 @@ PLATFORM PARTNER SIGNING FLOW
 ──────────────────────────────
 
 1. Platform partner has org-level API key (strategic_partner tier)
-2. Each publisher under the platform has their own rights profile 
+2. Each publisher under the platform has their own rights profile
    in Encypher (set up during publisher onboarding through the partner)
 3. Platform partner signs content on behalf of publishers:
 
@@ -851,7 +851,7 @@ STAGE 1: CONTENT SIGNED
 ├─ Rights and licensing terms registered
 └─ Timestamp: Publisher establishes priority
 
-STAGE 2: FORMAL NOTICE SERVED  
+STAGE 2: FORMAL NOTICE SERVED
 ├─ AI company receives notice that content is marked
 ├─ Notice includes: what's marked, where to verify, how to license
 ├─ Delivery confirmed (email receipt, API acknowledgment, registered mail)
@@ -868,7 +868,7 @@ STAGE 3: CONTINUED USE DETECTED
 STAGE 4: EVIDENCE PACKAGE GENERATED
 ├─ Original signed content with Merkle proofs
 ├─ Formal notice with delivery confirmation
-├─ Usage evidence with timestamps  
+├─ Usage evidence with timestamps
 ├─ Chain-of-custody documentation
 ├─ Rights terms that were in effect at time of use
 └─ Court-ready bundle (PDF + structured data + cryptographic proofs)
@@ -915,46 +915,46 @@ For the formal notice framework to work, AI companies need to be able to **disco
 ```
 DISCOVERY PATH 1: Embedded Markers (Primary)
 ─────────────────────────────────────────────
-AI company's ingestion pipeline processes text → Unicode variation 
+AI company's ingestion pipeline processes text → Unicode variation
 selectors are present → If they check, UUIDs resolve to rights info.
 If they don't check, the markers still exist as evidence that rights
 information was present and discoverable.
 
 DISCOVERY PATH 2: C2PA Manifest (Standards-Based)
 ──────────────────────────────────────────────────
-Content carries C2PA manifest (per the standard Erik authored) → 
+Content carries C2PA manifest (per the standard Erik authored) →
 Any C2PA-aware system can extract publisher identity and rights URL →
 Standard-compliant discovery without Encypher-specific tooling.
 
 DISCOVERY PATH 3: HTTP Headers (For Crawlers)
 ──────────────────────────────────────────────
 Publisher's web server includes HTTP headers on content pages:
-  X-Content-Rights: https://api.encypherai.com/api/v1/public/rights/{doc_id}
+  X-Content-Rights: https://api.encypher.com/api/v1/public/rights/{doc_id}
   X-Content-Provenance: c2pa
   X-Licensing-Contact: licensing@publisher.com
-  
+
 WordPress plugin can add these automatically.
 
 DISCOVERY PATH 4: HTML Meta Tags (For Scrapers)
 ────────────────────────────────────────────────
-<meta name="content-rights" 
-      content="https://api.encypherai.com/api/v1/public/rights/{doc_id}" />
+<meta name="content-rights"
+      content="https://api.encypher.com/api/v1/public/rights/{doc_id}" />
 <meta name="content-provenance" content="c2pa-signed" />
 <meta name="licensing-contact" content="licensing@publisher.com" />
-<link rel="license" 
-      href="https://api.encypherai.com/api/v1/public/rights/{doc_id}/json-ld" 
+<link rel="license"
+      href="https://api.encypher.com/api/v1/public/rights/{doc_id}/json-ld"
       type="application/ld+json" />
 
 DISCOVERY PATH 5: robots.txt Enhancement
 ─────────────────────────────────────────
 # AI-specific licensing information
-# See https://api.encypherai.com/api/v1/public/rights/organization/{org_id}
+# See https://api.encypher.com/api/v1/public/rights/organization/{org_id}
 User-agent: GPTBot
-User-agent: ClaudeBot  
+User-agent: ClaudeBot
 User-agent: Google-Extended
 Disallow: /  # Or specific paths
 # License-URL: https://publisher.com/ai-licensing
-# Rights-API: https://api.encypherai.com/api/v1/public/rights/organization/{org_id}
+# Rights-API: https://api.encypher.com/api/v1/public/rights/organization/{org_id}
 
 DISCOVERY PATH 6: ODRL / JSON-LD (Semantic Web)
 ────────────────────────────────────────────────
@@ -991,29 +991,29 @@ CREATE TABLE publisher_rights_profiles (
     effective_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_by UUID REFERENCES users(id),
-    
+
     publisher_name TEXT NOT NULL,
     publisher_url TEXT,
     contact_email TEXT NOT NULL,
     contact_url TEXT,
     legal_entity TEXT,
     jurisdiction TEXT DEFAULT 'US',
-    
+
     default_license_type TEXT NOT NULL DEFAULT 'all_rights_reserved',
-    
+
     bronze_tier JSONB NOT NULL DEFAULT '{}',
     silver_tier JSONB NOT NULL DEFAULT '{}',
     gold_tier JSONB NOT NULL DEFAULT '{}',
-    
+
     notice_status TEXT NOT NULL DEFAULT 'draft',
     notice_effective_date TIMESTAMPTZ,
     notice_text TEXT,
     notice_hash TEXT,
-    
+
     coalition_member BOOLEAN NOT NULL DEFAULT true,
     coalition_joined_at TIMESTAMPTZ,
     licensing_track TEXT NOT NULL DEFAULT 'both',
-    
+
     UNIQUE(organization_id, profile_version)
 );
 
@@ -1025,22 +1025,22 @@ CREATE TABLE document_rights_overrides (
     override_version INTEGER NOT NULL DEFAULT 1,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_by UUID REFERENCES users(id),
-    
+
     override_type TEXT NOT NULL DEFAULT 'document',
     collection_id UUID,
     content_type_filter TEXT,
     date_range_start TIMESTAMPTZ,
     date_range_end TIMESTAMPTZ,
-    
+
     bronze_tier_override JSONB,
     silver_tier_override JSONB,
     gold_tier_override JSONB,
-    
+
     do_not_license BOOLEAN NOT NULL DEFAULT false,
     premium_content BOOLEAN NOT NULL DEFAULT false,
     embargo_until TIMESTAMPTZ,
     syndication_rights JSONB,
-    
+
     UNIQUE(document_id, override_version)
 );
 
@@ -1050,32 +1050,32 @@ CREATE TABLE formal_notices (
     organization_id UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_by UUID REFERENCES users(id),
-    
+
     target_entity_name TEXT NOT NULL,
     target_entity_domain TEXT,
     target_contact_email TEXT,
     target_entity_type TEXT NOT NULL DEFAULT 'ai_company',
-    
+
     scope_type TEXT NOT NULL,
     scope_document_ids UUID[],
     scope_date_range_start TIMESTAMPTZ,
     scope_date_range_end TIMESTAMPTZ,
-    
+
     notice_type TEXT NOT NULL,
     notice_text TEXT NOT NULL,
     notice_hash TEXT NOT NULL,  -- SHA-256 of notice_text
-    
+
     demands JSONB NOT NULL,
-    
+
     status TEXT NOT NULL DEFAULT 'created',
     delivered_at TIMESTAMPTZ,
     delivery_method TEXT,
     delivery_receipt JSONB,
     delivery_receipt_hash TEXT,
-    
+
     acknowledged_at TIMESTAMPTZ,
     response JSONB,
-    
+
     CONSTRAINT notice_immutable CHECK (
         -- Once delivered, notice content cannot change
         -- (enforced at application layer, this is a safety net)
@@ -1092,7 +1092,7 @@ CREATE TABLE notice_evidence_chain (
     event_hash TEXT NOT NULL,
     previous_hash TEXT,  -- Chain link to previous event
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
+
     -- No UPDATE or DELETE allowed (enforced at application layer + DB triggers)
     CONSTRAINT chain_immutable CHECK (event_hash IS NOT NULL)
 );
@@ -1102,16 +1102,16 @@ CREATE TABLE licensing_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     publisher_org_id UUID NOT NULL,
     requester_org_id UUID,
-    
+
     tier TEXT NOT NULL,
     scope JSONB NOT NULL,
     proposed_terms JSONB NOT NULL,
     requester_info JSONB NOT NULL,
-    
+
     status TEXT NOT NULL DEFAULT 'pending',
     response JSONB,
     responded_at TIMESTAMPTZ,
-    
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -1121,19 +1121,19 @@ CREATE TABLE licensing_agreements (
     request_id UUID REFERENCES licensing_requests(id),
     publisher_org_id UUID NOT NULL,
     licensee_org_id UUID NOT NULL,
-    
+
     tier TEXT NOT NULL,
     scope JSONB NOT NULL,
     terms JSONB NOT NULL,
-    
+
     effective_date TIMESTAMPTZ NOT NULL,
     expiry_date TIMESTAMPTZ,
     auto_renew BOOLEAN DEFAULT false,
-    
+
     status TEXT NOT NULL DEFAULT 'active',
-    
+
     usage_metrics JSONB DEFAULT '{}',
-    
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -1376,7 +1376,7 @@ POST /api/v1/rights/rsl/import
      Auth: Required (org admin)
      Body: RSL XML document
      Returns: Created/updated rights profile
-     Note: For publishers who already have RSL set up — we ingest 
+     Note: For publishers who already have RSL set up — we ingest
      their existing terms and enhance them with our provenance layer.
 ```
 
@@ -1386,7 +1386,7 @@ A publisher already using RSL shouldn't have to re-enter their terms. The system
 
 ```
 RSL <license> with crawl terms    →  Bronze tier defaults populated
-RSL <license> with retrieval terms →  Silver tier defaults populated  
+RSL <license> with retrieval terms →  Silver tier defaults populated
 RSL <license> with training terms  →  Gold tier defaults populated
 RSL <standard> URL                →  Stored as reference license
 RSL <terms> URL                   →  Linked as publisher terms page
@@ -1426,13 +1426,13 @@ SCENARIO 2: AI Crawler Encounters Marked Content
 2. HTTP headers include rights URL (added by WordPress plugin)
 3. If crawler checks rights:
    → API logs the rights lookup event
-   → Publisher dashboard: "GPTBot looked up licensing terms for 
+   → Publisher dashboard: "GPTBot looked up licensing terms for
       your content at 14:30 UTC"
    → This is gold-standard evidence of awareness
 4. If crawler doesn't check rights but processes content:
    → Embedded markers are in the training data
    → If AI company later runs provenance check, it resolves
-   → If they never check, markers are still evidence that 
+   → If they never check, markers are still evidence that
       rights information was embedded and discoverable
 
 
@@ -1450,7 +1450,7 @@ SCENARIO 3: API-Based Content Verification (Tier 1)
      "verification_result": "authentic",
      "rights_included_in_response": true
    }
-4. Publisher dashboard: "3 verification requests for your 
+4. Publisher dashboard: "3 verification requests for your
    content from IP range associated with [AI Company]"
 
 
@@ -1463,7 +1463,7 @@ SCENARIO 4: RSL OLP License Check (Interop)
    → Validates crawler identity
    → Returns license terms from rights profile
    → Logs the license acquisition/check event
-   → Publisher dashboard: "[Crawler] requested RSL license 
+   → Publisher dashboard: "[Crawler] requested RSL license
       for /articles section"
 5. If crawler proceeds without obtaining license:
    → RSL-level violation (access-tier evidence)
@@ -1479,38 +1479,38 @@ CREATE TABLE content_detection_events (
     id BIGSERIAL PRIMARY KEY,
     document_id UUID NOT NULL,
     organization_id UUID NOT NULL,
-    
+
     detection_source TEXT NOT NULL,
         -- 'chrome_extension', 'api_verification', 'rsl_olp_check',
         -- 'http_header_lookup', 'rights_api_lookup', 'crawl_detected'
-    
+
     detected_on_url TEXT,
     detected_on_domain TEXT,
-    
+
     requester_ip INET,
     requester_org_id UUID,
     requester_user_agent TEXT,
     user_agent_category TEXT,
-        -- 'human_browser', 'ai_crawler', 'search_crawler', 
+        -- 'human_browser', 'ai_crawler', 'search_crawler',
         -- 'aggregator', 'unknown'
-    
+
     segments_found INTEGER,
     integrity_status TEXT,
-        -- 'intact', 'partial_tampering', 'significant_tampering', 
+        -- 'intact', 'partial_tampering', 'significant_tampering',
         -- 'stripped'
-    
+
     rights_served BOOLEAN DEFAULT false,
     rights_acknowledged BOOLEAN DEFAULT false,
-    
+
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
+
     -- Partition by month for performance
     -- No updates or deletes — append-only analytics
 ) PARTITION BY RANGE (created_at);
 
 -- Aggregated analytics for dashboard (materialized, refreshed periodically)
 CREATE MATERIALIZED VIEW content_detection_summary AS
-SELECT 
+SELECT
     organization_id,
     date_trunc('day', created_at) as detection_date,
     detection_source,
@@ -1531,7 +1531,7 @@ CREATE TABLE known_crawlers (
     crawler_name TEXT NOT NULL,
     operator_org TEXT NOT NULL,
     crawler_type TEXT NOT NULL,
-        -- 'ai_training', 'ai_search', 'search_engine', 
+        -- 'ai_training', 'ai_search', 'search_engine',
         -- 'aggregator', 'monitoring'
     respects_robots_txt BOOLEAN,
     respects_rsl BOOLEAN,
@@ -1540,13 +1540,13 @@ CREATE TABLE known_crawlers (
 );
 
 -- Indexes
-CREATE INDEX idx_detection_events_org_date 
+CREATE INDEX idx_detection_events_org_date
     ON content_detection_events(organization_id, created_at DESC);
-CREATE INDEX idx_detection_events_domain 
+CREATE INDEX idx_detection_events_domain
     ON content_detection_events(detected_on_domain, created_at DESC);
-CREATE INDEX idx_detection_events_document 
+CREATE INDEX idx_detection_events_document
     ON content_detection_events(document_id, created_at DESC);
-CREATE INDEX idx_detection_events_ua_category 
+CREATE INDEX idx_detection_events_ua_category
     ON content_detection_events(user_agent_category, created_at DESC);
 ```
 
@@ -1595,7 +1595,7 @@ AI CRAWLER ACTIVITY:
 └────────────────────────────┴───────┴──────────────────┘
 
 ACTIONS AVAILABLE:
-[Send Formal Notice to OpenAI]  
+[Send Formal Notice to OpenAI]
 [Generate Evidence Package for Google]
 [View RSL Compliance Report]
 [Export Detection Data (CSV)]
@@ -1610,12 +1610,12 @@ RSL OLP BRIDGE ARCHITECTURE
 ────────────────────────────
 
 1. Publisher's RSL document references Encypher as license server:
-   <content url="/articles" server="https://api.encypherai.com/rsl/olp">
+   <content url="/articles" server="https://api.encypher.com/rsl/olp">
 
 2. AI crawler reads RSL, sees license requirement
 
 3. Crawler sends OLP token request to Encypher:
-   POST https://api.encypherai.com/rsl/olp/token
+   POST https://api.encypher.com/rsl/olp/token
    {
      "grant_type": "rsl_license",
      "scope": "crawl",
@@ -1643,7 +1643,7 @@ NEW ENDPOINT:
 
 POST /api/v1/rsl/olp/token
      RSL Open License Protocol token endpoint.
-     Implements RSL 1.0 Section 5 (OLP) with Encypher as 
+     Implements RSL 1.0 Section 5 (OLP) with Encypher as
      the license server backend.
      Auth: Crawler identification (user agent + IP)
      Returns: OLP token or 401/402 with terms
@@ -1663,7 +1663,7 @@ When fully implemented, a publisher using Encypher has rights declared and enfor
 LAYER       STANDARD           WHAT IT DOES                    ENFORCEABILITY
 ──────      ──────────         ──────────────                  ──────────────
 Gate        robots.txt         Block/allow crawlers            Voluntary
-Gate        RSL 1.0            Machine-readable license terms  Voluntary (network 
+Gate        RSL 1.0            Machine-readable license terms  Voluntary (network
                                at domain level                 enforcement via CDN)
 Gate        RSL OLP/CAP        Crawler authorization protocol  Token-based access
                                                                control
@@ -1676,7 +1676,7 @@ Registry    Encypher API       Full rights, licensing terms,   Formal notice +
                                formal notice, evidence chain   willful infringement
                                                                evidence
 Semantic    JSON-LD / ODRL     W3C standard machine-readable   Semantic discovery
-                               rights                          
+                               rights
 Legal       Formal notice      Cryptographic proof of notice   Court-admissible
                                + delivery + awareness          evidence
 

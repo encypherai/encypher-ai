@@ -14,7 +14,7 @@ Migrated all apps and integrations from scattered local icon/logo copies to the 
 - Updated all logo references across 9 pages: login, signup, verify-domain, extension-handoff, verify-email, wordpress/connect, invite/[token], invite/team/[token], DashboardLayout
 - Added favicon metadata (SVG + ICO) to layout.tsx
 - Deleted 8 orphaned asset files (encypher_check_*, encypher_full_logo_*, encypher_full_nobg.png, logo.png, encypher-mark-corrected.svg, loader-preview.html)
-- **NEW: `/brand` page** -- internal brand asset browser with light/dark toggle, live React component previews, download buttons, embed snippet copy, usage guidelines. Gated to @encypher.com/@encypherai.com emails or superadmins.
+- **NEW: `/brand` page** -- internal brand asset browser with light/dark toggle, live React component previews, download buttons, embed snippet copy, usage guidelines. Gated to @encypher.com/@encypher.com emails or superadmins.
 - Added "Brand Assets" link to sidebar nav (desktop + mobile) under Internal section
 
 ### Encypher-Times (apps/encypher-times)
@@ -55,7 +55,7 @@ Migrated all apps and integrations from scattered local icon/logo copies to the 
 
 ## Remaining
 - Wordmark vertical padding: user flagged as too much -- needs visual Puppeteer verification to determine exact crop. Deferred.
-- Email template logo URLs (task 9.0): blocked on domain migration Phase 2 (12 base.html files still reference encypherai.com)
+- Email template logo URLs (task 9.0): blocked on domain migration Phase 2 (12 base.html files still reference encypher.com)
 
 ## Suggested Commit Message
 
@@ -69,7 +69,7 @@ feat(icons): migrate all apps to @encypher/icons, add brand assets page
 - Delete ~30 orphaned SVG/PNG/ICO duplicates (-2110 lines)
 - Add internal brand assets page at /brand on dashboard:
   light/dark preview, live React components, download/embed features,
-  gated to @encypher.com/@encypherai.com team members
+  gated to @encypher.com/@encypher.com team members
 - Set up public brand assets at marketing-site/public/brand/ with
   20 canonical files (8 SVGs + 12 PNGs) for external use
 - Update encypher-times: replace local EncypherMark.tsx with package

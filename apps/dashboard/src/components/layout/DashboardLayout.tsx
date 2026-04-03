@@ -319,7 +319,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isAdmin = isSuperAdmin === true;
   const userEmail = session?.user?.email || '';
   const isEncypherTeam =
-    userEmail.endsWith('@encypher.com') || userEmail.endsWith('@encypherai.com');
+    userEmail.endsWith('@encypher.com') || userEmail.endsWith('@encypher.com');
   const showBrandAssets = isEncypherTeam || isAdmin;
 
   // Session guard: redirect unauthenticated users and force-logout on refresh failure

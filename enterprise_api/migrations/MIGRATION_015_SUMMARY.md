@@ -65,7 +65,7 @@ This script will:
 ### Step 3: Verify Fix
 
 Test with old signed content:
-1. Go to https://encypherai.com/tools/decode
+1. Go to https://encypher.com/tools/decode
 2. Paste old signed content
 3. Should now verify successfully
 
@@ -106,15 +106,15 @@ CREATE INDEX IF NOT EXISTS idx_organizations_public_key ON organizations(id) WHE
 
 -- 2. Populate demo org (replace HEX_VALUE with actual demo public key hex)
 -- Get the hex value by running: railway run uv run python -c "from app.utils.crypto_utils import get_demo_private_key, serialize_public_key; print(serialize_public_key(get_demo_private_key().public_key()).hex())"
-UPDATE organizations 
+UPDATE organizations
 SET public_key = decode('HEX_VALUE', 'hex')
 WHERE id = 'org_demo';
 
 -- 3. Create legacy signer orgs if they don't exist
 INSERT INTO organizations (id, name, email, tier, public_key, monthly_quota, created_at, updated_at)
-VALUES 
-  ('demo-signer-id', 'Legacy Demo Signer (demo-signer-id)', 'demo-signer-id@encypherai.com', 'starter', decode('HEX_VALUE', 'hex'), 1000, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('c2pa-demo-signer-001', 'Legacy Demo Signer (c2pa-demo-signer-001)', 'c2pa-demo-signer-001@encypherai.com', 'starter', decode('HEX_VALUE', 'hex'), 1000, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+VALUES
+  ('demo-signer-id', 'Legacy Demo Signer (demo-signer-id)', 'demo-signer-id@encypher.com', 'starter', decode('HEX_VALUE', 'hex'), 1000, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('c2pa-demo-signer-001', 'Legacy Demo Signer (c2pa-demo-signer-001)', 'c2pa-demo-signer-001@encypher.com', 'starter', decode('HEX_VALUE', 'hex'), 1000, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT (id) DO UPDATE SET public_key = EXCLUDED.public_key;
 ```
 

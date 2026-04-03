@@ -78,8 +78,8 @@ Estimated submission-to-approval timeline: 4-8 weeks.
 - Hosts restricted to supported Office apps (Word for full-document attestation)
 
 **Business requirements (not yet complete):**
-- Privacy Policy URL (public, GDPR-compliant) -- link from encypherai.com/privacy
-- Terms of Use URL -- link from encypherai.com/terms
+- Privacy Policy URL (public, GDPR-compliant) -- link from encypher.com/privacy
+- Terms of Use URL -- link from encypher.com/terms
 - AppSource listing: screenshots at 1366x768, app description (up to 2048 chars), optional
   demo video
 - Microsoft Partner Center account with verified company identity
@@ -88,7 +88,7 @@ Estimated submission-to-approval timeline: 4-8 weeks.
 
 Assign a marketing resource to write the AppSource listing copy. Legal should review the
 privacy policy for compliance with Microsoft's requirements. Engineering prepares the
-production deployment of the add-in host (word-addin.encypherai.com).
+production deployment of the add-in host (word-addin.encypher.com).
 
 ---
 
@@ -205,7 +205,7 @@ communicated to enterprise customers proactively.
 
 1. Have legal draft a DPA before any enterprise proxy deal closes.
 2. Add "hash-only mode" to the proxy roadmap (no original_text stored).
-3. Publish a data practices page at encypherai.com/data-practices covering retention,
+3. Publish a data practices page at encypher.com/data-practices covering retention,
    deletion, and sub-processors.
 4. Target SOC2 Type II readiness within 12 months of first enterprise proxy customer.
 

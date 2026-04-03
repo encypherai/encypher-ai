@@ -131,7 +131,7 @@ def _extract_openapi_endpoints() -> set[tuple[str, str]]:
         routes=app.routes,
     )
     spec = jsonable_encoder(_filter_openapi_for_public(base))
-    verification_spec = _load_verification_service_openapi(api_base_url="https://api.encypherai.com")
+    verification_spec = _load_verification_service_openapi(api_base_url="https://api.encypher.com")
     spec = _merge_openapi_specs(base=spec, extra=verification_spec)
     endpoints: set[tuple[str, str]] = set()
 

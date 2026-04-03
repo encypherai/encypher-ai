@@ -4,7 +4,7 @@
 **Date**: March 19, 2026
 **Auditor**: UX/UI Expert Review (Opus)
 **Viewport**: 1920x1080 desktop, light + dark mode
-**Account**: test@encypherai.com (Publisher tier)
+**Account**: test@encypher.com (Publisher tier)
 **Baseline**: Dec 2025 audit scored dashboard 6.5/10
 
 ---

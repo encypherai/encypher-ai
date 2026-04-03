@@ -76,7 +76,7 @@ async def test_execute_signing_uses_managed_signer_when_mode_is_managed(monkeypa
 
     content_db = AsyncMock()
     core_db = AsyncMock()
-    allocate_mock = AsyncMock(return_value=(0, 7, "https://verify.encypherai.com/status/v1/org/list/0"))
+    allocate_mock = AsyncMock(return_value=(0, 7, "https://verify.encypher.com/status/v1/org/list/0"))
     ensure_cert_mock = AsyncMock(return_value=True)
 
     with (

@@ -1,6 +1,6 @@
 # C2PACustomAssertionsApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -37,7 +37,7 @@ import type { CreateSchemaApiV1EnterpriseC2paSchemasPostRequest } from '@encyphe
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -109,7 +109,7 @@ import type { CreateTemplateApiV1EnterpriseC2paTemplatesPostRequest } from '@enc
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -181,7 +181,7 @@ import type { DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDeleteRequest } from
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -253,7 +253,7 @@ import type { DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDeleteRequest 
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -325,7 +325,7 @@ import type { GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGetRequest } from '@enc
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -397,7 +397,7 @@ import type { GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGetRequest } from
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -469,7 +469,7 @@ import type { ListSchemasApiV1EnterpriseC2paSchemasGetRequest } from '@encypher/
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -547,7 +547,7 @@ import type { ListTemplatesApiV1EnterpriseC2paTemplatesGetRequest } from '@encyp
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -625,7 +625,7 @@ import type { UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutRequest } from '@
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -700,7 +700,7 @@ import type { UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutRequest } f
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -775,7 +775,7 @@ import type { ValidateAssertionApiV1EnterpriseC2paValidatePostRequest } from '@e
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -826,4 +826,3 @@ example().catch(console.error);
 | **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-

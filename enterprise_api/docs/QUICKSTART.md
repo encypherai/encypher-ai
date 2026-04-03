@@ -4,7 +4,7 @@ Get started with the Encypher Enterprise API in 5 minutes.
 
 ## Prerequisites
 
-- API key (contact sales@encypherai.com for beta access)
+- API key (contact sales@encypher.com for beta access)
 - `curl` or any HTTP client
 
 ## 1. Verify Your API Key
@@ -12,7 +12,7 @@ Get started with the Encypher Enterprise API in 5 minutes.
 Test your API key with a health check:
 
 ```bash
-curl https://api.encypherai.com/health
+curl https://api.encypher.com/health
 ```
 
 Expected response:
@@ -29,7 +29,7 @@ Expected response:
 Sign a piece of content with a C2PA manifest:
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/sign \
+curl -X POST https://api.encypher.com/api/v1/sign \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -52,7 +52,7 @@ Expected response:
     "document": {
       "document_id": "doc_a1b2c3d4e5f6",
       "signed_text": "Breaking news: Scientists discover new exoplanet... [invisible markers/manifest embedded]",
-      "verification_url": "https://verify.encypherai.com/doc_a1b2c3d4e5f6"
+      "verification_url": "https://verify.encypher.com/doc_a1b2c3d4e5f6"
     },
     "metadata": {
       "manifest_mode": "micro"
@@ -70,7 +70,7 @@ Expected response:
 Verify the C2PA manifest you just created:
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/verify \
+curl -X POST https://api.encypher.com/api/v1/verify \
   -H "Content-Type: application/json" \
   -d '{
     "text": "<paste signed_text from step 2 here>"
@@ -104,7 +104,7 @@ Expected response:
 Modify the signed text (e.g., change "100" to "200") and verify again:
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/verify \
+curl -X POST https://api.encypher.com/api/v1/verify \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Breaking news: Scientists discover new exoplanet. The planet is located 200 light-years away. [manifest]"
@@ -142,7 +142,7 @@ If you want a file-format-independent helper that creates a manifest JSON payloa
 This endpoint is public and supports an *optional* API key for higher limits.
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/public/c2pa/create-manifest \
+curl -X POST https://api.encypher.com/api/v1/public/c2pa/create-manifest \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Hello world. This will be signed.",
@@ -153,7 +153,7 @@ curl -X POST https://api.encypherai.com/api/v1/public/c2pa/create-manifest \
 You can then feed the returned `signing` payload fields into `/api/v1/sign`:
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/sign \
+curl -X POST https://api.encypher.com/api/v1/sign \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -171,7 +171,7 @@ If you want to validate the structure of a manifest JSON payload (including opti
 This endpoint is public and supports an *optional* API key for higher limits.
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/public/c2pa/validate-manifest \
+curl -X POST https://api.encypher.com/api/v1/public/c2pa/validate-manifest \
   -H "Content-Type: application/json" \
   -d '{
     "manifest": {
@@ -188,7 +188,7 @@ curl -X POST https://api.encypherai.com/api/v1/public/c2pa/validate-manifest \
 If you are building an external verifier, you can retrieve a signer's public key via the public trust anchor endpoint.
 
 ```bash
-curl https://api.encypherai.com/api/v1/public/c2pa/trust-anchors/encypher.public
+curl https://api.encypher.com/api/v1/public/c2pa/trust-anchors/encypher.public
 ```
 
 ## 5. Look Up Sentence Provenance
@@ -196,7 +196,7 @@ curl https://api.encypherai.com/api/v1/public/c2pa/trust-anchors/encypher.public
 Look up where a sentence came from:
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/lookup \
+curl -X POST https://api.encypher.com/api/v1/lookup \
   -H "Content-Type: application/json" \
   -d '{
     "sentence_text": "Breaking news: Scientists discover new exoplanet."
@@ -220,7 +220,7 @@ Expected response:
 Get your organization's usage statistics:
 
 ```bash
-curl -X GET https://api.encypherai.com/api/v1/usage \
+curl -X GET https://api.encypher.com/api/v1/usage \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -256,7 +256,7 @@ For up-to-date limits and remaining quota for your organization, use:
 For production use, request an SSL.com code signing certificate:
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/onboarding/request-certificate \
+curl -X POST https://api.encypher.com/api/v1/onboarding/request-certificate \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -267,7 +267,7 @@ You'll receive a validation URL. Complete the identity verification process.
 Monitor your certificate request:
 
 ```bash
-curl -X GET https://api.encypherai.com/api/v1/onboarding/certificate-status \
+curl -X GET https://api.encypher.com/api/v1/onboarding/certificate-status \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -281,7 +281,7 @@ curl -X GET https://api.encypherai.com/api/v1/onboarding/certificate-status \
 import requests
 
 API_KEY = "encypher_your_api_key"
-BASE_URL = "https://api.encypherai.com"
+BASE_URL = "https://api.encypher.com"
 
 # Sign content
 response = requests.post(
@@ -312,7 +312,7 @@ print(f"Valid: {verdict['valid']} (correlation_id={verification['correlation_id'
 const axios = require('axios');
 
 const API_KEY = 'encypher_your_api_key';
-const BASE_URL = 'https://api.encypherai.com';
+const BASE_URL = 'https://api.encypher.com';
 
 async function signContent(text) {
   const response = await axios.post(
@@ -355,13 +355,13 @@ async function verifyContent(text) {
 - Use `/api/v1/onboarding/request-certificate` to start the process
 
 ### "Monthly quota exceeded"
-- Upgrade your plan at https://dashboard.encypherai.com
-- Contact sales@encypherai.com for enterprise pricing
+- Upgrade your plan at https://dashboard.encypher.com
+- Contact sales@encypher.com for enterprise pricing
 
 ---
 
 ## Support
 
-- **Documentation:** https://docs.encypherai.com
+- **Documentation:** https://docs.encypher.com
 - **API Reference:** See [API.md](./API.md)
-- **Email:** support@encypherai.com
+- **Email:** support@encypher.com

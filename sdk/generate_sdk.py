@@ -37,10 +37,10 @@ MONOREPO_URL = "https://github.com/encypherai/encypherai-commercial"
 MONOREPO_GIT_URL = "https://github.com/encypherai/encypherai-commercial.git"
 GO_MODULE_PATH = "github.com/encypherai/encypherai-commercial/sdk/go"
 
-PRODUCTION_BASE_URL = "https://api.encypherai.com"
+PRODUCTION_BASE_URL = "https://api.encypher.com"
 LOCAL_DEV_BASE_URL = "http://localhost:8007"
 GO_VERSION = "1.21"
-HOMEPAGE_URL = "https://encypherai.com"
+HOMEPAGE_URL = "https://encypher.com"
 
 # Windows needs shell=True for npx
 IS_WINDOWS = platform.system() == "Windows"
@@ -163,7 +163,7 @@ def _patch_python_metadata(output_dir: Path) -> None:
 
         authors_block = (
             'authors = [\n'
-            '  {name = "Encypher", email = "sdk@encypherai.com"},\n'
+            '  {name = "Encypher", email = "sdk@encypher.com"},\n'
             ']'
         )
         if re.search(r"(?ms)^authors\s*=\s*\[.*?\n\]\s*$", text):
@@ -205,7 +205,7 @@ def _patch_python_metadata(output_dir: Path) -> None:
     if setup_path.exists():
         text = setup_path.read_text(encoding="utf-8")
         text = re.sub(r'(?m)^\s*author\s*=\s*".*"\s*,\s*$', '    author="Encypher",', text)
-        text = re.sub(r'(?m)^\s*author_email\s*=\s*".*"\s*,\s*$', '    author_email="sdk@encypherai.com",', text)
+        text = re.sub(r'(?m)^\s*author_email\s*=\s*".*"\s*,\s*$', '    author_email="sdk@encypher.com",', text)
         text = re.sub(r'(?m)^\s*url\s*=\s*".*"\s*,\s*$', f'    url="{MONOREPO_URL}",', text)
         _write_if_changed(setup_path, text)
 
@@ -348,7 +348,7 @@ def _patch_rust_metadata(output_dir: Path) -> None:
         upsert_package_field("documentation", f"{PRODUCTION_BASE_URL}/docs")
         upsert_package_field("license", "MIT")
         upsert_package_field("readme", "README.md")
-        upsert_package_array("authors", '"Encypher <sdk@encypherai.com>"')
+        upsert_package_array("authors", '"Encypher <sdk@encypher.com>"')
 
         text = text[: package_block.start(1)] + header + body + tail + text[package_block.end(3) :]
 
@@ -388,14 +388,14 @@ def _mit_license_text() -> str:
 
 def run_cmd(cmd: list, capture: bool = True, stream_output: bool = False) -> subprocess.CompletedProcess:
     """Run a command, handling Windows shell requirements.
-    
+
     Note: shell=True is required on Windows for npx to work correctly.
     The commands are constructed internally, not from user input.
     """
     if IS_WINDOWS:  # noqa: S602
         # Join command for shell execution on Windows
         cmd_str = " ".join(f'"{c}"' if " " in c else c for c in cmd)
-        
+
         if stream_output:
             # For streaming, run and capture but print as we go
             process = subprocess.Popen(  # noqa: S602
@@ -406,7 +406,7 @@ def run_cmd(cmd: list, capture: bool = True, stream_output: bool = False) -> sub
                 text=True,
             )
             stdout, stderr = process.communicate()
-            
+
             # Print output lines
             for line in stdout.split("\n"):
                 if line.strip():
@@ -414,18 +414,18 @@ def run_cmd(cmd: list, capture: bool = True, stream_output: bool = False) -> sub
                         console.print(f"  [dim]{line}[/dim]")
                     else:
                         print(f"  {line}")
-            
+
             return subprocess.CompletedProcess(
                 cmd_str, process.returncode, stdout, stderr
             )
-        
+
         return subprocess.run(  # noqa: S602
             cmd_str,
             shell=True,
             capture_output=capture,
             text=True,
         )
-    
+
     if stream_output:
         process = subprocess.Popen(
             cmd,
@@ -434,18 +434,18 @@ def run_cmd(cmd: list, capture: bool = True, stream_output: bool = False) -> sub
             text=True,
         )
         stdout, stderr = process.communicate()
-        
+
         for line in stdout.split("\n"):
             if line.strip():
                 if RICH_AVAILABLE:
                     console.print(f"  [dim]{line}[/dim]")
                 else:
                     print(f"  {line}")
-        
+
         return subprocess.CompletedProcess(
             cmd, process.returncode, stdout, stderr
         )
-    
+
     return subprocess.run(cmd, capture_output=capture, text=True)
 
 
@@ -505,11 +505,11 @@ def generate_sdk(language: str, api_info: dict, verbose: bool = False) -> bool:
     if not config:
         log_error(f"Unknown language: {language}")
         return False
-    
+
     output_dir = SDK_DIR / config["output_dir"]
     emoji = config["emoji"]
     name = config["name"]
-    
+
     # Determine version format
     if language == "python":
         version = convert_version(api_info["version"], "pep440")
@@ -517,17 +517,17 @@ def generate_sdk(language: str, api_info: dict, verbose: bool = False) -> bool:
         version = convert_version(api_info["version"], "npm")
     else:
         version = convert_version(api_info["version"], "semver")
-    
+
     if RICH_AVAILABLE:
         console.print(f"\n{emoji} [bold]{name} SDK[/bold] (v{version})")
     else:
         print(f"\n{emoji} {name} SDK (v{version})")
-    
+
     # Clean output directory
     if output_dir.exists():
         log_info(f"Cleaning {output_dir}...")
         shutil.rmtree(output_dir)
-    
+
     # Build additional properties string
     props = config["additional_properties"].copy()
     if language == "python":
@@ -536,13 +536,13 @@ def generate_sdk(language: str, api_info: dict, verbose: bool = False) -> bool:
         props["npmVersion"] = version
     else:
         props["packageVersion"] = version
-    
+
     props_str = ",".join(f"{k}={v}" for k, v in props.items())
-    
+
     # Use forward slashes for paths (works on all platforms including Windows)
     spec_path = str(OPENAPI_SPEC).replace("\\", "/")
     out_path = str(output_dir).replace("\\", "/")
-    
+
     cmd = [
         "npx", "--yes", "@openapitools/openapi-generator-cli", "generate",
         "-i", spec_path,
@@ -550,13 +550,13 @@ def generate_sdk(language: str, api_info: dict, verbose: bool = False) -> bool:
         "-o", out_path,
         "--additional-properties", props_str,
     ]
-    
+
     log_info(f"Running openapi-generator ({config['generator']})...")
-    
+
     start_time = time.time()
     result = run_cmd(cmd, stream_output=verbose)
     elapsed = time.time() - start_time
-    
+
     if result.returncode != 0:
         log_error(f"{name} SDK generation failed!")
         if result.stderr:
@@ -565,10 +565,10 @@ def generate_sdk(language: str, api_info: dict, verbose: bool = False) -> bool:
             else:
                 print(f"Error: {result.stderr}")
         return False
-    
+
     log_success(f"{name} SDK generated in {elapsed:.1f}s")
     log_info(f"Output: {output_dir}")
-    
+
     # Create language-specific wrappers
     if language == "python":
         create_python_wrapper(output_dir)
@@ -582,7 +582,7 @@ def generate_sdk(language: str, api_info: dict, verbose: bool = False) -> bool:
     elif language == "rust":
         create_rust_wrapper(output_dir)
         _patch_rust_metadata(output_dir)
-    
+
     return True
 
 
@@ -596,7 +596,7 @@ https://github.com/encypherai/encypherai-commercial/tree/main/sdk
 
 Usage:
     from encypher.client import EncypherClient
-    
+
     client = EncypherClient(api_key="your_api_key")
     result = client.sign(text="Hello, world!")
     print(result.signed_text)
@@ -610,23 +610,23 @@ __all__ = [
 class EncypherClient:
     """
     High-level client for the Encypher Enterprise API.
-    
+
     This wraps the auto-generated API clients with a more ergonomic interface.
-    
+
     Example:
         >>> client = EncypherClient(api_key="ency_...")
         >>> result = client.sign("Content to sign")
         >>> print(result.signed_text)
     """
-    
+
     def __init__(
         self,
         api_key: str,
-        base_url: str = "https://api.encypherai.com",
+        base_url: str = "https://api.encypher.com",
     ):
         """
         Initialize the Encypher client.
-        
+
         Args:
             api_key: Your Encypher API key
             base_url: API base URL (default: production)
@@ -635,40 +635,40 @@ class EncypherClient:
         from encypher.configuration import Configuration
         from encypher.api.signing_api import SigningApi
         from encypher.api.verification_api import VerificationApi
-        
+
         self.config = Configuration(
             host=base_url,
             access_token=api_key,
         )
         self.api_client = ApiClient(self.config)
-        
+
         # Initialize API instances
         self._signing = SigningApi(self.api_client)
         self._verification = VerificationApi(self.api_client)
-    
+
     def sign(self, text: str, **kwargs):
         """Sign content with C2PA manifest."""
         from encypher.models import SignRequest
         request = SignRequest(text=text, **kwargs)
         return self._signing.sign_content_api_v1_sign_post(request)
-    
+
     def verify(self, text: str):
         """Verify signed content."""
         from encypher.models import VerifyRequest
         request = VerifyRequest(text=text)
         return self._verification.verify_content_api_v1_verify_post(request)
-    
+
     def close(self):
         """Close the client."""
         pass
-    
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, *args):
         self.close()
 '''
-    
+
     wrapper_path = output_dir / "encypher" / "client.py"
     wrapper_path.parent.mkdir(parents=True, exist_ok=True)
     wrapper_path.write_text(wrapper_content)
@@ -679,14 +679,14 @@ def create_typescript_wrapper(output_dir: Path):
     """Create ergonomic wrapper for the generated TypeScript SDK."""
     wrapper_content = '''/**
  * Encypher SDK - TypeScript client for the Encypher Enterprise API.
- * 
+ *
  * This is an auto-generated SDK. For the source, see:
  * https://github.com/encypherai/encypherai-commercial/tree/main/sdk
- * 
+ *
  * @example
  * ```typescript
  * import { EncypherClient } from '@encypher/sdk';
- * 
+ *
  * const client = new EncypherClient({ apiKey: 'your_api_key' });
  * const result = await client.sign({ text: 'Hello, world!' });
  * console.log(result.signedText);
@@ -708,7 +708,7 @@ export class EncypherClient {
 
   constructor(options: EncypherClientOptions) {
     this.config = new Configuration({
-      basePath: options.baseUrl || 'https://api.encypherai.com',
+      basePath: options.baseUrl || 'https://api.encypher.com',
       accessToken: options.apiKey,
     });
 
@@ -730,7 +730,7 @@ export * from './apis';
 export * from './models';
 export * from './runtime';
 '''
-    
+
     wrapper_path = output_dir / "src" / "client.ts"
     wrapper_path.parent.mkdir(parents=True, exist_ok=True)
     wrapper_path.write_text(wrapper_content)
@@ -767,7 +767,7 @@ type Client struct {
 
 // NewClient creates a new Encypher client.
 func NewClient(apiKey string) *Client {
-	return NewClientWithURL(apiKey, "https://api.encypherai.com")
+	return NewClientWithURL(apiKey, "https://api.encypher.com")
 }
 
 // NewClientWithURL creates a new Encypher client with a custom base URL.
@@ -775,7 +775,7 @@ func NewClientWithURL(apiKey, baseURL string) *Client {
 	cfg := NewConfiguration()
 	cfg.Servers = ServerConfigurations{{URL: baseURL}}
 	cfg.AddDefaultHeader("Authorization", "Bearer "+apiKey)
-	
+
 	return &Client{
 		apiKey:  apiKey,
 		baseURL: baseURL,
@@ -795,7 +795,7 @@ func (c *Client) Verify(ctx context.Context, text string) (*VerifyResponse, erro
 	return c.api.VerificationAPI.VerifyContentApiV1VerifyPost(ctx).VerifyRequest(*req).Execute()
 }
 '''
-    
+
     wrapper_path = output_dir / "client_wrapper.go"
     wrapper_path.parent.mkdir(parents=True, exist_ok=True)
     wrapper_path.write_text(wrapper_content)
@@ -836,7 +836,7 @@ pub struct Client {
 impl Client {
     /// Create a new Encypher client.
     pub fn new(api_key: &str) -> Self {
-        Self::with_base_url(api_key, "https://api.encypherai.com")
+        Self::with_base_url(api_key, "https://api.encypher.com")
     }
 
     /// Create a new Encypher client with a custom base URL.
@@ -860,7 +860,7 @@ impl Client {
     }
 }
 '''
-    
+
     wrapper_path = output_dir / "src" / "client.rs"
     wrapper_path.parent.mkdir(parents=True, exist_ok=True)
     wrapper_path.write_text(wrapper_content)
@@ -874,13 +874,13 @@ def show_summary(results: dict, api_info: dict):
         table.add_column("Language", style="cyan")
         table.add_column("Status", style="green")
         table.add_column("Output")
-        
+
         for lang, success in results.items():
             config = SDK_CONFIGS.get(lang, {})
             status = "[green]✓ Success[/green]" if success else "[red]✗ Failed[/red]"
             output = f"sdk/{config.get('output_dir', lang)}/"
             table.add_row(f"{config.get('emoji', '')} {config.get('name', lang)}", status, output)
-        
+
         console.print()
         console.print(table)
         console.print()
@@ -934,7 +934,7 @@ Examples:
         action="store_true",
         help="Show detailed output from generator",
     )
-    
+
     args = parser.parse_args()
 
     global OPENAPI_SPEC
@@ -944,7 +944,7 @@ Examples:
         OPENAPI_SPEC = OPENAPI_INTERNAL_SPEC
     else:
         OPENAPI_SPEC = OPENAPI_PUBLIC_SPEC
-    
+
     # Show header
     if RICH_AVAILABLE:
         console.print(Panel.fit(
@@ -956,27 +956,27 @@ Examples:
         print("=" * 40)
         print("Encypher SDK Generator")
         print("=" * 40)
-    
+
     # Check prerequisites
     if not OPENAPI_SPEC.exists():
         log_error(f"OpenAPI spec not found: {OPENAPI_SPEC}")
         log_info("Run: uv run python sdk/generate_openapi.py")
         sys.exit(1)
-    
+
     # Load API info
     api_info = get_api_info()
     log_success(f"Loaded OpenAPI spec: {api_info['endpoints']} endpoints, {api_info['schemas']} schemas")
-    
+
     if not args.skip_check:
         if not check_openapi_generator():
             sys.exit(1)
-    
+
     # Determine targets
     if "all" in args.languages:
         targets = list(SDK_CONFIGS.keys())
     else:
         targets = args.languages
-    
+
     # Generate SDKs
     results = {}
     for target in targets:
@@ -985,10 +985,10 @@ Examples:
         except Exception as e:
             log_error(f"Exception generating {target} SDK: {e}")
             results[target] = False
-    
+
     # Show summary
     show_summary(results, api_info)
-    
+
     # Exit code
     if all(results.values()):
         log_success("All SDKs generated successfully!")

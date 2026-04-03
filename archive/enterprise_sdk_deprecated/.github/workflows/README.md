@@ -42,7 +42,7 @@ Verifies signed content integrity on pull requests and scheduled runs.
 1. Go to your repository **Settings** → **Secrets and variables** → **Actions**
 2. Click **New repository secret**
 3. Name: `ENCYPHER_API_KEY`
-4. Value: Your Encypher API key (get from https://dashboard.encypherai.com)
+4. Value: Your Encypher API key (get from https://dashboard.encypher.com)
 5. Click **Add secret**
 
 ### 2. Enable Workflows
@@ -190,5 +190,5 @@ Then add `ENCYPHER_API_KEY` as a CI/CD variable in your GitLab project settings.
 
 For issues or questions:
 - SDK Documentation: https://github.com/encypherai/enterprise-sdk
-- API Documentation: https://docs.encypherai.com
-- Support: sdk@encypherai.com
+- API Documentation: https://docs.encypher.com
+- Support: sdk@encypher.com

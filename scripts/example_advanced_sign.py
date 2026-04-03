@@ -17,7 +17,7 @@ Usage:
     # Full customization
     python scripts/example_advanced_sign.py \
         --api-key YOUR_API_KEY \
-        --base-url https://api.encypherai.com \
+        --base-url https://api.encypher.com \
         --manifest-mode micro \
         --segmentation-level sentence \
         --embedding-strategy distributed \
@@ -309,8 +309,7 @@ Examples:
         "--manifest-mode",
         choices=["full", "micro"],
         default="micro",
-        help="Manifest mode: 'micro' = compact invisible embedding (default), "
-        "'full' = standard C2PA manifest",
+        help="Manifest mode: 'micro' = compact invisible embedding (default), " "'full' = standard C2PA manifest",
     )
 
     # Embedding strategy (tier-gated)
@@ -318,8 +317,7 @@ Examples:
         "--embedding-strategy",
         choices=["single_point", "distributed", "distributed_redundant"],
         default="single_point",
-        help="Embedding placement strategy (default: single_point). "
-        "distributed_redundant requires Enterprise tier",
+        help="Embedding placement strategy (default: single_point). " "distributed_redundant requires Enterprise tier",
     )
     parser.add_argument(
         "--distribution-target",

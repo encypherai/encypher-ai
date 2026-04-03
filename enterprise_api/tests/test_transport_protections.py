@@ -117,7 +117,7 @@ async def test_docs_route_gets_relaxed_csp(async_client: AsyncClient, monkeypatc
 
     assert "unpkg.com" in csp
     assert "'unsafe-inline'" in csp
-    assert "encypherai.com" in csp
+    assert "encypher.com" in csp
     assert "default-src 'none'" not in csp
 
 
@@ -137,4 +137,4 @@ def test_docs_csp_allows_swagger_ui_resources() -> None:
     assert "https://unpkg.com" in DOCS_CSP
     assert "'unsafe-inline'" in DOCS_CSP
     assert "img-src" in DOCS_CSP
-    assert "https://encypherai.com" in DOCS_CSP
+    assert "https://encypher.com" in DOCS_CSP

@@ -270,7 +270,7 @@ class QuotaManager:
                     "error": "FeatureNotAvailable",
                     "message": f"'{quota_type.value}' is not available on {tier.value} tier",
                     "current_tier": tier.value,
-                    "upgrade_url": "https://dashboard.encypherai.com/billing",
+                    "upgrade_url": "https://dashboard.encypher.com/billing",
                 },
             )
 

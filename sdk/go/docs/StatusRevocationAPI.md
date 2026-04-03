@@ -1,6 +1,6 @@
 # \StatusRevocationAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -38,7 +38,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -58,7 +58,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -108,7 +108,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -128,7 +128,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -178,8 +178,8 @@ import (
 )
 
 func main() {
-	organizationId := "organizationId_example" // string | 
-	listIndex := int32(56) // int32 | 
+	organizationId := "organizationId_example" // string |
+	listIndex := int32(56) // int32 |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -199,8 +199,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**organizationId** | **string** |  | 
-**listIndex** | **int32** |  | 
+**organizationId** | **string** |  |
+**listIndex** | **int32** |  |
 
 ### Other Parameters
 
@@ -251,8 +251,8 @@ import (
 )
 
 func main() {
-	organizationId := "organizationId_example" // string | 
-	listIndex := int32(56) // int32 | 
+	organizationId := "organizationId_example" // string |
+	listIndex := int32(56) // int32 |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -272,8 +272,8 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**organizationId** | **string** |  | 
-**listIndex** | **int32** |  | 
+**organizationId** | **string** |  |
+**listIndex** | **int32** |  |
 
 ### Other Parameters
 
@@ -446,7 +446,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -466,7 +466,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -516,7 +516,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -536,7 +536,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -586,8 +586,8 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
-	revokeRequest := *openapiclient.NewRevokeRequest(openapiclient.RevocationReason("factual_error")) // RevokeRequest | 
+	documentId := "documentId_example" // string |
+	revokeRequest := *openapiclient.NewRevokeRequest(openapiclient.RevocationReason("factual_error")) // RevokeRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -607,7 +607,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -617,7 +617,7 @@ Other parameters are passed through a pointer to a apiRevokeDocumentApiV1StatusD
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **revokeRequest** | [**RevokeRequest**](RevokeRequest.md) |  | 
+ **revokeRequest** | [**RevokeRequest**](RevokeRequest.md) |  |
 
 ### Return type
 
@@ -658,8 +658,8 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
-	revokeRequest := *openapiclient.NewRevokeRequest(openapiclient.RevocationReason("factual_error")) // RevokeRequest | 
+	documentId := "documentId_example" // string |
+	revokeRequest := *openapiclient.NewRevokeRequest(openapiclient.RevocationReason("factual_error")) // RevokeRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -679,7 +679,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -689,7 +689,7 @@ Other parameters are passed through a pointer to a apiRevokeDocumentApiV1StatusD
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **revokeRequest** | [**RevokeRequest**](RevokeRequest.md) |  | 
+ **revokeRequest** | [**RevokeRequest**](RevokeRequest.md) |  |
 
 ### Return type
 
@@ -707,4 +707,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

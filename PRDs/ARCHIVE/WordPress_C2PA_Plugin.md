@@ -1,9 +1,9 @@
 # WordPress C2PA Integration Plugin - Product Requirements Document
 
-**Status:** Draft  
-**Version:** 1.0  
-**Created:** October 31, 2025  
-**Owner:** Product Team  
+**Status:** Draft
+**Version:** 1.0
+**Created:** October 31, 2025
+**Owner:** Product Team
 **Branch:** `feature/wordpress-c2pa-plugin`
 
 ---
@@ -50,8 +50,8 @@ A WordPress plugin that embeds invisible C2PA-compliant cryptographic watermarks
 ## Feature Tiers
 
 ### Free Tier
-**Target:** Individual bloggers, small publishers  
-**Signature:** Encypher-provided shared signature  
+**Target:** Individual bloggers, small publishers
+**Signature:** Encypher-provided shared signature
 **Features:**
 - Auto-mark on publish
 - Manual mark button for individual posts
@@ -69,7 +69,7 @@ A WordPress plugin that embeds invisible C2PA-compliant cryptographic watermarks
 **Pricing:** Free forever
 
 ### Pro Tier
-**Target:** Professional publishers, media organizations  
+**Target:** Professional publishers, media organizations
 **Signature Options:**
 1. Bring Your Own Key (BYOK): Use your own Ed25519 key pair
 2. Purchase Through Encypher: We generate and manage keys for you
@@ -86,8 +86,8 @@ A WordPress plugin that embeds invisible C2PA-compliant cryptographic watermarks
 **Pricing:** $99/month or $999/year
 
 ### Enterprise Tier
-**Target:** Large publishers, enterprise organizations  
-**Signature:** Enterprise-managed keys with HSM support  
+**Target:** Large publishers, enterprise organizations
+**Signature:** Enterprise-managed keys with HSM support
 **Features:**
 - All Pro features
 - Multi-site support
@@ -113,7 +113,7 @@ A WordPress plugin that embeds invisible C2PA-compliant cryptographic watermarks
 | Support | Community forum | Email (24–48h) | Dedicated TAM + SLA |
 
 **Dashboard Requirements**
-- Every user must authenticate via [dashboard.encypherai.com](https://dashboard.encypherai.com) to obtain API keys, manage billing, and configure BYOK profiles.
+- Every user must authenticate via [dashboard.encypher.com](https://dashboard.encypher.com) to obtain API keys, manage billing, and configure BYOK profiles.
 - Plugin settings include contextual actions: “Get API Key”, “Manage Account & Billing”, and (enterprise) “Contact Customer Success”.
 - Tokens returned by the dashboard carry a `tier` claim that the plugin uses to toggle UI controls and enforce limits (e.g., bulk batch size, sentence highlighting panel).
 - If an account downgrades, the plugin gracefully reverts to Free limits but keeps previously signed content intact (read-only mode).
@@ -341,9 +341,9 @@ Intelligently handle C2PA manifests when content is updated.
 ## Marketing & Distribution
 
 ### WordPress.org Listing
-**Plugin Name:** Encypher C2PA - Text Authentication  
-**Short Description:** "C2PA-compliant text authentication. Embed cryptographic proof of origin into your WordPress content."  
-**Tags:** c2pa, content-authentication, provenance, watermarking, copyright  
+**Plugin Name:** Encypher C2PA - Text Authentication
+**Short Description:** "C2PA-compliant text authentication. Embed cryptographic proof of origin into your WordPress content."
+**Tags:** c2pa, content-authentication, provenance, watermarking, copyright
 
 ### Positioning (per Marketing Guidelines)
 - Lead with: "C2PA-compliant text authentication"
@@ -397,11 +397,11 @@ Intelligently handle C2PA manifests when content is updated.
 
 ---
 
-**Document Control**  
-**Created:** October 31, 2025  
-**Last Updated:** October 31, 2025  
-**Next Review:** November 15, 2025  
-**Owner:** Product Team  
+**Document Control**
+**Created:** October 31, 2025
+**Last Updated:** October 31, 2025
+**Next Review:** November 15, 2025
+**Owner:** Product Team
 **Approvers:** CEO, CTO, Head of Product
 
 ---

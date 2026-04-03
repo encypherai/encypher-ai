@@ -18,7 +18,7 @@ def _org_fixture():
         id="org_test",
         name="Test Org",
         slug="test-org",
-        email="test@encypherai.com",
+        email="test@encypher.com",
         tier="professional",
         max_seats=1,
         subscription_status="active",

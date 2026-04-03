@@ -1,7 +1,7 @@
 # PRD: Marketing Site Tools API Host Fix
 
-**Status:** In Progress  
-**Current Goal:** Ensure the marketing-site encode/decode tools default to the production Enterprise API host (`api.encypherai.com`) when environment variables are missing, while keeping local development safe.
+**Status:** In Progress
+**Current Goal:** Ensure the marketing-site encode/decode tools default to the production Enterprise API host (`api.encypher.com`) when environment variables are missing, while keeping local development safe.
 
 ## Overview
 The marketing site proxies encode/decode requests through Next.js API routes. The sign route currently defaults to a staging host, causing production requests to hit the wrong backend. We will standardize Enterprise API URL resolution for tools routes, add unit coverage for fallback behavior, and verify the corrected routing.
@@ -26,7 +26,7 @@ The marketing site proxies encode/decode requests through Next.js API routes. Th
   - [x] 4.0.3 Manual encode/decode verification (✅ puppeteer)
 
 ## Success Criteria
-- The sign/verify proxy routes default to `https://api.encypherai.com` in production when env vars are unset.
+- The sign/verify proxy routes default to `https://api.encypher.com` in production when env vars are unset.
 - Local development defaults remain `http://localhost:9000` when env vars are unset.
 - Unit tests for URL resolution pass.
 

@@ -95,7 +95,7 @@ include_timestamp: true | false (default: false)
 {
   "success": true,
   "document_id": "doc_abc123",
-  "signed_pdf_url": "https://api.encypherai.com/downloads/signed_abc123.pdf",
+  "signed_pdf_url": "https://api.encypher.com/downloads/signed_abc123.pdf",
   "expires_at": "2025-12-14T18:30:00Z",
   "manifest_hash": "sha256:abc123...",
   "page_count": 5,
@@ -108,7 +108,7 @@ include_timestamp: true | false (default: false)
 {
   "success": true,
   "document_id": "doc_abc123",
-  "sidecar_url": "https://api.encypherai.com/downloads/manifest_abc123.c2pa",
+  "sidecar_url": "https://api.encypher.com/downloads/manifest_abc123.c2pa",
   "original_pdf_hash": "sha256:def456...",
   "expires_at": "2025-12-14T18:30:00Z"
 }

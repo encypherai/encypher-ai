@@ -35,4 +35,4 @@ The following features from this SDK may be extracted into a separate `encypher-
 December 19, 2025
 
 ## Questions?
-Contact sdk@encypherai.com
+Contact sdk@encypher.com

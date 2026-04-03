@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Encypher Logo](https://encypherai.com/encypher_full_logo_color.svg)
+![Encypher Logo](https://encypher.com/encypher_full_logo_color.svg)
 
 **Enterprise-grade content signing and verification for publishers, news organizations, and content creators**
 
@@ -266,7 +266,7 @@ encypher stream-sign --file live.txt --document-title "Keynote"
 ### Requirements
 
 - Python 3.9 or higher
-- API key from [Encypher Dashboard](https://dashboard.encypherai.com)
+- API key from [Encypher Dashboard](https://dashboard.encypher.com)
 
 ### Environment Variables
 
@@ -275,7 +275,7 @@ encypher stream-sign --file live.txt --document-title "Keynote"
 export ENCYPHER_API_KEY="encypher_..."
 
 # Optional
-export ENCYPHER_BASE_URL="https://api.encypherai.com/api/v1"
+export ENCYPHER_BASE_URL="https://api.encypher.com/api/v1"
 ```
 
 ### Optional Dependencies
@@ -550,7 +550,7 @@ from encypher_enterprise import generate_verification_badge
 
 badge_svg = generate_verification_badge(
     document_id="doc_123",
-    verification_url="https://encypherai.com/verify/doc_123",
+    verification_url="https://encypher.com/verify/doc_123",
     output_path=Path("badge.svg")
 )
 ```
@@ -820,7 +820,7 @@ response = llm.completion(
 ```python
 client = EncypherClient(
     api_key="encypher_...",
-    base_url="https://api.encypherai.com/api/v1"
+    base_url="https://api.encypher.com/api/v1"
 )
 
 # Sign content
@@ -907,10 +907,10 @@ uv run pytest tests/test_state.py -v
 
 ## 🤝 Support
 
-- **Documentation**: [docs.encypherai.com](https://docs.encypherai.com)
-- **Email**: sdk@encypherai.com
+- **Documentation**: [docs.encypher.com](https://docs.encypher.com)
+- **Email**: sdk@encypher.com
 - **GitHub Issues**: [github.com/encypherai/enterprise-sdk/issues](https://github.com/encypherai/enterprise-sdk/issues)
-- **Dashboard**: [dashboard.encypherai.com](https://dashboard.encypherai.com)
+- **Dashboard**: [dashboard.encypher.com](https://dashboard.encypher.com)
 
 ---
 
@@ -935,6 +935,6 @@ Built with:
 
 **Made with ❤️ by Encypher**
 
-[Website](https://encypherai.com) • [Dashboard](https://dashboard.encypherai.com) • [Docs](https://docs.encypherai.com)
+[Website](https://encypher.com) • [Dashboard](https://dashboard.encypher.com) • [Docs](https://docs.encypher.com)
 
 </div>

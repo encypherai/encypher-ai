@@ -1,6 +1,6 @@
 # encypher.CDNProvenanceApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -41,10 +41,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -113,10 +113,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -184,10 +184,10 @@ from encypher.models.cdn_manifest_lookup_response import CdnManifestLookupRespon
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -255,10 +255,10 @@ from encypher.models.cdn_manifest_lookup_response import CdnManifestLookupRespon
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -327,10 +327,10 @@ from encypher.models.cdn_variants_response import CdnVariantsResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -410,10 +410,10 @@ from encypher.models.cdn_variants_response import CdnVariantsResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -492,10 +492,10 @@ from encypher.models.cdn_image_register_response import CdnImageRegisterResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -576,10 +576,10 @@ from encypher.models.cdn_image_register_response import CdnImageRegisterResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -663,10 +663,10 @@ from encypher.models.cdn_image_sign_response import CdnImageSignResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -750,10 +750,10 @@ from encypher.models.cdn_image_sign_response import CdnImageSignResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -840,10 +840,10 @@ from encypher.models.cdn_verify_response import CdnVerifyResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -917,10 +917,10 @@ from encypher.models.cdn_verify_response import CdnVerifyResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -989,10 +989,10 @@ from encypher.models.cdn_verify_response import CdnVerifyResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -1061,10 +1061,10 @@ from encypher.models.cdn_verify_response import CdnVerifyResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -1129,10 +1129,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -1197,10 +1197,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 

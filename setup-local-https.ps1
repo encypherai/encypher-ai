@@ -30,8 +30,8 @@ if (-not (Test-Path ".\certs")) {
 }
 
 $domains = @(
-    "encypherai.com",
-    "*.encypherai.com",
+    "encypher.com",
+    "*.encypher.com",
     "localhost",
     "127.0.0.1",
     "::1"
@@ -44,8 +44,8 @@ Write-Host "------------------------------------------------"
 Write-Host "NEXT STEPS:"
 Write-Host "1. Run: docker-compose -f docker-compose.https.yml up -d"
 Write-Host "2. Update your 'hosts' file (C:\Windows\System32\drivers\etc\hosts) with:"
-Write-Host "   127.0.0.1 s-dashboard.encypherai.com"
-Write-Host "   127.0.0.1 s-www.encypherai.com"
-Write-Host "   127.0.0.1 api.encypherai.com"
-Write-Host "   127.0.0.1 encypherai.com"
+Write-Host "   127.0.0.1 s-dashboard.encypher.com"
+Write-Host "   127.0.0.1 s-www.encypher.com"
+Write-Host "   127.0.0.1 api.encypher.com"
+Write-Host "   127.0.0.1 encypher.com"
 Write-Host "------------------------------------------------"

@@ -25,7 +25,7 @@ Usage:
 
 Environment variables (or via --env-file / CLI flags):
     ENCYPHER_API_KEY  - Your Encypher API key
-    ENCYPHER_BASE_URL - API base URL (default: https://api.encypherai.com)
+    ENCYPHER_BASE_URL - API base URL (default: https://api.encypher.com)
 """
 
 from __future__ import annotations
@@ -46,24 +46,77 @@ __all__ = ["sign_html"]
 # HTML element classification
 # =============================================================================
 
-BLOCK_ELEMENTS = frozenset({
-    "address", "article", "aside", "blockquote", "dd", "details", "dialog",
-    "div", "dl", "dt", "fieldset", "figcaption", "figure", "footer", "form",
-    "h1", "h2", "h3", "h4", "h5", "h6", "header", "hgroup", "hr", "li",
-    "main", "nav", "ol", "p", "pre", "section", "summary", "table", "ul",
-    "tr", "td", "th", "thead", "tbody", "tfoot",
-})
+BLOCK_ELEMENTS = frozenset(
+    {
+        "address",
+        "article",
+        "aside",
+        "blockquote",
+        "dd",
+        "details",
+        "dialog",
+        "div",
+        "dl",
+        "dt",
+        "fieldset",
+        "figcaption",
+        "figure",
+        "footer",
+        "form",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "header",
+        "hgroup",
+        "hr",
+        "li",
+        "main",
+        "nav",
+        "ol",
+        "p",
+        "pre",
+        "section",
+        "summary",
+        "table",
+        "ul",
+        "tr",
+        "td",
+        "th",
+        "thead",
+        "tbody",
+        "tfoot",
+    }
+)
 
-SKIP_ELEMENTS = frozenset({
-    "img", "script", "style", "noscript", "svg", "math", "video", "audio",
-    "canvas", "iframe", "object", "embed", "source", "track", "picture",
-    "template",
-})
+SKIP_ELEMENTS = frozenset(
+    {
+        "img",
+        "script",
+        "style",
+        "noscript",
+        "svg",
+        "math",
+        "video",
+        "audio",
+        "canvas",
+        "iframe",
+        "object",
+        "embed",
+        "source",
+        "track",
+        "picture",
+        "template",
+    }
+)
 
 
 # =============================================================================
 # Unicode Variation Selector character set (invisible marker alphabet)
 # =============================================================================
+
 
 def _build_vs_char_set() -> frozenset[str]:
     """Build the set of all 256 Unicode Variation Selector characters.
@@ -79,7 +132,7 @@ def _build_vs_char_set() -> frozenset[str]:
         chars.add(chr(0xFE00 + i))
     for i in range(240):
         chars.add(chr(0xE0100 + i))
-    chars.add("\uFEFF")
+    chars.add("\ufeff")
     return frozenset(chars)
 
 
@@ -89,6 +142,7 @@ VS_CHARS = _build_vs_char_set()
 # =============================================================================
 # HTML text extraction
 # =============================================================================
+
 
 def _collect_text_nodes(root: Tag) -> list[tuple[NavigableString, str]]:
     """Collect renderable text nodes from a DOM subtree in document order."""
@@ -153,6 +207,7 @@ def _extract_text_from_element(root: Tag) -> str:
 # Embed signed text back into HTML
 # =============================================================================
 
+
 def _embed_signed_text_in_element(
     root: Tag,
     signed_text: str,
@@ -173,10 +228,7 @@ def _embed_signed_text_in_element(
         # Collect inter-node VS chars (part of the C2PA manifest) instead
         # of discarding them.  These will be prepended to this text node.
         gap_vs: list[str] = []
-        while cursor < len(signed_text) and (
-            signed_text[cursor] in VS_CHARS
-            or signed_text[cursor] in " \t\n\r"
-        ):
+        while cursor < len(signed_text) and (signed_text[cursor] in VS_CHARS or signed_text[cursor] in " \t\n\r"):
             if signed_text[cursor] in VS_CHARS:
                 gap_vs.append(signed_text[cursor])
             cursor += 1
@@ -203,9 +255,7 @@ def _embed_signed_text_in_element(
             # Attach any collected gap VS chars to the previous node
             if gap_vs and last_replaced_node is not None:
                 current = str(last_replaced_node)
-                last_replaced_node.replace_with(
-                    NavigableString(current + "".join(gap_vs))
-                )
+                last_replaced_node.replace_with(NavigableString(current + "".join(gap_vs)))
             continue
 
         # Consume trailing VS chars
@@ -222,9 +272,7 @@ def _embed_signed_text_in_element(
 
         # Prepend any inter-node VS chars (C2PA manifest fragments)
         gap_prefix = "".join(gap_vs)
-        replacement = NavigableString(
-            leading_ws + gap_prefix + signed_chunk + trailing_ws
-        )
+        replacement = NavigableString(leading_ws + gap_prefix + signed_chunk + trailing_ws)
         nav_str.replace_with(replacement)
         last_replaced_node = replacement
         matched += 1
@@ -238,9 +286,7 @@ def _embed_signed_text_in_element(
 
     if remaining_vs and last_replaced_node is not None:
         current = str(last_replaced_node)
-        last_replaced_node.replace_with(
-            NavigableString(current + "".join(remaining_vs))
-        )
+        last_replaced_node.replace_with(NavigableString(current + "".join(remaining_vs)))
 
     return matched
 
@@ -249,10 +295,11 @@ def _embed_signed_text_in_element(
 # Main signing function
 # =============================================================================
 
+
 def sign_html(
     html: str,
     api_key: str,
-    base_url: str = "https://api.encypherai.com",
+    base_url: str = "https://api.encypher.com",
     manifest_mode: str = "micro",
     content_selector: str = "article",
     document_title: str | None = None,
@@ -338,10 +385,7 @@ def sign_html(
         timeout=60,
     )
     if sign_response.status_code != 201:
-        raise RuntimeError(
-            f"Sign API returned {sign_response.status_code}: "
-            f"{sign_response.text[:500]}"
-        )
+        raise RuntimeError(f"Sign API returned {sign_response.status_code}: " f"{sign_response.text[:500]}")
 
     sign_data = sign_response.json()
     if not sign_data.get("success"):
@@ -396,6 +440,7 @@ def sign_html(
 # CLI
 # =============================================================================
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Sign HTML CMS content with Encypher invisible markers.",
@@ -446,8 +491,7 @@ def main() -> None:
             from dotenv import dotenv_values
         except ImportError:
             print(
-                "ERROR: python-dotenv is required for .env file support.\n"
-                "  Run: uv sync   (or: pip install python-dotenv)",
+                "ERROR: python-dotenv is required for .env file support.\n" "  Run: uv sync   (or: pip install python-dotenv)",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -455,16 +499,8 @@ def main() -> None:
     elif args.env_file != ".env":
         print(f"WARNING: Env file not found: {env_path}", file=sys.stderr)
 
-    api_key = (
-        args.api_key
-        or env.get("ENCYPHER_API_KEY")
-        or os.environ.get("ENCYPHER_API_KEY")
-    )
-    base_url = (
-        args.base_url
-        or env.get("ENCYPHER_BASE_URL")
-        or os.environ.get("ENCYPHER_BASE_URL", "https://api.encypherai.com")
-    )
+    api_key = args.api_key or env.get("ENCYPHER_API_KEY") or os.environ.get("ENCYPHER_API_KEY")
+    base_url = args.base_url or env.get("ENCYPHER_BASE_URL") or os.environ.get("ENCYPHER_BASE_URL", "https://api.encypher.com")
 
     if not api_key:
         print(

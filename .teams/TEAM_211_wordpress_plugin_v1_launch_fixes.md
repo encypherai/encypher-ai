@@ -100,7 +100,7 @@ Tests: 41/41 contract tests pass
 
 ### Completed
 - Removed Hard Binding toggle from Settings UI; hard binding is now always enforced (`add_hard_binding = true`).
-- Added Dashboard support contact section with direct email CTA: `wp-support@encypherai.com`.
+- Added Dashboard support contact section with direct email CTA: `wp-support@encypher.com`.
 - Standardized full-wordmark branded headers (`logo | Page`) across Dashboard, Content, Settings, Analytics, Account, Bulk Sign, and Coalition.
 - Fixed header sizing inconsistencies and validated runtime rendering with Puppeteer on Settings, Bulk Sign, and Coalition pages (computed width = `120px`).
 - Bumped plugin version to `1.0.0-beta` in plugin header/constant and `readme.txt` Stable tag.
@@ -118,7 +118,7 @@ Tests: 41/41 contract tests pass
 release(wp-plugin): prepare 1.0.0-beta public beta package
 
 - remove Hard Binding setting from admin UI and enforce add_hard_binding=true
-- add Dashboard support CTA with wp-support@encypherai.com
+- add Dashboard support CTA with wp-support@encypher.com
 - standardize full-wordmark page headers (logo | page name) across all Encypher admin tabs
 - fix header lockup sizing regressions on Settings/Bulk Sign/Coalition (120px normalized)
 - update plugin/readme versions to 1.0.0-beta and add changelog + upgrade notice

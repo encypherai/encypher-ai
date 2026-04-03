@@ -177,7 +177,7 @@ class StreamingService:
             "document_id": document_id,
             "total_chunks": final_stats["chunks_processed"],
             "duration_seconds": final_stats.get("duration_seconds", 0),
-            "verification_url": f"https://encypherai.com/verify/{document_id}",
+            "verification_url": f"https://encypher.com/verify/{document_id}",
         }
 
     async def recover_session(self, session_id: str) -> Dict[str, Any]:

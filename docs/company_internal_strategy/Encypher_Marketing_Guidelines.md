@@ -629,7 +629,7 @@ Visit: **encypher.com/publisher-demo** or **encypher.com/ai-demo**
 **Distribution:** All customer-facing teams
 
 **Key Changes from March 2026 (v5.0):**
-1. Domain migration: encypherai.com -> encypher.com
+1. Domain migration: encypherai.com -> encypher.com (complete)
 2. Chrome extension v2.0 and WordPress plugin are released products (removed "beta" labels)
 3. Marketing posture shifted from "held pending landmark deal" to active launch
 4. Updated status to Active Launch -- Full-Stack Content Provenance

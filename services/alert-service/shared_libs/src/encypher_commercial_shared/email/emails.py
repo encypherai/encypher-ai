@@ -135,7 +135,7 @@ Here's what you can do next:
 
 Go to Dashboard: {dashboard_url}
 
-Need help? Check out our documentation at https://encypherai.com/docs or email support@encypherai.com.
+Need help? Check out our documentation at https://encypher.com/docs or email support@encypher.com.
 
 Encipher provides infrastructure for text provenance - cryptographic proof of origin that survives copy-paste and distribution.
 

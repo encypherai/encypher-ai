@@ -1,7 +1,7 @@
 # Streaming API Implementation
 
-**Status:** Phase 1 Complete (90%)  
-**Version:** 1.0.0-preview  
+**Status:** Phase 1 Complete (90%)
+**Version:** 1.0.0-preview
 **Branch:** `feature/enterprise-streaming-api`
 
 ---
@@ -245,7 +245,7 @@ Real-time content signing via WebSocket.
   "document_id": "doc_xyz789",
   "total_chunks": 42,
   "duration_seconds": 125.5,
-  "verification_url": "https://encypherai.com/verify/doc_xyz789"
+  "verification_url": "https://encypher.com/verify/doc_xyz789"
 }
 
 // Error
@@ -301,7 +301,7 @@ Close a streaming session.
   "document_id": "doc_xyz789",
   "total_chunks": 42,
   "duration_seconds": 125.5,
-  "verification_url": "https://encypherai.com/verify/doc_xyz789"
+  "verification_url": "https://encypher.com/verify/doc_xyz789"
 }
 ```
 
@@ -545,6 +545,6 @@ WARNING: Failed to connect to Redis. Running without session persistence.
 
 ---
 
-**Last Updated:** 2025-10-30  
-**Maintainer:** Engineering Team  
+**Last Updated:** 2025-10-30
+**Maintainer:** Engineering Team
 **Status:** Phase 1 Complete (90%)

@@ -1,7 +1,7 @@
 # 🏗️ Microservices Migration Plan
 
-**Date:** October 30, 2025  
-**Status:** 🟡 In Progress  
+**Date:** October 30, 2025
+**Status:** 🟡 In Progress
 **Goal:** Migrate from monolithic FastAPI to microservices architecture
 
 ---
@@ -10,7 +10,7 @@
 
 ### **Monolithic Backend Structure**
 ```
-backend.encypherai.com (FastAPI Monolith)
+backend.encypher.com (FastAPI Monolith)
 ├── api/v1/
 │   ├── auth.py                      # Authentication & user management
 │   ├── auth_oauth.py                # OAuth providers
@@ -43,7 +43,7 @@ backend.encypherai.com (FastAPI Monolith)
 ### **Service Breakdown**
 
 ```
-api.encypherai.com (API Gateway)
+api.encypher.com (API Gateway)
 ├── auth-service          # Authentication & authorization
 ├── user-service          # User management & profiles
 ├── key-service           # API key generation & management
@@ -504,7 +504,7 @@ Kubernetes cluster with:
 
 ---
 
-**Status:** 📋 **PLAN COMPLETE - READY TO START**  
-**Next Step:** Set up infrastructure and extract first service (Auth)  
-**Timeline:** 6 weeks to full migration  
+**Status:** 📋 **PLAN COMPLETE - READY TO START**
+**Next Step:** Set up infrastructure and extract first service (Auth)
+**Timeline:** 6 weeks to full migration
 **Risk Level:** Medium (with proper testing and rollback plan)

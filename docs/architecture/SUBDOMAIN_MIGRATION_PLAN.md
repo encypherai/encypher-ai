@@ -1,7 +1,7 @@
 # 🏗️ Encypher Subdomain Migration & Deployment Plan
 
-**Date:** October 29, 2025  
-**Status:** Planning Phase  
+**Date:** October 29, 2025
+**Status:** Planning Phase
 **Goal:** Migrate from monolithic deployment to enterprise-grade modular architecture
 
 ---
@@ -11,8 +11,8 @@
 ### Current Deployment
 ```
 Current Architecture:
-├── encypherai.com              → Next.js frontend (marketing + dashboard)
-└── backend.encypherai.com      → FastAPI monolith
+├── encypher.com              → Next.js frontend (marketing + dashboard)
+└── backend.encypher.com      → FastAPI monolith
 ```
 
 ### Current Color Scheme (Unified Brand)
@@ -40,11 +40,11 @@ Current Architecture:
 ### Proposed Subdomain Structure
 ```
 Enterprise Architecture:
-├── encypherai.com                  → Marketing website (static/Next.js)
-├── dashboard.encypherai.com        → User dashboard (Next.js app)
-├── api.encypherai.com              → API Gateway (Nginx/Traefik)
-├── docs.encypherai.com             → Documentation (MkDocs/Docusaurus)
-└── verify.encypherai.com           → Public verification portal
+├── encypher.com                  → Marketing website (static/Next.js)
+├── dashboard.encypher.com        → User dashboard (Next.js app)
+├── api.encypher.com              → API Gateway (Nginx/Traefik)
+├── docs.encypher.com             → Documentation (MkDocs/Docusaurus)
+└── verify.encypher.com           → Public verification portal
 ```
 
 ### Backend Microservices (Internal)
@@ -65,18 +65,18 @@ Internal Services (not public subdomains):
 #### 1.1 DNS Configuration
 ```bash
 # Add DNS records
-dashboard.encypherai.com    → A/AAAA record
-api.encypherai.com          → A/AAAA record
-docs.encypherai.com         → A/AAAA record
-verify.encypherai.com       → A/AAAA record
+dashboard.encypher.com    → A/AAAA record
+api.encypher.com          → A/AAAA record
+docs.encypher.com         → A/AAAA record
+verify.encypher.com       → A/AAAA record
 ```
 
 #### 1.2 SSL Certificates
 ```bash
 # Let's Encrypt wildcard cert
 certbot certonly --dns-cloudflare \
-  -d encypherai.com \
-  -d *.encypherai.com
+  -d encypher.com \
+  -d *.encypher.com
 ```
 
 #### 1.3 Infrastructure Setup
@@ -105,7 +105,7 @@ encypher_website/frontend/
 
 **New Structure:**
 
-**Marketing Site** (`encypherai.com`):
+**Marketing Site** (`encypher.com`):
 ```
 marketing-site/
 ├── src/
@@ -124,7 +124,7 @@ marketing-site/
 └── package.json
 ```
 
-**Dashboard App** (`dashboard.encypherai.com`):
+**Dashboard App** (`dashboard.encypher.com`):
 ```
 dashboard-app/
 ├── src/
@@ -149,7 +149,7 @@ dashboard-app/
 └── package.json
 ```
 
-**Verification Portal** (`verify.encypherai.com`):
+**Verification Portal** (`verify.encypher.com`):
 ```
 verification-portal/
 ├── src/
@@ -201,7 +201,7 @@ packages/design-system/
 
 #### 3.1 Extract Services from Monolith
 
-**API Gateway** (`api.encypherai.com`):
+**API Gateway** (`api.encypher.com`):
 ```nginx
 # nginx.conf
 upstream encoding_service {
@@ -218,11 +218,11 @@ upstream analytics_service {
 
 server {
     listen 443 ssl http2;
-    server_name api.encypherai.com;
+    server_name api.encypher.com;
 
     # SSL configuration
-    ssl_certificate /etc/letsencrypt/live/encypherai.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/encypherai.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/encypher.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/encypher.com/privkey.pem;
 
     # Rate limiting
     limit_req_zone $binary_remote_addr zone=api_limit:10m rate=100r/s;
@@ -319,7 +319,7 @@ export const colors = {
   'columbia-blue': '#b7d5ed',
   'rosy-brown': '#ba8790',
   white: '#ffffff',
-  
+
   // Semantic colors
   primary: '#2a87c4',      // blue-ncs
   secondary: '#b7d5ed',    // columbia-blue
@@ -423,10 +423,10 @@ module.exports = {
 ```
 encypherai-commercial/
 ├── apps/
-│   ├── marketing-site/          → encypherai.com
-│   ├── dashboard/               → dashboard.encypherai.com
-│   ├── verification-portal/     → verify.encypherai.com
-│   └── docs-site/               → docs.encypherai.com
+│   ├── marketing-site/          → encypher.com
+│   ├── dashboard/               → dashboard.encypher.com
+│   ├── verification-portal/     → verify.encypher.com
+│   └── docs-site/               → docs.encypher.com
 │
 ├── services/
 │   ├── api-gateway/             → Nginx/Traefik config
@@ -471,21 +471,21 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
-  
+
   dashboard:
     build: ./apps/dashboard
     ports:
       - "3001:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
-  
+
   verification:
     build: ./apps/verification-portal
     ports:
       - "3002:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
-  
+
   # API Gateway
   api-gateway:
     image: nginx:alpine
@@ -497,26 +497,26 @@ services:
       - encoding-service
       - manifest-service
       - analytics-service
-  
+
   # Backend Services
   encoding-service:
     build: ./services/encoding-service
     environment:
       - DATABASE_URL=postgresql://user:pass@postgres:5432/encypher
       - REDIS_URL=redis://redis:6379
-  
+
   manifest-service:
     build: ./services/manifest-service
     environment:
       - DATABASE_URL=postgresql://user:pass@postgres:5432/encypher
       - REDIS_URL=redis://redis:6379
-  
+
   analytics-service:
     build: ./services/analytics-service
     environment:
       - DATABASE_URL=postgresql://user:pass@postgres:5432/encypher
       - PROMETHEUS_URL=http://prometheus:9090
-  
+
   # Infrastructure
   postgres:
     image: postgres:15-alpine
@@ -526,18 +526,18 @@ services:
       - POSTGRES_PASSWORD=pass
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  
+
   redis:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
-  
+
   prometheus:
     image: prom/prometheus:latest
     volumes:
       - ./infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
-  
+
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -566,13 +566,13 @@ metadata:
 spec:
   tls:
   - hosts:
-    - encypherai.com
-    - dashboard.encypherai.com
-    - api.encypherai.com
-    - verify.encypherai.com
+    - encypher.com
+    - dashboard.encypher.com
+    - api.encypher.com
+    - verify.encypher.com
     secretName: encypher-tls
   rules:
-  - host: encypherai.com
+  - host: encypher.com
     http:
       paths:
       - path: /
@@ -582,8 +582,8 @@ spec:
             name: marketing-site
             port:
               number: 3000
-  
-  - host: dashboard.encypherai.com
+
+  - host: dashboard.encypher.com
     http:
       paths:
       - path: /
@@ -593,8 +593,8 @@ spec:
             name: dashboard
             port:
               number: 3000
-  
-  - host: api.encypherai.com
+
+  - host: api.encypher.com
     http:
       paths:
       - path: /
@@ -604,8 +604,8 @@ spec:
             name: api-gateway
             port:
               number: 80
-  
-  - host: verify.encypherai.com
+
+  - host: verify.encypher.com
     http:
       paths:
       - path: /
@@ -632,12 +632,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function Button({ 
-  variant = 'primary', 
-  size = 'md', 
+export function Button({
+  variant = 'primary',
+  size = 'md',
   className,
   children,
-  ...props 
+  ...props
 }: ButtonProps) {
   return (
     <button
@@ -647,21 +647,21 @@ export function Button({
         'transition-colors focus-visible:outline-none focus-visible:ring-2',
         'focus-visible:ring-ring focus-visible:ring-offset-2',
         'disabled:pointer-events-none disabled:opacity-50',
-        
+
         // Variants
         {
           'bg-blue-ncs text-white hover:bg-blue-ncs/90': variant === 'primary',
           'bg-columbia-blue text-delft-blue hover:bg-columbia-blue/80': variant === 'secondary',
           'border-2 border-blue-ncs text-blue-ncs hover:bg-blue-ncs hover:text-white': variant === 'outline',
         },
-        
+
         // Sizes
         {
           'h-9 px-3 text-sm': size === 'sm',
           'h-10 px-4 py-2': size === 'md',
           'h-11 px-8 text-lg': size === 'lg',
         },
-        
+
         className
       )}
       {...props}
@@ -965,8 +965,8 @@ spec:
 ### User Communication
 - **Email:** Notify users 1 week before migration
 - **In-app Banner:** Show migration notice
-- **Status Page:** verify.encypherai.com/status
-- **Support:** support@encypherai.com
+- **Status Page:** verify.encypher.com/status
+- **Support:** support@encypher.com
 
 ---
 
@@ -1009,7 +1009,7 @@ This migration plan provides a comprehensive roadmap for transitioning from a mo
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** October 29, 2025  
-**Owner:** Engineering Team  
+**Document Version:** 1.0
+**Last Updated:** October 29, 2025
+**Owner:** Engineering Team
 **Status:** Ready for Review

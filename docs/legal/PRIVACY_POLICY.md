@@ -1,6 +1,6 @@
 # Encypher Privacy Policy
 
-**Last Updated:** October 28, 2025  
+**Last Updated:** October 28, 2025
 **Effective Date:** October 28, 2025
 
 ## 1. Introduction
@@ -234,7 +234,7 @@ You have the right to:
 - Export your data in JSON format
 - Receive data within 30 days
 
-**How to exercise:** Email privacy@encypherai.com
+**How to exercise:** Email privacy@encypher.com
 
 ### 7.2 Correction and Update
 
@@ -243,7 +243,7 @@ You have the right to:
 - Update your account details
 - Modify organization information
 
-**How to exercise:** Log into your account or email privacy@encypherai.com
+**How to exercise:** Log into your account or email privacy@encypher.com
 
 ### 7.3 Deletion
 
@@ -257,7 +257,7 @@ You have the right to:
 - Public verification data retained indefinitely (necessary for service)
 - Information required by law cannot be deleted
 
-**How to exercise:** Email privacy@encypherai.com
+**How to exercise:** Email privacy@encypher.com
 
 ### 7.4 Objection and Restriction
 
@@ -266,7 +266,7 @@ You have the right to:
 - Restrict processing of your information
 - Opt-out of marketing communications
 
-**How to exercise:** Email privacy@encypherai.com
+**How to exercise:** Email privacy@encypher.com
 
 ### 7.5 Withdraw Consent
 
@@ -295,11 +295,11 @@ Enterprise customers may request data storage in specific regions:
 - EU region (Frankfurt, Germany)
 - Asia-Pacific region (Singapore)
 
-Contact sales@encypherai.com for multi-region options.
+Contact sales@encypher.com for multi-region options.
 
 ## 9. Children's Privacy
 
-The Service is not intended for individuals under 18 years of age. We do not knowingly collect personal information from children. If you believe we have collected information from a child, contact us immediately at privacy@encypherai.com.
+The Service is not intended for individuals under 18 years of age. We do not knowingly collect personal information from children. If you believe we have collected information from a child, contact us immediately at privacy@encypher.com.
 
 ## 10. California Privacy Rights (CCPA)
 
@@ -332,7 +332,7 @@ You may designate an authorized agent to make requests on your behalf. The agent
 
 ### 10.6 How to Exercise CCPA Rights
 
-Email privacy@encypherai.com with:
+Email privacy@encypher.com with:
 - Your name and email address
 - Description of your request
 - Proof of California residency (if applicable)
@@ -357,8 +357,8 @@ Encypher is the data controller for your personal information.
 
 ### 11.3 Data Protection Officer
 
-For GDPR inquiries, contact our Data Protection Officer:  
-Email: dpo@encypherai.com
+For GDPR inquiries, contact our Data Protection Officer:
+Email: dpo@encypher.com
 
 ### 11.4 GDPR Rights
 
@@ -374,7 +374,7 @@ You have the right to:
 
 ### 11.5 How to Exercise GDPR Rights
 
-Email privacy@encypherai.com or dpo@encypherai.com
+Email privacy@encypher.com or dpo@encypher.com
 
 We will respond within 30 days.
 
@@ -429,20 +429,20 @@ We encourage you to review this Privacy Policy periodically.
 
 For questions, concerns, or requests regarding this Privacy Policy or your personal information:
 
-**Privacy Inquiries:**  
-Email: privacy@encypherai.com
+**Privacy Inquiries:**
+Email: privacy@encypher.com
 
-**Data Protection Officer (GDPR):**  
-Email: dpo@encypherai.com
+**Data Protection Officer (GDPR):**
+Email: dpo@encypher.com
 
-**General Contact:**  
-Email: legal@encypherai.com  
-Website: https://encypherai.com
+**General Contact:**
+Email: legal@encypher.com
+Website: https://encypher.com
 
-**Mailing Address:**  
-Encypher  
-[Your Physical Address]  
-[City, State, ZIP]  
+**Mailing Address:**
+Encypher
+[Your Physical Address]
+[City, State, ZIP]
 United States
 
 ## 16. Definitions

@@ -6,7 +6,7 @@ Most detection tools guess based on writing patterns󠇟󠇠󠇡󠇢󠅘󠅈󠄻
 
 Detection tools like GPTZero and UndetectableAI analyze sentence structure, repetition, or "burstiness," hoping to flag machine-written content󠇟󠇠󠇡󠇢󠇂󠆝󠄸󠆰󠇍󠅿󠄹󠄘󠆘󠇋󠆉󠅡󠆂󠄣󠅿󠆼󠅉󠅐󠆞󠄵󠆣󠇋󠅸󠇨󠄻󠅱︄󠄒󠄸󠇣󠇆󠄇󠅪󠅼󠆸󠆰󠇀󠄚󠅎󠆫. But their results are often inconsistent — and dangerously inaccurate󠇟󠇠󠇡󠇢󠅻󠄒󠅼󠆫󠆓󠆿󠄽󠅘󠆪󠆧󠆃󠇩󠅰󠇕󠆫󠆝󠅓󠅁󠅦󠅕󠄈󠅁󠄪󠆛󠆘󠆼󠆥󠆂󠄓󠅺󠅀󠆍󠅈󠆶︃󠆏󠄜󠅋󠄼󠄔. 📚 **Case in point:**󠇟󠇠󠇡󠇢󠇩󠅆󠄽󠅽󠅬󠇬󠄼󠆀󠆃󠅆󠆎󠄚󠆦󠆨󠆯󠇊󠆭󠄛󠄳󠇘󠇟󠄸󠆤󠆇󠆵󠇍󠄊󠄬󠇕󠄉󠆫󠇊󠆭󠅝󠇠󠅉︆󠇮󠆴󠅦 An essay by a real student, published on the official [Johns Hopkins admissions blog](https://apply.jhu.edu/hopkins-insider/finding-purpose-in-trivial-projects/), was submitted to multiple AI detectors󠇟󠇠󠇡󠇢︆︃󠆑󠄈󠅚󠆖󠄴󠄖󠆣󠅑󠄉󠄰󠆧󠄸󠆂󠆅󠆹󠇁󠅜󠆷󠆧󠄫󠅇󠅁︅󠆲󠅣󠄲󠆉󠅅󠄙󠅝󠆢️︍︀󠇜󠇦󠆵󠄹. [Encypher Demo](https://www.youtube.com/embed/_MNP0nHc77k)
 
-🔎 **The result󠇟󠇠󠇡󠇢󠅪󠆽󠄈󠆀󠄶󠆂󠄹󠇑󠆩󠄨󠅳󠅬󠄣󠇀󠇜󠅎󠅶󠇍󠄐󠄑󠅷󠆔󠆉󠆸󠅥󠄻󠆒󠇥󠇥󠄧󠅶󠄤󠅒󠄷󠅉󠅛󠆃󠄥󠅴󠅘? **  
+🔎 **The result󠇟󠇠󠇡󠇢󠅪󠆽󠄈󠆀󠄶󠆂󠄹󠇑󠆩󠄨󠅳󠅬󠄣󠇀󠇜󠅎󠅶󠇍󠄐󠄑󠅷󠆔󠆉󠆸󠅥󠄻󠆒󠇥󠇥󠄧󠅶󠄤󠅒󠄷󠅉󠅛󠆃󠄥󠅴󠅘? **
 GPTZero and UndetectableAI flagged it as "99% AI-generated󠇟󠇠󠇡󠇢󠄼󠄫󠄀󠇨󠆤󠅬󠄽󠆥󠅶󠆝󠅀󠄽󠄀󠄇󠇬󠅳󠇦︎󠅘󠄣󠇎󠄶󠆺󠄦󠇔󠅝󠆨󠇋󠅤󠄷󠅅󠄠󠄒󠇙󠅺󠅚󠆑󠅉󠆍󠇄. "
 
 󠇟󠇠󠇡󠇢󠄐󠄡󠅎󠄁󠄺󠄨󠄳︈󠆨󠅋󠆋󠇪󠄤󠅬󠅣󠅄󠇌󠅎󠄕󠆬󠆐󠄚󠇍︈󠅣󠆀󠄣󠆦󠄵󠅆󠄭󠄌󠄜󠆉󠅈󠆅󠅆󠅛󠆋󠄴! [UndetectableAI falsely flagging human content as AI-generated](/images/blog/What%20If%20AI%20Content%20Came%20With%20Built-In%20Proof%20of%20Origin/undetectableai%20false%20flag.png)
@@ -39,7 +39,7 @@ If you're working on:
 
 ...we'd love to collaborate.
 
-🔗󠇟󠇠󠇡󠇢󠇢󠅣󠅱󠅠󠄗󠅺󠄶󠄕󠆢󠅥󠆅󠇎︀󠅻󠆷󠆜︊󠅎󠄏󠆗󠆬󠄯︊󠅚󠇖󠆰󠄼󠆗󠇖󠄔󠄅󠄕󠆚󠄊󠅏󠅀󠇤󠆭󠅿󠆋 [encypherai.com](https://encypherai.com/?utm_source=linkedin&utm_medium=article&utm_campaign=explainer)  
+🔗󠇟󠇠󠇡󠇢󠇢󠅣󠅱󠅠󠄗󠅺󠄶󠄕󠆢󠅥󠆅󠇎︀󠅻󠆷󠆜︊󠅎󠄏󠆗󠆬󠄯︊󠅚󠇖󠆰󠄼󠆗󠇖󠄔󠄅󠄕󠆚󠄊󠅏󠅀󠇤󠆭󠅿󠆋 [encypher.com](https://encypher.com/?utm_source=linkedin&utm_medium=article&utm_campaign=explainer)
 📁󠇟󠇠󠇡󠇢󠄄󠅾󠆁󠅲󠄥󠇍󠄾󠇬󠆯󠅈󠇗󠅯󠆬︂󠆻󠅜󠄥󠆗󠅮󠅑󠄣󠅾󠄑󠅖󠄺󠅑󠄩󠅚󠅟󠆇󠄿󠇭󠆱󠅄󠄦󠄩󠅄󠄛󠆗󠆢 [github.com/encypherai/encypher-ai](https://github.com/encypherai/encypher-ai)
 
 ## Final Thoughts

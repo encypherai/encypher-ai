@@ -21,7 +21,7 @@
 - `integrations/ghost-provenance/tests/html-utils.test.ts`: Added tests for direct embedding-plan insertion (cross-paragraph insertion, index `-1` insertion, out-of-range validation).
 - `integrations/ghost-provenance/tests/signer.test.ts`: Added assertions that outbound sign payload includes `manifest_mode: micro_ecc_c2pa` and `segmentation_level: sentence`.
 - `integrations/ghost-provenance/src/signer.ts`: Updated signing flow to prefer direct `embedding_plan` insertion into HTML, then fallback to reconstructed/returned `signed_text`; C2PA compliance now checks extracted final HTML text.
-- `enterprise_api/app/routers/integrations.py`: Updated webhook URL builder to always use configured `api_base_url`, preventing issuance of non-routable `encypherai.com` webhook URLs for Ghost.
+- `enterprise_api/app/routers/integrations.py`: Updated webhook URL builder to always use configured `api_base_url`, preventing issuance of non-routable `encypher.com` webhook URLs for Ghost.
 - `enterprise_api/app/services/ghost_integration.py`: Added legacy manifest alias normalization at sign boundary and canonical micro option passthrough (`ecc`, `embed_c2pa`) to `SignOptions`.
 - `enterprise_api/app/schemas/integration_schemas.py`: Switched Ghost manifest/segmentation validation to signing SSOT constants and added canonical micro flags (`ecc`, `embed_c2pa`) to create/response schemas.
 - `enterprise_api/app/models/ghost_integration.py`: Added persisted `ecc` and `embed_c2pa` columns for hosted Ghost integration config.

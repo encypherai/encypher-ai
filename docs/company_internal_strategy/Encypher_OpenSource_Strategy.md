@@ -115,7 +115,7 @@ Why publishers need more than basic C2PA:
 
 **Basic C2PA provides proof. Enterprise capabilities enable legal transformation.**
 
-Learn more: encypherai.com
+Learn more: encypher.com
 Roundtable track (invite-only, rescheduling in progress):
 ```
 
@@ -489,7 +489,7 @@ We're not open-sourcing a product. We're proliferating the standard we authored-
 **The code is public. The standards are collaborative. The legal transformation is proprietary. The adoption is inevitable.**
 
 Repository: github.com/encypher/c2pa-text
-Website: **encypherai.com**
+Website: **encypher.com**
 C2PA Standard Publication: **January 8, 2026**
 Roundtable Track: **Invite-only (rescheduling in progress)**
 

@@ -624,7 +624,7 @@ async def emit_document_signed(
             "document_id": document_id,
             "title": title,
             "document_type": document_type,
-            "verification_url": f"https://api.encypherai.com/api/v1/verify/{document_id}",
+            "verification_url": f"https://api.encypher.com/api/v1/verify/{document_id}",
         },
     )
 

@@ -21,7 +21,7 @@ Prevent production `401 Invalid API key` errors caused by key-service querying `
 
 ## Handoff Notes
 - Deploy **key-service** with this fix to unblock production signing via `/api/v1/sign/advanced`.
-- After deploy, re-run `scripts/example_lightweight_sign.py` against `https://api.encypherai.com` with a valid API key.
+- After deploy, re-run `scripts/example_lightweight_sign.py` against `https://api.encypher.com` with a valid API key.
 
 ---
 

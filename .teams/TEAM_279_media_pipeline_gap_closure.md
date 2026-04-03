@@ -9,7 +9,7 @@ Closed all identified gaps in the image and video signing pipelines. Image pipel
 ## Changes Made
 
 ### 1. Fix old domain in video passthrough metadata
-- `app/utils/video_metadata.py`: `verify.encypherai.com` -> `verify.encypher.ai/`
+- `app/utils/video_metadata.py`: `verify.encypher.com` -> `verify.encypher.ai/`
 - `tests/unit/test_video_metadata.py`: Updated assertions
 
 ### 2. Propagate digital_source_type through video executor
@@ -65,7 +65,7 @@ feat(media-pipeline): close 8 image/video signing gaps
   imagehash average_hash (64-bit, matches image pipeline).
 - Propagate digital_source_type through video executor (was silently
   dropped).
-- Fix old domain in video passthrough metadata (encypherai.com ->
+- Fix old domain in video passthrough metadata (encypher.com ->
   encypher.ai).
 - Add FORMAT_NOT_SUPPORTED_FOR_SIGNING guard for WebM/MKV verify
   requests (asymmetry with signing support).

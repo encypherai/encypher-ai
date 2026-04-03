@@ -1,8 +1,8 @@
 # TEAM_188 — CERT_NOT_FOUND Verification Bug
 
-**Status:** Complete  
-**Started:** 2026-02-13  
-**Task:** Fix CERT_NOT_FOUND error when verifying embeddings signed by free-tier orgs (e.g., test@encypherai.com / org_07dd7ff77fa7e949)
+**Status:** Complete
+**Started:** 2026-02-13
+**Task:** Fix CERT_NOT_FOUND error when verifying embeddings signed by free-tier orgs (e.g., test@encypher.com / org_07dd7ff77fa7e949)
 
 ## Root Cause
 
@@ -64,7 +64,7 @@ but no certificate_pem were invisible to both verification paths:
    for orgs without certificate_pem but with private_key_encrypted or
    public_key columns.
 
-Fixes CERT_NOT_FOUND when verifying content signed by test@encypherai.com
+Fixes CERT_NOT_FOUND when verifying content signed by test@encypher.com
 and other free-tier users.
 
 TEAM_188

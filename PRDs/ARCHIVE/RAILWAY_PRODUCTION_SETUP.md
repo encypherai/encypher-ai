@@ -1,8 +1,8 @@
 # Railway Production Setup - Critical Infrastructure
 
-**Target Platform**: Railway.app  
-**Timeline**: 1-2 weeks  
-**Priority**: 🔴 CRITICAL - Block production launch  
+**Target Platform**: Railway.app
+**Timeline**: 1-2 weeks
+**Priority**: 🔴 CRITICAL - Block production launch
 **Status**: Implementation Ready
 
 ---
@@ -111,7 +111,7 @@ Each service has a `railway.json` file (✅ CREATED). Deploy them one by one:
    SERVICE_HOST=0.0.0.0
    SERVICE_PORT=${{PORT}}
    LOG_LEVEL=INFO
-   ALLOWED_ORIGINS=https://dashboard.encypherai.com,https://encypherai.com
+   ALLOWED_ORIGINS=https://dashboard.encypher.com,https://encypher.com
    ```
 
 6. Click "Deploy"
@@ -590,6 +590,6 @@ After deploying to Railway:
 
 ---
 
-**Status**: ✅ Ready to Deploy  
-**Next Action**: Create Railway project and deploy auth-service  
+**Status**: ✅ Ready to Deploy
+**Next Action**: Create Railway project and deploy auth-service
 **Estimated Time**: 2-3 hours for initial deployment

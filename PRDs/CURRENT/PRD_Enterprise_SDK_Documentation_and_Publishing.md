@@ -9,8 +9,8 @@
 
 Encypher has **three distinct documentation domains** that need clear separation and cross-referencing:
 
-1. **Open-Source Package** (`encypher-ai`) - AGPL v3, hosted at docs.encypherai.com
-2. **Enterprise REST API** - Commercial, interactive docs at api.encypherai.com/docs
+1. **Open-Source Package** (`encypher-ai`) - AGPL v3, hosted at docs.encypher.com
+2. **Enterprise REST API** - Commercial, interactive docs at api.encypher.com/docs
 3. **Enterprise SDKs** - Commercial, multi-language SDKs (Python/Go/Rust/TypeScript)
 
 This PRD defines how to host, publish, and cross-reference these documentation sites.
@@ -19,14 +19,14 @@ This PRD defines how to host, publish, and cross-reference these documentation s
 
 ## Current State
 
-### 1. docs.encypherai.com (Open-Source)
+### 1. docs.encypher.com (Open-Source)
 - **Source**: `encypher-ai/` (MkDocs)
 - **Content**: `encypher-ai` Python package documentation
 - **License**: AGPL v3
 - **Hosting**: GitHub Pages via CNAME
 - **Audience**: Open-source developers, researchers
 
-### 2. api.encypherai.com/docs (Enterprise API)
+### 2. api.encypher.com/docs (Enterprise API)
 - **Source**: `enterprise_api/app/main.py` (FastAPI + Swagger UI)
 - **Content**: REST API reference with embedded Swagger UI
 - **License**: Proprietary
@@ -56,9 +56,9 @@ This PRD defines how to host, publish, and cross-reference these documentation s
 
 | Domain | Content | Audience | Hosting |
 |--------|---------|----------|---------|
-| `docs.encypherai.com` | Open-source `encypher-ai` package | OSS developers | GitHub Pages |
-| `api.encypherai.com/docs` | Enterprise REST API (Swagger UI) | API consumers | FastAPI (self-hosted) |
-| `docs.encypherai.com/enterprise/` | Enterprise SDK documentation | Enterprise customers | GitHub Pages (new section) |
+| `docs.encypher.com` | Open-source `encypher-ai` package | OSS developers | GitHub Pages |
+| `api.encypher.com/docs` | Enterprise REST API (Swagger UI) | API consumers | FastAPI (self-hosted) |
+| `docs.encypher.com/enterprise/` | Enterprise SDK documentation | Enterprise customers | GitHub Pages (new section) |
 
 ### SDK Package Names
 
@@ -98,17 +98,17 @@ This PRD defines how to host, publish, and cross-reference these documentation s
 
 ### 1.0 SDK Documentation Hosting
 
-- [ ] 1.1 Add `/enterprise/` section to docs.encypherai.com (MkDocs)
+- [ ] 1.1 Add `/enterprise/` section to docs.encypher.com (MkDocs)
   - [ ] 1.1.1 Create `encypher-ai/docs/enterprise/` directory structure
   - [ ] 1.1.2 Add SDK quickstart guide
   - [ ] 1.1.3 Add SDK API reference (auto-generated from docstrings)
   - [ ] 1.1.4 Add integration guides (LangChain, OpenAI, CI/CD)
   - [ ] 1.1.5 Update mkdocs.yml navigation
 
-- [ ] 1.2 Alternative: Create separate sdk.encypherai.com
+- [ ] 1.2 Alternative: Create separate sdk.encypher.com
   - [ ] 1.2.1 Set up new MkDocs site in `enterprise_sdk/docs/`
   - [ ] 1.2.2 Configure GitHub Pages with CNAME
-  - [ ] 1.2.3 Add DNS record for sdk.encypherai.com
+  - [ ] 1.2.3 Add DNS record for sdk.encypher.com
 
 ### 2.0 SDK Publishing
 
@@ -136,22 +136,22 @@ This PRD defines how to host, publish, and cross-reference these documentation s
 
 ### 3.0 Cross-Referencing
 
-- [x] 3.1 Update api.encypherai.com/docs
+- [x] 3.1 Update api.encypher.com/docs
   - [x] 3.1.1 Add "Client SDKs" intro card linking to SDK docs
-  - [x] 3.1.2 Add "Open-Source Package" link to docs.encypherai.com
+  - [x] 3.1.2 Add "Open-Source Package" link to docs.encypher.com
 
-- [ ] 3.2 Update docs.encypherai.com
+- [ ] 3.2 Update docs.encypher.com
   - [ ] 3.2.1 Add "Enterprise API" link in navigation
   - [ ] 3.2.2 Add "Enterprise SDKs" section in navigation
   - [ ] 3.2.3 Update homepage to show product ecosystem
 
-- [x] 3.3 Update marketing site (encypherai.com)
-  - [ ] 3.3.1 Update footer "Documentation" link strategy (keep as docs.encypherai.com for OSS)
-  - [x] 3.3.2 Update pricing page API docs link to api.encypherai.com/docs
+- [x] 3.3 Update marketing site (encypher.com)
+  - [ ] 3.3.1 Update footer "Documentation" link strategy (keep as docs.encypher.com for OSS)
+  - [x] 3.3.2 Update pricing page API docs link to api.encypher.com/docs
   - [ ] 3.3.3 Add SDK download links on relevant pages
 
-- [x] 3.4 Update dashboard (dashboard.encypherai.com)
-  - [x] 3.4.1 Update "Documentation" links to api.encypherai.com/docs
+- [x] 3.4 Update dashboard (dashboard.encypher.com)
+  - [x] 3.4.1 Update "Documentation" links to api.encypher.com/docs
   - [x] 3.4.2 Update onboarding modal docs link
   - [x] 3.4.3 Update support page resource links to SDK packages
 
@@ -169,15 +169,15 @@ This PRD defines how to host, publish, and cross-reference these documentation s
 - [x] 4.2 Update internal documentation
   - [x] 4.2.1 Update root README.md with SDK information
   - [x] 4.2.2 Update DOCUMENTATION_INDEX.md
-  - [x] 4.2.3 Update api.encypherai.com/docs SDK links to GitHub repos
+  - [x] 4.2.3 Update api.encypher.com/docs SDK links to GitHub repos
 
 ---
 
 ## Success Criteria
 
 1. ✅ Enterprise SDK published to PyPI as `encypher-enterprise`
-2. ✅ SDK documentation accessible at docs.encypherai.com/enterprise/
-3. ✅ api.encypherai.com/docs links to SDK documentation
+2. ✅ SDK documentation accessible at docs.encypher.com/enterprise/
+3. ✅ api.encypher.com/docs links to SDK documentation
 4. ✅ Marketing/dashboard sites link to appropriate docs contextually
 5. ✅ Clear separation between open-source and enterprise documentation
 
@@ -185,7 +185,7 @@ This PRD defines how to host, publish, and cross-reference these documentation s
 
 ## Open Questions
 
-1. **SDK docs hosting**: Should enterprise SDK docs live under docs.encypherai.com/enterprise/ or a separate sdk.encypherai.com?
+1. **SDK docs hosting**: Should enterprise SDK docs live under docs.encypher.com/enterprise/ or a separate sdk.encypher.com?
 2. **SDK consolidation**: Should `enterprise_sdk/` (hand-crafted) and `sdk/` (auto-generated) be merged or kept separate?
 3. **Multi-language priority**: Which languages should be published first after Python?
 
@@ -193,7 +193,7 @@ This PRD defines how to host, publish, and cross-reference these documentation s
 
 ## Appendix: Current Link Audit
 
-### Files referencing docs.encypherai.com (45+ files)
+### Files referencing docs.encypher.com (45+ files)
 - Marketing site footer, pricing page
 - Dashboard navigation, support page, onboarding
 - Enterprise SDK README, API README
@@ -203,7 +203,7 @@ This PRD defines how to host, publish, and cross-reference these documentation s
 
 | Context | Current | Proposed |
 |---------|---------|----------|
-| Generic "Documentation" | docs.encypherai.com | docs.encypherai.com (keep) |
-| "API Documentation" | docs.encypherai.com | api.encypherai.com/docs |
-| "SDK Documentation" | docs.encypherai.com/sdk | docs.encypherai.com/enterprise/ |
-| "Python Package" | docs.encypherai.com | docs.encypherai.com (keep) |
+| Generic "Documentation" | docs.encypher.com | docs.encypher.com (keep) |
+| "API Documentation" | docs.encypher.com | api.encypher.com/docs |
+| "SDK Documentation" | docs.encypher.com/sdk | docs.encypher.com/enterprise/ |
+| "Python Package" | docs.encypher.com | docs.encypher.com (keep) |

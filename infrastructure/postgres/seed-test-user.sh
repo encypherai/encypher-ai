@@ -3,7 +3,7 @@
 # Seed Test User for Development Environment
 # ============================================================================
 # Creates a test user for local development:
-#   Email: test@encypherai.com
+#   Email: test@encypher.com
 #   Password: TestPassword123!
 #
 # This script runs after database initialization.
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS users (
 INSERT INTO users (id, email, password_hash, name, email_verified, is_active, created_at, updated_at)
 VALUES (
     :user_id,
-    'test@encypherai.com',
+    'test@encypher.com',
     :password_hash,
     'Test User',
     TRUE,
@@ -71,5 +71,5 @@ ON CONFLICT (email) DO UPDATE SET
 EOSQL
 
 echo "Test user created successfully!"
-echo "  Email: test@encypherai.com"
+echo "  Email: test@encypher.com"
 echo "  Password: TestPassword123!"

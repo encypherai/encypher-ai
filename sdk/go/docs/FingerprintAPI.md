@@ -1,6 +1,6 @@
 # \FingerprintAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -30,7 +30,7 @@ import (
 )
 
 func main() {
-	fingerprintDetectRequest := *openapiclient.NewFingerprintDetectRequest("Text_example") // FingerprintDetectRequest | 
+	fingerprintDetectRequest := *openapiclient.NewFingerprintDetectRequest("Text_example") // FingerprintDetectRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -55,7 +55,7 @@ Other parameters are passed through a pointer to a apiDetectFingerprintApiV1Ente
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fingerprintDetectRequest** | [**FingerprintDetectRequest**](FingerprintDetectRequest.md) |  | 
+ **fingerprintDetectRequest** | [**FingerprintDetectRequest**](FingerprintDetectRequest.md) |  |
 
 ### Return type
 
@@ -96,7 +96,7 @@ import (
 )
 
 func main() {
-	fingerprintEncodeRequest := *openapiclient.NewFingerprintEncodeRequest("DocumentId_example", "Text_example") // FingerprintEncodeRequest | 
+	fingerprintEncodeRequest := *openapiclient.NewFingerprintEncodeRequest("DocumentId_example", "Text_example") // FingerprintEncodeRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -121,7 +121,7 @@ Other parameters are passed through a pointer to a apiEncodeFingerprintApiV1Ente
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fingerprintEncodeRequest** | [**FingerprintEncodeRequest**](FingerprintEncodeRequest.md) |  | 
+ **fingerprintEncodeRequest** | [**FingerprintEncodeRequest**](FingerprintEncodeRequest.md) |  |
 
 ### Return type
 
@@ -139,4 +139,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

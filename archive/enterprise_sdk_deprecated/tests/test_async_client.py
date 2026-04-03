@@ -35,7 +35,7 @@ def _setup_async_client(monkeypatch, handler) -> AsyncEncypherClient:
         return original_client(*args, **kwargs)
 
     monkeypatch.setattr("encypher_enterprise.async_client.httpx.AsyncClient", async_client_factory)
-    return AsyncEncypherClient(api_key="async-token", base_url="https://api.encypherai.com")
+    return AsyncEncypherClient(api_key="async-token", base_url="https://api.encypher.com")
 
 
 @pytest.mark.asyncio

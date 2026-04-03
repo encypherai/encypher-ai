@@ -32,14 +32,14 @@
     "content-authenticity",
     "watermark"
   ],
-  "author": "Encypher Corporation <contact@encypherai.com>",
+  "author": "Encypher Corporation <contact@encypher.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/encypherai/c2pa-text.git",
     "directory": "typescript"
   },
-  "homepage": "https://encypherai.com",
+  "homepage": "https://encypher.com",
   "bugs": {
     "url": "https://github.com/encypherai/c2pa-text/issues"
   },

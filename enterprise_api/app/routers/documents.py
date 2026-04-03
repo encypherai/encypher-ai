@@ -191,7 +191,7 @@ async def list_documents(
                 document_type=row.document_type,
                 status=doc_status,
                 signed_at=row.created_at.isoformat() if row.created_at else "",
-                verification_url=f"https://api.encypherai.com/api/v1/verify/{row.document_id}",
+                verification_url=f"https://api.encypher.com/api/v1/verify/{row.document_id}",
                 word_count=None,
             ).model_dump()
         )
@@ -264,7 +264,7 @@ async def get_document(
             document_type=row.document_type,
             status=doc_status,
             signed_at=row.created_at.isoformat() if row.created_at else "",
-            verification_url=f"https://api.encypherai.com/api/v1/verify/{row.document_id}",
+            verification_url=f"https://api.encypher.com/api/v1/verify/{row.document_id}",
             word_count=None,
             url=row.url,
             signer_id=None,

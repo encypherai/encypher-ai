@@ -1758,7 +1758,7 @@ async def update_org_security_settings(
 # ---------------------------------------------------------------------------
 
 _DOMAIN_PATTERN = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$")
-_CNAME_TARGET = "verify.encypherai.com"
+_CNAME_TARGET = "verify.encypher.com"
 _BLOCKED_DOMAIN_SUFFIXES = {
     "localhost",
     "local",
@@ -1767,7 +1767,7 @@ _BLOCKED_DOMAIN_SUFFIXES = {
     "test",
     "example",
     "railway.internal",
-    "encypherai.com",
+    "encypher.com",
     "encypher.ai",
 }
 

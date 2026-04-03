@@ -1,6 +1,6 @@
 # Encypher Enterprise API - Terms of Service
 
-**Last Updated:** October 28, 2025  
+**Last Updated:** October 28, 2025
 **Effective Date:** October 28, 2025
 
 ## 1. Acceptance of Terms
@@ -31,7 +31,7 @@ To use the Service, you must:
 ### 3.2 API Keys
 - API keys are confidential and must not be shared
 - You are responsible for all usage of your API keys
-- Lost or compromised keys must be reported immediately to legal@encypherai.com
+- Lost or compromised keys must be reported immediately to legal@encypher.com
 - We reserve the right to revoke API keys at any time for violation of these Terms
 
 ### 3.3 Organization Types
@@ -277,7 +277,7 @@ Uptime commitment excludes downtime caused by:
 These Terms are governed by the laws of the State of Delaware, United States, without regard to conflict of law principles.
 
 ### 14.2 Dispute Resolution
-- **Informal Resolution**: Contact legal@encypherai.com to resolve disputes informally
+- **Informal Resolution**: Contact legal@encypher.com to resolve disputes informally
 - **Arbitration**: Unresolved disputes shall be settled by binding arbitration under the American Arbitration Association (AAA) Commercial Arbitration Rules
 - **Location**: Arbitration held in Wilmington, Delaware
 - **Class Action Waiver**: You waive any right to bring claims as a class action
@@ -323,18 +323,18 @@ The Service is a "commercial item" as defined in FAR 2.101, provided with "restr
 
 For questions about these Terms, contact us at:
 
-**Encypher**  
-Email: legal@encypherai.com  
-Website: https://encypherai.com
+**Encypher**
+Email: legal@encypher.com
+Website: https://encypher.com
 
-For technical support:  
-Email: support@encypherai.com
+For technical support:
+Email: support@encypher.com
 
-For privacy inquiries:  
-Email: privacy@encypherai.com
+For privacy inquiries:
+Email: privacy@encypher.com
 
-For abuse reports:  
-Email: abuse@encypherai.com
+For abuse reports:
+Email: abuse@encypher.com
 
 ---
 

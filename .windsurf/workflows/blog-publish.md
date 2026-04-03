@@ -82,7 +82,7 @@ uv run python enterprise_api/scripts/sign_blog_posts.py \
 ```
 
 Requirements:
-- `.env.skills` must contain a valid `ENYCPHER_API_KEY` and `ENCYPHER_BASE_URL=api.encypherai.com`
+- `.env.skills` must contain a valid `ENYCPHER_API_KEY` and `ENCYPHER_BASE_URL=api.encypher.com`
 - Signing must complete with exit code 0 and "Done. Signed 1 posts."
 - Report written to `enterprise_api/output/signed_blog_posts/signing_report.json`
 

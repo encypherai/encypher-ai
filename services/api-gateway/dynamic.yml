@@ -173,10 +173,10 @@ http:
         - cors
 
     # Verify Portal (host-based)
-    # Routes public verification URLs like https://verify.encypherai.com/{document_id}
-    # Also serves status lists at https://verify.encypherai.com/status/v1/{org_id}/list/{idx}
+    # Routes public verification URLs like https://verify.encypher.com/{document_id}
+    # Also serves status lists at https://verify.encypher.com/status/v1/{org_id}/list/{idx}
     verify-portal:
-      rule: "Host(`verify.encypherai.com`)"
+      rule: "Host(`verify.encypher.com`)"
       service: verification-service
       entryPoints:
         - web
@@ -289,11 +289,11 @@ http:
           - "http://localhost:3001"
           - "http://localhost:3050"
           - "http://localhost:3051"
-          - "https://staging.encypherai.com"
-          - "https://dashboard-staging.encypherai.com"
-          - "https://encypherai.com"
-          - "https://www.encypherai.com"
-          - "https://dashboard.encypherai.com"
+          - "https://staging.encypher.com"
+          - "https://dashboard-staging.encypher.com"
+          - "https://encypher.com"
+          - "https://www.encypher.com"
+          - "https://dashboard.encypher.com"
           - "https://staging.encypher.com"
           - "https://dashboard-staging.encypher.com"
           - "https://encypher.com"

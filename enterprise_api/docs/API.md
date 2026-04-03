@@ -1,6 +1,6 @@
 # Encypher Enterprise API Documentation
 
-**Base URL:** `https://api.encypherai.com`
+**Base URL:** `https://api.encypher.com`
 **Environment:** Preview (C2PA spec pending public release)
 **Version:** 1.0.0-preview
 
@@ -24,7 +24,7 @@ from encypher_enterprise import EncypherClient
 
 client = EncypherClient(
     api_key="encypher_live_xxx",
-    base_url="https://api.encypherai.com",
+    base_url="https://api.encypher.com",
 )
 
 sign_response = client.sign(
@@ -52,8 +52,8 @@ Authorization: Bearer encypher_<your_api_key>
 ```
 
 **Getting an API Key:**
-- Preview phase: Contact sales@encypherai.com for beta access
-- Production: Sign up at https://dashboard.encypherai.com
+- Preview phase: Contact sales@encypher.com for beta access
+- Production: Sign up at https://dashboard.encypher.com
 
 ## Rate Limiting
 
@@ -120,7 +120,7 @@ For the complete options matrix (tiers/defaults), use OpenAPI/Swagger for `/api/
     "document": {
       "document_id": "doc_abc123xyz",
       "signed_text": "Content with invisible C2PA/marker embeddings...",
-      "verification_url": "https://verify.encypherai.com/doc_abc123xyz"
+      "verification_url": "https://verify.encypher.com/doc_abc123xyz"
     },
     "metadata": {
       "manifest_mode": "micro"
@@ -140,7 +140,7 @@ For the complete options matrix (tiers/defaults), use OpenAPI/Swagger for `/api/
 
 **Example:**
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/sign \
+curl -X POST https://api.encypher.com/api/v1/sign \
   -H "Authorization: Bearer encypher_test_..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -219,7 +219,7 @@ Verify C2PA manifest in signed content.
 
 **Example:**
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/verify \
+curl -X POST https://api.encypher.com/api/v1/verify \
   -H "Content-Type: application/json" \
   -d '{
     "text": "Signed content from previous step..."
@@ -370,7 +370,7 @@ This endpoint enables third-party validators to verify Encypher-signed content b
 
 **Example:**
 ```bash
-curl https://api.encypherai.com/api/v1/public/c2pa/trust-anchors/encypher.public
+curl https://api.encypher.com/api/v1/public/c2pa/trust-anchors/encypher.public
 ```
 
 ---
@@ -411,7 +411,7 @@ Look up sentence provenance by hash.
 
 **Example:**
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/lookup \
+curl -X POST https://api.encypher.com/api/v1/lookup \
   -H "Content-Type: application/json" \
   -d '{
     "sentence_text": "The Senate passed a landmark bill today."
@@ -447,7 +447,7 @@ Request SSL.com code signing certificate for organization.
 
 **Example:**
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/onboarding/request-certificate \
+curl -X POST https://api.encypher.com/api/v1/onboarding/request-certificate \
   -H "Authorization: Bearer encypher_test_..."
 ```
 
@@ -641,24 +641,24 @@ Preview deliveries are synchronous and retried up to three times. Production del
 
 ## Batch Operations
 
-- `POST /api/v1/batch/sign`  
+- `POST /api/v1/batch/sign`
   Body: `mode`, `segmentation_level`, `items[]`, `idempotency_key`. Returns per-item results plus a batch summary object. Retries with the same idempotency key reuse the stored run and prevent duplicate writes.
 
-- `POST /api/v1/batch/verify`  
+- `POST /api/v1/batch/verify`
   Identical request schema, but returns `verdict` objects for each document. Tampered documents show `status: "error"` while valid documents continue.
 
 ## Streaming Signing (SSE)
 
-- `POST /api/v1/sign/stream`  
+- `POST /api/v1/sign/stream`
   Streams `start`, `progress`, `partial`, and `final` events via Server-Sent Events. The final event includes the signed text, verification URL, and runtime statistics. Provide an optional `run_id` to make retries idempotent.
 
-- `GET /api/v1/sign/stream/runs/{run_id}`  
+- `GET /api/v1/sign/stream/runs/{run_id}`
   Returns the most recent persisted state for a streaming run, enabling clients to resume after reconnects.
 
 ---
 
 ## Support
 
-- **Documentation:** https://docs.encypherai.com
-- **Email:** support@encypherai.com
-- **Status:** https://verify.encypherai.com/status
+- **Documentation:** https://docs.encypher.com
+- **Email:** support@encypher.com
+- **Status:** https://verify.encypher.com/status

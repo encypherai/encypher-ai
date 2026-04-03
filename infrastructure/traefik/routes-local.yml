@@ -5,10 +5,10 @@ http:
   routers:
     # ============================================
     # VERIFY PORTAL (Host-based) -> Verification Service (8005)
-    # Supports public URLs like https://verify.encypherai.com/{document_id}
+    # Supports public URLs like https://verify.encypher.com/{document_id}
     # ============================================
     verify-portal-router:
-      rule: "Host(`verify.encypherai.com`)"
+      rule: "Host(`verify.encypher.com`)"
       service: verification-service
       entryPoints:
         - web

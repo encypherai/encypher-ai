@@ -57,7 +57,7 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASS: str = ""
     SMTP_TLS: bool = True
-    EMAIL_FROM: str = "support@encypherai.com"
+    EMAIL_FROM: str = "support@encypher.com"
     EMAIL_FROM_NAME: str = "Support - Encypher"
 
     model_config = SettingsConfigDict(

@@ -25,6 +25,6 @@ def test_send_demo_notification_uses_contact_recipient_and_user_reply_to(monkeyp
 
     email_service.send_demo_notification(demo_request, context="publisher-demo")
 
-    assert captured["to_email"] == "contact@encypherai.com"
+    assert captured["to_email"] == "contact@encypher.com"
     assert captured["reply_to"] == "jane@example.com"
     assert "New Publisher Demo Request" in captured["subject"]

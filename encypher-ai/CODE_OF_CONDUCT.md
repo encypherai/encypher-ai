@@ -38,7 +38,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at:
 
-**Email:** conduct@encypherai.com
+**Email:** conduct@encypher.com
 
 All complaints will be reviewed and investigated promptly and fairly.
 

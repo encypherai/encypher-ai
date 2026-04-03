@@ -1,6 +1,6 @@
 # \StreamingMerkleAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -32,7 +32,7 @@ import (
 )
 
 func main() {
-	streamMerkleSegmentRequest := *openapiclient.NewStreamMerkleSegmentRequest("SessionId_example", "SegmentText_example") // StreamMerkleSegmentRequest | 
+	streamMerkleSegmentRequest := *openapiclient.NewStreamMerkleSegmentRequest("SessionId_example", "SegmentText_example") // StreamMerkleSegmentRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -57,7 +57,7 @@ Other parameters are passed through a pointer to a apiAddSegmentToSessionApiV1En
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **streamMerkleSegmentRequest** | [**StreamMerkleSegmentRequest**](StreamMerkleSegmentRequest.md) |  | 
+ **streamMerkleSegmentRequest** | [**StreamMerkleSegmentRequest**](StreamMerkleSegmentRequest.md) |  |
 
 ### Return type
 
@@ -98,7 +98,7 @@ import (
 )
 
 func main() {
-	streamMerkleFinalizeRequest := *openapiclient.NewStreamMerkleFinalizeRequest("SessionId_example") // StreamMerkleFinalizeRequest | 
+	streamMerkleFinalizeRequest := *openapiclient.NewStreamMerkleFinalizeRequest("SessionId_example") // StreamMerkleFinalizeRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -123,7 +123,7 @@ Other parameters are passed through a pointer to a apiFinalizeStreamingSessionAp
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **streamMerkleFinalizeRequest** | [**StreamMerkleFinalizeRequest**](StreamMerkleFinalizeRequest.md) |  | 
+ **streamMerkleFinalizeRequest** | [**StreamMerkleFinalizeRequest**](StreamMerkleFinalizeRequest.md) |  |
 
 ### Return type
 
@@ -164,7 +164,7 @@ import (
 )
 
 func main() {
-	streamMerkleStatusRequest := *openapiclient.NewStreamMerkleStatusRequest("SessionId_example") // StreamMerkleStatusRequest | 
+	streamMerkleStatusRequest := *openapiclient.NewStreamMerkleStatusRequest("SessionId_example") // StreamMerkleStatusRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -189,7 +189,7 @@ Other parameters are passed through a pointer to a apiGetSessionStatusApiV1Enter
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **streamMerkleStatusRequest** | [**StreamMerkleStatusRequest**](StreamMerkleStatusRequest.md) |  | 
+ **streamMerkleStatusRequest** | [**StreamMerkleStatusRequest**](StreamMerkleStatusRequest.md) |  |
 
 ### Return type
 
@@ -230,7 +230,7 @@ import (
 )
 
 func main() {
-	streamMerkleStartRequest := *openapiclient.NewStreamMerkleStartRequest("DocumentId_example") // StreamMerkleStartRequest | 
+	streamMerkleStartRequest := *openapiclient.NewStreamMerkleStartRequest("DocumentId_example") // StreamMerkleStartRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -255,7 +255,7 @@ Other parameters are passed through a pointer to a apiStartStreamingMerkleSessio
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **streamMerkleStartRequest** | [**StreamMerkleStartRequest**](StreamMerkleStartRequest.md) |  | 
+ **streamMerkleStartRequest** | [**StreamMerkleStartRequest**](StreamMerkleStartRequest.md) |  |
 
 ### Return type
 
@@ -273,4 +273,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

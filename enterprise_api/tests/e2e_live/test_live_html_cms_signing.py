@@ -5,7 +5,7 @@ Pipeline:
 1. Extract rendered text from chesschampion example_article.html
 2. Sign via live production API with micro mode (ecc=False and ecc=True)
 3. Verify via live production API
-4. Write signed text to files for manual copy-paste into encypherai.com/tools/verify
+4. Write signed text to files for manual copy-paste into encypher.com/tools/verify
 
 Run with:
     LIVE_API_TESTS=true uv run pytest tests/e2e_live/test_live_html_cms_signing.py -v -s
@@ -97,7 +97,7 @@ async def test_live_html_sign_micro_no_ecc(
     extracted_text,
 ) -> None:
     """Sign chesschampion HTML text with micro (ecc=False) via live unified /sign, verify, write output."""
-    assert live_api_config.base_url.startswith("https://api.encypherai.com")
+    assert live_api_config.base_url.startswith("https://api.encypher.com")
 
     document_id = _unique_document_id("html_micro_no_ecc")
 
@@ -131,7 +131,7 @@ async def test_live_html_sign_micro_no_ecc(
     assert isinstance(signed_text, str), "Expected signed_text in data.document"
     assert len(signed_text) > len(extracted_text), "Signed text should be longer (has markers)"
 
-    # Write signed text for manual copy-paste into encypherai.com/tools/verify
+    # Write signed text for manual copy-paste into encypher.com/tools/verify
     out_path = _write_output("chesschampion_micro_no_ecc_signed.txt", signed_text)
     print(f"\n>>> micro (ecc=False) signed text written to: {out_path}")
     print(f">>> Document ID: {document_id}")
@@ -155,7 +155,7 @@ async def test_live_html_sign_micro_no_ecc(
     )
 
     print(">>> micro (ecc=False) API verification: PASSED")
-    print(f">>> Copy the contents of {out_path} and paste into https://encypherai.com/tools/verify")
+    print(f">>> Copy the contents of {out_path} and paste into https://encypher.com/tools/verify")
 
 
 @pytest.mark.e2e
@@ -167,7 +167,7 @@ async def test_live_html_sign_micro_ecc(
     extracted_text,
 ) -> None:
     """Sign chesschampion HTML text with micro (ecc=True, default) via live unified /sign, verify, write output."""
-    assert live_api_config.base_url.startswith("https://api.encypherai.com")
+    assert live_api_config.base_url.startswith("https://api.encypher.com")
 
     document_id = _unique_document_id("html_micro_ecc")
 
@@ -224,7 +224,7 @@ async def test_live_html_sign_micro_ecc(
     )
 
     print(">>> micro (ecc=True) API verification: PASSED")
-    print(f">>> Copy the contents of {out_path} and paste into https://encypherai.com/tools/verify")
+    print(f">>> Copy the contents of {out_path} and paste into https://encypher.com/tools/verify")
 
 
 # ===========================================================================
@@ -241,7 +241,7 @@ async def test_live_html_sign_basic(
     extracted_text,
 ) -> None:
     """Sign chesschampion HTML text with basic /sign (default options) for comparison."""
-    assert live_api_config.base_url.startswith("https://api.encypherai.com")
+    assert live_api_config.base_url.startswith("https://api.encypher.com")
 
     document_id = _unique_document_id("html_basic")
 
@@ -304,7 +304,7 @@ async def test_live_html_inplace_micro_no_ecc(
     extracted_text,
 ) -> None:
     """Sign text via API with micro (ecc=False), embed back into HTML, output .html file."""
-    assert live_api_config.base_url.startswith("https://api.encypherai.com")
+    assert live_api_config.base_url.startswith("https://api.encypher.com")
 
     document_id = _unique_document_id("html_inplace_micro_no_ecc")
 
@@ -346,7 +346,7 @@ async def test_live_html_inplace_micro_no_ecc(
     print(f"\n>>> micro (ecc=False) signed HTML written to: {out_path}")
     print(f">>> Original HTML: {len(example_html)} chars")
     print(f">>> Signed HTML:   {len(signed_html)} chars")
-    print(">>> Open in browser, select-all, copy, paste into https://encypherai.com/tools/verify")
+    print(">>> Open in browser, select-all, copy, paste into https://encypher.com/tools/verify")
 
     # Verify: extract text from signed HTML, send to verify API
     text_from_signed_html = extract_text_from_html(signed_html)
@@ -375,7 +375,7 @@ async def test_live_html_inplace_micro_ecc(
     extracted_text,
 ) -> None:
     """Sign text via API with micro (ecc=True, default), embed back into HTML, output .html file."""
-    assert live_api_config.base_url.startswith("https://api.encypherai.com")
+    assert live_api_config.base_url.startswith("https://api.encypher.com")
 
     document_id = _unique_document_id("html_inplace_micro_ecc")
 

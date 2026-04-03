@@ -1,8 +1,8 @@
 # Comprehensive Assessment: Enterprise API Embedding Methods for CMS Blog Post Integration
 
-**Status:** Complete  
-**Team:** TEAM_165  
-**Date:** 2026-02-11  
+**Status:** Complete
+**Team:** TEAM_165
+**Date:** 2026-02-11
 
 ## Overview
 
@@ -242,7 +242,7 @@ Since `vs256_embedding` doesn't embed a C2PA manifest in the text itself, you ha
 1. **Sign with `vs256_embedding`** — per-sentence invisible UUIDs (36 chars each)
 2. **Store C2PA manifest server-side** — the `ContentReference` records already store `instance_id`, `manifest_data`, and all C2PA metadata
 3. **Serve manifest via API** — expose a `GET /api/v1/public/manifest/{document_id}` endpoint that returns the C2PA manifest JSON
-4. **Add `<link>` tag in HTML** — `<link rel="c2pa-manifest" href="https://api.encypherai.com/v1/public/manifest/blog-post-123">`
+4. **Add `<link>` tag in HTML** — `<link rel="c2pa-manifest" href="https://api.encypher.com/v1/public/manifest/blog-post-123">`
 
 This is the cleanest approach: the blog post HTML has minimal invisible overhead (36 chars/sentence), and the C2PA manifest is discoverable via a standard link relation.
 

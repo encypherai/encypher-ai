@@ -94,7 +94,7 @@ class ApiAccessService:
                 ApiAccessStatusEnum.APPROVED: "Your API access has been approved. You can now generate API keys.",
                 ApiAccessStatusEnum.DENIED: "Your API access request was denied. You may submit a new request with more details.",
                 ApiAccessStatusEnum.SUSPENDED: (
-                    "Your API access has been suspended. If you believe this is an error, please contact support at support@encypherai.com."
+                    "Your API access has been suspended. If you believe this is an error, please contact support at support@encypher.com."
                 ),
             }
 
@@ -131,7 +131,7 @@ class ApiAccessService:
             ApiAccessStatusEnum.APPROVED: "Your API access has been approved. You can now generate API keys.",
             ApiAccessStatusEnum.DENIED: "Your API access request was denied. You may submit a new request with more details.",
             ApiAccessStatusEnum.SUSPENDED: (
-                "Your API access has been suspended. If you believe this is an error, please contact support at support@encypherai.com."
+                "Your API access has been suspended. If you believe this is an error, please contact support at support@encypher.com."
             ),
         }
 
@@ -303,7 +303,7 @@ class ApiAccessService:
         current_status = user.api_access_status
 
         if current_status == ApiAccessStatus.SUSPENDED.value:
-            raise ValueError("Your API access has been suspended. If you believe this is an error, please contact support at support@encypherai.com.")
+            raise ValueError("Your API access has been suspended. If you believe this is an error, please contact support at support@encypher.com.")
 
         if current_status == ApiAccessStatus.PENDING.value:
             raise ValueError("API access request is already pending review")

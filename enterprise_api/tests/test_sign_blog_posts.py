@@ -17,8 +17,8 @@ from scripts.sign_blog_posts import (
 
 
 def test_normalize_base_url_adds_scheme() -> None:
-    assert normalize_base_url("api.encypherai.com") == "https://api.encypherai.com"
-    assert normalize_base_url("https://api.encypherai.com") == "https://api.encypherai.com"
+    assert normalize_base_url("api.encypher.com") == "https://api.encypher.com"
+    assert normalize_base_url("https://api.encypher.com") == "https://api.encypher.com"
 
 
 def test_parse_frontmatter_extracts_metadata_and_body() -> None:
@@ -53,12 +53,12 @@ def test_resolve_api_config_reads_requested_env_names(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("ENYCPHER_API_KEY", "k_test")
-    monkeypatch.setenv("ENCYPHER_BASE_URL", "api.encypherai.com")
+    monkeypatch.setenv("ENCYPHER_BASE_URL", "api.encypher.com")
 
     api_key, base_url = resolve_api_config(api_key=None, base_url=None, env_file=None)
 
     assert api_key == "k_test"
-    assert base_url == "https://api.encypherai.com"
+    assert base_url == "https://api.encypher.com"
 
 
 class _DummyResponse:
@@ -121,7 +121,7 @@ def test_sign_markdown_text_uses_micro_ecc_and_c2pa_defaults() -> None:
     signed_text = sign_markdown_text(
         post=post,
         api_key="k_test",
-        base_url="https://api.encypherai.com",
+        base_url="https://api.encypher.com",
         client=client,
     )
 
@@ -154,7 +154,7 @@ def test_sign_markdown_text_uses_embedding_plan_when_present() -> None:
     merged_text = sign_markdown_text(
         post=post,
         api_key="k_test",
-        base_url="https://api.encypherai.com",
+        base_url="https://api.encypher.com",
         client=client,
     )
 
@@ -176,7 +176,7 @@ def test_sign_markdown_text_preserves_markdown_formatting() -> None:
     merged_text = sign_markdown_text(
         post=post,
         api_key="k_test",
-        base_url="https://api.encypherai.com",
+        base_url="https://api.encypher.com",
         client=client,
     )
 
@@ -202,7 +202,7 @@ def test_sign_markdown_text_strips_existing_markers_before_signing() -> None:
     sign_markdown_text(
         post=post,
         api_key="k_test",
-        base_url="https://api.encypherai.com",
+        base_url="https://api.encypher.com",
         client=client,
     )
 

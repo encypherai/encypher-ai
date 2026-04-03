@@ -1,6 +1,6 @@
 # VerificationApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -232,7 +232,7 @@ import type { VerifyAdvancedApiV1VerifyAdvancedPostRequest } from '@encypher/sdk
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -576,4 +576,3 @@ No authorization required
 | **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-

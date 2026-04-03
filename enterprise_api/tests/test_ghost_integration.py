@@ -198,7 +198,7 @@ class TestBadgeInjection:
         script = generate_badge_script("doc_123", "inst_456")
         assert "doc_123" in script
         assert "Encypher Provenance Badge" in script
-        assert "verify.encypherai.com" in script
+        assert "verify.encypher.com" in script
 
     def test_generate_badge_custom_url(self):
         script = generate_badge_script("doc_123", "inst_456", "https://custom.verify.com")
@@ -569,31 +569,31 @@ class TestWebhookToken:
 
     def test_build_webhook_url(self, monkeypatch: pytest.MonkeyPatch):
         token = "ghwh_abc123"
-        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://api.encypherai.com")
+        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://api.encypher.com")
         url = _build_webhook_url(token)
-        assert url == f"https://api.encypherai.com{WEBHOOK_BASE_PATH}?token=ghwh_abc123"
+        assert url == f"https://api.encypher.com{WEBHOOK_BASE_PATH}?token=ghwh_abc123"
 
     def test_build_webhook_url_contains_token(self, monkeypatch: pytest.MonkeyPatch):
         token = _generate_webhook_token()
-        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://api.encypherai.com/")
+        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://api.encypher.com/")
         url = _build_webhook_url(token)
         assert token in url
-        assert url.startswith(f"https://api.encypherai.com{WEBHOOK_BASE_PATH}")
+        assert url.startswith(f"https://api.encypher.com{WEBHOOK_BASE_PATH}")
 
     def test_build_webhook_url_uses_configured_base_url(self, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://staging-api.encypherai.com")
+        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://staging-api.encypher.com")
         token = "ghwh_custom"
         url = _build_webhook_url(token)
-        assert url == f"https://staging-api.encypherai.com{WEBHOOK_BASE_PATH}?token=ghwh_custom"
+        assert url == f"https://staging-api.encypher.com{WEBHOOK_BASE_PATH}?token=ghwh_custom"
 
     def test_build_webhook_url_ignores_request_host(self, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://api.encypherai.com")
+        monkeypatch.setattr(integrations_router.settings, "api_base_url", "https://api.encypher.com")
 
         class _Req:
-            base_url = "https://encypherai.com/"
+            base_url = "https://encypher.com/"
 
         url = _build_webhook_url("ghwh_proxy", request=_Req())
-        assert url == f"https://api.encypherai.com{WEBHOOK_BASE_PATH}?token=ghwh_proxy"
+        assert url == f"https://api.encypher.com{WEBHOOK_BASE_PATH}?token=ghwh_proxy"
 
 
 class TestMaskKey:
@@ -628,7 +628,7 @@ class TestGhostIntegrationResponseSchema:
             embed_c2pa=True,
             badge_enabled=True,
             is_active=True,
-            webhook_url="https://api.encypherai.com/api/v1/integrations/ghost/webhook?token=ghwh_abc",
+            webhook_url="https://api.encypher.com/api/v1/integrations/ghost/webhook?token=ghwh_abc",
             webhook_token="ghwh_abc",
         )
         assert resp.webhook_token == "ghwh_abc"
@@ -650,7 +650,7 @@ class TestGhostIntegrationResponseSchema:
             embed_c2pa=True,
             badge_enabled=True,
             is_active=True,
-            webhook_url="https://api.encypherai.com/api/v1/integrations/ghost/webhook?token=ghwh_••••••••",
+            webhook_url="https://api.encypher.com/api/v1/integrations/ghost/webhook?token=ghwh_••••••••",
         )
         assert resp.webhook_token is None
         assert "••••••••" in resp.webhook_url
@@ -659,7 +659,7 @@ class TestGhostIntegrationResponseSchema:
 
     def test_token_regenerate_response(self):
         resp = GhostTokenRegenerateResponse(
-            webhook_url="https://api.encypherai.com/api/v1/integrations/ghost/webhook?token=ghwh_new",
+            webhook_url="https://api.encypher.com/api/v1/integrations/ghost/webhook?token=ghwh_new",
             webhook_token="ghwh_new",
         )
         assert resp.webhook_token == "ghwh_new"

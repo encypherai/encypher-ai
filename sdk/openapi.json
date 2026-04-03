@@ -19661,7 +19661,7 @@
   },
   "servers": [
     {
-      "url": "https://api.encypherai.com",
+      "url": "https://api.encypher.com",
       "description": "Production"
     },
     {

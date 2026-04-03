@@ -1,6 +1,6 @@
 # encypher.DocumentsApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -34,10 +34,10 @@ from encypher.models.document_delete_response import DocumentDeleteResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -54,7 +54,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.DocumentsApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
     revoke = True # bool | Also revoke the document (optional) (default to True)
     reason = 'reason_example' # str | Reason for deletion (optional)
 
@@ -74,9 +74,9 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
  **revoke** | **bool**| Also revoke the document | [optional] [default to True]
- **reason** | **str**| Reason for deletion | [optional] 
+ **reason** | **str**| Reason for deletion | [optional]
 
 ### Return type
 
@@ -120,10 +120,10 @@ from encypher.models.document_delete_response import DocumentDeleteResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -140,7 +140,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.DocumentsApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
     revoke = True # bool | Also revoke the document (optional) (default to True)
     reason = 'reason_example' # str | Reason for deletion (optional)
 
@@ -160,9 +160,9 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
  **revoke** | **bool**| Also revoke the document | [optional] [default to True]
- **reason** | **str**| Reason for deletion | [optional] 
+ **reason** | **str**| Reason for deletion | [optional]
 
 ### Return type
 
@@ -203,10 +203,10 @@ from encypher.models.document_detail_response import DocumentDetailResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -223,7 +223,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.DocumentsApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
 
     try:
         # Get Document
@@ -241,7 +241,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
 
 ### Return type
 
@@ -282,10 +282,10 @@ from encypher.models.document_detail_response import DocumentDetailResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -302,7 +302,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.DocumentsApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
 
     try:
         # Get Document
@@ -320,7 +320,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
 
 ### Return type
 
@@ -363,10 +363,10 @@ from encypher.models.document_history_response import DocumentHistoryResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -383,7 +383,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.DocumentsApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
 
     try:
         # Get Document History
@@ -401,7 +401,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
 
 ### Return type
 
@@ -444,10 +444,10 @@ from encypher.models.document_history_response import DocumentHistoryResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -464,7 +464,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.DocumentsApi(api_client)
-    document_id = 'document_id_example' # str | 
+    document_id = 'document_id_example' # str |
 
     try:
         # Get Document History
@@ -482,7 +482,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **document_id** | **str**|  | 
+ **document_id** | **str**|  |
 
 ### Return type
 
@@ -525,10 +525,10 @@ from encypher.models.document_list_response import DocumentListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -570,10 +570,10 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **page** | **int**| Page number | [optional] [default to 1]
  **page_size** | **int**| Items per page | [optional] [default to 50]
- **search** | **str**| Search in title | [optional] 
- **status** | **str**| Filter by status (active/revoked) | [optional] 
- **from_date** | **str**| Filter from date (ISO format) | [optional] 
- **to_date** | **str**| Filter to date (ISO format) | [optional] 
+ **search** | **str**| Search in title | [optional]
+ **status** | **str**| Filter by status (active/revoked) | [optional]
+ **from_date** | **str**| Filter from date (ISO format) | [optional]
+ **to_date** | **str**| Filter to date (ISO format) | [optional]
 
 ### Return type
 
@@ -616,10 +616,10 @@ from encypher.models.document_list_response import DocumentListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -661,10 +661,10 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **page** | **int**| Page number | [optional] [default to 1]
  **page_size** | **int**| Items per page | [optional] [default to 50]
- **search** | **str**| Search in title | [optional] 
- **status** | **str**| Filter by status (active/revoked) | [optional] 
- **from_date** | **str**| Filter from date (ISO format) | [optional] 
- **to_date** | **str**| Filter to date (ISO format) | [optional] 
+ **search** | **str**| Search in title | [optional]
+ **status** | **str**| Filter by status (active/revoked) | [optional]
+ **from_date** | **str**| Filter from date (ISO format) | [optional]
+ **to_date** | **str**| Filter to date (ISO format) | [optional]
 
 ### Return type
 
@@ -687,4 +687,3 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

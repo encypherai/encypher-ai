@@ -1,7 +1,7 @@
 # PRD: Enterprise API C2PA + Security Launch Audit
 
-**Status:** ✅ Complete  
-**Completed:** 2026-01-07  
+**Status:** ✅ Complete
+**Completed:** 2026-01-07
 **Current Goal:** ~~Establish a repo-SSOT audit of Enterprise API security and C2PA compatibility, then execute fixes (TDD) until launch-readiness criteria are met.~~ **DONE**
 
 ## Overview
@@ -60,7 +60,7 @@ This PRD defines a comprehensive audit of the `enterprise_api` surface area to e
       - Coalition Service: `app/utils/coalition_client.py` → `settings.coalition_service_url`
       - SSL.com API: `app/utils/ssl_com_client.py` → `settings.ssl_com_*`
       - C2PA Trust List: `app/utils/c2pa_trust_list.py` → hardcoded GitHub URL
-      - Status List CDN: `app/services/status_service.py` → host allowlist (`verify.encypherai.com`)
+      - Status List CDN: `app/services/status_service.py` → host allowlist (`verify.encypher.com`)
     - **Dev-only utilities (not in production paths):**
       - `app/utils/embeddings/encypher_extract.py` — partner extraction library, not called by API
 - [ ] 3.2 Abuse controls
@@ -118,7 +118,7 @@ This PRD defines a comprehensive audit of the `enterprise_api` surface area to e
 
 ## Completion Notes
 ### Rolling Findings (as discovered)
-- Implemented StatusList2021 remote fetch/decoding with strict host allowlist (`verify.encypherai.com`) and https-only.
+- Implemented StatusList2021 remote fetch/decoding with strict host allowlist (`verify.encypher.com`) and https-only.
 - Hardened `c2pa_verifier.verify_manifest_url()` against SSRF (https-only, localhost/private IP block, no redirects, payload size cap).
 - Implemented cryptographically-correct X.509 chain validation for C2PA trust-list checks (signature verification + validity windows + BasicConstraints CA).
 - Hardened webhook delivery/test against SSRF (https-only, localhost/private IP block, no redirects) and added TDD coverage.
@@ -178,7 +178,7 @@ Note: OpenAPI artifacts currently do not represent optional auth (API key header
 | `POST /api/v1/tools/decode` | none | none | DB read | Medium. Trust-anchor lookups of signer public keys; may enable org key existence probing. |
 | `POST /api/v1/lookup` | none | none | DB read | Medium. Returns document title/URL/org name for sentence hashes. |
 | `POST /api/v1/provenance/lookup` | none | none | DB read | Medium. Alias of `/lookup`. |
-| `POST /api/v1/verify` | none | none | DB read + network (restricted) | Medium. Rate limited. May fetch StatusList bitstrings for revocation checks via allowlisted host (`verify.encypherai.com`). |
+| `POST /api/v1/verify` | none | none | DB read + network (restricted) | Medium. Rate limited. May fetch StatusList bitstrings for revocation checks via allowlisted host (`verify.encypher.com`). |
 | `GET /api/v1/verify/{document_id}` | none | none | DB read | Medium. Public verification link (HTML). Reveals title + org for a known document ID. |
 | `GET /api/v1/status/lists/{list_id}` | none | none | DB read | Intended public. CDN-cacheable StatusList2021 credential (opaque UUID, no org_id exposure). |
 | `POST /api/v1/public/c2pa/create-manifest` | optional | none | DB/key-service optional | Low. Non-cryptographic. Optional API key for higher limits. |

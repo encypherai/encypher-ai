@@ -9,7 +9,7 @@ class EncypherConfig(BaseSettings):
     """SDK configuration from environment variables."""
 
     encypher_api_key: Optional[str] = None
-    encypher_base_url: str = "https://api.encypherai.com"
+    encypher_base_url: str = "https://api.encypher.com"
     encypher_timeout: float = 30.0
     encypher_max_retries: int = 3
 

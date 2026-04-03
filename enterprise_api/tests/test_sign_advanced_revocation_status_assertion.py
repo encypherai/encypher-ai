@@ -21,7 +21,7 @@ async def test_sign_advanced_embeds_status_list_assertion(
         def get_segments(self, level: str):
             return [self._text]
 
-    allocate_mock = AsyncMock(return_value=(1, 7, "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000e02"))
+    allocate_mock = AsyncMock(return_value=(1, 7, "https://verify.encypher.com/status/v1/lists/00000000-0000-0000-0000-000000000e02"))
 
     with (
         patch("app.utils.quota.QuotaManager.check_quota", new=AsyncMock(return_value=True)),
@@ -63,7 +63,7 @@ async def test_sign_advanced_embeds_status_list_assertion(
     assert any(
         assertion.get("label") == "org.encypher.status"
         and assertion.get("data", {}).get("statusListCredential")
-        == "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000e02"
+        == "https://verify.encypher.com/status/v1/lists/00000000-0000-0000-0000-000000000e02"
         and str(assertion.get("data", {}).get("statusListIndex")) == "7"
         for assertion in called_assertions
     )

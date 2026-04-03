@@ -1,11 +1,11 @@
 # PRD-003: WordPress Plugin Coalition Integration
 
-**Status**: ✅ Implemented  
-**Priority**: P1 (High)  
-**Estimated Effort**: 1-2 weeks  
-**Owner**: WordPress Team  
-**Created**: 2025-01-04  
-**Updated**: 2025-11-04  
+**Status**: ✅ Implemented
+**Priority**: P1 (High)
+**Estimated Effort**: 1-2 weeks
+**Owner**: WordPress Team
+**Created**: 2025-01-04
+**Updated**: 2025-11-04
 **Depends On**: PRD-001 (Coalition Infrastructure)
 
 ---
@@ -35,8 +35,8 @@ Integrate coalition features into the WordPress plugin so small publishers can v
 ## User Stories
 
 ### Story 1: Sarah (Small Publisher) - View Coalition Stats
-**As a** WordPress user with the Encypher plugin  
-**I want to** see my coalition stats in my WordPress dashboard  
+**As a** WordPress user with the Encypher plugin
+**I want to** see my coalition stats in my WordPress dashboard
 **So that** I don't need to visit a separate website
 
 **Acceptance Criteria:**
@@ -58,7 +58,7 @@ class Encypher_Provenance_Coalition {
         add_action('wp_dashboard_setup', [$this, 'add_coalition_widget']);
         add_action('admin_menu', [$this, 'add_coalition_page']);
     }
-    
+
     public function add_coalition_widget() {
         wp_add_dashboard_widget(
             'encypher_coalition_widget',
@@ -66,16 +66,16 @@ class Encypher_Provenance_Coalition {
             [$this, 'render_coalition_widget']
         );
     }
-    
+
     public function render_coalition_widget() {
         $stats = $this->get_coalition_stats();
         include plugin_dir_path(__FILE__) . '../admin/partials/coalition-widget.php';
     }
-    
+
     public function get_coalition_stats() {
         $api_base = get_option('encypher_api_base_url');
         $api_key = get_option('encypher_api_key');
-        
+
         $response = wp_remote_get(
             $api_base . '/coalition/stats',
             [
@@ -86,11 +86,11 @@ class Encypher_Provenance_Coalition {
                 'timeout' => 15
             ]
         );
-        
+
         if (is_wp_error($response)) {
             return null;
         }
-        
+
         $body = json_decode(wp_remote_retrieve_body($response), true);
         return $body['data'] ?? null;
     }
@@ -121,14 +121,14 @@ class Encypher_Provenance_Coalition {
             <span class="stat-value">$<?php echo number_format($stats['revenue_stats']['pending'], 2); ?></span>
         </div>
     </div>
-    
+
     <div class="coalition-info">
         <p>
             <strong>Coalition Members:</strong> <?php echo number_format($stats['coalition_stats']['total_members']); ?><br>
             <strong>Content Pool:</strong> <?php echo number_format($stats['coalition_stats']['total_content_pool']); ?> documents
         </p>
     </div>
-    
+
     <a href="<?php echo admin_url('admin.php?page=encypher-coalition'); ?>" class="button button-primary">
         View Full Coalition Dashboard
     </a>
@@ -202,7 +202,7 @@ public function register_coalition_settings() {
         [$this, 'render_coalition_section'],
         'encypher-provenance-settings'
     );
-    
+
     add_settings_field(
         'encypher_coalition_enabled',
         'Coalition Membership',
@@ -221,7 +221,7 @@ public function render_coalition_enabled_field() {
     </label>
     <p class="description">
         Coalition membership allows you to earn revenue from AI company licensing deals.
-        <a href="https://encypherai.com/coalition" target="_blank">Learn more</a>
+        <a href="https://encypher.com/coalition" target="_blank">Learn more</a>
     </p>
     <?php
 }

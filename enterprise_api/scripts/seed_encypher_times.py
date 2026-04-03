@@ -6,7 +6,7 @@ Creates a realistic midsized/large publisher account with pre-populated
 analytics data suitable for showing off the dashboard and analytics pages.
 
 Credentials:
-  Email:    times@encypherai.com
+  Email:    times@encypher.com
   Password: TimesDemo2024!
   Org:      org_encypher_times
 
@@ -47,7 +47,7 @@ def connect(dbname: str) -> psycopg2.extensions.connection:
 ORG_ID = "org_encypher_times"
 USER_ID = "user_encypher_times"
 ORG_NAME = "The Encypher Times"
-ORG_EMAIL = "times@encypherai.com"
+ORG_EMAIL = "times@encypher.com"
 ORG_SLUG = "encypher-times"
 USER_PASSWORD = "TimesDemo2024!"
 API_KEY = "times-demo-api-key-2024"
@@ -277,13 +277,13 @@ def seed_content(cur):
         "permitted": True,
         "license_type": "attribution_required",
         "conditions": ["author_credit", "canonical_url"],
-        "contact_url": "https://times.encypherai.com/licensing",
+        "contact_url": "https://times.encypher.com/licensing",
     }
     gold = {
         "permitted": False,
         "license_type": "license_required",
-        "contact_email": "licensing@encypherai.com",
-        "contact_url": "https://times.encypherai.com/licensing",
+        "contact_email": "licensing@encypher.com",
+        "contact_url": "https://times.encypher.com/licensing",
         "conditions": ["written_license", "revenue_share"],
     }
 
@@ -302,7 +302,7 @@ def seed_content(cur):
         )
         VALUES (
             %s, 1, %s,
-            %s, 'https://times.encypherai.com', 'licensing@encypherai.com',
+            %s, 'https://times.encypher.com', 'licensing@encypher.com',
             'Encypher Times Media LLC', 'US', 'all_rights_reserved',
             %s::jsonb, %s::jsonb, %s::jsonb,
             'published', %s,

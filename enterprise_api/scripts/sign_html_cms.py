@@ -25,7 +25,7 @@ Usage:
 
 Environment variables (or via --env-file):
     API_KEY     - Encypher AI API key
-    BASE_URL    - API base URL (default: https://api.encypherai.com)
+    BASE_URL    - API base URL (default: https://api.encypher.com)
 """
 
 from __future__ import annotations
@@ -208,7 +208,7 @@ def _embed_signed_text_in_element(
 def sign_html(
     html: str,
     api_key: str,
-    base_url: str = "https://api.encypherai.com",
+    base_url: str = "https://api.encypher.com",
     manifest_mode: str = "micro",
     content_selector: str = "article",
     document_title: str | None = None,
@@ -395,7 +395,7 @@ def main() -> None:
     import os
 
     api_key = args.api_key or env.get("API_KEY") or os.environ.get("API_KEY")
-    base_url = args.base_url or env.get("BASE_URL") or os.environ.get("BASE_URL", "https://api.encypherai.com")
+    base_url = args.base_url or env.get("BASE_URL") or os.environ.get("BASE_URL", "https://api.encypher.com")
 
     if not api_key:
         print("ERROR: API_KEY not provided. Use --api-key, --env-file, or set API_KEY env var.", file=sys.stderr)

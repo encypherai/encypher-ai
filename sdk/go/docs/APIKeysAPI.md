@@ -1,6 +1,6 @@
 # \APIKeysAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -38,7 +38,7 @@ import (
 )
 
 func main() {
-	keyCreateRequest := *openapiclient.NewKeyCreateRequest() // KeyCreateRequest | 
+	keyCreateRequest := *openapiclient.NewKeyCreateRequest() // KeyCreateRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -63,7 +63,7 @@ Other parameters are passed through a pointer to a apiCreateKeyApiV1KeysPostRequ
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **keyCreateRequest** | [**KeyCreateRequest**](KeyCreateRequest.md) |  | 
+ **keyCreateRequest** | [**KeyCreateRequest**](KeyCreateRequest.md) |  |
 
 ### Return type
 
@@ -104,7 +104,7 @@ import (
 )
 
 func main() {
-	keyCreateRequest := *openapiclient.NewKeyCreateRequest() // KeyCreateRequest | 
+	keyCreateRequest := *openapiclient.NewKeyCreateRequest() // KeyCreateRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -129,7 +129,7 @@ Other parameters are passed through a pointer to a apiCreateKeyApiV1KeysPost_1Re
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **keyCreateRequest** | [**KeyCreateRequest**](KeyCreateRequest.md) |  | 
+ **keyCreateRequest** | [**KeyCreateRequest**](KeyCreateRequest.md) |  |
 
 ### Return type
 
@@ -302,7 +302,7 @@ import (
 )
 
 func main() {
-	keyId := "keyId_example" // string | 
+	keyId := "keyId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -322,7 +322,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** |  | 
+**keyId** | **string** |  |
 
 ### Other Parameters
 
@@ -372,7 +372,7 @@ import (
 )
 
 func main() {
-	keyId := "keyId_example" // string | 
+	keyId := "keyId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -392,7 +392,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** |  | 
+**keyId** | **string** |  |
 
 ### Other Parameters
 
@@ -442,7 +442,7 @@ import (
 )
 
 func main() {
-	keyId := "keyId_example" // string | 
+	keyId := "keyId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -462,7 +462,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** |  | 
+**keyId** | **string** |  |
 
 ### Other Parameters
 
@@ -512,7 +512,7 @@ import (
 )
 
 func main() {
-	keyId := "keyId_example" // string | 
+	keyId := "keyId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -532,7 +532,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** |  | 
+**keyId** | **string** |  |
 
 ### Other Parameters
 
@@ -582,8 +582,8 @@ import (
 )
 
 func main() {
-	keyId := "keyId_example" // string | 
-	keyUpdateRequest := *openapiclient.NewKeyUpdateRequest() // KeyUpdateRequest | 
+	keyId := "keyId_example" // string |
+	keyUpdateRequest := *openapiclient.NewKeyUpdateRequest() // KeyUpdateRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -603,7 +603,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** |  | 
+**keyId** | **string** |  |
 
 ### Other Parameters
 
@@ -613,7 +613,7 @@ Other parameters are passed through a pointer to a apiUpdateKeyApiV1KeysKeyIdPat
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **keyUpdateRequest** | [**KeyUpdateRequest**](KeyUpdateRequest.md) |  | 
+ **keyUpdateRequest** | [**KeyUpdateRequest**](KeyUpdateRequest.md) |  |
 
 ### Return type
 
@@ -654,8 +654,8 @@ import (
 )
 
 func main() {
-	keyId := "keyId_example" // string | 
-	keyUpdateRequest := *openapiclient.NewKeyUpdateRequest() // KeyUpdateRequest | 
+	keyId := "keyId_example" // string |
+	keyUpdateRequest := *openapiclient.NewKeyUpdateRequest() // KeyUpdateRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -675,7 +675,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** |  | 
+**keyId** | **string** |  |
 
 ### Other Parameters
 
@@ -685,7 +685,7 @@ Other parameters are passed through a pointer to a apiUpdateKeyApiV1KeysKeyIdPat
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **keyUpdateRequest** | [**KeyUpdateRequest**](KeyUpdateRequest.md) |  | 
+ **keyUpdateRequest** | [**KeyUpdateRequest**](KeyUpdateRequest.md) |  |
 
 ### Return type
 
@@ -703,4 +703,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

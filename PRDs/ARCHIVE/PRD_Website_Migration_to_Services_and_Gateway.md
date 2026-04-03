@@ -45,7 +45,7 @@ Security is the top priority: short-lived access tokens, httpOnly refresh cookie
   - `/api/v1/auth/*` → auth-service (8001)
   - `/api/v1/analytics/*` → analytics-service (8006)
   - `/api/v1/verify*` → enterprise_api verification endpoints
-- CORS allowlist: `https://encypherai.com`, `https://www.encypherai.com`, `http://localhost:3000` (dev).
+- CORS allowlist: `https://encypher.com`, `https://www.encypher.com`, `http://localhost:3000` (dev).
 - Health: `GET /health` → `{ status, service, version }`.
 - Metrics: `GET /metrics` (Prometheus).
 - Logging: Structured JSON logs with correlation ID (`X-Request-ID`).
@@ -139,7 +139,7 @@ Security is the top priority: short-lived access tokens, httpOnly refresh cookie
 # 11. Configuration & Environments
 ## 11.1 Gateway ENV
 - `GATEWAY_PORT=8000`
-- `ALLOWED_ORIGINS=https://encypherai.com,https://www.encypherai.com,http://localhost:3000`
+- `ALLOWED_ORIGINS=https://encypher.com,https://www.encypher.com,http://localhost:3000`
 - `AUTH_SERVICE_URL=http://auth-service:8001`
 - `ANALYTICS_SERVICE_URL=http://analytics-service:8006`
 - `ENTERPRISE_API_URL=http://enterprise-api:9000` (or actual)
@@ -227,7 +227,7 @@ Security is the top priority: short-lived access tokens, httpOnly refresh cookie
 
 # 20. Open Questions
 - Do we require anonymous analytics? If yes, define minimal schema and abuse safeguards.
-  - A: Ideally we have some analytics, we currently use Google Analytics and Zoho SalesIQ. 
+  - A: Ideally we have some analytics, we currently use Google Analytics and Zoho SalesIQ.
 - Do we need social login (Google/GitHub) in MVP, or email/password only?
   - A: Keep google/github for MVP in addition to email/password.
 - What production rate limits are acceptable per endpoint and per IP?

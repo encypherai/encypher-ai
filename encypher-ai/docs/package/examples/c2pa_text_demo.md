@@ -11,7 +11,7 @@ This guide provides a walkthrough of a C2PA text demo workflow using the example
 Related links:
 
 - Wrapper reference implementation (MIT): https://github.com/encypherai/c2pa-text
-- Encypher Enterprise API: https://encypherai.com
+- Encypher Enterprise API: https://encypher.com
 
 ## Demo Overview
 

@@ -1,8 +1,8 @@
 # Coalition Infrastructure Security Audit Checklist
 
-**Date**: 2025-11-04  
-**PRD**: PRD-001 Coalition Infrastructure  
-**Phase**: 5 - Testing & Launch  
+**Date**: 2025-11-04
+**PRD**: PRD-001 Coalition Infrastructure
+**Phase**: 5 - Testing & Launch
 
 ---
 
@@ -165,13 +165,13 @@ done
 ### Test Commands
 ```bash
 # Check security headers
-curl -I https://api.encypherai.com/api/v1/coalition/stats
+curl -I https://api.encypher.com/api/v1/coalition/stats
 
 # Test TLS version
-nmap --script ssl-enum-ciphers -p 443 api.encypherai.com
+nmap --script ssl-enum-ciphers -p 443 api.encypher.com
 
 # Test SSL certificate
-openssl s_client -connect api.encypherai.com:443 -tls1_2
+openssl s_client -connect api.encypher.com:443 -tls1_2
 ```
 
 ---
@@ -406,8 +406,8 @@ nikto -h http://localhost:8000
 - [ ] All high issues resolved or accepted
 - [ ] Medium/low issues documented
 
-**Auditor**: ___________________  
-**Date**: ___________________  
+**Auditor**: ___________________
+**Date**: ___________________
 **Signature**: ___________________
 
 ### Development Team
@@ -415,16 +415,16 @@ nikto -h http://localhost:8000
 - [ ] Security tests passing
 - [ ] Documentation updated
 
-**Lead Developer**: ___________________  
-**Date**: ___________________  
+**Lead Developer**: ___________________
+**Date**: ___________________
 **Signature**: ___________________
 
 ### Management
 - [ ] Security risks reviewed
 - [ ] Launch approved
 
-**Product Manager**: ___________________  
-**Date**: ___________________  
+**Product Manager**: ___________________
+**Date**: ___________________
 **Signature**: ___________________
 
 ---

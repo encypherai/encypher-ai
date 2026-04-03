@@ -28,4 +28,4 @@ Add the ability for super admins to see and toggle the API access status (active
 ## Handoff Notes
 - No DB migration needed — `api_access_status` column already exists as VARCHAR(32), new `suspended` value is just a string
 - The admin dropdown prompts for a reason when suspending (via `window.prompt`)
-- Suspended users see a dedicated "API Access Suspended" card with a mailto link to support@encypherai.com
+- Suspended users see a dedicated "API Access Suspended" card with a mailto link to support@encypher.com

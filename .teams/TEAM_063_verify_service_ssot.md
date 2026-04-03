@@ -15,5 +15,5 @@ Move **all** `/api/v1/verify` functionality to `services/verification-service`, 
 - [x] PRD updated + archived
 
 ## Notes / Handoff
-- Ensure `verify.encypherai.com/{document_id}` works after routing change (may require a root redirect handler in verification-service).
+- Ensure `verify.encypher.com/{document_id}` works after routing change (may require a root redirect handler in verification-service).
 - `encypher-ai` upstream sync strategy confirmed: git subtree (local modifications allowed; upstream pulls may require conflict resolution).

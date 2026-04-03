@@ -86,7 +86,7 @@ async def test_sdk_public_openapi_artifact_has_production_servers_first() -> Non
     assert servers
 
     first = servers[0]
-    assert first.get("url") == "https://api.encypherai.com"
+    assert first.get("url") == "https://api.encypher.com"
 
 
 @pytest.mark.asyncio
@@ -120,7 +120,7 @@ async def test_sdk_public_openapi_artifact_matches_runtime_paths_and_security() 
     )
     runtime = jsonable_encoder(_filter_openapi_for_public(base))
 
-    verification_runtime = _load_verification_service_openapi(api_base_url="https://api.encypherai.com")
+    verification_runtime = _load_verification_service_openapi(api_base_url="https://api.encypher.com")
     runtime = _merge_openapi_specs(base=runtime, extra=verification_runtime)
 
     assert _iter_http_operation_keys(artifact) == _iter_http_operation_keys(runtime)

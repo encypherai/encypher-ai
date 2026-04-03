@@ -17,7 +17,7 @@ def _org_fixture(**overrides):
         id="org_test",
         name="Test Org",
         slug="test-org",
-        email="test@encypherai.com",
+        email="test@encypher.com",
         tier="free",
         max_seats=1,
         subscription_status="active",

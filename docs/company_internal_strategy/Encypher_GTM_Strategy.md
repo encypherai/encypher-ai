@@ -891,7 +891,7 @@ TollBit, ProRata, and Cloudflare AI Crawl Control are all Tier 1 licensing tools
 **Document Owner:** CEO / Chief Commercial Officer (CCO)
 
 **Key Changes from March 2026 (v5.0):**
-1. Domain migration: encypherai.com -> encypher.com
+1. Domain migration: encypher.com -> encypher.com
 2. Status updated to Active Launch -- Full-Stack Content Provenance
 3. All "beta" labels removed (Chrome extension v2.0, WordPress plugin -- both released)
 4. Version bumped to 5.0 reflecting domain migration and launch posture shift

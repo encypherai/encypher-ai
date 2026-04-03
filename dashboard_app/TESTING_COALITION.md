@@ -180,7 +180,7 @@ async def create_test_users():
             is_active=True
         )
         db.add(user)
-        
+
         # Create admin user
         admin = User(
             email="admin@example.com",
@@ -190,7 +190,7 @@ async def create_test_users():
             is_superuser=True
         )
         db.add(admin)
-        
+
         await db.commit()
         print("Test users created!")
 
@@ -392,7 +392,7 @@ After running locust, download report:
    # Quick check
    cd dashboard_app\backend
    uv run pytest tests\api\test_coalition_api_async.py -v
-   
+
    cd dashboard_app\frontend
    npm test -- --testPathPattern=coalition
    ```
@@ -411,14 +411,14 @@ After running locust, download report:
 
 4. **Load test before major releases**
    ```powershell
-   uv run locust -f test_coalition_load.py --host=http://staging.encypherai.com --users 1000 --spawn-rate 50 --run-time 30m --headless
+   uv run locust -f test_coalition_load.py --host=http://staging.encypher.com --users 1000 --spawn-rate 50 --run-time 30m --headless
    ```
 
 5. **Security scan weekly**
    ```powershell
    cd dashboard_app\backend
    uv run pip-audit
-   
+
    cd dashboard_app\frontend
    npm audit
    ```

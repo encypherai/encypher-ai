@@ -1,6 +1,6 @@
 # \CoalitionAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -645,4 +645,3 @@ Other parameters are passed through a pointer to a apiOptOutOfCoalitionApiV1Coal
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

@@ -18,17 +18,17 @@ branch_labels = None
 depends_on = None
 
 # Default super admin email
-DEFAULT_SUPER_ADMIN_EMAIL = "erik.svilich@encypherai.com"
+DEFAULT_SUPER_ADMIN_EMAIL = "erik.svilich@encypher.com"
 
 
 def upgrade() -> None:
     # Add is_super_admin column with default False
     op.add_column("users", sa.Column("is_super_admin", sa.Boolean(), nullable=False, server_default="false"))
 
-    # Set erik.svilich@encypherai.com as super admin if they exist
+    # Set erik.svilich@encypher.com as super admin if they exist
     op.execute(f"""
-        UPDATE users 
-        SET is_super_admin = true 
+        UPDATE users
+        SET is_super_admin = true
         WHERE email = '{DEFAULT_SUPER_ADMIN_EMAIL}'
     """)
 

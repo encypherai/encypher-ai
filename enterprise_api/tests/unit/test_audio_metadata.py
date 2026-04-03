@@ -65,7 +65,7 @@ class TestMP3Injection:
         assert extracted["org_id"] == _FIELDS["org_id"]
         assert extracted["document_id"] == _FIELDS["document_id"]
         assert extracted["content_hash"] == _FIELDS["content_hash"]
-        assert extracted["verify"] == "https://verify.encypherai.com"
+        assert extracted["verify"] == "https://verify.encypher.com"
 
     def test_roundtrip_with_existing_id3(self):
         mp3 = _make_mp3_with_id3()
@@ -103,7 +103,7 @@ class TestWAVInjection:
         assert extracted is not None
         assert extracted["instance_id"] == _FIELDS["instance_id"]
         assert extracted["org_id"] == _FIELDS["org_id"]
-        assert extracted["verify"] == "https://verify.encypherai.com"
+        assert extracted["verify"] == "https://verify.encypher.com"
 
     def test_no_metadata_returns_none(self):
         wav = _make_wav_stub()

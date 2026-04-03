@@ -1,6 +1,6 @@
 # \WebhooksAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -42,7 +42,7 @@ import (
 )
 
 func main() {
-	webhookCreateRequest := *openapiclient.NewWebhookCreateRequest("Url_example", []string{"Events_example"}) // WebhookCreateRequest | 
+	webhookCreateRequest := *openapiclient.NewWebhookCreateRequest("Url_example", []string{"Events_example"}) // WebhookCreateRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -67,7 +67,7 @@ Other parameters are passed through a pointer to a apiCreateWebhookApiV1Webhooks
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhookCreateRequest** | [**WebhookCreateRequest**](WebhookCreateRequest.md) |  | 
+ **webhookCreateRequest** | [**WebhookCreateRequest**](WebhookCreateRequest.md) |  |
 
 ### Return type
 
@@ -108,7 +108,7 @@ import (
 )
 
 func main() {
-	webhookCreateRequest := *openapiclient.NewWebhookCreateRequest("Url_example", []string{"Events_example"}) // WebhookCreateRequest | 
+	webhookCreateRequest := *openapiclient.NewWebhookCreateRequest("Url_example", []string{"Events_example"}) // WebhookCreateRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -133,7 +133,7 @@ Other parameters are passed through a pointer to a apiCreateWebhookApiV1Webhooks
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhookCreateRequest** | [**WebhookCreateRequest**](WebhookCreateRequest.md) |  | 
+ **webhookCreateRequest** | [**WebhookCreateRequest**](WebhookCreateRequest.md) |  |
 
 ### Return type
 
@@ -174,7 +174,7 @@ import (
 )
 
 func main() {
-	webhookId := "webhookId_example" // string | 
+	webhookId := "webhookId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -194,7 +194,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**webhookId** | **string** |  | 
+**webhookId** | **string** |  |
 
 ### Other Parameters
 
@@ -244,7 +244,7 @@ import (
 )
 
 func main() {
-	webhookId := "webhookId_example" // string | 
+	webhookId := "webhookId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -264,7 +264,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**webhookId** | **string** |  | 
+**webhookId** | **string** |  |
 
 ### Other Parameters
 
@@ -314,7 +314,7 @@ import (
 )
 
 func main() {
-	webhookId := "webhookId_example" // string | 
+	webhookId := "webhookId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -334,7 +334,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**webhookId** | **string** |  | 
+**webhookId** | **string** |  |
 
 ### Other Parameters
 
@@ -384,7 +384,7 @@ import (
 )
 
 func main() {
-	webhookId := "webhookId_example" // string | 
+	webhookId := "webhookId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -404,7 +404,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**webhookId** | **string** |  | 
+**webhookId** | **string** |  |
 
 ### Other Parameters
 
@@ -454,7 +454,7 @@ import (
 )
 
 func main() {
-	webhookId := "webhookId_example" // string | 
+	webhookId := "webhookId_example" // string |
 	page := int32(56) // int32 |  (optional) (default to 1)
 	pageSize := int32(56) // int32 |  (optional) (default to 50)
 
@@ -476,7 +476,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**webhookId** | **string** |  | 
+**webhookId** | **string** |  |
 
 ### Other Parameters
 
@@ -528,7 +528,7 @@ import (
 )
 
 func main() {
-	webhookId := "webhookId_example" // string | 
+	webhookId := "webhookId_example" // string |
 	page := int32(56) // int32 |  (optional) (default to 1)
 	pageSize := int32(56) // int32 |  (optional) (default to 50)
 
@@ -550,7 +550,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**webhookId** | **string** |  | 
+**webhookId** | **string** |  |
 
 ### Other Parameters
 
@@ -724,7 +724,7 @@ import (
 )
 
 func main() {
-	webhookId := "webhookId_example" // string | 
+	webhookId := "webhookId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -744,7 +744,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**webhookId** | **string** |  | 
+**webhookId** | **string** |  |
 
 ### Other Parameters
 
@@ -794,7 +794,7 @@ import (
 )
 
 func main() {
-	webhookId := "webhookId_example" // string | 
+	webhookId := "webhookId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -814,7 +814,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**webhookId** | **string** |  | 
+**webhookId** | **string** |  |
 
 ### Other Parameters
 
@@ -864,8 +864,8 @@ import (
 )
 
 func main() {
-	webhookId := "webhookId_example" // string | 
-	webhookUpdateRequest := *openapiclient.NewWebhookUpdateRequest() // WebhookUpdateRequest | 
+	webhookId := "webhookId_example" // string |
+	webhookUpdateRequest := *openapiclient.NewWebhookUpdateRequest() // WebhookUpdateRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -885,7 +885,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**webhookId** | **string** |  | 
+**webhookId** | **string** |  |
 
 ### Other Parameters
 
@@ -895,7 +895,7 @@ Other parameters are passed through a pointer to a apiUpdateWebhookApiV1Webhooks
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **webhookUpdateRequest** | [**WebhookUpdateRequest**](WebhookUpdateRequest.md) |  | 
+ **webhookUpdateRequest** | [**WebhookUpdateRequest**](WebhookUpdateRequest.md) |  |
 
 ### Return type
 
@@ -936,8 +936,8 @@ import (
 )
 
 func main() {
-	webhookId := "webhookId_example" // string | 
-	webhookUpdateRequest := *openapiclient.NewWebhookUpdateRequest() // WebhookUpdateRequest | 
+	webhookId := "webhookId_example" // string |
+	webhookUpdateRequest := *openapiclient.NewWebhookUpdateRequest() // WebhookUpdateRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -957,7 +957,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**webhookId** | **string** |  | 
+**webhookId** | **string** |  |
 
 ### Other Parameters
 
@@ -967,7 +967,7 @@ Other parameters are passed through a pointer to a apiUpdateWebhookApiV1Webhooks
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **webhookUpdateRequest** | [**WebhookUpdateRequest**](WebhookUpdateRequest.md) |  | 
+ **webhookUpdateRequest** | [**WebhookUpdateRequest**](WebhookUpdateRequest.md) |  |
 
 ### Return type
 
@@ -985,4 +985,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

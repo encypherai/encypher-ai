@@ -81,4 +81,4 @@ Completed on Feb 5, 2026.
 **Next Steps for Distribution:**
 1. Submit to WordPress.org plugin directory
 2. Contact WordPress VIP for enterprise partnership
-3. Create marketing landing page at encypherai.com/wordpress
+3. Create marketing landing page at encypher.com/wordpress

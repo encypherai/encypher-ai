@@ -1,6 +1,6 @@
 # \EnterpriseMerkleTreesAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -29,7 +29,7 @@ import (
 )
 
 func main() {
-	documentEncodeRequest := *openapiclient.NewDocumentEncodeRequest("DocumentId_example", "Text_example") // DocumentEncodeRequest | 
+	documentEncodeRequest := *openapiclient.NewDocumentEncodeRequest("DocumentId_example", "Text_example") // DocumentEncodeRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -54,7 +54,7 @@ Other parameters are passed through a pointer to a apiEncodeDocumentApiV1Enterpr
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **documentEncodeRequest** | [**DocumentEncodeRequest**](DocumentEncodeRequest.md) |  | 
+ **documentEncodeRequest** | [**DocumentEncodeRequest**](DocumentEncodeRequest.md) |  |
 
 ### Return type
 
@@ -72,4 +72,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

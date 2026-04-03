@@ -193,7 +193,7 @@ All three workers implement the same pattern:
 1. Intercept image response (detect by `Content-Type`)
 2. Strip CDN transform parameters from the request URL to recover the canonical URL
 3. Call `GET /api/v1/cdn/manifests/lookup?url=<canonical>` (cached)
-4. If found, inject `C2PA-Manifest-URL: https://api.encypherai.com/api/v1/cdn/manifests/{id}` response header
+4. If found, inject `C2PA-Manifest-URL: https://api.encypher.com/api/v1/cdn/manifests/{id}` response header
 5. Fail open — never block image delivery if the API is unavailable
 
 ### Cloudflare Worker
@@ -218,10 +218,10 @@ wrangler deploy
 
 Required Fastly backends:
 - `origin` — publisher's origin server
-- `encypher_api` — `api.encypherai.com`
+- `encypher_api` — `api.encypher.com`
 
 Required Edge Dictionary `encypher_config`:
-- `api_base_url` — e.g. `https://api.encypherai.com`
+- `api_base_url` — e.g. `https://api.encypher.com`
 - `cache_ttl_s` — e.g. `3600`
 
 Deployment:

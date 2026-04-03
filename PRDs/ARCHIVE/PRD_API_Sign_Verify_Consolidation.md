@@ -1,7 +1,7 @@
 # PRD: API Sign/Verify Consolidation
 
-**Status:** ✅ Done  
-**Current Goal:** Consolidate API surface to /sign (+ /sign/advanced) and /verify; migrate website off /encode and /decode  
+**Status:** ✅ Done
+**Current Goal:** Consolidate API surface to /sign (+ /sign/advanced) and /verify; migrate website off /encode and /decode
 **Team:** TEAM_063
 
 ---
@@ -72,7 +72,7 @@ Additionally, we need the upstream `encypher-ai` package code present in this mo
 
 - Backend consolidation completed; `/api/v1/tools/encode` and `/api/v1/tools/decode` are hard-deprecated (410) and removed from OpenAPI.
 - Verification is now cleanly owned by `services/verification-service`:
-  - Traefik routes all `/api/v1/verify*` and `verify.encypherai.com` to verification-service.
+  - Traefik routes all `/api/v1/verify*` and `verify.encypher.com` to verification-service.
   - Enterprise API `/api/v1/verify*` endpoints are deprecated (410) and removed from OpenAPI.
   - Gateway-level OpenAPI (`sdk/openapi.public.json`) is now a merged spec (enterprise-api + verification-service).
 - Verification: ✅ `uv run ruff check .` ✅ `uv run pytest`

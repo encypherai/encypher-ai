@@ -55,7 +55,7 @@ Implement a new Google Docs Add-on under `integrations/google-docs-addon` using 
 - Implemented Docs menu + sidebar entrypoints (`onOpen`, `onInstall`, homepage card).
 - Added sign/verify for both selection and full document via Encypher APIs.
 - Added provenance chain extraction, storage in Document Properties, and re-sign reuse.
-- Added API base URL allowlist validation (`https://*.encypherai.com`) for add-on security.
+- Added API base URL allowlist validation (`https://*.encypher.com`) for add-on security.
 - Added local Node tests for provenance utilities (6/6 passing via `npm test`).
 - Added deployment and Marketplace checklist documentation in add-on README.
 - Branding/design conformance pass completed:

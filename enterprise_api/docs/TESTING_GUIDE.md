@@ -75,12 +75,12 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 class TestMyFeature:
     """Test my feature."""
-    
+
     async def test_database_operation(self, db: AsyncSession):
         """Test direct database operation."""
         # Your test code here
         pass
-    
+
     async def test_api_endpoint(self, client: AsyncClient, auth_headers: dict):
         """Test API endpoint."""
         response = await client.post(
@@ -146,7 +146,7 @@ class JSONType(TypeDecorator):
     """Database-agnostic JSON type."""
     impl = JSON
     cache_ok = True
-    
+
     def load_dialect_impl(self, dialect):
         if dialect.name == 'postgresql':
             return dialect.type_descriptor(JSONB())
@@ -161,7 +161,7 @@ from app.models.c2pa_schema import JSONType
 
 class MyModel(Base):
     __tablename__ = "my_table"
-    
+
     # Works with both PostgreSQL and SQLite
     data = Column(JSONType, nullable=False)
 ```
@@ -233,14 +233,14 @@ Supported variables:
 
 - `LIVE_API_TESTS=true` (required to run)
 - `LIVE_API_KEY` (production test org API key)
-- `LIVE_API_BASE_URL` (defaults to `https://api.encypherai.com` when set in `.env.prod`)
+- `LIVE_API_BASE_URL` (defaults to `https://api.encypher.com` when set in `.env.prod`)
 - `LIVE_API_TIMEOUT` (optional timeout in seconds, default 30)
 
 `.env.prod` example:
 
 ```bash
 API_KEY=ency_...
-BASE_URL=https://api.encypherai.com
+BASE_URL=https://api.encypher.com
 ```
 
 ### Run Live Tests
@@ -263,19 +263,19 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Install uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      
+
       - name: Install dependencies
         run: uv sync
-      
+
       - name: Run tests
         run: uv run pytest --cov=app --cov-report=xml
-      
+
       - name: Upload coverage
         uses: codecov/codecov-action@v3
 ```
@@ -347,7 +347,7 @@ async def test_full_workflow(self, client, auth_headers):
     # Create schema
     response = await client.post("/api/v1/c2pa/schemas", ...)
     assert response.status_code == 201
-    
+
     # Validate assertion
     response = await client.post("/api/v1/c2pa/validate", ...)
     assert response.status_code == 200
@@ -403,10 +403,10 @@ async def db(async_engine):
 
 ## Summary
 
-✅ **Fast**: SQLite in-memory = 50x faster than PostgreSQL  
-✅ **Isolated**: Each test gets a clean database  
-✅ **Simple**: No external dependencies required  
-✅ **Compatible**: Same models work in production and testing  
+✅ **Fast**: SQLite in-memory = 50x faster than PostgreSQL
+✅ **Isolated**: Each test gets a clean database
+✅ **Simple**: No external dependencies required
+✅ **Compatible**: Same models work in production and testing
 ✅ **CI-Friendly**: Easy to integrate with GitHub Actions, etc.
 
 **Happy Testing!** 🎉

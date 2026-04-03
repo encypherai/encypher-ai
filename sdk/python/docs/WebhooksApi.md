@@ -1,6 +1,6 @@
 # encypher.WebhooksApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -41,10 +41,10 @@ from encypher.models.webhook_create_response import WebhookCreateResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -61,7 +61,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_create_request = encypher.WebhookCreateRequest() # WebhookCreateRequest | 
+    webhook_create_request = encypher.WebhookCreateRequest() # WebhookCreateRequest |
 
     try:
         # Create Webhook
@@ -79,7 +79,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_create_request** | [**WebhookCreateRequest**](WebhookCreateRequest.md)|  | 
+ **webhook_create_request** | [**WebhookCreateRequest**](WebhookCreateRequest.md)|  |
 
 ### Return type
 
@@ -124,10 +124,10 @@ from encypher.models.webhook_create_response import WebhookCreateResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -144,7 +144,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_create_request = encypher.WebhookCreateRequest() # WebhookCreateRequest | 
+    webhook_create_request = encypher.WebhookCreateRequest() # WebhookCreateRequest |
 
     try:
         # Create Webhook
@@ -162,7 +162,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_create_request** | [**WebhookCreateRequest**](WebhookCreateRequest.md)|  | 
+ **webhook_create_request** | [**WebhookCreateRequest**](WebhookCreateRequest.md)|  |
 
 ### Return type
 
@@ -203,10 +203,10 @@ from encypher.models.webhook_delete_response import WebhookDeleteResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -223,7 +223,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_id = 'webhook_id_example' # str | 
+    webhook_id = 'webhook_id_example' # str |
 
     try:
         # Delete Webhook
@@ -241,7 +241,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_id** | **str**|  | 
+ **webhook_id** | **str**|  |
 
 ### Return type
 
@@ -282,10 +282,10 @@ from encypher.models.webhook_delete_response import WebhookDeleteResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -302,7 +302,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_id = 'webhook_id_example' # str | 
+    webhook_id = 'webhook_id_example' # str |
 
     try:
         # Delete Webhook
@@ -320,7 +320,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_id** | **str**|  | 
+ **webhook_id** | **str**|  |
 
 ### Return type
 
@@ -361,10 +361,10 @@ from encypher.models.webhook_list_response import WebhookListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -381,7 +381,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_id = 'webhook_id_example' # str | 
+    webhook_id = 'webhook_id_example' # str |
 
     try:
         # Get Webhook
@@ -399,7 +399,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_id** | **str**|  | 
+ **webhook_id** | **str**|  |
 
 ### Return type
 
@@ -440,10 +440,10 @@ from encypher.models.webhook_list_response import WebhookListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -460,7 +460,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_id = 'webhook_id_example' # str | 
+    webhook_id = 'webhook_id_example' # str |
 
     try:
         # Get Webhook
@@ -478,7 +478,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_id** | **str**|  | 
+ **webhook_id** | **str**|  |
 
 ### Return type
 
@@ -519,10 +519,10 @@ from encypher.models.webhook_deliveries_response import WebhookDeliveriesRespons
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -539,7 +539,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_id = 'webhook_id_example' # str | 
+    webhook_id = 'webhook_id_example' # str |
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
 
@@ -559,7 +559,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_id** | **str**|  | 
+ **webhook_id** | **str**|  |
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
 
@@ -602,10 +602,10 @@ from encypher.models.webhook_deliveries_response import WebhookDeliveriesRespons
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -622,7 +622,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_id = 'webhook_id_example' # str | 
+    webhook_id = 'webhook_id_example' # str |
     page = 1 # int |  (optional) (default to 1)
     page_size = 50 # int |  (optional) (default to 50)
 
@@ -642,7 +642,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_id** | **str**|  | 
+ **webhook_id** | **str**|  |
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
 
@@ -685,10 +685,10 @@ from encypher.models.webhook_list_response import WebhookListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -759,10 +759,10 @@ from encypher.models.webhook_list_response import WebhookListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -835,10 +835,10 @@ from encypher.models.webhook_test_response import WebhookTestResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -855,7 +855,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_id = 'webhook_id_example' # str | 
+    webhook_id = 'webhook_id_example' # str |
 
     try:
         # Test Webhook
@@ -873,7 +873,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_id** | **str**|  | 
+ **webhook_id** | **str**|  |
 
 ### Return type
 
@@ -916,10 +916,10 @@ from encypher.models.webhook_test_response import WebhookTestResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -936,7 +936,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_id = 'webhook_id_example' # str | 
+    webhook_id = 'webhook_id_example' # str |
 
     try:
         # Test Webhook
@@ -954,7 +954,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_id** | **str**|  | 
+ **webhook_id** | **str**|  |
 
 ### Return type
 
@@ -996,10 +996,10 @@ from encypher.models.webhook_update_response import WebhookUpdateResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1016,8 +1016,8 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_id = 'webhook_id_example' # str | 
-    webhook_update_request = encypher.WebhookUpdateRequest() # WebhookUpdateRequest | 
+    webhook_id = 'webhook_id_example' # str |
+    webhook_update_request = encypher.WebhookUpdateRequest() # WebhookUpdateRequest |
 
     try:
         # Update Webhook
@@ -1035,8 +1035,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_id** | **str**|  | 
- **webhook_update_request** | [**WebhookUpdateRequest**](WebhookUpdateRequest.md)|  | 
+ **webhook_id** | **str**|  |
+ **webhook_update_request** | [**WebhookUpdateRequest**](WebhookUpdateRequest.md)|  |
 
 ### Return type
 
@@ -1078,10 +1078,10 @@ from encypher.models.webhook_update_response import WebhookUpdateResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -1098,8 +1098,8 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.WebhooksApi(api_client)
-    webhook_id = 'webhook_id_example' # str | 
-    webhook_update_request = encypher.WebhookUpdateRequest() # WebhookUpdateRequest | 
+    webhook_id = 'webhook_id_example' # str |
+    webhook_update_request = encypher.WebhookUpdateRequest() # WebhookUpdateRequest |
 
     try:
         # Update Webhook
@@ -1117,8 +1117,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **webhook_id** | **str**|  | 
- **webhook_update_request** | [**WebhookUpdateRequest**](WebhookUpdateRequest.md)|  | 
+ **webhook_id** | **str**|  |
+ **webhook_update_request** | [**WebhookUpdateRequest**](WebhookUpdateRequest.md)|  |
 
 ### Return type
 
@@ -1141,4 +1141,3 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

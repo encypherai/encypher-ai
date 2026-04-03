@@ -5,7 +5,7 @@
 ## Problem
 The `/docs` page renders as unstyled HTML because `SecurityHeadersMiddleware` applies a blanket restrictive CSP (`default-src 'none'`) to all responses, including the docs page. This blocks:
 - External CSS/JS from `unpkg.com` (Swagger UI)
-- External images from `encypherai.com` (logo/favicon)
+- External images from `encypher.com` (logo/favicon)
 - Inline `<style>` and `<script>` blocks
 
 ## Fix
@@ -27,7 +27,7 @@ fix(enterprise-api): relax CSP for /docs routes so Swagger UI loads
 
 The SecurityHeadersMiddleware applied `default-src 'none'` to all
 responses, blocking Swagger UI CDN resources (unpkg.com CSS/JS),
-external images (encypherai.com logo), and inline styles/scripts
+external images (encypher.com logo), and inline styles/scripts
 on the /docs page.
 
 Add a dedicated DOCS_CSP that whitelists the required sources for

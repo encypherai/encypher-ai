@@ -1,11 +1,11 @@
 # PRD: Metrics Parsing and API Docs Routing
 
 **Status:** 📋 Planning
-**Current Goal:** Fix analytics metric ingestion type handling and restore publicly accessible API docs at `api.encypherai.com/docs`.
+**Current Goal:** Fix analytics metric ingestion type handling and restore publicly accessible API docs at `api.encypher.com/docs`.
 
 ## Overview
 
-We currently emit fractional latency metrics into Redis Streams, but the Analytics Service stream consumer parses these fields as integers and logs errors. Separately, requests to `api.encypherai.com/docs` return 404, blocking prospective customers from viewing interactive API documentation.
+We currently emit fractional latency metrics into Redis Streams, but the Analytics Service stream consumer parses these fields as integers and logs errors. Separately, requests to `api.encypher.com/docs` return 404, blocking prospective customers from viewing interactive API documentation.
 
 This PRD defines the work to:
 - Make metrics ingestion robust and type-correct (industry best practices)
@@ -31,7 +31,7 @@ This PRD defines the work to:
 
 ### 2.0 Public API Docs Routing (Traefik + Enterprise API)
 
-- [x] 2.1 Identify which hostname should serve docs (`api.encypherai.com`) and align routing
+- [x] 2.1 Identify which hostname should serve docs (`api.encypher.com`) and align routing
 - [x] 2.2 Update Traefik routing rules to serve `/docs`, `/redoc`, `/openapi.json` at the chosen public hostname
 - [x] 2.3 Ensure Enterprise API configuration allows docs in production only when explicitly enabled (secure default)
 - [x] 2.4 Implement public/internal docs split and marketing landing page:
@@ -46,7 +46,7 @@ This PRD defines the work to:
 - Automated tests pass:
   - [x] 1.3 — ✅ pytest
   - [x] 2.4 — ✅ pytest (`enterprise_api/tests/test_docs_visibility.py`)
-- `api.encypherai.com/docs` returns a non-404 response in the target environment
+- `api.encypher.com/docs` returns a non-404 response in the target environment
 
 ## Completion Notes
 

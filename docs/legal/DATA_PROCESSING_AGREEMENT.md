@@ -309,8 +309,8 @@ If you object to a Sub-processor change:
 
 ### 8.4 Sub-processor List
 
-An up-to-date list of Sub-processors is available at:  
-https://encypherai.com/legal/subprocessors
+An up-to-date list of Sub-processors is available at:
+https://encypher.com/legal/subprocessors
 
 ### 8.5 Liability
 
@@ -446,7 +446,7 @@ Enterprise customers may request data storage in specific regions:
 - **EU Region**: Frankfurt, Germany (GDPR compliant)
 - **Asia-Pacific Region**: Singapore
 
-Contact sales@encypherai.com for multi-region deployment options.
+Contact sales@encypher.com for multi-region deployment options.
 
 ### 12.5 Onward Transfers
 
@@ -528,19 +528,19 @@ In the event of conflict:
 
 For questions or concerns regarding this DPA:
 
-**Data Protection Officer:**  
-Email: dpo@encypherai.com
+**Data Protection Officer:**
+Email: dpo@encypher.com
 
-**Legal Department:**  
-Email: legal@encypherai.com
+**Legal Department:**
+Email: legal@encypher.com
 
-**Security Incidents:**  
-Email: security@encypherai.com  
+**Security Incidents:**
+Email: security@encypher.com
 Phone: [Emergency Security Hotline]
 
-**General Inquiries:**  
-Website: https://encypherai.com  
-Email: support@encypherai.com
+**General Inquiries:**
+Website: https://encypher.com
+Email: support@encypher.com
 
 ---
 

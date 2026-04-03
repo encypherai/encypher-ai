@@ -51,7 +51,7 @@ class Settings(BaseModel):
     ENTERPRISE_API_TIMEOUT: float = float(os.getenv("ENTERPRISE_API_TIMEOUT", "30"))
 
     # Email settings
-    EMAILS_FROM_EMAIL: str = os.getenv("EMAILS_FROM_EMAIL", "noreply@encypherai.com")
+    EMAILS_FROM_EMAIL: str = os.getenv("EMAILS_FROM_EMAIL", "noreply@encypher.com")
     EMAILS_FROM_NAME: str = os.getenv("EMAILS_FROM_NAME", "Encypher Dashboard")
     SMTP_HOST: str = os.getenv("SMTP_HOST", "localhost")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "25"))

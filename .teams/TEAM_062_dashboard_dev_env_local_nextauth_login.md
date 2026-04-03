@@ -16,7 +16,7 @@ Fix local dashboard credential login by ensuring NextAuth points at the local AP
   - Added a request-builder contract test suite.
 
 ## Notes
-- Symptom: NextAuth credentials provider attempted login to `https://api.encypherai.com/api/v1/auth/login` causing 401 for local-only test credentials.
+- Symptom: NextAuth credentials provider attempted login to `https://api.encypher.com/api/v1/auth/login` causing 401 for local-only test credentials.
 
 ## Verification
 - ✅ `npm run type-check` (apps/dashboard)

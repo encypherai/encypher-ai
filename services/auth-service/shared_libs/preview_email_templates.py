@@ -27,12 +27,28 @@ def generate_preview_html() -> str:
 
     # Sample data for each template
     templates = {
+        "Organization Invitation": {
+            "template": "invitation.html",
+            "context": {
+                "subject": "You're invited to join Encypher Editorial on Encypher",
+                "greeting_name": "Erik",
+                "inviter_display": "Test User (test.user@encypher.com)",
+                "organization_name": "Encypher Editorial",
+                "role": "Owner",
+                "tier": "enterprise",
+                "tier_label": "Enterprise",
+                "trial_months": 2,
+                "message": "We've set up your workspace so you can generate credentials, validate your signing flow, and configure rollout settings with the team.",
+                "invitation_url": "https://dashboard.encypher.com/invite/example-invite-token",
+                "expires_at_label": "March 24, 2026 at 5:00 PM UTC",
+            },
+        },
         "Email Verification": {
             "template": "email_verification.html",
             "context": {
                 "subject": "Verify your email address",
                 "user_name": "Alex Johnson",
-                "verification_url": "https://dashboard.encypherai.com/auth/verify-email?token=abc123xyz789",
+                "verification_url": "https://dashboard.encypher.com/auth/verify-email?token=abc123xyz789",
             },
         },
         "Welcome Email": {
@@ -40,7 +56,7 @@ def generate_preview_html() -> str:
             "context": {
                 "subject": "Welcome to Encypher!",
                 "user_name": "Alex Johnson",
-                "dashboard_url": "https://dashboard.encypherai.com",
+                "dashboard_url": "https://dashboard.encypher.com",
             },
         },
         "Password Reset": {
@@ -48,7 +64,7 @@ def generate_preview_html() -> str:
             "context": {
                 "subject": "Reset your password",
                 "user_name": "Alex Johnson",
-                "reset_url": "https://dashboard.encypherai.com/reset-password/abc123xyz789",
+                "reset_url": "https://dashboard.encypher.com/reset-password/abc123xyz789",
                 "ip_address": "192.168.1.100",
             },
         },

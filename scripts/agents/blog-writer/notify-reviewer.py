@@ -7,7 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
 
-NOTIFY_TO = "erik.svilich@encypherai.com"
+NOTIFY_TO = "erik.svilich@encypher.com"
 
 pr_url = os.environ.get("PR_URL", "").strip()
 smtp_host = os.environ.get("SMTP_HOST", "").strip()

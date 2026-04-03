@@ -325,7 +325,7 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 3. User watermarks with Enterprise mode
 4. Shows formal notice capability enabled
 5. Demonstrates sentence-level attribution
-6. CTA: "Join the publisher coalition" ' **encypherai.com/publisher-demo**
+6. CTA: "Join the publisher coalition" ' **encypher.com/publisher-demo**
 
 ### Flow 3: AI Provenance Infrastructure
 
@@ -334,7 +334,7 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 3. Tier 1 (no integration): Web-surface detection of signed content on aggregators, RAG systems, scrapers
 4. Tier 2 (with integration): Ingestion-time provenance checking -- know what marked content entered your pipeline
 5. Enterprise: Sentence-level attribution and performance intelligence when integrated
-6. CTA: "Infrastructure for AI companies" ' **encypherai.com/ai-demo**
+6. CTA: "Infrastructure for AI companies" ' **encypher.com/ai-demo**
 
 ---
 
@@ -556,13 +556,13 @@ frontmatter\_provider \= FrontmatterMetadataProvider()
 
 **For Publishers:**
 
-- "See Formal Notice Demo" ' **encypherai.com/publisher-demo**
+- "See Formal Notice Demo" ' **encypher.com/publisher-demo**
 - "Calculate Licensing ROI" ' Sales qualification
 - "Join Publisher Coalition" ' Matt Kaminsky follow-up
 
 **For AI Companies:**
 
-- "See Attribution Intelligence" ' **encypherai.com/ai-demo**
+- "See Attribution Intelligence" ' **encypher.com/ai-demo**
 - "Infrastructure Partnership" ' Collaborative discussion
 - "Technical Integration Guide" ' Standards collaboration
 
@@ -607,9 +607,9 @@ Every interaction highlights:
 
 **Links:**
 
-- Publishers: **encypherai.com/publisher-demo**
-- AI Companies: **encypherai.com/ai-demo**
-- Enterprises: **encypherai.com/enterprise**
+- Publishers: **encypher.com/publisher-demo**
+- AI Companies: **encypher.com/ai-demo**
+- Enterprises: **encypher.com/enterprise**
 
 ---
 
@@ -634,7 +634,7 @@ The sandbox proves: **Unmarked text has no proof. C2PA provides proof. Our enhan
 - ... Removed AI detection comparisons
 - ... Added C2PA standards authority messaging
 - ... Emphasized unmarked ' marked transformation
-- ... Updated website to encypherai.com with demo paths
+- ... Updated website to encypher.com with demo paths
 - ... Added collaborative framing for AI companies
 - ... Focused on cryptographic proof vs. no proof
 - ... Added real-time streaming capabilities (WebSocket/SSE)

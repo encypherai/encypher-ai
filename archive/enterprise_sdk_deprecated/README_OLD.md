@@ -332,7 +332,7 @@ asyncio.run(main())
 export ENCYPHER_API_KEY="encypher_your_key"
 
 # Base URL (optional, defaults to production)
-export ENCYPHER_BASE_URL="https://api.encypherai.com"
+export ENCYPHER_BASE_URL="https://api.encypher.com"
 
 # Timeout (optional, default 30s)
 export ENCYPHER_TIMEOUT=30
@@ -348,7 +348,7 @@ from encypher_enterprise import EncypherClient
 
 client = EncypherClient(
     api_key="encypher_...",
-    base_url="https://api.encypherai.com",
+    base_url="https://api.encypher.com",
     timeout=30.0,
     max_retries=3
 )
@@ -511,7 +511,7 @@ encypher sign-repo ./articles \
 # Output:
 # Signing repository: ./articles
 # Patterns: *.md, *.txt
-# 
+#
 # Batch Signing Complete
 #   Total: 42
 #   Success: 42
@@ -647,7 +647,7 @@ client = EncypherClient(api_key="encypher_your_key_here")
 
 ### "Monthly quota exceeded"
 
-Upgrade your plan at https://dashboard.encypherai.com or contact sales@encypherai.com
+Upgrade your plan at https://dashboard.encypher.com or contact sales@encypher.com
 
 ### Streaming not working
 
@@ -660,9 +660,9 @@ final_text = signer.finalize()  # Important!
 
 ## Support
 
-- **Documentation**: https://docs.encypherai.com/sdk
-- **API Reference**: https://docs.encypherai.com/api
-- **Email**: sdk@encypherai.com
+- **Documentation**: https://docs.encypher.com/sdk
+- **API Reference**: https://docs.encypher.com/api
+- **Email**: sdk@encypher.com
 - **Issues**: GitHub Issues (for enterprise customers)
 
 ## License

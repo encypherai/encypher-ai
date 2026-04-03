@@ -97,7 +97,7 @@ RIGHTS_TEMPLATES: dict[str, dict] = {
             },
             "quote_integrity": {
                 "verification_required": True,
-                "verification_endpoint": "https://api.encypherai.com/api/v1/verify",
+                "verification_endpoint": "https://api.encypher.com/api/v1/verify",
                 "accuracy_threshold": 0.95,
                 "paraphrase_permitted": True,
                 "fabrication_prohibited": True,
@@ -233,7 +233,7 @@ RIGHTS_TEMPLATES: dict[str, dict] = {
             },
             "quote_integrity": {
                 "verification_required": True,
-                "verification_endpoint": "https://api.encypherai.com/api/v1/verify",
+                "verification_endpoint": "https://api.encypher.com/api/v1/verify",
                 "accuracy_threshold": 0.95,
                 "paraphrase_permitted": True,
                 "fabrication_prohibited": True,
@@ -381,7 +381,7 @@ RIGHTS_TEMPLATES: dict[str, dict] = {
             },
             "quote_integrity": {
                 "verification_required": True,
-                "verification_endpoint": "https://api.encypherai.com/api/v1/verify",
+                "verification_endpoint": "https://api.encypher.com/api/v1/verify",
                 "accuracy_threshold": 0.98,
                 "paraphrase_permitted": True,
                 "fabrication_prohibited": True,
@@ -531,7 +531,7 @@ RIGHTS_TEMPLATES: dict[str, dict] = {
             },
             "quote_integrity": {
                 "verification_required": True,
-                "verification_endpoint": "https://api.encypherai.com/api/v1/verify",
+                "verification_endpoint": "https://api.encypher.com/api/v1/verify",
                 "accuracy_threshold": 1.0,
                 "paraphrase_permitted": False,
                 "fabrication_prohibited": True,
@@ -686,7 +686,7 @@ RIGHTS_TEMPLATES: dict[str, dict] = {
             },
             "quote_integrity": {
                 "verification_required": True,
-                "verification_endpoint": "https://api.encypherai.com/api/v1/verify",
+                "verification_endpoint": "https://api.encypher.com/api/v1/verify",
                 "accuracy_threshold": 1.0,
                 "paraphrase_permitted": False,
                 "fabrication_prohibited": True,

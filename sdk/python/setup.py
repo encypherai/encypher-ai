@@ -35,7 +35,7 @@ setup(
     version=VERSION,
     description="Encypher Enterprise API",
     author="Encypher",
-    author_email="sdk@encypherai.com",
+    author_email="sdk@encypher.com",
     url="https://github.com/encypherai/encypherai-commercial",
     keywords=["OpenAPI", "OpenAPI-Generator", "Encypher Enterprise API"],
     install_requires=REQUIRES,

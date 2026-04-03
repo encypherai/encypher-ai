@@ -164,7 +164,7 @@ class Configuration:
     :param ca_cert_data: verify the peer using concatenated CA certificate data
       in PEM (str) or DER (bytes) format.
     :param cert_file: the path to a client certificate file, for mTLS.
-    :param key_file: the path to a client key file, for mTLS. 
+    :param key_file: the path to a client key file, for mTLS.
 
     :Example:
     """
@@ -194,7 +194,7 @@ class Configuration:
     ) -> None:
         """Constructor
         """
-        self._base_path = "https://api.encypherai.com" if host is None else host
+        self._base_path = "https://api.encypher.com" if host is None else host
         """Default Base url
         """
         self.server_index = 0 if server_index is None and host is None else server_index
@@ -524,7 +524,7 @@ class Configuration:
         """
         return [
             {
-                'url': "https://api.encypherai.com",
+                'url': "https://api.encypher.com",
                 'description': "Production",
             },
             {

@@ -1,6 +1,6 @@
 # encypher.BYOKApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -33,10 +33,10 @@ from encypher.models.public_key_list_response import PublicKeyListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -112,10 +112,10 @@ from encypher.models.public_key_list_response import PublicKeyListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -190,10 +190,10 @@ from encypher.models.trust_list_response import TrustListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -254,10 +254,10 @@ from encypher.models.trust_list_response import TrustListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 
@@ -320,10 +320,10 @@ from encypher.models.public_key_register_response import PublicKeyRegisterRespon
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -340,7 +340,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.BYOKApi(api_client)
-    public_key_register_request = encypher.PublicKeyRegisterRequest() # PublicKeyRegisterRequest | 
+    public_key_register_request = encypher.PublicKeyRegisterRequest() # PublicKeyRegisterRequest |
 
     try:
         # Register a public key
@@ -358,7 +358,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **public_key_register_request** | [**PublicKeyRegisterRequest**](PublicKeyRegisterRequest.md)|  | 
+ **public_key_register_request** | [**PublicKeyRegisterRequest**](PublicKeyRegisterRequest.md)|  |
 
 ### Return type
 
@@ -400,10 +400,10 @@ from encypher.models.public_key_register_response import PublicKeyRegisterRespon
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -420,7 +420,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.BYOKApi(api_client)
-    public_key_register_request = encypher.PublicKeyRegisterRequest() # PublicKeyRegisterRequest | 
+    public_key_register_request = encypher.PublicKeyRegisterRequest() # PublicKeyRegisterRequest |
 
     try:
         # Register a public key
@@ -438,7 +438,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **public_key_register_request** | [**PublicKeyRegisterRequest**](PublicKeyRegisterRequest.md)|  | 
+ **public_key_register_request** | [**PublicKeyRegisterRequest**](PublicKeyRegisterRequest.md)|  |
 
 ### Return type
 
@@ -478,10 +478,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -498,7 +498,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.BYOKApi(api_client)
-    key_id = 'key_id_example' # str | 
+    key_id = 'key_id_example' # str |
     reason = 'reason_example' # str | Reason for revocation (optional)
 
     try:
@@ -517,8 +517,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key_id** | **str**|  | 
- **reason** | **str**| Reason for revocation | [optional] 
+ **key_id** | **str**|  |
+ **reason** | **str**| Reason for revocation | [optional]
 
 ### Return type
 
@@ -558,10 +558,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -578,7 +578,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.BYOKApi(api_client)
-    key_id = 'key_id_example' # str | 
+    key_id = 'key_id_example' # str |
     reason = 'reason_example' # str | Reason for revocation (optional)
 
     try:
@@ -597,8 +597,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key_id** | **str**|  | 
- **reason** | **str**| Reason for revocation | [optional] 
+ **key_id** | **str**|  |
+ **reason** | **str**| Reason for revocation | [optional]
 
 ### Return type
 
@@ -640,10 +640,10 @@ from encypher.models.certificate_upload_response import CertificateUploadRespons
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -660,7 +660,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.BYOKApi(api_client)
-    certificate_upload_request = encypher.CertificateUploadRequest() # CertificateUploadRequest | 
+    certificate_upload_request = encypher.CertificateUploadRequest() # CertificateUploadRequest |
 
     try:
         # Upload a CA-signed certificate
@@ -678,7 +678,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **certificate_upload_request** | [**CertificateUploadRequest**](CertificateUploadRequest.md)|  | 
+ **certificate_upload_request** | [**CertificateUploadRequest**](CertificateUploadRequest.md)|  |
 
 ### Return type
 
@@ -720,10 +720,10 @@ from encypher.models.certificate_upload_response import CertificateUploadRespons
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -740,7 +740,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.BYOKApi(api_client)
-    certificate_upload_request = encypher.CertificateUploadRequest() # CertificateUploadRequest | 
+    certificate_upload_request = encypher.CertificateUploadRequest() # CertificateUploadRequest |
 
     try:
         # Upload a CA-signed certificate
@@ -758,7 +758,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **certificate_upload_request** | [**CertificateUploadRequest**](CertificateUploadRequest.md)|  | 
+ **certificate_upload_request** | [**CertificateUploadRequest**](CertificateUploadRequest.md)|  |
 
 ### Return type
 
@@ -781,4 +781,3 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

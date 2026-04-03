@@ -294,7 +294,7 @@ async def generate_worker_config(
             detail="CDN integration not found.",
         )
 
-    base_url = str(request.base_url).rstrip("/") if request else "https://api.encypherai.com"
+    base_url = str(request.base_url).rstrip("/") if request else "https://api.encypher.com"
 
     # Attempt to load external template file; fall back to embedded template
     import os

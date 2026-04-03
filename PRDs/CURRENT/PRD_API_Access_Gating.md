@@ -1,7 +1,7 @@
 # PRD: API Access Gating
 
-**Status**: Complete  
-**Team**: TEAM_006  
+**Status**: Complete
+**Team**: TEAM_006
 **Current Goal**: Implement user approval flow for API access
 
 ---
@@ -55,7 +55,7 @@ Implement an industry-standard API access gating system where users must request
 - [x] 2.3 Admin Dashboard — ✅ done
   - [x] 2.3.1 Super admin check via API
   - [x] 2.3.2 Pending requests list with approve/deny buttons
-  - [x] 2.3.3 Default super admin: erik.svilich@encypherai.com
+  - [x] 2.3.3 Default super admin: erik.svilich@encypher.com
 
 ### 3.0 Cleanup
 
@@ -68,7 +68,7 @@ Implement an industry-standard API access gating system where users must request
 - [x] Users cannot generate API keys without approved status
 - [x] Users can request access with a use case description
 - [x] Admins can approve/deny requests via API and dashboard
-- [x] Super admin role enforced (erik.svilich@encypherai.com)
+- [x] Super admin role enforced (erik.svilich@encypher.com)
 - [x] All tests pass (`uv run pytest`)
 - [ ] Dashboard correctly shows access status
 

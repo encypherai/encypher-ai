@@ -551,7 +551,7 @@ This isn't a sales process competing with alternatives. It's infrastructure adop
 **Document Owner:** Chief Commercial Officer (CCO)
 
 **Key Changes from March 2026 (v5.0):**
-1. Domain migration: encypherai.com -> encypher.com
+1. Domain migration: encypher.com -> encypher.com
 2. Removed "beta" labels (Chrome extension v2.0 released, WordPress plugin released)
 3. Q4 2025 - Q1 2026 targets updated with actual status (pipeline active, no deals signed)
 4. Q2 2026 targets reset to realistic first-deal milestones (aspirational $75M ARR removed from operating targets)

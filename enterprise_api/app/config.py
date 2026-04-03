@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     provisioning_token: Optional[str] = None
 
     # API
-    api_base_url: str = "https://api.encypherai.com"
+    api_base_url: str = "https://api.encypher.com"
 
     # API docs exposure
     enable_public_api_docs: bool = False
@@ -77,7 +77,7 @@ class Settings(BaseSettings):
     notification_service_url: str = "http://localhost:8005"
 
     # Dashboard URL for invite/claim links
-    dashboard_url: str = "https://dashboard.encypherai.com"
+    dashboard_url: str = "https://dashboard.encypher.com"
 
     internal_service_token: Optional[str] = None
     # Auth-service is the SSOT for org tier/features. Composed mode
@@ -103,16 +103,16 @@ class Settings(BaseSettings):
 
     # Domains
     marketing_domain: str = "encypher.ai"
-    infrastructure_domain: str = "encypherai.com"
+    infrastructure_domain: str = "encypher.com"
 
     # Status list base URL (consolidated under verify subdomain)
-    status_list_base_url: str = "https://verify.encypherai.com/status/v1"
+    status_list_base_url: str = "https://verify.encypher.com/status/v1"
 
     # CORS - comma-separated list of allowed origins
     allowed_origins: str = "http://localhost:3000,http://localhost:3001"
 
     # Trusted hosts - comma-separated list
-    allowed_hosts: str = "api.encypherai.com,*.up.railway.app"
+    allowed_hosts: str = "api.encypher.com,*.up.railway.app"
 
     # Trusted proxy IPs (comma-separated list)
     trusted_proxy_ips: str = ""

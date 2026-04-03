@@ -1,6 +1,6 @@
 # \EvidenceGenerationAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -29,7 +29,7 @@ import (
 )
 
 func main() {
-	evidenceGenerateRequest := *openapiclient.NewEvidenceGenerateRequest("TargetText_example") // EvidenceGenerateRequest | 
+	evidenceGenerateRequest := *openapiclient.NewEvidenceGenerateRequest("TargetText_example") // EvidenceGenerateRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -54,7 +54,7 @@ Other parameters are passed through a pointer to a apiGenerateEvidenceApiV1Enter
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **evidenceGenerateRequest** | [**EvidenceGenerateRequest**](EvidenceGenerateRequest.md) |  | 
+ **evidenceGenerateRequest** | [**EvidenceGenerateRequest**](EvidenceGenerateRequest.md) |  |
 
 ### Return type
 
@@ -72,4 +72,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

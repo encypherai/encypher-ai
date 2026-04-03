@@ -1,6 +1,6 @@
 # \PublicC2PAAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -31,7 +31,7 @@ import (
 )
 
 func main() {
-	createManifestRequest := *openapiclient.NewCreateManifestRequest("Text_example") // CreateManifestRequest | 
+	createManifestRequest := *openapiclient.NewCreateManifestRequest("Text_example") // CreateManifestRequest |
 	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -57,8 +57,8 @@ Other parameters are passed through a pointer to a apiCreateManifestApiV1PublicC
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **createManifestRequest** | [**CreateManifestRequest**](CreateManifestRequest.md) |  | 
- **authorization** | **string** |  | 
+ **createManifestRequest** | [**CreateManifestRequest**](CreateManifestRequest.md) |  |
+ **authorization** | **string** |  |
 
 ### Return type
 
@@ -119,7 +119,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**signerId** | **string** | Signer identifier from manifest | 
+**signerId** | **string** | Signer identifier from manifest |
 
 ### Other Parameters
 
@@ -169,7 +169,7 @@ import (
 )
 
 func main() {
-	validateManifestRequest := *openapiclient.NewValidateManifestRequest(map[string]interface{}{"key": interface{}(123)}) // ValidateManifestRequest | 
+	validateManifestRequest := *openapiclient.NewValidateManifestRequest(map[string]interface{}{"key": interface{}(123)}) // ValidateManifestRequest |
 	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -195,8 +195,8 @@ Other parameters are passed through a pointer to a apiValidateManifestApiV1Publi
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **validateManifestRequest** | [**ValidateManifestRequest**](ValidateManifestRequest.md) |  | 
- **authorization** | **string** |  | 
+ **validateManifestRequest** | [**ValidateManifestRequest**](ValidateManifestRequest.md) |  |
+ **authorization** | **string** |  |
 
 ### Return type
 
@@ -214,4 +214,3 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

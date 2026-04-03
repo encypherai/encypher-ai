@@ -6,7 +6,7 @@ info:
   version: 1.0.2
 servers:
 - description: Production
-  url: https://api.encypherai.com
+  url: https://api.encypher.com
 - description: Local development
   url: http://localhost:8007
 paths:

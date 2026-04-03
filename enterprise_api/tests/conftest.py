@@ -115,10 +115,10 @@ async def _ensure_seeded() -> None:
                         updated_at = NOW();
                     """
                 ),
-                {"email": "test@encypherai.com", "name": "Test User"},
+                {"email": "test@encypher.com", "name": "Test User"},
             )
 
-            user_id = await conn.scalar(text("SELECT id FROM users WHERE email = :email"), {"email": "test@encypherai.com"})
+            user_id = await conn.scalar(text("SELECT id FROM users WHERE email = :email"), {"email": "test@encypher.com"})
             if not user_id:
                 raise RuntimeError("Failed to seed or fetch test user id")
 

@@ -69,10 +69,10 @@ railway variables set KEY_ENCRYPTION_KEY=$KEY_ENCRYPTION_KEY
 railway variables set ENCRYPTION_NONCE=$ENCRYPTION_NONCE
 railway variables set SSL_COM_API_KEY=<your-ssl-com-api-key>
 railway variables set SSL_COM_API_URL=https://api.ssl.com/v1
-railway variables set API_BASE_URL=https://api.encypherai.com
+railway variables set API_BASE_URL=https://api.encypher.com
 railway variables set ENVIRONMENT=preview
 railway variables set MARKETING_DOMAIN=encypher.ai
-railway variables set INFRASTRUCTURE_DOMAIN=encypherai.com
+railway variables set INFRASTRUCTURE_DOMAIN=encypher.com
 railway variables set REDIS_URL=${{Redis.REDIS_URL}}
 railway variables set PUBLIC_RATE_LIMIT_USE_REDIS=true
 railway variables set REMOTE_MANIFEST_VERIFY_DISTRIBUTED_LIMIT_USE_REDIS=true
@@ -113,7 +113,7 @@ railway open
 
 1. Go to Railway dashboard → Your project
 2. Click on your service → Settings → Domains
-3. Add custom domain: `api.encypherai.com`
+3. Add custom domain: `api.encypher.com`
 4. Configure DNS:
    - Type: `CNAME`
    - Name: `api`
@@ -141,10 +141,10 @@ Railway automatically provisions SSL/TLS certificates via Let's Encrypt.
 | `ENVIRONMENT` | Environment mode | `development` |
 | `REDIS_URL` | Shared Redis used for sessions, distributed public rate limiting, and distributed remote verification budgets | `redis://localhost:6379/0` |
 | `SSL_COM_API_URL` | SSL.com API endpoint | `https://api.ssl.com/v1` |
-| `API_BASE_URL` | Public API URL | `https://api.encypherai.com` |
+| `API_BASE_URL` | Public API URL | `https://api.encypher.com` |
 | `RATE_LIMIT_PER_MINUTE` | Rate limit | `60` |
 | `MARKETING_DOMAIN` | Marketing domain | `encypher.ai` |
-| `INFRASTRUCTURE_DOMAIN` | Infrastructure domain | `encypherai.com` |
+| `INFRASTRUCTURE_DOMAIN` | Infrastructure domain | `encypher.com` |
 | `PUBLIC_RATE_LIMIT_USE_REDIS` | Enable Redis-backed shared public rate limiting | `true` |
 | `REMOTE_MANIFEST_VERIFY_DISTRIBUTED_LIMIT_USE_REDIS` | Enable Redis-backed shared remote manifest verification concurrency limits | `true` |
 | `REMOTE_MANIFEST_VERIFY_DISTRIBUTED_LEASE_SECONDS` | Lease duration for shared remote verification slots | `30` |
@@ -279,7 +279,7 @@ logger.error("Error occurred", exc_info=True)
 Monitor API health:
 
 ```bash
-curl https://api.encypherai.com/health
+curl https://api.encypher.com/health
 
 # Expected response:
 # {
@@ -292,7 +292,7 @@ curl https://api.encypherai.com/health
 The `/readyz` endpoint performs deeper dependency probes and is suitable for load-balancer readiness checks:
 
 ```bash
-curl https://api.encypherai.com/readyz
+curl https://api.encypher.com/readyz
 
 # Expected response when all services are healthy:
 # {
@@ -457,6 +457,6 @@ docker run -p 8000:8000 --env-file .env encypher-enterprise-api
 ## Support
 
 For deployment issues:
-- **Email:** devops@encypherai.com
+- **Email:** devops@encypher.com
 - **Slack:** #deployment (internal)
-- **Docs:** https://docs.encypherai.com/deployment
+- **Docs:** https://docs.encypher.com/deployment

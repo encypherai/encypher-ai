@@ -80,7 +80,7 @@ The current AI Crawlers dashboard shows provenance-checking activity (RSL lookup
 
 - [x] 4.1 Updated `apps/dashboard/src/app/ai-crawlers/page.tsx` header to "Provenance Activity" -- ✅ tsc
 - [x] 4.2 Added amber callout explaining what data is/isn't shown (honest capability framing) -- ✅ tsc
-- [x] 4.3 Added "Join Waitlist" CTA (mailto: partnerships@encypherai.com) for Cloudflare integration -- ✅ tsc
+- [x] 4.3 Added "Join Waitlist" CTA (mailto: partnerships@encypher.com) for Cloudflare integration -- ✅ tsc
 - [x] 4.4 Nav item renamed "Provenance Activity" in DashboardLayout.tsx -- ✅ tsc
 
 ### 5.0 Formal Notice Progression System

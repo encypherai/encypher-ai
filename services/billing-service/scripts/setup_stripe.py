@@ -396,7 +396,7 @@ def print_env_output(subscription_results: dict, one_time_results: dict, overage
   customer.created
 
   Endpoint URL:
-    Production:  https://api.encypherai.com/api/v1/webhooks/stripe
+    Production:  https://api.encypher.com/api/v1/webhooks/stripe
     Development: Use `stripe listen --forward-to localhost:8007/api/v1/webhooks/stripe`
 """)
 

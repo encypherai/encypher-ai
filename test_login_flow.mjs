@@ -5,7 +5,7 @@ const res = await fetch("http://localhost:3000/api/auth/callback/credentials", {
     "Accept": "application/json"
   },
   body: new URLSearchParams({
-    email: "test_mfa_user@encypherai.com", // Need a user with MFA or valid credentials to test
+    email: "test_mfa_user@encypher.com", // Need a user with MFA or valid credentials to test
     password: "Password123!",
     redirect: "false"
   })

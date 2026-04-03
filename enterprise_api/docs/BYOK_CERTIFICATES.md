@@ -65,11 +65,11 @@ openssl req -new -key private_key.pem -out request.csr \
 
 ```bash
 # List trusted CAs (optional - verify your CA is supported)
-curl -X GET "https://api.encypherai.com/api/v1/byok/trusted-cas" \
+curl -X GET "https://api.encypher.com/api/v1/byok/trusted-cas" \
   -H "X-API-Key: YOUR_API_KEY"
 
 # Upload your certificate
-curl -X POST "https://api.encypherai.com/api/v1/byok/certificates" \
+curl -X POST "https://api.encypher.com/api/v1/byok/certificates" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -113,7 +113,7 @@ openssl pkey -in private_key.pem -pubout -out public_key.pem
 ### Step 2: Register Public Key
 
 ```bash
-curl -X POST "https://api.encypherai.com/api/v1/byok/public-keys" \
+curl -X POST "https://api.encypher.com/api/v1/byok/public-keys" \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -246,5 +246,5 @@ Use this only for customers that require tenant-specific cert identity.
 ## Support
 
 For assistance with BYOK setup:
-- Email: support@encypherai.com
-- Documentation: https://docs.encypherai.com
+- Email: support@encypher.com
+- Documentation: https://docs.encypher.com

@@ -1,15 +1,15 @@
 # UX/UI & Design System Audit PRD
 
-**Document Version:** 3.1  
-**Date:** November 28, 2025  
-**Author:** AI Audit System  
-**Status:** ✅ COMPLETE - All Issues Resolved  
+**Document Version:** 3.1
+**Date:** November 28, 2025
+**Author:** AI Audit System
+**Status:** ✅ COMPLETE - All Issues Resolved
 
 ---
 
 ## Executive Summary
 
-This PRD documents findings from a comprehensive UX/UI audit of the Encypher marketing site (`encypherai.com`), dashboard (`dashboard.encypherai.com`), and the shared design system package. The audit identified **critical issues** affecting user experience, brand consistency, and code maintainability.
+This PRD documents findings from a comprehensive UX/UI audit of the Encypher marketing site (`encypher.com`), dashboard (`dashboard.encypher.com`), and the shared design system package. The audit identified **critical issues** affecting user experience, brand consistency, and code maintainability.
 
 ### Critical Findings Summary
 
@@ -164,7 +164,7 @@ encypherai-commercial/
 
 **Console Warnings:**
 ```
-Image with src "http://localhost:3000/c2pa_companies/google-llc.svg" 
+Image with src "http://localhost:3000/c2pa_companies/google-llc.svg"
 has either width or height modified, but not the other.
 ```
 
@@ -383,9 +383,9 @@ Screenshots captured during audit:
 ## Appendix B: Console Warnings Log
 
 ```
-[warn] Image with src "http://localhost:3000/c2pa_companies/digicert-inc.svg" 
+[warn] Image with src "http://localhost:3000/c2pa_companies/digicert-inc.svg"
        has either width or height modified, but not the other.
-[warn] Image with src "http://localhost:3000/c2pa_companies/deloitte-consulting-llp.svg" 
+[warn] Image with src "http://localhost:3000/c2pa_companies/deloitte-consulting-llp.svg"
        has either width or height modified, but not the other.
 ... (26 more similar warnings)
 ```
@@ -398,7 +398,7 @@ Screenshots captured during audit:
 
 ### Fix 1: Dashboard 404 Issue
 **Root Cause:** Stale build artifacts causing wrong app to be served on port 3001.
-**Solution:** 
+**Solution:**
 - Killed all node processes
 - Cleaned `.next` directories in both apps
 - Restarted dev servers in correct order
@@ -419,7 +419,7 @@ Screenshots captured during audit:
 
 ### Fix 4: Color Palette Standardization
 **Root Cause:** Marketing site used `rosy-brown` while design system used `cyber-teal`.
-**Solution:** 
+**Solution:**
 - Added `cyber-teal: #00ced1` to marketing site config
 - Added `neutral-gray: #a7afbc` for consistency
 - Kept `rosy-brown` as backwards-compatible alias
@@ -487,9 +487,9 @@ apps/*/src/components/ui/        <- shadcn/ui components (use theme vars)
 
 ## 7. Dashboard UX/UI Audit (Puppeteer Automated Testing)
 
-**Date:** November 28, 2025  
-**Test Method:** Puppeteer automated browser testing at 1920x1080  
-**Test User:** test@encypherai.com
+**Date:** November 28, 2025
+**Test Method:** Puppeteer automated browser testing at 1920x1080
+**Test User:** test@encypher.com
 
 ### 7.1 Login Page
 
@@ -504,7 +504,7 @@ apps/*/src/components/ui/        <- shadcn/ui components (use theme vars)
 - Terms of Service and Privacy links present
 
 ⚠️ **Issues Fixed During Audit:**
-- **Cookie domain issue** - Cookies were configured with `.encypherai.com` domain even in development, preventing login on localhost
+- **Cookie domain issue** - Cookies were configured with `.encypher.com` domain even in development, preventing login on localhost
 - **Fix:** Updated `apps/dashboard/src/app/api/auth/[...nextauth]/route.ts` to only set domain when `NEXTAUTH_COOKIE_DOMAIN` env var is explicitly set
 
 ### 7.2 Dashboard Overview Page
@@ -643,7 +643,7 @@ All pages tested at 375x812 (iPhone) viewport:
 ## 11. Test Credentials
 
 For local testing:
-- **Email:** `test@encypherai.com`
+- **Email:** `test@encypher.com`
 - **Password:** `TestPassword123!`
 
 ---

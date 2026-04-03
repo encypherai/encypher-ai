@@ -119,7 +119,7 @@ feat(marketing-site): upgrade markdown blog rendering and polish content present
 - `uv run pytest enterprise_api/tests/test_sign_html_cms.py` ✅
 - `uv run pytest enterprise_api/tests/test_sign_blog_posts.py` ✅
 - `uv run ruff check enterprise_api/scripts/sign_blog_posts.py enterprise_api/tests/test_sign_blog_posts.py` ✅
-- `uv run python enterprise_api/scripts/sign_blog_posts.py apps/marketing-site/src/content/blog --dry-run --api-key dummy_key --base-url api.encypherai.com` ✅
+- `uv run python enterprise_api/scripts/sign_blog_posts.py apps/marketing-site/src/content/blog --dry-run --api-key dummy_key --base-url api.encypher.com` ✅
 
 ### Suggested Commit Message (comprehensive)
 feat(enterprise-api): add blog markdown batch-signing workflow with micro+ecc+c2pa defaults

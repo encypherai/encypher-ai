@@ -1,6 +1,6 @@
 # \StreamingAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -34,7 +34,7 @@ import (
 )
 
 func main() {
-	sessionId := "sessionId_example" // string | 
+	sessionId := "sessionId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -54,7 +54,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**sessionId** | **string** |  | 
+**sessionId** | **string** |  |
 
 ### Other Parameters
 
@@ -131,7 +131,7 @@ Other parameters are passed through a pointer to a apiCreateStreamingSessionApiV
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **sessionType** | **string** |  | [default to &quot;websocket&quot;]
- **bodyCreateStreamingSessionApiV1SignStreamSessionsPost** | [**BodyCreateStreamingSessionApiV1SignStreamSessionsPost**](BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md) |  | 
+ **bodyCreateStreamingSessionApiV1SignStreamSessionsPost** | [**BodyCreateStreamingSessionApiV1SignStreamSessionsPost**](BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md) |  |
 
 ### Return type
 
@@ -172,7 +172,7 @@ import (
 )
 
 func main() {
-	runId := "runId_example" // string | 
+	runId := "runId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -192,7 +192,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**runId** | **string** |  | 
+**runId** | **string** |  |
 
 ### Other Parameters
 
@@ -303,7 +303,7 @@ import (
 )
 
 func main() {
-	sessionId := "sessionId_example" // string | 
+	sessionId := "sessionId_example" // string |
 	apiKey := "apiKey_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -324,7 +324,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**sessionId** | **string** |  | 
+**sessionId** | **string** |  |
 
 ### Other Parameters
 
@@ -334,7 +334,7 @@ Other parameters are passed through a pointer to a apiSseEventsEndpointApiV1Sign
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **apiKey** | **string** |  | 
+ **apiKey** | **string** |  |
 
 ### Return type
 
@@ -375,7 +375,7 @@ import (
 )
 
 func main() {
-	streamSignRequest := *openapiclient.NewStreamSignRequest("Text_example") // StreamSignRequest | 
+	streamSignRequest := *openapiclient.NewStreamSignRequest("Text_example") // StreamSignRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -398,7 +398,7 @@ Other parameters are passed through a pointer to a apiStreamSigningApiV1SignStre
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **streamSignRequest** | [**StreamSignRequest**](StreamSignRequest.md) |  | 
+ **streamSignRequest** | [**StreamSignRequest**](StreamSignRequest.md) |  |
 
 ### Return type
 
@@ -416,4 +416,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

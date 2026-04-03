@@ -1,7 +1,7 @@
 # 🔌 Dashboard Backend Integration Complete!
 
-**Date:** October 30, 2025  
-**Status:** ✅ All Next Steps Completed  
+**Date:** October 30, 2025
+**Status:** ✅ All Next Steps Completed
 **URL:** http://localhost:3001
 
 ---
@@ -99,17 +99,17 @@ import { useAuth } from '@/lib/auth';
 
 function MyComponent() {
   const { token } = useAuth();
-  
+
   // Fetch API keys
   const keys = await apiClient.getApiKeys(token);
-  
+
   // Generate new key
   const newKey = await apiClient.createApiKey(
-    token, 
-    'Production Key', 
+    token,
+    'Production Key',
     ['sign', 'verify']
   );
-  
+
   // Get usage stats
   const stats = await apiClient.getUsageStats(token, '30d');
 }
@@ -149,12 +149,12 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 **Google:**
 1. Go to https://console.cloud.google.com/apis/credentials
 2. Create OAuth 2.0 Client ID
-3. Add authorized redirect: `https://dashboard.encypherai.com/api/auth/callback/google`
+3. Add authorized redirect: `https://dashboard.encypher.com/api/auth/callback/google`
 
 **GitHub:**
 1. Go to https://github.com/settings/developers
 2. Create new OAuth App
-3. Add callback URL: `https://dashboard.encypherai.com/api/auth/callback/github`
+3. Add callback URL: `https://dashboard.encypher.com/api/auth/callback/github`
 
 ---
 
@@ -403,7 +403,7 @@ Dashboard (/)
 
 Update the API URL in `.env.local`:
 ```bash
-NEXT_PUBLIC_API_URL=https://api.encypherai.com
+NEXT_PUBLIC_API_URL=https://api.encypher.com
 ```
 
 ### **2. Configure OAuth**
@@ -438,7 +438,7 @@ npm run build
 
 # Deploy to Vercel/AWS/Netlify
 # Set environment variables
-# Configure domain: dashboard.encypherai.com
+# Configure domain: dashboard.encypher.com
 ```
 
 ---
@@ -492,8 +492,8 @@ All pages include:
 7. ✅ Updated environment configuration
 8. ✅ Documented all integration points
 
-**Total new files:** 8  
-**Total lines of code:** ~2,000  
+**Total new files:** 8
+**Total lines of code:** ~2,000
 **Status:** ✅ **READY FOR BACKEND CONNECTION**
 
 ---
@@ -508,8 +508,8 @@ All pages include:
 - ✅ Ready for backend integration
 - ✅ Production-ready code
 
-**Running at:** http://localhost:3001  
-**Pages:** Home, Login, Signup, API Keys, Analytics, Billing, Settings, Support  
+**Running at:** http://localhost:3001
+**Pages:** Home, Login, Signup, API Keys, Analytics, Billing, Settings, Support
 **Next:** Connect to your backend API and deploy!
 
 ---

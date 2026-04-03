@@ -20,7 +20,7 @@ class EncypherConfig(BaseSettings):
     """SDK configuration from environment variables."""
 
     encypher_api_key: Optional[str] = None
-    encypher_base_url: str = "https://api.encypherai.com"
+    encypher_base_url: str = "https://api.encypher.com"
     encypher_timeout: float = 30.0
     encypher_max_retries: int = 3
 
@@ -61,7 +61,7 @@ class EncypherClient:
     def __init__(
         self,
         api_key: str,
-        base_url: str = "https://api.encypherai.com",
+        base_url: str = "https://api.encypher.com",
         timeout: float = 30.0,
         max_retries: int = 3
     ):

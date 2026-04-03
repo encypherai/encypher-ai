@@ -161,7 +161,7 @@ Optimize the Chrome extension to reduce API spam, add smart lazy-load detection,
 
 ### 25. API Base URL — text input instead of dropdown
 - Replaced `<select>` dropdown (with localhost options) with a plain `<input type="url">`
-- Defaults to `https://api.encypherai.com` (production)
+- Defaults to `https://api.encypher.com` (production)
 - Users can type any URL for custom/staging environments
 - On blur, if empty, resets to production default
 - Removed `customUrlField`, `customApiUrl` hidden field, and all dropdown logic from options.js

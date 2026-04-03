@@ -29,7 +29,7 @@ The `@encypher/icons` package (`packages/icons/`) is built and verified with 40 
 | Local EncypherMark.tsx | 1 | encypher-times (inline SVG, ~10 import sites) |
 | Loader.tsx (branded) | 1 | dashboard (broken viewBox, off-center transform-origin) |
 | Loader.tsx (generic) | 1 | marketing-site (unused, generic spinner) |
-| Email template logos | 12 | All services' base.html -- hardcode `https://encypherai.com/encypher_full_logo_white.png` (old domain) |
+| Email template logos | 12 | All services' base.html -- hardcode `https://encypher.com/encypher_full_logo_white.png` (old domain) |
 
 ## Tasks
 
@@ -122,7 +122,7 @@ Serve canonical brand assets at `https://encypher.com/brand/` so external partne
 Build an internal brand asset browser at `/brand` on the dashboard, locked behind auth, for Encypher team members. Based on the preview.html built during package development but integrated into the dashboard UI.
 
 - [ ] 8.1 Create `apps/dashboard/src/app/brand/page.tsx`
-- [ ] 8.2 Gate access: require authenticated session with email ending in `@encypher.com` or `@encypherai.com`, OR `isSuperAdmin` check (matching existing admin page pattern)
+- [ ] 8.2 Gate access: require authenticated session with email ending in `@encypher.com` or `@encypher.com`, OR `isSuperAdmin` check (matching existing admin page pattern)
 - [ ] 8.3 Build page UI:
   - Light/dark mode toggle (or respect dashboard theme)
   - Contrast preview section (dark bg + light bg side by side)
@@ -143,7 +143,7 @@ Build an internal brand asset browser at `/brand` on the dashboard, locked behin
 
 These are tracked separately under the domain migration project but noted here for completeness.
 
-- [ ] 9.1 Update ~12 `base.html` files across services from `https://encypherai.com/encypher_full_logo_white.png` to `https://encypher.com/brand/wordmark-white-nobg.png` (or appropriate hosted URL)
+- [ ] 9.1 Update ~12 `base.html` files across services from `https://encypher.com/encypher_full_logo_white.png` to `https://encypher.com/brand/wordmark-white-nobg.png` (or appropriate hosted URL)
 - [ ] 9.2 Depends on: DNS migration Phase 2 (domain migration PRD) and task 7.x (public brand assets)
 
 ### 10.0 Cleanup
@@ -181,7 +181,7 @@ Recommendation: Start with Option B (direct static serving). If Referer analytic
 const session = useSession();
 const isEncypherTeam =
   session?.data?.user?.email?.endsWith('@encypher.com') ||
-  session?.data?.user?.email?.endsWith('@encypherai.com');
+  session?.data?.user?.email?.endsWith('@encypher.com');
 const { data: isSuperAdmin } = useQuery(['is-super-admin'], ...);
 const hasAccess = isEncypherTeam || isSuperAdmin;
 ```

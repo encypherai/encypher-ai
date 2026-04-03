@@ -1,7 +1,7 @@
 # PRD: Enterprise API Endpoint Improvements
 
-**Status:** 🟢 Complete  
-**Current Goal:** All endpoints implemented, tests written  
+**Status:** 🟢 Complete
+**Current Goal:** All endpoints implemented, tests written
 **Team:** TEAM_032
 
 ---
@@ -139,7 +139,7 @@ This PRD addresses critical gaps in the Enterprise API that enterprise customers
         "title": "Press Release Q4",
         "status": "active",
         "signed_at": "2024-12-20T15:30:00Z",
-        "verification_url": "https://api.encypherai.com/api/v1/verify/doc_abc123"
+        "verification_url": "https://api.encypher.com/api/v1/verify/doc_abc123"
       }
     ],
     "total": 150,

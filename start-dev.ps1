@@ -38,7 +38,7 @@
 # ┌─────────────────────────────────────────────────────────────────────────┐
 # │                         FRONTEND APPS                                    │
 # ├─────────────────────────────────────────────────────────────────────────┤
-# │  Marketing Site       │ 3000  │ Next.js        │ encypherai.com         │
+# │  Marketing Site       │ 3000  │ Next.js        │ encypher.com         │
 # │  Dashboard            │ 3001  │ Next.js        │ dashboard.encypherai   │
 # └─────────────────────────────────────────────────────────────────────────┘
 #
@@ -91,7 +91,7 @@
 # ============================================================================
 #
 # A test user is automatically created on first database initialization:
-#   Email:    test@encypherai.com
+#   Email:    test@encypher.com
 #   Password: TestPassword123!
 #
 # ============================================================================
@@ -222,11 +222,11 @@ Write-Success "Node.js $nodeVersion"
 # Step 2: Clean caches if requested
 if ($CleanStart) {
     Write-Step "2/8" "Cleaning caches and Docker resources..."
-    
+
     # Stop and remove all containers, networks, and volumes
     Write-Info "Stopping Docker containers and removing volumes..."
     docker-compose -f docker-compose.full-stack.yml down -v 2>$null
-    
+
     # Remove old Docker images for our services to force rebuild
     Write-Info "Removing old Docker images to force rebuild..."
     $services = @(
@@ -244,7 +244,7 @@ if ($CleanStart) {
         docker rmi $service 2>$null | Out-Null
     }
     Write-Info "Docker images cleared"
-    
+
     # Clean Next.js caches
     if (Test-Path "apps/marketing-site/.next") {
         Remove-Item -Recurse -Force "apps/marketing-site/.next" -ErrorAction SilentlyContinue
@@ -254,7 +254,7 @@ if ($CleanStart) {
         Remove-Item -Recurse -Force "apps/dashboard/.next" -ErrorAction SilentlyContinue
         Write-Info "Cleaned dashboard/.next"
     }
-    
+
     # Clean node_modules cache
     if (Test-Path "apps/marketing-site/node_modules/.cache") {
         Remove-Item -Recurse -Force "apps/marketing-site/node_modules/.cache" -ErrorAction SilentlyContinue
@@ -262,7 +262,7 @@ if ($CleanStart) {
     if (Test-Path "apps/dashboard/node_modules/.cache") {
         Remove-Item -Recurse -Force "apps/dashboard/node_modules/.cache" -ErrorAction SilentlyContinue
     }
-    
+
     Write-Success "All caches and Docker resources cleaned"
 } else {
     Write-Step "2/8" "Skipping cache clean (use -CleanStart to clean)"
@@ -271,12 +271,12 @@ if ($CleanStart) {
 # Step 3: Start All Docker Services
 if (-not $SkipDocker) {
     Write-Step "3/8" "Starting all Docker services..."
-    
+
     # Stop any existing containers first (unless already done in CleanStart)
     if (-not $CleanStart) {
         docker-compose -f docker-compose.full-stack.yml down 2>$null
     }
-    
+
     # Start ALL services (mirrors production)
     # Infrastructure: postgres, redis-cache, redis-celery, traefik
     # Microservices: auth, user, key, encoding, verification, analytics, billing, notification
@@ -288,7 +288,7 @@ if (-not $SkipDocker) {
     } else {
         docker-compose -f docker-compose.full-stack.yml up -d 2>$null
     }
-    
+
     if ($LASTEXITCODE -ne 0) {
         Write-Err "Failed to start Docker services"
     } else {
@@ -301,7 +301,7 @@ if (-not $SkipDocker) {
 # Step 4: Wait for databases
 if (-not $SkipDocker) {
     Write-Step "4/8" "Waiting for PostgreSQL..."
-    
+
     # Wait for PostgreSQL (single container with multiple databases)
     $maxRetries = 30
     $retryCount = 0
@@ -315,11 +315,11 @@ if (-not $SkipDocker) {
         Write-Host "    Waiting for PostgreSQL... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
         Start-Sleep -Seconds 2
     } while ($retryCount -lt $maxRetries)
-    
+
     if ($retryCount -ge $maxRetries) {
         Write-Err "PostgreSQL did not start in time"
     }
-    
+
     # Verify Redis
     $redisCheck = docker exec encypher-redis-cache redis-cli ping 2>$null
     if ($redisCheck -eq "PONG") {
@@ -334,7 +334,7 @@ if (-not $SkipDocker) {
 # Step 5: Database Initialization
 if (-not $SkipDocker) {
     Write-Step "5/8" "Databases initialized via init-databases.sql..."
-    
+
     # The init-databases.sql script runs automatically on first PostgreSQL startup
     # It creates all per-service databases. Each service runs its own Alembic migrations.
     Write-Info "Per-service databases created by PostgreSQL init script"
@@ -346,7 +346,7 @@ if (-not $SkipDocker) {
 # Step 6: Wait for Microservices
 if (-not $SkipDocker) {
     Write-Step "6/8" "Waiting for microservices to be ready..."
-    
+
     # Wait for auth-service (required for login)
     $retryCount = 0
     $maxRetries = 30
@@ -364,11 +364,11 @@ if (-not $SkipDocker) {
         Write-Host "    Waiting for Auth Service... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
         Start-Sleep -Seconds 2
     } while ($retryCount -lt $maxRetries)
-    
+
     if ($retryCount -ge $maxRetries) {
         Write-Warn "Auth Service may still be starting (check docker logs)"
     }
-    
+
     # Wait for Key Service
     $retryCount = 0
     do {
@@ -385,11 +385,11 @@ if (-not $SkipDocker) {
         Write-Host "    Waiting for Key Service... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
         Start-Sleep -Seconds 2
     } while ($retryCount -lt $maxRetries)
-    
+
     if ($retryCount -ge $maxRetries) {
         Write-Warn "Key Service may still be starting (check docker logs)"
     }
-    
+
     # Wait for Enterprise API
     $retryCount = 0
     do {
@@ -406,7 +406,7 @@ if (-not $SkipDocker) {
         Write-Host "    Waiting for Enterprise API... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
         Start-Sleep -Seconds 2
     } while ($retryCount -lt $maxRetries)
-    
+
     if ($retryCount -ge $maxRetries) {
         Write-Warn "Enterprise API may still be starting (check docker logs)"
     }
@@ -417,17 +417,17 @@ if (-not $SkipDocker) {
 # Step 7: Start Frontend Applications
 if (-not $SkipFrontend) {
     Write-Step "7/8" "Starting frontend applications..."
-    
+
     # Marketing Site
     if (Test-Path "apps/marketing-site") {
         $marketingPath = Resolve-Path "apps/marketing-site"
-        
+
         # Clean .next cache if corrupted
         if (Test-Path "$marketingPath\.next\trace") {
             Remove-Item -Recurse -Force "$marketingPath\.next" -ErrorAction SilentlyContinue
             Write-Info "Cleaned corrupted marketing-site/.next cache"
         }
-        
+
         # Build the startup command (single line to avoid here-string issues)
         $cmd = "Set-Location '$marketingPath'; `$Host.UI.RawUI.WindowTitle = 'Marketing Site (3000)'; if (-not (Test-Path 'node_modules')) { npm install }; npm run dev"
         Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmd
@@ -435,17 +435,17 @@ if (-not $SkipFrontend) {
     } else {
         Write-Warn "apps/marketing-site not found"
     }
-    
+
     # Dashboard
     if (Test-Path "apps/dashboard") {
         $dashboardPath = Resolve-Path "apps/dashboard"
-        
+
         # Clean .next cache if corrupted
         if (Test-Path "$dashboardPath\.next\trace") {
             Remove-Item -Recurse -Force "$dashboardPath\.next" -ErrorAction SilentlyContinue
             Write-Info "Cleaned corrupted dashboard/.next cache"
         }
-        
+
         $cmd = "Set-Location '$dashboardPath'; `$Host.UI.RawUI.WindowTitle = 'Dashboard (3001)'; if (-not (Test-Path 'node_modules')) { npm install }; npm run dev"
         Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmd
         Write-Info "Dashboard starting on port 3001"
@@ -519,7 +519,7 @@ Write-Host "  Marketing Site:     http://localhost:3000" -ForegroundColor Cyan
 Write-Host "  Dashboard:          http://localhost:3001" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Test Credentials:" -ForegroundColor Yellow
-Write-Host "  Email:    test@encypherai.com" -ForegroundColor Gray
+Write-Host "  Email:    test@encypher.com" -ForegroundColor Gray
 Write-Host "  Password: TestPassword123!" -ForegroundColor Gray
 Write-Host "  API Key:  demo-api-key-for-testing" -ForegroundColor Gray
 Write-Host ""

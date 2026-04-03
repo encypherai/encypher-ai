@@ -176,7 +176,7 @@ def _email_config() -> dict:
         "smtp_user": os.getenv("SMTP_USER", ""),
         "smtp_pass": os.getenv("SMTP_PASS", ""),
         "smtp_tls": os.getenv("SMTP_TLS", "true").lower() == "true",
-        "email_from": os.getenv("EMAIL_FROM", "noreply@encypherai.com"),
+        "email_from": os.getenv("EMAIL_FROM", "noreply@encypher.com"),
         "email_from_name": os.getenv("EMAIL_FROM_NAME", "Encypher"),
     }
 

@@ -42,7 +42,7 @@ class EncypherClient:
     def __init__(
         self,
         api_key: str,
-        base_url: str = "https://api.encypherai.com",
+        base_url: str = "https://api.encypher.com",
         timeout: float = 30.0,
         max_retries: int = 3,
         transport: Optional[httpx.BaseTransport] = None,
@@ -171,7 +171,7 @@ class EncypherClient:
             return StatsResponse(**response.json())
         except httpx.HTTPStatusError as e:
             self._raise_api_error(e.response)
-    
+
     def encode_document_merkle(
         self,
         text: str,
@@ -180,21 +180,21 @@ class EncypherClient:
     ) -> Dict[str, Any]:
         """
         Encode document into Merkle trees for attribution tracking (Enterprise tier).
-        
+
         Args:
             text: Document text to encode
             document_id: Unique document identifier
             segmentation_levels: Levels to segment at (default: ["sentence", "paragraph"])
-        
+
         Returns:
             Dict with Merkle root hashes and metadata
-        
+
         Raises:
             APIError: If encoding fails or feature not available
         """
         if segmentation_levels is None:
             segmentation_levels = ["sentence", "paragraph"]
-        
+
         try:
             response = self.client.post(
                 f"{self.base_url}/api/v1/enterprise/merkle/encode",
@@ -281,7 +281,7 @@ class EncypherClient:
             return EncodeWithEmbeddingsResponse(**response.json())
         except httpx.HTTPStatusError as e:
             self._raise_api_error(e.response)
-    
+
     def find_sources(
         self,
         text: str,
@@ -290,15 +290,15 @@ class EncypherClient:
     ) -> Dict[str, Any]:
         """
         Find source documents for given text (Enterprise tier).
-        
+
         Args:
             text: Text to find sources for
             min_similarity: Minimum similarity threshold (0.0-1.0)
             max_results: Maximum number of results
-        
+
         Returns:
             Dict with source matches and attribution data
-        
+
         Raises:
             APIError: If attribution fails or feature not available
         """
@@ -315,7 +315,7 @@ class EncypherClient:
             return response.json()
         except httpx.HTTPStatusError as e:
             self._raise_api_error(e.response)
-    
+
     def detect_plagiarism(
         self,
         text: str,
@@ -324,15 +324,15 @@ class EncypherClient:
     ) -> Dict[str, Any]:
         """
         Detect plagiarism in document (Enterprise tier).
-        
+
         Args:
             text: Document text to check
             document_id: Unique document identifier
             threshold: Similarity threshold for plagiarism (0.0-1.0)
-        
+
         Returns:
             Dict with plagiarism detection results and heat map
-        
+
         Raises:
             APIError: If detection fails or feature not available
         """

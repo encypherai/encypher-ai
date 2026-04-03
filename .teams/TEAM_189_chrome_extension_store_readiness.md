@@ -19,7 +19,7 @@ Add documentation and installation/setup instructions to the dashboard Integrati
 
 ### 2. manifest.json — Store Readiness
 - Removed `http://localhost:8000/*` and `http://localhost:9000/*` from `host_permissions`
-- Added `https://*.encypherai.com/*` for all Encypher subdomains
+- Added `https://*.encypher.com/*` for all Encypher subdomains
 - Production-only host permissions now
 
 ### 3. README.md Updates
@@ -90,7 +90,7 @@ Dashboard:
 
 Chrome Extension Store Readiness:
 - Remove localhost from manifest.json host_permissions
-- Add https://*.encypherai.com/* wildcard
+- Add https://*.encypher.com/* wildcard
 - Update README: Pro→Enterprise, 42 tests, 1hr cache, zip build instructions
 - Update STORE_LISTING: remove emojis, free+enterprise pricing, WYSIWYG support
 - Update PRIVACY: remove emojis, fix cache TTL to 1 hour

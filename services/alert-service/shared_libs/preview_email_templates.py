@@ -32,7 +32,7 @@ def generate_preview_html() -> str:
             "context": {
                 "subject": "Verify your email address",
                 "user_name": "Alex Johnson",
-                "verification_url": "https://dashboard.encypherai.com/auth/verify-email?token=abc123xyz789",
+                "verification_url": "https://dashboard.encypher.com/auth/verify-email?token=abc123xyz789",
             },
         },
         "Welcome Email": {
@@ -40,7 +40,7 @@ def generate_preview_html() -> str:
             "context": {
                 "subject": "Welcome to Encypher!",
                 "user_name": "Alex Johnson",
-                "dashboard_url": "https://dashboard.encypherai.com",
+                "dashboard_url": "https://dashboard.encypher.com",
             },
         },
         "Password Reset": {
@@ -48,7 +48,7 @@ def generate_preview_html() -> str:
             "context": {
                 "subject": "Reset your password",
                 "user_name": "Alex Johnson",
-                "reset_url": "https://dashboard.encypherai.com/reset-password/abc123xyz789",
+                "reset_url": "https://dashboard.encypher.com/reset-password/abc123xyz789",
                 "ip_address": "192.168.1.100",
             },
         },

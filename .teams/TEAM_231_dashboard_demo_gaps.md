@@ -3,7 +3,7 @@
 ## Status: COMPLETE (with session management addendum -- see C1-C4 below)
 
 ## Objective
-Close 5 UI display bugs and 2 prefilled-data disconnects for Valnet-style demo with times@encypherai.com.
+Close 5 UI display bugs and 2 prefilled-data disconnects for Valnet-style demo with times@encypher.com.
 
 ## Tasks
 - [x] A1. rights/page.tsx: use licensee_name not licensee_org_id -- verified "Nexus AI Corp", "Meridian AI (Coalition Member)" in table
@@ -35,7 +35,7 @@ container). JWT vs API key auth mismatch, plus non-UUID user_id. Fix: added
 File: `services/billing-service/app/api/v1/endpoints.py`
 
 ### B2 API Keys
-`encypher_keys` DB had no org or keys for times@encypherai.com. Seeded org and 3 keys.
+`encypher_keys` DB had no org or keys for times@encypher.com. Seeded org and 3 keys.
 NULL fingerprint caused 500 error -- fixed with `UPDATE api_keys SET fingerprint = LEFT(id, 8)`.
 
 ## Files Modified
@@ -83,7 +83,7 @@ not just user settings.
 ## Suggested Git Commit Message
 
 ```
-fix(dashboard): close demo gaps for times@encypherai.com
+fix(dashboard): close demo gaps for times@encypher.com
 
 UI fixes:
 - rights/page: show licensee_name instead of truncated org_id in Licensing table

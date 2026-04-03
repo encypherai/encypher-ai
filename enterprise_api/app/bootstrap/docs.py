@@ -23,7 +23,7 @@ _DOCS_PAGE_HTML = """
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Encypher Enterprise API</title>
-  <link rel="icon" href="https://encypherai.com/favicon.ico" />
+  <link rel="icon" href="https://encypher.com/favicon.ico" />
   <link rel="stylesheet" href="/docs/assets/design-system.css" />
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   <style>
@@ -52,7 +52,7 @@ _DOCS_PAGE_HTML = """
 <body>
   <header class="header">
     <div class="header-inner">
-      <img src="https://encypherai.com/encypher_full_logo_white.svg" alt="Encypher" class="logo" />
+      <img src="https://encypher.com/encypher_full_logo_white.svg" alt="Encypher" class="logo" />
       <h1>Enterprise API</h1>
       <p class="header-desc">C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises.</p>
     </div>
@@ -69,7 +69,7 @@ _DOCS_PAGE_HTML = """
     </div>
     <div class="intro-card">
       <h3>Getting Started</h3>
-      <p>Obtain an API key from <a href="https://dashboard.encypherai.com" style="color:var(--accent);">dashboard.encypherai.com</a>, then use the endpoints below.</p>
+      <p>Obtain an API key from <a href="https://dashboard.encypher.com" style="color:var(--accent);">dashboard.encypher.com</a>, then use the endpoints below.</p>
     </div>
     <div class="intro-card">
       <h3>Client SDKs</h3>
@@ -77,7 +77,7 @@ _DOCS_PAGE_HTML = """
     </div>
     <div class="intro-card">
       <h3>Open-Source Package</h3>
-      <p>Looking for the AGPL-licensed <code>encypher-ai</code> Python package? See <a href="https://docs.encypherai.com" style="color:var(--accent);">docs.encypherai.com</a>.</p>
+      <p>Looking for the AGPL-licensed <code>encypher-ai</code> Python package? See <a href="https://docs.encypher.com" style="color:var(--accent);">docs.encypher.com</a>.</p>
     </div>
   </section>
 

@@ -56,7 +56,7 @@ async def init_database():
             await conn.execute("""
                 INSERT INTO organizations
                 (organization_id, organization_name, organization_type, email, tier)
-                VALUES ('test_org_001', 'Encypher Test Publisher', 'publisher', 'test@encypherai.com', 'enterprise')
+                VALUES ('test_org_001', 'Encypher Test Publisher', 'publisher', 'test@encypher.com', 'enterprise')
             """)
             print(" Test organization created")
 

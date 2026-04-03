@@ -61,7 +61,7 @@ def _build_client(
 @click.option("--api-key", envvar="ENCYPHER_API_KEY", help="Enterprise API key.")
 @click.option(
     "--base-url",
-    default="https://api.encypherai.com",
+    default="https://api.encypher.com",
     show_default=True,
     help="Base URL for the Enterprise API.",
 )
@@ -381,17 +381,17 @@ def sign_repo_command(
 ) -> None:
     """
     Sign all files in a repository with C2PA-compliant metadata.
-    
+
     Examples:
         # Basic signing
         encypher sign-repo ./articles --author "Jane Doe" --publisher "Acme News"
-        
+
         # With metadata extraction
         encypher sign-repo ./articles --use-git-metadata --use-frontmatter
-        
+
         # With version tracking
         encypher sign-repo ./articles --incremental --track-changes
-        
+
         # With language detection
         encypher sign-repo ./articles --detect-language
         encypher sign-repo ./articles --language en
@@ -399,13 +399,13 @@ def sign_repo_command(
     from ..batch import RepositorySigner, FileMetadata
     from ..metadata_providers import GitMetadataProvider, FrontmatterMetadataProvider, CombinedMetadataProvider
     from ..language import LanguageDetector, detect_language_from_file
-    
+
     client: EncypherClient = ctx.obj["client"]
-    
+
     # Create metadata function based on options
     if use_git_metadata or use_frontmatter:
         providers = []
-        
+
         # Frontmatter takes priority if both are enabled
         if use_frontmatter:
             frontmatter_provider = FrontmatterMetadataProvider(
@@ -413,14 +413,14 @@ def sign_repo_command(
                 fallback_publisher=publisher
             )
             providers.append(frontmatter_provider)
-        
+
         if use_git_metadata:
             try:
                 git_provider = GitMetadataProvider(repo_path=directory)
                 providers.append(git_provider)
             except ImportError:
                 console.print(Text("Warning: gitpython not installed. Install with: uv add gitpython", style="yellow"))
-        
+
         if len(providers) > 1:
             combined_provider = CombinedMetadataProvider(providers)
             metadata_fn = combined_provider.get_metadata
@@ -446,19 +446,19 @@ def sign_repo_command(
                 created=datetime.fromtimestamp(file_path.stat().st_ctime),
                 modified=datetime.fromtimestamp(file_path.stat().st_mtime),
             )
-    
+
     # Wrap metadata function with language detection if requested
     if detect_language or language:
         base_metadata_fn = metadata_fn
         lang_detector = LanguageDetector() if detect_language else None
-        
+
         def metadata_fn_with_language(file_path: Path) -> FileMetadata:
             metadata = base_metadata_fn(file_path)
-            
+
             # Add language to custom metadata
             if not metadata.custom:
                 metadata.custom = {}
-            
+
             if language:
                 # Use specified language
                 metadata.custom['language'] = language
@@ -471,11 +471,11 @@ def sign_repo_command(
                 except Exception:
                     # Fallback to English if detection fails
                     metadata.custom['language'] = 'en'
-            
+
             return metadata
-        
+
         metadata_fn = metadata_fn_with_language
-    
+
     console.print(Text(f"\nSigning repository: {directory}", style="bold cyan"))
     console.print(f"Patterns: {', '.join(pattern)}")
     console.print(f"Exclude: {', '.join(exclude)}")
@@ -487,10 +487,10 @@ def sign_repo_command(
         console.print(f"Language: {language}")
     elif detect_language:
         console.print("Language detection: Enabled")
-    
+
     # Sign repository
     signer = RepositorySigner(client, use_sentence_tracking=True)
-    
+
     try:
         result = signer.sign_directory(
             directory=directory,
@@ -508,17 +508,17 @@ def sign_repo_command(
     except Exception as exc:
         console.print(Text(f"Repository signing failed: {exc}", style="red"))
         ctx.exit(1)
-    
+
     # Display summary
     console.print(Text("\n" + result.summary(), style="bold green"))
-    
+
     # Display results table
     table = Table(title="Signing Results")
     table.add_column("File", style="cyan")
     table.add_column("Status", style="white")
     table.add_column("Document ID", style="yellow")
     table.add_column("Time", style="magenta")
-    
+
     for r in result.results:
         status = "✓" if r.success else "✗"
         status_style = "green" if r.success else "red"
@@ -528,15 +528,15 @@ def sign_repo_command(
             r.document_id or r.error or "-",
             f"{r.processing_time:.2f}s",
         )
-    
+
     console.print(table)
-    
+
     # Save report if requested
     if report:
         from ..reports import ReportGenerator
-        
+
         generator = ReportGenerator()
-        
+
         if report_format == 'json':
             result.to_json(report)
         elif report_format == 'html':
@@ -547,7 +547,7 @@ def sign_repo_command(
             generator.generate_markdown(result, report, title=title)
         elif report_format == 'csv':
             generator.generate_csv(result, report)
-        
+
         console.print(Text(f"\n✓ {report_format.upper()} report saved to: {report}", style="green"))
 
 
@@ -572,13 +572,13 @@ def merkle_encode_command(
 ) -> None:
     """
     Encode document into Merkle trees for attribution tracking (Enterprise tier).
-    
+
     Example:
         encypher merkle-encode --file article.txt --document-id doc_123
     """
     client: EncypherClient = ctx.obj["client"]
     content = _read_text(text, file)
-    
+
     try:
         result = client.encode_document_merkle(
             text=content,
@@ -588,21 +588,21 @@ def merkle_encode_command(
     except EncypherError as exc:
         console.print(Text(f"Merkle encoding failed: {exc}", style="red"))
         ctx.exit(1)
-    
+
     console.print(Text("✓ Document encoded successfully", style="green"))
-    
+
     table = Table(title="Merkle Roots")
     table.add_column("Level", style="cyan")
     table.add_column("Root Hash", style="yellow")
     table.add_column("Nodes", style="white")
-    
+
     for level_data in result.get("roots", []):
         table.add_row(
             level_data.get("level", "-"),
             level_data.get("root_hash", "-")[:16] + "...",
             str(level_data.get("node_count", 0)),
         )
-    
+
     console.print(table)
 
 
@@ -698,13 +698,13 @@ def find_sources_command(
 ) -> None:
     """
     Find source documents for given text (Enterprise tier).
-    
+
     Example:
         encypher find-sources --text "Some text to check" --min-similarity 0.85
     """
     client: EncypherClient = ctx.obj["client"]
     content = _read_text(text, file)
-    
+
     try:
         result = client.find_sources(
             text=content,
@@ -714,27 +714,27 @@ def find_sources_command(
     except EncypherError as exc:
         console.print(Text(f"Source attribution failed: {exc}", style="red"))
         ctx.exit(1)
-    
+
     matches = result.get("matches", [])
-    
+
     if not matches:
         console.print(Text("No sources found", style="yellow"))
         return
-    
+
     console.print(Text(f"\nFound {len(matches)} source(s)", style="green"))
-    
+
     table = Table(title="Source Matches")
     table.add_column("Document", style="cyan")
     table.add_column("Similarity", style="yellow")
     table.add_column("Matched Text", style="white")
-    
+
     for match in matches:
         table.add_row(
             match.get("document_id", "-"),
             f"{match.get('similarity', 0):.2%}",
             match.get("matched_text", "-")[:50] + "...",
         )
-    
+
     console.print(table)
 
 
@@ -771,21 +771,21 @@ def verify_repo_command(
 ) -> None:
     """
     Verify all signed files in a repository.
-    
+
     Example:
         encypher verify-repo ./articles
         encypher verify-repo ./articles --fail-on-tampered
     """
     from ..verification import RepositoryVerifier
-    
+
     client: EncypherClient = ctx.obj["client"]
-    
+
     console.print(Text(f"Verifying repository: {directory}", style="bold cyan"))
     console.print(f"Patterns: {', '.join(pattern)}")
-    
+
     # Verify repository
     verifier = RepositoryVerifier(client)
-    
+
     try:
         result = verifier.verify_directory(
             directory=directory,
@@ -800,17 +800,17 @@ def verify_repo_command(
     except Exception as exc:
         console.print(Text(f"Verification failed: {exc}", style="red"))
         ctx.exit(1)
-    
+
     # Display summary
     console.print(Text("\n" + result.summary(), style="bold green"))
-    
+
     # Display results table
     table = Table(title="Verification Results")
     table.add_column("File", style="cyan")
     table.add_column("Status", style="white")
     table.add_column("Organization", style="yellow")
     table.add_column("Time", style="magenta")
-    
+
     for r in result.results:
         if r.is_valid and not r.tampered:
             status = "✓ Valid"
@@ -821,20 +821,20 @@ def verify_repo_command(
         else:
             status = "✗ Invalid"
             status_style = "red"
-        
+
         table.add_row(
             str(r.file_path.name),
             Text(status, style=status_style),
             r.organization_name or r.error or "-",
             f"{r.processing_time:.2f}s",
         )
-    
+
     console.print(table)
-    
+
     # Save report if requested
     if report:
         import json
-        
+
         if report_format == 'json':
             with open(report, 'w', encoding='utf-8') as f:
                 json.dump(result.to_dict(), f, indent=2)
@@ -842,7 +842,7 @@ def verify_repo_command(
             # Convert verification result to signing result format for report generator
             from ..batch import BatchSigningResult, SigningResult
             from ..reports import ReportGenerator
-            
+
             signing_results = [
                 SigningResult(
                     file_path=r.file_path,
@@ -856,7 +856,7 @@ def verify_repo_command(
                 )
                 for r in result.results
             ]
-            
+
             signing_result = BatchSigningResult(
                 total_files=result.total_files,
                 successful=result.valid,
@@ -864,18 +864,18 @@ def verify_repo_command(
                 results=signing_results,
                 total_time=result.total_time
             )
-            
+
             generator = ReportGenerator()
-            
+
             if report_format == 'html':
                 generator.generate_html(signing_result, report, title="Verification Report")
             elif report_format == 'markdown':
                 generator.generate_markdown(signing_result, report, title="Verification Report")
             elif report_format == 'csv':
                 generator.generate_csv(signing_result, report)
-        
+
         console.print(Text(f"\n✓ {report_format.upper()} report saved to: {report}", style="green"))
-    
+
     # Exit with error if tampered files found
     if fail_on_tampered and result.tampered > 0:
         ctx.exit(1)
@@ -894,17 +894,17 @@ def diff_command(
 ) -> None:
     """
     Generate diff between two file versions.
-    
+
     Example:
         encypher diff article_v1.md article_v2.md
         encypher diff old.md new.md --format html --output diff.html
     """
     from ..diff import generate_diff_report
-    
+
     # Read files
     content1 = file1.read_text(encoding='utf-8')
     content2 = file2.read_text(encoding='utf-8')
-    
+
     # Generate diff
     diff_report = generate_diff_report(
         content1,
@@ -913,7 +913,7 @@ def diff_command(
         new_version=file2.name,
         format=format
     )
-    
+
     # Output
     if output:
         output.write_text(diff_report, encoding='utf-8')
@@ -933,13 +933,13 @@ def detect_language_command(
 ) -> None:
     """
     Detect language of text content.
-    
+
     Example:
         encypher detect-language --text "This is English"
         encypher detect-language --file article.md --top-n 3
     """
     from ..language import LanguageDetector
-    
+
     # Get content
     if file:
         content = file.read_text(encoding='utf-8')
@@ -948,26 +948,26 @@ def detect_language_command(
     else:
         console.print(Text("Error: Provide either --text or --file", style="red"))
         return
-    
+
     # Detect language
     detector = LanguageDetector()
-    
+
     try:
         if top_n == 1:
             lang_info = detector.detect(content)
             lang_name = detector.get_language_name(lang_info.language)
-            
+
             console.print(Text("\nDetected Language:", style="bold cyan"))
             console.print(f"  Language: {lang_name} ({lang_info.language})")
             console.print(f"  Confidence: {lang_info.confidence:.1%}")
         else:
             langs = detector.detect_multiple(content, top_n=top_n)
-            
+
             console.print(Text(f"\nTop {len(langs)} Languages:", style="bold cyan"))
             for i, lang in enumerate(langs, 1):
                 lang_name = detector.get_language_name(lang.language)
                 console.print(f"  {i}. {lang_name} ({lang.language}): {lang.confidence:.1%}")
-    
+
     except ValueError as e:
         console.print(Text(f"Error: {e}", style="red"))
 

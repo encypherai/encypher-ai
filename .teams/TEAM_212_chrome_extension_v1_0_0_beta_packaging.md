@@ -208,13 +208,13 @@ for their 2FA code.
 ```
 
 ### Session Addendum 2: Fixing Password Hash Mismatch for Test User
-**Goal:** The test user `test@encypherai.com` was unable to log in because the password hash in the database did not match the application's hashing format.
+**Goal:** The test user `test@encypher.com` was unable to log in because the password hash in the database did not match the application's hashing format.
 
 **Root Cause:**
-The `auth-service` uses a custom pre-hashing step `base64.b64encode(hashlib.sha256(password).digest())` before running it through bcrypt to avoid bcrypt's 72-byte limit. The password hash stored in the database for `test@encypherai.com` was seemingly generated using standard bcrypt or another format, meaning `Password123!` was failing to verify on the backend and returning a 401 Unauthorized before it could ever trigger the MFA flow.
+The `auth-service` uses a custom pre-hashing step `base64.b64encode(hashlib.sha256(password).digest())` before running it through bcrypt to avoid bcrypt's 72-byte limit. The password hash stored in the database for `test@encypher.com` was seemingly generated using standard bcrypt or another format, meaning `Password123!` was failing to verify on the backend and returning a 401 Unauthorized before it could ever trigger the MFA flow.
 
 **Fix Applied:**
-We manually generated the correct hash for `Password123!` using the backend's exact hashing function and updated the `test@encypherai.com` user row in the postgres database.
+We manually generated the correct hash for `Password123!` using the backend's exact hashing function and updated the `test@encypher.com` user row in the postgres database.
 
 The user can now successfully log in with `Password123!` and will be prompted for their MFA code.
 
@@ -242,6 +242,6 @@ message when they enter a wrong code.
 ```
 
 ### Session Addendum 4: Password Sync Issue
-**Goal:** The test user was still unable to log in with `Password123!`. 
+**Goal:** The test user was still unable to log in with `Password123!`.
 **Root Cause:** The earlier password reset was accidentally rolled back or overwritten during the restart/rebuild to `TestPassword123!` via the seed script, but the user was typing `Password123!`.
 **Fix Applied:** We have forcibly reset the password hash in the database to the pre-hashed bcrypt equivalent of `Password123!`.

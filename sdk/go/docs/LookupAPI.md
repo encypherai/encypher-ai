@@ -1,6 +1,6 @@
 # \LookupAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -30,7 +30,7 @@ import (
 )
 
 func main() {
-	lookupRequest := *openapiclient.NewLookupRequest("SentenceText_example") // LookupRequest | 
+	lookupRequest := *openapiclient.NewLookupRequest("SentenceText_example") // LookupRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -55,7 +55,7 @@ Other parameters are passed through a pointer to a apiLookupSentenceApiV1LookupP
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **lookupRequest** | [**LookupRequest**](LookupRequest.md) |  | 
+ **lookupRequest** | [**LookupRequest**](LookupRequest.md) |  |
 
 ### Return type
 
@@ -96,7 +96,7 @@ import (
 )
 
 func main() {
-	lookupRequest := *openapiclient.NewLookupRequest("SentenceText_example") // LookupRequest | 
+	lookupRequest := *openapiclient.NewLookupRequest("SentenceText_example") // LookupRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -121,7 +121,7 @@ Other parameters are passed through a pointer to a apiProvenanceLookupApiV1Prove
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **lookupRequest** | [**LookupRequest**](LookupRequest.md) |  | 
+ **lookupRequest** | [**LookupRequest**](LookupRequest.md) |  |
 
 ### Return type
 
@@ -139,4 +139,3 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

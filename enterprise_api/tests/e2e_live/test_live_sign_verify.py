@@ -18,9 +18,7 @@ def _assert_status(response, expected_status: int, label: str) -> None:
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_live_sign_and_verify(live_client, live_auth_headers, live_api_config) -> None:
-    assert live_api_config.base_url.startswith(
-        "https://api.encypherai.com"
-    ), f"Live tests should target production api. Got {live_api_config.base_url}"
+    assert live_api_config.base_url.startswith("https://api.encypher.com"), f"Live tests should target production api. Got {live_api_config.base_url}"
     document_id = _unique_document_id("live_sign")
     original_text = "Live API verification test. This is a signed payload."
 
@@ -63,9 +61,7 @@ async def test_live_sign_and_verify(live_client, live_auth_headers, live_api_con
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_live_sign_advanced_and_verify_advanced(live_client, live_auth_headers, live_api_config) -> None:
-    assert live_api_config.base_url.startswith(
-        "https://api.encypherai.com"
-    ), f"Live tests should target production api. Got {live_api_config.base_url}"
+    assert live_api_config.base_url.startswith("https://api.encypher.com"), f"Live tests should target production api. Got {live_api_config.base_url}"
     document_id = _unique_document_id("live_adv")
     original_text = "Live advanced signing test. Confirm advanced verify works."
 

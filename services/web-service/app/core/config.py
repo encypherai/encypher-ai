@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     # CORS
     BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = [
         "http://localhost:3000",  # Default Next.js dev server
-        "https://encypherai.com",
-        "https://www.encypherai.com",
+        "https://encypher.com",
+        "https://www.encypher.com",
     ]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
@@ -67,15 +67,15 @@ class Settings(BaseSettings):
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""  # noqa: S105
     EMAILS_ENABLED: bool = False
-    EMAIL_FROM_EMAIL: str = "noreply@encypherai.com"
+    EMAIL_FROM_EMAIL: str = "noreply@encypher.com"
     EMAIL_FROM_NAME: str = Field(default="Encypher", validation_alias="MAIL_FROM_NAME")
-    CONTACT_EMAIL: str = "contact@encypherai.com"
-    SALES_EMAIL: str = "sales@encypherai.com"
-    DEMO_EMAIL: str = "demo@encypherai.com"
+    CONTACT_EMAIL: str = "contact@encypher.com"
+    SALES_EMAIL: str = "sales@encypher.com"
+    DEMO_EMAIL: str = "demo@encypher.com"
 
     # Newsletter
     NEWSLETTER_BROADCAST_SECRET: str = ""  # noqa: S105
-    SITE_URL: str = "https://encypherai.com"
+    SITE_URL: str = "https://encypher.com"
     INTERNAL_SERVICE_TOKEN: str = ""  # noqa: S105
 
     # Web Analytics

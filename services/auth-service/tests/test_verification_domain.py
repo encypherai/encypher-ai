@@ -29,7 +29,7 @@ def _org_fixture(**overrides):
         id="org_cvd",
         name="Test Org",
         slug="test-org",
-        email="test@encypherai.com",
+        email="test@encypher.com",
         account_type="organization",
         display_name="Test Publisher",
         anonymous_publisher=False,
@@ -141,7 +141,7 @@ def test_set_domain_success(monkeypatch):
     data = response.json()["data"]
     assert data["domain"] == "verify.acmenews.com"
     assert data["status"] == "pending_dns"
-    assert data["instructions"]["cname"]["target"] == "verify.encypherai.com"
+    assert data["instructions"]["cname"]["target"] == "verify.encypher.com"
     assert "encypher-verify=" in data["instructions"]["txt"]["value"]
 
 
@@ -160,7 +160,7 @@ def test_verify_dns_success(monkeypatch):
 
     mock_cname = MagicMock()
     mock_cname_rdata = MagicMock()
-    mock_cname_rdata.target = "verify.encypherai.com."
+    mock_cname_rdata.target = "verify.encypher.com."
     mock_cname.__iter__ = lambda self: iter([mock_cname_rdata])
 
     mock_txt = MagicMock()
@@ -343,7 +343,7 @@ def test_addon_cancellation_deactivates_domain_status(monkeypatch):
 
 
 def test_blocked_domain_rejected(monkeypatch):
-    """Reserved domains like localhost and encypherai.com are rejected."""
+    """Reserved domains like localhost and encypher.com are rejected."""
     mock_db = MagicMock()
     client = _build_client(mock_db)
     _mock_user_auth(monkeypatch)

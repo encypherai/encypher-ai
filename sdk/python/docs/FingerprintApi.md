@@ -1,6 +1,6 @@
 # encypher.FingerprintApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -31,10 +31,10 @@ from encypher.models.fingerprint_detect_response import FingerprintDetectRespons
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -51,7 +51,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.FingerprintApi(api_client)
-    fingerprint_detect_request = encypher.FingerprintDetectRequest() # FingerprintDetectRequest | 
+    fingerprint_detect_request = encypher.FingerprintDetectRequest() # FingerprintDetectRequest |
 
     try:
         # Detect Fingerprint
@@ -69,7 +69,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fingerprint_detect_request** | [**FingerprintDetectRequest**](FingerprintDetectRequest.md)|  | 
+ **fingerprint_detect_request** | [**FingerprintDetectRequest**](FingerprintDetectRequest.md)|  |
 
 ### Return type
 
@@ -116,10 +116,10 @@ from encypher.models.fingerprint_encode_response import FingerprintEncodeRespons
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -136,7 +136,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.FingerprintApi(api_client)
-    fingerprint_encode_request = encypher.FingerprintEncodeRequest() # FingerprintEncodeRequest | 
+    fingerprint_encode_request = encypher.FingerprintEncodeRequest() # FingerprintEncodeRequest |
 
     try:
         # Encode Fingerprint
@@ -154,7 +154,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **fingerprint_encode_request** | [**FingerprintEncodeRequest**](FingerprintEncodeRequest.md)|  | 
+ **fingerprint_encode_request** | [**FingerprintEncodeRequest**](FingerprintEncodeRequest.md)|  |
 
 ### Return type
 
@@ -177,4 +177,3 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

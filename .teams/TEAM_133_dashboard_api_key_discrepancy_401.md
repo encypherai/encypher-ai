@@ -29,7 +29,7 @@
 - ✅ `AUTH_SERVICE_URL` = `http://auth-service.railway.internal:8080`
 - ✅ `KEY_SERVICE_URL` = `http://key-service.railway.internal:8080`
 - ✅ All services use Railway internal DNS with correct port `:8080`
-- ✅ Public API domain `https://api.encypherai.com` used by clients (Dashboard)
+- ✅ Public API domain `https://api.encypher.com` used by clients (Dashboard)
 - ✅ Traefik routing config matches Railway internal URLs
 - **Conclusion**: Dual public/private routing setup is optimal and production-ready
 
@@ -40,7 +40,7 @@
 - Original issue: Overview used unscoped key list; enterprise-api had misconfigured key-service URL causing fallback to legacy DB + misleading 401
 - Railway routing: Already optimal, no migration needed
 - New bug found: key-service 500 error due to production DB missing `organizations.certificate_pem` (fixed via fallback query)
-- Deployment note: api.encypherai.com will continue returning 401 until Railway `key-service` (and any callers) are redeployed with this change
+- Deployment note: api.encypher.com will continue returning 401 until Railway `key-service` (and any callers) are redeployed with this change
 
 ## Follow-on (2026-01-27)
 - [x] Fix enterprise-api /api/v1/sign/advanced NO_PRIVATE_KEY details showing "Organization <id> not found" when COMPOSE_ORG_CONTEXT_VIA_AUTH_SERVICE=true (org lives in auth-service)

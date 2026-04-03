@@ -96,7 +96,7 @@ config = EmailConfig.from_env()
 # Or explicit
 config = EmailConfig(
     smtp_host="smtp.zoho.com",
-    smtp_user="support@encypherai.com",
+    smtp_user="support@encypher.com",
     smtp_pass="...",
 )
 
@@ -126,7 +126,7 @@ uv pip install -e ../shared_commercial_libs
 | `SMTP_USER` | | SMTP username |
 | `SMTP_PASS` | | SMTP password |
 | `SMTP_TLS` | true | Use TLS |
-| `EMAIL_FROM` | support@encypherai.com | From address |
+| `EMAIL_FROM` | support@encypher.com | From address |
 | `EMAIL_FROM_NAME` | Support - Encypher | From name |
 | `FRONTEND_URL` | http://localhost:3000 | For email links |
 | `DASHBOARD_URL` | | Dashboard URL |

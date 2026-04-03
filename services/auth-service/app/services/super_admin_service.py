@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.db.models import User
 
-SUPER_ADMIN_EMAIL = "erik.svilich@encypherai.com"
+SUPER_ADMIN_EMAIL = "erik.svilich@encypher.com"
 
 
 def ensure_super_admin_user(db: Session) -> bool:

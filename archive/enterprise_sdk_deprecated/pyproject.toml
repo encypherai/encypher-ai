@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "Proprietary"}
 authors = [
-    {name = "Encypher", email = "sdk@encypherai.com"}
+    {name = "Encypher", email = "sdk@encypher.com"}
 ]
 keywords = ["c2pa", "content-signing", "provenance", "ai", "streaming", "langchain", "openai"]
 classifiers = [
@@ -52,8 +52,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://encypherai.com"
-Documentation = "https://docs.encypherai.com/sdk"
+Homepage = "https://encypher.com"
+Documentation = "https://docs.encypher.com/sdk"
 Repository = "https://github.com/encypherai/encypherai-commercial"
 
 [project.scripts]

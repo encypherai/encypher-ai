@@ -20,7 +20,7 @@ env_vars_to_set = {
     "KEY_ENCRYPTION_KEY": "0" * 64,  # 32 bytes hex
     "ENCRYPTION_NONCE": "0" * 24,  # 12 bytes hex
     "ENVIRONMENT": "development",
-    "API_BASE_URL": "https://api.encypherai.com",
+    "API_BASE_URL": "https://api.encypher.com",
 }
 
 # Remove conflicting vars that aren't in Settings
@@ -75,7 +75,7 @@ def _load_verification_service_openapi(*, api_base_url: str) -> dict:
             "app = FastAPI(title='Encypher Verification Service', version='1.0.2', description='Document verification microservice'); "
             "app.include_router(v1_endpoints.router, prefix='/api/v1/verify', tags=['verification']); "
             "spec = get_openapi(title=app.title, version=app.version, description=app.description, routes=app.routes); "
-            "spec['servers'] = [{'url': os.environ.get('API_BASE_URL', 'https://api.encypherai.com'), 'description': 'Production'}, {'url': 'http://localhost:8005', 'description': 'Local development'}]; "
+            "spec['servers'] = [{'url': os.environ.get('API_BASE_URL', 'https://api.encypher.com'), 'description': 'Production'}, {'url': 'http://localhost:8005', 'description': 'Local development'}]; "
             "print(json.dumps(spec))"
         ),
     ]
@@ -167,7 +167,7 @@ def main():
     internal_path = output_dir / "openapi.internal.json"
     legacy_path = output_dir / "openapi.json"
 
-    api_base_url = os.environ.get("API_BASE_URL", "https://api.encypherai.com")
+    api_base_url = os.environ.get("API_BASE_URL", "https://api.encypher.com")
 
     base_public = get_openapi(
         title=app.title,

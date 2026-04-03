@@ -1,7 +1,7 @@
 # OEM / Non-Publisher Pricing Guidelines
 
-**Status:** Internal Only  
-**Last Updated:** December 3, 2025  
+**Status:** Internal Only
+**Last Updated:** December 3, 2025
 **Owner:** Sales / Product
 
 ---
@@ -82,7 +82,7 @@ When negotiating OEM deals, consider:
 ## Free Starter for Testing
 
 OEM prospects can:
-1. Sign up for a **free Starter account** at dashboard.encypherai.com.
+1. Sign up for a **free Starter account** at dashboard.encypher.com.
 2. Test the API with 10K signatures/month and 2 API keys.
 3. Evaluate technical fit before engaging sales.
 
@@ -93,7 +93,7 @@ OEM prospects can:
 ## Escalation Path
 
 For OEM inquiries:
-1. **Inbound:** Route to sales@encypherai.com with "OEM Inquiry" subject.
+1. **Inbound:** Route to sales@encypher.com with "OEM Inquiry" subject.
 2. **Qualification:** Confirm non-publisher use case and volume expectations.
 3. **Proposal:** Use this document as pricing guardrails; customize based on scope.
 4. **Contract:** Standard Enterprise MSA with OEM-specific terms (no coalition, usage-based billing).

@@ -2,7 +2,7 @@
 
 Verifies that:
 1. Signing with verification_domain set produces custom-domain URL
-2. Signing without it falls back to verify.encypherai.com
+2. Signing without it falls back to verify.encypher.com
 3. Demo org always uses default domain
 """
 
@@ -13,7 +13,7 @@ from app.services.signing_executor import _build_verification_url
 
 def _prod_settings():
     """Return a mock settings object simulating production."""
-    return patch("app.services.signing_executor.settings", is_development=False, infrastructure_domain="encypherai.com")
+    return patch("app.services.signing_executor.settings", is_development=False, infrastructure_domain="encypher.com")
 
 
 def test_custom_domain_in_verification_url():
@@ -25,18 +25,18 @@ def test_custom_domain_in_verification_url():
 
 
 def test_fallback_to_default_domain():
-    """When org has no verification_domain, use verify.encypherai.com."""
+    """When org has no verification_domain, use verify.encypher.com."""
     org = {"verification_domain": None}
     with _prod_settings():
         url = _build_verification_url(document_id="doc_456", is_demo_org=False, organization=org)
-    assert url == "https://verify.encypherai.com/doc_456"
+    assert url == "https://verify.encypher.com/doc_456"
 
 
 def test_empty_org_falls_back():
     """Empty org dict falls back to default domain."""
     with _prod_settings():
         url = _build_verification_url(document_id="doc_789", is_demo_org=False, organization={})
-    assert url == "https://verify.encypherai.com/doc_789"
+    assert url == "https://verify.encypher.com/doc_789"
 
 
 def test_demo_org_ignores_custom_domain():
@@ -44,7 +44,7 @@ def test_demo_org_ignores_custom_domain():
     org = {"verification_domain": "verify.acmenews.com"}
     with _prod_settings():
         url = _build_verification_url(document_id="doc_demo", is_demo_org=True, organization=org)
-    assert "verify.encypherai.com" in url
+    assert "verify.encypher.com" in url
     assert "demo/doc_demo" in url
 
 

@@ -19,7 +19,7 @@ async def _fake_basic_sign(*, document, **kwargs):
     return SignedDocumentResult(
         document_id=document.document_id or "doc_1",
         signed_text=f"{document.text}\ufe00",
-        verification_url="https://verify.encypherai.com/doc_1",
+        verification_url="https://verify.encypher.com/doc_1",
         total_segments=1,
         metadata=document.metadata,
     )
@@ -29,7 +29,7 @@ async def _fake_advanced_sign(*, document, **kwargs):
     return SignedDocumentResult(
         document_id=document.document_id or "doc_1",
         signed_text=f"{document.text}\ufe00",
-        verification_url="https://verify.encypherai.com/doc_1",
+        verification_url="https://verify.encypher.com/doc_1",
         total_segments=1,
         metadata=document.metadata,
     )

@@ -33,14 +33,14 @@ CMS systems store content as HTML. To sign this content with our invisible Unico
 - [x] 2.1 Live e2e test via production API (POST /api/v1/sign with options) — ✅ pytest
   - [x] 2.1.1 Sign chesschampion HTML text with micro_c2pa via live API
   - [x] 2.1.2 Verify via live /api/v1/verify
-  - [x] 2.1.3 Output signed text to file for manual paste into encypherai.com/tools/verify
+  - [x] 2.1.3 Output signed text to file for manual paste into encypher.com/tools/verify
 - [x] 2.2 Tests pass
 
 ### 3.0 micro_ecc_c2pa HTML Round-Trip
 - [x] 3.1 Live e2e test via production API — ✅ pytest
   - [x] 3.1.1 Sign chesschampion HTML text with micro_ecc_c2pa via live API
   - [x] 3.1.2 Verify via live /api/v1/verify
-  - [x] 3.1.3 Output signed text to file for manual paste into encypherai.com/tools/verify
+  - [x] 3.1.3 Output signed text to file for manual paste into encypher.com/tools/verify
 - [x] 3.2 Tests pass
 
 ### 5.0 In-Place HTML Signing (embed signed text back into HTML)
@@ -99,7 +99,7 @@ CMS systems store content as HTML. To sign this content with our invisible Unico
 - micro_ecc_c2pa RS markers are embedded and verifiable after HTML text extraction
 - Signed text survives simulated browser copy-paste (visible text unchanged, markers preserved)
 - **In-place HTML signing**: signed text is injected back into original HTML, preserving all tags/attributes/images
-- Signed HTML files can be opened in a browser, text copied, and verified at encypherai.com/tools/verify
+- Signed HTML files can be opened in a browser, text copied, and verified at encypher.com/tools/verify
 - **Standalone CMS script**: signs full production CMS pages, isolating article content from nav/footer/scripts
 - **C2PA manifest preserved**: FEFF wrapper block intact in HTML output, manifest extractable after round-trip
 - **Backward compatible**: no changes to C2PA hash function (NFC-only per spec), whitespace normalization is pre-processing only

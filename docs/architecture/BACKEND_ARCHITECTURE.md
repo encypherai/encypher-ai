@@ -1,7 +1,7 @@
 # Backend Architecture Recommendations
 
-**Version:** 1.0  
-**Last Updated:** October 28, 2025  
+**Version:** 1.0
+**Last Updated:** October 28, 2025
 **Status:** Architectural Decision Record (ADR)
 
 ## Executive Summary
@@ -22,7 +22,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   encypherai.com                        │
+│                   encypher.com                        │
 │                                                         │
 │  ┌─────────────────────────────────────────────────┐  │
 │  │         FastAPI Application (Monolith)          │  │
@@ -183,7 +183,7 @@ SELECT * FROM merkle.merkle_roots;
 **Single Database, Single Application**
 
 ```
-encypherai.com
+encypher.com
 ├── FastAPI Application
 └── PostgreSQL Database
     ├── organizations
@@ -208,7 +208,7 @@ encypherai.com
 **Logical Separation with Schemas**
 
 ```
-encypherai.com
+encypher.com
 ├── FastAPI Application
 └── PostgreSQL Database
     ├── core schema
@@ -237,7 +237,7 @@ encypherai.com
 **Physical Separation (If Needed)**
 
 ```
-encypherai.com
+encypher.com
 ├── API Gateway
 ├── Core Service → Core Database
 ├── Merkle Service → Merkle Database
@@ -346,7 +346,7 @@ redis.setex(cache_key, 3600, json.dumps(org_data))
 def update_document(document_id, data):
     # Update database
     db.update(document_id, data)
-    
+
     # Invalidate cache
     redis.delete(f"verify:{document_id}")
     redis.delete(f"doc:{document_id}")
@@ -386,7 +386,7 @@ engine = create_async_engine(
 ### Unified API Structure
 
 ```
-encypherai.com/
+encypher.com/
 ├── /                          # Website homepage
 ├── /verify/{document_id}      # Public verification page
 ├── /dashboard/                # Publisher dashboard
@@ -431,7 +431,7 @@ async def verify_badge(
     cached = await cache.get(cache_key)
     if cached:
         return json.loads(cached)
-    
+
     # Query database (optimized query)
     result = await db.execute(
         select(
@@ -445,11 +445,11 @@ async def verify_badge(
         .join(Organization)
         .where(Document.document_id == document_id)
     )
-    
+
     row = result.first()
     if not row:
         raise HTTPException(status_code=404, detail="Document not found")
-    
+
     # Build response
     response = {
         "status": "verified",
@@ -468,12 +468,12 @@ async def verify_badge(
             "standard": "C2PA 2.2",
             "certificate_issuer": "SSL.com"
         },
-        "verification_url": f"https://encypherai.com/verify/{document_id}"
+        "verification_url": f"https://encypher.com/verify/{document_id}"
     }
-    
+
     # Cache for 5 minutes
     await cache.setex(cache_key, 300, json.dumps(response))
-    
+
     return response
 ```
 
@@ -490,10 +490,10 @@ async def verification_page(
     """
     # Get document details
     document = await get_document_with_verification(db, document_id)
-    
+
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
-    
+
     # Render HTML template with SEO meta tags
     return templates.TemplateResponse(
         "verification.html",
@@ -503,7 +503,7 @@ async def verification_page(
             "meta_title": f"Verified: {document.title}",
             "meta_description": f"Verified content from {document.publisher_name}",
             "og_image": document.publisher_logo,
-            "canonical_url": f"https://encypherai.com/verify/{document_id}"
+            "canonical_url": f"https://encypher.com/verify/{document_id}"
         }
     )
 ```
@@ -540,20 +540,20 @@ alerts:
     - metric: query_latency_p99
       threshold: 100ms
       severity: warning
-    
+
     - metric: connection_pool_usage
       threshold: 80%
       severity: warning
-    
+
     - metric: database_size
       threshold: 80% of allocated
       severity: warning
-  
+
   application:
     - metric: api_error_rate
       threshold: 1%
       severity: critical
-    
+
     - metric: api_latency_p99
       threshold: 500ms
       severity: warning

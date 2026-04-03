@@ -1,6 +1,6 @@
 # @encypher/sdk@1.0.2
 
-A TypeScript SDK client for the api.encypherai.com API.
+A TypeScript SDK client for the api.encypher.com API.
 
 ## Usage
 
@@ -22,7 +22,7 @@ import type { CreateKeyApiV1KeysPostRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
+  const config = new Configuration({
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
@@ -50,7 +50,7 @@ example().catch(console.error);
 
 ### API Endpoints
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 | Class | Method | HTTP request | Description
 | ----- | ------ | ------------ | -------------

@@ -75,7 +75,7 @@ This document maps which shared environment variables are used by each service.
 ### enterprise-api
 - `DATABASE_URL` / `CORE_DATABASE_URL` — Core DB (publisher_rights_profiles, formal_notices, notice_evidence_chain, rights_licensing_requests, rights_licensing_agreements, rights_audit_log, content_detection_events, known_crawlers)
 - `CONTENT_DATABASE_URL` — Content DB (content_references — rights_snapshot, rights_resolution_url columns)
-- `API_BASE_URL` — Base URL used to build `rights_resolution_url` in sign responses (e.g., `https://api.encypherai.com`)
+- `API_BASE_URL` — Base URL used to build `rights_resolution_url` in sign responses (e.g., `https://api.encypher.com`)
 - `KEY_ENCRYPTION_KEY`, `ENCRYPTION_NONCE` — C2PA signing key encryption
 - `RATE_LIMIT_PER_MINUTE` — Rate limit for all endpoints including public rights lookup
 
@@ -107,12 +107,12 @@ DASHBOARD_URL=https://dashboard-staging-xxx.up.railway.app
 API_URL=https://auth-service-staging-xxx.up.railway.app
 
 # URLs (Production)
-# MARKETING_SITE_URL=https://www.encypherai.com
-# DASHBOARD_URL=https://dashboard.encypherai.com
-# API_URL=https://api.encypherai.com
+# MARKETING_SITE_URL=https://www.encypher.com
+# DASHBOARD_URL=https://dashboard.encypher.com
+# API_URL=https://api.encypher.com
 
 # CORS
-ALLOWED_ORIGINS=https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com
+ALLOWED_ORIGINS=https://encypher.com,https://www.encypher.com,https://dashboard.encypher.com
 
 # Internal Service URLs (use Railway private networking)
 AUTH_SERVICE_URL=http://auth-service.railway.internal:8001

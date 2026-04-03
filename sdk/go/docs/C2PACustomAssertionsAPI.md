@@ -1,6 +1,6 @@
 # \C2PACustomAssertionsAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -39,7 +39,7 @@ import (
 )
 
 func main() {
-	c2PASchemaCreate := *openapiclient.NewC2PASchemaCreate("Name_example", "Label_example", map[string]interface{}{"key": interface{}(123)}) // C2PASchemaCreate | 
+	c2PASchemaCreate := *openapiclient.NewC2PASchemaCreate("Name_example", "Label_example", map[string]interface{}{"key": interface{}(123)}) // C2PASchemaCreate |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -64,7 +64,7 @@ Other parameters are passed through a pointer to a apiCreateSchemaApiV1Enterpris
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **c2PASchemaCreate** | [**C2PASchemaCreate**](C2PASchemaCreate.md) |  | 
+ **c2PASchemaCreate** | [**C2PASchemaCreate**](C2PASchemaCreate.md) |  |
 
 ### Return type
 
@@ -105,7 +105,7 @@ import (
 )
 
 func main() {
-	c2PATemplateCreate := *openapiclient.NewC2PATemplateCreate("Name_example", "SchemaId_example", map[string]interface{}{"key": interface{}(123)}) // C2PATemplateCreate | 
+	c2PATemplateCreate := *openapiclient.NewC2PATemplateCreate("Name_example", "SchemaId_example", map[string]interface{}{"key": interface{}(123)}) // C2PATemplateCreate |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -130,7 +130,7 @@ Other parameters are passed through a pointer to a apiCreateTemplateApiV1Enterpr
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **c2PATemplateCreate** | [**C2PATemplateCreate**](C2PATemplateCreate.md) |  | 
+ **c2PATemplateCreate** | [**C2PATemplateCreate**](C2PATemplateCreate.md) |  |
 
 ### Return type
 
@@ -171,7 +171,7 @@ import (
 )
 
 func main() {
-	schemaId := "schemaId_example" // string | 
+	schemaId := "schemaId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -189,7 +189,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**schemaId** | **string** |  | 
+**schemaId** | **string** |  |
 
 ### Other Parameters
 
@@ -239,7 +239,7 @@ import (
 )
 
 func main() {
-	templateId := "templateId_example" // string | 
+	templateId := "templateId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -257,7 +257,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**templateId** | **string** |  | 
+**templateId** | **string** |  |
 
 ### Other Parameters
 
@@ -307,7 +307,7 @@ import (
 )
 
 func main() {
-	schemaId := "schemaId_example" // string | 
+	schemaId := "schemaId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -327,7 +327,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**schemaId** | **string** |  | 
+**schemaId** | **string** |  |
 
 ### Other Parameters
 
@@ -377,7 +377,7 @@ import (
 )
 
 func main() {
-	templateId := "templateId_example" // string | 
+	templateId := "templateId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -397,7 +397,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**templateId** | **string** |  | 
+**templateId** | **string** |  |
 
 ### Other Parameters
 
@@ -476,7 +476,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **page** | **int32** |  | [default to 1]
  **pageSize** | **int32** |  | [default to 50]
- **isPublic** | **bool** |  | 
+ **isPublic** | **bool** |  |
 
 ### Return type
 
@@ -546,7 +546,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **page** | **int32** |  | [default to 1]
  **pageSize** | **int32** |  | [default to 50]
- **category** | **string** |  | 
+ **category** | **string** |  |
 
 ### Return type
 
@@ -587,8 +587,8 @@ import (
 )
 
 func main() {
-	schemaId := "schemaId_example" // string | 
-	c2PASchemaUpdate := *openapiclient.NewC2PASchemaUpdate() // C2PASchemaUpdate | 
+	schemaId := "schemaId_example" // string |
+	c2PASchemaUpdate := *openapiclient.NewC2PASchemaUpdate() // C2PASchemaUpdate |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -608,7 +608,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**schemaId** | **string** |  | 
+**schemaId** | **string** |  |
 
 ### Other Parameters
 
@@ -618,7 +618,7 @@ Other parameters are passed through a pointer to a apiUpdateSchemaApiV1Enterpris
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **c2PASchemaUpdate** | [**C2PASchemaUpdate**](C2PASchemaUpdate.md) |  | 
+ **c2PASchemaUpdate** | [**C2PASchemaUpdate**](C2PASchemaUpdate.md) |  |
 
 ### Return type
 
@@ -659,8 +659,8 @@ import (
 )
 
 func main() {
-	templateId := "templateId_example" // string | 
-	c2PATemplateUpdate := *openapiclient.NewC2PATemplateUpdate() // C2PATemplateUpdate | 
+	templateId := "templateId_example" // string |
+	c2PATemplateUpdate := *openapiclient.NewC2PATemplateUpdate() // C2PATemplateUpdate |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -680,7 +680,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**templateId** | **string** |  | 
+**templateId** | **string** |  |
 
 ### Other Parameters
 
@@ -690,7 +690,7 @@ Other parameters are passed through a pointer to a apiUpdateTemplateApiV1Enterpr
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **c2PATemplateUpdate** | [**C2PATemplateUpdate**](C2PATemplateUpdate.md) |  | 
+ **c2PATemplateUpdate** | [**C2PATemplateUpdate**](C2PATemplateUpdate.md) |  |
 
 ### Return type
 
@@ -731,7 +731,7 @@ import (
 )
 
 func main() {
-	c2PAAssertionValidateRequest := *openapiclient.NewC2PAAssertionValidateRequest("Label_example", map[string]interface{}{"key": interface{}(123)}) // C2PAAssertionValidateRequest | 
+	c2PAAssertionValidateRequest := *openapiclient.NewC2PAAssertionValidateRequest("Label_example", map[string]interface{}{"key": interface{}(123)}) // C2PAAssertionValidateRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -756,7 +756,7 @@ Other parameters are passed through a pointer to a apiValidateAssertionApiV1Ente
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **c2PAAssertionValidateRequest** | [**C2PAAssertionValidateRequest**](C2PAAssertionValidateRequest.md) |  | 
+ **c2PAAssertionValidateRequest** | [**C2PAAssertionValidateRequest**](C2PAAssertionValidateRequest.md) |  |
 
 ### Return type
 
@@ -774,4 +774,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

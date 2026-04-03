@@ -156,7 +156,7 @@ Webhooks allow Stripe to notify your backend about payment events.
 
 1. Go to https://dashboard.stripe.com/webhooks
 2. Click **"+ Add endpoint"**
-3. Endpoint URL: `https://api.encypherai.com/api/v1/billing/webhooks/stripe`
+3. Endpoint URL: `https://api.encypher.com/api/v1/billing/webhooks/stripe`
 4. Select events to listen to:
    - `checkout.session.completed`
    - `customer.subscription.created`

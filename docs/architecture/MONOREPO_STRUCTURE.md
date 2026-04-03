@@ -1,7 +1,7 @@
 # Monorepo Structure (Current Setup)
 
-**Decision:** Keep existing monorepo structure  
-**Date:** October 28, 2025  
+**Decision:** Keep existing monorepo structure
+**Date:** October 28, 2025
 **Rationale:** Already working well with shared DB, CI/CD, and local dev
 
 ## Current Repository Structure
@@ -359,7 +359,7 @@ website/
 
 **Served from:**
 ```
-https://encypherai.com/embed/verify.js
+https://encypher.com/embed/verify.js
 ```
 
 **Option 2: Separate CDN Repo**
@@ -408,17 +408,17 @@ async def verify_badge(document_id: str):
     """
     from shared.database import get_db_session
     from enterprise_api.app.models import Document
-    
+
     async with get_db_session() as db:
         # Query database directly
         result = await db.execute(
             select(Document).where(Document.document_id == document_id)
         )
         doc = result.scalar_one_or_none()
-        
+
         if not doc:
             raise HTTPException(404, "Not found")
-        
+
         return {
             "status": "verified",
             "document_id": doc.document_id,

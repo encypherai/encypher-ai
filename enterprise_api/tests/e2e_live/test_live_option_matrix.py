@@ -117,9 +117,7 @@ async def _verify_advanced(
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_live_sign_option_matrix(live_client, live_auth_headers, live_api_config) -> None:
-    assert live_api_config.base_url.startswith(
-        "https://api.encypherai.com"
-    ), f"Live tests should target production api. Got {live_api_config.base_url}"
+    assert live_api_config.base_url.startswith("https://api.encypher.com"), f"Live tests should target production api. Got {live_api_config.base_url}"
 
     timestamp = datetime.now(timezone.utc).isoformat()
     actions = [
@@ -195,9 +193,7 @@ async def test_live_sign_option_matrix(live_client, live_auth_headers, live_api_
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_live_sign_advanced_option_matrix(live_client, live_auth_headers, live_api_config) -> None:
-    assert live_api_config.base_url.startswith(
-        "https://api.encypherai.com"
-    ), f"Live tests should target production api. Got {live_api_config.base_url}"
+    assert live_api_config.base_url.startswith("https://api.encypher.com"), f"Live tests should target production api. Got {live_api_config.base_url}"
 
     failures: list[str] = []
     baseline_payload = None
@@ -339,9 +335,7 @@ async def test_live_sign_advanced_option_matrix(live_client, live_auth_headers, 
 @pytest.mark.e2e
 @pytest.mark.asyncio
 async def test_live_verify_advanced_option_matrix(live_client, live_auth_headers, live_api_config) -> None:
-    assert live_api_config.base_url.startswith(
-        "https://api.encypherai.com"
-    ), f"Live tests should target production api. Got {live_api_config.base_url}"
+    assert live_api_config.base_url.startswith("https://api.encypher.com"), f"Live tests should target production api. Got {live_api_config.base_url}"
 
     failures: list[str] = []
     signed_payload = None

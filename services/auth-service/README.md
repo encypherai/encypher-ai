@@ -57,7 +57,7 @@ Authentication and authorization microservice for the Encypher platform.
    ```bash
    # Create database
    createdb encypher_auth
-   
+
    # Run migrations (tables will be created automatically on startup)
    ```
 
@@ -312,7 +312,7 @@ See `.env.example` for all available configuration options.
 | `SMTP_USER` | | SMTP username (email address) |
 | `SMTP_PASS` | | SMTP password or app password |
 | `SMTP_TLS` | true | Enable TLS encryption |
-| `EMAIL_FROM` | support@encypherai.com | From email address |
+| `EMAIL_FROM` | support@encypher.com | From email address |
 | `EMAIL_FROM_NAME` | Support - Encypher | From display name |
 | `FRONTEND_URL` | http://localhost:3000 | Frontend URL for email links |
 | `DASHBOARD_URL` | | Dashboard URL (optional) |

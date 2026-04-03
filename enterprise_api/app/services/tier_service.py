@@ -147,7 +147,7 @@ class TierService:
                         "message": f"The '{feature}' feature is not available on free tier",
                         "current_tier": "free",
                         "required_tier": upgrade_tier,
-                        "upgrade_url": "https://dashboard.encypherai.com/billing",
+                        "upgrade_url": "https://dashboard.encypher.com/billing",
                         "features_available": TierService.get_tier_features(tier),
                     },
                 )
@@ -177,7 +177,7 @@ class TierService:
                     "message": f"The '{feature}' feature is not available on your current plan ({tier.value})",
                     "current_tier": tier.value,
                     "required_tier": upgrade_tier,
-                    "upgrade_url": "https://dashboard.encypherai.com/billing",
+                    "upgrade_url": "https://dashboard.encypher.com/billing",
                     "features_available": TierService.get_tier_features(tier),
                 },
             )

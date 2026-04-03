@@ -425,7 +425,7 @@ ERROR_NAVIGATION: Dict[str, Dict[str, str]] = {
         "docs_url": "/docs#/Usage",
     },
     ErrorCode.E_TIER_REQUIRED: {
-        "next_action": "Upgrade your plan at https://encypherai.com/pricing.",
+        "next_action": "Upgrade your plan at https://encypher.com/pricing.",
     },
     ErrorCode.E_FEATURE_UNAVAILABLE: {
         "next_action": "This feature requires a higher tier. Check GET /api/v1/account for available features.",
@@ -530,7 +530,7 @@ class ApiResponse(BaseModel, Generic[T]):
         "error": {
             "code": "E_TIER_REQUIRED",
             "message": "This feature requires Enterprise tier or higher",
-            "hint": "Upgrade at https://encypherai.com/pricing"
+            "hint": "Upgrade at https://encypher.com/pricing"
         },
         "correlation_id": "req-abc123",
         "meta": {
@@ -650,7 +650,7 @@ def build_tier_error(
         message=f"{display_name} requires {required_tier.title()} tier or higher",
         correlation_id=correlation_id,
         tier=current_tier,
-        hint=f"Upgrade your plan at https://encypherai.com/pricing to access {display_name}",
+        hint=f"Upgrade your plan at https://encypher.com/pricing to access {display_name}",
         details={
             "feature": feature_name,
             "required_tier": required_tier,

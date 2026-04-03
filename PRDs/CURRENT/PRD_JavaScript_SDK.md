@@ -1,9 +1,9 @@
 # PRD: JavaScript/TypeScript SDK for Enterprise API
 
-**Status:** Not Started  
-**Priority:** P0 (Critical)  
-**Owner:** TBD  
-**Created:** November 11, 2025  
+**Status:** Not Started
+**Priority:** P0 (Critical)
+**Owner:** TBD
+**Created:** November 11, 2025
 **Target Completion:** November 25, 2025
 
 ---
@@ -73,7 +73,7 @@ import { EncypherClient } from '@encypher/enterprise-sdk';
 // Initialize client
 const client = new EncypherClient({
   apiKey: 'encypher_...',
-  baseUrl: 'https://api.encypherai.com', // optional
+  baseUrl: 'https://api.encypher.com', // optional
   timeout: 30000, // optional
 });
 
@@ -514,5 +514,5 @@ const result = await client.sign({
 
 ---
 
-**Last Updated:** November 11, 2025  
+**Last Updated:** November 11, 2025
 **Next Review:** November 18, 2025

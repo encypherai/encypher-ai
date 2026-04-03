@@ -141,7 +141,7 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
     except httpx.RequestError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=("Auth service unavailable. Please retry in a few moments. If the problem persists, contact support@encypherai.com."),
+            detail=("Auth service unavailable. Please retry in a few moments. If the problem persists, contact support@encypher.com."),
         )
 
 
@@ -422,7 +422,7 @@ async def create_checkout_session(
             detail=(
                 f"Cannot checkout for {request.tier.value} tier. "
                 "Free tier requires no payment. "
-                "Enterprise requires contacting sales at sales@encypherai.com. "
+                "Enterprise requires contacting sales at sales@encypher.com. "
                 "For self-service checkout, use tier=pro with billing_cycle=monthly or annual. "
                 "See available plans: GET /api/v1/billing/plans."
             ),
@@ -497,7 +497,7 @@ async def create_add_on_checkout_session(
     if not price_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=("Price not configured for add-on. The add-on price may not be set up in Stripe. Contact support@encypherai.com."),
+            detail=("Price not configured for add-on. The add-on price may not be set up in Stripe. Contact support@encypher.com."),
         )
 
     try:
@@ -570,7 +570,7 @@ async def create_add_on_subscription_checkout(
     if not price_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Price not configured for this add-on. Contact support@encypherai.com.",
+            detail="Price not configured for this add-on. Contact support@encypher.com.",
         )
 
     try:
@@ -671,7 +671,7 @@ async def upgrade_subscription(
     if target_tier == TierName.ENTERPRISE:
         return UpgradeResponse(
             success=False,
-            message="Enterprise plans require custom pricing. Please contact sales@encypherai.com",
+            message="Enterprise plans require custom pricing. Please contact sales@encypher.com",
         )
 
     # Free tier: redirect to Stripe Billing Portal to cancel existing subscription.

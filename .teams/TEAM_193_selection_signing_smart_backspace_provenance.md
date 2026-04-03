@@ -76,7 +76,7 @@ feat(extension): sign selection in-place, smart backspace, provenance chain
 - **Apps Script manifest** (`appsscript.json`) with:
   - add-on metadata (`addOns.common`, `addOns.docs`)
   - required scopes (`documents.currentonly`, `script.container.ui`, `script.external_request`, `userinfo.email`)
-  - API URL allowlist (`urlFetchWhitelist` for `https://api.encypherai.com/`)
+  - API URL allowlist (`urlFetchWhitelist` for `https://api.encypher.com/`)
 - **Entry points + menu actions** (`Code.gs`):
   - `onInstall`, `onOpen`, add-on homepage card, sidebar launch
   - Docs add-on menu: Open Sidebar, Sign Selection/Document, Verify Selection/Document
@@ -96,7 +96,7 @@ feat(extension): sign selection in-place, smart backspace, provenance chain
   - save/clear API key + base URL
   - runtime state + provenance summary
 - **Security policy** (`Config.gs`):
-  - enforced HTTPS and `*.encypherai.com` API base URL policy
+  - enforced HTTPS and `*.encypher.com` API base URL policy
 - **UI** (`Sidebar.html`):
   - branded Encypher sidebar for sign/verify/settings/provenance
 
@@ -120,7 +120,7 @@ feat(integrations): add native Google Docs add-on with sign/verify and provenanc
 - Implement Docs menu + sidebar entrypoints (onOpen/onInstall/homepage card)
 - Add sign/verify flows for selection and full document via Encypher API
 - Add provenance extraction/storage and reuse via previous_embeddings
-- Enforce HTTPS + *.encypherai.com API base URL policy for add-on settings
+- Enforce HTTPS + *.encypher.com API base URL policy for add-on settings
 - Add local Node tests for provenance utilities (6/6 passing)
 - Add README with clasp deployment and Marketplace checklist
 ```
@@ -154,7 +154,7 @@ feat(integrations): add native Google Docs add-on with sign/verify and provenanc
   - Previous embedding reuse for re-sign operations
 - **API client** (`src/api-client.js`):
   - `/api/v1/sign` and `/api/v1/verify` integration
-  - HTTPS + `*.encypherai.com` host enforcement
+  - HTTPS + `*.encypher.com` host enforcement
 - **Roaming settings persistence** (`src/storage.js`):
   - User settings and provenance entries in `Office.context.roamingSettings`
   - Index-based provenance key trimming (no reliance on private Office internals)
@@ -184,7 +184,7 @@ feat(integrations): add Microsoft Office add-in for Word/Excel/PowerPoint
 - support sign/verify for selection across Word/Excel/PowerPoint
 - support full-document sign/verify for Word
 - add provenance extraction and roaming-settings chain persistence
-- enforce HTTPS + *.encypherai.com API host validation
+- enforce HTTPS + *.encypher.com API host validation
 - add task pane UI for actions, settings, capabilities, and results
 - add tests for provenance utils, host capabilities, and API URL policy (13/13 passing)
 - add README with sideloading and AppSource checklist
@@ -242,7 +242,7 @@ feat(integrations): add Outlook email add-in and embedding survivability harness
 - create Outlook Mailbox add-in scaffold with compose/read task pane support
 - implement email body sign/verify flow with Encypher API integration
 - add roaming-settings persistence for API settings and provenance chain
-- enforce https + *.encypherai.com API host validation
+- enforce https + *.encypher.com API host validation
 - add JS survivability harness comparing micro_ecc_c2pa vs zero-width embeddings
 - add Python enterprise tests for email transform survivability with real crypto utilities
 - add survivability matrix documentation and Outlook sideloading README

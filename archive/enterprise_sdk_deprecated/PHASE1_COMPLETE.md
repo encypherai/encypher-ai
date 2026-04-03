@@ -1,6 +1,6 @@
 # 🎉 Phase 1 Complete - Enterprise SDK Enhanced!
 
-**Date:** October 29, 2025  
+**Date:** October 29, 2025
 **Status:** ✅ Production Ready
 
 ## Executive Summary
@@ -351,8 +351,8 @@ result = signer.sign_directory(Path("."), incremental=True)
 
 - **Documentation:** See `README.md` and `examples/`
 - **Issues:** GitHub Issues
-- **Email:** sdk@encypherai.com
-- **API Docs:** https://docs.encypherai.com
+- **Email:** sdk@encypher.com
+- **API Docs:** https://docs.encypher.com
 
 ## Thank You!
 

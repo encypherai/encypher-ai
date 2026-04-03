@@ -37,7 +37,7 @@ services:
   #   - encypher_analytics:     analytics-service
   #   - encypher_coalition:     coalition-service
   #   - encypher_content:       enterprise-api (C2PA content)
-  
+
   postgres:
     image: postgres:15-alpine
     container_name: encypher-postgres
@@ -192,7 +192,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8002
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypher.com,https://s-www.encypher.com,https://api.encypher.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -258,7 +258,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8004
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypher.com,https://s-www.encypher.com,https://api.encypher.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -337,7 +337,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8009
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypher.com,https://s-www.encypher.com,https://api.encypher.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -370,7 +370,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8006
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypher.com,https://s-www.encypher.com,https://api.encypher.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -404,7 +404,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8007
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypher.com,https://s-www.encypher.com,https://api.encypher.com
       API_GATEWAY_URL: http://localhost:8000
     depends_on:
       postgres:
@@ -435,7 +435,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8008
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypher.com,https://s-www.encypher.com,https://api.encypher.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -484,7 +484,7 @@ services:
       ENVIRONMENT: development
       LOG_LEVEL: DEBUG
       SERVICE_NAME: enterprise-api
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3050,http://localhost:3051,https://staging.encypherai.com,https://dashboard-staging.encypherai.com,https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3050,http://localhost:3051,https://staging.encypher.com,https://dashboard-staging.encypher.com,https://encypher.com,https://www.encypher.com,https://dashboard.encypher.com
       COMPOSE_ORG_CONTEXT_VIA_AUTH_SERVICE: "true"
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-dev-internal-token}
       # Internal service URLs (for cross-service API calls)

@@ -4,7 +4,7 @@
 **Created:** 2026-02-13
 
 ## Objective
-Consolidate `status.encypherai.com` into `verify.encypherai.com/status/...` so that:
+Consolidate `status.encypher.com` into `verify.encypher.com/status/...` so that:
 1. No separate `status` subdomain is needed
 2. The org_id is no longer exposed in public status list URLs
 3. All public verification/status infrastructure lives under one subdomain + one service
@@ -19,20 +19,20 @@ Consolidate `status.encypherai.com` into `verify.encypherai.com/status/...` so t
 - `services/api-gateway/dynamic.yml` — route `/status/*` under verify host
 - `services/verification-service/app/main.py` — add status list proxy/route
 - `integrations/ghost-provenance/src/config.ts` — already correct (uses verify subdomain)
-- All test files referencing `status.encypherai.com`
-- All docs/READMEs referencing `status.encypherai.com`
+- All test files referencing `status.encypher.com`
+- All docs/READMEs referencing `status.encypher.com`
 - Dashboard support page
 
 ## Completion Notes
 
 ### Phase 1: Subdomain Consolidation
-All `status.encypherai.com` references replaced with `verify.encypherai.com/status/...`.
+All `status.encypher.com` references replaced with `verify.encypher.com/status/...`.
 
 ### Phase 2: Opaque UUID URLs (privacy)
 Replaced `org_id/list/{list_index}` in public status list URLs with opaque `StatusListMetadata.id` UUID.
 
-**Old URL**: `https://verify.encypherai.com/status/v1/{org_id}/list/{list_index}`
-**New URL**: `https://verify.encypherai.com/status/v1/lists/{uuid}`
+**Old URL**: `https://verify.encypher.com/status/v1/{org_id}/list/{list_index}`
+**New URL**: `https://verify.encypher.com/status/v1/lists/{uuid}`
 
 Legacy endpoints kept for backward compatibility (hidden from OpenAPI schema).
 
@@ -42,7 +42,7 @@ Legacy endpoints kept for backward compatibility (hidden from OpenAPI schema).
 
 **Core infrastructure (enterprise_api):**
 - `app/config.py` — added `status_list_base_url` setting (SSOT)
-- `app/services/status_service.py` — SSRF allowlist → `verify.encypherai.com`; `_build_status_list_url` now accepts UUID; `allocate_status_index` passes `metadata.id`; `generate_status_list` accepts optional `list_id`; revoke/reinstate look up metadata UUID for cache invalidation
+- `app/services/status_service.py` — SSRF allowlist → `verify.encypher.com`; `_build_status_list_url` now accepts UUID; `allocate_status_index` passes `metadata.id`; `generate_status_list` accepts optional `list_id`; revoke/reinstate look up metadata UUID for cache invalidation
 - `app/models/status_list.py` — `status_list_url` property uses `self.id` UUID
 - `app/services/unified_signing_service.py` — added `settings` import; uses `settings.infrastructure_domain`
 - `app/routers/status.py` — new `GET /status/lists/{list_id}` endpoint (UUID-based); legacy `GET /status/list/{org}/{index}` kept but hidden from OpenAPI; `get_document_status` looks up metadata UUID
@@ -65,8 +65,8 @@ Legacy endpoints kept for backward compatibility (hidden from OpenAPI schema).
 ```
 feat: consolidate status subdomain + use opaque UUIDs for status list URLs
 
-Phase 1: Eliminates the separate status.encypherai.com subdomain by
-serving status lists under verify.encypherai.com/status/v1/...
+Phase 1: Eliminates the separate status.encypher.com subdomain by
+serving status lists under verify.encypher.com/status/v1/...
 
 Phase 2: Replaces org_id/list_index in public status list URLs with
 opaque StatusListMetadata.id UUIDs for privacy (no org enumeration).
@@ -76,7 +76,7 @@ Legacy:  /status/v1/{org_id}/list/{index} (kept, hidden from OpenAPI)
 
 Changes:
 - Add status_list_base_url setting to enterprise_api config (SSOT)
-- Update SSRF allowlist from status.encypherai.com → verify.encypherai.com
+- Update SSRF allowlist from status.encypher.com → verify.encypher.com
 - Refactor _build_status_list_url to use opaque UUID
 - Add UUID-based status list endpoint + legacy backward-compat endpoint
 - Add status list proxy endpoints to verification-service

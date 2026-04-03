@@ -1,6 +1,6 @@
 # \DocumentsAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -36,7 +36,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 	revoke := true // bool | Also revoke the document (optional) (default to true)
 	reason := "reason_example" // string | Reason for deletion (optional)
 
@@ -58,7 +58,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -69,7 +69,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
  **revoke** | **bool** | Also revoke the document | [default to true]
- **reason** | **string** | Reason for deletion | 
+ **reason** | **string** | Reason for deletion |
 
 ### Return type
 
@@ -110,7 +110,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 	revoke := true // bool | Also revoke the document (optional) (default to true)
 	reason := "reason_example" // string | Reason for deletion (optional)
 
@@ -132,7 +132,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -143,7 +143,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
  **revoke** | **bool** | Also revoke the document | [default to true]
- **reason** | **string** | Reason for deletion | 
+ **reason** | **string** | Reason for deletion |
 
 ### Return type
 
@@ -184,7 +184,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -204,7 +204,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -254,7 +254,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -274,7 +274,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -324,7 +324,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -344,7 +344,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -394,7 +394,7 @@ import (
 )
 
 func main() {
-	documentId := "documentId_example" // string | 
+	documentId := "documentId_example" // string |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -414,7 +414,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**documentId** | **string** |  | 
+**documentId** | **string** |  |
 
 ### Other Parameters
 
@@ -496,10 +496,10 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **page** | **int32** | Page number | [default to 1]
  **pageSize** | **int32** | Items per page | [default to 50]
- **search** | **string** | Search in title | 
- **status** | **string** | Filter by status (active/revoked) | 
- **fromDate** | **string** | Filter from date (ISO format) | 
- **toDate** | **string** | Filter to date (ISO format) | 
+ **search** | **string** | Search in title |
+ **status** | **string** | Filter by status (active/revoked) |
+ **fromDate** | **string** | Filter from date (ISO format) |
+ **toDate** | **string** | Filter to date (ISO format) |
 
 ### Return type
 
@@ -572,10 +572,10 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **page** | **int32** | Page number | [default to 1]
  **pageSize** | **int32** | Items per page | [default to 50]
- **search** | **string** | Search in title | 
- **status** | **string** | Filter by status (active/revoked) | 
- **fromDate** | **string** | Filter from date (ISO format) | 
- **toDate** | **string** | Filter to date (ISO format) | 
+ **search** | **string** | Search in title |
+ **status** | **string** | Filter by status (active/revoked) |
+ **fromDate** | **string** | Filter from date (ISO format) |
+ **toDate** | **string** | Filter to date (ISO format) |
 
 ### Return type
 
@@ -593,4 +593,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

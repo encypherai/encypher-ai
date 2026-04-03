@@ -75,7 +75,7 @@ async def test_sign_basic_applies_builtin_template_assertions() -> None:
 
     content_db = AsyncMock()
     core_db = AsyncMock()
-    allocate_mock = AsyncMock(return_value=(0, 1, "https://verify.encypherai.com/status/v1/org_business/list/0"))
+    allocate_mock = AsyncMock(return_value=(0, 1, "https://verify.encypher.com/status/v1/org_business/list/0"))
 
     with (
         patch(
@@ -122,7 +122,7 @@ async def test_sign_basic_allows_single_custom_assertion_for_starter() -> None:
 
     content_db = AsyncMock()
     core_db = AsyncMock()
-    allocate_mock = AsyncMock(return_value=(0, 1, "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000s01"))
+    allocate_mock = AsyncMock(return_value=(0, 1, "https://verify.encypher.com/status/v1/lists/00000000-0000-0000-0000-000000000s01"))
 
     with (
         patch(

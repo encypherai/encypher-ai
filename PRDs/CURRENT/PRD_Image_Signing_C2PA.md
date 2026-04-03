@@ -373,7 +373,7 @@ Only metadata (hashes, pHash, c2pa_instance_id) is stored in DB.
         "image_id": "img_a1b2c3d4",
         "filename": "photo1.jpg",
         "position": 0,
-        "signed_image_url": "https://storage.encypherai.com/signed/...",
+        "signed_image_url": "https://storage.encypher.com/signed/...",
         "signed_image_hash": "sha256:deadbeef...",
         "c2pa_manifest_instance_id": "urn:uuid:...",
         "size_bytes": 245760,

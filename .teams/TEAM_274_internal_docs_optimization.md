@@ -40,13 +40,13 @@
 - services/web-service/agents.md (domain reference)
 
 ## Phase 2 Handoff: Full Codebase Domain Migration
-~300+ files across the monorepo still reference encypherai.com. This is a separate, large-scope task that should be done when DNS/infrastructure is ready. Key areas documented in memory file: project_domain_migration.md.
+~300+ files across the monorepo still reference encypher.com. This is a separate, large-scope task that should be done when DNS/infrastructure is ready. Key areas documented in memory file: project_domain_migration.md.
 
 ## Suggested Commit Message
 ```
 docs: v5.0 internal strategy docs -- domain migration, active launch posture, Content Provenance alignment
 
-- Migrate 53 encypherai.com references to encypher.com across 9 internal docs (Phase 1)
+- Migrate 53 encypher.com references to encypher.com across 9 internal docs (Phase 1)
 - Shift marketing posture from "held pending landmark deal" to "Active Launch -- Full-Stack Content Provenance"
 - Remove beta labels from Chrome extension v2.0 and WordPress plugin (7+ docs)
 - Update "Text Provenance" to "Content Provenance" in key headers

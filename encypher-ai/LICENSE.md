@@ -22,8 +22,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 In addition to the open source license above, Encypher offers commercial licensing options for organizations that wish to use our technology without the copyleft requirements of the AGPL. For commercial licensing, please contact:
 
-**Email:** enterprise@encypherai.com
-**Website:** [https://www.encypherai.com/licensing](https://www.encypherai.com/licensing)
+**Email:** enterprise@encypher.com
+**Website:** [https://www.encypher.com/licensing](https://www.encypher.com/licensing)
 
 ---
 

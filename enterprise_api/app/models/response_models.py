@@ -28,7 +28,7 @@ class SignResponse(BaseModel):
                     "document_id": "doc_abc123xyz",
                     "signed_text": "The Senate passed... [with invisible C2PA manifest]",
                     "total_sentences": 2,
-                    "verification_url": "https://verify.encypherai.com/doc_abc123xyz",
+                    "verification_url": "https://verify.encypher.com/doc_abc123xyz",
                 }
             ]
         }

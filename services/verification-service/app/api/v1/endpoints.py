@@ -1747,7 +1747,7 @@ async def verify_by_document_id(
 
 _LEGACY_DEPRECATION_HINT = (
     "This endpoint is deprecated. Use POST /api/v1/verify with a VerifyRequest body instead. "
-    "See https://docs.encypherai.com/api/verify for migration guide."
+    "See https://docs.encypher.com/api/verify for migration guide."
 )
 
 

@@ -1,10 +1,10 @@
 # PRD: Enterprise Streaming & Real-Time Signing Features
 
-**Status:** Draft  
-**Priority:** High  
-**Tier:** Enterprise Only  
-**Target Release:** Phase 3  
-**Owner:** Engineering Team  
+**Status:** Draft
+**Priority:** High
+**Tier:** Enterprise Only
+**Target Release:** Phase 3
+**Owner:** Engineering Team
 **Created:** 2025-10-30
 
 ---
@@ -17,7 +17,7 @@ Implement enterprise-grade streaming support for real-time content signing, enab
 ### Business Value
 - **Revenue Impact:** Premium enterprise feature with dedicated pricing tier
 - **Market Differentiation:** First C2PA-compliant streaming signing solution
-- **Use Cases:** 
+- **Use Cases:**
   - Real-time LLM chat applications (ChatGPT-style interfaces)
   - Live content moderation and attribution
   - Event-driven architectures with Kafka/RabbitMQ
@@ -105,7 +105,7 @@ Implement enterprise-grade streaming support for real-time content signing, enab
   "type": "complete",
   "document_id": "doc_xyz789",
   "total_chunks": 15,
-  "verification_url": "https://encypherai.com/verify/doc_xyz789"
+  "verification_url": "https://encypher.com/verify/doc_xyz789"
 }
 ```
 
@@ -161,7 +161,7 @@ data: {"document_id": "doc_123", "status": "signed"}
 {
   "success": true,
   "session_id": "session_abc123",
-  "websocket_url": "wss://api.encypherai.com/api/v1/stream/sign?session=session_abc123",
+  "websocket_url": "wss://api.encypher.com/api/v1/stream/sign?session=session_abc123",
   "expires_at": "2025-10-30T16:30:00Z"
 }
 ```
@@ -497,7 +497,7 @@ async def test_chat_streaming():
             "type": "message",
             "content": "Explain quantum computing"
         })
-        
+
         # Receive streaming signed chunks
         chunks = []
         async for message in ws:
@@ -507,7 +507,7 @@ async def test_chat_streaming():
                 assert data["signed"] is True
             elif data["type"] == "complete":
                 break
-        
+
         # Verify complete document
         full_text = "".join(chunks)
         verify_result = await client.verify(full_text)
@@ -530,19 +530,19 @@ async def test_kafka_streaming():
         "bootstrap_servers": ["localhost:9092"],
         "topic": "signed.content"
     })
-    
+
     # Subscribe consumer
     await client.kafka_consumer_subscribe({
         "topics": ["unsigned.content"],
         "callback_topic": "signed.content"
     })
-    
+
     # Produce unsigned content
     producer.send("unsigned.content", {
         "content": "Breaking news article...",
         "metadata": {"source": "NewsAPI"}
     })
-    
+
     # Consume signed content
     signed_message = consumer.poll(timeout=5.0)
     assert signed_message is not None
@@ -564,7 +564,7 @@ async def test_high_concurrency():
     for i in range(10000):
         ws = await websocket_client.connect()
         connections.append(ws)
-    
+
     # Send chunks concurrently
     async def send_chunks(ws, conn_id):
         for chunk_id in range(100):
@@ -574,7 +574,7 @@ async def test_high_concurrency():
             })
             response = await ws.receive_json()
             assert response["signed"] is True
-    
+
     await asyncio.gather(*[
         send_chunks(ws, i) for i, ws in enumerate(connections)
     ])
@@ -843,6 +843,6 @@ Volume: 5k documents/day, 1k concurrent editors
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2025-10-30  
+**Document Version:** 1.0
+**Last Updated:** 2025-10-30
 **Next Review:** 2025-11-15

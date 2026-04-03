@@ -1,6 +1,6 @@
 # \SigningAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -91,7 +91,7 @@ import (
 )
 
 func main() {
-	unifiedSignRequest := *openapiclient.NewUnifiedSignRequest() // UnifiedSignRequest | 
+	unifiedSignRequest := *openapiclient.NewUnifiedSignRequest() // UnifiedSignRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -116,7 +116,7 @@ Other parameters are passed through a pointer to a apiSignContentApiV1SignPostRe
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **unifiedSignRequest** | [**UnifiedSignRequest**](UnifiedSignRequest.md) |  | 
+ **unifiedSignRequest** | [**UnifiedSignRequest**](UnifiedSignRequest.md) |  |
 
 ### Return type
 
@@ -134,4 +134,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

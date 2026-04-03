@@ -1,7 +1,7 @@
 # Encypher Relationship Tracker
 ## Active BD, Standards, and Investor Pipeline
 
-**Last Updated:** March 30, 2026
+**Last Updated:** April 2, 2026
 **Status:** Active Tracker (Living Document)
 **Owner:** Chief Commercial Officer (CCO)
 **Distribution:** Executive, BD, Strategy
@@ -39,6 +39,7 @@ Use it to track status, ownership, next actions, and strategic significance acro
 | Playwire | Tier 2 Channel | BD leadership (active outreach) | Pipeline call sequence in progress | Monitor | Matt | Complete qualification call + partner economics review |
 | Aditude | Tier 2 Channel | Jared Siegal, Anthony Gonsalves, Tobias Bennett context | Intelligence-rich relationship; preference for built-in rev-share over referral | Monitor | Matt | Define partnership structure aligned to rev-share preference |
 | Snack-Media (UK) | Tier 2/3 Channel | Hector (CEO) | Offered webinar host support; UK expansion channel | Monitor | Matt | Design webinar pilot + UK publisher cohort |
+| Local Media Association (LMA) | Tier 2 Channel / Ecosystem | Frank Mungeam (CIO), Lindsay (Chief of Staff) | Intro call complete (2026-04-01); strong alignment on local news sustainability, AI trust practices, and content provenance; Frank offered Lynn Walsh / Trusting News intro; asked for materials and pricing; follow-up email sent with pilot proposal and AI Discovery Day Phoenix ask | Healthy | Erik / Matt | Send materials + pitch deck; propose 5-10 newsroom WordPress plugin pilot; pursue AI Discovery Day Phoenix inclusion; execute mutual intros (Ellen McCarthy, Lynn Walsh) |
 
 ---
 
@@ -164,6 +165,7 @@ Use it to track status, ownership, next actions, and strategic significance acro
 
 ## Change Log
 
+- **2026-04-02:** Added Local Media Association (LMA) to Platform and Channel Partners. Frank Mungeam (CIO) intro call completed 2026-04-01; journalism support org touching 3,000+ news leaders; distribution/credibility channel for small/regional publishers; AI Discovery Day events (next: Phoenix); co-published trust research with Trusting News. Pilot proposal and mutual intros (Ellen McCarthy, Lynn Walsh) in follow-up.
 - **2026-03-30:** Updated NPR after intro meeting with Erica. Contact identified, status upgraded to active evaluation, four-team follow-up scheduled (~April 13). SC application reference ask sent via follow-up email.
 - **2026-03-29:** Major update for C2PA Steering Committee application. Added Section 7 (SC application tracker with internal supporters, external support portfolio, and pre-submission actions). Corrected Library of Congress status from "Healthy" to "Paused" (no presentation delivered). Added NPR (active, meeting in 2 weeks) and Ellen McCarthy / Trust in Media (potential SC application supporter). Updated SPUR status to "Healthy" (SPUR wants to work with Encypher). Renumbered Immediate Action Queue to Section 8; reprioritized around SC application.
 - **2026-03-08:** Added Attest pipeline section (Section 6); renumbered Immediate Action Queue to Section 7; added SSOT pointer notes.

@@ -379,7 +379,7 @@ def embed_signed_text_in_html(original_html: str, signed_text: str) -> str:
 # =============================================================================
 
 
-def generate_badge_script(document_id: str, instance_id: str, verify_base_url: str = "https://verify.encypherai.com") -> str:
+def generate_badge_script(document_id: str, instance_id: str, verify_base_url: str = "https://verify.encypher.com") -> str:
     """Generate the verification badge JavaScript snippet for Ghost code injection."""
     return f"""<!-- Encypher Provenance Badge -->
 <script>

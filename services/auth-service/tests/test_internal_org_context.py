@@ -18,7 +18,7 @@ def _org_fixture():
         id="org_test",
         name="Test Org",
         slug="test-org",
-        email="test@encypherai.com",
+        email="test@encypher.com",
         account_type="organization",
         display_name="Test Publisher",
         anonymous_publisher=False,

@@ -88,7 +88,7 @@ Fix systemic gaps preventing non-enforcement add-ons from being purchased, persi
 
 ### Domain Management API (4 endpoints)
 - `services/auth-service/app/api/v1/organizations.py`: GET/POST/DELETE /{org_id}/verification-domain + POST /{org_id}/verification-domain/verify
-  - DNS verification: CNAME to verify.encypherai.com + TXT ownership proof
+  - DNS verification: CNAME to verify.encypher.com + TXT ownership proof
   - Gated behind custom-verification-domain add-on (enterprise bypasses)
 
 ### URL Generation

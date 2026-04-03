@@ -1,6 +1,6 @@
 <div align="center">
-  <a href="https://encypherai.com">
-    <img src="https://encypherai.com/encypher_full_nobg.png" alt="Encypher Corporation Logo" width="200">
+  <a href="https://encypher.com">
+    <img src="https://encypher.com/encypher_full_nobg.png" alt="Encypher Corporation Logo" width="200">
   </a>
 
   # c2pa-text
@@ -45,7 +45,7 @@ Placement: End of text, prefixed with ZWNBSP (U+FEFF)
 
 ## Maintenance & Support
 
-This library is the official reference implementation maintained by **Encypher** (encypherai.com), authors of the C2PA Text Specification and active contributors to the C2PA standard.
+This library is the official reference implementation maintained by **Encypher** (encypher.com), authors of the C2PA Text Specification and active contributors to the C2PA standard.
 
 While this library is free and permissively licensed (MIT), Encypher offers an **Enterprise API** for:
 - Managing cryptographic keys at scale (HSM)
@@ -53,7 +53,7 @@ While this library is free and permissively licensed (MIT), Encypher offers an *
 - Automated verification and revocation
 - Content production workflows
 
-[Learn more about Encypher Enterprise](https://encypherai.com)
+[Learn more about Encypher Enterprise](https://encypher.com)
 
 ## Installation
 ```bash
@@ -75,7 +75,7 @@ go get github.com/encypherai/c2pa-text/go@v1.0.3
 This library handles the **embedding layer** (text steganography). To generate the valid C2PA JUMBF manifest bytes (`manifest_bytes`), you have two options:
 
 ### 1. Use Encypher API (Recommended)
-The [Encypher Enterprise API](https://encypherai.com) automatically handles key management, signing, and manifest generation. It returns the fully signed JUMBF bytes or the final watermarked text directly.
+The [Encypher Enterprise API](https://encypher.com) automatically handles key management, signing, and manifest generation. It returns the fully signed JUMBF bytes or the final watermarked text directly.
 
 ### 2. Use C2PA Tooling
 You can generate raw JUMBF manifests using standard C2PA tools (like `c2pa-rs` or `c2patool`) and pass the binary output to this library.
@@ -86,7 +86,7 @@ You can generate raw JUMBF manifests using standard C2PA tools (like `c2pa-rs` o
 from c2pa_text import embed_manifest, extract_manifest
 
 # 1. You have a binary C2PA manifest (JUMBF)
-manifest_bytes = b"..." 
+manifest_bytes = b"..."
 
 # 2. Embed it into text
 text = "Hello World"

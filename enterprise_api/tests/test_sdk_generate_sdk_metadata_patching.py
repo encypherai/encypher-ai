@@ -58,7 +58,7 @@ async def test_patch_typescript_metadata_sets_monorepo_repository(tmp_path: Path
         encoding="utf-8",
     )
     mod._patch_typescript_metadata(tmp_path)
-    assert "https://api.encypherai.com" in runtime_ts.read_text(encoding="utf-8")
+    assert "https://api.encypher.com" in runtime_ts.read_text(encoding="utf-8")
 
 
 @pytest.mark.asyncio
@@ -124,10 +124,10 @@ Repository = "https://github.com/encypherai/sdk-python"
     text = pyproject.read_text(encoding="utf-8")
     assert '"urllib3>=2.1.0,<3.0.0"' in text
     assert '{name = "Encypher"' in text
-    assert 'email = "sdk@encypherai.com"' in text
+    assert 'email = "sdk@encypher.com"' in text
     assert "license" in text
     assert "MIT" in text
-    assert 'Homepage = "https://encypherai.com"' in text
+    assert 'Homepage = "https://encypher.com"' in text
     assert f'Documentation = "{mod.PRODUCTION_BASE_URL}/docs"' in text
     assert f'Repository = "{mod.MONOREPO_URL}"' in text
     assert f'Changelog = "{mod.MONOREPO_URL}/releases"' in text
@@ -151,7 +151,7 @@ Repository = "https://github.com/encypherai/sdk-python"
     )
     mod._patch_python_metadata(tmp_path)
     patched = config_py.read_text(encoding="utf-8")
-    assert "https://api.encypherai.com" in patched
+    assert "https://api.encypher.com" in patched
     assert "http://localhost:8007" in patched
 
 
@@ -172,11 +172,11 @@ license = \"Unlicense\"
 
     patched = cargo.read_text(encoding="utf-8")
     assert f'repository = "{mod.MONOREPO_URL}"' in patched
-    assert 'homepage = "https://encypherai.com"' in patched
+    assert 'homepage = "https://encypher.com"' in patched
     assert f'documentation = "{mod.PRODUCTION_BASE_URL}/docs"' in patched
     assert 'license = "MIT"' in patched
     assert 'readme = "README.md"' in patched
-    assert 'authors = ["Encypher <sdk@encypherai.com>"]' in patched
+    assert 'authors = ["Encypher <sdk@encypher.com>"]' in patched
 
     rust_cfg = tmp_path / "src" / "apis" / "configuration.rs"
     rust_cfg.parent.mkdir(parents=True, exist_ok=True)
@@ -185,7 +185,7 @@ license = \"Unlicense\"
         encoding="utf-8",
     )
     mod._patch_rust_metadata(tmp_path)
-    assert "https://api.encypherai.com" in rust_cfg.read_text(encoding="utf-8")
+    assert "https://api.encypher.com" in rust_cfg.read_text(encoding="utf-8")
 
 
 def test_check_openapi_generator_uses_noninteractive_npx(monkeypatch: pytest.MonkeyPatch) -> None:

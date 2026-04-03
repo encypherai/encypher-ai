@@ -57,7 +57,7 @@ event: partial
 data: {"run_id":"run_123","document_id":"doc_123","status":"partial","pct":90,"preview":"Signed content preview..."}
 
 event: final
-data: {"run_id":"run_123","document_id":"doc_123","status":"final","pct":100,"signed_text":"...","verification_url":"https://verify.encypherai.com/doc_123","duration_ms":84}
+data: {"run_id":"run_123","document_id":"doc_123","status":"final","pct":100,"signed_text":"...","verification_url":"https://verify.encypher.com/doc_123","duration_ms":84}
 ```
 
 ### Run-state lookup
@@ -133,7 +133,7 @@ Server -> client messages:
 ```json
 {"type": "connected", "session_id": "session_abc123"}
 {"type": "signed_chunk", "chunk_id": "chunk_001", "content": "signed:...", "signed": true, "session_id": "session_abc123", "timestamp": "2026-02-25T21:00:00Z"}
-{"type": "complete", "success": true, "session_id": "session_abc123", "document_id": "doc_xyz789", "total_chunks": 42, "duration_seconds": 12.4, "verification_url": "https://encypherai.com/verify/doc_xyz789"}
+{"type": "complete", "success": true, "session_id": "session_abc123", "document_id": "doc_xyz789", "total_chunks": 42, "duration_seconds": 12.4, "verification_url": "https://encypher.com/verify/doc_xyz789"}
 {"type": "error", "message": "Error description"}
 ```
 

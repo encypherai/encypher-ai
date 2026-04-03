@@ -1,7 +1,7 @@
 # PRD: Hosted Ghost Webhook Endpoint
 
-**Status:** Implementation Complete  
-**Team:** TEAM_187  
+**Status:** Implementation Complete
+**Team:** TEAM_187
 **Created:** 2026-02-13
 
 ## Overview
@@ -90,7 +90,7 @@ Ghost webhooks don't carry the org's Encypher API key. We use an **opaque webhoo
 - Token is generated on integration creation and returned once
 - Only the SHA-256 hash is stored in the database
 - Token can be regenerated via `POST /api/v1/integrations/ghost/regenerate-token`
-- User sets target URL to: `https://api.encypherai.com/api/v1/integrations/ghost/webhook?token=ghwh_xxx`
+- User sets target URL to: `https://api.encypher.com/api/v1/integrations/ghost/webhook?token=ghwh_xxx`
 
 **Security benefits:**
 - Org API key never exposed in webhook URLs or server logs

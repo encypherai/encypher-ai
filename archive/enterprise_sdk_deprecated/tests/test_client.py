@@ -41,7 +41,7 @@ def _setup_mock_client(monkeypatch, handler) -> EncypherClient:
         return original_client(*args, **kwargs)
 
     monkeypatch.setattr("encypher_enterprise.client.httpx.Client", client_factory)
-    return EncypherClient(api_key="test-token", base_url="https://api.encypherai.com")
+    return EncypherClient(api_key="test-token", base_url="https://api.encypher.com")
 
 
 def test_sign_success_includes_metadata(monkeypatch):

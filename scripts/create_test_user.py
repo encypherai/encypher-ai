@@ -24,7 +24,7 @@ def get_password_hash(password: str) -> str:
 def create_test_user():
     """Create a test user in the database."""
     # Test user credentials
-    email = "test@encypherai.com"
+    email = "test@encypher.com"
     password = "TestPassword123!"
     name = "Test User"
     user_id = str(uuid.uuid4())

@@ -62,7 +62,7 @@ class StatusService:
 
         # TEAM_056: Basic SSRF hardening - only allow fetching from these hosts.
         # TEAM_056: Intentionally strict; expand only with explicit security review.
-        self._allowed_status_list_hosts = {"verify.encypherai.com"}
+        self._allowed_status_list_hosts = {"verify.encypher.com"}
 
     # -------------------------------------------------------------------------
     # Status Allocation (used during signing)
@@ -531,7 +531,7 @@ class StatusService:
             "@context": ["https://www.w3.org/2018/credentials/v1", "https://w3id.org/vc/status-list/2021/v1"],
             "id": status_list_url,
             "type": ["VerifiableCredential", "StatusList2021Credential"],
-            "issuer": f"did:web:encypherai.com:orgs:{organization_id}",
+            "issuer": f"did:web:encypher.com:orgs:{organization_id}",
             "issued": issued,
             "credentialSubject": {"id": f"{status_list_url}#list", "type": "StatusList2021", "statusPurpose": "revocation", "encodedList": encoded},
         }

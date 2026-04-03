@@ -25,7 +25,7 @@ async def test_sdk_python_metadata_has_mit_license_and_urls() -> None:
     assert "license" in text
     assert "MIT" in text
 
-    assert 'Documentation = "https://api.encypherai.com/docs"' in text
+    assert 'Documentation = "https://api.encypher.com/docs"' in text
     assert 'Repository = "https://github.com/encypherai/encypherai-commercial"' in text
 
 

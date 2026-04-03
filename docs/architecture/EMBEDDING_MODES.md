@@ -164,7 +164,7 @@ returned `signed_text`.
 
 ```bash
 # Full mode (default, C2PA manifest in content)
-curl -X POST https://api.encypherai.com/api/v1/sign \
+curl -X POST https://api.encypher.com/api/v1/sign \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -173,7 +173,7 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
   }'
 
 # Micro mode: VS256-RS (max density, ECC, not Word-safe)
-curl -X POST https://api.encypherai.com/api/v1/sign \
+curl -X POST https://api.encypher.com/api/v1/sign \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -186,7 +186,7 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
   }'
 
 # Micro mode: legacy_safe-RS (Word-safe, ECC)
-curl -X POST https://api.encypherai.com/api/v1/sign \
+curl -X POST https://api.encypher.com/api/v1/sign \
   -H "Authorization: Bearer $API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -251,7 +251,7 @@ the embedding format in priority order:
 5. **C2PA manifest** -- tried for full mode
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/verify \
+curl -X POST https://api.encypher.com/api/v1/verify \
   -H "Content-Type: application/json" \
   -d '{"text": "Text with invisible embeddings..."}'
 ```

@@ -42,7 +42,7 @@ class AsyncEncypherClient:
     def __init__(
         self,
         api_key: str,
-        base_url: str = "https://api.encypherai.com",
+        base_url: str = "https://api.encypher.com",
         timeout: float = 30.0,
         max_retries: int = 3,
         transport: Optional[httpx.BaseTransport] = None,

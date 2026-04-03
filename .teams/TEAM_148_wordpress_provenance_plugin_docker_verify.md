@@ -11,12 +11,12 @@ Reference PRD task numbers. Mark with test verification:
 - [x] 4.4 — completed (✅ pytest contract tests, ✅ dockerized auto-sign, ✅ endpoint verification)
 
 ## Changes Made
-- Fixed `docker-compose.test.yml`: Added `extra_hosts` mapping for `wp-cli` service to resolve `api.encypherai.com:host-gateway`
+- Fixed `docker-compose.test.yml`: Added `extra_hosts` mapping for `wp-cli` service to resolve `api.encypher.com:host-gateway`
 - Created `VERIFICATION_REPORT.md`: Comprehensive verification report documenting plugin compliance with Enterprise API `/sign/advanced` and `/verify/advanced` endpoints
 - Implemented NMA member flag support at both plugin and API level
 
 ## Blockers
-- ~~Enterprise API TrustedHost middleware rejects container-to-host calls~~ **RESOLVED**: Added `extra_hosts` mapping for `api.encypherai.com` to both `wordpress` and `wp-cli` services
+- ~~Enterprise API TrustedHost middleware rejects container-to-host calls~~ **RESOLVED**: Added `extra_hosts` mapping for `api.encypher.com` to both `wordpress` and `wp-cli` services
 
 ## Verification Results
 ✅ **Contract Tests**: All 4 tests passed

@@ -1,6 +1,6 @@
 # 🎯 Corrected Encypher Migration Plan
 
-**Date:** October 29, 2025  
+**Date:** October 29, 2025
 **Status:** ✅ Dashboard Creation In Progress
 
 ---
@@ -11,17 +11,17 @@
 
 1. **Keep Existing Marketing Site** ✅
    - Already built at `c:\Users\eriks\encypher_website\frontend`
-   - Will stay at `encypherai.com`
+   - Will stay at `encypher.com`
    - May integrate design system later for consistency (optional)
 
 2. **Create NEW Dashboard** 🟡 IN PROGRESS
    - Building at `apps/dashboard`
-   - Will deploy to `dashboard.encypherai.com`
+   - Will deploy to `dashboard.encypher.com`
    - **This is the main focus!**
 
 3. **Migrate Backend** ⏳ NEXT
    - Transition from monolithic FastAPI to microservices
-   - Deploy to `api.encypherai.com`
+   - Deploy to `api.encypher.com`
    - This is the backend work you mentioned
 
 ---
@@ -54,13 +54,13 @@
 
 **Current State:**
 ```
-backend.encypherai.com (monolith)
+backend.encypher.com (monolith)
 └── FastAPI app
 ```
 
 **Target State:**
 ```
-api.encypherai.com (API Gateway)
+api.encypher.com (API Gateway)
 ├── encoding-service
 ├── manifest-service
 ├── analytics-service
@@ -89,7 +89,7 @@ api.encypherai.com (API Gateway)
 **Tasks:**
 - [ ] Create verification app
 - [ ] Build verification UI
-- [ ] Deploy to `verify.encypherai.com`
+- [ ] Deploy to `verify.encypher.com`
 
 **Timeline:** 1 week
 
@@ -195,17 +195,17 @@ npm run dev  # Will run on port 3001
 
 ### Current
 ```
-encypherai.com              → Existing marketing site
-backend.encypherai.com      → Monolithic FastAPI
+encypher.com              → Existing marketing site
+backend.encypher.com      → Monolithic FastAPI
 ```
 
 ### Target
 ```
-encypherai.com              → Existing marketing site (no changes)
-dashboard.encypherai.com    → NEW dashboard app
-api.encypherai.com          → NEW API gateway + microservices
-verify.encypherai.com       → NEW verification portal (optional)
-docs.encypherai.com         → Documentation (optional)
+encypher.com              → Existing marketing site (no changes)
+dashboard.encypher.com    → NEW dashboard app
+api.encypher.com          → NEW API gateway + microservices
+verify.encypher.com       → NEW verification portal (optional)
+docs.encypher.com         → Documentation (optional)
 ```
 
 ---
@@ -330,7 +330,7 @@ encypher_website/
 
 ---
 
-**Status:** ✅ **ON TRACK**  
-**Current Focus:** Dashboard creation  
-**Next Milestone:** Dashboard running locally  
+**Status:** ✅ **ON TRACK**
+**Current Focus:** Dashboard creation
+**Next Milestone:** Dashboard running locally
 **Timeline:** 4-6 weeks total

@@ -2,7 +2,7 @@
 name = "web-service"
 version = "0.2.0"
 description = "Marketing website backend service for Encypher - handles demo requests, analytics, and sales contact forms"
-authors = [{name = "Encypher Team", email = "contact@encypherai.com"}]
+authors = [{name = "Encypher Team", email = "contact@encypher.com"}]
 license = {text = "Proprietary"}
 readme = "README.md"
 requires-python = ">=3.11"

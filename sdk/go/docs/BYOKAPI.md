@@ -1,6 +1,6 @@
 # \BYOKAPI
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -292,7 +292,7 @@ import (
 )
 
 func main() {
-	publicKeyRegisterRequest := *openapiclient.NewPublicKeyRegisterRequest("PublicKeyPem_example") // PublicKeyRegisterRequest | 
+	publicKeyRegisterRequest := *openapiclient.NewPublicKeyRegisterRequest("PublicKeyPem_example") // PublicKeyRegisterRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -317,7 +317,7 @@ Other parameters are passed through a pointer to a apiRegisterPublicKeyApiV1Byok
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **publicKeyRegisterRequest** | [**PublicKeyRegisterRequest**](PublicKeyRegisterRequest.md) |  | 
+ **publicKeyRegisterRequest** | [**PublicKeyRegisterRequest**](PublicKeyRegisterRequest.md) |  |
 
 ### Return type
 
@@ -358,7 +358,7 @@ import (
 )
 
 func main() {
-	publicKeyRegisterRequest := *openapiclient.NewPublicKeyRegisterRequest("PublicKeyPem_example") // PublicKeyRegisterRequest | 
+	publicKeyRegisterRequest := *openapiclient.NewPublicKeyRegisterRequest("PublicKeyPem_example") // PublicKeyRegisterRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -383,7 +383,7 @@ Other parameters are passed through a pointer to a apiRegisterPublicKeyApiV1Byok
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **publicKeyRegisterRequest** | [**PublicKeyRegisterRequest**](PublicKeyRegisterRequest.md) |  | 
+ **publicKeyRegisterRequest** | [**PublicKeyRegisterRequest**](PublicKeyRegisterRequest.md) |  |
 
 ### Return type
 
@@ -424,7 +424,7 @@ import (
 )
 
 func main() {
-	keyId := "keyId_example" // string | 
+	keyId := "keyId_example" // string |
 	reason := "reason_example" // string | Reason for revocation (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -445,7 +445,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** |  | 
+**keyId** | **string** |  |
 
 ### Other Parameters
 
@@ -455,7 +455,7 @@ Other parameters are passed through a pointer to a apiRevokePublicKeyApiV1ByokPu
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **reason** | **string** | Reason for revocation | 
+ **reason** | **string** | Reason for revocation |
 
 ### Return type
 
@@ -496,7 +496,7 @@ import (
 )
 
 func main() {
-	keyId := "keyId_example" // string | 
+	keyId := "keyId_example" // string |
 	reason := "reason_example" // string | Reason for revocation (optional)
 
 	configuration := openapiclient.NewConfiguration()
@@ -517,7 +517,7 @@ func main() {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-**keyId** | **string** |  | 
+**keyId** | **string** |  |
 
 ### Other Parameters
 
@@ -527,7 +527,7 @@ Other parameters are passed through a pointer to a apiRevokePublicKeyApiV1ByokPu
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **reason** | **string** | Reason for revocation | 
+ **reason** | **string** | Reason for revocation |
 
 ### Return type
 
@@ -568,7 +568,7 @@ import (
 )
 
 func main() {
-	certificateUploadRequest := *openapiclient.NewCertificateUploadRequest("CertificatePem_example") // CertificateUploadRequest | 
+	certificateUploadRequest := *openapiclient.NewCertificateUploadRequest("CertificatePem_example") // CertificateUploadRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -593,7 +593,7 @@ Other parameters are passed through a pointer to a apiUploadCertificateApiV1Byok
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **certificateUploadRequest** | [**CertificateUploadRequest**](CertificateUploadRequest.md) |  | 
+ **certificateUploadRequest** | [**CertificateUploadRequest**](CertificateUploadRequest.md) |  |
 
 ### Return type
 
@@ -634,7 +634,7 @@ import (
 )
 
 func main() {
-	certificateUploadRequest := *openapiclient.NewCertificateUploadRequest("CertificatePem_example") // CertificateUploadRequest | 
+	certificateUploadRequest := *openapiclient.NewCertificateUploadRequest("CertificatePem_example") // CertificateUploadRequest |
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
@@ -659,7 +659,7 @@ Other parameters are passed through a pointer to a apiUploadCertificateApiV1Byok
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **certificateUploadRequest** | [**CertificateUploadRequest**](CertificateUploadRequest.md) |  | 
+ **certificateUploadRequest** | [**CertificateUploadRequest**](CertificateUploadRequest.md) |  |
 
 ### Return type
 
@@ -677,4 +677,3 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
 [[Back to Model list]](../README.md#documentation-for-models)
 [[Back to README]](../README.md)
-

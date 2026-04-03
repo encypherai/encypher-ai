@@ -14,8 +14,8 @@ Transform from a monolithic website to an enterprise-grade modular platform with
 
 ### Current State ❌
 ```
-encypherai.com              → Everything (marketing + dashboard)
-backend.encypherai.com      → Single FastAPI monolith
+encypher.com              → Everything (marketing + dashboard)
+backend.encypher.com      → Single FastAPI monolith
 ```
 
 **Problems:**
@@ -26,11 +26,11 @@ backend.encypherai.com      → Single FastAPI monolith
 
 ### Target State ✅
 ```
-encypherai.com              → Marketing website only
-dashboard.encypherai.com    → User dashboard (NEW)
-api.encypherai.com          → API Gateway (NEW)
-docs.encypherai.com         → Documentation (NEW)
-verify.encypherai.com       → Public verification (NEW)
+encypher.com              → Marketing website only
+dashboard.encypher.com    → User dashboard (NEW)
+api.encypher.com          → API Gateway (NEW)
+docs.encypher.com         → Documentation (NEW)
+verify.encypher.com       → Public verification (NEW)
 ```
 
 **Benefits:**
@@ -71,11 +71,11 @@ White (#ffffff)           → Base
 ```
 User Browser
      │
-     ├─→ Marketing Site (encypherai.com)
-     ├─→ Dashboard (dashboard.encypherai.com)
-     ├─→ Verification (verify.encypherai.com)
+     ├─→ Marketing Site (encypher.com)
+     ├─→ Dashboard (dashboard.encypher.com)
+     ├─→ Verification (verify.encypher.com)
      │
-     └─→ API Gateway (api.encypherai.com)
+     └─→ API Gateway (api.encypher.com)
               │
               ├─→ Encoding Service (signing)
               ├─→ Manifest Service (documents)
@@ -88,7 +88,7 @@ User Browser
 
 ## 📦 What Moves Where
 
-### Marketing Site (`encypherai.com`)
+### Marketing Site (`encypher.com`)
 **Content:**
 - Homepage
 - Pricing page
@@ -96,10 +96,10 @@ User Browser
 - Blog
 - Contact
 
-**Tech:** Next.js (static/SSG)  
+**Tech:** Next.js (static/SSG)
 **Purpose:** Attract and convert visitors
 
-### Dashboard (`dashboard.encypherai.com`)
+### Dashboard (`dashboard.encypher.com`)
 **Content:**
 - User signup/login
 - API key management
@@ -107,36 +107,36 @@ User Browser
 - Document management
 - Account settings
 
-**Tech:** Next.js (dynamic)  
+**Tech:** Next.js (dynamic)
 **Purpose:** User application interface
 
-### API Gateway (`api.encypherai.com`)
+### API Gateway (`api.encypher.com`)
 **Content:**
 - All API endpoints
 - Rate limiting
 - Authentication
 - Request routing
 
-**Tech:** Nginx/Traefik  
+**Tech:** Nginx/Traefik
 **Purpose:** Centralized API access
 
-### Verification Portal (`verify.encypherai.com`)
+### Verification Portal (`verify.encypher.com`)
 **Content:**
 - Public document verification
 - Verification results display
 - Trust badges
 
-**Tech:** Next.js (lightweight)  
+**Tech:** Next.js (lightweight)
 **Purpose:** Public trust & transparency
 
-### Documentation (`docs.encypherai.com`)
+### Documentation (`docs.encypher.com`)
 **Content:**
 - SDK documentation
 - API reference
 - Tutorials & guides
 - Code examples
 
-**Tech:** MkDocs/Docusaurus  
+**Tech:** MkDocs/Docusaurus
 **Purpose:** Developer resources
 
 ---
@@ -258,10 +258,10 @@ User Browser
 ### Risks
 1. **Downtime during migration**
    - *Mitigation:* Blue-green deployment, rollback plan
-   
+
 2. **Increased complexity**
    - *Mitigation:* Good documentation, monitoring
-   
+
 3. **Higher costs**
    - *Mitigation:* Better performance = better conversion
 
@@ -311,8 +311,8 @@ User Browser
 
 ## 📞 Questions?
 
-**Technical Questions:** engineering@encypherai.com  
-**Business Questions:** leadership@encypherai.com  
+**Technical Questions:** engineering@encypher.com
+**Business Questions:** leadership@encypher.com
 **Full Details:** See [SUBDOMAIN_MIGRATION_PLAN.md](./SUBDOMAIN_MIGRATION_PLAN.md)
 
 ---
@@ -327,13 +327,13 @@ User Browser
 - ✅ Ready for scale
 - ✅ Enterprise customer-ready
 
-**Timeline:** 6 weeks  
-**Investment:** ~$500/month + 6 weeks dev time  
-**ROI:** Higher conversion, better reliability, enterprise-ready  
+**Timeline:** 6 weeks
+**Investment:** ~$500/month + 6 weeks dev time
+**ROI:** Higher conversion, better reliability, enterprise-ready
 **Risk:** Low (well-planned with rollback)
 
 ---
 
-**Status:** 📋 Ready for Approval  
-**Owner:** Engineering Team  
+**Status:** 📋 Ready for Approval
+**Owner:** Engineering Team
 **Stakeholders:** Leadership, Marketing, Sales

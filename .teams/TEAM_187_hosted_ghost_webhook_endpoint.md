@@ -1,7 +1,7 @@
 # TEAM_187 — Hosted Ghost Webhook Endpoint
 
-**Status:** Implementation Complete  
-**Started:** 2026-02-13  
+**Status:** Implementation Complete
+**Started:** 2026-02-13
 **Task:** Add a hosted Ghost CMS webhook endpoint to the Enterprise API so users can enable end-to-end signing of Ghost content with a single webhook URL — no self-hosted integration service required.
 
 ## Design
@@ -9,7 +9,7 @@
 ### User Flow
 1. User creates a custom integration in Ghost Admin → gets Admin API key
 2. User stores Ghost URL + Admin API key in Encypher dashboard (via `/api/v1/integrations/ghost` endpoint)
-3. User points Ghost webhooks at `https://api.encypherai.com/api/v1/integrations/ghost/webhook`
+3. User points Ghost webhooks at `https://api.encypher.com/api/v1/integrations/ghost/webhook`
 4. Our API handles everything: receive webhook → read post → extract text → sign → embed → write back
 
 ### Architecture

@@ -474,8 +474,8 @@ async def test_create_domain_claim_succeeds_when_notification_dispatch_fails(mon
     claim = MagicMock()
     claim.id = "odc_123"
     claim.organization_id = "org_123"
-    claim.domain = "encypherai.com"
-    claim.verification_email = "admin@encypherai.com"
+    claim.domain = "encypher.com"
+    claim.verification_email = "admin@encypher.com"
     claim.status = "pending"
     claim.dns_token = "dns-token"
     claim.email_token = "email-token"
@@ -498,7 +498,7 @@ async def test_create_domain_claim_succeeds_when_notification_dispatch_fails(mon
     send_mock = AsyncMock(side_effect=RuntimeError("notification down"))
     monkeypatch.setattr(org_api, "_send_domain_claim_email", send_mock)
 
-    payload = org_api.DomainClaimCreate(domain="encypherai.com", verification_email="admin@encypherai.com")
+    payload = org_api.DomainClaimCreate(domain="encypher.com", verification_email="admin@encypher.com")
     response = await org_api.create_domain_claim("org_123", payload, request, db, None)
 
     assert response["success"] is True
@@ -515,8 +515,8 @@ async def test_create_domain_claim_dispatches_verification_email(monkeypatch):
     claim = MagicMock()
     claim.id = "odc_456"
     claim.organization_id = "org_123"
-    claim.domain = "encypherai.com"
-    claim.verification_email = "erik.svilich@encypherai.com"
+    claim.domain = "encypher.com"
+    claim.verification_email = "erik.svilich@encypher.com"
     claim.status = "pending"
     claim.dns_token = "dns-token"
     claim.email_token = "email-token"
@@ -539,16 +539,16 @@ async def test_create_domain_claim_dispatches_verification_email(monkeypatch):
     send_mock = AsyncMock()
     monkeypatch.setattr(org_api, "_send_domain_claim_email", send_mock)
 
-    payload = org_api.DomainClaimCreate(domain="encypherai.com", verification_email="erik.svilich@encypherai.com")
+    payload = org_api.DomainClaimCreate(domain="encypher.com", verification_email="erik.svilich@encypher.com")
     response = await org_api.create_domain_claim("org_123", payload, request, db, None)
 
     assert response["success"] is True
     send_mock.assert_awaited_once()
     _, kwargs = send_mock.call_args
     assert kwargs["authorization"] == "Bearer test-token"
-    assert kwargs["recipient_email"] == "erik.svilich@encypherai.com"
+    assert kwargs["recipient_email"] == "erik.svilich@encypher.com"
     assert kwargs["organization_name"] == "Encypher"
-    assert kwargs["domain"] == "encypherai.com"
+    assert kwargs["domain"] == "encypher.com"
     assert kwargs["email_token"] == "email-token"
 
 
@@ -561,8 +561,8 @@ async def test_delete_domain_claim_endpoint_returns_deleted_claim(monkeypatch):
     claim = MagicMock()
     claim.id = "odc_123"
     claim.organization_id = "org_123"
-    claim.domain = "encypherai.com"
-    claim.verification_email = "admin@encypherai.com"
+    claim.domain = "encypher.com"
+    claim.verification_email = "admin@encypher.com"
     claim.status = "pending"
     claim.dns_token = "dns-token"
     claim.dns_verified_at = None

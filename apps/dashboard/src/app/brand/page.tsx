@@ -351,7 +351,7 @@ export default function BrandAssetsPage() {
   });
 
   const isEncypherTeam =
-    userEmail.endsWith('@encypher.com') || userEmail.endsWith('@encypherai.com');
+    userEmail.endsWith('@encypher.com') || userEmail.endsWith('@encypher.com');
   const hasAccess = isEncypherTeam || isSuperAdmin === true;
 
   const [bgMode, setBgMode] = useState<BgMode>('light');

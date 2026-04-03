@@ -1,6 +1,6 @@
 # encypher.C2PACustomAssertionsApi
 
-All URIs are relative to *https://api.encypherai.com*
+All URIs are relative to *https://api.encypher.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -38,10 +38,10 @@ from encypher.models.c2_pa_schema_response import C2PASchemaResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -58,7 +58,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.C2PACustomAssertionsApi(api_client)
-    c2_pa_schema_create = encypher.C2PASchemaCreate() # C2PASchemaCreate | 
+    c2_pa_schema_create = encypher.C2PASchemaCreate() # C2PASchemaCreate |
 
     try:
         # Create Schema
@@ -76,7 +76,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **c2_pa_schema_create** | [**C2PASchemaCreate**](C2PASchemaCreate.md)|  | 
+ **c2_pa_schema_create** | [**C2PASchemaCreate**](C2PASchemaCreate.md)|  |
 
 ### Return type
 
@@ -118,10 +118,10 @@ from encypher.models.c2_pa_template_response import C2PATemplateResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -138,7 +138,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.C2PACustomAssertionsApi(api_client)
-    c2_pa_template_create = encypher.C2PATemplateCreate() # C2PATemplateCreate | 
+    c2_pa_template_create = encypher.C2PATemplateCreate() # C2PATemplateCreate |
 
     try:
         # Create Template
@@ -156,7 +156,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **c2_pa_template_create** | [**C2PATemplateCreate**](C2PATemplateCreate.md)|  | 
+ **c2_pa_template_create** | [**C2PATemplateCreate**](C2PATemplateCreate.md)|  |
 
 ### Return type
 
@@ -196,10 +196,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -216,7 +216,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.C2PACustomAssertionsApi(api_client)
-    schema_id = 'schema_id_example' # str | 
+    schema_id = 'schema_id_example' # str |
 
     try:
         # Delete Schema
@@ -232,7 +232,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **schema_id** | **str**|  | 
+ **schema_id** | **str**|  |
 
 ### Return type
 
@@ -272,10 +272,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -292,7 +292,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.C2PACustomAssertionsApi(api_client)
-    template_id = 'template_id_example' # str | 
+    template_id = 'template_id_example' # str |
 
     try:
         # Delete Template
@@ -308,7 +308,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **template_id** | **str**|  | 
+ **template_id** | **str**|  |
 
 ### Return type
 
@@ -349,10 +349,10 @@ from encypher.models.c2_pa_schema_response import C2PASchemaResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -369,7 +369,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.C2PACustomAssertionsApi(api_client)
-    schema_id = 'schema_id_example' # str | 
+    schema_id = 'schema_id_example' # str |
 
     try:
         # Get Schema
@@ -387,7 +387,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **schema_id** | **str**|  | 
+ **schema_id** | **str**|  |
 
 ### Return type
 
@@ -428,10 +428,10 @@ from encypher.models.c2_pa_template_response import C2PATemplateResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -448,7 +448,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.C2PACustomAssertionsApi(api_client)
-    template_id = 'template_id_example' # str | 
+    template_id = 'template_id_example' # str |
 
     try:
         # Get Template
@@ -466,7 +466,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **template_id** | **str**|  | 
+ **template_id** | **str**|  |
 
 ### Return type
 
@@ -509,10 +509,10 @@ from encypher.models.c2_pa_schema_list_response import C2PASchemaListResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -551,7 +551,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **is_public** | **bool**|  | [optional] 
+ **is_public** | **bool**|  | [optional]
 
 ### Return type
 
@@ -592,10 +592,10 @@ from encypher.models.c2_pa_template_list_response import C2PATemplateListRespons
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -634,7 +634,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **page** | **int**|  | [optional] [default to 1]
  **page_size** | **int**|  | [optional] [default to 50]
- **category** | **str**|  | [optional] 
+ **category** | **str**|  | [optional]
 
 ### Return type
 
@@ -676,10 +676,10 @@ from encypher.models.c2_pa_schema_update import C2PASchemaUpdate
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -696,8 +696,8 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.C2PACustomAssertionsApi(api_client)
-    schema_id = 'schema_id_example' # str | 
-    c2_pa_schema_update = encypher.C2PASchemaUpdate() # C2PASchemaUpdate | 
+    schema_id = 'schema_id_example' # str |
+    c2_pa_schema_update = encypher.C2PASchemaUpdate() # C2PASchemaUpdate |
 
     try:
         # Update Schema
@@ -715,8 +715,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **schema_id** | **str**|  | 
- **c2_pa_schema_update** | [**C2PASchemaUpdate**](C2PASchemaUpdate.md)|  | 
+ **schema_id** | **str**|  |
+ **c2_pa_schema_update** | [**C2PASchemaUpdate**](C2PASchemaUpdate.md)|  |
 
 ### Return type
 
@@ -758,10 +758,10 @@ from encypher.models.c2_pa_template_update import C2PATemplateUpdate
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -778,8 +778,8 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.C2PACustomAssertionsApi(api_client)
-    template_id = 'template_id_example' # str | 
-    c2_pa_template_update = encypher.C2PATemplateUpdate() # C2PATemplateUpdate | 
+    template_id = 'template_id_example' # str |
+    c2_pa_template_update = encypher.C2PATemplateUpdate() # C2PATemplateUpdate |
 
     try:
         # Update Template
@@ -797,8 +797,8 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **template_id** | **str**|  | 
- **c2_pa_template_update** | [**C2PATemplateUpdate**](C2PATemplateUpdate.md)|  | 
+ **template_id** | **str**|  |
+ **c2_pa_template_update** | [**C2PATemplateUpdate**](C2PATemplateUpdate.md)|  |
 
 ### Return type
 
@@ -842,10 +842,10 @@ from encypher.models.c2_pa_assertion_validate_response import C2PAAssertionValid
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://api.encypherai.com
+# Defining the host is optional and defaults to https://api.encypher.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
+    host = "https://api.encypher.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -862,7 +862,7 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.C2PACustomAssertionsApi(api_client)
-    c2_pa_assertion_validate_request = encypher.C2PAAssertionValidateRequest() # C2PAAssertionValidateRequest | 
+    c2_pa_assertion_validate_request = encypher.C2PAAssertionValidateRequest() # C2PAAssertionValidateRequest |
 
     try:
         # Validate Assertion
@@ -880,7 +880,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **c2_pa_assertion_validate_request** | [**C2PAAssertionValidateRequest**](C2PAAssertionValidateRequest.md)|  | 
+ **c2_pa_assertion_validate_request** | [**C2PAAssertionValidateRequest**](C2PAAssertionValidateRequest.md)|  |
 
 ### Return type
 
@@ -903,4 +903,3 @@ Name | Type | Description  | Notes
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-

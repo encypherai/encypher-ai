@@ -91,7 +91,7 @@ def _mp3_inject_id3(
         "ENCYPHER_ORG_ID": org_id,
         "ENCYPHER_DOCUMENT_ID": document_id,
         "ENCYPHER_CONTENT_HASH": content_hash,
-        "ENCYPHER_VERIFY": "https://verify.encypherai.com",
+        "ENCYPHER_VERIFY": "https://verify.encypher.com",
     }
 
     txxx_data = b""
@@ -214,7 +214,7 @@ def _wav_inject_riff(
             "org_id": org_id,
             "document_id": document_id,
             "content_hash": content_hash,
-            "verify": "https://verify.encypherai.com",
+            "verify": "https://verify.encypher.com",
         },
         separators=(",", ":"),
     ).encode("utf-8")
