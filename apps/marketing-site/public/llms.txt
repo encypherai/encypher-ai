@@ -33,7 +33,7 @@ Encypher authored Section A.7 of the C2PA 2.3 specification (text provenance) an
 - Quote integrity verification
 
 ### Standards and Affiliations
-- C2PA (Coalition for Content Provenance and Authenticity) - Section A.7 Authors, Text Provenance Task Force Co-Chairs
+- C2PA (Coalition for Content Provenance and Authenticity) - Text Provenance Task Force Co-Chairs, authored Section A.7 of C2PA 2.3
 - CAI (Content Authenticity Initiative) - Members
 - Active collaboration with Adobe, Microsoft, Google, OpenAI, BBC
 

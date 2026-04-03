@@ -225,7 +225,7 @@ Erik
 
 ## 9. Jeremy Uzan -- Universal Music Group
 
-**Subject:** C2PA text provenance -- quick ask from spec author
+**Subject:** C2PA text provenance -- quick ask from task force co-chair
 
 **To:** Jeremy Uzan
 

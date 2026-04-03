@@ -168,7 +168,7 @@ We're infrastructure, not applications. We're the protocol layer for content pro
 - We're the only solution
 
 ### Pillar 2: Cryptographic Proof of Origin
-**The Message:** Text on the open web has no cryptographic proof of origin. Our watermarking technology embeds proof directly into text, surviving copy-paste, B2B distribution through wire services and licensees, aggregator scraping, and data processing.
+**The Message:** Text on the open web has no cryptographic proof of origin. Our watermarking technology embeds proof directly into text, surviving copy-paste, B2B distribution through wire services and licensees, aggregator scraping, and syndication.
 
 **Supporting Points:**
 - Invisible to readers, impossible to remove undetected
@@ -511,7 +511,7 @@ When Erik speaks for Encypher:
 
 As Co-Chair of the C2PA Text Provenance Task Force, we're building the standard that changes this--published January 8, 2026--with Google, BBC, OpenAI, Adobe, and Microsoft. I authored the specification and we built the reference implementation.
 
-Our patent-pending cryptographic watermarking embeds proof directly into text at sentence-level granularity. It survives copy-paste, B2B distribution, and data processing. Publishers can serve formal notice that content is marked. Once notified, continued unauthorized use becomes provable willful infringement--transforming 'prove they used your content' into 'prove they ignored your notice.' This materially strengthens enforcement posture, especially for registered works.
+Our patent-pending cryptographic watermarking embeds proof directly into text at sentence-level granularity. It survives copy-paste, B2B distribution, and scraping. Publishers can serve formal notice that content is marked. Once notified, continued unauthorized use becomes provable willful infringement--transforming 'prove they used your content' into 'prove they ignored your notice.' This materially strengthens enforcement posture, especially for registered works.
 
 The founding coalition is forming now. The invite-only roundtable track is defining market licensing frameworks through interim briefings and reconvened sessions. First movers shape the terms."
 
