@@ -11,17 +11,18 @@ on:
 jobs:
   sync-shared-libs:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Sync shared_libs to all services
         run: |
           # List of all services that use shared_commercial_libs
           SERVICES=(
+            "alert-service"
             "analytics-service"
             "auth-service"
             "billing-service"
@@ -33,34 +34,34 @@ jobs:
             "verification-service"
             "web-service"
           )
-          
+
           for SERVICE in "${SERVICES[@]}"; do
             echo "Syncing to $SERVICE..."
             rm -rf "services/$SERVICE/shared_libs"
             cp -r shared_commercial_libs "services/$SERVICE/shared_libs"
-            
+
             # Add SYNC_NOTICE.md to indicate this is a synced copy
             cat > "services/$SERVICE/shared_libs/SYNC_NOTICE.md" << 'EOF'
           # AUTO-SYNCED - DO NOT EDIT
-          
+
           This directory is automatically synced from `/shared_commercial_libs/`.
-          
+
           **Source of Truth**: `/shared_commercial_libs/`
-          
+
           Any changes made here will be overwritten on the next sync.
           To make changes, edit the files in `/shared_commercial_libs/` and push to main.
-          
+
           Synced by: GitHub Actions (sync-shared-libs.yml)
           EOF
             echo "  Synced to $SERVICE"
           done
           echo "All services synced."
-      
+
       - name: Check for changes
         id: check_changes
         run: |
           git diff --quiet || echo "changes=true" >> $GITHUB_OUTPUT
-      
+
       - name: Commit and push changes
         if: steps.check_changes.outputs.changes == 'true'
         run: |
