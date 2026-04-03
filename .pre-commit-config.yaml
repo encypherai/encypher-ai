@@ -9,7 +9,7 @@ repos:
         exclude: ^apps/marketing-site/src/content/blog/
         stages: [pre-commit]
     -   id: check-yaml
-        exclude: ^mkdocs\.yml$  # Exclude mkdocs.yml due to PyYAML tags
+        exclude: (^mkdocs\.yml$|^encypher-ai/mkdocs\.yml$)  # Exclude mkdocs.yml due to PyYAML tags
         stages: [pre-commit]
     -   id: check-added-large-files
         stages: [pre-commit]

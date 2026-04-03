@@ -45,7 +45,7 @@ jobs:
         run: |
           RAW_SLUG=$(basename "$NEW_FILE" .md)
           SLUG=$(echo "$RAW_SLUG" | tr '[:upper:]' '[:lower:]' | sed 's/[[:space:]]/-/g')
-          POST_URL="https://encypherai.com/blog/${SLUG}"
+          POST_URL="https://encypher.com/blog/${SLUG}"
           echo "Waiting for $POST_URL to go live..."
           MAX_ATTEMPTS=15
           ATTEMPT=0

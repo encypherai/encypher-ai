@@ -48,15 +48,15 @@ This monorepo is organized by product tier and functionality:
 
 | Directory | Application | Domain | Description |
 |-----------|-------------|--------|-------------|
-| [`apps/marketing-site/`](./apps/marketing-site/) | **Marketing Site** | `encypherai.com` | Public-facing marketing website (Next.js) |
-| [`apps/dashboard/`](./apps/dashboard/) | **User Dashboard** | `dashboard.encypherai.com` | API key management, usage tracking, analytics (Next.js) |
+| [`apps/marketing-site/`](./apps/marketing-site/) | **Marketing Site** | `encypher.com` | Public-facing marketing website (Next.js) |
+| [`apps/dashboard/`](./apps/dashboard/) | **User Dashboard** | `dashboard.encypher.com` | API key management, usage tracking, analytics (Next.js) |
 | [`dashboard_app/`](./dashboard_app/) | **Compliance Dashboard** | Internal/Enterprise | Full-stack compliance dashboard with directory signing (FastAPI + Next.js) |
 
 ### APIs & SDKs (Enterprise Tier)
 
 | Directory | Product | License Tier | Description |
 |-----------|---------|--------------|-------------|
-| [`enterprise_api/`](./enterprise_api/) | **Enterprise API** | Enterprise | Production C2PA API with Merkle trees, source attribution, plagiarism detection. [API Docs](https://api.encypherai.com/docs) |
+| [`enterprise_api/`](./enterprise_api/) | **Enterprise API** | Enterprise | Production C2PA API with Merkle trees, source attribution, plagiarism detection. [API Docs](https://api.encypher.com/docs) |
 | [`sdk/`](./sdk/) | **Enterprise SDKs** | Enterprise | Auto-generated SDKs (Python/TypeScript/Go/Rust) always in sync with API. MIT licensed. |
 | [`archive/enterprise_sdk_deprecated/`](./archive/enterprise_sdk_deprecated/) | ~~Enterprise SDK~~ | Deprecated | Archived hand-crafted SDK. See [DEPRECATED.md](./archive/enterprise_sdk_deprecated/DEPRECATED.md) |
 
@@ -518,9 +518,9 @@ uv run python scripts/repo_stats.py
 ## Support
 
 - **Internal Team**: Slack #encypher-dev
-- **Enterprise Customers**: enterprise@encypherai.com
-- **API Issues**: api@encypherai.com
-- **SDK Issues**: sdk@encypherai.com
+- **Enterprise Customers**: enterprise@encypher.com
+- **API Issues**: api@encypher.com
+- **SDK Issues**: sdk@encypher.com
 
 ---
 
@@ -548,6 +548,6 @@ Built with:
 
 **Made by the Encypher Team**
 
-[Website](https://encypherai.com) | [Dashboard](https://dashboard.encypherai.com) | [API Docs](https://docs.encypherai.com)
+[Website](https://encypher.com) | [Dashboard](https://dashboard.encypher.com) | [API Docs](https://docs.encypher.com)
 
 </div>

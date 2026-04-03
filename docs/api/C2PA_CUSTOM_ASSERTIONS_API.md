@@ -30,7 +30,7 @@ The C2PA Custom Assertions API allows enterprise customers to:
 ### Base URL
 
 ```
-Production: https://api.encypherai.com/api/v1
+Production: https://api.encypher.com/api/v1
 Development: http://localhost:8000/api/v1
 ```
 
@@ -465,7 +465,7 @@ Embed a document with custom C2PA assertions.
 ### Example 1: News Article with Location and Fact-Checking
 
 ```bash
-curl -X POST https://api.encypherai.com/api/v1/enterprise/embeddings/encode-with-embeddings \
+curl -X POST https://api.encypher.com/api/v1/enterprise/embeddings/encode-with-embeddings \
   -H "X-API-Key: your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -498,7 +498,7 @@ curl -X POST https://api.encypherai.com/api/v1/enterprise/embeddings/encode-with
 
 ```bash
 # First, register custom schema
-curl -X POST https://api.encypherai.com/api/v1/enterprise/c2pa/schemas \
+curl -X POST https://api.encypher.com/api/v1/enterprise/c2pa/schemas \
   -H "X-API-Key: your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -516,7 +516,7 @@ curl -X POST https://api.encypherai.com/api/v1/enterprise/c2pa/schemas \
   }'
 
 # Then, embed document with custom assertion
-curl -X POST https://api.encypherai.com/api/v1/enterprise/embeddings/encode-with-embeddings \
+curl -X POST https://api.encypher.com/api/v1/enterprise/embeddings/encode-with-embeddings \
   -H "X-API-Key: your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -539,7 +539,7 @@ curl -X POST https://api.encypherai.com/api/v1/enterprise/embeddings/encode-with
 
 ```bash
 # Create template
-curl -X POST https://api.encypherai.com/api/v1/enterprise/c2pa/templates \
+curl -X POST https://api.encypher.com/api/v1/enterprise/c2pa/templates \
   -H "X-API-Key: your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -685,10 +685,10 @@ Thumbnail image for content preview.
 
 For questions or issues:
 
-- **Documentation**: https://docs.encypherai.com
-- **API Status**: https://verify.encypherai.com/status
-- **Support Email**: support@encypherai.com
-- **Enterprise Support**: enterprise@encypherai.com
+- **Documentation**: https://docs.encypher.com
+- **API Status**: https://verify.encypher.com/status
+- **Support Email**: support@encypher.com
+- **Enterprise Support**: enterprise@encypher.com
 
 ---
 
