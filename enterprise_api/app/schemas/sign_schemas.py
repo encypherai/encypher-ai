@@ -63,6 +63,33 @@ class RightsMetadata(BaseModel):
     )
 
 
+class SegmentRightsMapping(BaseModel):
+    """Maps a set of segment indices to a specific rights profile.
+
+    Used with segment_rights on SignOptions to assign different rights
+    to different segments within a single document.  Segments not
+    covered by any mapping inherit the document-level ``rights`` field.
+    """
+
+    segment_indices: List[int] = Field(
+        ...,
+        min_length=1,
+        description="Segment indices (0-based) that this rights profile applies to",
+    )
+    rights: RightsMetadata = Field(
+        ...,
+        description="Rights metadata for the specified segments",
+    )
+
+    @field_validator("segment_indices")
+    @classmethod
+    def validate_indices_non_negative(cls, v: List[int]) -> List[int]:
+        for idx in v:
+            if idx < 0:
+                raise ValueError(f"Segment index must be greater than or equal to 0, got {idx}")
+        return v
+
+
 class LicenseInfo(BaseModel):
     """License information for content."""
 
@@ -134,6 +161,7 @@ class SignOptions(BaseModel):
     | add_dual_binding         | no   | yes        |
     | include_fingerprint      | no   | yes        |
     | enable_print_fingerprint | no   | yes        |
+    | segment_rights           | no   | yes        |
     | word segmentation        | no   | yes        |
     | batch (documents array)  | 10   | 100        |
     """
@@ -241,6 +269,15 @@ class SignOptions(BaseModel):
             "Print Leak Detection - embed imperceptible spacing patterns that survive "
             "printing and scanning, enabling source identification from physical or PDF "
             "copies (Enterprise)"
+        ),
+    )
+    segment_rights: Optional[List[SegmentRightsMapping]] = Field(
+        default=None,
+        description=(
+            "Per-segment rights mappings (Enterprise). Each entry maps a set of segment "
+            "indices to a RightsMetadata profile. Segments not covered inherit the "
+            "document-level rights field. Produces a com.encypher.rights.v2 compound "
+            "assertion in the C2PA manifest."
         ),
     )
     disable_c2pa: bool = Field(
@@ -738,6 +775,20 @@ def validate_sign_options_for_tier(
         else:
             features_used.append("print_fingerprint")
 
+    # Check segment-level rights
+    if options.segment_rights:
+        if not is_feature_available("segment_rights", tier_normalized):
+            features_denied.append(
+                {
+                    "feature": "segment_rights",
+                    "display_name": "Segment-Level Rights",
+                    "required_tier": TierName.ENTERPRISE,
+                    "requested_value": f"{len(options.segment_rights)} mappings",
+                }
+            )
+        else:
+            features_used.append("segment_rights")
+
     # Check batch size
     batch_limit = get_batch_limit(tier_normalized)
     if batch_size > batch_limit:
@@ -800,6 +851,10 @@ class SignedDocumentResult(BaseModel):
     embedding_plan: Optional[EmbeddingPlan] = Field(
         None,
         description="Optional index-based marker insertion plan (returned when options.return_embedding_plan=true).",
+    )
+    segment_rights_map: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Per-segment rights map (returned when options.segment_rights is provided). Each entry has segment_indices and rights.",
     )
 
 

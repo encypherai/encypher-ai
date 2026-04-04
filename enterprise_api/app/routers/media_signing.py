@@ -123,6 +123,7 @@ async def sign_media(
     action: str = Form(default="c2pa.created", description="C2PA action: c2pa.created or c2pa.edited"),
     digital_source_type: Optional[str] = Form(default=None, description="IPTC digital source type"),
     ingredient: Optional[UploadFile] = File(default=None, description="Previously signed file to reference as ingredient"),
+    enable_audio_watermark: bool = Form(default=False, description="Apply spread-spectrum audio watermark (Enterprise only, audio files only)"),
     organization: dict = Depends(_require_enterprise),
     db: AsyncSession = Depends(get_db),
 ):
@@ -259,6 +260,7 @@ async def sign_media(
             digital_source_type,
             ingredient_data,
             ingredient_mime,
+            enable_audio_watermark=enable_audio_watermark,
         )
     elif category == "document":
         signed_result = await _sign_document(
@@ -405,10 +407,26 @@ async def _sign_audio(
     digital_source_type,
     ingredient_data,
     ingredient_mime,
+    enable_audio_watermark: bool = False,
 ):
     from app.services.audio_signing_service import sign_audio
 
     audio_id = f"aud_{uuid.uuid4().hex[:16]}"
+
+    # Build custom assertions, including soft-binding declaration when watermarking
+    custom_assertions: list[dict] = []
+    if enable_audio_watermark:
+        custom_assertions.append(
+            {
+                "label": "c2pa.soft_binding.v1",
+                "data": {
+                    "method": "encypher.spread_spectrum_audio.v1",
+                    "payload_bits": 64,
+                    "description": "Spread-spectrum audio watermark embedded in signal domain",
+                },
+            }
+        )
+
     result = await sign_audio(
         audio_data=data,
         mime_type=mime,
@@ -416,7 +434,7 @@ async def _sign_audio(
         org_id=org_id,
         document_id=document_id,
         audio_id=audio_id,
-        custom_assertions=[],
+        custom_assertions=custom_assertions,
         rights_data={},
         signer_private_key_pem=private_key_pem,
         signer_cert_chain_pem=cert_chain_pem,
@@ -425,6 +443,34 @@ async def _sign_audio(
         ingredient_data=ingredient_data,
         ingredient_mime=ingredient_mime,
     )
+
+    # Apply spread-spectrum watermark after C2PA signing (modifies audio signal)
+    watermark_applied = False
+    watermark_key_val = None
+    if enable_audio_watermark:
+        from app.services.audio_watermark_client import (
+            audio_watermark_client,
+            compute_audio_watermark_key,
+            compute_audio_watermark_payload,
+        )
+
+        if audio_watermark_client.is_configured:
+            signed_b64 = base64.b64encode(result.signed_bytes).decode()
+            payload_hex = compute_audio_watermark_payload(audio_id, org_id)
+            wm_result = await audio_watermark_client.apply_watermark(signed_b64, mime, payload_hex)
+            if wm_result is not None:
+                watermarked_b64, _confidence = wm_result
+                result.signed_bytes = base64.b64decode(watermarked_b64)
+                from app.utils.hashing import compute_sha256
+
+                result.signed_hash = compute_sha256(result.signed_bytes)
+                result.size_bytes = len(result.signed_bytes)
+                watermark_applied = True
+                watermark_key_val = compute_audio_watermark_key(audio_id, org_id)
+                logger.info("Audio watermark applied: audio_id=%s doc=%s", audio_id, document_id)
+            else:
+                logger.warning("Audio watermark failed for audio_id=%s, continuing without watermark", audio_id)
+
     return {
         "success": True,
         "media_type": "audio",
@@ -437,6 +483,8 @@ async def _sign_audio(
         "size_bytes": result.size_bytes,
         "signed_file_b64": base64.b64encode(result.signed_bytes).decode("utf-8"),
         "has_ingredient": ingredient_data is not None,
+        "watermark_applied": watermark_applied,
+        "watermark_key": watermark_key_val,
     }
 
 

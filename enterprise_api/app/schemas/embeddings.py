@@ -127,6 +127,10 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         None,
         description="Optional rights metadata to embed (Business+).",
     )
+    segment_rights: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Per-segment rights mappings (Enterprise). Each entry has segment_indices (list of ints) and rights (RightsMetadata dict). Serialized from SignOptions.segment_rights.",
+    )
     embedding_options: EmbeddingOptions = Field(default_factory=EmbeddingOptions, description="Embedding generation options")
     expires_at: Optional[datetime] = Field(None, description="Optional expiration datetime for embeddings")
 

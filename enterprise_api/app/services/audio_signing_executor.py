@@ -28,6 +28,7 @@ async def execute_audio_signing(
     custom_assertions: list[dict] | None = None,
     rights_data: dict | None = None,
     action: str = "c2pa.created",
+    enable_audio_watermark: bool = False,
 ) -> SignedAudioResult:
     """Sign audio with C2PA using org credentials.
 
@@ -68,15 +69,29 @@ async def execute_audio_signing(
             exc,
         )
 
+    # Add soft-binding assertion when watermarking is enabled
+    assertions = list(custom_assertions or [])
+    if enable_audio_watermark:
+        assertions.append(
+            {
+                "label": "c2pa.soft_binding.v1",
+                "data": {
+                    "method": "encypher.spread_spectrum_audio.v1",
+                    "payload_bits": 64,
+                    "description": "Spread-spectrum audio watermark embedded in signal domain",
+                },
+            }
+        )
+
     try:
-        return await sign_audio(
+        result = await sign_audio(
             audio_data=audio_bytes,
             mime_type=mime_type,
             title=title,
             org_id=org_id,
             document_id=document_id,
             audio_id=audio_id,
-            custom_assertions=custom_assertions or [],
+            custom_assertions=assertions,
             rights_data=rights_data or {},
             signer_private_key_pem=private_key_pem,
             signer_cert_chain_pem=cert_chain_pem,
@@ -91,3 +106,29 @@ async def execute_audio_signing(
             status_code=500,
             detail={"code": "AUDIO_SIGNING_FAILED", "message": "Audio signing failed"},
         ) from exc
+
+    # Apply spread-spectrum watermark after C2PA signing
+    if enable_audio_watermark:
+        import base64
+
+        from app.services.audio_watermark_client import (
+            audio_watermark_client,
+            compute_audio_watermark_payload,
+        )
+
+        if audio_watermark_client.is_configured:
+            signed_b64 = base64.b64encode(result.signed_bytes).decode()
+            payload_hex = compute_audio_watermark_payload(audio_id, org_id)
+            wm_result = await audio_watermark_client.apply_watermark(signed_b64, mime_type, payload_hex)
+            if wm_result is not None:
+                watermarked_b64, _confidence = wm_result
+                result.signed_bytes = base64.b64decode(watermarked_b64)
+                from app.utils.hashing import compute_sha256
+
+                result.signed_hash = compute_sha256(result.signed_bytes)
+                result.size_bytes = len(result.signed_bytes)
+                logger.info("Audio watermark applied: audio_id=%s org=%s", audio_id, org_id)
+            else:
+                logger.warning("Audio watermark failed for audio_id=%s, continuing without", audio_id)
+
+    return result
