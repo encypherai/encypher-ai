@@ -1,7 +1,7 @@
 # Segment-Level Rights
 
 **Status:** In Progress
-**Current Goal:** Task 4.2 -- Parse v2 assertion in verification logic
+**Current Goal:** Remaining: 4.3 (public rights API), 6.3-6.5/6.7-6.9 (integration tests)
 **Driven By:** NPR evaluation (Erica, BD/Licensing). NPR's rights management is complex: much of their site content is unowned. They need granular control over which segments are licensable and which are not, within a single document.
 
 ## Overview
@@ -37,17 +37,17 @@ Rights metadata is currently document-scoped. `SignOptions.rights` and `use_righ
 - [x] 3.2 Update `app/services/embedding_executor.py` to build compound `com.encypher.rights.v2` assertion -- pytest
 - [x] 3.3 Update `app/services/embedding_service.py` to store per-segment rights in `ContentReference.embedding_metadata["rights"]` -- pytest
 - [x] 3.4 Pass `segment_rights` through `unified_signing_service.py` to `EncodeWithEmbeddingsRequest` -- pytest
-- [ ] 3.5 Validate `segment_rights` indices against segmentation output count (runtime check)
+- [x] 3.5 Validate `segment_rights` indices against segmentation output count (422 if index >= n_segments) -- DONE
 
 ### 4.0 Verification Flow
 
 - [x] 4.1 Update `resolve_rights()` in `unified_verify_service.py` to return segment-specific rights via `segment_index` param -- pytest
-- [ ] 4.2 Update `_extract_rights_signals()` in `app/services/verification_logic.py` to parse the compound `com.encypher.rights.v2` assertion
+- [x] 4.2 Update `_extract_rights_signals()` in `verification_logic.py` to parse `com.encypher.rights.v2` (segment_rights_map + default_rights fallback) -- DONE
 - [ ] 4.3 Update public rights API in `app/api/v1/public/rights.py` to support segment-specific rights resolution
 
 ### 5.0 Duplicate RightsMetadata Consolidation
 
-- [ ] 5.1 Consolidate `RightsMetadata` to a single definition (currently duplicated in `sign_schemas.py`, `embeddings.py`, `request_models.py`) -- use import from canonical location
+- [x] 5.1 Consolidate `RightsMetadata` to single SSOT in `sign_schemas.py` (embeddings.py and request_models.py now import from there) -- DONE
 
 ### 6.0 Testing and Validation
 

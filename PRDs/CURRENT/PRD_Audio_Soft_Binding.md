@@ -54,7 +54,7 @@ Audio signing currently embeds C2PA manifests into container metadata (RIFF chun
 ### 5.0 Tier Gating and Config
 
 - [x] 5.1 Add `audio_watermark` feature flag to `app/core/tier_config.py` (False for free, True for enterprise, True for strategic_partner) -- DONE
-- [ ] 5.2 Add validation in media signing router to reject `enable_audio_watermark` if tier does not permit
+- [x] 5.2 Add validation in media signing router to reject `enable_audio_watermark` on non-audio files (422) -- DONE
 - [ ] 5.3 DB tracking: add `watermark_applied` (bool), `watermark_key` (str), `watermark_method` (str) to audio content tracking (new migration)
 
 ### 6.0 Robustness Testing
@@ -62,6 +62,11 @@ Audio signing currently embeds C2PA manifests into container metadata (RIFF chun
 - [x] 6.1 Unit tests: watermark embed/detect roundtrip on WAV (12/12 passing) -- DONE
 - [ ] 6.2 Unit tests: watermark embed/detect roundtrip on MP3
 - [x] 6.3 Unit tests: tier gating (7/7 passing) -- DONE
+- [x] 6.3a Robustness test: survive PCM16 quantization (WAV encode/decode roundtrip) -- DONE
+- [x] 6.3b Robustness test: survive amplitude scaling (loudness normalization sim) -- DONE
+- [x] 6.3c Robustness test: survive additive noise at -30 dB -- DONE
+- [x] 6.3d Robustness test: no false positive on clean audio -- DONE
+- [x] 6.3e Robustness test: wrong seed does not extract correct payload -- DONE
 - [ ] 6.4 Robustness test: survive MP3 re-encoding at 128kbps
 - [ ] 6.5 Robustness test: survive MP3 re-encoding at 64kbps (lower bound)
 - [ ] 6.6 Robustness test: survive loudness normalization (-14 LUFS Spotify, -16 LUFS Apple, -24 LUFS broadcast)
