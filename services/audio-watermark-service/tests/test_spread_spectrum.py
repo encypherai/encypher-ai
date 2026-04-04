@@ -198,6 +198,126 @@ class TestImperceptibility:
         assert np.all(watermarked <= 1.0)
 
 
+class TestRobustness:
+    """Watermark survives common audio processing."""
+
+    def test_survives_pcm16_quantization(self) -> None:
+        """Embed, encode to WAV PCM_16, decode, detect -- the full pipeline roundtrip."""
+        samples = _make_speech_like(duration_s=3.0)
+        watermarked, _ = embed(
+            samples,
+            SAMPLE_RATE,
+            PAYLOAD,
+            SEED,
+            snr_db=-20.0,
+            chip_rate=CHIP_RATE,
+            payload_bits=PAYLOAD_BITS,
+        )
+        wav_bytes = encode_audio(watermarked, SAMPLE_RATE)
+        decoded, sr = decode_audio(wav_bytes)
+
+        detected, extracted, confidence = detect(
+            decoded,
+            sr,
+            SEED,
+            chip_rate=CHIP_RATE,
+            payload_bits=PAYLOAD_BITS,
+        )
+        assert detected is True
+        assert extracted == PAYLOAD
+
+    def test_survives_amplitude_scaling(self) -> None:
+        """Watermark survives loudness normalization (amplitude scaling)."""
+        samples = _make_speech_like(duration_s=3.0)
+        watermarked, _ = embed(
+            samples,
+            SAMPLE_RATE,
+            PAYLOAD,
+            SEED,
+            snr_db=-20.0,
+            chip_rate=CHIP_RATE,
+            payload_bits=PAYLOAD_BITS,
+        )
+        # Simulate loudness normalization: scale amplitude by 0.5 (-6 dB)
+        scaled = watermarked * 0.5
+
+        detected, extracted, _ = detect(
+            scaled,
+            SAMPLE_RATE,
+            SEED,
+            chip_rate=CHIP_RATE,
+            payload_bits=PAYLOAD_BITS,
+        )
+        assert detected is True
+        assert extracted == PAYLOAD
+
+    def test_survives_additive_noise(self) -> None:
+        """Watermark survives low-level additive noise."""
+        samples = _make_speech_like(duration_s=3.0)
+        watermarked, _ = embed(
+            samples,
+            SAMPLE_RATE,
+            PAYLOAD,
+            SEED,
+            snr_db=-15.0,
+            chip_rate=CHIP_RATE,
+            payload_bits=PAYLOAD_BITS,
+        )
+        # Add noise at -30 dB relative to signal
+        rng = np.random.RandomState(99)
+        signal_power = np.mean(watermarked**2)
+        noise_power = signal_power * 1e-3  # -30 dB
+        noise = rng.randn(len(watermarked)) * np.sqrt(noise_power)
+        noisy = np.clip(watermarked + noise, -1.0, 1.0)
+
+        detected, extracted, _ = detect(
+            noisy,
+            SAMPLE_RATE,
+            SEED,
+            chip_rate=CHIP_RATE,
+            payload_bits=PAYLOAD_BITS,
+        )
+        assert detected is True
+        assert extracted == PAYLOAD
+
+    def test_no_false_positive_on_clean_audio(self) -> None:
+        """Unwatermarked audio should not produce a false detection."""
+        samples = _make_speech_like(duration_s=3.0)
+        detected, _, confidence = detect(
+            samples,
+            SAMPLE_RATE,
+            SEED,
+            chip_rate=CHIP_RATE,
+            payload_bits=PAYLOAD_BITS,
+        )
+        assert detected is False
+        assert confidence < 0.05
+
+    def test_wrong_seed_fails_detection(self) -> None:
+        """Detection with the wrong seed should not extract the correct payload."""
+        samples = _make_speech_like(duration_s=3.0)
+        watermarked, _ = embed(
+            samples,
+            SAMPLE_RATE,
+            PAYLOAD,
+            SEED,
+            snr_db=-20.0,
+            chip_rate=CHIP_RATE,
+            payload_bits=PAYLOAD_BITS,
+        )
+        wrong_seed = b"wrong-seed-for-audio-watermark"
+        detected, extracted, _ = detect(
+            watermarked,
+            SAMPLE_RATE,
+            wrong_seed,
+            chip_rate=CHIP_RATE,
+            payload_bits=PAYLOAD_BITS,
+        )
+        # With wrong seed, the extracted payload should not match
+        if detected:
+            assert extracted != PAYLOAD
+
+
 class TestAudioIO:
     """Audio encode/decode helpers."""
 

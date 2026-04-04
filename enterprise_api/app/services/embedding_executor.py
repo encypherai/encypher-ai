@@ -462,6 +462,20 @@ async def encode_document_with_embeddings(
 
             leaf_hashes = [compute_leaf_hash(segment) for segment in segments]
 
+        # Validate segment_rights indices against actual segment count
+        if request.segment_rights:
+            n_segments = len(segments)
+            for mapping in request.segment_rights:
+                for idx in mapping.get("segment_indices", []):
+                    if idx >= n_segments:
+                        raise HTTPException(
+                            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail={
+                                "code": "INVALID_SEGMENT_INDEX",
+                                "message": f"segment_rights index {idx} exceeds segment count ({n_segments})",
+                            },
+                        )
+
         # Step 3: Generate minimal signed embeddings
         license_info = None
         if request.license:

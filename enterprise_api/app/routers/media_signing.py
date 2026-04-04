@@ -151,6 +151,16 @@ async def sign_media(
 
     category = _classify(mime_lower)
 
+    # Validate enable_audio_watermark is only used with audio files
+    if enable_audio_watermark and category != "audio":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "INVALID_WATERMARK_TARGET",
+                "message": f"Audio watermark is only supported for audio files, got {category}",
+            },
+        )
+
     # Read ingredient if provided
     ingredient_data: Optional[bytes] = None
     ingredient_mime: Optional[str] = None
