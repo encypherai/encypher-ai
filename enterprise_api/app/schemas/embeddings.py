@@ -52,13 +52,7 @@ class LicenseInfo(BaseModel):
     contact_email: Optional[str] = Field(None, description="Contact email for licensing")
 
 
-class RightsMetadata(BaseModel):
-    copyright_holder: Optional[str] = Field(None, description="Copyright holder / publisher name")
-    license_url: Optional[str] = Field(None, description="URL to license terms")
-    usage_terms: Optional[str] = Field(None, description="Human-readable usage terms")
-    syndication_allowed: Optional[bool] = Field(None, description="Whether downstream syndication is permitted")
-    embargo_until: Optional[datetime] = Field(None, description="Optional embargo end timestamp")
-    contact_email: Optional[str] = Field(None, description="Contact email for licensing")
+from app.schemas.sign_schemas import RightsMetadata  # noqa: E402 -- SSOT; avoid duplicate definition
 
 
 class EncodeWithEmbeddingsRequest(BaseModel):

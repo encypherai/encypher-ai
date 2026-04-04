@@ -8,35 +8,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
-class RightsMetadata(BaseModel):
-    copyright_holder: Optional[str] = Field(
-        default=None,
-        max_length=255,
-        description="Copyright holder / publisher name",
-    )
-    license_url: Optional[str] = Field(
-        default=None,
-        max_length=1000,
-        description="URL to license terms",
-    )
-    usage_terms: Optional[str] = Field(
-        default=None,
-        max_length=2000,
-        description="Human-readable usage terms",
-    )
-    syndication_allowed: Optional[bool] = Field(
-        default=None,
-        description="Whether downstream syndication is permitted",
-    )
-    embargo_until: Optional[datetime] = Field(
-        default=None,
-        description="Optional embargo end timestamp",
-    )
-    contact_email: Optional[str] = Field(
-        default=None,
-        max_length=320,
-        description="Contact email for licensing",
-    )
+from app.schemas.sign_schemas import RightsMetadata  # noqa: E402 -- SSOT; avoid duplicate definition
 
 
 class SignRequest(BaseModel):
