@@ -13,6 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.organization import Organization
 from app.services.video_signing_service import SignedVideoResult, sign_video
+from app.services.video_watermark_client import (
+    SOFT_BINDING_ASSERTION_VIDEO,
+    apply_watermark_to_signed_video,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +33,7 @@ async def execute_video_signing(
     rights_data: dict | None = None,
     action: str = "c2pa.created",
     digital_source_type: str | None = None,
+    enable_video_watermark: bool = False,
 ) -> SignedVideoResult:
     """Sign video with C2PA using org credentials.
 
@@ -69,6 +74,11 @@ async def execute_video_signing(
             exc,
         )
 
+    # Add soft-binding assertion when watermarking is enabled
+    assertions = list(custom_assertions or [])
+    if enable_video_watermark:
+        assertions.append(SOFT_BINDING_ASSERTION_VIDEO)
+
     try:
         result = await sign_video(
             video_data=video_bytes,
@@ -77,7 +87,7 @@ async def execute_video_signing(
             org_id=org_id,
             document_id=document_id,
             video_id=video_id,
-            custom_assertions=custom_assertions or [],
+            custom_assertions=assertions,
             rights_data=rights_data or {},
             signer_private_key_pem=private_key_pem,
             signer_cert_chain_pem=cert_chain_pem,
@@ -93,6 +103,16 @@ async def execute_video_signing(
             status_code=500,
             detail={"code": "VIDEO_SIGNING_FAILED", "message": "Video signing failed"},
         ) from exc
+
+    # Apply spread-spectrum watermark after C2PA signing
+    if enable_video_watermark:
+        wm_result = await apply_watermark_to_signed_video(result.signed_bytes, mime_type, video_id, org_id)
+        if wm_result is not None:
+            result.signed_bytes, result.signed_hash, wm_key = wm_result
+            result.size_bytes = len(result.signed_bytes)
+            result.watermark_applied = True
+            result.watermark_key = wm_key
+            logger.info("Video watermark applied: video_id=%s org=%s", video_id, org_id)
 
     # Persist SignedVideo record
     try:

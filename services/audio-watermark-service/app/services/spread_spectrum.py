@@ -1,23 +1,26 @@
 """
-Spread-spectrum audio watermarking.
+Spread-spectrum audio watermarking with concatenated ECC.
 
 Embeds a 64-bit payload into an audio signal using pseudo-random
-spreading sequences in the time domain. Each payload bit is spread
-across the full audio duration with a unique PN (pseudo-noise)
-sequence, making the watermark robust to common audio transformations.
+spreading sequences in the time domain. Each coded bit (786 total
+after RS + convolutional encoding) is spread across the full audio
+duration with a unique PN (pseudo-noise) sequence.
 
 Algorithm:
   EMBED:
-    1. For each payload bit, generate a PN chip sequence of length
+    1. Encode 8-byte payload through RS(32,8) + rate-1/3 K=7 conv code
+       to produce 786 coded bits.
+    2. For each coded bit, generate a PN chip sequence of length
        equal to the audio sample count using HMAC-SHA256(bit_index, seed).
-    2. Compute embedding strength alpha from the target SNR and signal power.
-    3. Add alpha * sum(bit_sign[i] * pn[i]) to the time-domain samples.
+    3. Compute embedding strength alpha from the target SNR and signal power,
+       normalised by CODED_BITS (786).
+    4. Add alpha * sum(coded_bit_sign[i] * pn[i]) to the time-domain samples.
 
   DETECT:
-    1. For each payload bit, correlate the audio with the expected
-       PN chip sequence.
-    2. Positive correlation -> bit=1, negative -> bit=0.
-    3. Confidence = mean absolute correlation, normalized by signal RMS.
+    1. For each of the 786 coded bit positions, correlate the audio with the
+       expected PN chip sequence to obtain a soft value.
+    2. Pass 786 soft values to the Viterbi + RS decoder (ecc_decode).
+    3. Confidence = mean absolute correlation, normalised by signal RMS.
 """
 
 from __future__ import annotations
@@ -32,13 +35,29 @@ import numpy as np
 import soundfile as sf
 from numpy.typing import NDArray
 
+from app.services.spread_spectrum_ecc import CODED_BITS, ecc_decode, ecc_encode
+
+# pydub is used for MP3/M4A format conversion via ffmpeg.
+# Import lazily so the service works without it for WAV-only workloads.
+try:
+    from pydub import AudioSegment as _AudioSegment
+
+    _PYDUB_AVAILABLE = True
+except ImportError:
+    _PYDUB_AVAILABLE = False
+    _AudioSegment = None  # type: ignore[assignment,misc]
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-_DETECTION_THRESHOLD = 0.01  # Minimum normalized correlation to declare detection
+# Minimum normalised correlation to declare watermark present.
+# With ECC (786 coded bits), per-bit spreading gain is lower than the
+# raw 64-bit scheme. Empirically, clean audio produces ~0.002 and
+# a -20 dB watermark produces ~0.004, so 0.003 cleanly separates them.
+_DETECTION_THRESHOLD = 0.003
 
 
 # ---------------------------------------------------------------------------
@@ -49,7 +68,6 @@ _DETECTION_THRESHOLD = 0.01  # Minimum normalized correlation to declare detecti
 def _generate_chips(
     bit_index: int,
     seed: bytes,
-    chip_rate: int,
     n_bins: int,
 ) -> NDArray[np.float64]:
     """Generate a deterministic +1/-1 chip sequence for a single payload bit.
@@ -57,11 +75,10 @@ def _generate_chips(
     Uses HMAC-SHA256(seed, bit_index) to produce a reproducible pseudo-random
     sequence of length n_bins. Each bit gets a fully independent sequence,
     ensuring low cross-correlation between different bits' chip sequences.
-
-    chip_rate is reserved for future use (e.g., controlling active bins per bit).
     """
     key = hmac.new(seed, bit_index.to_bytes(4, "big"), hashlib.sha256).digest()
-    rng = np.random.RandomState(int.from_bytes(key[:4], "big"))
+    # Use full 32-byte HMAC digest as entropy via SeedSequence for maximum PN diversity
+    rng = np.random.default_rng(np.random.SeedSequence(list(key)))
     chips = rng.choice([-1.0, 1.0], size=n_bins)
     return chips
 
@@ -77,46 +94,47 @@ def embed(
     payload: str,
     seed: bytes,
     snr_db: float = -20.0,
-    chip_rate: int = 8,
-    payload_bits: int = 64,
 ) -> Tuple[NDArray[np.float64], float]:
     """Embed a payload into the audio signal using time-domain spread-spectrum.
+
+    The payload is first encoded through a concatenated RS(32,8) + rate-1/3
+    convolutional code, producing CODED_BITS (786) coded bits. Each coded bit
+    gets its own PN chip sequence, spreading the energy across the full audio.
 
     Args:
         samples: Mono audio as float64 in [-1, 1].
         sample_rate: Sample rate in Hz.
-        payload: Hex string of the payload (16 chars for 64 bits).
+        payload: Hex string of the payload (up to 16 hex chars = 64 bits).
         seed: Secret key for PN sequence generation.
         snr_db: Target watermark-to-signal ratio in dB (negative = quieter).
-        chip_rate: Reserved for future use.
-        payload_bits: Number of payload bits to embed.
 
     Returns:
         Tuple of (watermarked_samples, confidence).
     """
-    if len(payload) * 4 < payload_bits:
-        raise ValueError(f"Payload hex {payload!r} too short for {payload_bits} bits")
-
     n_samples = len(samples)
 
-    # Convert hex payload to bit signs: 0 -> -1, 1 -> +1
-    payload_int = int(payload, 16)
-    bit_signs = np.array(
-        [1.0 if (payload_int >> (payload_bits - 1 - i)) & 1 else -1.0 for i in range(payload_bits)],
-        dtype=np.float64,
-    )
+    # Normalise payload to exactly 8 bytes (zero-pad on the left)
+    payload_bytes = bytes.fromhex(payload.zfill(16))
+
+    # ECC encode: 8 bytes -> 786 coded bits (0/1 uint8)
+    coded_bits = ecc_encode(payload_bytes)
+
+    # Convert coded bits to ±1 signs: 0 -> -1, 1 -> +1
+    coded_signs = (coded_bits.astype(np.float64) * 2.0) - 1.0
 
     # Compute embedding strength from target watermark-to-signal ratio.
-    # watermark_power = alpha^2 * payload_bits (PN sequences have unit power)
+    # watermark_power = alpha^2 * CODED_BITS (PN sequences have unit power)
     # WSR = watermark_power / signal_power = 10^(snr_db/10)
     signal_power = np.mean(samples**2) + 1e-10
-    alpha = np.sqrt(signal_power * (10.0 ** (snr_db / 10.0)) / payload_bits)
+    alpha = np.sqrt(signal_power * (10.0 ** (snr_db / 10.0)) / CODED_BITS)
 
-    # Build the composite watermark in time domain
+    # Build the composite watermark in time domain.
+    # In-place multiply avoids a temporary O(n_samples) array per iteration.
     watermark = np.zeros(n_samples, dtype=np.float64)
-    for i in range(payload_bits):
-        chips = _generate_chips(i, seed, chip_rate, n_samples)
-        watermark += bit_signs[i] * chips
+    for i in range(CODED_BITS):
+        chips = _generate_chips(i, seed, n_samples)
+        chips *= coded_signs[i]
+        watermark += chips
 
     watermark *= alpha
 
@@ -136,50 +154,46 @@ def detect(
     samples: NDArray[np.float64],
     sample_rate: int,
     seed: bytes,
-    chip_rate: int = 8,
-    payload_bits: int = 64,
 ) -> Tuple[bool, Optional[str], float]:
     """Detect and extract a payload from audio using time-domain correlation.
+
+    Correlates against all CODED_BITS (786) PN sequences to produce soft values,
+    then decodes through Viterbi + RS to recover the 8-byte payload.
 
     Args:
         samples: Mono audio as float64 in [-1, 1].
         sample_rate: Sample rate in Hz.
         seed: Same secret key used during embedding.
-        chip_rate: Same chip rate used during embedding.
-        payload_bits: Number of payload bits.
 
     Returns:
         Tuple of (detected, payload_hex_or_none, confidence).
     """
     n_samples = len(samples)
 
-    # Correlate with each bit's PN sequence
-    correlations = np.zeros(payload_bits)
-    for i in range(payload_bits):
-        chips = _generate_chips(i, seed, chip_rate, n_samples)
-        correlations[i] = np.mean(samples * chips)
+    # Correlate with each coded bit's PN sequence to produce soft values.
+    # Positive correlation -> coded bit was 1, negative -> coded bit was 0.
+    # np.dot avoids allocating a temporary O(n_samples) product array per iteration.
+    soft_values = np.zeros(CODED_BITS, dtype=np.float64)
+    inv_n = 1.0 / n_samples
+    for i in range(CODED_BITS):
+        chips = _generate_chips(i, seed, n_samples)
+        soft_values[i] = np.dot(samples, chips) * inv_n
 
-    # Extract bits: positive correlation -> 1, negative -> 0
-    extracted_bits = (correlations > 0).astype(int)
-
-    # Confidence: mean absolute correlation normalized by signal RMS.
-    # Without a watermark, correlations are ~0 (PN uncorrelated with signal).
-    # With a watermark, |correlation| ~ alpha.
+    # Confidence: mean absolute correlation normalised by signal RMS.
     signal_rms = np.sqrt(np.mean(samples**2)) + 1e-10
-    abs_corr = np.abs(correlations)
-    mean_abs_corr = float(np.mean(abs_corr))
+    mean_abs_corr = float(np.mean(np.abs(soft_values)))
     confidence = float(np.clip(mean_abs_corr / signal_rms, 0.0, 1.0))
 
-    detected = confidence > _DETECTION_THRESHOLD
-
-    if detected:
-        payload_int = 0
-        for bit in extracted_bits:
-            payload_int = (payload_int << 1) | int(bit)
-        payload_hex = f"{payload_int:0{payload_bits // 4}x}"
-        return True, payload_hex, confidence
-    else:
+    if confidence <= _DETECTION_THRESHOLD:
         return False, None, confidence
+
+    # ECC decode: Viterbi + RS erasure decoding
+    recovered, _corrected = ecc_decode(soft_values)
+    if recovered is None:
+        return False, None, confidence
+
+    payload_hex = recovered.hex()
+    return True, payload_hex, confidence
 
 
 # ---------------------------------------------------------------------------
@@ -187,16 +201,56 @@ def detect(
 # ---------------------------------------------------------------------------
 
 
-def decode_audio(audio_bytes: bytes) -> Tuple[NDArray[np.float64], int]:
-    """Decode audio bytes to mono float64 samples + sample rate."""
-    buf = io.BytesIO(audio_bytes)
-    data, sr = sf.read(buf, dtype="float64", always_2d=True)
-    # Convert to mono by averaging channels
-    if data.ndim == 2 and data.shape[1] > 1:
-        data = np.mean(data, axis=1)
-    else:
-        data = data.ravel()
+def _decode_via_pydub(audio_bytes: bytes, fmt: Optional[str] = None) -> Tuple[NDArray[np.float64], int]:
+    """Decode audio using pydub (ffmpeg backend) to mono float64 + sample rate.
+
+    Used for formats not supported by libsndfile (MP3, M4A/AAC).
+    """
+    if not _PYDUB_AVAILABLE:
+        raise RuntimeError("pydub is required for MP3/M4A decoding. Install with: uv add pydub")
+
+    seg = _AudioSegment.from_file(io.BytesIO(audio_bytes), format=fmt)
+    # Convert to mono, 16-bit PCM via pydub, then hand off to soundfile for
+    # clean float64 normalization (avoids manual bit-depth scaling).
+    seg = seg.set_channels(1)
+    wav_buf = io.BytesIO()
+    seg.export(wav_buf, format="wav")
+    wav_buf.seek(0)
+    data, sr = sf.read(wav_buf, dtype="float64", always_2d=True)
+    data = data.ravel()
     return data, sr
+
+
+def decode_audio(audio_bytes: bytes, fmt: Optional[str] = None) -> Tuple[NDArray[np.float64], int]:
+    """Decode audio bytes to mono float64 samples + sample rate.
+
+    Supports WAV, FLAC, OGG via libsndfile directly. Falls back to pydub
+    (ffmpeg) for MP3 and M4A/AAC, which libsndfile cannot read.
+
+    Args:
+        audio_bytes: Raw audio file bytes.
+        fmt: Optional format hint ("mp3", "m4a", "wav", etc.). When None,
+             libsndfile is tried first; on failure, pydub is used.
+    """
+    _PYDUB_FORMATS = {"mp3", "m4a", "aac", "ogg", "opus"}
+
+    if fmt is not None and fmt.lower() in _PYDUB_FORMATS:
+        return _decode_via_pydub(audio_bytes, fmt=fmt.lower())
+
+    # Try libsndfile first (fast path for WAV/FLAC/OGG)
+    try:
+        buf = io.BytesIO(audio_bytes)
+        data, sr = sf.read(buf, dtype="float64", always_2d=True)
+        if data.ndim == 2 and data.shape[1] > 1:
+            data = np.mean(data, axis=1)
+        else:
+            data = data.ravel()
+        return data, sr
+    except Exception:
+        pass
+
+    # Fall back to pydub for formats soundfile cannot handle
+    return _decode_via_pydub(audio_bytes, fmt=fmt)
 
 
 def encode_audio(
@@ -204,8 +258,41 @@ def encode_audio(
     sample_rate: int,
     output_format: str = "WAV",
     subtype: str = "PCM_16",
+    bitrate: str = "128k",
 ) -> bytes:
-    """Encode mono float64 samples to audio bytes."""
-    buf = io.BytesIO()
-    sf.write(buf, samples, sample_rate, format=output_format, subtype=subtype)
-    return buf.getvalue()
+    """Encode mono float64 samples to audio bytes.
+
+    Args:
+        samples: Mono float64 audio in [-1, 1].
+        sample_rate: Sample rate in Hz.
+        output_format: Output format. "WAV" and "FLAC" use soundfile directly.
+            "MP3" and "M4A" (AAC) use pydub/ffmpeg.
+        subtype: PCM subtype for WAV/FLAC (ignored for MP3/M4A).
+        bitrate: Bitrate for lossy encoding (MP3/M4A), e.g. "128k", "64k".
+    """
+    fmt_upper = output_format.upper()
+
+    if fmt_upper in ("WAV", "FLAC", "OGG"):
+        buf = io.BytesIO()
+        sf.write(buf, samples, sample_rate, format=fmt_upper, subtype=subtype)
+        return buf.getvalue()
+
+    # MP3 / M4A path: encode to WAV first, then transcode via pydub
+    if not _PYDUB_AVAILABLE:
+        raise RuntimeError("pydub is required for MP3/M4A encoding. Install with: uv add pydub")
+
+    wav_buf = io.BytesIO()
+    sf.write(wav_buf, samples, sample_rate, format="WAV", subtype="PCM_16")
+    wav_buf.seek(0)
+
+    seg = _AudioSegment.from_wav(wav_buf)
+
+    out_buf = io.BytesIO()
+    if fmt_upper == "MP3":
+        seg.export(out_buf, format="mp3", bitrate=bitrate)
+    elif fmt_upper in ("M4A", "AAC"):
+        seg.export(out_buf, format="mp4", codec="aac", bitrate=bitrate)
+    else:
+        raise ValueError(f"Unsupported output format: {output_format!r}. Use WAV, FLAC, OGG, MP3, or M4A.")
+
+    return out_buf.getvalue()

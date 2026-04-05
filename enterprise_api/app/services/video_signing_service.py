@@ -27,6 +27,8 @@ class SignedVideoResult:
     size_bytes: int
     mime_type: str
     c2pa_signed: bool = True
+    watermark_applied: bool = False
+    watermark_key: str | None = None
 
 
 async def sign_video(

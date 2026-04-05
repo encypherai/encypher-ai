@@ -1,11 +1,11 @@
 """Tests for TrustMark HTTP client and payload computation."""
 
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from app.services.trustmark_client import (
+    SOFT_BINDING_ASSERTION_IMAGE,
     TrustMarkClient,
     compute_trustmark_key,
     compute_trustmark_payload,
@@ -42,11 +42,46 @@ class TestComputeTrustmarkKey:
         b = compute_trustmark_key("img_1", "org_1")
         assert a == b
 
+    def test_differs_by_org(self):
+        a = compute_trustmark_key("img_1", "org_1")
+        b = compute_trustmark_key("img_1", "org_2")
+        assert a != b
+
+
+class TestSoftBindingAssertionImage:
+    def test_assertion_label(self):
+        assert SOFT_BINDING_ASSERTION_IMAGE["label"] == "c2pa.soft_binding.v1"
+
+    def test_assertion_method(self):
+        assert SOFT_BINDING_ASSERTION_IMAGE["data"]["method"] == "encypher.trustmark_neural.v1"
+
+    def test_assertion_payload_bits(self):
+        assert SOFT_BINDING_ASSERTION_IMAGE["data"]["payload_bits"] == 100
+
+    def test_assertion_has_description(self):
+        assert "description" in SOFT_BINDING_ASSERTION_IMAGE["data"]
+
+
+class TestTrustMarkClientConfigured:
+    def test_is_configured_true(self, monkeypatch: pytest.MonkeyPatch):
+        from app import config as cfg
+
+        monkeypatch.setattr(cfg.settings, "image_service_url", "http://localhost:8010")
+        client = TrustMarkClient()
+        assert client.is_configured is True
+
+    def test_is_configured_false(self, monkeypatch: pytest.MonkeyPatch):
+        from app import config as cfg
+
+        monkeypatch.setattr(cfg.settings, "image_service_url", "")
+        client = TrustMarkClient()
+        assert client.is_configured is False
+
 
 class TestTrustMarkClientUnconfigured:
     @pytest.mark.asyncio
     async def test_apply_returns_none_when_unconfigured(self):
-        with patch("app.services.trustmark_client.settings") as mock_settings:
+        with patch("app.config.settings") as mock_settings:
             mock_settings.image_service_url = ""
             client = TrustMarkClient()
             result = await client.apply_watermark("b64data", "image/jpeg", "a" * 25)
@@ -54,7 +89,7 @@ class TestTrustMarkClientUnconfigured:
 
     @pytest.mark.asyncio
     async def test_detect_returns_none_when_unconfigured(self):
-        with patch("app.services.trustmark_client.settings") as mock_settings:
+        with patch("app.config.settings") as mock_settings:
             mock_settings.image_service_url = ""
             client = TrustMarkClient()
             result = await client.detect_watermark("b64data")
@@ -73,15 +108,12 @@ class TestTrustMarkClientApply:
 
         mock_client = AsyncMock()
         mock_client.post.return_value = mock_response
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client.is_closed = False
 
-        with (
-            patch("app.services.trustmark_client.settings") as mock_settings,
-            patch("app.services.trustmark_client.httpx.AsyncClient", return_value=mock_client),
-        ):
+        with patch("app.config.settings") as mock_settings:
             mock_settings.image_service_url = "http://localhost:8010"
             client = TrustMarkClient()
+            client._client = mock_client
             result = await client.apply_watermark("img_b64", "image/jpeg", "a" * 25)
 
         assert result is not None
@@ -90,20 +122,42 @@ class TestTrustMarkClientApply:
         assert confidence == 0.99
 
     @pytest.mark.asyncio
+    async def test_sends_message_bits_key(self):
+        """TrustMark uses 'message_bits', not 'payload' like spread-spectrum."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "watermarked_b64": "data",
+            "confidence": 0.95,
+        }
+
+        mock_client = AsyncMock()
+        mock_client.post.return_value = mock_response
+        mock_client.is_closed = False
+
+        with patch("app.config.settings") as mock_settings:
+            mock_settings.image_service_url = "http://localhost:8010"
+            client = TrustMarkClient()
+            client._client = mock_client
+            await client.apply_watermark("img_b64", "image/jpeg", "deadbeef" * 3 + "d")
+
+        call_kwargs = mock_client.post.call_args
+        body = call_kwargs[1]["json"]
+        assert "message_bits" in body
+        assert "payload" not in body
+
+    @pytest.mark.asyncio
     async def test_service_unavailable_returns_none(self):
         import httpx
 
         mock_client = AsyncMock()
         mock_client.post.side_effect = httpx.ConnectError("connection refused")
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client.is_closed = False
 
-        with (
-            patch("app.services.trustmark_client.settings") as mock_settings,
-            patch("app.services.trustmark_client.httpx.AsyncClient", return_value=mock_client),
-        ):
+        with patch("app.config.settings") as mock_settings:
             mock_settings.image_service_url = "http://localhost:8010"
             client = TrustMarkClient()
+            client._client = mock_client
             result = await client.apply_watermark("img_b64", "image/jpeg", "a" * 25)
 
         assert result is None
@@ -116,15 +170,12 @@ class TestTrustMarkClientApply:
 
         mock_client = AsyncMock()
         mock_client.post.return_value = mock_response
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client.is_closed = False
 
-        with (
-            patch("app.services.trustmark_client.settings") as mock_settings,
-            patch("app.services.trustmark_client.httpx.AsyncClient", return_value=mock_client),
-        ):
+        with patch("app.config.settings") as mock_settings:
             mock_settings.image_service_url = "http://localhost:8010"
             client = TrustMarkClient()
+            client._client = mock_client
             result = await client.apply_watermark("img_b64", "image/jpeg", "a" * 25)
 
         assert result is None
@@ -143,15 +194,12 @@ class TestTrustMarkClientDetect:
 
         mock_client = AsyncMock()
         mock_client.post.return_value = mock_response
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client.is_closed = False
 
-        with (
-            patch("app.services.trustmark_client.settings") as mock_settings,
-            patch("app.services.trustmark_client.httpx.AsyncClient", return_value=mock_client),
-        ):
+        with patch("app.config.settings") as mock_settings:
             mock_settings.image_service_url = "http://localhost:8010"
             client = TrustMarkClient()
+            client._client = mock_client
             result = await client.detect_watermark("img_b64")
 
         assert result is not None
@@ -159,3 +207,28 @@ class TestTrustMarkClientDetect:
         assert detected is True
         assert bits == "a" * 25
         assert confidence == 0.95
+
+    @pytest.mark.asyncio
+    async def test_not_detected(self):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "detected": False,
+            "message_bits": None,
+            "confidence": 0.01,
+        }
+
+        mock_client = AsyncMock()
+        mock_client.post.return_value = mock_response
+        mock_client.is_closed = False
+
+        with patch("app.config.settings") as mock_settings:
+            mock_settings.image_service_url = "http://localhost:8010"
+            client = TrustMarkClient()
+            client._client = mock_client
+            result = await client.detect_watermark("img_b64")
+
+        assert result is not None
+        detected, bits, confidence = result
+        assert detected is False
+        assert bits is None

@@ -17,33 +17,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_current_organization
+from app.dependencies import require_enterprise_tier
 from app.models.organization import Organization
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Reuse tier gate from video_attribution
-_ALLOWED_TIERS = {"enterprise", "strategic_partner", "demo"}
-
-
-def require_enterprise_video_stream(
-    organization: dict = Depends(get_current_organization),
-) -> dict:
-    """Require Enterprise tier for video stream signing."""
-    tier = (organization.get("tier") or "free").lower().replace("-", "_")
-    if tier not in _ALLOWED_TIERS:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Video stream signing requires Enterprise tier",
-                "required_tier": "enterprise",
-                "current_tier": tier,
-                "upgrade_url": "/billing/upgrade",
-            },
-        )
-    return organization
+require_enterprise_video_stream = require_enterprise_tier("Video stream signing")
 
 
 # ---------------------------------------------------------------------------
@@ -68,6 +48,7 @@ class StreamSegmentResponse(BaseModel):
     size_bytes: int
     mime_type: str
     c2pa_signed: bool
+    watermark_applied: bool
 
 
 class StreamFinalizeResponse(BaseModel):
@@ -104,6 +85,7 @@ class StreamStatusResponse(BaseModel):
 )
 async def stream_start(
     request: Request,
+    enable_video_watermark: bool = Form(default=False, description="Embed spread-spectrum watermark in each segment"),
     organization: dict = Depends(require_enterprise_video_stream),
     db: AsyncSession = Depends(get_db),
 ) -> StreamStartResponse:
@@ -139,6 +121,7 @@ async def stream_start(
         org_id=org_id,
         private_key_pem=private_key_pem,
         cert_chain_pem=cert_chain_pem,
+        enable_video_watermark=enable_video_watermark,
     )
 
     return StreamStartResponse(
@@ -211,6 +194,7 @@ async def stream_segment(
         size_bytes=result.size_bytes,
         mime_type=result.mime_type,
         c2pa_signed=result.c2pa_signed,
+        watermark_applied=result.watermark_applied,
     )
 
 

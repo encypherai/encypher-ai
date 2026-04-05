@@ -20,36 +20,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_current_organization
+from app.dependencies import require_enterprise_tier
 from app.models.organization import Organization
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Tier gate
-# ---------------------------------------------------------------------------
-
-_ALLOWED_TIERS = {"enterprise", "strategic_partner", "demo"}
-
-
-def require_enterprise_video(
-    organization: dict = Depends(get_current_organization),
-) -> dict:
-    """Require Enterprise (or equivalent) tier for video C2PA endpoints."""
-    tier = (organization.get("tier") or "free").lower().replace("-", "_")
-    if tier not in _ALLOWED_TIERS:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Video C2PA signing requires Enterprise tier",
-                "required_tier": "enterprise",
-                "current_tier": tier,
-                "upgrade_url": "/billing/upgrade",
-            },
-        )
-    return organization
+require_enterprise_video = require_enterprise_tier("Video C2PA signing")
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +162,8 @@ class VideoSignResponse(BaseModel):
     size_bytes: int
     mime_type: str
     c2pa_signed: bool
+    watermark_applied: bool = False
+    watermark_key: Optional[str] = None
 
 
 class VideoVerifyResponse(BaseModel):
@@ -197,6 +176,9 @@ class VideoVerifyResponse(BaseModel):
     signed_at: Optional[str] = None
     manifest_data: Optional[dict] = None
     error: Optional[str] = None
+    watermark_detected: bool = False
+    watermark_payload: Optional[str] = None
+    watermark_confidence: float = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -226,6 +208,7 @@ async def video_sign(
     digital_source_type: Optional[str] = Form(default=None, description="C2PA digital source type (e.g. digitalCapture, trainedAlgorithmicMedia)"),
     custom_assertions: str = Form(default="[]", description="JSON-encoded list of additional C2PA assertions"),
     rights_data: str = Form(default="{}", description="JSON-encoded rights metadata"),
+    enable_video_watermark: bool = Form(default=False, description="Apply spread-spectrum video watermark (Enterprise only)"),
     organization: dict = Depends(require_enterprise_video),
     db: AsyncSession = Depends(get_db),
 ) -> VideoSignResponse:
@@ -269,6 +252,7 @@ async def video_sign(
             rights_data=parsed_rights,
             action=action,
             digital_source_type=digital_source_type,
+            enable_video_watermark=enable_video_watermark,
         )
     except HTTPException:
         raise
@@ -298,6 +282,8 @@ async def video_sign(
         size_bytes=signing_result.size_bytes,
         mime_type=signing_result.mime_type,
         c2pa_signed=signing_result.c2pa_signed,
+        watermark_applied=signing_result.watermark_applied,
+        watermark_key=signing_result.watermark_key,
     )
 
 
@@ -317,20 +303,23 @@ async def video_verify(
     if not video_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
 
-    from app.services.video_verification_service import verify_video_c2pa
+    from app.services.video_verification_service import verify_video_with_watermark
 
-    result = verify_video_c2pa(video_bytes, mime_type)
+    combined = await verify_video_with_watermark(video_bytes, mime_type)
 
     return VideoVerifyResponse(
-        success=result.valid,
-        valid=result.valid,
-        c2pa_manifest_valid=result.c2pa_manifest_valid,
-        hash_matches=result.hash_matches,
-        c2pa_instance_id=result.c2pa_instance_id,
-        signer=result.signer,
-        signed_at=result.signed_at,
-        manifest_data=result.manifest_data,
-        error=result.error,
+        success=combined.c2pa.valid,
+        valid=combined.c2pa.valid,
+        c2pa_manifest_valid=combined.c2pa.c2pa_manifest_valid,
+        hash_matches=combined.c2pa.hash_matches,
+        c2pa_instance_id=combined.c2pa.c2pa_instance_id,
+        signer=combined.c2pa.signer,
+        signed_at=combined.c2pa.signed_at,
+        manifest_data=combined.c2pa.manifest_data,
+        error=combined.c2pa.error,
+        watermark_detected=combined.watermark_detected,
+        watermark_payload=combined.watermark_payload,
+        watermark_confidence=combined.watermark_confidence,
     )
 
 

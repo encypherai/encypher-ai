@@ -75,5 +75,9 @@ class ImageVerifyResponse(BaseModel):
     db_matched: Optional[bool] = None
     historically_signed_by_us: Optional[bool] = None
     overall_status: Optional[str] = None
+    # TrustMark watermark detection results
+    watermark_detected: Optional[bool] = None
+    watermark_payload: Optional[str] = None
+    watermark_confidence: Optional[float] = None
     error: Optional[str] = None
     correlation_id: str

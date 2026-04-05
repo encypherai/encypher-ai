@@ -21,29 +21,13 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_current_organization
+from app.dependencies import require_enterprise_tier
 from app.models.organization import Organization
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Tier gate: enterprise, strategic_partner, demo
-_ALLOWED_TIERS = {"enterprise", "strategic_partner", "demo"}
-
-
-def _require_enterprise(organization: dict = Depends(get_current_organization)) -> dict:
-    tier = (organization.get("tier") or "free").lower().replace("-", "_")
-    if tier not in _ALLOWED_TIERS:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Media C2PA signing requires Enterprise tier",
-                "required_tier": "enterprise",
-                "current_tier": tier,
-            },
-        )
-    return organization
+_require_enterprise = require_enterprise_tier("Media C2PA signing")
 
 
 # Green-list MIME types from C2PA Conformance Program
@@ -124,6 +108,8 @@ async def sign_media(
     digital_source_type: Optional[str] = Form(default=None, description="IPTC digital source type"),
     ingredient: Optional[UploadFile] = File(default=None, description="Previously signed file to reference as ingredient"),
     enable_audio_watermark: bool = Form(default=False, description="Apply spread-spectrum audio watermark (Enterprise only, audio files only)"),
+    enable_video_watermark: bool = Form(default=False, description="Apply spread-spectrum video watermark (Enterprise only, video files only)"),
+    enable_image_watermark: bool = Form(default=False, description="Apply TrustMark neural image watermark (Enterprise only, image files only)"),
     organization: dict = Depends(_require_enterprise),
     db: AsyncSession = Depends(get_db),
 ):
@@ -158,6 +144,26 @@ async def sign_media(
             detail={
                 "code": "INVALID_WATERMARK_TARGET",
                 "message": f"Audio watermark is only supported for audio files, got {category}",
+            },
+        )
+
+    # Validate enable_video_watermark is only used with video files
+    if enable_video_watermark and category != "video":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "INVALID_WATERMARK_TARGET",
+                "message": f"Video watermark is only supported for video files, got {category}",
+            },
+        )
+
+    # Validate enable_image_watermark is only used with image files
+    if enable_image_watermark and category != "image":
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "code": "INVALID_WATERMARK_TARGET",
+                "message": f"Image watermark is only supported for image files, got {category}",
             },
         )
 
@@ -242,6 +248,7 @@ async def sign_media(
             digital_source_type,
             ingredient_data,
             ingredient_mime,
+            enable_image_watermark=enable_image_watermark,
         )
     elif category == "video":
         signed_result = await _sign_video(
@@ -256,6 +263,7 @@ async def sign_media(
             digital_source_type,
             ingredient_data,
             ingredient_mime,
+            enable_video_watermark=enable_video_watermark,
         )
     elif category == "audio":
         signed_result = await _sign_audio(
@@ -307,8 +315,13 @@ async def _sign_image(
     digital_source_type,
     ingredient_data,
     ingredient_mime,
+    enable_image_watermark: bool = False,
 ):
     from app.services.image_signing_service import sign_image
+    from app.services.trustmark_client import (
+        SOFT_BINDING_ASSERTION_IMAGE,
+        apply_watermark_to_signed_image,
+    )
     from app.utils.image_utils import generate_image_id
 
     # JXL routes through document signing pipeline
@@ -327,6 +340,8 @@ async def _sign_image(
         )
 
     image_id = generate_image_id()
+    custom_assertions = [SOFT_BINDING_ASSERTION_IMAGE] if enable_image_watermark else []
+
     result = await sign_image(
         image_data=data,
         mime_type=mime,
@@ -334,7 +349,7 @@ async def _sign_image(
         org_id=org_id,
         document_id=document_id,
         image_id=image_id,
-        custom_assertions=[],
+        custom_assertions=custom_assertions,
         rights_data={},
         signer_private_key_pem=private_key_pem,
         signer_cert_chain_pem=cert_chain_pem,
@@ -343,10 +358,47 @@ async def _sign_image(
         ingredient_data=ingredient_data,
         ingredient_mime=ingredient_mime,
     )
+
+    return await _apply_watermark_and_build_response(
+        result,
+        media_type="image",
+        asset_id=image_id,
+        document_id=document_id,
+        mime=mime,
+        org_id=org_id,
+        ingredient_data=ingredient_data,
+        enable_watermark=enable_image_watermark,
+        apply_watermark_fn=apply_watermark_to_signed_image,
+    )
+
+
+async def _apply_watermark_and_build_response(
+    result,
+    *,
+    media_type: str,
+    asset_id: str,
+    document_id: str,
+    mime: str,
+    org_id: str,
+    ingredient_data,
+    enable_watermark: bool,
+    apply_watermark_fn,
+) -> dict:
+    """Apply optional spread-spectrum watermark and build standardized response."""
+    watermark_applied = False
+    watermark_key_val = None
+    if enable_watermark:
+        wm_result = await apply_watermark_fn(result.signed_bytes, mime, asset_id, org_id)
+        if wm_result is not None:
+            result.signed_bytes, result.signed_hash, watermark_key_val = wm_result
+            result.size_bytes = len(result.signed_bytes)
+            watermark_applied = True
+            logger.info("%s watermark applied: id=%s doc=%s", media_type.title(), asset_id, document_id)
+
     return {
         "success": True,
-        "media_type": "image",
-        "asset_id": result.image_id,
+        "media_type": media_type,
+        "asset_id": asset_id,
         "mime_type": result.mime_type,
         "c2pa_instance_id": result.c2pa_instance_id,
         "c2pa_signed": result.c2pa_signed,
@@ -355,6 +407,8 @@ async def _sign_image(
         "size_bytes": result.size_bytes,
         "signed_file_b64": base64.b64encode(result.signed_bytes).decode("utf-8"),
         "has_ingredient": ingredient_data is not None,
+        "watermark_applied": watermark_applied,
+        "watermark_key": watermark_key_val,
     }
 
 
@@ -370,10 +424,17 @@ async def _sign_video(
     digital_source_type,
     ingredient_data,
     ingredient_mime,
+    enable_video_watermark: bool = False,
 ):
     from app.services.video_signing_service import sign_video
+    from app.services.video_watermark_client import (
+        SOFT_BINDING_ASSERTION_VIDEO,
+        apply_watermark_to_signed_video,
+    )
 
     video_id = f"vid_{uuid.uuid4().hex[:16]}"
+    custom_assertions = [SOFT_BINDING_ASSERTION_VIDEO] if enable_video_watermark else []
+
     result = await sign_video(
         video_data=data,
         mime_type=mime,
@@ -381,7 +442,7 @@ async def _sign_video(
         org_id=org_id,
         document_id=document_id,
         video_id=video_id,
-        custom_assertions=[],
+        custom_assertions=custom_assertions,
         rights_data={},
         signer_private_key_pem=private_key_pem,
         signer_cert_chain_pem=cert_chain_pem,
@@ -390,19 +451,18 @@ async def _sign_video(
         ingredient_data=ingredient_data,
         ingredient_mime=ingredient_mime,
     )
-    return {
-        "success": True,
-        "media_type": "video",
-        "asset_id": result.video_id,
-        "mime_type": result.mime_type,
-        "c2pa_instance_id": result.c2pa_instance_id,
-        "c2pa_signed": result.c2pa_signed,
-        "original_hash": result.original_hash,
-        "signed_hash": result.signed_hash,
-        "size_bytes": result.size_bytes,
-        "signed_file_b64": base64.b64encode(result.signed_bytes).decode("utf-8"),
-        "has_ingredient": ingredient_data is not None,
-    }
+
+    return await _apply_watermark_and_build_response(
+        result,
+        media_type="video",
+        asset_id=video_id,
+        document_id=document_id,
+        mime=mime,
+        org_id=org_id,
+        ingredient_data=ingredient_data,
+        enable_watermark=enable_video_watermark,
+        apply_watermark_fn=apply_watermark_to_signed_video,
+    )
 
 
 async def _sign_audio(
@@ -420,22 +480,13 @@ async def _sign_audio(
     enable_audio_watermark: bool = False,
 ):
     from app.services.audio_signing_service import sign_audio
+    from app.services.audio_watermark_client import (
+        SOFT_BINDING_ASSERTION,
+        apply_watermark_to_signed_audio,
+    )
 
     audio_id = f"aud_{uuid.uuid4().hex[:16]}"
-
-    # Build custom assertions, including soft-binding declaration when watermarking
-    custom_assertions: list[dict] = []
-    if enable_audio_watermark:
-        custom_assertions.append(
-            {
-                "label": "c2pa.soft_binding.v1",
-                "data": {
-                    "method": "encypher.spread_spectrum_audio.v1",
-                    "payload_bits": 64,
-                    "description": "Spread-spectrum audio watermark embedded in signal domain",
-                },
-            }
-        )
+    custom_assertions = [SOFT_BINDING_ASSERTION] if enable_audio_watermark else []
 
     result = await sign_audio(
         audio_data=data,
@@ -454,48 +505,17 @@ async def _sign_audio(
         ingredient_mime=ingredient_mime,
     )
 
-    # Apply spread-spectrum watermark after C2PA signing (modifies audio signal)
-    watermark_applied = False
-    watermark_key_val = None
-    if enable_audio_watermark:
-        from app.services.audio_watermark_client import (
-            audio_watermark_client,
-            compute_audio_watermark_key,
-            compute_audio_watermark_payload,
-        )
-
-        if audio_watermark_client.is_configured:
-            signed_b64 = base64.b64encode(result.signed_bytes).decode()
-            payload_hex = compute_audio_watermark_payload(audio_id, org_id)
-            wm_result = await audio_watermark_client.apply_watermark(signed_b64, mime, payload_hex)
-            if wm_result is not None:
-                watermarked_b64, _confidence = wm_result
-                result.signed_bytes = base64.b64decode(watermarked_b64)
-                from app.utils.hashing import compute_sha256
-
-                result.signed_hash = compute_sha256(result.signed_bytes)
-                result.size_bytes = len(result.signed_bytes)
-                watermark_applied = True
-                watermark_key_val = compute_audio_watermark_key(audio_id, org_id)
-                logger.info("Audio watermark applied: audio_id=%s doc=%s", audio_id, document_id)
-            else:
-                logger.warning("Audio watermark failed for audio_id=%s, continuing without watermark", audio_id)
-
-    return {
-        "success": True,
-        "media_type": "audio",
-        "asset_id": result.audio_id,
-        "mime_type": result.mime_type,
-        "c2pa_instance_id": result.c2pa_instance_id,
-        "c2pa_signed": result.c2pa_signed,
-        "original_hash": result.original_hash,
-        "signed_hash": result.signed_hash,
-        "size_bytes": result.size_bytes,
-        "signed_file_b64": base64.b64encode(result.signed_bytes).decode("utf-8"),
-        "has_ingredient": ingredient_data is not None,
-        "watermark_applied": watermark_applied,
-        "watermark_key": watermark_key_val,
-    }
+    return await _apply_watermark_and_build_response(
+        result,
+        media_type="audio",
+        asset_id=audio_id,
+        document_id=document_id,
+        mime=mime,
+        org_id=org_id,
+        ingredient_data=ingredient_data,
+        enable_watermark=enable_audio_watermark,
+        apply_watermark_fn=apply_watermark_to_signed_audio,
+    )
 
 
 async def _sign_document(

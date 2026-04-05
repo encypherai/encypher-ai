@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 _SUPPORTED_MIMES = {"audio/wav", "audio/wave", "audio/x-wav", "audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/aac"}
 
+# Cache the seed bytes at module level (settings are immutable after startup)
+_SEED: bytes = settings.WATERMARK_SECRET.encode() or b"encypher-audio-wm-default"
+
 
 def _decode_b64(audio_b64: str, mime_type: str) -> bytes:
     """Decode base64 audio, validate size and mime type."""
@@ -44,7 +47,6 @@ async def watermark_audio(payload: AudioWatermarkRequest) -> AudioWatermarkRespo
     """Embed a spread-spectrum watermark into audio."""
     audio_bytes = _decode_b64(payload.audio_b64, payload.mime_type)
 
-    seed = settings.WATERMARK_SECRET.encode() or b"encypher-audio-wm-default"
     snr_db = payload.snr_db if payload.snr_db is not None else settings.DEFAULT_SNR_DB
 
     t0 = time.perf_counter()
@@ -54,10 +56,8 @@ async def watermark_audio(payload: AudioWatermarkRequest) -> AudioWatermarkRespo
             samples=samples,
             sample_rate=sr,
             payload=payload.payload,
-            seed=seed,
+            seed=_SEED,
             snr_db=snr_db,
-            chip_rate=settings.CHIP_RATE,
-            payload_bits=settings.PAYLOAD_BITS,
         )
         output_bytes = encode_audio(watermarked, sr)
     except Exception as e:
@@ -78,17 +78,13 @@ async def detect_watermark(payload: AudioDetectRequest) -> AudioDetectResponse:
     """Detect a spread-spectrum watermark in audio."""
     audio_bytes = _decode_b64(payload.audio_b64, payload.mime_type)
 
-    seed = settings.WATERMARK_SECRET.encode() or b"encypher-audio-wm-default"
-
     t0 = time.perf_counter()
     try:
         samples, sr = decode_audio(audio_bytes)
         detected, extracted_payload, confidence = detect(
             samples=samples,
             sample_rate=sr,
-            seed=seed,
-            chip_rate=settings.CHIP_RATE,
-            payload_bits=settings.PAYLOAD_BITS,
+            seed=_SEED,
         )
     except Exception as e:
         logger.exception("Audio watermark detect failed: %s", e)

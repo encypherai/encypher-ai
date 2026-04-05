@@ -45,7 +45,7 @@ class TestComputeAudioWatermarkKey:
 class TestAudioWatermarkClientUnconfigured:
     @pytest.mark.asyncio
     async def test_apply_returns_none_when_unconfigured(self):
-        with patch("app.services.audio_watermark_client.settings") as mock_settings:
+        with patch("app.config.settings") as mock_settings:
             mock_settings.audio_watermark_service_url = ""
             client = AudioWatermarkClient()
             result = await client.apply_watermark("b64data", "audio/wav", "a" * 16)
@@ -53,7 +53,7 @@ class TestAudioWatermarkClientUnconfigured:
 
     @pytest.mark.asyncio
     async def test_detect_returns_none_when_unconfigured(self):
-        with patch("app.services.audio_watermark_client.settings") as mock_settings:
+        with patch("app.config.settings") as mock_settings:
             mock_settings.audio_watermark_service_url = ""
             client = AudioWatermarkClient()
             result = await client.detect_watermark("b64data", "audio/wav")
@@ -78,8 +78,8 @@ class TestAudioWatermarkClientApply:
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
         with (
-            patch("app.services.audio_watermark_client.settings") as mock_settings,
-            patch("app.services.audio_watermark_client.httpx.AsyncClient", return_value=mock_client),
+            patch("app.config.settings") as mock_settings,
+            patch("app.services.watermark_client_base.httpx.AsyncClient", return_value=mock_client),
         ):
             mock_settings.audio_watermark_service_url = "http://localhost:8011"
             client = AudioWatermarkClient()
@@ -107,8 +107,8 @@ class TestAudioWatermarkClientApply:
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
         with (
-            patch("app.services.audio_watermark_client.settings") as mock_settings,
-            patch("app.services.audio_watermark_client.httpx.AsyncClient", return_value=mock_client),
+            patch("app.config.settings") as mock_settings,
+            patch("app.services.watermark_client_base.httpx.AsyncClient", return_value=mock_client),
         ):
             mock_settings.audio_watermark_service_url = "http://localhost:8011"
             client = AudioWatermarkClient()
@@ -128,8 +128,8 @@ class TestAudioWatermarkClientApply:
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
         with (
-            patch("app.services.audio_watermark_client.settings") as mock_settings,
-            patch("app.services.audio_watermark_client.httpx.AsyncClient", return_value=mock_client),
+            patch("app.config.settings") as mock_settings,
+            patch("app.services.watermark_client_base.httpx.AsyncClient", return_value=mock_client),
         ):
             mock_settings.audio_watermark_service_url = "http://localhost:8011"
             client = AudioWatermarkClient()
@@ -149,8 +149,8 @@ class TestAudioWatermarkClientApply:
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
         with (
-            patch("app.services.audio_watermark_client.settings") as mock_settings,
-            patch("app.services.audio_watermark_client.httpx.AsyncClient", return_value=mock_client),
+            patch("app.config.settings") as mock_settings,
+            patch("app.services.watermark_client_base.httpx.AsyncClient", return_value=mock_client),
         ):
             mock_settings.audio_watermark_service_url = "http://localhost:8011"
             client = AudioWatermarkClient()
@@ -177,8 +177,8 @@ class TestAudioWatermarkClientDetect:
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
         with (
-            patch("app.services.audio_watermark_client.settings") as mock_settings,
-            patch("app.services.audio_watermark_client.httpx.AsyncClient", return_value=mock_client),
+            patch("app.config.settings") as mock_settings,
+            patch("app.services.watermark_client_base.httpx.AsyncClient", return_value=mock_client),
         ):
             mock_settings.audio_watermark_service_url = "http://localhost:8011"
             client = AudioWatermarkClient()
@@ -207,8 +207,8 @@ class TestAudioWatermarkClientDetect:
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
         with (
-            patch("app.services.audio_watermark_client.settings") as mock_settings,
-            patch("app.services.audio_watermark_client.httpx.AsyncClient", return_value=mock_client),
+            patch("app.config.settings") as mock_settings,
+            patch("app.services.watermark_client_base.httpx.AsyncClient", return_value=mock_client),
         ):
             mock_settings.audio_watermark_service_url = "http://localhost:8011"
             client = AudioWatermarkClient()
