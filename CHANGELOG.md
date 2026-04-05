@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-04-04
+
+### Added
+- Segment-level rights (Enterprise)
+  - Per-segment `RightsMetadata` mappings via `segment_rights` field on `SignOptions`
+  - `com.encypher.rights.v2` compound C2PA assertion mapping segment indices to rights profiles
+  - Segments without explicit mapping inherit document-level `options.rights`
+  - Tier-gated: Enterprise and strategic_partner only
+  - Index validation against actual segment count at signing time (422 if out of bounds)
+- Audio soft-binding watermarking (Enterprise)
+  - New `audio-watermark-service` microservice (port 8011) using time-domain spread-spectrum embedding
+  - 64-bit payload embedded directly in audio signal, survives MP3 re-encoding and loudness normalization
+  - `enable_audio_watermark` form field on `POST /sign/media` (audio files only)
+  - `c2pa.soft_binding.v1` assertion added to C2PA manifest when watermarking enabled
+  - Enterprise API client (`audio_watermark_client.py`) mirroring TrustMark pattern
+  - Combined C2PA + watermark verification via `/verify/audio` endpoint
+  - Tier-gated: Enterprise and strategic_partner only
+- Video spread-spectrum watermarking (Enterprise)
+  - New `video-watermark-service` microservice (port 8012) using frame-domain spread-spectrum embedding
+  - Supports VOD files and live stream segments
+  - Combined C2PA + watermark verification via `/verify/video` endpoint
+  - `encypher.spread_spectrum_video.v1` method identifier
+  - Tier-gated: Enterprise and strategic_partner only
+- Concatenated ECC for audio and video watermarks
+  - Shared ECC module at `services/shared/` (RS(32,8) outer code + rate-1/3 K=7 convolutional inner code + soft Viterbi decoder)
+  - Method identifier: `rs32_8_conv_r3_k7`
+  - Applied to both `audio-watermark-service` and `video-watermark-service`
+- Image soft-binding watermarking via TrustMark (Enterprise)
+  - `enable_image_watermark` form field on `POST /sign/media` (image files only)
+  - TrustMark neural watermark (100-bit payload, Adobe Research, Apache 2.0)
+  - `c2pa.soft_binding.v1` assertion added to C2PA manifest when watermarking enabled
+  - TrustMark detection wired into `/verify/image` endpoint (best-effort, non-blocking)
+  - `ImageWatermarkRecord` model and `image_watermark_records` migration for persistence
+  - `TrustMarkClient` refactored to inherit `WatermarkClientBase` (connection pooling)
+  - Tier-gated: Enterprise and strategic_partner only
+
+### Changed
+- Consolidated `RightsMetadata` to single source of truth in `sign_schemas.py` (removed duplicates from `embeddings.py` and `request_models.py`)
+- Refactored watermark application to shared helper (`apply_watermark_to_signed_audio`) eliminating duplication between `media_signing.py` and `audio_signing_executor.py`
+- Upgraded PN sequence RNG from `RandomState(4 bytes)` to `default_rng(SeedSequence(32 bytes))` for full HMAC entropy
+
 ## [1.1.0] - 2026-03-21
 
 ### Added

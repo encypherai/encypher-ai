@@ -101,8 +101,12 @@ through Word's copy-paste engine.
 
 - **"ZWC" for VS markers** -- variation selectors are not zero-width characters; conflating
   them obscures the technical distinction and is wrong
-- **"watermarking"** -- implies degradation of original content; our technique is lossless
-  and additive. Use "provenance markers" or "Content Provenance" instead.
+- **"watermarking" for text embedding** -- implies degradation of original content; our
+  text technique is lossless and additive. Use "provenance markers" or "Content Provenance"
+  instead. Note: "watermarking" is the correct term for image (TrustMark neural), audio
+  (spread-spectrum), and video (spread-spectrum) soft-binding, where signal modification is
+  inherent and expected. The API parameters `enable_image_watermark`, `enable_audio_watermark`,
+  and `enable_video_watermark` use this term deliberately.
 - **"steganography"** in customer-facing use -- carries connotations of hiding or concealment;
   use "provenance markers" instead
 - **"text provenance"** -- our positioning is "Content Provenance" (multi-media); avoid

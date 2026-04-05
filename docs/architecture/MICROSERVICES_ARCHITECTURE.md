@@ -1,8 +1,8 @@
 # 🏗️ Microservices Architecture
 
-**Version:** 1.0  
-**Last Updated:** October 30, 2025  
-**Status:** Active (9 services)
+**Version:** 1.1
+**Last Updated:** April 4, 2026
+**Status:** Active (12 services)
 
 ---
 
@@ -81,7 +81,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **1. Auth Service** ✅ Port 8001
 
-**Status:** Production Ready  
+**Status:** Production Ready
 **Dependencies:** PostgreSQL, Redis
 
 **Responsibilities:**
@@ -109,7 +109,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **2. Key Service** ✅ Port 8003
 
-**Status:** Production Ready  
+**Status:** Production Ready
 **Dependencies:** PostgreSQL, Redis, Auth Service
 
 **Responsibilities:**
@@ -138,7 +138,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **3. Encoding Service** ⏳ Port 8004
 
-**Status:** Active  
+**Status:** Active
 **Dependencies:** PostgreSQL, Key Service
 
 **Responsibilities:**
@@ -158,7 +158,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **4. Verification Service** ⏳ Port 8005
 
-**Status:** Active  
+**Status:** Active
 **Dependencies:** PostgreSQL, Key Service
 
 **Responsibilities:**
@@ -178,7 +178,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **5. Analytics Service** ⏳ Port 8006
 
-**Status:** Active  
+**Status:** Active
 **Dependencies:** PostgreSQL, Redis
 
 **Responsibilities:**
@@ -199,7 +199,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **6. Billing Service** ⏳ Port 8007
 
-**Status:** Planned  
+**Status:** Planned
 **Dependencies:** PostgreSQL, Analytics Service
 
 **Responsibilities:**
@@ -220,7 +220,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **7. Notification Service** ⏳ Port 8008
 
-**Status:** Planned  
+**Status:** Planned
 **Dependencies:** Redis, Message Queue
 
 **Responsibilities:**
@@ -241,7 +241,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **8. User Service** ✅ Port 8002
 
-**Status:** Active  
+**Status:** Active
 **Dependencies:** PostgreSQL, Auth Service
 
 **Responsibilities:**
@@ -262,7 +262,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **9. Web Service** ✅ Port 8002
 
-**Status:** Active  
+**Status:** Active
 **Dependencies:** PostgreSQL
 
 **Responsibilities:**
@@ -282,9 +282,78 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ---
 
-### **10. API Gateway** ⏳ Port 8000
+### **10. Audio Watermark Service** ✅ Port 8011
 
-**Status:** Planned  
+**Status:** Active
+**Dependencies:** None (stateless, called by Enterprise API)
+
+**Responsibilities:**
+- Spread-spectrum audio watermark embedding (64-bit payload)
+- Watermark detection and payload extraction
+- Time-domain PN sequence generation via HMAC-SHA256
+
+**Endpoints:**
+- `POST /api/v1/audio/watermark` - Embed watermark into audio
+- `POST /api/v1/audio/detect` - Detect and extract watermark
+- `GET /health` - Health check
+
+**Key Design Decisions:**
+- Time-domain spread-spectrum (not STFT) for robustness
+- Applied after C2PA hard-binding; declared via `c2pa.soft_binding.v1` assertion
+- Follows TrustMark image service pattern (separate microservice for heavy DSP)
+- numpy-only (no scipy, no ML, no GPU)
+- ECC: shared `services/shared/spread_spectrum_ecc.py` module (`rs32_8_conv_r3_k7`)
+
+---
+
+### **11. Video Watermark Service** ✅ Port 8012
+
+**Status:** Active
+**Dependencies:** ffmpeg/PyAV, numpy, reedsolo (stateless, called by Enterprise API)
+
+**Responsibilities:**
+- Spread-spectrum video watermark embedding (frame-domain)
+- Watermark detection and payload extraction for VOD and live stream segments
+- Shared ECC via `services/shared/spread_spectrum_ecc.py`
+
+**Endpoints:**
+- `POST /api/v1/video/watermark` - Embed watermark into video
+- `POST /api/v1/video/detect` - Detect and extract watermark
+- `GET /health` - Health check
+
+**Key Design Decisions:**
+- Frame-domain spread-spectrum embedding
+- Applied after C2PA hard-binding; declared via `encypher.spread_spectrum_video.v1` method
+- Same ECC stack as audio watermark service: RS(32,8) outer + rate-1/3 K=7 convolutional inner + soft Viterbi
+
+---
+
+### **12. Image Watermark Service (TrustMark)** ✅ Port 8010
+
+**Status:** Active
+**Dependencies:** PyTorch, TrustMark (Apache 2.0, Adobe Research), Pillow
+
+**Responsibilities:**
+- TrustMark neural image watermark embedding (100-bit payload)
+- Watermark detection and payload extraction
+- Robust to JPEG recompression, scaling, cropping
+
+**Endpoints:**
+- `POST /api/v1/watermark` - Embed TrustMark watermark into image
+- `POST /api/v1/detect` - Detect and extract watermark payload
+- `GET /health` - Health check
+
+**Key Design Decisions:**
+- Neural/perceptual watermarking (not signal-domain spread-spectrum)
+- Applied after C2PA hard-binding; declared via `c2pa.soft_binding.v1` assertion (method: `encypher.trustmark_neural.v1`)
+- Separate microservice to isolate PyTorch/CUDA dependency from the main API
+- 100-bit payload (25 hex chars) vs 64-bit for audio/video spread-spectrum
+
+---
+
+### **13. API Gateway** ⏳ Port 8000
+
+**Status:** Planned
 **Dependencies:** All services
 
 **Responsibilities:**
@@ -597,7 +666,7 @@ Replica Replica Replica
 
 <div align="center">
 
-**Encypher Microservices Architecture**  
+**Encypher Microservices Architecture**
 **Version 1.0 | October 2025**
 
 [View Progress](./MICROSERVICES_PROGRESS.md) • [Migration Plan](./MICROSERVICES_MIGRATION_PLAN.md)

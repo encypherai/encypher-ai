@@ -118,6 +118,13 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | Audio C2PA verification | No | Yes |
 | C2PA audio actions (created, dubbed, mixed, mastered, remixed) | No | Yes |
 | Per-org signing credentials (SSL.com / BYOK) | No | Yes |
+| Audio soft-binding watermark (`enable_audio_watermark` on `/sign/media`) | No | Yes |
+
+### Signing Features (continued)
+
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Segment-level rights (`segment_rights` on `/sign`) | No | Yes |
 
 ### Video Signing Features (`/api/v1/enterprise/video`)
 
@@ -128,6 +135,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | Multipart upload (up to 500 MB) | No | Yes |
 | Large file download endpoint (files > 50 MB) | No | Yes |
 | Per-org signing credentials (SSL.com / BYOK) | No | Yes |
+| Video soft-binding watermark (VOD and live stream) | No | Yes |
 
 ### Live Video Stream Signing (`/api/v1/enterprise/video/stream`)
 
@@ -1194,7 +1202,7 @@ cross-organization pHash attribution search.
   "options": {
     "segmentation_level": "sentence",
     "manifest_mode": "micro",
-    "enable_trustmark": false,
+    "enable_image_watermark": false,
     "image_quality": 95
   }
 }

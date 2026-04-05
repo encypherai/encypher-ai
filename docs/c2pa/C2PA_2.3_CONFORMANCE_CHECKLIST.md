@@ -18,7 +18,7 @@
 - [x] Ingredient assertion uses `c2pa.ingredient.v3` when prior manifests exist.
 - [x] Metadata assertion uses `c2pa.metadata` with JSON-LD payload.
 - [x] Hard binding (`c2pa.hash.data.v1`) with byte-level exclusions.
-- [x] Soft binding (`c2pa.soft_binding.v1`) over CBOR payload.
+- [x] Soft binding (`c2pa.soft_binding.v1`) over CBOR payload. Implemented for audio via `audio-watermark-service` (method: `encypher.spread_spectrum_audio.v1`), video via `video-watermark-service` (method: `encypher.spread_spectrum_video.v1`), and image via `image-service` TrustMark neural watermark (method: `encypher.trustmark_neural.v1`).
 
 ## 3. Verification Behavior
 - [x] Validator accepts v2.3 contexts and actions v2 (see `enterprise_api/app/services/c2pa_validator.py`).

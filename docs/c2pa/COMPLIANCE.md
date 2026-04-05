@@ -61,11 +61,13 @@ Encypher supports the following C2PA assertion types:
 | `c2pa.created` | [§8.2](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_created) | Creation timestamp and source type |
 | `c2pa.actions.v2` | [§8.3](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_actions_v2) | Action history |
 | `c2pa.hash.data.v1` | [§8.4](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_hash_data_v1) | Content binding (hard binding) |
-| `c2pa.soft_binding.v1` | [§8.5](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_soft_binding_v1) | Soft binding for watermarks |
+| `c2pa.soft_binding.v1` | [§8.5](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_soft_binding_v1) | Soft binding for watermarks (implemented: audio spread-spectrum via `audio-watermark-service`; video spread-spectrum via `video-watermark-service`; image TrustMark neural via `image-service`) |
 | `c2pa.training-mining.v1` | [§8.6](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_training_mining_v1) | AI training/mining permissions |
 | `c2pa.watermarked` | §8.3 (action) | Watermark embedding action |
 | `c2pa.ingredient.v3` | [§9.8](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_ingredients) | Provenance chain |
 | `c2pa.metadata` | [§9.10](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_metadata_assertion) | JSON-LD metadata |
+| `com.encypher.rights.v1` | Custom | Document-level rights metadata |
+| `com.encypher.rights.v2` | Custom | Segment-level rights (maps segment indices to rights profiles) |
 
 ---
 
@@ -137,6 +139,10 @@ Image and audio signing use `c2pa-python` (Python bindings for `c2pa-rs`) which 
 - Shared manifest builder: `enterprise_api/app/utils/c2pa_manifest.py`
 - Shared verifier: `enterprise_api/app/utils/c2pa_verifier_core.py`
 - Audio signing: `enterprise_api/app/services/audio_signing_service.py`
+- Audio watermarking: `services/audio-watermark-service/app/services/spread_spectrum.py`
+- Video watermarking: `services/video-watermark-service/` (port 8012, `encypher.spread_spectrum_video.v1`)
+- Shared ECC: `services/shared/spread_spectrum_ecc.py` (RS(32,8) + rate-1/3 K=7 convolutional + soft Viterbi, method `rs32_8_conv_r3_k7`)
+- Segment rights: `enterprise_api/app/services/segment_rights_utils.py`
 - Video signing: `enterprise_api/app/services/video_signing_service.py`
 - Video stream signing: `enterprise_api/app/services/video_stream_signing_service.py`
 - Image signing: `enterprise_api/app/services/image_signing_service.py`
@@ -151,7 +157,9 @@ Image and audio signing use `c2pa-python` (Python bindings for `c2pa-rs`) which 
 | TSA integration | Q1 2026 | §15.8 |
 | Image signing | Shipped (Feb 2026) | Appendix A.1-A.3 |
 | Audio signing (WAV, MP3, M4A) | Shipped (Mar 2026) | Appendix A.3.4, A.3.7, A.5 |
+| Audio soft-binding watermark (`c2pa.soft_binding.v1`) | Shipped (Apr 2026) | §8.5 |
 | Video signing (MP4, MOV, M4V, AVI) | Shipped (Mar 2026) | Appendix A.5, A.3 |
+| Video soft-binding watermark (`encypher.spread_spectrum_video.v1`) | Shipped (Apr 2026) | §8.5 |
 | Live video stream signing | Shipped (Mar 2026) | Section 19 |
 | PDF signing | Planned | Appendix A.4 |
 
@@ -168,6 +176,10 @@ Image and audio signing use `c2pa-python` (Python bindings for `c2pa-rs`) which 
 | Mar 2026 | TEAM_265 | Shared C2PA modules (signer, manifest, verifier) | ✅ Refactored |
 | Mar 2026 | TEAM_266 | Video C2PA signing (MP4, MOV, M4V, AVI) | ✅ Implemented |
 | Mar 2026 | TEAM_266 | Live video stream signing (C2PA 2.3 Section 19) | ✅ Implemented |
+| Apr 2026 | TEAM_289 | Audio soft-binding watermark (`c2pa.soft_binding.v1`) | ✅ Implemented |
+| Apr 2026 | TEAM_289 | Segment-level rights (`com.encypher.rights.v2`) | ✅ Implemented |
+| Apr 2026 | TEAM_294 | Video soft-binding watermark (`encypher.spread_spectrum_video.v1`) | ✅ Implemented |
+| Apr 2026 | TEAM_294 | Concatenated ECC for audio and video watermarks (`rs32_8_conv_r3_k7`) | ✅ Implemented |
 
 ---
 
