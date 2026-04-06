@@ -12,6 +12,7 @@ from app.api.v1.audio_verify import router as audio_verify_router
 from app.api.v1.image_verify import router as image_verify_router
 from app.api.v1.video_verify import router as video_verify_router
 from app.api.v1.public import c2pa as public_c2pa
+from app.api.v1.public import cdn_signing as public_cdn_signing
 from app.api.v1.public import prebid as public_prebid
 from app.api.v1.public import rights as public_rights
 from app.api.v1.public import verify
@@ -77,3 +78,7 @@ api_router.include_router(public_rights.router)
 # === Prebid Auto-Provenance (TEAM_283) ===
 # Include public Prebid RTD signing endpoints (no auth — rate limited by IP/domain)
 api_router.include_router(public_prebid.router)
+
+# === CDN Edge Provenance Worker (TEAM_298) ===
+# Include public CDN signing endpoints (no auth — rate limited by IP/domain)
+api_router.include_router(public_cdn_signing.router)

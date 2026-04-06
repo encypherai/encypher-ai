@@ -1,0 +1,39 @@
+# Encypher Edge Provenance Worker
+#
+# Embeds copy-paste-survivable provenance markers into HTML article text
+# at the CDN edge. Deploy with zero configuration via the Deploy button:
+#
+#   https://deploy.workers.cloudflare.com/?url=https://github.com/encypher/cloudflare-worker-provenance
+#
+# After deploying, add a route in your Cloudflare dashboard:
+#   Route: *yourdomain.com/*
+#   Worker: encypher-provenance
+
+name = "encypher-provenance"
+main = "src/worker.js"
+compatibility_date = "2026-04-01"
+
+[[kv_namespaces]]
+binding = "PROVENANCE_CACHE"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+[vars]
+# -----------------------------------------------------------------------
+# All configuration below is OPTIONAL. The worker works with zero config.
+# -----------------------------------------------------------------------
+
+# Override article content detection (default: auto-detect via <article>,
+# .entry-content, <main>, etc.)
+# ARTICLE_SELECTOR = ".my-article-class"
+
+# Minimum text length to sign (default: 50 characters)
+# MIN_TEXT_LENGTH = "50"
+
+# Maximum text length to sign (default: 51200 = 50KB)
+# MAX_TEXT_LENGTH = "51200"
+
+# API key for enterprise features. When set, the worker uses authenticated
+# endpoints and the org's enterprise tier settings apply automatically.
+# Set this as an encrypted secret via `wrangler secret put ENCYPHER_API_KEY`
+# rather than in plaintext here.
+# ENCYPHER_API_KEY = ""
