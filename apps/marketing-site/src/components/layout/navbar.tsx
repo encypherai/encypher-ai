@@ -79,6 +79,12 @@ export function Navbar() {
                 <Link href="/rights-management">Rights Management</Link>
               </DropdownMenuItem>
               <DropdownMenuItem className="border-t border-border/40 mt-1 pt-1" disabled>
+                <span className="text-xs text-muted-foreground">Integrations</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/cloudflare">Cloudflare Edge Worker</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="border-t border-border/40 mt-1 pt-1" disabled>
                 <span className="text-xs text-muted-foreground">Demos</span>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
@@ -258,6 +264,15 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Rights Management
+            </Link>
+            {/* Mobile Integrations Links */}
+            <span className="text-xs text-muted-foreground pl-4 pt-2">Integrations</span>
+            <Link
+              href="/cloudflare"
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Cloudflare Edge Worker
             </Link>
             {/* Mobile Demos Links */}
             <span className="text-xs text-muted-foreground pl-4 pt-2">Demos</span>

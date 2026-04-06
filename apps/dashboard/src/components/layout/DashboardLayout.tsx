@@ -120,6 +120,16 @@ function IconCdnAnalytics({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
+function IconEdgeProvenance({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" strokeWidth={1.5} />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2 12h20" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+    </svg>
+  );
+}
+
 function IconAICrawlers({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg className={className} width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -218,6 +228,7 @@ const navGroupsByLayout: Record<'publisher' | 'enterprise', NavGroup[]> = {
       label: 'Insights',
       items: [
         { href: '/analytics', label: 'Content Performance', icon: IconAnalytics },
+        { href: '/edge-provenance', label: 'Edge Provenance', icon: IconEdgeProvenance },
         { href: '/cdn-analytics', label: 'CDN Analytics', icon: IconCdnAnalytics, enterpriseOnly: true },
         { href: '/ai-crawlers', label: 'AI Crawlers', icon: IconAICrawlers },
         { href: '/docs', label: 'Docs', icon: IconDocs },
@@ -261,6 +272,7 @@ const navGroupsByLayout: Record<'publisher' | 'enterprise', NavGroup[]> = {
       label: 'Insights',
       items: [
         { href: '/analytics', label: 'Content Performance', icon: IconAnalytics },
+        { href: '/edge-provenance', label: 'Edge Provenance', icon: IconEdgeProvenance },
         { href: '/cdn-analytics', label: 'CDN Analytics', icon: IconCdnAnalytics, enterpriseOnly: true },
         { href: '/ai-crawlers', label: 'AI Crawlers', icon: IconAICrawlers },
         { href: '/docs', label: 'Docs', icon: IconDocs },
