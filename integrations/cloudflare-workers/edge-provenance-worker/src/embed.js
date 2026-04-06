@@ -38,16 +38,30 @@ export function isVsChar(ch) {
 }
 
 /**
- * Check if an HTML response already contains VS marker embeddings.
+ * Encypher MAGIC_PREFIX: VS240-VS243 (U+E01DF-U+E01E2).
+ *
+ * These supplementary-plane variation selectors never appear in natural emoji
+ * text (emoji use VS1-VS16 in the BMP). Checking for this 4-char sequence
+ * reliably identifies Encypher-signed content without false positives from
+ * emoji variation selectors or other legitimate VS usage.
+ *
+ * Matches vs256_crypto.py BYTE_TO_VS[239..242].
+ */
+export const MAGIC_PREFIX = String.fromCodePoint(0xE01DF, 0xE01E0, 0xE01E1, 0xE01E2);
+
+/**
+ * Check if text already contains Encypher provenance markers.
+ *
+ * Looks for the MAGIC_PREFIX sequence that begins every Encypher micro+ECC
+ * marker. Content with existing markers is preserved regardless of validity:
+ * re-signing would corrupt existing markers, and tampered markers are still
+ * valuable (the verification API reports tampering to the reader).
  *
  * @param {string} text - Extracted article text
  * @returns {boolean}
  */
 export function hasExistingMarkers(text) {
-  for (const ch of text) {
-    if (isVsChar(ch)) return true;
-  }
-  return false;
+  return text.includes(MAGIC_PREFIX);
 }
 
 /**

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyEmbeddingPlan, splitChars, isVsChar, hasExistingMarkers } from '../src/embed.js';
+import { applyEmbeddingPlan, splitChars, isVsChar, hasExistingMarkers, MAGIC_PREFIX } from '../src/embed.js';
 
 // A VS marker character (U+FE01)
 const VS_MARKER = '\uFE01';
@@ -51,8 +51,27 @@ describe('hasExistingMarkers', () => {
     assert.ok(!hasExistingMarkers('Hello world'));
   });
 
-  it('returns true when VS chars present', () => {
-    assert.ok(hasExistingMarkers(`Hello${VS_MARKER} world`));
+  it('returns true when MAGIC_PREFIX is present', () => {
+    assert.ok(hasExistingMarkers(`Hello${MAGIC_PREFIX}payload world`));
+  });
+
+  it('ignores emoji variation selectors (VS1-VS16)', () => {
+    // Emoji text presentation selectors are common and should not trigger detection
+    assert.ok(!hasExistingMarkers('Heart \u2764\uFE0F emoji'));
+    assert.ok(!hasExistingMarkers(`Text with${VS_MARKER} single VS char`));
+  });
+
+  it('ignores isolated supplementary VS chars without MAGIC_PREFIX', () => {
+    // A lone VS17 (U+E0100) is not an Encypher marker
+    assert.ok(!hasExistingMarkers('Text \u{E0100} here'));
+  });
+
+  it('detects MAGIC_PREFIX at start of text', () => {
+    assert.ok(hasExistingMarkers(`${MAGIC_PREFIX}rest of text`));
+  });
+
+  it('detects MAGIC_PREFIX at end of text', () => {
+    assert.ok(hasExistingMarkers(`some text${MAGIC_PREFIX}`));
   });
 });
 

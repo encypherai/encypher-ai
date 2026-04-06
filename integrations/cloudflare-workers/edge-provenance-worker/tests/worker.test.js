@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 
 import { findArticleBoundary } from '../src/boundary.js';
 import { extractFragments, assembleText, hashText } from '../src/fragments.js';
-import { applyEmbeddingPlan, hasExistingMarkers } from '../src/embed.js';
+import { applyEmbeddingPlan, hasExistingMarkers, MAGIC_PREFIX } from '../src/embed.js';
 import { getCachedPlan, cachePlan } from '../src/cache.js';
 
 // ---------------------------------------------------------------------------
@@ -201,19 +201,20 @@ describe('cache-hit path', () => {
 // ---------------------------------------------------------------------------
 
 describe('already-signed content', () => {
-  it('skips HTML that already contains VS markers in the article region', async () => {
-    // Inject a VS marker directly into the article content
+  it('skips HTML that already contains Encypher markers in the article region', async () => {
+    // Inject an Encypher MAGIC_PREFIX + payload into the article content
+    const fakeMarker = MAGIC_PREFIX + MARKER; // prefix + payload chars
     const signed = WP_ARTICLE_HTML.replace(
       'The quick brown fox jumps',
-      `The quick brown fox${MARKER} jumps`,
+      `The quick brown fox${fakeMarker} jumps`,
     );
 
     const boundary = findArticleBoundary(signed, null);
     assert.ok(boundary, 'boundary should still be detected');
 
-    // hasExistingMarkers should block processing
+    // hasExistingMarkers should block processing (detects MAGIC_PREFIX)
     const alreadySigned = hasExistingMarkers(boundary.html);
-    assert.ok(alreadySigned, 'should detect existing VS markers');
+    assert.ok(alreadySigned, 'should detect existing Encypher markers');
 
     // Confirm the pipeline guard works end-to-end
     const plan = { index_unit: 'codepoint', operations: [{ insert_after_index: 0, marker: MARKER }] };

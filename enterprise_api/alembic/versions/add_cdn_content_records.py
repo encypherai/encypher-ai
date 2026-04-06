@@ -1,7 +1,7 @@
 """Add cdn_content_records table for CDN Edge Provenance Worker
 
 Revision ID: add_cdn_content_records
-Revises: make_merkle_root_id_nullable
+Revises: 20260407_100000
 Create Date: 2026-04-06
 
 Tracks auto-signed content from the Cloudflare Edge Provenance Worker.
@@ -15,7 +15,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 revision = "add_cdn_content_records"
-down_revision = "make_merkle_root_id_nullable"
+down_revision = "20260407_100000"
 branch_labels = None
 depends_on = None
 

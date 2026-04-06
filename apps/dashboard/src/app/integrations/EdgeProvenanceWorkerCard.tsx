@@ -39,7 +39,7 @@ export function EdgeProvenanceWorkerCard() {
 
   if (isLoading) {
     return (
-      <Card variant="bordered" className="animate-pulse">
+      <Card className="animate-pulse">
         <CardHeader>
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-slate-700" />
@@ -55,7 +55,6 @@ export function EdgeProvenanceWorkerCard() {
 
   return (
     <Card
-      variant="bordered"
       className={
         hasDomains
           ? 'border-green-500/30 overflow-hidden'
