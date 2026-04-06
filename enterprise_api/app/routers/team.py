@@ -229,6 +229,13 @@ async def list_team_members(
         for row in rows
     ]
 
+    return TeamMemberListResponse(
+        organization_id=org_id,
+        members=members,
+        total=len(members),
+        max_members=max_members,
+    )
+
 
 @router.post("/invites/{invite_id}/resend")
 async def resend_invite(

@@ -141,8 +141,10 @@ class TestClassifyMime:
         assert classify_mime("video/webm") == "video"
         assert classify_mime("video/quicktime") == "video"
 
+    def test_document_types(self):
+        assert classify_mime("application/pdf") == "document"
+
     def test_unknown(self):
-        assert classify_mime("application/pdf") == "unknown"
         assert classify_mime("text/plain") == "unknown"
 
     def test_case_insensitive(self):
@@ -239,7 +241,7 @@ class TestVerifyMedia:
         assert resp.media_type == "video"
 
     def test_unsupported_mime(self):
-        resp = verify_media(b"fake", "application/pdf")
+        resp = verify_media(b"fake", "application/x-custom-binary")
         assert resp.valid is False
         assert resp.reason_code == "UNSUPPORTED_MEDIA_TYPE"
         assert "Unsupported" in resp.error
@@ -373,7 +375,7 @@ class TestUnifiedVerifyEndpoint:
         """Multipart with unsupported MIME returns unsupported error."""
         resp = await async_client.post(
             "/api/v1/public/verify/media",
-            files={"file": ("test.pdf", b"fake-pdf-bytes", "application/pdf")},
+            files={"file": ("test.bin", b"fake-bytes", "application/x-custom-binary")},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -946,3 +948,146 @@ class TestAttributionOrgScoping:
         )
         # With no org_id to filter against, results pass through
         assert result["matches_found"] == 1
+
+
+# ---------------------------------------------------------------------------
+# Per-segment rights verification (6.8)
+# ---------------------------------------------------------------------------
+
+
+class TestExtractRightsSignalsV2:
+    """_extract_rights_signals correctly parses com.encypher.rights.v2 assertions.
+
+    These tests validate the segment-rights parsing path added for the
+    segment-level rights feature (TEAM_293 / PRD_Segment_Level_Rights).
+    """
+
+    def test_v2_assertion_populates_segment_rights(self) -> None:
+        """v2 assertion's segment_rights_map is surfaced as rights_signals.segment_rights."""
+        from app.services.verification_logic import _extract_rights_signals
+
+        segment_map = [
+            {"segment_indices": [0, 1], "rights": {"copyright_holder": "NPR"}},
+            {"segment_indices": [2], "rights": {"copyright_holder": "AP"}},
+        ]
+        manifest = {
+            "assertions": [
+                {
+                    "label": "com.encypher.rights.v2",
+                    "data": {
+                        "segment_rights_map": segment_map,
+                        "default_rights": {"copyright_holder": "DefaultPub"},
+                    },
+                }
+            ]
+        }
+        signals = _extract_rights_signals(manifest)
+        assert "segment_rights" in signals
+        assert len(signals["segment_rights"]) == 2
+        assert signals["segment_rights"][0]["rights"]["copyright_holder"] == "NPR"
+        assert signals["segment_rights"][1]["rights"]["copyright_holder"] == "AP"
+
+    def test_v2_assertion_sets_default_rights_fallback(self) -> None:
+        """When v2 assertion has default_rights, it is used as the rights fallback."""
+        from app.services.verification_logic import _extract_rights_signals
+
+        manifest = {
+            "assertions": [
+                {
+                    "label": "com.encypher.rights.v2",
+                    "data": {
+                        "segment_rights_map": [{"segment_indices": [0], "rights": {"copyright_holder": "AP"}}],
+                        "default_rights": {"copyright_holder": "NPR", "usage_terms": "All rights reserved"},
+                    },
+                }
+            ]
+        }
+        signals = _extract_rights_signals(manifest)
+        # default_rights should be set as fallback rights
+        assert "rights" in signals
+        assert signals["rights"]["copyright_holder"] == "NPR"
+
+    def test_v2_assertion_no_default_rights_leaves_rights_absent(self) -> None:
+        """v2 assertion without default_rights does not set rights key."""
+        from app.services.verification_logic import _extract_rights_signals
+
+        manifest = {
+            "assertions": [
+                {
+                    "label": "com.encypher.rights.v2",
+                    "data": {
+                        "segment_rights_map": [{"segment_indices": [0], "rights": {"copyright_holder": "NPR"}}],
+                        "default_rights": None,
+                    },
+                }
+            ]
+        }
+        signals = _extract_rights_signals(manifest)
+        assert "segment_rights" in signals
+        # rights key should not be set when default_rights is absent/None
+        assert "rights" not in signals
+
+    def test_v1_assertion_not_overridden_by_v2_default(self) -> None:
+        """When both v1 and v2 assertions are present, v1 sets rights first
+        and v2 default_rights does not overwrite it (setdefault semantics)."""
+        from app.services.verification_logic import _extract_rights_signals
+
+        manifest = {
+            "assertions": [
+                {
+                    "label": "com.encypher.rights.v1",
+                    "data": {"copyright_holder": "V1Publisher"},
+                },
+                {
+                    "label": "com.encypher.rights.v2",
+                    "data": {
+                        "segment_rights_map": [],
+                        "default_rights": {"copyright_holder": "V2DefaultPublisher"},
+                    },
+                },
+            ]
+        }
+        signals = _extract_rights_signals(manifest)
+        # v1 rights should remain (setdefault means v2 default doesn't overwrite)
+        assert signals["rights"]["copyright_holder"] == "V1Publisher"
+
+    def test_v2_assertion_nested_manifest(self) -> None:
+        """Rights signals are extracted correctly from nested manifest structure."""
+        from app.services.verification_logic import _extract_rights_signals
+
+        segment_map = [{"segment_indices": [0], "rights": {"copyright_holder": "NPR"}}]
+        manifest = {
+            "manifest": {
+                "assertions": [
+                    {
+                        "label": "com.encypher.rights.v2",
+                        "data": {
+                            "segment_rights_map": segment_map,
+                            "default_rights": {"copyright_holder": "NPR"},
+                        },
+                    }
+                ]
+            }
+        }
+        signals = _extract_rights_signals(manifest)
+        assert "segment_rights" in signals
+        assert signals["segment_rights"][0]["rights"]["copyright_holder"] == "NPR"
+
+    def test_v2_assertion_empty_segment_map(self) -> None:
+        """v2 assertion with empty segment_rights_map is still valid."""
+        from app.services.verification_logic import _extract_rights_signals
+
+        manifest = {
+            "assertions": [
+                {
+                    "label": "com.encypher.rights.v2",
+                    "data": {
+                        "segment_rights_map": [],
+                        "default_rights": {"copyright_holder": "NPR"},
+                    },
+                }
+            ]
+        }
+        signals = _extract_rights_signals(manifest)
+        assert signals["segment_rights"] == []
+        assert signals["rights"]["copyright_holder"] == "NPR"

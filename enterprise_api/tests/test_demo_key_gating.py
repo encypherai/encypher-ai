@@ -51,6 +51,7 @@ async def test_get_current_organization_blocks_demo_key_in_production_without_al
     background_tasks = MagicMock()
 
     with patch.object(dependencies, "key_service_client") as mock_service_client:
+        mock_service_client.validate_key_minimal = AsyncMock(return_value=None)
         mock_service_client.validate_key = AsyncMock(return_value=None)
         with pytest.raises(HTTPException) as exc_info:
             await get_current_organization(
@@ -74,6 +75,7 @@ async def test_get_current_organization_allows_allowlisted_demo_key_in_productio
     background_tasks = MagicMock()
 
     with patch.object(dependencies, "key_service_client") as mock_service_client:
+        mock_service_client.validate_key_minimal = AsyncMock(return_value=None)
         mock_service_client.validate_key = AsyncMock(return_value=None)
         result = await get_current_organization(
             request=request,

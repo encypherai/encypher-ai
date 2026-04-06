@@ -126,8 +126,8 @@ class TestRichSignRequestValidation:
         with pytest.raises(pydantic.ValidationError):
             RichContentImage(
                 data=b64(make_test_jpeg()),
-                filename="test.gif",
-                mime_type="image/gif",  # not supported
+                filename="test.bin",
+                mime_type="application/octet-stream",  # not supported
                 position=0,
             )
 
@@ -281,14 +281,17 @@ async def test_verify_image_response_has_required_fields(async_client: AsyncClie
 
 
 @pytest.mark.asyncio
-async def test_verify_rich_unknown_document_id_returns_404(async_client: AsyncClient):
+async def test_verify_rich_unknown_document_id_returns_invalid(async_client: AsyncClient):
     resp = await async_client.post(
         "/api/v1/verify/rich",
         json={
             "document_id": "nonexistent_doc_id_xyz_12345",
         },
     )
-    assert resp.status_code == 404
+    # Endpoint returns 200 with valid=False for unknown documents
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["valid"] is False
 
 
 @pytest.mark.asyncio
@@ -308,7 +311,7 @@ async def test_sign_rich_unauthenticated_returns_401(async_client: AsyncClient):
 async def test_sign_rich_invalid_mime_type_returns_422(async_client: AsyncClient, enterprise_auth_headers: dict):
     """Schema validation catches bad MIME type before auth even matters."""
     req = make_article_request(n_images=1)
-    req["images"][0]["mime_type"] = "image/gif"
+    req["images"][0]["mime_type"] = "application/octet-stream"
     resp = await async_client.post(
         "/api/v1/sign/rich",
         json=req,
@@ -423,23 +426,25 @@ class TestImageUtils:
 class TestCompositeManifestIntegration:
     def test_build_composite_manifest_correct_structure(self):
         from app.services.composite_manifest_service import (
-            ImageIngredient,
+            MediaIngredient,
             build_composite_manifest,
         )
 
         ingredients = [
-            ImageIngredient(
-                image_id="img_aabbccdd",
+            MediaIngredient(
+                asset_id="img_aabbccdd",
                 filename="photo1.jpg",
                 mime_type="image/jpeg",
+                media_type="image",
                 c2pa_instance_id="urn:uuid:test-1234",
                 signed_hash="sha256:abc123",
                 position=0,
             ),
-            ImageIngredient(
-                image_id="img_eeff0011",
+            MediaIngredient(
+                asset_id="img_eeff0011",
                 filename="photo2.png",
                 mime_type="image/png",
+                media_type="image",
                 c2pa_instance_id="urn:uuid:test-5678",
                 signed_hash="sha256:def456",
                 position=1,
@@ -466,12 +471,12 @@ class TestCompositeManifestIntegration:
         import json
 
         from app.services.composite_manifest_service import (
-            ImageIngredient,
+            MediaIngredient,
             build_composite_manifest,
         )
 
         ingredients = [
-            ImageIngredient("img_1", "a.jpg", "image/jpeg", "urn:uuid:1", "sha256:1", 0),
+            MediaIngredient("img_1", "a.jpg", "image/jpeg", "image", "urn:uuid:1", "sha256:1", 0),
         ]
         result = build_composite_manifest(
             document_id="doc1",

@@ -154,6 +154,7 @@ class TestPlatformStats:
             patch("app.dependencies.httpx.AsyncClient", return_value=mock_async_client),
             patch("app.routers.admin.AdminService.get_platform_stats", return_value=mock_stats),
         ):
+            mock_key_service.validate_key_minimal = AsyncMock(return_value=None)
             mock_key_service.validate_key = AsyncMock(return_value=None)
             response = client.get(
                 "/api/v1/admin/stats",

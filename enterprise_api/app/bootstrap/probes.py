@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def register_probe_routes(app: FastAPI) -> None:
-    @app.get("/health", tags=["Health"])
+    @app.get("/health", tags=["Health"], description="Returns 200 OK when the service is running. Use /readyz for a full dependency check.")
     async def health_check():
         if not settings.expose_health_details:
             return {"status": "healthy"}
@@ -24,7 +24,7 @@ def register_probe_routes(app: FastAPI) -> None:
             "version": "1.0.0-preview",
         }
 
-    @app.get("/readyz", tags=["Health"])
+    @app.get("/readyz", tags=["Health"], description="Checks database, Redis, key service, and auth service connectivity. Returns ready or degraded.")
     async def readiness_check():
         import httpx as _httpx
 
@@ -69,7 +69,7 @@ def register_probe_routes(app: FastAPI) -> None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
         return PlainTextResponse(render_prometheus(), media_type="text/plain; version=0.0.4")
 
-    @app.get("/", tags=["Info"])
+    @app.get("/", tags=["Info"], description="Returns API metadata including name, version, and links to documentation.")
     async def root():
         return {
             "name": "Encypher Enterprise API",

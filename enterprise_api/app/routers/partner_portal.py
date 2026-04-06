@@ -30,7 +30,11 @@ def _require_strategic_partner(org_context: Dict) -> str:
     return org_context["organization_id"]
 
 
-@router.get("/publishers")
+@router.get(
+    "/publishers",
+    summary="List partner publishers",
+    description="List all child publisher organizations managed by the authenticated strategic partner.",
+)
 async def list_partner_publishers(
     db: AsyncSession = Depends(get_db),
     org_context: Dict = Depends(get_current_organization_dep),
@@ -55,7 +59,7 @@ async def list_partner_publishers(
     return {"publishers": publishers, "total": len(publishers)}
 
 
-@router.get("/aggregate")
+@router.get("/aggregate", summary="Get partner aggregate stats", description="Return aggregated metrics across all child publisher organizations.")
 async def get_partner_aggregate(
     db: AsyncSession = Depends(get_db),
     org_context: Dict = Depends(get_current_organization_dep),
@@ -113,7 +117,11 @@ async def get_partner_aggregate(
     }
 
 
-@router.get("/publishers/{pub_org_id}")
+@router.get(
+    "/publishers/{pub_org_id}",
+    summary="Get partner publisher detail",
+    description="Retrieve detailed information about a specific child publisher organization.",
+)
 async def get_partner_publisher_detail(
     pub_org_id: str = Path(...),
     db: AsyncSession = Depends(get_db),

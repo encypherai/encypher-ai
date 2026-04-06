@@ -253,7 +253,8 @@ class TestAudioSigningPassthrough:
         assert result.audio_id == "aud_test"
         assert result.mime_type == "audio/wav"
         assert result.original_hash.startswith("sha256:")
-        assert result.signed_bytes == make_test_wav()
+        # Passthrough now injects Encypher metadata (RIFF chunk), so bytes differ
+        assert len(result.signed_bytes) >= len(make_test_wav())
 
     @pytest.mark.asyncio
     async def test_passthrough_has_correct_hashes(self):
@@ -276,7 +277,9 @@ class TestAudioSigningPassthrough:
 
         expected_hash = compute_sha256(wav_data)
         assert result.original_hash == expected_hash
-        assert result.signed_hash == expected_hash
+        # signed_hash is of the metadata-injected bytes, not the original
+        assert result.signed_hash == compute_sha256(result.signed_bytes)
+        assert result.signed_hash != result.original_hash
 
     @pytest.mark.asyncio
     async def test_passthrough_instance_id_format(self):

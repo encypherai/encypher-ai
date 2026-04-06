@@ -219,7 +219,8 @@ class TestVideoSigningPassthrough:
         assert result.video_id == "vid_test"
         assert result.mime_type == "video/mp4"
         assert result.original_hash.startswith("sha256:")
-        assert result.signed_bytes == make_fake_mp4()
+        # Passthrough now injects Encypher metadata (uuid box), so bytes differ
+        assert len(result.signed_bytes) >= len(make_fake_mp4())
 
     @pytest.mark.asyncio
     async def test_passthrough_has_correct_hashes(self):
@@ -242,7 +243,9 @@ class TestVideoSigningPassthrough:
 
         expected_hash = compute_sha256(mp4_data)
         assert result.original_hash == expected_hash
-        assert result.signed_hash == expected_hash
+        # signed_hash is of the metadata-injected bytes, not the original
+        assert result.signed_hash == compute_sha256(result.signed_bytes)
+        assert result.signed_hash != result.original_hash
 
     @pytest.mark.asyncio
     async def test_passthrough_instance_id_format(self):

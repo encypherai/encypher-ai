@@ -42,6 +42,7 @@ class PublicAPIRateLimiter:
         "c2pa_validate_manifest": {"requests_per_hour": 10, "window_seconds": 60},
         "c2pa_create_manifest": {"requests_per_hour": 10, "window_seconds": 60},
         "trust_anchor_lookup": {"requests_per_hour": 100, "window_seconds": 60},
+        "prebid_sign": {"requests_per_hour": 60, "window_seconds": 3600},
         "default": {"requests_per_hour": 500, "window_seconds": 3600},
     }
 

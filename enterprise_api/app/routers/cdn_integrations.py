@@ -126,6 +126,7 @@ async def save_cdn_integration(
     "/cloudflare",
     status_code=status.HTTP_200_OK,
     summary="Get current Cloudflare Logpush integration config",
+    description="Retrieve the current Cloudflare Logpush integration configuration for the authenticated organization.",
     response_model=CdnIntegrationResponse,
 )
 async def get_cdn_integration(
@@ -165,6 +166,7 @@ async def get_cdn_integration(
     "/cloudflare",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Remove Cloudflare Logpush integration",
+    description="Remove the Cloudflare Logpush integration configuration for the authenticated organization.",
 )
 async def delete_cdn_integration(
     db: AsyncSession = Depends(get_db),

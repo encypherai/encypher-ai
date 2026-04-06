@@ -94,7 +94,11 @@ def _attestation_to_dict(a: Any) -> Dict[str, Any]:
 # -- Policy CRUD routes -------------------------------------------------------
 
 
-@router.get("/attestation-policies/")
+@router.get(
+    "/attestation-policies/",
+    summary="List attestation policies",
+    description="List all attestation policies for the authenticated enterprise organization.",
+)
 async def list_policies(
     active: Optional[bool] = Query(None),
     db: AsyncSession = Depends(get_db),
@@ -115,7 +119,12 @@ async def list_policies(
     }
 
 
-@router.post("/attestation-policies/", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/attestation-policies/",
+    status_code=status.HTTP_201_CREATED,
+    summary="Create attestation policy",
+    description="Create a new attestation policy defining rules and enforcement mode for content attestation.",
+)
 async def create_policy(
     body: CreatePolicyRequest,
     db: AsyncSession = Depends(get_db),
@@ -142,7 +151,7 @@ async def create_policy(
     return _policy_to_dict(policy)
 
 
-@router.get("/attestation-policies/{policy_id}")
+@router.get("/attestation-policies/{policy_id}", summary="Get attestation policy", description="Retrieve a specific attestation policy by ID.")
 async def get_policy(
     policy_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
@@ -162,7 +171,11 @@ async def get_policy(
     return _policy_to_dict(policy)
 
 
-@router.put("/attestation-policies/{policy_id}")
+@router.put(
+    "/attestation-policies/{policy_id}",
+    summary="Update attestation policy",
+    description="Update an existing attestation policy's name, enforcement mode, scope, rules, or active state.",
+)
 async def update_policy(
     body: UpdatePolicyRequest,
     policy_id: str = Path(...),
@@ -201,7 +214,11 @@ async def update_policy(
     return _policy_to_dict(policy)
 
 
-@router.delete("/attestation-policies/{policy_id}")
+@router.delete(
+    "/attestation-policies/{policy_id}",
+    summary="Delete attestation policy",
+    description="Deactivate an attestation policy. The policy is marked inactive rather than permanently deleted.",
+)
 async def delete_policy(
     policy_id: str = Path(...),
     db: AsyncSession = Depends(get_db),
@@ -228,7 +245,7 @@ async def delete_policy(
 # -- Attestation list route ----------------------------------------------------
 
 
-@router.get("/attestations/")
+@router.get("/attestations/", summary="List attestations", description="List attestation records for the authenticated enterprise organization.")
 async def list_attestations(
     document_id: Optional[str] = Query(None),
     verdict: Optional[str] = Query(None),

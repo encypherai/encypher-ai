@@ -186,7 +186,10 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/sign/advanced` | POST | - | - | **REMOVED** - Returns 410 Gone, use `/sign` with options | - |
 | `/api/v1/sign/rich` | POST | Yes | All | Sign rich article (text + embedded images) with C2PA | Key Service |
 | `/api/v1/verify` | POST | Yes | All (features gated) | Verify signed content with optional attribution, plagiarism, and fuzzy search flags - features gated by tier | Key Service |
+| `/api/v1/sign/media` | POST | Yes | All | Sign media content (image, audio, video) with C2PA manifest | Key Service |
 | `/api/v1/verify/image` | POST | No | Public | Verify a signed image. Checks embedded C2PA manifest; falls back to XMP instance_id DB lookup for passthrough-mode images | None |
+| `/api/v1/verify/audio` | POST | No | Public | Verify a signed audio file. Checks embedded C2PA manifest | None |
+| `/api/v1/verify/video` | POST | No | Public | Verify a signed video file. Checks embedded C2PA manifest | None |
 | `/api/v1/verify/rich` | POST | No | Public | Verify a signed rich article by document_id | None |
 | `/api/v1/lookup` | POST | No | Public | Lookup sentence provenance | None |
 | `/api/v1/provenance/lookup` | POST | No | Public | Lookup provenance for a document (structured) | None |
@@ -300,6 +303,9 @@ available to all tiers; scope "all" (cross-organization) requires Enterprise.
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
+| `/api/v1/public/verify` | POST | No | Public | Verify signed content (text, image, audio, video) |
+| `/api/v1/public/verify-text` | POST | No | Public | Verify signed text content |
+| `/api/v1/public/verify/media` | POST | No | Public | Verify signed media content |
 | `/api/v1/public/verify/{ref_id}` | GET | No | Public | Verify embedding by reference ID (optional API key for higher limits) |
 | `/api/v1/public/verify/batch` | POST | No | Public | Batch verify embeddings (optional API key for higher limits) |
 | `/api/v1/public/extract-and-verify` | POST | - | - | **DEPRECATED** - Returns 410 Gone, use `POST /api/v1/verify` via verification-service |
@@ -349,6 +355,8 @@ available to all tiers; scope "all" (cross-organization) requires Enterprise.
 | `/api/v1/keys/{key_id}` | PATCH | Yes | All | Update API key (name/metadata) |
 | `/api/v1/keys/{key_id}` | DELETE | Yes | All | Delete API key |
 | `/api/v1/keys/{key_id}/rotate` | POST | Yes | All | Rotate API key |
+| `/api/v1/keys/{key_id}/usage` | GET | Yes | All | Get usage statistics for a specific API key |
+| `/api/v1/keys/revoke-by-user` | POST | Yes | All | Revoke all API keys for a user |
 | `/api/v1/byok/public-keys` | GET | Yes | Enterprise | List BYOK public keys |
 | `/api/v1/byok/public-keys` | POST | Yes | Enterprise | Register BYOK public key |
 | `/api/v1/byok/public-keys/{key_id}` | DELETE | Yes | Enterprise | Delete BYOK public key |
@@ -364,6 +372,7 @@ available to all tiers; scope "all" (cross-organization) requires Enterprise.
 | `/api/v1/webhooks/{webhook_id}` | PATCH | Yes | Enterprise | Update webhook |
 | `/api/v1/webhooks/{webhook_id}` | DELETE | Yes | Enterprise | Delete webhook |
 | `/api/v1/webhooks/{webhook_id}/deliveries` | GET | Yes | Enterprise | List webhook deliveries |
+| `/api/v1/webhooks/{webhook_id}/deliveries/{delivery_id}/retry` | POST | Yes | Enterprise | Retry a failed webhook delivery |
 | `/api/v1/webhooks/{webhook_id}/test` | POST | Yes | Enterprise | Send a test delivery |
 
 #### Supported Webhook Events
@@ -548,6 +557,81 @@ Notices are append-only with SHA-256 content hashing for tamper-evidence. Each e
 | `/api/v1/cdn/cloudflare` | POST | Yes | Enterprise | Create or update Cloudflare Logpush integration |
 | `/api/v1/cdn/cloudflare` | GET | Yes | Enterprise | Get current Cloudflare Logpush integration config |
 | `/api/v1/cdn/cloudflare` | DELETE | Yes | Enterprise | Remove Cloudflare Logpush integration |
+| `/api/v1/cdn/analytics/summary` | GET | Yes | Enterprise | Get CDN analytics summary |
+| `/api/v1/cdn/analytics/timeline` | GET | Yes | Enterprise | Get CDN analytics timeline |
+| `/api/v1/cdn/manifests/lookup` | GET | Yes | Enterprise | Lookup CDN manifest by URL or domain |
+| `/api/v1/cdn/manifests/{record_id}` | GET | Yes | Enterprise | Get a specific CDN manifest record |
+| `/api/v1/cdn/images/register` | POST | Yes | Enterprise | Register an image for CDN signing |
+| `/api/v1/cdn/images/sign` | POST | Yes | Enterprise | Sign a CDN image with C2PA manifest |
+| `/api/v1/cdn/images/{record_id}/variants` | POST | Yes | Enterprise | Register image variants for a CDN record |
+| `/api/v1/cdn/integrations/{integration_id}/generate-worker-config` | POST | Yes | Enterprise | Generate Cloudflare Worker config for a CDN integration |
+| `/api/v1/cdn/verify` | POST | No | Public | Verify a CDN-served image |
+| `/api/v1/cdn/verify/url` | POST | No | Public | Verify a CDN image by URL |
+
+### WordPress Integration Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/integrations/wordpress/status` | GET | Yes | All | Get WordPress integration status |
+| `/api/v1/integrations/wordpress/status-sync` | POST | Yes | All | Sync WordPress integration status |
+| `/api/v1/integrations/wordpress/register-install` | POST | Yes | All | Register or update a WordPress install |
+| `/api/v1/integrations/wordpress/verification-event` | POST | Yes | All | Record a WordPress verification event |
+| `/api/v1/integrations/wordpress/{install_id}/actions` | POST | Yes | All | Queue a remote action for a WordPress install |
+| `/api/v1/integrations/wordpress/{install_id}/actions/pull` | POST | Yes | All | Pull queued remote actions for a WordPress install |
+| `/api/v1/integrations/wordpress/{install_id}/actions/{action_id}/ack` | POST | Yes | All | Acknowledge a WordPress remote action result |
+| `/api/v1/integrations/wordpress/connect/start` | POST | Yes | All | Start a WordPress magic-link connect session |
+| `/api/v1/integrations/wordpress/connect/session/{session_id}` | GET | Yes | All | Poll a WordPress magic-link connect session |
+| `/api/v1/integrations/wordpress/connect/complete` | POST | Yes | All | Complete a WordPress magic-link connect session |
+
+### Attestation Policy Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/attestation-policies/` | GET | Yes | Enterprise | List attestation policies |
+| `/api/v1/attestation-policies/` | POST | Yes | Enterprise | Create attestation policy |
+| `/api/v1/attestation-policies/{policy_id}` | GET | Yes | Enterprise | Get attestation policy |
+| `/api/v1/attestation-policies/{policy_id}` | PUT | Yes | Enterprise | Update attestation policy |
+| `/api/v1/attestation-policies/{policy_id}` | DELETE | Yes | Enterprise | Delete (deactivate) attestation policy |
+| `/api/v1/attestations/` | GET | Yes | Enterprise | List attestation records |
+
+### Partner Portal Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/partner/portal/publishers` | GET | Yes | Strategic Partner | List child publisher organizations |
+| `/api/v1/partner/portal/aggregate` | GET | Yes | Strategic Partner | Get aggregate metrics across child publishers |
+| `/api/v1/partner/portal/publishers/{pub_org_id}` | GET | Yes | Strategic Partner | Get child publisher detail |
+
+### Prebid Auto-Provenance Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/public/prebid/sign` | POST | No | Public | Sign ad creative with C2PA provenance (rate limited) |
+| `/api/v1/public/prebid/status/{domain}` | GET | No | Public | Get Prebid provenance status for a domain |
+| `/api/v1/public/prebid/manifest/{record_id}` | GET | No | Public | Get Prebid ad creative manifest |
+
+### Data Management Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/data/deletion-request` | POST | Yes | All | Submit a data deletion request |
+| `/api/v1/data/deletion-requests` | GET | Yes | All | List data deletion requests |
+| `/api/v1/data/deletion-request/{request_id}/cancel` | POST | Yes | All | Cancel a pending deletion request |
+| `/api/v1/data/deletion-request/{request_id}/confirm` | DELETE | Yes | All | Confirm and execute a deletion request |
+| `/api/v1/data/deletion-request/{request_id}/receipt` | GET | Yes | All | Get deletion receipt |
+| `/api/v1/data/admin/purge-user` | POST | Yes | Enterprise | Admin purge user data |
+
+### Compliance Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/compliance/readiness` | GET | Yes | All | Get compliance readiness assessment |
+
+### Support Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/support/contact` | POST | Yes | All | Submit a support contact request |
 
 ### Onboarding & Provisioning Endpoints
 
@@ -565,6 +649,8 @@ Notices are append-only with SHA-256 content hashing for tamper-evidence. Each e
 | `/readyz` | GET | No | Public | Readiness probe |
 | `/metrics` | GET | No | Internal | Prometheus-compatible metrics |
 | `/` | GET | No | Public | API information |
+| `/api/v1/` | GET | No | Public | API version information |
+| `/.well-known/c2pa/manifests/{record_id}` | GET | No | Public | C2PA well-known manifest lookup |
 
 ## Quick Start
 

@@ -241,9 +241,9 @@ def test_settings_page_surfaces_launch_readiness_checklist_and_health_card() -> 
 
     assert "Launch Readiness Checklist" in admin_src
     assert "Connection Health" in admin_src
-    assert "Step 1: Configure API base URL" in admin_src
-    assert "Step 2: Add API key" in admin_src
-    assert "Step 3: Run connection test" in admin_src
+    assert "Step 1: Start secure email connect or paste an existing API key" in admin_src
+    assert "Step 2: Confirm WordPress is connected to your workspace" in admin_src
+    assert "Step 3: Publish and verify your first signed post" in admin_src
 
     assert "Connected and ready" in js_src
     assert "Auth required" in js_src

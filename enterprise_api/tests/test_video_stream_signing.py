@@ -45,19 +45,19 @@ class TestStreamSession:
             cert_chain_pem="",
         )
         # Same org
-        found = get_session(session.session_id, "org_a")
+        found = await get_session(session.session_id, "org_a")
         assert found is not None
         assert found.session_id == session.session_id
 
         # Different org
-        found = get_session(session.session_id, "org_b")
+        found = await get_session(session.session_id, "org_b")
         assert found is None
 
     @pytest.mark.asyncio
     async def test_get_session_not_found(self):
         from app.services.video_stream_signing_service import get_session
 
-        found = get_session("nonexistent_session", "org_test")
+        found = await get_session("nonexistent_session", "org_test")
         assert found is None
 
 
