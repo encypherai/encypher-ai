@@ -1,8 +1,9 @@
 """Rich article signing router: POST /sign/rich endpoint.
 
-Signs rich articles (text + embedded images) as a single atomic provenance unit
-using the C2PA standard. Each image gets a standalone JUMBF-embedded C2PA manifest,
-and the article-level manifest binds text + images via an ingredient list.
+Signs rich articles (text + embedded media) as a single atomic provenance unit
+using the C2PA standard. Each media file (image, audio, video) gets a standalone
+C2PA manifest, and the article-level composite manifest binds text + all media
+via an ingredient list.
 """
 
 import asyncio
@@ -31,28 +32,33 @@ router = APIRouter()
 @router.post(
     "/sign/rich",
     status_code=status.HTTP_201_CREATED,
-    summary="Sign rich article (text + images) with C2PA",
+    summary="Sign rich article (text + images + audio + video) with C2PA",
     description="""
-Sign a rich article containing both text and embedded images as a single
-atomic provenance unit.
+Sign a rich article containing text and embedded media (images, audio, video)
+as a single atomic provenance unit.
 
-Each image receives a standalone C2PA JUMBF-embedded manifest. The article-level
-composite manifest binds text (via Merkle root) and all images (via ingredient
-references) into a single provenance record.
+Each media file receives a standalone C2PA manifest. The article-level composite
+manifest binds text (via Merkle root) and all media (via ingredient references)
+into a single provenance record.
+
+At least one media item (image, audio, or video) is required per request.
 
 **Tier feature matrix:**
 
 | Feature | Free | Enterprise |
 |---------|------|------------|
-| Basic image C2PA signing | Yes | Yes |
-| pHash attribution indexing | Yes | Yes |
-| TrustMark neural watermark | No | Yes |
+| Image C2PA signing | Yes | Yes |
+| Audio C2PA signing | Yes | Yes |
+| Video C2PA signing | Yes | Yes |
+| pHash attribution indexing (images) | Yes | Yes |
+| TrustMark neural watermark (images) | No | Yes |
+| Audio spread-spectrum watermark | No | Yes |
+| Video spread-spectrum watermark | No | Yes |
 
-**Quota:** Each call consumes (N_images + 1 text + 1 composite) signatures.
+**Quota:** Each call consumes (N_images + N_audios + N_videos + 1 text + 1 composite) signatures.
 
-**Images:** Up to 20 images per request. Each image is base64-encoded in the
-request body and returned base64-encoded in the response. Publishers are
-responsible for hosting signed images on their own CDN.
+**Limits:** Up to 20 images (10MB each), 10 audio files (50MB each), 5 video files (100MB each).
+All media is base64-encoded in the request/response body.
 """,
     responses={
         201: {"description": "Article signed successfully"},
@@ -71,11 +77,10 @@ async def sign_rich_content(
     core_db: AsyncSession = Depends(get_db),
     content_db: AsyncSession = Depends(get_content_db),
 ):
-    """
-    Sign a rich article with text + embedded images.
+    """Sign a rich article with text + embedded media.
 
-    Validates the request, checks quota, signs all images and text, builds the
-    composite manifest, and returns base64-encoded signed images plus the composite
+    Validates the request, checks quota, signs all media and text, builds the
+    composite manifest, and returns base64-encoded signed media plus the composite
     manifest summary.
     """
     correlation_id = getattr(http_request.state, "request_id", None) or f"req-{uuid.uuid4().hex[:12]}"
@@ -114,8 +119,9 @@ async def sign_rich_content(
             headers=api_rate_limiter.get_headers(rate_result),
         )
 
-    # Quota check: 1 (text) + N_images (images) + 1 (composite) = N+2 signatures
-    quota_increment = len(request.images) + 2
+    # Quota check: 1 (text) + N_images + N_audios + N_videos + 1 (composite)
+    media_count = len(request.images) + len(request.audios) + len(request.videos)
+    quota_increment = media_count + 2
     await QuotaManager.check_quota(
         db=core_db,
         organization_id=org_id,

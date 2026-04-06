@@ -3,7 +3,9 @@ SQLAlchemy models for the Enterprise API.
 """
 
 from app.models.attestation import Attestation, AttestationPolicy
+from app.models.article_audio import ArticleAudio
 from app.models.article_image import ArticleImage
+from app.models.article_video import ArticleVideo
 from app.models.audio_watermark_record import AudioWatermarkRecord
 from app.models.image_watermark_record import ImageWatermarkRecord
 from app.models.video_watermark_record import VideoWatermarkRecord
@@ -24,7 +26,9 @@ from app.models.webhook import Webhook, WebhookDelivery, WebhookEvent
 __all__ = [
     "Attestation",
     "AttestationPolicy",
+    "ArticleAudio",
     "ArticleImage",
+    "ArticleVideo",
     "AudioWatermarkRecord",
     "ImageWatermarkRecord",
     "VideoWatermarkRecord",

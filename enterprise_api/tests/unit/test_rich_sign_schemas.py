@@ -1,6 +1,8 @@
 """Unit tests for rich_sign_schemas.py."""
 
 import base64
+import struct
+import wave
 from io import BytesIO
 
 import pytest
@@ -16,6 +18,26 @@ def make_jpeg_b64(width: int = 32, height: int = 32) -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
+def make_wav_b64(duration: float = 0.01, sample_rate: int = 8000) -> str:
+    """Create a minimal WAV file and return as base64 string."""
+    buf = BytesIO()
+    n_samples = int(sample_rate * duration)
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sample_rate)
+        wf.writeframes(b"\x00\x00" * n_samples)
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def make_mp4_b64() -> str:
+    """Create minimal bytes that look like an MP4 (ftyp box) and return as base64."""
+    ftyp_data = b"mp42\x00\x00\x00\x00mp42isom"
+    box_size = 8 + len(ftyp_data)
+    ftyp_box = struct.pack(">I", box_size) + b"ftyp" + ftyp_data
+    return base64.b64encode(ftyp_box + b"\x00" * 64).decode()
+
+
 def make_valid_image(position: int = 0, mime_type: str = "image/jpeg") -> dict:
     """Create a valid RichContentImage payload dict."""
     return {
@@ -24,6 +46,28 @@ def make_valid_image(position: int = 0, mime_type: str = "image/jpeg") -> dict:
         "mime_type": mime_type,
         "position": position,
         "alt_text": None,
+        "metadata": {},
+    }
+
+
+def make_valid_audio(position: int = 0, mime_type: str = "audio/wav") -> dict:
+    """Create a valid RichContentAudio payload dict."""
+    return {
+        "data": make_wav_b64(),
+        "filename": f"clip{position}.wav",
+        "mime_type": mime_type,
+        "position": position,
+        "metadata": {},
+    }
+
+
+def make_valid_video(position: int = 0, mime_type: str = "video/mp4") -> dict:
+    """Create a valid RichContentVideo payload dict."""
+    return {
+        "data": make_mp4_b64(),
+        "filename": f"video{position}.mp4",
+        "mime_type": mime_type,
+        "position": position,
         "metadata": {},
     }
 
@@ -102,14 +146,86 @@ class TestRichContentImage:
         assert img.alt_text is None
 
 
+class TestRichContentAudio:
+    def test_valid_wav_passes(self):
+        from app.schemas.rich_sign_schemas import RichContentAudio
+
+        aud = RichContentAudio(**make_valid_audio())
+        assert aud.filename == "clip0.wav"
+        assert aud.mime_type == "audio/wav"
+
+    def test_invalid_base64_raises(self):
+        from app.schemas.rich_sign_schemas import RichContentAudio
+
+        with pytest.raises(ValidationError, match="base64"):
+            RichContentAudio(data="not-valid!!!", filename="bad.wav", mime_type="audio/wav")
+
+    def test_audio_over_50mb_raises(self):
+        from app.schemas.rich_sign_schemas import RichContentAudio
+
+        big_data = b"\x00" * (51 * 1024 * 1024)
+        big_b64 = base64.b64encode(big_data).decode()
+        with pytest.raises(ValidationError, match="50MB"):
+            RichContentAudio(data=big_b64, filename="big.wav", mime_type="audio/wav")
+
+    def test_unsupported_audio_mime_raises(self):
+        from app.schemas.rich_sign_schemas import RichContentAudio
+
+        with pytest.raises(ValidationError, match="audio MIME"):
+            RichContentAudio(data=make_wav_b64(), filename="bad.ogg", mime_type="audio/ogg")
+
+    def test_position_must_be_non_negative(self):
+        from app.schemas.rich_sign_schemas import RichContentAudio
+
+        with pytest.raises(ValidationError):
+            RichContentAudio(data=make_wav_b64(), filename="clip.wav", mime_type="audio/wav", position=-1)
+
+
+class TestRichContentVideo:
+    def test_valid_mp4_passes(self):
+        from app.schemas.rich_sign_schemas import RichContentVideo
+
+        vid = RichContentVideo(**make_valid_video())
+        assert vid.filename == "video0.mp4"
+        assert vid.mime_type == "video/mp4"
+
+    def test_invalid_base64_raises(self):
+        from app.schemas.rich_sign_schemas import RichContentVideo
+
+        with pytest.raises(ValidationError, match="base64"):
+            RichContentVideo(data="not-valid!!!", filename="bad.mp4", mime_type="video/mp4")
+
+    def test_video_over_100mb_raises(self):
+        from app.schemas.rich_sign_schemas import RichContentVideo
+
+        big_data = b"\x00" * (101 * 1024 * 1024)
+        big_b64 = base64.b64encode(big_data).decode()
+        with pytest.raises(ValidationError, match="100MB"):
+            RichContentVideo(data=big_b64, filename="big.mp4", mime_type="video/mp4")
+
+    def test_unsupported_video_mime_raises(self):
+        from app.schemas.rich_sign_schemas import RichContentVideo
+
+        with pytest.raises(ValidationError, match="video MIME"):
+            RichContentVideo(data=make_mp4_b64(), filename="bad.webm", mime_type="video/webm")
+
+    def test_position_must_be_non_negative(self):
+        from app.schemas.rich_sign_schemas import RichContentVideo
+
+        with pytest.raises(ValidationError):
+            RichContentVideo(data=make_mp4_b64(), filename="clip.mp4", mime_type="video/mp4", position=-1)
+
+
 class TestRichArticleSignRequest:
-    def _make_valid_request(self, num_images: int = 1) -> dict:
+    def _make_valid_request(self, num_images: int = 1, num_audios: int = 0, num_videos: int = 0) -> dict:
         return {
             "content": "This is test article content with some text.",
             "content_format": "plain",
             "document_id": "test-doc-001",
             "document_title": "Test Article",
             "images": [make_valid_image(i) for i in range(num_images)],
+            "audios": [make_valid_audio(i) for i in range(num_audios)],
+            "videos": [make_valid_video(i) for i in range(num_videos)],
             "options": {
                 "segmentation_level": "sentence",
                 "manifest_mode": "micro",
@@ -123,24 +239,58 @@ class TestRichArticleSignRequest:
         assert len(req.images) == 1
         assert req.content == "This is test article content with some text."
 
+    def test_valid_request_with_audio_only(self):
+        from app.schemas.rich_sign_schemas import RichArticleSignRequest
+
+        req = RichArticleSignRequest(**self._make_valid_request(num_images=0, num_audios=2))
+        assert len(req.images) == 0
+        assert len(req.audios) == 2
+
+    def test_valid_request_with_video_only(self):
+        from app.schemas.rich_sign_schemas import RichArticleSignRequest
+
+        req = RichArticleSignRequest(**self._make_valid_request(num_images=0, num_videos=1))
+        assert len(req.videos) == 1
+
+    def test_valid_request_with_all_media_types(self):
+        from app.schemas.rich_sign_schemas import RichArticleSignRequest
+
+        req = RichArticleSignRequest(**self._make_valid_request(num_images=2, num_audios=1, num_videos=1))
+        assert len(req.images) == 2
+        assert len(req.audios) == 1
+        assert len(req.videos) == 1
+
+    def test_no_media_raises(self):
+        """At least one media item is required."""
+        from app.schemas.rich_sign_schemas import RichArticleSignRequest
+
+        payload = self._make_valid_request(num_images=0, num_audios=0, num_videos=0)
+        with pytest.raises(ValidationError, match="At least one media item"):
+            RichArticleSignRequest(**payload)
+
     def test_more_than_20_images_raises(self):
         from app.schemas.rich_sign_schemas import RichArticleSignRequest
 
         with pytest.raises(ValidationError):
             RichArticleSignRequest(**self._make_valid_request(21))
 
+    def test_more_than_10_audios_raises(self):
+        from app.schemas.rich_sign_schemas import RichArticleSignRequest
+
+        with pytest.raises(ValidationError):
+            RichArticleSignRequest(**self._make_valid_request(num_images=0, num_audios=11))
+
+    def test_more_than_5_videos_raises(self):
+        from app.schemas.rich_sign_schemas import RichArticleSignRequest
+
+        with pytest.raises(ValidationError):
+            RichArticleSignRequest(**self._make_valid_request(num_images=0, num_videos=6))
+
     def test_exactly_20_images_passes(self):
         from app.schemas.rich_sign_schemas import RichArticleSignRequest
 
         req = RichArticleSignRequest(**self._make_valid_request(20))
         assert len(req.images) == 20
-
-    def test_no_images_raises(self):
-        from app.schemas.rich_sign_schemas import RichArticleSignRequest
-
-        payload = self._make_valid_request(0)
-        with pytest.raises(ValidationError):
-            RichArticleSignRequest(**payload)
 
     def test_enable_trustmark_defaults_false(self):
         from app.schemas.rich_sign_schemas import RichArticleSignRequest
@@ -180,9 +330,18 @@ class TestRichSignOptions:
         assert opts.segmentation_level == "sentence"
         assert opts.manifest_mode == "micro"
         assert opts.enable_trustmark is False
+        assert opts.enable_audio_watermark is False
+        assert opts.enable_video_watermark is False
         assert opts.image_quality == 95
         assert opts.use_rights_profile is True
         assert opts.index_for_attribution is True
+
+    def test_watermark_flags_can_be_set(self):
+        from app.schemas.rich_sign_schemas import RichSignOptions
+
+        opts = RichSignOptions(enable_audio_watermark=True, enable_video_watermark=True)
+        assert opts.enable_audio_watermark is True
+        assert opts.enable_video_watermark is True
 
     def test_image_quality_bounds(self):
         from app.schemas.rich_sign_schemas import RichSignOptions
@@ -231,3 +390,57 @@ class TestSignedImageResult:
             phash=None,
         )
         assert result.phash is None
+
+
+class TestSignedAudioResult:
+    def test_instantiation(self):
+        from app.schemas.rich_sign_schemas import SignedAudioResult
+
+        result = SignedAudioResult(
+            audio_id="aud_aabbccdd11223344",
+            filename="interview.wav",
+            position=0,
+            signed_audio_b64=make_wav_b64(),
+            signed_audio_hash="sha256:" + "b" * 64,
+            c2pa_manifest_instance_id="urn:uuid:11111111-2222-3333-4444-555555555555",
+            size_bytes=2048,
+            mime_type="audio/wav",
+        )
+        assert result.audio_id == "aud_aabbccdd11223344"
+        assert result.watermark_applied is False
+        assert result.c2pa_signed is True
+
+    def test_watermark_applied(self):
+        from app.schemas.rich_sign_schemas import SignedAudioResult
+
+        result = SignedAudioResult(
+            audio_id="aud_test",
+            filename="clip.wav",
+            position=0,
+            signed_audio_b64=make_wav_b64(),
+            signed_audio_hash="sha256:" + "c" * 64,
+            c2pa_manifest_instance_id="urn:uuid:test",
+            size_bytes=1024,
+            mime_type="audio/wav",
+            watermark_applied=True,
+        )
+        assert result.watermark_applied is True
+
+
+class TestSignedVideoResult:
+    def test_instantiation(self):
+        from app.schemas.rich_sign_schemas import SignedVideoResult
+
+        result = SignedVideoResult(
+            video_id="vid_aabbccdd11223344",
+            filename="intro.mp4",
+            position=0,
+            signed_video_b64=make_mp4_b64(),
+            signed_video_hash="sha256:" + "d" * 64,
+            c2pa_manifest_instance_id="urn:uuid:66666666-7777-8888-9999-aaaaaaaaaaaa",
+            size_bytes=4096,
+            mime_type="video/mp4",
+        )
+        assert result.video_id == "vid_aabbccdd11223344"
+        assert result.watermark_applied is False
+        assert result.c2pa_signed is True
