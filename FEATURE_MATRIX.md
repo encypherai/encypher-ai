@@ -1,7 +1,7 @@
 # Encypher Feature Matrix by Tier
 
-**Last Updated**: April 4, 2026
-**Version**: 2.3
+**Last Updated**: April 6, 2026
+**Version**: 2.4
 
 This document provides a comprehensive breakdown of all Encypher features organized by subscription tier.
 
@@ -43,7 +43,8 @@ Founding Coalition members have the implementation fee waived.
 | Batch operations (100+ documents/request) | ❌ | ✅ |
 | Document revocation (StatusList2021) | ❌ | ✅ |
 | Robust fingerprinting (survives paraphrase/translation) | ❌ | ✅ |
-| Segment-level rights (per-segment licensing metadata) | ❌ | ✅ |
+| Segment-level rights (per-segment licensing metadata; `segment_index` query param on public rights endpoint for per-segment resolution) | ❌ | ✅ |
+| Composite web content signing (`/sign/rich` - text + images + audio + video in one C2PA composite manifest; `RichContentAudio` 50 MB limit, `RichContentVideo` 100 MB limit) | ❌ | ✅ |
 
 ---
 
@@ -59,6 +60,8 @@ Founding Coalition members have the implementation fee waived.
 | Multi-source attribution with authority ranking | ❌ | ✅ |
 | Fuzzy fingerprint matching | ❌ | ✅ |
 | Plagiarism detection with Merkle proof linkage | ❌ | ✅ |
+| Video watermark verification (`/verify/video` returns `watermark_detected`, `watermark_payload`, `watermark_confidence`) | ✅ | ✅ |
+| Audio watermark verification (`/verify/audio` returns `watermark_detected`, `watermark_payload`, `watermark_confidence`) | ✅ | ✅ |
 
 ---
 
@@ -188,6 +191,20 @@ Per-segment C2PA manifest signing for live video streams. Each CMAF/fMP4 segment
 | Browser extension for verification | ✅ | ✅ |
 | Ghost CMS integration (webhook + image signing) | ✅ | ✅ |
 | Custom integrations | ❌ | ✅ |
+
+---
+
+## Prebid Auto-Provenance
+
+Public endpoints for signing ad creative with C2PA provenance and serving provenance metadata to Prebid RTD modules. All endpoints are public (no auth required) and rate-limited by IP and domain.
+
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| `POST /api/v1/public/prebid/sign` - Sign ad creative with C2PA provenance | Yes | Yes |
+| `GET /api/v1/public/prebid/status/{domain}` - Get provenance status for a domain | Yes | Yes |
+| `GET /api/v1/public/prebid/manifest/{record_id}` - Get ad creative manifest | Yes | Yes |
+| Prebid RTD module (`encypherRtdProvider.js`) - CDN meta tag, cache, and auto-sign paths | Yes | Yes |
+| Rate limiting by IP and domain | Yes | Yes |
 
 ---
 

@@ -1,9 +1,9 @@
 # Encypher Corporation Master GTM Strategy
 ## Standards-Driven Coalition Strategy for Content Provenance Infrastructure
 
-**Last Updated:** March 26, 2026
+**Last Updated:** April 6, 2026
 **Status:** Active Launch -- Full-Stack Content Provenance
-**Version:** 5.1
+**Version:** 5.2
 **Distribution:** Executive Team & Strategy Leadership
 
 > **CANONICAL MESSAGING SSOT:** This document is the authoritative source for all
@@ -77,8 +77,8 @@ Verification is free across all media asset classes. The public verification API
 
 - **Text:** Verify signed text, extract C2PA manifests, detect tampering at sentence level
 - **Images (13 formats):** JPEG, PNG, WebP, TIFF, AVIF, HEIC, HEIC-sequence, HEIF, HEIF-sequence, SVG, DNG, GIF, JXL. Includes perceptual hash (pHash) attribution search for fuzzy derivative matching across resized/reformatted variants.
-- **Audio (6 formats):** WAV (RIFF chunk), MP3/MPA (ID3 GEOB frame), M4A/AAC (ISO BMFF uuid box), FLAC (custom JUMBF/COSE)
-- **Video (4 formats):** MP4, MOV/QuickTime, M4V (ISO BMFF uuid box), AVI (RIFF chunk)
+- **Audio (6 formats):** WAV (RIFF chunk), MP3/MPA (ID3 GEOB frame), M4A/AAC (ISO BMFF uuid box), FLAC (custom JUMBF/COSE). Verification also returns spread-spectrum watermark detection results when soft-bound audio is checked.
+- **Video (4 formats):** MP4, MOV/QuickTime, M4V (ISO BMFF uuid box), AVI (RIFF chunk). Verification also returns spread-spectrum watermark detection results when soft-bound video is checked.
 - **Documents (5 formats):** PDF, EPUB, DOCX, ODT, OXPS (custom JUMBF/COSE)
 - **Fonts (3 formats):** OTF, TTF, SFNT (custom JUMBF/COSE)
 - **Live Video Streams:** Verify per-segment C2PA manifests with backwards-linked provenance chain (C2PA 2.3 Section 19)
@@ -485,6 +485,9 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 - Patent-pending sentence-level tracking
 - Cryptographic watermarking that survives distribution
 - Full multi-media C2PA signing platform (text + images + audio + video + live streams)
+- Signal-domain soft-binding watermarks (Enterprise): spread-spectrum audio watermarking with Reed-Solomon ECC that survives MP3 re-encoding, loudness normalization, and podcast distribution pipelines; spread-spectrum video watermarking that survives H.264/H.265 transcoding, resolution scaling, and platform re-encoding (YouTube, social media CDNs); TrustMark neural image watermarking that survives JPEG recompression and moderate crops. All three produce `c2pa.soft_binding.v1` assertions and return detection results on verification (`watermark_detected`, `watermark_payload`, `watermark_confidence`)
+- Composite multi-media signing: `/sign/rich` binds text + images + audio + video into a single C2PA composite manifest, enabling article-level provenance that covers the entire media package
+- Prebid RTD module: production-ready ad-creative signing distributed via the Prebid.js real-time data pipeline. Three execution paths (CDN/CMS meta tag, cache lookup, auto-sign). Public signing endpoint live at `/api/v1/public/prebid/sign`
 - Free verification across all media asset classes
 - Quote integrity verification
 - 18+ months technical lead on reference implementation
@@ -510,7 +513,7 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 RSL is an open standard (1.0 spec finalized December 2025, 50+ members including Reddit, Yahoo, Quora, Medium, BuzzFeed, USA Today, Vox Media) for machine-readable AI content licensing terms. RSL tells AI companies the rules (pricing models, usage rights). Encypher proves whether they followed the rules (cryptographic provenance + formal notice). RSL defines terms; Encypher provides enforcement evidence. The integration story: RSL terms reference Encypher provenance for enforcement. This is a natural partnership where RSL member publishers become Encypher coalition candidates.
 
 **Digimarc / Truepic -- Multi-Format C2PA:**
-Digimarc co-chairs the C2PA watermarking task force for images/video/audio. Truepic is a C2PA founding member for visual media. Encypher co-chairs the C2PA text provenance task force. Note: while partnerships with Digimarc/Truepic remain strategically valuable for standards credibility, Encypher's Enterprise API now provides native C2PA signing for 31 MIME types across 6 categories -- images (13 formats), audio (6 formats), video (4 formats), documents (5 formats including PDF/EPUB/DOCX), fonts (3 formats), plus live video streams and text. Enterprise customers get full multi-format C2PA provenance from a single vendor. This is a competitive advantage for enterprise deals where publishers produce text + photos + podcasts + video + PDFs + ebooks. Partnership narrative shifts from "together we cover all formats" to "we cover all formats natively, and we collaborate on standards."
+Digimarc co-chairs the C2PA watermarking task force for images/video/audio. Truepic is a C2PA founding member for visual media. Encypher co-chairs the C2PA text provenance task force. Note: while partnerships with Digimarc/Truepic remain strategically valuable for standards credibility, Encypher's Enterprise API now provides native C2PA signing for 31 MIME types across 6 categories -- images (13 formats), audio (6 formats), video (4 formats), documents (5 formats including PDF/EPUB/DOCX), fonts (3 formats), plus live video streams and text. Enterprise customers get full multi-format C2PA provenance from a single vendor. Additionally, Encypher now provides its own signal-domain soft-binding watermarks for images (TrustMark neural watermarking), audio (spread-spectrum with Reed-Solomon ECC), and video (spread-spectrum), all producing `c2pa.soft_binding.v1` assertions. This means Encypher covers both container-level C2PA provenance and signal-domain survival independently, without relying on Digimarc for the watermarking layer. Partnership narrative shifts from "together we cover all formats" to "we cover all formats natively including signal-domain watermarking, and we collaborate on standards."
 
 ### Competitive Positioning (Updated)
 

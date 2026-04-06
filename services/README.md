@@ -2,7 +2,7 @@
 
 This directory contains the microservices architecture for the Encypher platform. Each service is independently deployable and communicates via HTTP/gRPC.
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 The Encypher platform uses a microservices architecture with all services running in Docker.
 
@@ -12,43 +12,43 @@ The Encypher platform uses a microservices architecture with all services runnin
 - [Repo system context](../docs/diagrams/architecture/system-context.d2) — shows how services fit alongside the Enterprise API and client-facing products.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   Traefik API Gateway                        │
-│                      (Port 8000)                             │
-│         Routes /api/v1/* to appropriate services             │
-└─────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-┌───────▼────────┐   ┌───────▼────────┐   ┌───────▼────────┐
-│  Auth Service  │   │  User Service  │   │  Key Service   │
-│   (Port 8001)  │   │   (Port 8002)  │   │   (Port 8003)  │
-└────────────────┘   └────────────────┘   └────────────────┘
-        │                     │                     │
-        └─────────────────────┼─────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-┌───────▼────────┐   ┌───────▼────────┐   ┌───────▼────────┐
-│Encoding Service│   │Verification Svc│   │Analytics Svc   │
-│   (Port 8004)  │   │   (Port 8005)  │   │   (Port 8006)  │
-└────────────────┘   └────────────────┘   └────────────────┘
-        │                     │                     │
-        └─────────────────────┼─────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-┌───────▼────────┐   ┌───────▼────────┐   ┌───────▼────────┐
-│Billing Service │   │Notification Svc│   │Audio Watermark │
-│   (Port 8007)  │   │   (Port 8008)  │   │   (Port 8011)  │
-└────────────────┘   └────────────────┘   └────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                                           │
-┌───────▼────────┐                        ┌────────▼────────┐
-│Video Watermark │                        │ Enterprise API  │
-│   (Port 8012)  │                        │   (Port 9000)   │
-└────────────────┘                        └─────────────────┘
++-------------------------------------------------------------+
+|                   Traefik API Gateway                        |
+|                      (Port 8000)                             |
+|         Routes /api/v1/* to appropriate services             |
++-------------------------------------------------------------+
+                              |
+        +---------------------+---------------------+
+        |                     |                     |
++-------+--------+   +--------+-------+   +---------+------+
+|  Auth Service  |   |  User Service  |   |  Key Service   |
+|   (Port 8001)  |   |   (Port 8002)  |   |   (Port 8003)  |
++----------------+   +----------------+   +----------------+
+        |                     |                     |
+        +---------------------+---------------------+
+                              |
+        +---------------------+---------------------+
+        |                     |                     |
++-------+--------+   +--------+-------+   +---------+------+
+|Encoding Service|   |Verification Svc|   |Analytics Svc   |
+|   (Port 8004)  |   |   (Port 8005)  |   |   (Port 8006)  |
++----------------+   +----------------+   +----------------+
+        |                     |                     |
+        +---------------------+---------------------+
+                              |
+        +---------------------+---------------------+
+        |                     |                     |
++-------+--------+   +--------+-------+   +---------+------+
+|Billing Service |   |Notification Svc|   |Image Watermark |
+|   (Port 8007)  |   |   (Port 8008)  |   |   (Port 8010)  |
++----------------+   +----------------+   +----------------+
+                              |
+        +---------------------+---------------------+
+        |                     |                     |
++-------+--------+   +--------+-------+   +---------+------+
+|Audio Watermark |   |Video Watermark |   | Enterprise API |
+|   (Port 8011)  |   |   (Port 8012)  |   |   (Port 9000)  |
++----------------+   +----------------+   +----------------+
 ```
 
 ## 📦 Services
@@ -66,8 +66,9 @@ The Encypher platform uses a microservices architecture with all services runnin
 | [**analytics-service**](./analytics-service/) | 8006 | postgres-core | ✅ Active | Usage metrics |
 | [**billing-service**](./billing-service/) | 8007 | postgres-core | ✅ Active | Subscriptions, Stripe |
 | [**notification-service**](./notification-service/) | 8008 | postgres-core | ✅ Active | Email, notifications |
-| [**audio-watermark-service**](./audio-watermark-service/) | 8011 | - | ✅ Active | Spread-spectrum audio watermarking (64-bit payload) |
-| [**video-watermark-service**](./video-watermark-service/) | 8012 | - | ✅ Active | Spread-spectrum video watermarking (VOD and live stream) |
+| [**image-service**](./image-service/) | 8010 | - | Active | TrustMark neural image watermarking (Enterprise-only soft binding) |
+| [**audio-watermark-service**](./audio-watermark-service/) | 8011 | - | Active | Spread-spectrum audio watermarking (64-bit payload) |
+| [**video-watermark-service**](./video-watermark-service/) | 8012 | - | Active | Spread-spectrum video watermarking (VOD and live stream) |
 | **enterprise-api** | 9000 | core + content | ✅ Active | C2PA sign/verify API, Rights Management System |
 
 ### Infrastructure

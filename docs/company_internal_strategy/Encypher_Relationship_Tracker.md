@@ -133,7 +133,7 @@ Use it to track status, ownership, next actions, and strategic significance acro
 | ~~6~~ | ~~Ellen McCarthy / Trust in Media~~ | ~~Dropped: doesn't map to SC selection criteria~~ | ~~N/A~~ |
 | 7 | River Valley Technology | C2PA member peer validation | Achievable; needs ask |
 | 8 | NPR | Tier 1 public media active evaluation | Intro meeting complete; SC reference ask sent; awaiting confirmation |
-| 9 | Prebid | Ad-tech supply chain (touches Amazon, Microsoft, BBC ecosystems) | Pending formal commitment |
+| 9 | Prebid | Ad-tech supply chain (touches Amazon, Microsoft, BBC ecosystems) | Phase 1 complete: backend signing service live, RTD module built and tested, upstream PR pending |
 | 10 | Freestar / Kurt Donnell | Platform commercial traction (700+ publishers) | Legal review in progress |
 | 11 | Jeremy Uzan / UMG | Creative economy breadth (music rights) | Needs ask |
 | 12 | Linklaters / Ieuan Jolly | Legal infrastructure dimension (Magic Circle law firm) | Active relationship |

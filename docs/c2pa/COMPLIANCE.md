@@ -69,6 +69,8 @@ Encypher supports the following C2PA assertion types:
 | `com.encypher.rights.v1` | Custom | Document-level rights metadata |
 | `com.encypher.rights.v2` | Custom | Segment-level rights (maps segment indices to rights profiles) |
 
+**Composite multi-media manifests (`/sign/rich`):** The `/sign/rich` endpoint creates an article-level C2PA manifest that binds text, images, audio, and video under one `instance_id` with a deterministic `manifest_hash`. Each signed media item (image, audio, video) appears as a `c2pa.ingredient.v3` reference in the composite manifest; each ingredient carries its own fully-formed C2PA manifest and hard binding. This satisfies C2PA Section 9.8 (Ingredients) for multi-media provenance chains.
+
 ---
 
 ## Cryptographic Algorithms
@@ -103,6 +105,9 @@ Encypher supports the following C2PA assertion types:
 | `POST /api/v1/public/c2pa/validate-manifest` | Validate manifest structure | Non-cryptographic validation |
 | `POST /api/v1/public/c2pa/create-manifest` | Create manifest from text | Manifest generation |
 | `GET /api/v1/public/c2pa/trust-anchors/{signer_id}` | Lookup signer public key | Private Credential Store (§14.4.3) |
+| `POST /api/v1/public/prebid/sign` | Auto-provenance signing for Prebid ad impressions (rate-limited) | Manifest generation for programmatic ad content |
+| `GET /api/v1/public/prebid/status/{domain}` | Check Prebid signing status for a domain | Trust anchor lookup (§14.4.3) |
+| `GET /api/v1/public/prebid/manifest/{record_id}` | Retrieve manifest for a signed Prebid record | Manifest retrieval |
 
 ### Authenticated Endpoints
 
@@ -111,9 +116,10 @@ Encypher supports the following C2PA assertion types:
 | `POST /api/v1/sign` | Sign text with C2PA manifest | Full C2PA embedding |
 | `POST /api/v1/verify` | Verify C2PA manifest in text | §14.3 validation |
 | `POST /api/v1/enterprise/audio/sign` | Sign audio with C2PA manifest (WAV, MP3, M4A) | Appendix A.3.4, A.3.7, A.5 |
-| `POST /api/v1/enterprise/audio/verify` | Verify C2PA manifest in audio | §14.3 validation |
+| `POST /api/v1/enterprise/audio/verify` | Verify C2PA manifest in audio; returns `watermark_detected`, `watermark_payload`, `watermark_confidence` alongside C2PA results | §14.3 validation + §8.5 soft-binding |
 | `POST /api/v1/enterprise/video/sign` | Sign video with C2PA manifest (MP4, MOV, M4V, AVI) | Appendix A.5, A.3 |
-| `POST /api/v1/enterprise/video/verify` | Verify C2PA manifest in video | §14.3 validation |
+| `POST /api/v1/enterprise/video/verify` | Verify C2PA manifest in video; returns `watermark_detected`, `watermark_payload`, `watermark_confidence` alongside C2PA results | §14.3 validation + §8.5 soft-binding |
+| `POST /api/v1/sign/rich` | Create composite multi-media manifest binding text + images + audio + video via `c2pa.ingredient.v3` | §9.8 Ingredients, composite manifest |
 | `POST /api/v1/enterprise/video/stream/start` | Start live stream signing session | §19 (live video) |
 | `POST /api/v1/enterprise/video/stream/{id}/segment` | Sign individual stream segment | §19 Method 1 |
 | `POST /api/v1/enterprise/video/stream/{id}/finalize` | Finalize stream, compute Merkle root | §19 |

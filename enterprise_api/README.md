@@ -49,8 +49,10 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 #### Core Capabilities
 - **C2PA-Compliant Signing**: Full C2PA 2.3 text manifest support
-- **Audio C2PA Signing**: WAV, MP3, M4A/AAC audio signing and verification
-- **Video C2PA Signing**: MP4, MOV, M4V, AVI video signing and verification (multipart upload)
+- **Audio C2PA Signing**: WAV, MP3, M4A/AAC audio signing and verification; verification returns watermark detection results (watermark_detected, watermark_payload, watermark_confidence) when soft-bound media is verified
+- **Video C2PA Signing**: MP4, MOV, M4V, AVI video signing and verification (multipart upload); verification returns watermark detection results (watermark_detected, watermark_payload, watermark_confidence) when soft-bound media is verified
+- **Composite Multi-Media Signing**: Sign text + images + audio + video as a single atomic provenance unit via /sign/rich
+- **Prebid Auto-Provenance**: Public ad-creative signing for Prebid RTD module integration
 - **Live Video Stream Signing**: Per-segment C2PA signing with manifest chaining (C2PA 2.3 Section 19)
 - **Content Verification**: Cryptographic verification with tamper detection
 - **Granular Attribution**: Track provenance of individual sentences

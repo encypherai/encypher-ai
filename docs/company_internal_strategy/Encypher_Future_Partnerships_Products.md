@@ -286,7 +286,7 @@ only the lightweight fingerprint layer at the CDN edge via WASM SDK. Hierarchica
 ### Partner Sequencing
 
 1. Freestar/PubOS (seed concept in current partnership, Phase 2 capability)
-2. Aditude (bridge into Prebid.org AI working group)
+2. **Prebid.js RTD Module (Phase 1 complete):** Backend signing service live at `/api/v1/public/prebid/sign`. RTD module (`encypherRtdProvider.js`, 3.79 KiB minified) with three execution paths (Path A: CDN/CMS meta tag, Path B: cache lookup, Path C: auto-sign). 23 unit + 7 E2E tests passing. Upstream PR to `prebid/Prebid.js` pending. Aditude relationship provides bridge into Prebid.org AI working group for distribution and standards influence.
 3. Fastly (first CDN -- media vertical, least competitive overlap)
 4. Cloudflare (after reference implementation exists -- competitive risk if approached too early)
 

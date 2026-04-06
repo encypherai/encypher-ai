@@ -1,6 +1,6 @@
 # Encypher Commercial - Documentation Index
 
-**Last Updated**: March 21, 2026
+**Last Updated**: April 6, 2026
 **Repository**: encypherai-commercial
 **Documentation Status**: Complete and Current
 
@@ -26,7 +26,7 @@ Use this index to jump directly to the documentation you need.
 |----------|---------|----------|
 | [README.md](./README.md) | Repository overview, structure, getting started | Everyone |
 | [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) | **Master feature list by tier (Free + Enterprise + Add-ons)** | Everyone |
-| [MICROSERVICES_FEATURES.md](./MICROSERVICES_FEATURES.md) | Complete feature matrix for all 8 services | Everyone |
+| [MICROSERVICES_FEATURES.md](./MICROSERVICES_FEATURES.md) | Complete feature matrix for all 12 services | Everyone |
 | [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) | This file - navigation guide | Everyone |
 | [CHANGELOG.md](./CHANGELOG.md) | Version history and changes | Developers |
 | [LICENSE](./LICENSE) | Proprietary license information | Legal, Management |
@@ -123,7 +123,7 @@ Use this index to jump directly to the documentation you need.
 | [enterprise_api/docs/LICENSING_API.md](./enterprise_api/docs/LICENSING_API.md) | Licensing API reference (agreements, content, payouts) |
 | [docs/perf/batch-sign.md](./docs/perf/batch-sign.md) | Batch throughput benchmark results |
 
-**Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection, CDN provenance continuity, audio C2PA signing (WAV, MP3, M4A/AAC), audio soft-binding watermarking, image soft-binding watermarking (TrustMark neural), segment-level rights, video C2PA signing (MP4, MOV, M4V, AVI), live video stream signing (C2PA 2.3 Section 19)
+**Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection, CDN provenance continuity, audio C2PA signing (WAV, MP3, M4A/AAC), audio soft-binding watermarking, image soft-binding watermarking (TrustMark neural), segment-level rights, video C2PA signing (MP4, MOV, M4V, AVI), live video stream signing (C2PA 2.3 Section 19), composite multi-media signing (`/sign/rich` -- text + images + audio + video bound into a single C2PA manifest)
 **Status**: Production Ready
 **Tier**: Enterprise
 **Port**: 9000
@@ -279,7 +279,7 @@ Per-segment C2PA manifest signing for live video streams with backwards-linked p
 | [services/ENV_VARS_MAPPING.md](./services/ENV_VARS_MAPPING.md) | Environment variables mapping |
 | [docker-compose.microservices.yml](./docker-compose.microservices.yml) | Full microservices stack |
 
-**Architecture**: 10 core services plus the Enterprise API
+**Architecture**: 12 core services plus the Enterprise API
 **Status**: Active
 
 #### Active Services
@@ -361,6 +361,7 @@ Per-segment C2PA manifest signing for live video streams with backwards-linked p
 | [PRDs/CURRENT/PRD_Enterprise_API_Production_Readiness_Blockers.md](./PRDs/CURRENT/PRD_Enterprise_API_Production_Readiness_Blockers.md) | Production readiness blockers for enterprise API |
 | [PRDs/CURRENT/PRD_Enterprise_API_Mypy_Errors_Overview.md](./PRDs/CURRENT/PRD_Enterprise_API_Mypy_Errors_Overview.md) | Mypy error inventory and remediation plan |
 | [PRDs/CURRENT/PRD_Python_SDK_WBS.md](./PRDs/CURRENT/PRD_Python_SDK_WBS.md) | Python SDK production readiness WBS |
+| [PRDs/CURRENT/PRD_Prebid_C2PA_Auto_Provenance.md](./PRDs/CURRENT/PRD_Prebid_C2PA_Auto_Provenance.md) | Prebid RTD module auto-provenance signing for ad creatives (public, rate-limited, cached) |
 | [docs/PRD.md](./docs/PRD.md) | Main product requirements |
 
 #### C2PA Reference
@@ -610,6 +611,6 @@ Per-segment C2PA manifest signing for live video streams with backwards-linked p
 
 ---
 
-**Last Updated**: February 13, 2026
+**Last Updated**: April 6, 2026
 **Maintained By**: Development Team
-**Next Review**: May 13, 2026 (or after major changes)
+**Next Review**: July 6, 2026 (or after major changes)

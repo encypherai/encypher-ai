@@ -1,9 +1,9 @@
 # Encypher Corporation: Infrastructure for Content Provenance
 ## One-Page Overviews for Publishers and AI Companies
 
-**Last Updated:** March 23, 2026
+**Last Updated:** April 6, 2026
 **Status:** Active Launch -- Full-Stack Content Provenance
-**Version:** 5.0
+**Version:** 5.1
 **Distribution:** Sales & Business Development Teams
 
 > **Messaging SSOT:** Core positioning and value propositions are owned by
@@ -92,6 +92,9 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 - **Granular Tamper Detection:** Multiple hash layers reveal ANY modification to specific sentences
 - **Court-Admissible Evidence:** Mathematical proof that eliminates the innocent infringement defense
 - **Multi-Media Provenance (Enterprise):** Sign your photos, podcasts, and video alongside articles -- your entire content portfolio under one provenance infrastructure with C2PA manifests
+- **Composite Article Signing:** Text, images, audio, and video signed as a single atomic provenance unit with a composite C2PA manifest binding all ingredients under one `document_id`
+- **Signal-Domain Soft-Binding Watermarks (Enterprise):** Audio spread-spectrum watermarking with Reed-Solomon error correction survives transcoding and compression. Video spread-spectrum watermarking and TrustMark neural image watermarking detected automatically during verification
+- **Segment-Level Rights:** Assign per-segment licensing metadata (e.g., CC-BY-NC for paragraph 3, All Rights Reserved for paragraph 7) queryable via API with O(1) index lookup
 - **Free Verification:** Any third party -- journalists, courts, compliance teams, AI companies -- can verify any signed asset (text, image, audio, video) at no cost via the public API
 
 ### Eliminate the "We Didn't Know" Defense
@@ -193,6 +196,9 @@ Technical demonstration showing how sentence-level tracking, quote integrity ver
 | **Publisher Coalition** | N/A | Partial | Full Access |
 | **AI Company Compatible** | No | Basic | Full Integration |
 | **Multi-Media Provenance** | No | No | Text + Images + Audio + Video |
+| **Signal-Domain Watermarks** | No | No | Audio + Video + Image (Enterprise) |
+| **Segment-Level Rights** | No | No | Per-Segment Licensing Metadata |
+| **Composite Signing** | No | No | Multi-Media Atomic Provenance |
 
 ---
 
@@ -312,6 +318,12 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 **Distribution:** Sales & Business Development Teams
 **Next Review:** Monthly
 **Document Owner:** Chief Commercial Officer (CCO)
+
+**Key Changes from April 2026 (v5.1):**
+1. Added composite article signing (text + images + audio + video as atomic provenance unit)
+2. Added signal-domain soft-binding watermarks (audio spread-spectrum, video spread-spectrum, TrustMark neural image)
+3. Added segment-level rights with per-segment licensing metadata and query API
+4. Updated comparison table with watermarks, segment-level rights, and composite signing rows
 
 **Key Changes from March 2026 (v5.0):**
 1. Domain migration: encypher.com -> encypher.com (all URLs and email addresses)

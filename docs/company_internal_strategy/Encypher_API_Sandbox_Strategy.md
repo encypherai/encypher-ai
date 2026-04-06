@@ -2,9 +2,9 @@
 
 ## Standards-Based Text Provenance Demonstration
 
-**Last Updated:** March 21, 2026
+**Last Updated:** April 6, 2026
 **Status:** Post-Standard Publication (C2PA 2.3 Released)
-**Version:** 4.1
+**Version:** 4.2
 **Distribution:** Product & Engineering Teams
 
 ---
@@ -67,7 +67,9 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - Performance intelligence
 - Public verification API (no auth required)
 - Multi-media C2PA signing -- 31 MIME types: images (JPEG/PNG/WebP/TIFF/AVIF/HEIC/HEIF/SVG/DNG/GIF/JXL), audio (WAV/MP3/M4A/AAC/FLAC/MPA), video (MP4/MOV/M4V/AVI), documents (PDF/EPUB/DOCX/ODT/OXPS), fonts (OTF/TTF/SFNT), live streams
-- Rich article signing: text + images as single atomic provenance unit
+- Composite article signing: text + images + audio + video as single atomic provenance unit with composite C2PA manifest
+- Signal-domain soft-binding watermarks: audio spread-spectrum (Reed-Solomon ECC), video spread-spectrum, TrustMark neural image watermarking (Enterprise)
+- Segment-level rights: per-segment licensing metadata with query-by-segment API
 - CDN image provenance with edge integrations (Cloudflare, Fastly, Lambda@Edge)
 - **Message: "This enables licensing, governance, and attribution intelligence"**
 
@@ -437,6 +439,30 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - Demo: Simulate live stream signing with manifest chaining
 - Highlight: Backwards-linked provenance across segments
 
+**POST /api/v1/verify/audio**
+
+- Verify audio files: C2PA manifest validation and watermark detection
+- Demo: Upload signed audio, show manifest details and watermark confidence
+- Highlight: Returns `watermark_detected`, `watermark_confidence`, and `c2pa.soft_binding.v1` assertion
+
+**POST /api/v1/verify/video**
+
+- Verify video files: C2PA manifest validation and watermark detection
+- Demo: Upload signed video, show manifest details and watermark status
+- Highlight: Returns watermark detection results alongside C2PA verification
+
+**POST /api/v1/sign/rich** (Composite)
+
+- Sign text + images + audio + video as single atomic provenance unit
+- Demo: Upload article with photos, podcast audio, and video; show composite manifest binding all ingredients
+- Highlight: Single `document_id` with composite C2PA manifest; each media ingredient tracked by `asset_id`
+
+**GET /api/v1/public/rights?document_id=...&segment_index=3**
+
+- Query per-segment rights metadata with O(1) index lookup
+- Demo: Show different licensing terms per paragraph (e.g., CC-BY-NC for paragraph 3, All Rights Reserved for paragraph 7)
+- Highlight: Segment-level rights enable granular licensing policies
+
 ---
 
 ## 8\. SDK Capabilities to Showcase
@@ -623,13 +649,20 @@ The sandbox proves: **Unmarked text has no proof. C2PA provides proof. Our enhan
 
 ## Document Control
 
-**Last Updated:** March 21, 2026
+**Last Updated:** April 6, 2026
 **Status:** Post-Standard Publication, Marketing Push Pending Landmark Deal
 **Distribution:** Product & Engineering Teams
 **Next Review:** After first landmark deal announcement
 **Document Owner:** Chief Product Officer
 
-**Key Updates:**
+**Key Updates (v4.2):**
+- ... Added audio/video watermark verification endpoints (verify/audio, verify/video)
+- ... Added composite article signing endpoint (sign/rich with multi-media)
+- ... Added segment-level rights query endpoint (public/rights with segment_index)
+- ... Added signal-domain soft-binding watermarks to Tier 2 features
+- ... Updated Rich Article Signing to Composite Article Signing
+
+**Key Updates (v4.1 and earlier):**
 
 - ... Removed AI detection comparisons
 - ... Added C2PA standards authority messaging

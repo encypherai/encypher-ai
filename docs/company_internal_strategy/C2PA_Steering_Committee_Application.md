@@ -19,7 +19,7 @@
 - [x] Resolve Madhav Chinnappa engagement status: strategic advisor; participates in capacity available, not weekly commitment
 - [x] Confirm Erik's current weekly C2PA hours: 1-3 meetings/week (task force + working groups)
 - [ ] Confirm WordPress 7.0 inclusion status (LOI, confirmed, or "PR submitted and under review")
-- [ ] Confirm Prebid implementation status (formal commitment, evaluation, or "in discussion")
+- [x] Confirm Prebid implementation status: Phase 1 complete. Backend signing service live at `/api/v1/public/prebid/sign`. RTD module (`encypherRtdProvider.js`, 3.79 KiB minified) with three execution paths (CDN/CMS meta tag, cache lookup, auto-sign). 23 unit + 7 E2E tests passing. Upstream PR to `prebid/Prebid.js` pending.
 - [ ] Confirm Freestar/PubOS partnership status (signed, in legal review, or "in discussion")
 - [ ] Confirm NPR evaluation status (SC reference ask sent 2026-03-30; awaiting Erica's confirmation)
 - [ ] Confirm SPUR collaboration characterization (partnership, collaboration, or "engaged")
@@ -394,8 +394,9 @@ integration rather than audience scale.
   portfolio, including text, audio, and broadcast distribution / CONFIRM -- ask sent, awaiting permission].
 
 **Ad-tech layer:**
-- Prebid: [Implementation status -- CONFIRM]. Prebid's ecosystem spans [70K+]
-  publisher sites.
+- Prebid: Phase 1 complete. Backend signing service live, RTD module built and
+  tested (23 unit + 7 E2E tests), upstream PR to `prebid/Prebid.js` pending.
+  Prebid's ecosystem spans [70K+] publisher sites.
 
 **Standards ecosystem:**
 - NMA (News Media Alliance): Engaged with US news publisher membership.
@@ -542,7 +543,7 @@ Too late and the decision is made.
 | Fact | Contact | Accurate Characterization | Confirmed? |
 |---|---|---|---|
 | WordPress 7.0 inclusion | Automattic/WordPress contact | [ ] "Confirmed for 7.0" / [ ] "PR submitted, under review" / [ ] Other | [ ] |
-| Prebid implementation | Prebid contact | [ ] "Formal commitment" / [ ] "In evaluation" / [ ] "In discussion" | [ ] |
+| Prebid implementation | Prebid contact | [x] Phase 1 complete: backend signing + RTD module built, tested, upstream PR pending | [x] |
 | Freestar/PubOS partnership | Kurt Donnell | [ ] "Partnership signed" / [ ] "In legal review" / [ ] "In discussion" | [ ] |
 | NPR evaluation | Erica (NPR, BD/Licensing) | [ ] "Evaluating full media portfolio" / [ ] Other | Ask sent 2026-03-30; awaiting reply |
 | SPUR collaboration | Charlie Hatford | [ ] "Formal collaboration" / [ ] "Active engagement" / [ ] Other | [ ] |

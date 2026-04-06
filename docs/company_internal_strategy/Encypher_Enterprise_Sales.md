@@ -1,9 +1,9 @@
 # Encypher Corporation: Enterprise Sales Positioning
 ## Content Provenance Infrastructure Through Standards
 
-**Last Updated:** March 23, 2026
+**Last Updated:** April 6, 2026
 **Status:** Active Launch -- Full-Stack Content Provenance
-**Version:** 5.0
+**Version:** 5.1
 **Distribution:** Sales & Solutions Teams
 
 > **Messaging SSOT:** Core positioning, value propositions, and competitive framing are
@@ -74,6 +74,9 @@ Our patent-pending technology goes beyond basic C2PA:
 - **Formal Notice Infrastructure:** Serve cryptographically-backed notice that content is marked and owned
 - **Directory-Scale Operations:** Sign and verify entire content repositories
 - **Performance Intelligence:** Real-time dashboards showing content attribution and model optimization insights
+- **Segment-Level Rights:** Per-segment licensing metadata (e.g., CC-BY-NC for paragraph 3, All Rights Reserved for paragraph 7) with O(1) pre-built index and query-by-segment API
+- **Signal-Domain Soft-Binding Watermarks (Enterprise):** Audio spread-spectrum watermarking with Reed-Solomon ECC, video spread-spectrum watermarking, and TrustMark neural image watermarking. Watermarks survive transcoding, compression, and format conversion. Detected automatically during verification and reported as `c2pa.soft_binding.v1` assertions
+- **Composite Multi-Media Signing:** Text, images, audio, and video signed as a single atomic provenance unit with a composite C2PA manifest binding all ingredients
 
 **Multi-Media Provenance -- 31 MIME Types (Enterprise)**
 Sign the full content portfolio under one provenance infrastructure:
@@ -83,7 +86,7 @@ Sign the full content portfolio under one provenance infrastructure:
 - **Document Signing (5 formats):** PDF, EPUB, DOCX, ODT, OXPS with custom JUMBF/COSE manifests
 - **Font Signing (3 formats):** OTF, TTF, SFNT with custom JUMBF/COSE manifests
 - **Live Video Streams:** Per-segment C2PA signing conforming to C2PA 2.3 Section 19
-- **Rich Article Signing:** Text and images signed as an atomic provenance unit
+- **Composite Article Signing:** Text, images, audio, and video signed as a single atomic provenance unit with composite C2PA manifest
 - **CDN Image Provenance (shipped):** Cloudflare Logpush integration, C2PA image signing + pHash registration, analytics dashboard
 - **CDN Edge Fingerprinting (roadmap Q2-Q3 2026):** Per-session fingerprinting via WASM SDK on Cloudflare Workers, Fastly Compute@Edge, Lambda@Edge
 - **Perceptual Hash Attribution Search:** Track image derivatives and cropped variants across the web
@@ -463,11 +466,17 @@ Expect detailed follow-up questions on implementation method, systems integratio
 
 ## Document Control
 
-**Last Updated:** March 23, 2026
+**Last Updated:** April 6, 2026
 **Status:** Active Launch -- Full-Stack Content Provenance
 **Distribution:** Sales & Solutions Teams
 **Next Review:** Monthly
 **Document Owner:** Chief Commercial Officer (CCO)
+
+**Key Changes from April 2026 (v5.1):**
+1. Added signal-domain soft-binding watermarks (audio spread-spectrum + Reed-Solomon ECC, video spread-spectrum, TrustMark neural image) to Enterprise Enhancements
+2. Added segment-level rights with per-segment licensing metadata and query-by-segment API
+3. Added composite multi-media signing (text + images + audio + video as atomic provenance unit)
+4. Updated Rich Article Signing to Composite Article Signing reflecting multi-media capability
 
 **Key Changes from March 2026 (v5.0):**
 1. Domain migration: encypher.com -> encypher.com

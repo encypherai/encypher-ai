@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-04-06
+
+### Added
+- **Composite web content signing** - `/sign/rich` now accepts text, images, audio, and video in a single request, bound into one C2PA composite manifest. `MediaIngredient` dataclass generalizes `ImageIngredient` with a `media_type` discriminator. New `RichContentAudio` (50 MB limit) and `RichContentVideo` (100 MB limit) schemas. New `ArticleAudio` and `ArticleVideo` SQLAlchemy models. Enterprise-only `enable_audio_watermark` and `enable_video_watermark` options with spread-spectrum soft binding via `c2pa.soft_binding.v1` assertions.
+- **Prebid auto-provenance** - Three new public endpoints: `POST /api/v1/public/prebid/sign` (sign ad creative with C2PA provenance), `GET /api/v1/public/prebid/status/{domain}` (provenance status for a domain), `GET /api/v1/public/prebid/manifest/{record_id}` (get ad creative manifest). All rate-limited by IP and domain. Prebid RTD module (`encypherRtdProvider.js`) with three execution paths: CDN meta tag, cache, and auto-sign.
+- **Video watermark verification** - Public `/verify/video` now returns `watermark_detected`, `watermark_payload`, and `watermark_confidence` alongside C2PA verification results.
+- **Segment-level rights public API** - `segment_index` query parameter on public rights resolution endpoint. O(1) pre-built index replaces O(n^2) per-segment lookup in embedding service.
+
+### Changed
+- **SDK OpenAPI artifacts regenerated** - `sdk/openapi.public.json` (185 endpoints) and `sdk/openapi.internal.json` (217 endpoints) updated to include all new endpoints.
+- **README endpoint tables** - 51 new endpoints documented across WordPress integration, attestation policies, partner portal, Prebid, data management, compliance, and support sections.
+
+### Fixed
+- **37 pre-existing test failures resolved** - Auth mocking (`AsyncMock` for `validate_key_minimal`), passthrough metadata injection, async/await patterns, MIME classification drift, missing router registrations, OpenAPI route descriptions (24 routes), and README/OpenAPI endpoint drift.
+
 ## [1.2.0] - 2026-04-04
 
 ### Added

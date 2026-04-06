@@ -1,7 +1,7 @@
 # Encypher Embedding Terminology
 
 **Status:** Canonical -- SSOT for embedding technique naming
-**Last updated:** March 2026
+**Last updated:** April 2026
 
 This document is the single source of truth for how Encypher names its invisible text
 embedding techniques. Use these terms consistently across code, docs, API references,
@@ -126,6 +126,41 @@ through Word's copy-paste engine.
 | Microsoft Word safe | No | Yes |
 | Email pipeline safe | Depends on pipeline | More robust |
 | Recommended default | Yes | No (Word pipelines only) |
+
+---
+
+## Product and Service Concepts
+
+### Composite manifest
+
+The article-level C2PA manifest that binds signed text and signed media (images, audio,
+video) into a single provenance unit. A composite manifest references each signed media
+file as a C2PA ingredient, so one verification call covers the full article. Built by
+`composite_manifest_service.py` and exposed via the `/sign/rich` endpoint.
+
+The composite manifest is Encypher's proprietary orchestration layer on top of the C2PA
+ingredient model. Do not conflate it with C2PA's native manifest structure -- it is the
+output artifact produced by combining one text manifest with one or more media manifests.
+
+### MediaIngredient
+
+Dataclass representing a signed media file (image, audio, or video) to include as a C2PA
+ingredient in a composite manifest. Generalizes the former `ImageIngredient` with a
+`media_type` discriminator field (`image`, `audio`, `video`). Used internally by
+`composite_manifest_service.py`; not exposed directly in the public API schema.
+
+### Prebid auto-provenance
+
+Public, rate-limited signing service for ad creatives distributed via the Prebid RTD
+module. Signs text content with C2PA manifests and caches results for reuse across bid
+requests. Distinct from the authenticated Enterprise signing endpoints in three ways:
+
+- No API key required (public endpoint, rate-limited by IP and creative hash)
+- Results are cached by content hash to avoid re-signing identical creatives
+- Designed for latency budgets imposed by the OpenRTB bid lifecycle
+
+The Prebid RTD module calls this endpoint automatically during bid enrichment; publishers
+do not interact with it directly.
 
 ---
 
