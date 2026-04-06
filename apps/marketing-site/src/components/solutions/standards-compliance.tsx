@@ -44,7 +44,7 @@ export default function StandardsCompliance() {
       <div className="container mx-auto px-4">
         <div className="text-center">
           <h3 className="text-2xl font-semibold text-muted-foreground uppercase tracking-wider mb-8">
-            We&apos;re Authoring the Future of Text Content Authenticity
+            We&apos;re Authoring the Future of Content Authenticity
           </h3>
           <div className="flex justify-center items-center gap-12 md:gap-16 mb-8">
             <div className="relative h-12 w-48">
@@ -74,13 +74,13 @@ export default function StandardsCompliance() {
           </div>
         </div>
       </div>
-      
+
       {/* Logo Sliders - CSS Animation for smooth infinite scroll */}
       <div className="relative flex flex-col gap-6">
         <h3 className="text-center text-lg font-semibold text-muted-foreground tracking-wider mb-4">
-          Encypher co-chairs the C2PA Text Provenance Task Force. We're building the standard together.
+          Encypher co-chairs the C2PA Text Provenance Task Force and implements the standard across all media. Building content authenticity together.
         </h3>
-        
+
         {/* Slider 1 (Right to Left) */}
         <div className={styles.logoSlider}>
           <div className={`${styles.sliderTrack} ${styles.scrollRtoL}`}>

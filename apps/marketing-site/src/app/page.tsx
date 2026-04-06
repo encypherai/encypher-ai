@@ -58,7 +58,7 @@ export default function HomePage() {
               Your Content Carries Its Own Proof of Ownership.<br />Everywhere It Goes.
             </h1>
             <p className="text-sm xs:text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 text-shadow-md max-w-3xl mx-auto leading-relaxed px-2" style={{ minHeight: '4rem' }}>
-              Invisible cryptographic signatures embed directly into your text content, surviving copy-paste, scraping, and syndication.<br />
+              Invisible cryptographic signatures embed directly into your content, surviving copy-paste, scraping, and syndication.<br />
               When someone uses your content, you can prove it&apos;s yours.<br />
               When they ignore your rights, you can prove that too.
             </p>
@@ -158,7 +158,7 @@ export default function HomePage() {
               </div>
               <h4 className="text-xl font-bold mb-3">Protect Ownership Across Every Channel</h4>
               <p className="text-muted-foreground mb-4">
-                Other solutions put a lock on your front door. Encypher locks every piece of content you own with invisible proof that survives redistribution.
+                Other solutions put a lock on your front door. Encypher locks every piece of content you own - articles, photos, podcasts, video - with invisible proof that survives redistribution.
               </p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
@@ -263,7 +263,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xl font-semibold mb-3">Mark It</h3>
               <p className="text-muted-foreground text-sm">
-                Free, invisible cryptographic proof embeds directly into your text. Survives copy-paste, scraping, and syndication with zero visible changes.
+                Free, invisible cryptographic proof embeds directly into your content. Articles, photos, podcasts, and video. Survives copy-paste, scraping, and syndication.
               </p>
             </div>
 
@@ -301,8 +301,8 @@ export default function HomePage() {
         <div className="container mx-auto px-4 max-w-5xl text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Know When Someone Takes Your Content. With Certainty.</h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Our Chrome extension and analytics detect when marked articles appear on competitor sites, aggregators, social platforms, or AI outputs.
-            Not statistical guessing - cryptographic proof that this specific text came from your publication.
+            Our Chrome extension and analytics detect when marked content appears on competitor sites, aggregators, social platforms, or AI outputs.
+            Not statistical guessing - cryptographic proof that this specific content came from your publication.
           </p>
           <Button asChild size="lg" className="shadow-lg font-semibold" style={{ backgroundColor: '#1a365d', color: '#ffffff' }}>
             <a href={CHROME_STORE_URL} target="_blank" rel="noopener noreferrer">

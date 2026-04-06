@@ -28,76 +28,116 @@ const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboar
 const CORE_CAPABILITIES = [
   {
     icon: Shield,
-    title: 'C2PA Document Signing',
+    title: 'Sign Every Format You Publish',
     description:
-      'Sign text content with C2PA 2.3-compliant manifests. Sentence-level Merkle tree authentication creates tamper-evident provenance for every paragraph.',
+      'Articles, photos, podcasts, video, PDFs, websites, live streams. One API handles all of them. Composite signing bundles an entire article package into a single provenance unit, so the hero image, podcast clip, and written piece share one verifiable chain of custody.',
   },
   {
     icon: Fingerprint,
-    title: 'Invisible Embeddings',
+    title: 'Watermarks That Survive Everything',
     description:
-      'Patent-pending Unicode watermarks survive copy-paste, CMS rendering, email forwarding, and web scraping. Invisible to readers, machine-readable for verification.',
+      'Invisible text embeddings survive copy-paste, scraping, and CMS rendering. Audio and video watermarks survive transcoding, compression, and format conversion. Image watermarks survive cropping and resizing. Together they satisfy the EU AI Act proposed multilayered marking requirements.',
   },
   {
     icon: FileSearch,
-    title: 'Attribution & Verification',
+    title: 'Free Verification for Anyone',
     description:
-      'Public verification API lets anyone confirm content origin. Quote integrity verification checks whether AI-generated citations match signed source material.',
+      'Any journalist, court, compliance team, or AI company can verify any signed asset at no cost through the public API. Quote integrity verification checks whether AI-generated citations match your original signed content.',
   },
   {
     icon: Scale,
-    title: 'Enforcement Pipeline',
+    title: 'From Detection to Licensing',
     description:
-      'From detection to licensing: attribution analytics show where content appears in AI outputs, formal notices establish willful infringement, and evidence packages are court-ready.',
+      'Attribution analytics show where your content appears across the web. Formal notices establish willful infringement. Evidence packages hold up in court. The pipeline works across articles, images, audio, and video.',
   },
   {
     icon: Layers,
-    title: 'Rights Management',
+    title: 'Rights at Every Level',
     description:
-      'Publisher rights profiles, licensing terms, and usage policies travel with content. AI companies can resolve rights programmatically before ingestion.',
+      'Publisher rights profiles, licensing terms, and usage policies travel with content. Per-segment rights let you license one section of an article under Creative Commons while keeping another exclusive. AI companies resolve rights programmatically before ingestion.',
   },
   {
     icon: Globe,
     title: 'Coalition Licensing',
     description:
-      'Auto-enrolled in the Encypher Coalition. Content is indexed for licensing deals. Publishers receive the majority of revenue on every deal - same splits across all tiers.',
+      'Auto-enrolled in the Encypher Coalition. Every format you sign is indexed for licensing deals. Publishers keep the majority of revenue on every deal.',
   },
 ];
 
 const INFRASTRUCTURE_STACK = [
-  { layer: 'Signing', detail: 'C2PA 2.3 manifests, Merkle trees, invisible embeddings' },
-  { layer: 'Storage', detail: 'Content references, Merkle subhashes, attribution reports' },
-  { layer: 'Verification', detail: 'Public API, tamper detection, quote integrity' },
-  { layer: 'Enforcement', detail: 'Attribution analytics, formal notices, evidence packages' },
-  { layer: 'Licensing', detail: 'Rights profiles, resolution URLs, coalition deals' },
-  { layer: 'Distribution', detail: 'WordPress plugin, REST API, CLI, GitHub Action, browser extension' },
+  { layer: 'Signing', detail: 'C2PA manifests for articles, images, audio, video, PDFs, fonts, and live streams' },
+  { layer: 'Watermarking', detail: 'Audio, video, and image watermarks plus invisible text embeddings' },
+  { layer: 'Verification', detail: 'Free public API, tamper detection, quote integrity, watermark extraction' },
+  { layer: 'Enforcement', detail: 'Attribution analytics, formal notices, court-ready evidence packages' },
+  { layer: 'Rights', detail: 'Per-segment licensing, rights resolution API, publisher profiles' },
+  { layer: 'Distribution', detail: 'WordPress, Prebid ad-tech, CDN edge, REST API, CLI, browser extension' },
 ];
 
 const COMPETITIVE_POSITIONING = [
   {
-    us: 'Sentence-level Merkle tree authentication',
-    them: 'Document-level hashing only',
+    us: 'Articles, photos, audio, video, websites, ads, live streams',
+    them: 'Text-only or image-only tools',
   },
   {
-    us: 'Invisible embeddings survive copy-paste and scraping',
-    them: 'Visible watermarks easily removed',
+    us: 'Watermarks survive transcoding, compression, and format conversion',
+    them: 'Fragile metadata stripped by platforms',
   },
   {
-    us: 'Co-Chair of C2PA Text Provenance Task Force',
-    them: 'Third-party C2PA implementation',
+    us: 'Co-authored the C2PA standard we implement',
+    them: 'Third-party implementations of standards others wrote',
   },
   {
-    us: 'Quote integrity verification for AI attribution',
-    them: 'No AI-specific verification capabilities',
+    us: 'Composite signing: one provenance unit per article package',
+    them: 'Separate, unlinked signing per file',
   },
   {
-    us: 'Court-ready evidence packages with chain of custody',
+    us: 'Court-ready evidence packages with cryptographic chain of custody',
     them: 'Basic detection reports',
   },
   {
-    us: 'Free signing infrastructure with paid enforcement',
-    them: 'Per-document signing fees from day one',
+    us: 'Free signing for every publisher, paid enforcement add-ons',
+    them: 'Per-document fees from day one',
   },
+];
+
+const ECOSYSTEM_LAYERS = [
+  {
+    layer: 'Layer 1',
+    title: 'Access Control',
+    tools: ['robots.txt', 'TollBit', 'Cloudflare'],
+    description:
+      'Tell AI crawlers not to scrape. These tools work at the server level, but only when AI companies respect your directives.',
+    strengthened:
+      'When crawlers ignore these signals, content-level provenance provides the evidence that your terms were attached and violated.',
+    highlight: false,
+  },
+  {
+    layer: 'Layer 2',
+    title: 'Content Provenance',
+    tools: ['Encypher'],
+    description:
+      'Proof of ownership embedded in the content itself. Articles, photos, audio, video, websites. Works whether AI companies cooperate or not.',
+    strengthened: '',
+    highlight: true,
+  },
+  {
+    layer: 'Layer 3',
+    title: 'Attribution & Monetization',
+    tools: ['ProRata', 'Dappier', 'Microsoft PCM'],
+    description:
+      'Estimate which sources contributed to AI outputs and route revenue to publishers. These tools work inside opted-in ecosystems.',
+    strengthened:
+      'Cryptographic proof of origin makes attribution claims verifiable, not just statistical estimates.',
+    highlight: false,
+  },
+];
+
+const STANDARDS_COMPAT = [
+  'C2PA 2.3',
+  'RSL 1.0',
+  'SPUR Framework',
+  'EU AI Act CoP',
+  'W3C ODRL',
 ];
 
 export default function PlatformPage() {
@@ -107,10 +147,10 @@ export default function PlatformPage() {
     <div className="bg-background text-foreground">
       <AISummary
         title="Encypher Platform"
-        whatWeDo="Co-Chair of C2PA Text Provenance Task Force. Enterprise API and SDKs in Python, TypeScript, Go, and Rust for content authentication infrastructure. Standard publishes January 8, 2026."
-        whoItsFor="Publishers needing provable content ownership. AI labs needing performance intelligence and quote integrity verification. Enterprises requiring EU AI Act and China watermarking compliance."
-        keyDifferentiator="Cryptographic watermarking survives copy-paste, B2B distribution, and scraping. One API for entire publisher ecosystem."
-        primaryValue="Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org). Working with industry leaders to define content licensing frameworks."
+        whatWeDo="Content provenance infrastructure for articles, photos, podcasts, video, websites, ads, and live streams. C2PA-based cryptographic manifests plus proprietary signal-domain watermarking across 31 media formats. Co-Chair of C2PA Text Provenance Task Force. Standard published January 8, 2026."
+        whoItsFor="Publishers needing provable content ownership across their full portfolio. AI labs needing performance intelligence and quote integrity verification. Enterprises requiring EU AI Act compliance with multilayered marking."
+        keyDifferentiator="One platform for every format: text, images, audio, video, documents, fonts, live streams. Watermarks survive transcoding, compression, copy-paste, and scraping. Free signing, free verification."
+        primaryValue="Building standards with BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA. Proprietary watermarking meets EU AI Act proposed multilayered marking requirements. Working with industry leaders to define content licensing frameworks."
       />
 
       {/* Hero Section */}
@@ -118,14 +158,15 @@ export default function PlatformPage() {
         <div className="container mx-auto px-4 text-center">
           <Badge variant="outline" className="mb-6 text-sm px-4 py-1.5">
             <Layers className="h-3.5 w-3.5 mr-1.5" />
-            C2PA Text Infrastructure
+            Content Provenance Platform
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            The Complete Stack for<br />Text Content Authenticity
+            One Platform for<br />Everything You Publish
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
-            Sign, verify, attribute, and license text content with cryptographic provenance.
-            Built on the C2PA standard we co-authored. Free infrastructure for every publisher.
+            Articles, photos, podcasts, video, websites, ads, live streams.
+            Cryptographic provenance built on the C2PA standard we co-authored, with watermarking
+            designed for EU AI Act compliance. Free for every publisher.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold">
@@ -155,11 +196,13 @@ export default function PlatformPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              <Link href="/c2pa-standard/media-types" className="text-primary underline underline-offset-2 hover:no-underline">C2PA</Link> Text Infrastructure Stack
+              Content Provenance Stack
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Six layers that take content from signing through licensing.
-              Each layer is production-ready and accessible via REST API.
+              Six layers from signing through licensing. Built on{' '}
+              <Link href="/c2pa-standard/media-types" className="text-primary underline underline-offset-2 hover:no-underline">C2PA</Link>{' '}
+              with proprietary watermarking across{' '}
+              <Link href="/c2pa-standard/media-types" className="text-primary underline underline-offset-2 hover:no-underline">31 media formats</Link>.
             </p>
           </div>
 
@@ -196,7 +239,7 @@ export default function PlatformPage() {
               Core Capabilities
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Everything you need to protect, verify, and monetize text content.
+              Protect, verify, and monetize every content format you produce.
             </p>
           </div>
 
@@ -222,6 +265,78 @@ export default function PlatformPage() {
 
       {/* Standards Compliance */}
       <StandardsCompliance />
+
+      {/* Ecosystem Section */}
+      <section className="py-20 w-full bg-background border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Strengthens Your Existing Stack
+            </h2>
+            <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
+              Content provenance is not a replacement for access control or attribution tools.
+              It is the layer that makes them enforceable.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
+            {ECOSYSTEM_LAYERS.map((layer) => (
+              <div
+                key={layer.title}
+                className={`p-6 rounded-lg border-2 ${
+                  layer.highlight
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-card'
+                }`}
+              >
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                  {layer.layer}
+                </div>
+                <h3 className="text-lg font-semibold mb-3">{layer.title}</h3>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {layer.tools.map((tool) => (
+                    <span
+                      key={tool}
+                      className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                        layer.highlight
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {tool}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {layer.description}
+                </p>
+                {layer.strengthened && (
+                  <p className="text-sm font-medium text-primary border-t border-border pt-3 mt-3">
+                    {layer.strengthened}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <h3 className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
+              Standards and Frameworks Compatible
+            </h3>
+            <div className="flex flex-wrap justify-center gap-3">
+              {STANDARDS_COMPAT.map((standard) => (
+                <div
+                  key={standard}
+                  className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-full border border-border"
+                >
+                  <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                  <span className="text-sm font-medium">{standard}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Developer Section */}
       <section className="py-20 w-full bg-background border-b border-border">
@@ -277,19 +392,19 @@ export default function PlatformPage() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">POST</span>{' '}
-                  <span className="text-primary">/api/v1/sign/batch</span>
+                  <span className="text-primary">/api/v1/sign/media</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">POST</span>{' '}
-                  <span className="text-primary">/api/v1/verify/advanced</span>
+                  <span className="text-primary">/api/v1/sign/rich</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">POST</span>{' '}
-                  <span className="text-primary">/api/v1/verify/quote-integrity</span>
+                  <span className="text-primary">/api/v1/verify/image</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">GET</span>{' '}
-                  <span className="text-primary">/api/v1/rights/analytics</span>
+                  <span className="text-primary">/api/v1/public/rights</span>
                 </div>
               </div>
             </div>
@@ -308,15 +423,15 @@ export default function PlatformPage() {
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                  GitHub Action
+                  Prebid RTD module (ad-tech)
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                  Kafka event streaming
+                  CDN edge integrations
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                  CLI tool + browser extension
+                  GitHub Action + CLI
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
@@ -367,7 +482,7 @@ export default function PlatformPage() {
               Why Encypher
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Purpose-built for text content authenticity. Not an afterthought bolted onto image tools.
+              The only platform covering articles, photos, audio, video, and websites under one provenance infrastructure.
             </p>
           </div>
 
@@ -411,8 +526,8 @@ export default function PlatformPage() {
             Start Protecting Your Content Today
           </h2>
           <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
-            Free signing infrastructure for every publisher. Add enforcement tools when you are ready to license.
-            Enterprise plans for organizations that need unlimited volume and dedicated support.
+            Sign articles, photos, podcasts, and video at no cost. Add enforcement tools when you are
+            ready to license. Enterprise plans for unlimited volume and dedicated support.
             Read our guide to <Link href="/content-provenance/verification" className="text-primary underline underline-offset-2 hover:no-underline">content provenance verification</Link>.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
