@@ -14,6 +14,7 @@ from app.services.cdn_signing_service import (
     _build_sign_options_for_org,
     _generate_cdn_org_id,
     _generate_prebid_org_id,
+    claim_domain,
     extract_domain,
     hash_content,
 )
@@ -206,3 +207,62 @@ class TestCdnContentRecordModel:
         repr_str = repr(record)
         assert "CdnContentRecord" in repr_str
         assert "test.com" in repr_str
+
+
+# ---------------------------------------------------------------------------
+# Domain claim tests
+# ---------------------------------------------------------------------------
+
+
+class TestClaimDomain:
+    @pytest.mark.asyncio
+    async def test_claim_invalid_domain(self):
+        """claim_domain rejects domains without a dot."""
+        db = AsyncMock()
+        result = await claim_domain(db=db, domain="nodot", user_id="u1")
+        assert result["success"] is False
+        assert result["error"] == "invalid_domain"
+
+    @pytest.mark.asyncio
+    async def test_claim_empty_domain(self):
+        """claim_domain rejects empty domain strings."""
+        db = AsyncMock()
+        result = await claim_domain(db=db, domain="", user_id="u1")
+        assert result["success"] is False
+        assert result["error"] == "invalid_domain"
+
+    @pytest.mark.asyncio
+    @patch("app.services.cdn_signing_service.httpx.AsyncClient")
+    async def test_claim_unreachable_domain(self, mock_client_cls):
+        """claim_domain returns verification_failed when worker is unreachable."""
+        import httpx
+
+        mock_client = AsyncMock()
+        mock_client.get.side_effect = httpx.ConnectError("Connection refused")
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client_cls.return_value = mock_client
+
+        db = AsyncMock()
+        result = await claim_domain(db=db, domain="unreachable.com", user_id="u1")
+        assert result["success"] is False
+        assert result["error"] == "verification_failed"
+
+    @pytest.mark.asyncio
+    @patch("app.services.cdn_signing_service.httpx.AsyncClient")
+    async def test_claim_non_200_response(self, mock_client_cls):
+        """claim_domain returns verification_failed on non-200 status."""
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+
+        mock_client = AsyncMock()
+        mock_client.get.return_value = mock_response
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client_cls.return_value = mock_client
+
+        db = AsyncMock()
+        result = await claim_domain(db=db, domain="missing.com", user_id="u1")
+        assert result["success"] is False
+        assert result["error"] == "verification_failed"
+        assert "404" in result["message"]

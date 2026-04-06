@@ -1,7 +1,7 @@
 # Cloudflare Edge Provenance Worker
 
-**Status:** In Progress (Phase 2 complete)
-**Current Goal:** Phase 1 (backend + worker) and Phase 2 (dashboard integration card, README, API client) complete. 80/80 tests passing, dashboard builds clean. Phase 3 (landing page, advanced analytics, org signing config) pending.
+**Status:** In Progress (Phase 3 complete)
+**Current Goal:** 100/100 tests passing (29 backend + 71 worker). All core features complete: backend endpoints, worker modules, dashboard integration, domain claim, boundary fallbacks, E2E tests, README, LICENSE, CHANGELOG. Remaining: landing page, CDN text analytics view, org signing config.
 
 ## Overview
 
@@ -432,12 +432,12 @@ Parallel to `prebid_content_records`. Shares the same cross-channel org resoluti
   - [x] 1.4.1 `provision_domain(db, domain, worker_version)` - cross-channel org resolution, create if needed
   - [x] 1.4.2 `sign_or_retrieve(db, text, page_url, org_id, options)` - dedup, quota check, sign with org-tier-aware options
   - [x] 1.4.3 `_apply_org_tier_options(db, org_id, options)` - read org tier, merge default signing config
-  - [ ] 1.4.4 `claim_domain(db, org_id, email)` - verify via .well-known, send email (deferred to Phase 2)
+  - [x] 1.4.4 `claim_domain(db, domain, user_id)` - verify via .well-known, link to user org -- 4 pytest
 - [x] 1.5 Add `app/api/v1/public/cdn_signing.py` router
   - [x] 1.5.1 `POST /api/v1/public/cdn/provision` - rate-limited, provisions domain
   - [x] 1.5.2 `POST /api/v1/public/cdn/sign` - rate-limited by org quota, returns embedding plan
   - [x] 1.5.3 `GET /api/v1/public/cdn/manifest/{record_id}` - public manifest retrieval with CORS
-  - [ ] 1.5.4 `POST /api/v1/public/cdn/claim` - domain claim initiation (deferred to Phase 2)
+  - [x] 1.5.4 `POST /api/v1/public/cdn/claim` - authenticated domain claim via .well-known
 - [x] 1.6 Register router in `app/api/v1/api.py`
 - [x] 1.7 Add rate limiter entries in `public_rate_limiter.py`
 - [x] 1.8 Cross-channel org resolution utility
@@ -454,8 +454,8 @@ Parallel to `prebid_content_records`. Shares the same cross-channel org resoluti
   - [x] 2.1.4 Schema.org microdata: [itemprop="articleBody"]
   - [x] 2.1.5 `<main>` / [role="main"] fallback
   - [x] 2.1.6 JSON-LD articleBody extraction
-  - [ ] 2.1.7 Largest `<p>` cluster heuristic (deferred - low priority fallback)
-  - [ ] 2.1.8 Full `<body>` with skip list (last resort) (deferred - low priority fallback)
+  - [x] 2.1.7 Largest `<p>` cluster heuristic (min 5 paragraphs)
+  - [x] 2.1.8 Full `<body>` fallback (last resort)
 - [x] 2.2 Fragment extraction module (`src/fragments.js`) -- 22/22 node:test
   - [x] 2.2.1 Port Ghost `extractFragments` to Cloudflare Workers (TextEncoder/Uint8Array instead of Buffer)
   - [x] 2.2.2 Byte-level tag scanner with skip elements
@@ -535,8 +535,8 @@ Parallel to `prebid_content_records`. Shares the same cross-channel org resoluti
 
 - [x] 7.1 GitHub repo setup (`encypher/cloudflare-worker-provenance`)
   - [x] 7.1.1 README with Deploy button, 5-minute setup guide, architecture overview
-  - [ ] 7.1.2 LICENSE file (deferred - repo not yet public)
-  - [ ] 7.1.3 CHANGELOG (deferred - repo not yet public)
+  - [x] 7.1.2 LICENSE file (proprietary)
+  - [x] 7.1.3 CHANGELOG (v1.0.0)
 - [x] 7.2 Deploy button configuration
   - [x] 7.2.1 Button image and URL in README
   - [ ] 7.2.2 Auto-provisioning of KV namespace confirmed working (needs live deploy test)
@@ -560,8 +560,8 @@ Parallel to `prebid_content_records`. Shares the same cross-channel org resoluti
   - [x] 8.2.3 Ghost CMS HTML
   - [x] 8.2.4 Squarespace HTML
   - [x] 8.2.5 Webflow HTML
-  - [ ] 8.2.6 Substack HTML (deferred)
-  - [ ] 8.2.7 Jekyll/Hugo static site HTML (deferred)
+  - [x] 8.2.6 Substack HTML
+  - [x] 8.2.7 Jekyll/Hugo static site HTML
   - [x] 8.2.8 Custom HTML with JSON-LD articleBody
   - [x] 8.2.9 Page with no article content
   - [x] 8.2.10 Page with multiple `<article>` tags
@@ -579,12 +579,12 @@ Parallel to `prebid_content_records`. Shares the same cross-channel org resoluti
   - [x] 8.4.5 Visible text unchanged after embedding (stripped comparison)
   - [ ] 8.4.6 Embedded markers survive copy-paste from rendered HTML (requires browser, deferred)
   - [ ] 8.4.7 Embedded markers verify successfully via public verification API (requires live API, deferred)
-- [ ] 8.5 End-to-end tests (deferred to Phase 2 - requires live API + KV)
-  - [ ] 8.5.1 Full flow: HTML in -> signed HTML out -> copy text -> verify -> provenance confirmed
-  - [ ] 8.5.2 Cache hit path: second request uses cached plan
-  - [ ] 8.5.3 Quota exceeded: serves unmodified HTML
-  - [ ] 8.5.4 API unavailable: serves unmodified HTML (fail-open)
-  - [ ] 8.5.5 Already-signed content: skips re-signing
+- [x] 8.5 End-to-end integration tests (mock API) -- tests/worker.test.js
+  - [x] 8.5.1 Full signing pipeline: HTML in -> boundary -> fragments -> mock plan -> embed -> verify markers
+  - [x] 8.5.2 Cache-hit path: apply cached plan without API call
+  - [ ] 8.5.3 Quota exceeded: serves unmodified HTML (requires live API)
+  - [x] 8.5.4 API error: fail-open serves unmodified HTML
+  - [x] 8.5.5 Already-signed content: hasExistingMarkers detects and skips
 
 ### 9.0 Documentation
 

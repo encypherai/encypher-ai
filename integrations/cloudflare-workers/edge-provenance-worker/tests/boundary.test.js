@@ -107,6 +107,42 @@ const NO_ARTICLE = `<html><body>
 <footer>Copyright</footer>
 </body></html>`;
 
+const SUBSTACK = `<html><head><title>Substack</title></head><body>
+<div class="post">
+  <div class="body markup">
+    <p>Substack newsletter content using the body markup class for article content.</p>
+    <p>Another paragraph in the Substack newsletter for testing boundary detection.</p>
+  </div>
+</div>
+</body></html>`;
+
+const JEKYLL_HUGO = `<html><head><title>Hugo Post</title></head><body>
+<nav>Navigation</nav>
+<main>
+  <article class="post">
+    <h1>Hugo Article</h1>
+    <div class="post-content">
+      <p>Hugo static site article content using post-content class for the article body.</p>
+      <p>Second paragraph of the Hugo article with more content for testing detection.</p>
+    </div>
+  </article>
+</main>
+<footer>Footer</footer>
+</body></html>`;
+
+// No article/main tags; content is in a div with many paragraphs.
+const P_CLUSTER_ONLY = `<html><body>
+<div class="header">Site header</div>
+<div class="content-area">
+  <p>First paragraph of the main content area used for p-cluster heuristic detection.</p>
+  <p>Second paragraph with additional text to satisfy the five paragraph minimum.</p>
+  <p>Third paragraph continues the content with enough material for signing purposes.</p>
+  <p>Fourth paragraph adds more content to reach the threshold for cluster detection.</p>
+  <p>Fifth paragraph completes the minimum set for the largest p-cluster heuristic.</p>
+</div>
+<div class="sidebar"><p>Sidebar item</p></div>
+</body></html>`;
+
 const AP_NEWS_STYLE = `<html><head><title>AP Style</title></head><body>
 <main class="Page-main">
   <div class="RichTextStoryBody RichTextBody">
@@ -192,6 +228,31 @@ describe('findArticleBoundary', () => {
     if (result) {
       assert.equal(result.selector, 'body');
     }
+  });
+
+  it('detects Substack .body.markup class', () => {
+    const result = findArticleBoundary(SUBSTACK, null);
+    assert.ok(result);
+    // body markup is in CMS_CONTENT_CLASSES; selector should reflect the matched class
+    assert.ok(
+      result.selector === 'class:body markup' || result.selector === 'class:markup',
+      `unexpected selector: ${result.selector}`,
+    );
+    assert.ok(result.html.includes('Substack newsletter content'));
+  });
+
+  it('detects Jekyll/Hugo <article> tag', () => {
+    const result = findArticleBoundary(JEKYLL_HUGO, null);
+    assert.ok(result);
+    assert.equal(result.selector, 'article');
+    assert.ok(result.html.includes('Hugo Article'));
+  });
+
+  it('falls back to p-cluster heuristic when no semantic landmark exists', () => {
+    const result = findArticleBoundary(P_CLUSTER_ONLY, null);
+    assert.ok(result);
+    assert.equal(result.selector, 'p-cluster');
+    assert.ok(result.html.includes('content-area'));
   });
 
   it('uses publisher override selector when provided', () => {

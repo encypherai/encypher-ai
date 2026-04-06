@@ -109,15 +109,11 @@ class CdnSignResponse(BaseModel):
 
 
 class CdnClaimRequest(BaseModel):
-    """Request body for domain claim initiation."""
+    """Request body for domain claim via .well-known verification."""
 
-    org_id: str = Field(
+    domain: str = Field(
         ...,
-        max_length=64,
-        description="Organization ID to claim.",
-    )
-    email: str = Field(
-        ...,
-        max_length=320,
-        description="Email address for account creation.",
+        min_length=1,
+        max_length=255,
+        description="Domain to claim. Backend verifies via .well-known/encypher-verify.",
     )

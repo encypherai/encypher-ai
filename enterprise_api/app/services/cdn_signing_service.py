@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 from urllib.parse import urlparse
 
+import httpx
 from fastapi import HTTPException
 from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -428,4 +429,110 @@ async def sign_or_retrieve(
         "signer_tier": signer_tier,
         "signed_at": now.isoformat(),
         "cached": False,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Domain claiming
+# ---------------------------------------------------------------------------
+
+
+async def claim_domain(
+    *,
+    db: AsyncSession,
+    domain: str,
+    user_id: str,
+    user_org_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Claim a CDN-provisioned domain by verifying .well-known endpoint.
+
+    1. Fetch https://{domain}/.well-known/encypher-verify
+    2. Confirm the response contains a valid domain_token and org_id
+    3. Link the CDN org to the user's dashboard account
+    """
+    domain = domain.lower().strip()
+    if not domain or "." not in domain:
+        return {"success": False, "error": "invalid_domain", "message": "Invalid domain"}
+
+    # Step 1: Verify the worker is deployed by fetching .well-known
+    verify_url = f"https://{domain}/.well-known/encypher-verify"
+    try:
+        async with httpx.AsyncClient(timeout=10.0, verify=True) as client:
+            resp = await client.get(verify_url)
+    except (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError) as exc:
+        logger.warning("Domain claim verification failed for %s: %s", domain, exc)
+        return {
+            "success": False,
+            "error": "verification_failed",
+            "message": f"Could not reach {verify_url}. Ensure the Edge Provenance Worker is deployed on this domain.",
+        }
+
+    if resp.status_code != 200:
+        return {
+            "success": False,
+            "error": "verification_failed",
+            "message": f"Worker returned status {resp.status_code}. Expected 200.",
+        }
+
+    try:
+        data = resp.json()
+    except Exception:
+        return {
+            "success": False,
+            "error": "verification_failed",
+            "message": "Worker returned invalid JSON.",
+        }
+
+    remote_org_id = data.get("org_id")
+    remote_token = data.get("domain_token")
+
+    if not remote_org_id or not remote_token:
+        return {
+            "success": False,
+            "error": "verification_failed",
+            "message": "Worker response missing org_id or domain_token.",
+        }
+
+    # Step 2: Verify the org exists in our DB
+    expected_token = f"dtk_{hashlib.sha256(f'{remote_org_id}:{domain}'.encode()).hexdigest()[:24]}"
+    if remote_token != expected_token:
+        return {
+            "success": False,
+            "error": "token_mismatch",
+            "message": "Domain token does not match. The worker may need redeployment.",
+        }
+
+    result = await db.execute(select(Organization).where(Organization.id == remote_org_id))
+    cdn_org = result.scalar_one_or_none()
+    if not cdn_org:
+        return {
+            "success": False,
+            "error": "org_not_found",
+            "message": "CDN org not provisioned. Deploy the worker and load at least one page first.",
+        }
+
+    # Step 3: Link to the user's dashboard org (if provided) or update the CDN org
+    if user_org_id and user_org_id != remote_org_id:
+        # Transfer CDN records to the user's org
+        await db.execute(update(CdnContentRecord).where(CdnContentRecord.organization_id == remote_org_id).values(organization_id=user_org_id))
+        await db.commit()
+        logger.info(
+            "Domain %s claimed: CDN org %s records transferred to user org %s",
+            domain,
+            remote_org_id,
+            user_org_id,
+        )
+        return {
+            "success": True,
+            "domain": domain,
+            "org_id": user_org_id,
+            "message": f"Domain {domain} claimed and linked to your organization.",
+        }
+
+    # No user org to link to, just confirm the claim
+    return {
+        "success": True,
+        "domain": domain,
+        "org_id": remote_org_id,
+        "message": f"Domain {domain} verified. Worker is active.",
     }

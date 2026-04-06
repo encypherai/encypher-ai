@@ -26,7 +26,7 @@ from app.schemas.cdn_content_schemas import (
     CdnSignRequest,
     CdnSignResponse,
 )
-from app.services.cdn_signing_service import provision_domain, sign_or_retrieve
+from app.services.cdn_signing_service import claim_domain, provision_domain, sign_or_retrieve
 
 logger = logging.getLogger(__name__)
 
@@ -223,6 +223,45 @@ async def cdn_status(
         "quota_remaining": remaining,
         "upgrade_url": f"https://encypher.com/enterprise?ref=cdn&domain={domain}",
     }
+
+
+@router.post(
+    "/claim",
+    summary="Claim a CDN domain by verifying the Edge Provenance Worker",
+    description="""
+    Authenticated endpoint. Verifies that the Edge Provenance Worker is
+    deployed on the given domain by fetching its .well-known/encypher-verify
+    endpoint. On success, links the CDN domain to the authenticated user's
+    organization.
+    """,
+    responses={
+        200: {"description": "Domain claim result"},
+    },
+)
+async def cdn_claim(
+    claim_request: CdnClaimRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Claim a CDN-provisioned domain for the authenticated user's org."""
+    from app.middleware.auth import get_current_user
+
+    user = await get_current_user(request, db)
+
+    result = await claim_domain(
+        db=db,
+        domain=claim_request.domain,
+        user_id=str(user.id),
+        user_org_id=user.active_organization_id,
+    )
+
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.get("message", "Claim failed"),
+        )
+
+    return result
 
 
 @router.get(

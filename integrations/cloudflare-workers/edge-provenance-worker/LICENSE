@@ -1,0 +1,15 @@
+Copyright (c) 2026 Encypher Corporation. All rights reserved.
+
+This software is proprietary. The source code is provided for transparency
+and auditability. You may deploy this worker on domains you control using
+the Encypher signing API.
+
+Redistribution, modification, or use of this software outside of the
+Encypher platform requires a written license agreement from Encypher
+Corporation.
+
+The Encypher signing API, marker embedding protocol, verification
+infrastructure, and C2PA manifest generation are separate proprietary
+services and are not covered by this license.
+
+For licensing inquiries: legal@encypher.com
