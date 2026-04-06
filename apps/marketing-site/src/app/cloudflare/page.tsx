@@ -8,16 +8,11 @@ import {
   ArrowRight,
   CheckCircle2,
   Shield,
-  Zap,
   Globe,
-  Server,
-  Layers,
   Database,
-  GitBranch,
   FileCode2,
   Cpu,
 } from 'lucide-react';
-import Link from 'next/link';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 
@@ -26,72 +21,72 @@ const HOW_IT_WORKS = [
     step: 1,
     title: 'Deploy',
     description:
-      'Click "Deploy to Cloudflare" and authorize the Worker. No code changes to your CMS, no DNS updates, no server configuration. The Worker sits in front of your existing origin.',
+      'Add the Encypher Worker to your Cloudflare zone. No changes to your CMS, no DNS migration, no engineering resources. Works alongside your existing setup.',
   },
   {
     step: 2,
-    title: 'Auto-Provision',
+    title: 'Automatic Setup',
     description:
-      'On first request, the Worker registers your domain with Encypher, creates a publisher account, and fetches signing credentials. No manual dashboard setup required.',
+      'The Worker connects to your Encypher account and begins protecting content immediately. No manual configuration required.',
   },
   {
     step: 3,
-    title: 'Sign Every Article',
+    title: 'Protect Every Article',
     description:
-      'Every HTML response containing article content receives invisible sentence-level provenance markers before Cloudflare delivers it to the reader. Markers survive copy-paste, scraping, and aggregation.',
+      'Every article on your site receives invisible provenance markers before it reaches readers. When that content is copied, scraped, or republished, you can trace it back to its source.',
   },
 ];
 
 const CMS_PLATFORMS = [
-  { name: 'WordPress', detection: 'article tag + WordPress body class' },
-  { name: 'Ghost', detection: 'article.gh-article selector' },
-  { name: 'Squarespace', detection: 'article.BlogItem selector' },
-  { name: 'Webflow', detection: 'div.w-richtext selector' },
-  { name: 'Substack', detection: 'div.body.markup selector' },
-  { name: 'Hugo / Jekyll', detection: 'article or main.content tag' },
-  { name: 'AP / News Wires', detection: 'Standard article + time tag heuristic' },
-  { name: 'Custom HTML', detection: 'Configurable selector via Worker env var' },
+  { name: 'WordPress', detection: 'Self-hosted and WordPress.com' },
+  { name: 'Ghost', detection: 'All Ghost-powered publications' },
+  { name: 'Squarespace', detection: 'Blog and article pages' },
+  { name: 'Webflow', detection: 'Rich text content blocks' },
+  { name: 'Substack', detection: 'Newsletter and post pages' },
+  { name: 'Hugo / Jekyll', detection: 'Static site generators' },
+  { name: 'News Wires', detection: 'AP, Reuters, and wire formats' },
+  { name: 'Custom HTML', detection: 'Any site with configurable selectors' },
 ];
 
 const FREE_VS_ENTERPRISE = [
-  { feature: 'Full C2PA signing + ECC + micro embedding', free: true, enterprise: true },
-  { feature: 'Sentence-level provenance markers', free: true, enterprise: true },
-  { feature: 'Auto-detection of article boundaries', free: true, enterprise: true },
-  { feature: 'KV cache (1 h TTL, one API call per unique article)', free: true, enterprise: true },
-  { feature: 'Fail-open on errors (unmodified HTML served)', free: true, enterprise: true },
-  { feature: 'Monthly article quota', free: '1,000 articles', enterprise: 'Unlimited' },
-  { feature: 'Fingerprinting (Enterprise only)', free: false, enterprise: true },
-  { feature: 'Dual binding (Encypher + C2PA manifest)', free: false, enterprise: true },
-  { feature: 'Per-segment rights metadata', free: false, enterprise: true },
-  { feature: 'Custom Worker environment configuration', free: false, enterprise: true },
+  { feature: 'Content provenance on every article', free: true, enterprise: true },
+  { feature: 'Sentence-level content tracking', free: true, enterprise: true },
+  { feature: 'Automatic CMS compatibility', free: true, enterprise: true },
+  { feature: 'Zero performance impact', free: true, enterprise: true },
+  { feature: 'Guaranteed site availability', free: true, enterprise: true },
+  { feature: 'Monthly article volume', free: '1,000 articles', enterprise: 'Unlimited' },
+  { feature: 'Leak source identification', free: false, enterprise: true },
+  { feature: 'C2PA manifest compliance', free: false, enterprise: true },
+  { feature: 'Granular content licensing per segment', free: false, enterprise: true },
+  { feature: 'Custom deployment configuration', free: false, enterprise: true },
   { feature: 'Attribution analytics dashboard', free: false, enterprise: true },
-  { feature: 'Dedicated support + named account manager', free: false, enterprise: true },
+  { feature: 'Dedicated support and named account manager', free: false, enterprise: true },
 ];
 
 const TECHNICAL_CARDS = [
   {
     icon: Cpu,
-    title: 'Content Detection',
+    title: 'Works With Every CMS',
     description:
-      '8-priority selector chain identifies the canonical article body across WordPress, Ghost, Squarespace, Webflow, Substack, Hugo, news wires, and custom HTML. Falls back gracefully when no article is detected.',
+      'Automatic content detection across WordPress, Ghost, Squarespace, Webflow, Substack, Hugo, news wires, and custom HTML. No per-CMS configuration needed.',
   },
   {
     icon: FileCode2,
-    title: 'Marker Embedding',
+    title: 'Invisible, Persistent Protection',
     description:
-      'Unicode variation selectors embedded after sentence boundaries. Invisible to readers and rendering engines. Survive copy-paste into Google Docs, Slack, social media, and AI prompts.',
+      'Provenance markers are invisible to readers. They survive copy-paste into Google Docs, Slack, social media, and AI prompts, so you can trace content wherever it travels.',
   },
   {
     icon: Database,
-    title: 'KV Cache',
+    title: 'Zero Performance Impact',
     description:
-      'Signed content is cached by content hash in Cloudflare KV with a 1-hour TTL. The Encypher API is called once per unique article body, not once per page view. Zero latency impact at scale.',
+      'Signed content is cached at the edge. Your site loads at the same speed with or without provenance enabled. No added latency for readers.',
   },
   {
     icon: Shield,
-    title: 'Fail-Open Architecture',
+    title: 'Your Site Never Breaks',
     description:
-      'Any error - network timeout, API failure, parse error - causes the Worker to serve the original unmodified HTML. Publisher sites never break due to the provenance layer.',
+      'If anything goes wrong, the Worker serves your original page unchanged. Provenance is additive. It never degrades your site availability or reader experience.',
   },
 ];
 
@@ -101,11 +96,11 @@ export default function CloudflarePage() {
   return (
     <div className="bg-background text-foreground">
       <AISummary
-        title="Encypher Edge Provenance Worker for Cloudflare"
-        whatWeDo="One-click Cloudflare Worker that embeds sentence-level content provenance markers into every article at the CDN edge. No code changes to the publisher's CMS. Markers survive copy-paste, scraping, and aggregation."
-        whoItsFor="Publishers running Cloudflare who want provenance on every article without engineering effort. Compatible with WordPress, Ghost, Squarespace, Webflow, Substack, Hugo, Jekyll, news wires, and custom HTML."
-        keyDifferentiator="Markers are invisible Unicode variation selectors embedded at sentence boundaries in the HTML itself - not meta tags, not HTTP headers. They survive when readers copy text into AI prompts, social media, or documents."
-        primaryValue="Free signing for all publishers up to 1,000 articles per month. Enterprise plan adds fingerprinting, dual binding, per-segment rights, and unlimited volume. Auto-provisioned - no dashboard setup required."
+        title="Encypher Edge Provenance for Cloudflare"
+        whatWeDo="Cloudflare Worker that adds invisible content provenance to every article at the CDN edge. No code changes to the publisher's CMS. Provenance markers survive copy-paste, scraping, and aggregation."
+        whoItsFor="Publishers running Cloudflare who want to protect and track their content without engineering effort. Compatible with WordPress, Ghost, Squarespace, Webflow, Substack, Hugo, Jekyll, news wires, and custom HTML."
+        keyDifferentiator="Provenance is embedded directly in article text, not in meta tags or HTTP headers. When content is copied into AI prompts, social media, or documents, the provenance travels with it."
+        primaryValue="Free for all publishers up to 1,000 articles per month. Enterprise plan adds leak source identification, C2PA compliance, granular licensing, and unlimited volume."
         pagePath="/cloudflare"
         pageType="ProductPage"
       />
@@ -118,27 +113,23 @@ export default function CloudflarePage() {
             Cloudflare Integration
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Provenance at the Edge,<br />Zero Code Changes
+            Protect Every Article<br />at the Edge
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
-            One-click Cloudflare Worker. Every article signed with invisible markers that survive
-            copy-paste, scraping, and aggregation. Free for all publishers.
+            Add invisible content provenance to every article on your Cloudflare site.
+            Track where your content goes when it is copied, scraped, or fed into AI models.
+            No CMS changes. Free for all publishers.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold">
-              <Link href="https://deploy.workers.cloudflare.com/?url=https://github.com/encypher/cloudflare-worker-provenance">
-                Deploy to Cloudflare <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="https://github.com/encypher/cloudflare-worker-provenance">
-                View on GitHub <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+              <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}/signup`}>
+                Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+              </a>
             </Button>
             <Button
               onClick={() => setShowContactModal(true)}
               size="lg"
-              variant="ghost"
+              variant="outline"
               className="font-semibold"
             >
               Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
@@ -187,12 +178,11 @@ export default function CloudflarePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Supported CMS Platforms
+              Works With Your CMS
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-              The Worker detects article content automatically across eight platform families
-              using a priority-ordered selector chain. Custom selectors are configurable via
-              Worker environment variables.
+              The Worker detects and protects article content automatically across every
+              major publishing platform. No per-CMS configuration needed.
             </p>
           </div>
 
@@ -221,8 +211,8 @@ export default function CloudflarePage() {
               Free vs. Enterprise
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Full signing infrastructure is free for every publisher. Enterprise adds
-              fingerprinting, dual binding, per-segment rights, and unlimited volume.
+              Full content provenance is free for every publisher. Enterprise adds leak
+              detection, C2PA compliance, granular licensing, and unlimited volume.
             </p>
           </div>
 
@@ -265,16 +255,16 @@ export default function CloudflarePage() {
         </div>
       </section>
 
-      {/* Technical Overview */}
+      {/* Why Publishers Trust It */}
       <section className="py-20 w-full bg-muted/30 border-b border-border">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Technical Overview
+              Built for Publisher Sites
             </h2>
             <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
-              Built for reliability at CDN scale. The Worker adds no perceptible latency
-              and never degrades publisher site availability.
+              Designed for reliability at CDN scale. No performance impact on your site,
+              no risk to availability.
             </p>
           </div>
 
@@ -293,26 +283,6 @@ export default function CloudflarePage() {
               );
             })}
           </div>
-
-          <div className="mt-12 max-w-3xl mx-auto">
-            <div className="bg-card rounded-lg border border-border p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <GitBranch className="h-5 w-5 text-primary" />
-                <h3 className="font-semibold">Open Source</h3>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                The Worker is fully open source under the MIT license. Inspect the signing logic,
-                selector chain, and caching strategy before you deploy. Fork it for custom pipelines.
-              </p>
-              <div className="flex gap-3">
-                <Button asChild variant="outline" size="sm">
-                  <Link href="https://github.com/encypher/cloudflare-worker-provenance">
-                    View Source on GitHub <ArrowRight className="ml-2 h-3.5 w-3.5" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -320,27 +290,22 @@ export default function CloudflarePage() {
       <section className="py-20 w-full bg-background border-t border-border">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Sign Every Article at the Edge
+            Protect Every Article at the Edge
           </h2>
           <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
-            Deploy in minutes. Every article signed with invisible, copy-paste-survivable provenance
-            markers. Free for all publishers. Enterprise features available when you need them.
+            Deploy in minutes. Know where your content goes when it is copied, scraped,
+            or ingested by AI. Free for all publishers. Enterprise features when you need them.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold">
-              <Link href="https://deploy.workers.cloudflare.com/?url=https://github.com/encypher/cloudflare-worker-provenance">
-                Deploy to Cloudflare <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="https://github.com/encypher/cloudflare-worker-provenance">
-                View on GitHub <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
+              <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}/signup`}>
+                Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+              </a>
             </Button>
             <Button
               onClick={() => setShowContactModal(true)}
               size="lg"
-              variant="ghost"
+              variant="outline"
               className="font-semibold"
             >
               Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
