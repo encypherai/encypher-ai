@@ -62,7 +62,7 @@ This monorepo is organized by product tier and functionality:
 
 ### Microservices Architecture
 
-**Migration Status:** 100% Complete (8/8 services) | [View Progress](./docs/architecture/MICROSERVICES_PROGRESS.md)
+**Migration Status:** 100% Complete (10 services) | [View Progress](./docs/architecture/MICROSERVICES_PROGRESS.md)
 
 All microservices are production-ready with full FastAPI implementations, Docker support, and comprehensive documentation.
 
@@ -76,6 +76,8 @@ All microservices are production-ready with full FastAPI implementations, Docker
 | [`services/analytics-service/`](./services/analytics-service/) | **Analytics Service** | 8006 | Complete | Usage statistics, performance metrics, activity tracking, reporting |
 | [`services/billing-service/`](./services/billing-service/) | **Billing Service** | 8007 | Complete | Subscription management, payment processing, invoicing, billing statistics |
 | [`services/notification-service/`](./services/notification-service/) | **Notification Service** | 8008 | Complete | Email notifications, SMS alerts, webhook delivery, notification history |
+| [`services/audio-watermark-service/`](./services/audio-watermark-service/) | **Audio Watermark Service** | 8011 | Complete | Spread-spectrum audio watermarking (64-bit signal-domain payload) |
+| [`services/video-watermark-service/`](./services/video-watermark-service/) | **Video Watermark Service** | 8012 | Complete | Spread-spectrum video watermarking (VOD and live stream, concatenated ECC) |
 
 **Quick Start:**
 ```bash
@@ -140,6 +142,9 @@ We maintain **two distinct architectures** for different use cases and customer 
 - **Plagiarism Detection** - Advanced content similarity analysis
 - **Batch Operations** - High-volume processing with queuing
 - **Advanced Analytics** - Deep insights and forensic analysis
+- **Segment-Level Rights** - Per-segment licensing metadata within a single document
+- **Audio Soft-Binding Watermark** - Signal-domain watermark surviving MP3 re-encoding and loudness normalization
+- **Video Soft-Binding Watermark** - Frame-domain watermark for VOD and live stream segments (concatenated ECC: RS(32,8) + rate-1/3 K=7 convolutional + soft Viterbi)
 - **Custom Integrations** - Framework wrappers and CI/CD tools
 
 **Best For:**
