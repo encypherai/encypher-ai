@@ -3,7 +3,7 @@
 
 **Last Updated:** April 6, 2026
 **Status:** Active Launch -- Full-Stack Content Provenance
-**Version:** 5.2
+**Version:** 5.3
 **Distribution:** Executive Team & Strategy Leadership
 
 > **CANONICAL MESSAGING SSOT:** This document is the authoritative source for all
@@ -85,7 +85,7 @@ Verification is free across all media asset classes. The public verification API
 
 Two verification pipelines: c2pa-python (c2pa-rs) for natively supported formats (21 types), and custom JUMBF/COSE structural verification for formats where c2pa-python does not yet support embedding (10 types: PDF, EPUB, DOCX, ODT, OXPS, FLAC, JXL, OTF, TTF, SFNT).
 
-Signing for images, audio, video, documents, fonts, and live streams is Enterprise-tier only. Text signing is available at Free tier (document-level) and Enterprise tier (sentence-level + Merkle trees + invisible embeddings + fingerprinting). This asymmetry is intentional: text is the adoption wedge; media signing is the enterprise upsell that covers the full content portfolio.
+Signing for images, audio, video, documents, fonts, and live streams is Enterprise-tier only. Text signing is available at Free tier (document-level) and Enterprise tier (sentence-level + Merkle trees + invisible embeddings + fingerprinting + print-survivable provenance markers). This asymmetry is intentional: text is the adoption wedge; media signing is the enterprise upsell that covers the full content portfolio.
 
 ---
 
@@ -486,6 +486,7 @@ Note: Revenue scales non-linearly once licensing deals begin. A single major AI 
 - Cryptographic watermarking that survives distribution
 - Full multi-media C2PA signing platform (text + images + audio + video + live streams)
 - Signal-domain soft-binding watermarks (Enterprise): spread-spectrum audio watermarking with Reed-Solomon ECC that survives MP3 re-encoding, loudness normalization, and podcast distribution pipelines; spread-spectrum video watermarking that survives H.264/H.265 transcoding, resolution scaling, and platform re-encoding (YouTube, social media CDNs); TrustMark neural image watermarking that survives JPEG recompression and moderate crops. All three produce `c2pa.soft_binding.v1` assertions and return detection results on verification (`watermark_detected`, `watermark_payload`, `watermark_confidence`)
+- Print-survivable provenance markers (Enterprise): RS-protected provenance payload (log_id + HMAC) encoded in inter-word spacing width variations using 4 Unicode space variants. Survives institutional-grade printing and scanning at 300-600 DPI, enabling provenance verification of government documents, invoices, bank statements, and legal filings from physical copies. Shares the same log_id as the digital micro channel for unified transparency log resolution. RS(48,32) error correction handles print/scan noise (8 byte errors or 16 known erasures)
 - Composite multi-media signing: `/sign/rich` binds text + images + audio + video into a single C2PA composite manifest, enabling article-level provenance that covers the entire media package
 - Prebid RTD module: production-ready ad-creative signing distributed via the Prebid.js real-time data pipeline. Three execution paths (CDN/CMS meta tag, cache lookup, auto-sign). Public signing endpoint live at `/api/v1/public/prebid/sign`
 - Free verification across all media asset classes
@@ -898,6 +899,11 @@ TollBit, ProRata, and Cloudflare AI Crawl Control are all Tier 1 licensing tools
 2. Status updated to Active Launch -- Full-Stack Content Provenance
 3. All "beta" labels removed (Chrome extension v2.0, WordPress plugin -- both released)
 4. Version bumped to 5.0 reflecting domain migration and launch posture shift
+
+**Key Changes from April 2026 (v5.3):**
+1. Added print-survivable provenance markers (Enterprise) to Technical Moat -- RS(48,32)-protected provenance payload encoded in inter-word spacing width variations, survives 300-600 DPI print/scan pipelines
+2. Updated Enterprise text signing capability description to include print-survivable markers
+3. Target use cases: government documents, invoices, bank statements, legal filings
 
 **Key Changes from March 26, 2026 (v5.1):**
 1. Updated format coverage from 11 formats to 31 MIME types across 6 categories (images 13, audio 6, video 4, documents 5, fonts 3, plus text and live streams) -- reflecting conformance evidence

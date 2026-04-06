@@ -271,6 +271,16 @@ class SignOptions(BaseModel):
             "copies (Enterprise)"
         ),
     )
+    enable_print_micro_ecc: bool = Field(
+        default=False,
+        description=(
+            "Print-Survivable Provenance - embed RS-protected provenance payload "
+            "(log_id + HMAC) in inter-word spacing that survives printing and scanning "
+            "at 300-600 DPI. Carries the same log_id as the digital micro channel for "
+            "unified transparency log resolution. Requires >= 193 words. Mutually "
+            "exclusive with enable_print_fingerprint (Enterprise)"
+        ),
+    )
     segment_rights: Optional[List[SegmentRightsMapping]] = Field(
         default=None,
         description=(
@@ -774,6 +784,34 @@ def validate_sign_options_for_tier(
             )
         else:
             features_used.append("print_fingerprint")
+
+    # Check print micro ECC (Print-Survivable Provenance)
+    if options.enable_print_micro_ecc:
+        if not is_feature_available("print_micro_ecc", tier_normalized):
+            features_denied.append(
+                {
+                    "feature": "print_micro_ecc",
+                    "display_name": "Print-Survivable Provenance (Micro ECC)",
+                    "required_tier": TierName.ENTERPRISE,
+                    "requested_value": "true",
+                }
+            )
+        else:
+            features_used.append("print_micro_ecc")
+
+    # Mutual exclusion: print_fingerprint and print_micro_ecc cannot both be enabled
+    if options.enable_print_fingerprint and options.enable_print_micro_ecc:
+        return {
+            "success": False,
+            "error": {
+                "code": "E_VALIDATION",
+                "message": (
+                    "enable_print_fingerprint and enable_print_micro_ecc are mutually "
+                    "exclusive. Use enable_print_micro_ecc for full provenance payload "
+                    "or enable_print_fingerprint for lightweight leak detection."
+                ),
+            },
+        }
 
     # Check segment-level rights
     if options.segment_rights:

@@ -250,6 +250,18 @@ packages/signing-config/
 - WordPress plugin: not applicable (PHP backend; JS assets lack build step)
 - Python backend: not applicable (`signing_constants.py` remains the Python SSOT
 
+### Print-Survivable Micro ECC (April 2026, TEAM_297)
+
+A third embedding channel, `enable_print_micro_ecc`, was added as a parallel layer alongside
+the `full`/`micro` manifest modes. It is not a `manifest_mode` value; it is a boolean flag
+on `SignOptions` (Enterprise tier, mutually exclusive with `enable_print_fingerprint`). It
+encodes the same `log_id` + HMAC payload as the digital micro channel in inter-word spacing
+width variations (4-symbol base-4 encoding, RS(48,32) error correction). This channel
+survives printing and scanning at 300-600 DPI.
+
+The `@encypher/signing-config` package (when created) should include `enable_print_micro_ecc`
+as a named boolean option alongside `ecc`, `legacy_safe`, and `embed_c2pa`.
+
 ### Why Deferred
 
 Low urgency -- the 4 duplicate sites are consistent today and the normalization logic is

@@ -66,6 +66,7 @@ We co-chair the C2PA Text Provenance Task Force. Erik Svilich authored the speci
 - **Registration-Qualified Enforcement Leverage:** Willful infringement can materially increase exposure (up to $150,000 per registered work under U.S. statutory framework)
 - **Quote Integrity Verification:** Prove whether "According to [Your Publication]..." is accurate or hallucinated
 - **Downstream Survival:** Watermarking survives B2B distribution, wire services, aggregators, scrapers
+- **Physical Document Provenance (Enterprise):** Print-survivable provenance markers survive institutional-grade printing and scanning at 300-600 DPI, enabling source attribution from physical copies of government documents, invoices, bank statements, and legal filings
 
 **Enterprise Enhancements--Differentiation**
 Our patent-pending technology goes beyond basic C2PA:
@@ -77,6 +78,7 @@ Our patent-pending technology goes beyond basic C2PA:
 - **Segment-Level Rights:** Per-segment licensing metadata (e.g., CC-BY-NC for paragraph 3, All Rights Reserved for paragraph 7) with O(1) pre-built index and query-by-segment API
 - **Signal-Domain Soft-Binding Watermarks (Enterprise):** Audio spread-spectrum watermarking with Reed-Solomon ECC, video spread-spectrum watermarking, and TrustMark neural image watermarking. Watermarks survive transcoding, compression, and format conversion. Detected automatically during verification and reported as `c2pa.soft_binding.v1` assertions
 - **Composite Multi-Media Signing:** Text, images, audio, and video signed as a single atomic provenance unit with a composite C2PA manifest binding all ingredients
+- **Print-Survivable Provenance Markers (Enterprise):** RS-protected provenance payload encoded in inter-word spacing width variations. Survives printing and scanning at 300-600 DPI for government documents, invoices, bank statements, and legal filings. Shares the same transparency log entry as the digital provenance channel for unified verification from either digital or physical copies
 
 **Multi-Media Provenance -- 31 MIME Types (Enterprise)**
 Sign the full content portfolio under one provenance infrastructure:
@@ -290,6 +292,7 @@ AI company pricing to be determined based on coalition leverage and market stand
 |-----------|---------------|------------|-------------------|
 | Proof of Origin | None | Document-level | Sentence-level |
 | Survives Distribution | No | Limited | Yes |
+| Survives Print/Scan | No | No | Yes (300-600 DPI) |
 | Quote Integrity | No | No | Yes |
 | Willful Infringement Proof | No | No | Yes |
 | Court Admissible | No | Limited | Yes |
@@ -471,6 +474,11 @@ Expect detailed follow-up questions on implementation method, systems integratio
 **Distribution:** Sales & Solutions Teams
 **Next Review:** Monthly
 **Document Owner:** Chief Commercial Officer (CCO)
+
+**Key Changes from April 2026 (v5.2):**
+1. Added print-survivable provenance markers (Enterprise) to Enterprise Enhancements and Legal Transformation sections
+2. Added "Survives Print/Scan" row to Technical Comparison Matrix (Enterprise: Yes at 300-600 DPI)
+3. Target use cases: government documents, invoices, bank statements, legal filings
 
 **Key Changes from April 2026 (v5.1):**
 1. Added signal-domain soft-binding watermarks (audio spread-spectrum + Reed-Solomon ECC, video spread-spectrum, TrustMark neural image) to Enterprise Enhancements

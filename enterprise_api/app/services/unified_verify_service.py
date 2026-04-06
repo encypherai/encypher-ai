@@ -556,6 +556,28 @@ def run_print_fingerprint(text: str) -> Dict[str, Any]:
     }
 
 
+def run_print_micro_ecc(text: str) -> Dict[str, Any]:
+    """Decode print micro ECC payload from text (passive, cheap).
+
+    Returns the decoded 32-byte payload (log_id + HMAC) if detected,
+    with the log_id extracted for transparency log resolution.
+    """
+    from app.utils.print_micro_ecc import (
+        decode_print_micro_ecc,
+        extract_hmac,
+        extract_log_id,
+    )
+
+    decoded = decode_print_micro_ecc(text)
+    if decoded is None:
+        return {"detected": False, "log_id_hex": None, "hmac_hex": None}
+    return {
+        "detected": True,
+        "log_id_hex": extract_log_id(decoded).hex(),
+        "hmac_hex": extract_hmac(decoded).hex(),
+    }
+
+
 async def resolve_rights(
     document_id: Optional[str],
     content_db: AsyncSession,
@@ -738,6 +760,10 @@ async def verify_text(
     # Print fingerprint detection (sync, cheap -- run before async gather)
     if options.detect_print_fingerprint:
         details["print_fingerprint"] = run_print_fingerprint(text)
+
+    # Print micro ECC detection (sync, cheap -- run before async gather)
+    if options.detect_print_micro_ecc:
+        details["print_micro_ecc"] = run_print_micro_ecc(text)
 
     # Build list of async tasks to run concurrently
     async_tasks: Dict[str, Any] = {}

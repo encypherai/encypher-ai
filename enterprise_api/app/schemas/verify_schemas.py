@@ -47,6 +47,9 @@ class VerifyOptions(BaseModel):
     # Print leak detection (cheap, on by default)
     detect_print_fingerprint: bool = True
 
+    # Print micro ECC detection (cheap, on by default)
+    detect_print_micro_ecc: bool = True
+
 
 class VerifyDocument(BaseModel):
     """One item in a batch verify request."""

@@ -69,6 +69,7 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - Multi-media C2PA signing -- 31 MIME types: images (JPEG/PNG/WebP/TIFF/AVIF/HEIC/HEIF/SVG/DNG/GIF/JXL), audio (WAV/MP3/M4A/AAC/FLAC/MPA), video (MP4/MOV/M4V/AVI), documents (PDF/EPUB/DOCX/ODT/OXPS), fonts (OTF/TTF/SFNT), live streams
 - Composite article signing: text + images + audio + video as single atomic provenance unit with composite C2PA manifest
 - Signal-domain soft-binding watermarks: audio spread-spectrum (Reed-Solomon ECC), video spread-spectrum, TrustMark neural image watermarking (Enterprise)
+- Print-survivable provenance markers: RS-protected provenance payload encoded in inter-word spacing, survives 300-600 DPI print/scan (Enterprise)
 - Segment-level rights: per-segment licensing metadata with query-by-segment API
 - CDN image provenance with edge integrations (Cloudflare, Fastly, Lambda@Edge)
 - **Message: "This enables licensing, governance, and attribution intelligence"**
@@ -86,6 +87,7 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - "Real-Time Streaming Demo"
 - "Compare Unmarked vs. Marked"
 - "Multi-Media Signing Demo" (Enterprise)
+- "Print Survivability Demo" (Enterprise)
 
 **Smart Examples:**
 
@@ -97,6 +99,7 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - Invisible embedding extraction & verification
 - Image C2PA signing and verification
 - Audio provenance embedding and extraction
+- Print-survivable provenance: sign document, simulate print/scan, verify from physical copy
 - Rich article (text + photos) atomic signing
 
 **Real-Time Comparison:**
@@ -283,6 +286,8 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 | | Court-Admissible Evidence | | Limited | ... Yes | |
 
 | | Multi-Media Signing | | | ... Yes | |
+
+| | Survives Print/Scan | | | ... Yes | |
 
 | | Free Verification (All Media) | | ... Yes | ... Yes | |
 

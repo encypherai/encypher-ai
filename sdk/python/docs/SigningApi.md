@@ -116,6 +116,7 @@ Sign content with C2PA manifest. Features are gated by tier.
 | Word-level segmentation | ❌ | ✅ |
 | Dual binding | ❌ | ✅ |
 | Fingerprinting | ❌ | ✅ |
+| Print-survivable provenance | ❌ | ✅ |
 
 ---
 
@@ -175,7 +176,8 @@ Provide **either** `text` (single document) **or** `documents` (batch), plus an 
 | `include_fingerprint` | bool | `false` | Enterprise | Generate a robust content fingerprint that can survive minor text modifications. |
 | `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding for non-micro modes; only basic metadata is attached. For micro mode, use `embed_c2pa` instead. |
 | `store_c2pa_manifest` | bool | `true` | Free | Persist generated C2PA manifest in content DB for DB-backed verification. Applies to all modes that generate a manifest. |
-| `enable_print_fingerprint` | bool | `false` | Enterprise | Print Leak Detection - embed imperceptible spacing patterns (U+2009 THIN SPACE vs U+0020) that survive printing and scanning, enabling source identification from leaked physical or PDF copies. |
+| `enable_print_fingerprint` | bool | `false` | Enterprise | Print Leak Detection (legacy) - embed binary spacing patterns (U+2009 THIN SPACE vs U+0020) for source identification from printed copies. 128-bit HMAC lookup key only, no error correction. Mutually exclusive with `enable_print_micro_ecc`. |
+| `enable_print_micro_ecc` | bool | `false` | Enterprise | Print-Survivable Provenance - embed RS-protected provenance payload (log_id + HMAC) in inter-word spacing using 4 Unicode space variants. Survives 300-600 DPI print/scan. Carries the same log_id as the digital micro channel. RS(48,32) error correction (8 byte errors / 16 erasures). Requires >= 193 words. Mutually exclusive with `enable_print_fingerprint`. |
 
 ### Custom Assertions & Rights (Business+)
 

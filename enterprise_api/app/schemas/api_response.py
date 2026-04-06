@@ -161,6 +161,13 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
         required_tier=TierName.ENTERPRISE,
         category="signing",
     ),
+    "print_micro_ecc": FeatureDefinition(
+        name="print_micro_ecc",
+        display_name="Print-Survivable Provenance (Micro ECC)",
+        description="Embed RS-protected provenance payload (log_id + HMAC) in inter-word spacing that survives printing and scanning at 300-600 DPI",
+        required_tier=TierName.ENTERPRISE,
+        category="signing",
+    ),
     "batch_signing": FeatureDefinition(
         name="batch_signing",
         display_name="Batch Signing",

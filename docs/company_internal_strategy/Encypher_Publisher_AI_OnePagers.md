@@ -94,6 +94,7 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 - **Multi-Media Provenance (Enterprise):** Sign your photos, podcasts, and video alongside articles -- your entire content portfolio under one provenance infrastructure with C2PA manifests
 - **Composite Article Signing:** Text, images, audio, and video signed as a single atomic provenance unit with a composite C2PA manifest binding all ingredients under one `document_id`
 - **Signal-Domain Soft-Binding Watermarks (Enterprise):** Audio spread-spectrum watermarking with Reed-Solomon error correction survives transcoding and compression. Video spread-spectrum watermarking and TrustMark neural image watermarking detected automatically during verification
+- **Print-Survivable Provenance Markers (Enterprise):** RS-protected provenance payload encoded in inter-word spacing survives institutional-grade printing and scanning at 300-600 DPI. Verify provenance from physical copies of government documents, invoices, bank statements, and legal filings. Shares the same transparency log as the digital channel for unified verification
 - **Segment-Level Rights:** Assign per-segment licensing metadata (e.g., CC-BY-NC for paragraph 3, All Rights Reserved for paragraph 7) queryable via API with O(1) index lookup
 - **Free Verification:** Any third party -- journalists, courts, compliance teams, AI companies -- can verify any signed asset (text, image, audio, video) at no cost via the public API
 
@@ -199,6 +200,7 @@ Technical demonstration showing how sentence-level tracking, quote integrity ver
 | **Signal-Domain Watermarks** | No | No | Audio + Video + Image (Enterprise) |
 | **Segment-Level Rights** | No | No | Per-Segment Licensing Metadata |
 | **Composite Signing** | No | No | Multi-Media Atomic Provenance |
+| **Survives Print/Scan** | No | No | Yes (300-600 DPI, Enterprise) |
 
 ---
 

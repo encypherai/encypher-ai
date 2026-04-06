@@ -23,6 +23,10 @@ from app.services.auth_service_client import auth_service_client
 from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.unified_signing_service import execute_unified_signing
 from app.services.webhook_dispatcher import emit_document_signed
+from app.utils.print_micro_ecc import (
+    build_document_payload as build_micro_ecc_payload,
+    encode_print_micro_ecc,
+)
 from app.utils.print_stego import build_payload, encode_print_fingerprint
 from app.utils.quota import QuotaManager, QuotaType
 
@@ -381,6 +385,10 @@ async def sign_content(
     if result.get("success") and request.options.enable_print_fingerprint:
         _apply_print_fingerprint(result=result, org_id=effective_org_id)
 
+    # Post-sign: apply Print Micro ECC when enable_print_micro_ecc=True
+    if result.get("success") and request.options.enable_print_micro_ecc:
+        _apply_print_micro_ecc(result=result, org_id=effective_org_id)
+
     # Add quota headers (publisher's quota for proxy signing)
     quota_headers = await QuotaManager.get_quota_headers(
         db=core_db,
@@ -486,6 +494,45 @@ def _apply_print_fingerprint(result: dict, org_id: str) -> None:
                 _fingerprint_doc(doc)
     except Exception:
         logger.warning("Failed to apply print fingerprint after signing; continuing", exc_info=True)
+
+
+def _apply_print_micro_ecc(result: dict, org_id: str) -> None:
+    """Post-sign hook: encode RS-protected provenance payload into inter-word spacing.
+
+    Operates in-place on ``result["data"]``.  Modifies ``signed_text`` for each
+    document (single or batch) and injects ``print_micro_ecc`` metadata.
+    Errors are swallowed so they never break a successful sign response.
+    """
+    try:
+        data = result.get("data", {})
+
+        def _micro_ecc_doc(doc: dict) -> None:
+            doc_id = doc.get("document_id", "")
+            signed_text = doc.get("signed_text")
+            if not signed_text or not doc_id:
+                return
+            payload = build_micro_ecc_payload(org_id, doc_id)
+            encoded = encode_print_micro_ecc(signed_text, payload)
+            if encoded != signed_text:  # encoding succeeded (enough spaces)
+                doc["signed_text"] = encoded
+                doc["print_micro_ecc"] = {
+                    "enabled": True,
+                    "payload_hex": payload.hex(),
+                    "log_id_hex": payload[:16].hex(),
+                }
+            else:
+                doc["print_micro_ecc"] = {
+                    "enabled": False,
+                    "reason": "Document too short (requires >= 193 words)",
+                }
+
+        if data.get("document"):
+            _micro_ecc_doc(data["document"])
+        if data.get("documents"):
+            for doc in data["documents"]:
+                _micro_ecc_doc(doc)
+    except Exception:
+        logger.warning("Failed to apply print micro ECC after signing; continuing", exc_info=True)
 
 
 async def _attach_rights_snapshot(
