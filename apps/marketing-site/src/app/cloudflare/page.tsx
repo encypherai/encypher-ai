@@ -12,7 +12,9 @@ import {
   Database,
   FileCode2,
   Cpu,
+  GitBranch,
 } from 'lucide-react';
+import Link from 'next/link';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 
@@ -122,14 +124,19 @@ export default function CloudflarePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold">
-              <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}/signup`}>
-                Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
+              <Link href="https://deploy.workers.cloudflare.com/?url=https://github.com/encypherai/edge-provenance-worker">
+                Deploy to Cloudflare <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="https://github.com/encypherai/edge-provenance-worker">
+                View on GitHub <GitBranch className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
             <Button
               onClick={() => setShowContactModal(true)}
               size="lg"
-              variant="outline"
+              variant="ghost"
               className="font-semibold"
             >
               Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
@@ -298,9 +305,9 @@ export default function CloudflarePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold">
-              <a href={`${process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypher.com"}/signup`}>
-                Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
+              <Link href="https://deploy.workers.cloudflare.com/?url=https://github.com/encypherai/edge-provenance-worker">
+                Deploy to Cloudflare <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
             <Button
               onClick={() => setShowContactModal(true)}
