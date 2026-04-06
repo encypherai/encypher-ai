@@ -187,9 +187,7 @@ def replace_manifest_in_pdf(
         ValueError: If manifest is larger than the placeholder.
     """
     if len(manifest_bytes) > placeholder_length:
-        raise ValueError(
-            f"Manifest ({len(manifest_bytes)} bytes) exceeds placeholder " f"({placeholder_length} bytes). Retry with larger placeholder."
-        )
+        raise ValueError(f"Manifest ({len(manifest_bytes)} bytes) exceeds placeholder ({placeholder_length} bytes). Retry with larger placeholder.")
 
     # Pad manifest to exactly fill the placeholder
     padded = manifest_bytes + b"\x00" * (placeholder_length - len(manifest_bytes))

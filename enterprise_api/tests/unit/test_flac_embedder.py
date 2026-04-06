@@ -35,7 +35,7 @@ def _make_minimal_flac() -> bytes:
 
 def _make_flac_with_extra_blocks() -> bytes:
     """Build a FLAC file with STREAMINFO + VORBIS_COMMENT + PADDING."""
-    streaminfo_data = b"\x10\x00\x10\x00" b"\x00\x00\x00\x00\x00\x00" b"\x0a\xc4\x40\xf0\x00\x00\x00\x00" + b"\x00" * 16
+    streaminfo_data = b"\x10\x00\x10\x00\x00\x00\x00\x00\x00\x00\x0a\xc4\x40\xf0\x00\x00\x00\x00" + b"\x00" * 16
 
     # STREAMINFO: is_last=0, type=0, length=34
     si_header = bytes([0x00]) + struct.pack(">I", 34)[1:]

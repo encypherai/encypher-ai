@@ -69,19 +69,12 @@ async def execute_audio_signing(
             exc,
         )
 
+    from app.services.audio_watermark_client import SOFT_BINDING_ASSERTION
+
     # Add soft-binding assertion when watermarking is enabled
     assertions = list(custom_assertions or [])
     if enable_audio_watermark:
-        assertions.append(
-            {
-                "label": "c2pa.soft_binding.v1",
-                "data": {
-                    "method": "encypher.spread_spectrum_audio.v1",
-                    "payload_bits": 64,
-                    "description": "Spread-spectrum audio watermark embedded in signal domain",
-                },
-            }
-        )
+        assertions.append(SOFT_BINDING_ASSERTION)
 
     try:
         result = await sign_audio(
@@ -109,26 +102,12 @@ async def execute_audio_signing(
 
     # Apply spread-spectrum watermark after C2PA signing
     if enable_audio_watermark:
-        import base64
+        from app.services.audio_watermark_client import apply_watermark_to_signed_audio
 
-        from app.services.audio_watermark_client import (
-            audio_watermark_client,
-            compute_audio_watermark_payload,
-        )
-
-        if audio_watermark_client.is_configured:
-            signed_b64 = base64.b64encode(result.signed_bytes).decode()
-            payload_hex = compute_audio_watermark_payload(audio_id, org_id)
-            wm_result = await audio_watermark_client.apply_watermark(signed_b64, mime_type, payload_hex)
-            if wm_result is not None:
-                watermarked_b64, _confidence = wm_result
-                result.signed_bytes = base64.b64decode(watermarked_b64)
-                from app.utils.hashing import compute_sha256
-
-                result.signed_hash = compute_sha256(result.signed_bytes)
-                result.size_bytes = len(result.signed_bytes)
-                logger.info("Audio watermark applied: audio_id=%s org=%s", audio_id, org_id)
-            else:
-                logger.warning("Audio watermark failed for audio_id=%s, continuing without", audio_id)
+        wm_result = await apply_watermark_to_signed_audio(result.signed_bytes, mime_type, audio_id, org_id)
+        if wm_result is not None:
+            result.signed_bytes, result.signed_hash, _wm_key = wm_result
+            result.size_bytes = len(result.signed_bytes)
+            logger.info("Audio watermark applied: audio_id=%s org=%s", audio_id, org_id)
 
     return result

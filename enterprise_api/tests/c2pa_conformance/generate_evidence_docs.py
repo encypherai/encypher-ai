@@ -232,9 +232,7 @@ def generate_matrix(data: dict[str, Any]) -> str:
         else:
             adobe_col = "pending"
         evidence_link = f"[Details]({category}/{fmt_name}.md)"
-        return (
-            f"| {r['name']} | {r['mime_type']} | {CATEGORY_DISPLAY.get(category, category)} " f"| {sign} | {verify} | {adobe_col} | {evidence_link} |"
-        )
+        return f"| {r['name']} | {r['mime_type']} | {CATEGORY_DISPLAY.get(category, category)} | {sign} | {verify} | {adobe_col} | {evidence_link} |"
 
     # Full table
     all_rows = "\n".join(row(r) for r in results)

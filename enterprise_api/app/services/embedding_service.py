@@ -240,6 +240,14 @@ class EmbeddingService:
         full_document_parts = []
         segment_embeddings: list[tuple[str, Dict[str, Any]]] = []  # Store individual segment embeddings for later
 
+        # Pre-build index: segment_index -> rights dict for O(1) lookup
+        _segment_rights_index: Dict[int, Dict[str, Any]] = {}
+        if segment_rights:
+            for mapping in segment_rights:
+                rights_val = mapping.get("rights", {})
+                for si in mapping.get("segment_indices", []):
+                    _segment_rights_index[si] = rights_val
+
         for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
             # Store ORIGINAL segment for C2PA wrapper (no embeddings yet)
             full_document_parts.append(segment)
@@ -273,11 +281,8 @@ class EmbeddingService:
                 embedding_metadata["processing"] = processing_metadata
 
             # Per-segment rights: store the resolved rights for this segment
-            if segment_rights:
-                for mapping in segment_rights:
-                    if idx in mapping.get("segment_indices", []):
-                        embedding_metadata["rights"] = mapping.get("rights", {})
-                        break
+            if idx in _segment_rights_index:
+                embedding_metadata["rights"] = _segment_rights_index[idx]
 
             reference = ContentReference(
                 id=content_id,  # Use unique random ID

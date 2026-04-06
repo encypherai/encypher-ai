@@ -213,7 +213,7 @@ def replace_manifest_in_zip(zip_bytes: bytes, manifest_bytes: bytes) -> bytes:
         raise ValueError(f"Manifest entry {MANIFEST_PATH} not found in ZIP")
 
     if len(manifest_bytes) > manifest_info.file_size:
-        raise ValueError(f"Manifest ({len(manifest_bytes)} bytes) exceeds placeholder " f"({manifest_info.file_size} bytes)")
+        raise ValueError(f"Manifest ({len(manifest_bytes)} bytes) exceeds placeholder ({manifest_info.file_size} bytes)")
 
     # Pad manifest to exactly fill the placeholder
     padded = manifest_bytes + b"\x00" * (manifest_info.file_size - len(manifest_bytes))

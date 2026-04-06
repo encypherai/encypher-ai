@@ -12,7 +12,7 @@ import logging
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -50,6 +50,9 @@ This endpoint is public and rate-limited. Any entity — AI companies, developer
 researchers — can call this to discover the publisher's licensing terms for content
 they have encountered.
 
+When `segment_index` is provided, returns the per-segment rights for that
+segment if available, falling back to the document-level rights.
+
 Calling this endpoint constitutes **constructive notice** — the information was
 available, accessible, and machine-readable.
     """,
@@ -57,6 +60,11 @@ available, accessible, and machine-readable.
 async def get_document_rights(
     request: Request,
     document_id: str = Path(..., description="Document ID from the signed content"),
+    segment_index: Optional[int] = Query(
+        default=None,
+        ge=0,
+        description="Optional segment index (0-based). When provided, returns per-segment rights if available.",
+    ),
     db: AsyncSession = Depends(get_db),
     _rate: None = Depends(public_rate_limiter),
 ) -> Dict[str, Any]:
@@ -80,6 +88,19 @@ async def get_document_rights(
     # Get publisher profile for identity info
     profile = await svc.get_current_profile(db=db, organization_id=org_id)
 
+    # When segment_index is provided, resolve per-segment rights from embedding metadata
+    segment_rights_data: Optional[Dict[str, Any]] = None
+    if segment_index is not None:
+        from app.services.unified_verify_service import resolve_rights as resolve_segment_rights
+
+        segment_result = await resolve_segment_rights(
+            document_id=document_id,
+            content_db=db,
+            segment_index=segment_index,
+        )
+        if segment_result and segment_result.get("segment_rights"):
+            segment_rights_data = segment_result["segment_rights"]
+
     # Log detection event
     await _log_detection(
         svc=svc,
@@ -92,7 +113,15 @@ async def get_document_rights(
     )
 
     # Build response
-    return _build_public_rights_response(document_id=document_id, profile=profile, rights=rights, doc_record=doc_record)
+    response = _build_public_rights_response(document_id=document_id, profile=profile, rights=rights, doc_record=doc_record)
+
+    # Attach segment-specific rights when available
+    if segment_index is not None:
+        response["segment_index"] = segment_index
+        if segment_rights_data:
+            response["segment_rights"] = segment_rights_data
+
+    return response
 
 
 @router.post(

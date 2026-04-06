@@ -63,7 +63,7 @@ class PublicAudioVerifyResponse(BaseModel):
     "/verify/audio",
     summary="Verify a C2PA-signed audio file",
     description=(
-        "Public endpoint. Accepts a base64-encoded audio file, extracts and " "verifies the embedded JUMBF C2PA manifest. No authentication required."
+        "Public endpoint. Accepts a base64-encoded audio file, extracts and verifies the embedded JUMBF C2PA manifest. No authentication required."
     ),
 )
 async def verify_audio(

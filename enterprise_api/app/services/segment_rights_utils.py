@@ -47,6 +47,22 @@ def build_segment_rights_assertion(
     return {"label": "com.encypher.rights.v2", "data": data}
 
 
+def build_segment_rights_assertion_from_raw(
+    segment_rights_dicts: List[Dict[str, Any]],
+    default_rights: Optional[RightsMetadata] = None,
+) -> Dict[str, Any]:
+    """Build a com.encypher.rights.v2 assertion from pre-serialized dicts.
+
+    Use this when segment_rights have already been serialized to dicts
+    (e.g., in the EncodeWithEmbeddingsRequest flow).
+    """
+    data: Dict[str, Any] = {
+        "segment_rights_map": segment_rights_dicts,
+        "default_rights": _rights_to_dict(default_rights) if default_rights else None,
+    }
+    return {"label": "com.encypher.rights.v2", "data": data}
+
+
 def resolve_segment_rights(
     segment_index: int,
     segment_rights: List[SegmentRightsMapping],

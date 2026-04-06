@@ -39,9 +39,16 @@ The Encypher platform uses a microservices architecture with all services runnin
         ┌─────────────────────┼─────────────────────┐
         │                     │                     │
 ┌───────▼────────┐   ┌───────▼────────┐   ┌───────▼────────┐
-│Billing Service │   │Notification Svc│   │ Enterprise API │
-│   (Port 8007)  │   │   (Port 8008)  │   │   (Port 9000)  │
+│Billing Service │   │Notification Svc│   │Audio Watermark │
+│   (Port 8007)  │   │   (Port 8008)  │   │   (Port 8011)  │
 └────────────────┘   └────────────────┘   └────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        │                                           │
+┌───────▼────────┐                        ┌────────▼────────┐
+│Video Watermark │                        │ Enterprise API  │
+│   (Port 8012)  │                        │   (Port 9000)   │
+└────────────────┘                        └─────────────────┘
 ```
 
 ## 📦 Services
@@ -59,6 +66,8 @@ The Encypher platform uses a microservices architecture with all services runnin
 | [**analytics-service**](./analytics-service/) | 8006 | postgres-core | ✅ Active | Usage metrics |
 | [**billing-service**](./billing-service/) | 8007 | postgres-core | ✅ Active | Subscriptions, Stripe |
 | [**notification-service**](./notification-service/) | 8008 | postgres-core | ✅ Active | Email, notifications |
+| [**audio-watermark-service**](./audio-watermark-service/) | 8011 | - | ✅ Active | Spread-spectrum audio watermarking (64-bit payload) |
+| [**video-watermark-service**](./video-watermark-service/) | 8012 | - | ✅ Active | Spread-spectrum video watermarking (VOD and live stream) |
 | **enterprise-api** | 9000 | core + content | ✅ Active | C2PA sign/verify API, Rights Management System |
 
 ### Infrastructure

@@ -20,7 +20,7 @@ depends_on = None
 def _has_column(table_name: str, column_name: str) -> bool:
     bind = op.get_bind()
     result = bind.execute(
-        sa.text("SELECT 1 FROM information_schema.columns " "WHERE table_name = :table AND column_name = :col"),
+        sa.text("SELECT 1 FROM information_schema.columns WHERE table_name = :table AND column_name = :col"),
         {"table": table_name, "col": column_name},
     )
     return result.fetchone() is not None

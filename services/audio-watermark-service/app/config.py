@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     DEFAULT_SNR_DB: float = -20.0
     # Payload length in bits.
     PAYLOAD_BITS: int = 64
-    # Chip rate: number of STFT bins per payload bit.
+    # Chip rate: reserved for future use (controls active bins per payload bit).
     CHIP_RATE: int = 8
 
     class Config:

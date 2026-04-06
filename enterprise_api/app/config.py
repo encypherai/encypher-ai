@@ -123,6 +123,7 @@ class Settings(BaseSettings):
     image_response_format: str = "base64"  # always base64 for now
     image_service_url: str = ""  # TrustMark microservice URL (empty = disabled)
     audio_watermark_service_url: str = ""  # Audio watermark microservice URL (empty = disabled)
+    video_watermark_service_url: str = ""  # Video watermark microservice URL (empty = disabled)
     # When True: skip JUMBF embedding (no cert required). Returns original image bytes
     # unchanged. All metadata (hash, pHash, composite manifest, DB rows) is still written.
     # Use for local dev/CI where no CA-signed cert is available.

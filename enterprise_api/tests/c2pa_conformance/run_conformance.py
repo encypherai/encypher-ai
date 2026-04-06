@@ -1205,7 +1205,7 @@ def write_results(results: list[FormatResult]):
     for r in results:
         sign_str = "OK" if r.sign_success else "FAIL"
         verify_str = "PASS" if r.verify_success else "FAIL"
-        lines.append(f"{r.name:<8} {r.mime_type:<25} {r.category:<10} {sign_str:<6} {verify_str:<8} " f"{r.fixture_size:<10} {r.signed_size:<10}")
+        lines.append(f"{r.name:<8} {r.mime_type:<25} {r.category:<10} {sign_str:<6} {verify_str:<8} {r.fixture_size:<10} {r.signed_size:<10}")
     lines.append("-" * 85)
     lines.append(f"Total: {len(results)} formats")
     lines.append(f"Signed OK: {sum(1 for r in results if r.sign_success)}/{len(results)}")
@@ -1214,7 +1214,7 @@ def write_results(results: list[FormatResult]):
 
     # Detail section
     for r in results:
-        lines.append(f"\n{'='*50}")
+        lines.append(f"\n{'=' * 50}")
         lines.append(f"Format: {r.name} ({r.mime_type})")
         lines.append(f"Category: {r.category}")
         lines.append(f"Sign: {'OK' if r.sign_success else 'FAIL'}")

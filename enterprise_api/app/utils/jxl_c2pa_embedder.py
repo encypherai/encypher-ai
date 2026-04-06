@@ -71,7 +71,7 @@ def parse_jxl_boxes(data: bytes) -> list[dict]:
     """
     if len(data) < 12 or data[:12] != JXL_CONTAINER_SIGNATURE:
         if len(data) >= 2 and data[:2] == JXL_CODESTREAM_SIGNATURE:
-            raise ValueError("JXL file is a bare codestream (no ISOBMFF container). " "C2PA embedding requires the ISOBMFF container variant.")
+            raise ValueError("JXL file is a bare codestream (no ISOBMFF container). C2PA embedding requires the ISOBMFF container variant.")
         raise ValueError("Not a valid JXL ISOBMFF container file")
 
     boxes = []
@@ -167,7 +167,7 @@ def replace_manifest_in_jxl(
         ValueError: If manifest is larger than the placeholder.
     """
     if len(manifest_bytes) > manifest_length:
-        raise ValueError(f"Manifest ({len(manifest_bytes)} bytes) exceeds placeholder " f"({manifest_length} bytes). Retry with larger placeholder.")
+        raise ValueError(f"Manifest ({len(manifest_bytes)} bytes) exceeds placeholder ({manifest_length} bytes). Retry with larger placeholder.")
 
     # Pad to fill the placeholder exactly
     padded = manifest_bytes + b"\x00" * (manifest_length - len(manifest_bytes))

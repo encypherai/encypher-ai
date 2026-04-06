@@ -200,17 +200,9 @@ async def encode_document_with_embeddings(
 
         # Segment-level rights: build compound v2 assertion
         if request.segment_rights:
-            default_rights_dict = None
-            if request.rights:
-                default_rights_dict = request.rights.dict(exclude_none=True)
-                embargo_val = default_rights_dict.get("embargo_until")
-                if embargo_val is not None and hasattr(embargo_val, "isoformat"):
-                    default_rights_dict["embargo_until"] = embargo_val.isoformat()
-            v2_data = {
-                "segment_rights_map": request.segment_rights,
-                "default_rights": default_rights_dict,
-            }
-            raw_assertions.append({"label": "com.encypher.rights.v2", "data": v2_data})
+            from app.services.segment_rights_utils import build_segment_rights_assertion_from_raw
+
+            raw_assertions.append(build_segment_rights_assertion_from_raw(request.segment_rights, request.rights))
 
         if effective_template_id:
             features = organization.get("features", {})
