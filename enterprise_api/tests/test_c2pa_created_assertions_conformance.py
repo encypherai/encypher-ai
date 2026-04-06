@@ -58,11 +58,9 @@ class TestPipelineAManifestBuilder:
 
         for assertion in assertions:
             label = assertion["label"]
-            assert assertion.get("created") is True, (
-                f"Assertion '{label}' missing created=True. "
-                f"c2pa-rs will place this in gathered_assertions, "
-                f"violating C2PA conformance requirements."
-            )
+            assert (
+                assertion.get("created") is True
+            ), f"Assertion '{label}' missing created=True. c2pa-rs will place this in gathered_assertions, violating C2PA conformance requirements."
 
     def test_actions_assertion_has_created_true(self):
         """c2pa.actions.v2 must be in created_assertions."""
@@ -81,9 +79,9 @@ class TestPipelineAManifestBuilder:
 
         actions = [a for a in manifest["assertions"] if a["label"] == "c2pa.actions.v2"]
         assert len(actions) == 1, "Expected exactly one c2pa.actions.v2 assertion"
-        assert actions[0].get("created") is True, (
-            "c2pa.actions.v2 MUST have created=True per C2PA conformance. " "The action assertion is a claim made by our generator product."
-        )
+        assert (
+            actions[0].get("created") is True
+        ), "c2pa.actions.v2 MUST have created=True per C2PA conformance. The action assertion is a claim made by our generator product."
 
     def test_provenance_assertion_has_created_true(self):
         """com.encypher.provenance must be in created_assertions."""
@@ -102,9 +100,9 @@ class TestPipelineAManifestBuilder:
 
         prov = [a for a in manifest["assertions"] if a["label"] == "com.encypher.provenance"]
         assert len(prov) == 1, "Expected exactly one com.encypher.provenance assertion"
-        assert prov[0].get("created") is True, (
-            "com.encypher.provenance MUST have created=True per C2PA conformance. " "This is a custom assertion made by our generator product."
-        )
+        assert (
+            prov[0].get("created") is True
+        ), "com.encypher.provenance MUST have created=True per C2PA conformance. This is a custom assertion made by our generator product."
 
     def test_rights_assertion_has_created_true(self):
         """com.encypher.rights.v1 must be in created_assertions when present."""
@@ -201,9 +199,9 @@ class TestPipelineBClaimBuilder:
     def test_created_assertions_field_exists(self):
         """The CBOR claim must have a created_assertions field."""
         claim, _ = self._build_test_claim()
-        assert "created_assertions" in claim, (
-            "CBOR claim is missing 'created_assertions' field. " "C2PA v2 requires this field to identify assertions made by the signer."
-        )
+        assert (
+            "created_assertions" in claim
+        ), "CBOR claim is missing 'created_assertions' field. C2PA v2 requires this field to identify assertions made by the signer."
 
     def test_created_assertions_references_all_assertions(self):
         """created_assertions must reference ALL assertions (we are the sole signer)."""
@@ -212,9 +210,9 @@ class TestPipelineBClaimBuilder:
         created_urls = {ref["url"] for ref in claim["created_assertions"]}
         expected_urls = {f"self#jumbf=c2pa.assertions/{label}" for label, _ in assertion_data}
 
-        assert created_urls == expected_urls, (
-            f"created_assertions does not match expected. " f"Missing: {expected_urls - created_urls}. " f"Extra: {created_urls - expected_urls}."
-        )
+        assert (
+            created_urls == expected_urls
+        ), f"created_assertions does not match expected. Missing: {expected_urls - created_urls}. Extra: {created_urls - expected_urls}."
 
     def test_created_assertions_have_hashes(self):
         """Each created_assertion ref must have a hash and alg."""
@@ -228,16 +226,16 @@ class TestPipelineBClaimBuilder:
         """We are the sole signer; there should be no gathered_assertions."""
         claim, _ = self._build_test_claim()
         gathered = claim.get("gathered_assertions")
-        assert gathered is None or len(gathered) == 0, (
-            f"Unexpected gathered_assertions in claim: {gathered}. " f"All assertions should be in created_assertions."
-        )
+        assert (
+            gathered is None or len(gathered) == 0
+        ), f"Unexpected gathered_assertions in claim: {gathered}. All assertions should be in created_assertions."
 
     def test_no_v1_only_fields(self):
         """c2pa.claim.v2 must not contain v1-only fields."""
         claim, _ = self._build_test_claim()
         v1_only = {"claim_generator", "dc:format", "assertions"}
         present = v1_only & set(claim.keys())
-        assert not present, f"v1-only fields found in v2 claim: {present}. " f"c2pa-rs rejects claims with both v1 and v2 fields."
+        assert not present, f"v1-only fields found in v2 claim: {present}. c2pa-rs rejects claims with both v1 and v2 fields."
 
 
 # ===================================================================
@@ -302,7 +300,7 @@ class TestManifestFilesConformance:
         data = json.loads(manifest_path.read_text())
         filename = manifest_path.name
 
-        assert "active_manifest" in data, f"{filename}: Missing 'active_manifest' key. " f"Manifest JSON must use the canonical c2pa-rs format."
+        assert "active_manifest" in data, f"{filename}: Missing 'active_manifest' key. Manifest JSON must use the canonical c2pa-rs format."
         assert isinstance(data.get("manifests"), dict), f"{filename}: 'manifests' must be a dict keyed by label, not a list."
 
         manifest = _parse_manifest(data)

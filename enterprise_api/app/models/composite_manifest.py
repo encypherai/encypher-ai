@@ -1,7 +1,8 @@
 """SQLAlchemy model for composite_manifests table.
 
-Stores the article-level C2PA manifest that references each signed image as an
-ingredient and binds them to the signed text via the ZWC/Merkle pipeline.
+Stores the article-level C2PA manifest that references each signed media file
+(image, audio, video) as an ingredient and binds them to the signed text via
+the provenance marker/Merkle pipeline.
 """
 
 import uuid
@@ -22,12 +23,11 @@ from app.database import Base
 
 
 class CompositeManifest(Base):
-    """
-    Article-level C2PA manifest binding signed text and signed images.
+    """Article-level C2PA manifest binding signed text and signed media.
 
-    Created after all images in a rich article are signed. The manifest_data
-    JSONB field holds the full C2PA manifest with c2pa.ingredient.v3 entries
-    for each image and a reference to the text Merkle root.
+    Created after all media in a rich article are signed. The manifest_data
+    JSONB field holds the full C2PA manifest with c2pa.ingredient entries
+    for each media file and a reference to the text Merkle root.
     """
 
     __tablename__ = "composite_manifests"
@@ -45,8 +45,11 @@ class CompositeManifest(Base):
     # Link to text signing Merkle root (null if text-only article had no Merkle)
     text_merkle_root = Column(String(128), nullable=True)
 
-    # Number of image ingredients in this composite manifest
+    # Total and per-type ingredient counts
     ingredient_count = Column(Integer, nullable=False, default=0)
+    image_count = Column(Integer, nullable=False, default=0)
+    audio_count = Column(Integer, nullable=False, default=0)
+    video_count = Column(Integer, nullable=False, default=0)
 
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)
 
@@ -60,4 +63,8 @@ class CompositeManifest(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<CompositeManifest(document_id={self.document_id!r}, ingredients={self.ingredient_count})>"
+        return (
+            f"<CompositeManifest(document_id={self.document_id!r}, "
+            f"ingredients={self.ingredient_count}, "
+            f"images={self.image_count}, audios={self.audio_count}, videos={self.video_count})>"
+        )

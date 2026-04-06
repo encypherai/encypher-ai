@@ -49,6 +49,9 @@ class PublicAudioVerifyResponse(BaseModel):
     error: str | None = None
     correlation_id: str | None = None
     verified_at: str | None = None
+    watermark_detected: bool = False
+    watermark_payload: str | None = None
+    watermark_confidence: float = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -60,7 +63,7 @@ class PublicAudioVerifyResponse(BaseModel):
     "/verify/audio",
     summary="Verify a C2PA-signed audio file",
     description=(
-        "Public endpoint. Accepts a base64-encoded audio file, extracts and " "verifies the embedded JUMBF C2PA manifest. No authentication required."
+        "Public endpoint. Accepts a base64-encoded audio file, extracts and verifies the embedded JUMBF C2PA manifest. No authentication required."
     ),
 )
 async def verify_audio(
@@ -87,9 +90,10 @@ async def verify_audio(
             detail=f"Payload exceeds {settings.public_audio_max_size_bytes} bytes limit",
         )
 
-    from app.services.audio_verification_service import verify_audio_c2pa
+    from app.services.audio_verification_service import verify_audio_with_watermark
 
-    result = verify_audio_c2pa(audio_bytes, payload.mime_type)
+    combined = await verify_audio_with_watermark(audio_bytes, payload.mime_type, payload.audio_data)
+    result = combined.c2pa
 
     return PublicAudioVerifyResponse(
         success=result.valid,
@@ -103,4 +107,7 @@ async def verify_audio(
         error=result.error,
         correlation_id=correlation_id,
         verified_at=verified_at,
+        watermark_detected=combined.watermark_detected,
+        watermark_payload=combined.watermark_payload,
+        watermark_confidence=combined.watermark_confidence,
     )

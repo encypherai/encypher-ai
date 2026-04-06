@@ -276,7 +276,7 @@ class TestAuthenticateAPIKey:
 
         client.post.assert_awaited_once_with(
             "/api/v1/keys/validate",
-            json={"key": "ency_test_12345678901234567890"},
+            json={"key": "fixture-token-1234567890"},
             headers={"x-request-id": "-"},
         )
 

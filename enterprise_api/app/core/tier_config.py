@@ -84,6 +84,9 @@ FREE_FEATURES: Dict[str, Any] = {
     # image enterprise features
     "image_fuzzy_search": False,  # pHash cross-org search (Enterprise only)
     "trustmark_watermark": False,  # TrustMark neural watermark (Enterprise only)
+    "segment_rights": False,  # Per-segment rights mappings (Enterprise only)
+    "audio_watermark": False,  # Spread-spectrum audio watermark (Enterprise only)
+    "video_watermark": False,  # Spread-spectrum video watermark (Enterprise only)
     # enforcement gating (March 2026 decision)
     "content_spread_analytics": True,  # ungated for all tiers
     "formal_notice_creation": False,
@@ -111,6 +114,9 @@ ENTERPRISE_FEATURES: Dict[str, Any] = {
     # image enterprise features
     "image_fuzzy_search": True,  # pHash cross-org search
     "trustmark_watermark": True,  # TrustMark neural watermark
+    "segment_rights": True,  # Per-segment rights mappings
+    "audio_watermark": True,  # Spread-spectrum audio watermark
+    "video_watermark": True,  # Spread-spectrum video watermark
     # enforcement gating
     "content_spread_analytics": True,
     "formal_notice_creation": True,

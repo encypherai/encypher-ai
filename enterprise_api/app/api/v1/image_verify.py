@@ -161,6 +161,20 @@ async def verify_image(
     cryptographically_valid = bool(result.valid)
     overall_status = "cryptographically_valid" if cryptographically_valid else "historically_signed_record" if db_confirmed else "invalid"
 
+    # Attempt TrustMark watermark detection (non-blocking, best-effort)
+    wm_detected: Optional[bool] = None
+    wm_payload: Optional[str] = None
+    wm_confidence: Optional[float] = None
+    try:
+        from app.services.trustmark_client import trustmark_client
+
+        if trustmark_client.is_configured:
+            wm_result = await trustmark_client.detect_watermark(payload.image_data)
+            if wm_result is not None:
+                wm_detected, wm_payload, wm_confidence = wm_result
+    except Exception:
+        logger.debug("TrustMark detection skipped: service unavailable")
+
     response_payload = ImageVerifyResponse(
         success=True,
         valid=cryptographically_valid,
@@ -174,6 +188,9 @@ async def verify_image(
         db_matched=db_confirmed,
         historically_signed_by_us=db_confirmed,
         overall_status=overall_status,
+        watermark_detected=wm_detected,
+        watermark_payload=wm_payload,
+        watermark_confidence=wm_confidence,
         error=result.error,
         correlation_id=correlation_id,
     )

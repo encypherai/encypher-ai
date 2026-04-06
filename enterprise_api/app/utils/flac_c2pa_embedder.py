@@ -203,7 +203,7 @@ def replace_manifest_in_flac(
         ValueError: If manifest is larger than the placeholder.
     """
     if len(manifest_bytes) > manifest_length:
-        raise ValueError(f"Manifest ({len(manifest_bytes)} bytes) exceeds placeholder " f"({manifest_length} bytes). Retry with larger placeholder.")
+        raise ValueError(f"Manifest ({len(manifest_bytes)} bytes) exceeds placeholder ({manifest_length} bytes). Retry with larger placeholder.")
 
     # Pad to fill the placeholder exactly
     padded = manifest_bytes + b"\x00" * (manifest_length - len(manifest_bytes))

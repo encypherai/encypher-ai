@@ -3,7 +3,7 @@
   "info": {
     "title": "Encypher Enterprise API (Internal)",
     "description": "C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises",
-    "version": "1.0.2"
+    "version": "2.0.0"
   },
   "paths": {
     "/health": {
@@ -12,6 +12,7 @@
           "Health"
         ],
         "summary": "Health Check",
+        "description": "Returns 200 OK when the service is running. Use /readyz for a full dependency check.",
         "operationId": "health_check_health_get",
         "responses": {
           "200": {
@@ -31,6 +32,7 @@
           "Health"
         ],
         "summary": "Readiness Check",
+        "description": "Checks database, Redis, key service, and auth service connectivity. Returns ready or degraded.",
         "operationId": "readiness_check_readyz_get",
         "responses": {
           "200": {
@@ -50,6 +52,7 @@
           "Info"
         ],
         "summary": "Root",
+        "description": "Returns API metadata including name, version, and links to documentation.",
         "operationId": "root__get",
         "responses": {
           "200": {
@@ -1900,6 +1903,62 @@
         }
       }
     },
+    "/api/v1/webhooks/{webhook_id}/deliveries/{delivery_id}/retry": {
+      "post": {
+        "tags": [
+          "Webhooks",
+          "Webhooks"
+        ],
+        "summary": "Retry a failed webhook delivery",
+        "description": "Manually retry a failed or permanently_failed delivery. Only works for deliveries belonging to webhooks owned by the requesting organization.",
+        "operationId": "retry_webhook_delivery_api_v1_webhooks__webhook_id__deliveries__delivery_id__retry_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "webhook_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Webhook Id"
+            }
+          },
+          {
+            "name": "delivery_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Delivery Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/sign": {
       "post": {
         "tags": [
@@ -1978,13 +2037,59 @@
         "deprecated": true
       }
     },
+    "/api/v1/sign/media": {
+      "post": {
+        "tags": [
+          "Media Signing",
+          "Media Signing"
+        ],
+        "summary": "Sign any media file with a C2PA manifest",
+        "description": "Sign a media file (image, video, audio, or document) with a C2PA manifest. Supports all C2PA Conformance Program formats. Optionally accepts a previously signed file as an ingredient for provenance chain (c2pa.edited) workflows.",
+        "operationId": "sign_media_api_v1_sign_media_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_sign_media_api_v1_sign_media_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/sign/rich": {
       "post": {
         "tags": [
           "Rich Signing"
         ],
-        "summary": "Sign rich article (text + images) with C2PA",
-        "description": "Sign a rich article containing both text and embedded images as a single\natomic provenance unit.\n\nEach image receives a standalone C2PA JUMBF-embedded manifest. The article-level\ncomposite manifest binds text (via Merkle root) and all images (via ingredient\nreferences) into a single provenance record.\n\n**Tier feature matrix:**\n\n| Feature | Free | Enterprise |\n|---------|------|------------|\n| Basic image C2PA signing | Yes | Yes |\n| pHash attribution indexing | Yes | Yes |\n| TrustMark neural watermark | No | Yes |\n\n**Quota:** Each call consumes (N_images + 1 text + 1 composite) signatures.\n\n**Images:** Up to 20 images per request. Each image is base64-encoded in the\nrequest body and returned base64-encoded in the response. Publishers are\nresponsible for hosting signed images on their own CDN.",
+        "summary": "Sign rich article (text + images + audio + video) with C2PA",
+        "description": "Sign a rich article containing text and embedded media (images, audio, video)\nas a single atomic provenance unit.\n\nEach media file receives a standalone C2PA manifest. The article-level composite\nmanifest binds text (via Merkle root) and all media (via ingredient references)\ninto a single provenance record.\n\nAt least one media item (image, audio, or video) is required per request.\n\n**Tier feature matrix:**\n\n| Feature | Free | Enterprise |\n|---------|------|------------|\n| Image C2PA signing | Yes | Yes |\n| Audio C2PA signing | Yes | Yes |\n| Video C2PA signing | Yes | Yes |\n| pHash attribution indexing (images) | Yes | Yes |\n| TrustMark neural watermark (images) | No | Yes |\n| Audio spread-spectrum watermark | No | Yes |\n| Video spread-spectrum watermark | No | Yes |\n\n**Quota:** Each call consumes (N_images + N_audios + N_videos + 1 text + 1 composite) signatures.\n\n**Limits:** Up to 20 images (10MB each), 10 audio files (50MB each), 5 video files (100MB each).\nAll media is base64-encoded in the request/response body.",
         "operationId": "sign_rich_content_api_v1_sign_rich_post",
         "requestBody": {
           "content": {
@@ -4629,7 +4734,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BatchVerifyRequest"
+                "$ref": "#/components/schemas/app__schemas__batch__BatchVerifyRequest"
               }
             }
           },
@@ -4671,6 +4776,7 @@
           "Integrations"
         ],
         "summary": "Get WordPress integration status",
+        "description": "Retrieve the current WordPress integration configuration and install status for the authenticated organization.",
         "operationId": "get_wordpress_integration_status_api_v1_integrations_wordpress_status_get",
         "responses": {
           "200": {
@@ -4698,6 +4804,7 @@
           "Integrations"
         ],
         "summary": "Sync WordPress integration status",
+        "description": "Update the WordPress integration status fields from the WordPress plugin.",
         "operationId": "sync_wordpress_integration_status_api_v1_integrations_wordpress_status_sync_post",
         "requestBody": {
           "content": {
@@ -4745,6 +4852,7 @@
           "Integrations"
         ],
         "summary": "Register or update a WordPress install",
+        "description": "Register a new WordPress site install or update an existing record for the authenticated organization.",
         "operationId": "register_wordpress_install_api_v1_integrations_wordpress_register_install_post",
         "requestBody": {
           "content": {
@@ -4792,6 +4900,7 @@
           "Integrations"
         ],
         "summary": "Record a WordPress verification event",
+        "description": "Record a content verification event generated by the WordPress plugin for tracking and audit.",
         "operationId": "record_wordpress_verification_event_api_v1_integrations_wordpress_verification_event_post",
         "requestBody": {
           "content": {
@@ -4839,6 +4948,7 @@
           "Integrations"
         ],
         "summary": "Queue a remote action for a WordPress install",
+        "description": "Queue a remote management action to be delivered to a specific WordPress install.",
         "operationId": "queue_wordpress_install_action_api_v1_integrations_wordpress__install_id__actions_post",
         "security": [
           {
@@ -4897,6 +5007,7 @@
           "Integrations"
         ],
         "summary": "Pull queued remote actions for a WordPress install",
+        "description": "Pull pending remote actions queued for a specific WordPress install, called on a polling interval.",
         "operationId": "pull_wordpress_install_actions_api_v1_integrations_wordpress__install_id__actions_pull_post",
         "security": [
           {
@@ -4945,6 +5056,7 @@
           "Integrations"
         ],
         "summary": "Acknowledge a WordPress remote action result",
+        "description": "Acknowledge completion of a remote action by the WordPress plugin, recording the result.",
         "operationId": "ack_wordpress_install_action_api_v1_integrations_wordpress__install_id__actions__action_id__ack_post",
         "security": [
           {
@@ -5012,6 +5124,7 @@
           "Integrations"
         ],
         "summary": "Start a WordPress magic-link connect session",
+        "description": "Initiate a magic-link connection flow for linking a WordPress site to an Encypher account.",
         "operationId": "start_wordpress_connect_session_api_v1_integrations_wordpress_connect_start_post",
         "requestBody": {
           "content": {
@@ -5054,6 +5167,7 @@
           "Integrations"
         ],
         "summary": "Poll a WordPress magic-link connect session",
+        "description": "Poll the status of a WordPress magic-link connect session to check approval.",
         "operationId": "poll_wordpress_connect_session_api_v1_integrations_wordpress_connect_session__session_id__get",
         "parameters": [
           {
@@ -5097,6 +5211,7 @@
           "Integrations"
         ],
         "summary": "Complete a WordPress magic-link connect session",
+        "description": "Complete the WordPress magic-link connection flow using the token from the approval email.",
         "operationId": "complete_wordpress_connect_session_api_v1_integrations_wordpress_connect_complete_post",
         "requestBody": {
           "content": {
@@ -5445,6 +5560,7 @@
           "CDN Integrations"
         ],
         "summary": "Get current Cloudflare Logpush integration config",
+        "description": "Retrieve the current Cloudflare Logpush integration configuration for the authenticated organization.",
         "operationId": "get_cdn_integration_api_v1_cdn_cloudflare_get",
         "responses": {
           "200": {
@@ -5516,6 +5632,7 @@
           "CDN Integrations"
         ],
         "summary": "Remove Cloudflare Logpush integration",
+        "description": "Remove the Cloudflare Logpush integration configuration for the authenticated organization.",
         "operationId": "delete_cdn_integration_api_v1_cdn_cloudflare_delete",
         "responses": {
           "204": {
@@ -7459,7 +7576,8 @@
           "Partner Portal",
           "Partner Portal"
         ],
-        "summary": "List Partner Publishers",
+        "summary": "List partner publishers",
+        "description": "List all child publisher organizations managed by the authenticated strategic partner.",
         "operationId": "list_partner_publishers_api_v1_partner_portal_publishers_get",
         "responses": {
           "200": {
@@ -7488,7 +7606,8 @@
           "Partner Portal",
           "Partner Portal"
         ],
-        "summary": "Get Partner Aggregate",
+        "summary": "Get partner aggregate stats",
+        "description": "Return aggregated metrics across all child publisher organizations.",
         "operationId": "get_partner_aggregate_api_v1_partner_portal_aggregate_get",
         "responses": {
           "200": {
@@ -7517,7 +7636,8 @@
           "Partner Portal",
           "Partner Portal"
         ],
-        "summary": "Get Partner Publisher Detail",
+        "summary": "Get partner publisher detail",
+        "description": "Retrieve detailed information about a specific child publisher organization.",
         "operationId": "get_partner_publisher_detail_api_v1_partner_portal_publishers__pub_org_id__get",
         "security": [
           {
@@ -7597,7 +7717,8 @@
           "Attestation Policies",
           "Attestation Policies"
         ],
-        "summary": "List Policies",
+        "summary": "List attestation policies",
+        "description": "List all attestation policies for the authenticated enterprise organization.",
         "operationId": "list_policies_api_v1_attestation_policies__get",
         "security": [
           {
@@ -7652,7 +7773,8 @@
           "Attestation Policies",
           "Attestation Policies"
         ],
-        "summary": "Create Policy",
+        "summary": "Create attestation policy",
+        "description": "Create a new attestation policy defining rules and enforcement mode for content attestation.",
         "operationId": "create_policy_api_v1_attestation_policies__post",
         "security": [
           {
@@ -7701,7 +7823,8 @@
           "Attestation Policies",
           "Attestation Policies"
         ],
-        "summary": "Get Policy",
+        "summary": "Get attestation policy",
+        "description": "Retrieve a specific attestation policy by ID.",
         "operationId": "get_policy_api_v1_attestation_policies__policy_id__get",
         "security": [
           {
@@ -7749,7 +7872,8 @@
           "Attestation Policies",
           "Attestation Policies"
         ],
-        "summary": "Update Policy",
+        "summary": "Update attestation policy",
+        "description": "Update an existing attestation policy's name, enforcement mode, scope, rules, or active state.",
         "operationId": "update_policy_api_v1_attestation_policies__policy_id__put",
         "security": [
           {
@@ -7807,7 +7931,8 @@
           "Attestation Policies",
           "Attestation Policies"
         ],
-        "summary": "Delete Policy",
+        "summary": "Delete attestation policy",
+        "description": "Deactivate an attestation policy. The policy is marked inactive rather than permanently deleted.",
         "operationId": "delete_policy_api_v1_attestation_policies__policy_id__delete",
         "security": [
           {
@@ -7857,7 +7982,8 @@
           "Attestation Policies",
           "Attestation Policies"
         ],
-        "summary": "List Attestations",
+        "summary": "List attestations",
+        "description": "List attestation records for the authenticated enterprise organization.",
         "operationId": "list_attestations_api_v1_attestations__get",
         "security": [
           {
@@ -8303,7 +8429,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -8313,7 +8439,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -8323,7 +8449,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -8333,7 +8459,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -9664,6 +9790,449 @@
         ]
       }
     },
+    "/api/v1/enterprise/audio/sign": {
+      "post": {
+        "tags": [
+          "Audio Attribution",
+          "Audio Attribution"
+        ],
+        "summary": "Sign audio with C2PA manifest",
+        "description": "Embed a C2PA manifest into an audio file (WAV, MP3, or M4A/AAC). The signed audio is returned as base64. Requires a configured signing certificate (SSL.com or BYOK).",
+        "operationId": "audio_sign_api_v1_enterprise_audio_sign_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AudioSignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AudioSignResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/audio/verify": {
+      "post": {
+        "tags": [
+          "Audio Attribution",
+          "Audio Attribution"
+        ],
+        "summary": "Verify C2PA manifest in audio file",
+        "description": "Extract and verify the C2PA manifest embedded in an audio file. Returns manifest details and validation status.",
+        "operationId": "audio_verify_api_v1_enterprise_audio_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AudioVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AudioVerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/video/sign": {
+      "post": {
+        "tags": [
+          "Video Attribution",
+          "Video Attribution"
+        ],
+        "summary": "Sign video with C2PA manifest",
+        "description": "Embed a C2PA manifest into a video file (MP4, MOV, M4V, AVI). Upload as multipart/form-data. The signed video is returned as base64 for files under 50MB, or via a download URL for larger files. Requires a configured signing certificate (SSL.com or BYOK).",
+        "operationId": "video_sign_api_v1_enterprise_video_sign_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_video_sign_api_v1_enterprise_video_sign_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoSignResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/video/verify": {
+      "post": {
+        "tags": [
+          "Video Attribution",
+          "Video Attribution"
+        ],
+        "summary": "Verify C2PA manifest in video file",
+        "description": "Extract and verify the C2PA manifest embedded in a video file. Upload as multipart/form-data.",
+        "operationId": "video_verify_api_v1_enterprise_video_verify_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_video_verify_api_v1_enterprise_video_verify_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoVerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/video/download/{video_id}": {
+      "get": {
+        "tags": [
+          "Video Attribution",
+          "Video Attribution"
+        ],
+        "summary": "Download signed video",
+        "description": "Download signed video bytes. Available for 10 minutes after signing files larger than 50MB.",
+        "operationId": "video_download_api_v1_enterprise_video_download__video_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "video_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Video Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/enterprise/video/stream/start": {
+      "post": {
+        "tags": [
+          "Video Stream Attribution",
+          "Video Stream Attribution"
+        ],
+        "summary": "Start video stream signing session",
+        "description": "Create a new session for signing video stream segments. Signing credentials are cached for the session lifetime. Each segment is signed individually with manifest chaining.",
+        "operationId": "stream_start_api_v1_enterprise_video_stream_start_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_stream_start_api_v1_enterprise_video_stream_start_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamStartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/video/stream/{session_id}/segment": {
+      "post": {
+        "tags": [
+          "Video Stream Attribution",
+          "Video Stream Attribution"
+        ],
+        "summary": "Sign a video stream segment",
+        "description": "Sign a single CMAF/fMP4 segment with a C2PA manifest. Manifest is chained to the previous segment.",
+        "operationId": "stream_segment_api_v1_enterprise_video_stream__session_id__segment_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_stream_segment_api_v1_enterprise_video_stream__session_id__segment_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamSegmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/enterprise/video/stream/{session_id}/finalize": {
+      "post": {
+        "tags": [
+          "Video Stream Attribution",
+          "Video Stream Attribution"
+        ],
+        "summary": "Finalize video stream session",
+        "description": "Finalize the stream session and compute a Merkle root over all segment manifest hashes.",
+        "operationId": "stream_finalize_api_v1_enterprise_video_stream__session_id__finalize_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamFinalizeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/enterprise/video/stream/{session_id}/status": {
+      "get": {
+        "tags": [
+          "Video Stream Attribution",
+          "Video Stream Attribution"
+        ],
+        "summary": "Check stream session status",
+        "description": "Get the current status of a video stream signing session.",
+        "operationId": "stream_status_api_v1_enterprise_video_stream__session_id__status_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/verify/image": {
       "post": {
         "tags": [
@@ -9748,6 +10317,90 @@
         }
       }
     },
+    "/api/v1/verify/audio": {
+      "post": {
+        "tags": [
+          "Audio Verification"
+        ],
+        "summary": "Verify a C2PA-signed audio file",
+        "description": "Public endpoint. Accepts a base64-encoded audio file, extracts and verifies the embedded JUMBF C2PA manifest. No authentication required.",
+        "operationId": "verify_audio_api_v1_verify_audio_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicAudioVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAudioVerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/video": {
+      "post": {
+        "tags": [
+          "Video Verification"
+        ],
+        "summary": "Verify a C2PA-signed video file",
+        "description": "Public endpoint. Accepts a video file as multipart/form-data, extracts and verifies the embedded JUMBF C2PA manifest. No authentication required.",
+        "operationId": "verify_video_api_v1_verify_video_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_verify_video_api_v1_verify_video_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicVideoVerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/public/verify/{ref_id}": {
       "get": {
         "tags": [
@@ -9810,7 +10463,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -9820,7 +10473,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -9830,7 +10483,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -9879,7 +10532,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__schemas__embeddings__BatchVerifyRequest"
+                "$ref": "#/components/schemas/BatchVerifyRequest"
               }
             }
           }
@@ -9900,7 +10553,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -9910,10 +10563,56 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/verify-text": {
+      "post": {
+        "tags": [
+          "Public - Verification"
+        ],
+        "summary": "Verify text with embedded signatures (Public - No Auth Required)",
+        "description": "Submit text containing invisible Encypher signatures for verification.\n    Returns signer identity, tamper detection result, and signing metadata.\n\n    **This endpoint is PUBLIC and does NOT require authentication.**",
+        "operationId": "verify_text_api_v1_public_verify_text_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyTextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Verification result",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
           },
           "422": {
             "description": "Validation Error",
@@ -9933,8 +10632,8 @@
         "tags": [
           "Public - Verification"
         ],
-        "summary": "DEPRECATED - Use POST /api/v1/verify instead",
-        "description": "**\u26a0\ufe0f DEPRECATED: This endpoint is deprecated and will be removed.**\n\n    Please use `POST /api/v1/verify` instead, which provides:\n    - Full C2PA trust chain validation\n    - Document info, licensing, and C2PA details (all free)\n    - Merkle proof (with API key)\n    - Better performance via verification-service",
+        "summary": "DEPRECATED - Use POST /api/v1/public/verify-text instead",
+        "description": "DEPRECATED: Use POST /api/v1/public/verify-text instead.",
         "operationId": "extract_and_verify_embedding_api_v1_public_extract_and_verify_post",
         "requestBody": {
           "content": {
@@ -9955,8 +10654,8 @@
               }
             }
           },
-          "301": {
-            "description": "Redirect to /api/v1/verify"
+          "410": {
+            "description": "Endpoint removed"
           },
           "422": {
             "description": "Validation Error",
@@ -9970,6 +10669,65 @@
           }
         },
         "deprecated": true
+      }
+    },
+    "/api/v1/public/verify": {
+      "post": {
+        "tags": [
+          "Public - Verification"
+        ],
+        "summary": "Unified text verification (Public)",
+        "description": "Verify text content for embedded Encypher signatures. Returns a unified response envelope.",
+        "operationId": "unified_verify_api_v1_public_verify_post",
+        "responses": {
+          "200": {
+            "description": "Verification result",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request (empty text)"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/v1/public/verify/media": {
+      "post": {
+        "tags": [
+          "Public - Verification"
+        ],
+        "summary": "Unified media verification (Public)",
+        "description": "Verify binary media (image, audio, video) for C2PA provenance.",
+        "operationId": "unified_verify_media_api_v1_public_verify_media_post",
+        "parameters": [
+          {
+            "name": "file",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "title": "File"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification result",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "No file uploaded"
+          }
+        }
       }
     },
     "/api/v1/public/c2pa/validate-manifest": {
@@ -10236,7 +10994,7 @@
           "Public - Rights"
         ],
         "summary": "Resolve rights for a specific document",
-        "description": "Resolve the full rights and licensing terms for a signed document.\n\nThis endpoint is public and rate-limited. Any entity \u2014 AI companies, developers,\nresearchers \u2014 can call this to discover the publisher's licensing terms for content\nthey have encountered.\n\nCalling this endpoint constitutes **constructive notice** \u2014 the information was\navailable, accessible, and machine-readable.",
+        "description": "Resolve the full rights and licensing terms for a signed document.\n\nThis endpoint is public and rate-limited. Any entity \u2014 AI companies, developers,\nresearchers \u2014 can call this to discover the publisher's licensing terms for content\nthey have encountered.\n\nWhen `segment_index` is provided, returns the per-segment rights for that\nsegment if available, falling back to the document-level rights.\n\nCalling this endpoint constitutes **constructive notice** \u2014 the information was\navailable, accessible, and machine-readable.",
         "operationId": "get_document_rights_api_v1_public_rights__document_id__get",
         "parameters": [
           {
@@ -10249,6 +11007,25 @@
               "title": "Document Id"
             },
             "description": "Document ID from the signed content"
+          },
+          {
+            "name": "segment_index",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional segment index (0-based). When provided, returns per-segment rights if available.",
+              "title": "Segment Index"
+            },
+            "description": "Optional segment index (0-based). When provided, returns per-segment rights if available."
           },
           {
             "name": "endpoint_type",
@@ -10730,6 +11507,137 @@
                   "additionalProperties": true,
                   "title": "Response Validate Olp Token Api V1 Public Rights Rsl Olp Validate  Token  Get"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/prebid/sign": {
+      "post": {
+        "tags": [
+          "Public - Prebid Provenance"
+        ],
+        "summary": "Auto-sign article content for Prebid RTD module",
+        "description": "Public endpoint for the Encypher RTD provider module. Accepts article\n    text extracted from the DOM, signs it with C2PA provenance (notarization\n    model), and returns a manifest URL for injection into OpenRTB bid requests.\n\n    **No authentication required.**\n\n    Content text is never stored. Only hashes, metadata, and C2PA manifests\n    are persisted. Duplicate requests for the same content on the same domain\n    return the existing manifest without charging quota.\n\n    **Rate Limiting:**\n    - 60 requests/minute per IP\n    - 1,000 unique content signatures per domain per month (free tier)",
+        "operationId": "prebid_sign_api_v1_public_prebid_sign_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrebidSignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Content signed or existing manifest returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrebidSignResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit or quota exceeded"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/prebid/manifest/{record_id}": {
+      "get": {
+        "tags": [
+          "Public - Prebid Provenance"
+        ],
+        "summary": "Retrieve a Prebid content manifest",
+        "description": "Returns the C2PA manifest metadata for a signed content record.",
+        "operationId": "prebid_manifest_api_v1_public_prebid_manifest__record_id__get",
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Manifest metadata",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "Record not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/prebid/status/{domain}": {
+      "get": {
+        "tags": [
+          "Public - Prebid Provenance"
+        ],
+        "summary": "Check signing status for a domain",
+        "description": "Returns signing statistics for a Prebid-provisioned domain.",
+        "operationId": "prebid_status_api_v1_public_prebid_status__domain__get",
+        "parameters": [
+          {
+            "name": "domain",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Domain"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Domain signing stats",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -11590,6 +12498,369 @@
         "title": "AgreementType",
         "description": "Type of licensing agreement."
       },
+      "AudioSignRequest": {
+        "properties": {
+          "audio_data": {
+            "type": "string",
+            "title": "Audio Data",
+            "description": "Base64-encoded audio file bytes"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "Audio MIME type (audio/wav, audio/mpeg, audio/mp4)"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Title",
+            "description": "Human-readable title for the C2PA manifest",
+            "default": "untitled-audio"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id",
+            "description": "Custom document identifier. Auto-generated if omitted."
+          },
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "C2PA action verb (e.g. c2pa.created, c2pa.dubbed, c2pa.mixed)",
+            "default": "c2pa.created"
+          },
+          "custom_assertions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Custom Assertions",
+            "description": "Additional C2PA assertions to embed"
+          },
+          "rights_data": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Rights Data",
+            "description": "Rights metadata for com.encypher.rights.v1 assertion"
+          }
+        },
+        "type": "object",
+        "required": [
+          "audio_data",
+          "mime_type"
+        ],
+        "title": "AudioSignRequest",
+        "description": "Request to sign an audio file with a C2PA manifest."
+      },
+      "AudioSignResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "audio_id": {
+            "type": "string",
+            "title": "Audio Id"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "signed_audio_base64": {
+            "type": "string",
+            "title": "Signed Audio Base64"
+          },
+          "original_hash": {
+            "type": "string",
+            "title": "Original Hash"
+          },
+          "signed_hash": {
+            "type": "string",
+            "title": "Signed Hash"
+          },
+          "c2pa_instance_id": {
+            "type": "string",
+            "title": "C2Pa Instance Id"
+          },
+          "c2pa_manifest_hash": {
+            "type": "string",
+            "title": "C2Pa Manifest Hash"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "c2pa_signed": {
+            "type": "boolean",
+            "title": "C2Pa Signed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "audio_id",
+          "document_id",
+          "signed_audio_base64",
+          "original_hash",
+          "signed_hash",
+          "c2pa_instance_id",
+          "c2pa_manifest_hash",
+          "size_bytes",
+          "mime_type",
+          "c2pa_signed"
+        ],
+        "title": "AudioSignResponse"
+      },
+      "AudioVerificationResult": {
+        "properties": {
+          "audio_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Id"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "c2pa_manifest_valid": {
+            "type": "boolean",
+            "title": "C2Pa Manifest Valid"
+          },
+          "hash_matches": {
+            "type": "boolean",
+            "title": "Hash Matches"
+          },
+          "watermark_valid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Valid"
+          },
+          "c2pa_instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "C2Pa Instance Id"
+          },
+          "signer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "cryptographically_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cryptographically Verified"
+          },
+          "historically_signed_by_us": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Historically Signed By Us"
+          },
+          "overall_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall Status"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "c2pa_manifest_valid",
+          "hash_matches"
+        ],
+        "title": "AudioVerificationResult"
+      },
+      "AudioVerifyRequest": {
+        "properties": {
+          "audio_data": {
+            "type": "string",
+            "title": "Audio Data",
+            "description": "Base64-encoded audio file bytes"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "Audio MIME type (audio/wav, audio/mpeg, audio/mp4)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "audio_data",
+          "mime_type"
+        ],
+        "title": "AudioVerifyRequest",
+        "description": "Request to verify a C2PA manifest in an audio file."
+      },
+      "AudioVerifyResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "c2pa_manifest_valid": {
+            "type": "boolean",
+            "title": "C2Pa Manifest Valid"
+          },
+          "hash_matches": {
+            "type": "boolean",
+            "title": "Hash Matches"
+          },
+          "c2pa_instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "C2Pa Instance Id"
+          },
+          "signer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "manifest_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "valid",
+          "c2pa_manifest_valid",
+          "hash_matches"
+        ],
+        "title": "AudioVerifyResponse"
+      },
       "AuditLogEntry": {
         "properties": {
           "id": {
@@ -12283,65 +13554,21 @@
       },
       "BatchVerifyRequest": {
         "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "c2pa",
-              "embeddings"
-            ],
-            "title": "Mode",
-            "description": "Processing mode: 'c2pa' or 'embeddings'"
-          },
-          "segmentation_level": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "document",
-                  "paragraph",
-                  "sentence"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Segmentation Level",
-            "description": "Segmentation level (embeddings mode only)",
-            "default": "sentence"
-          },
-          "idempotency_key": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 8,
-            "title": "Idempotency Key",
-            "description": "Caller-supplied key used to deduplicate retries"
-          },
-          "items": {
+          "references": {
             "items": {
-              "$ref": "#/components/schemas/BatchItemPayload"
+              "$ref": "#/components/schemas/VerifyEmbeddingRequest"
             },
             "type": "array",
-            "maxItems": 100,
-            "minItems": 1,
-            "title": "Items",
-            "description": "Documents to process (max 100)"
-          },
-          "fail_fast": {
-            "type": "boolean",
-            "title": "Fail Fast",
-            "description": "Abort remaining items upon the first error when set to true",
-            "default": false
+            "title": "References",
+            "description": "List of embeddings to verify"
           }
         },
         "type": "object",
         "required": [
-          "mode",
-          "idempotency_key",
-          "items"
+          "references"
         ],
         "title": "BatchVerifyRequest",
-        "description": "Batch verification request (shares schema for now)."
+        "description": "Request to verify multiple embeddings."
       },
       "BatchVerifyResponse": {
         "properties": {
@@ -12538,6 +13765,133 @@
         ],
         "title": "Body_sign_image_endpoint_api_v1_cdn_images_sign_post"
       },
+      "Body_sign_media_api_v1_sign_media_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File",
+            "description": "Media file to sign"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Title for the C2PA manifest",
+            "default": "Untitled"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "C2PA action: c2pa.created or c2pa.edited",
+            "default": "c2pa.created"
+          },
+          "digital_source_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digital Source Type",
+            "description": "IPTC digital source type"
+          },
+          "ingredient": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "binary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ingredient",
+            "description": "Previously signed file to reference as ingredient"
+          },
+          "enable_audio_watermark": {
+            "type": "boolean",
+            "title": "Enable Audio Watermark",
+            "description": "Apply spread-spectrum audio watermark (Enterprise only, audio files only)",
+            "default": false
+          },
+          "enable_video_watermark": {
+            "type": "boolean",
+            "title": "Enable Video Watermark",
+            "description": "Apply spread-spectrum video watermark (Enterprise only, video files only)",
+            "default": false
+          },
+          "enable_image_watermark": {
+            "type": "boolean",
+            "title": "Enable Image Watermark",
+            "description": "Apply TrustMark neural image watermark (Enterprise only, image files only)",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_sign_media_api_v1_sign_media_post"
+      },
+      "Body_stream_segment_api_v1_enterprise_video_stream__session_id__segment_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File",
+            "description": "Video segment file (fMP4/CMAF)"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "Segment MIME type",
+            "default": "video/mp4"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Segment title",
+            "default": "stream-segment"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "C2PA action",
+            "default": "c2pa.created"
+          },
+          "custom_assertions": {
+            "type": "string",
+            "title": "Custom Assertions",
+            "description": "JSON-encoded assertions",
+            "default": "[]"
+          },
+          "rights_data": {
+            "type": "string",
+            "title": "Rights Data",
+            "description": "JSON-encoded rights metadata",
+            "default": "{}"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_stream_segment_api_v1_enterprise_video_stream__session_id__segment_post"
+      },
+      "Body_stream_start_api_v1_enterprise_video_stream_start_post": {
+        "properties": {
+          "enable_video_watermark": {
+            "type": "boolean",
+            "title": "Enable Video Watermark",
+            "description": "Embed spread-spectrum watermark in each segment",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "Body_stream_start_api_v1_enterprise_video_stream_start_post"
+      },
       "Body_verify_image_api_v1_cdn_verify_post": {
         "properties": {
           "file": {
@@ -12552,6 +13906,123 @@
           "file"
         ],
         "title": "Body_verify_image_api_v1_cdn_verify_post"
+      },
+      "Body_verify_video_api_v1_verify_video_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File",
+            "description": "Video file to verify"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "Video MIME type (video/mp4, video/quicktime, video/x-msvideo)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "mime_type"
+        ],
+        "title": "Body_verify_video_api_v1_verify_video_post"
+      },
+      "Body_video_sign_api_v1_enterprise_video_sign_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File",
+            "description": "Video file (MP4, MOV, M4V, AVI)"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "Video MIME type (video/mp4, video/quicktime, video/x-msvideo)"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Title for C2PA manifest",
+            "default": "untitled-video"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id",
+            "description": "Custom document ID (auto-generated if omitted)"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "C2PA action (c2pa.created, c2pa.edited, c2pa.transcoded)",
+            "default": "c2pa.created"
+          },
+          "digital_source_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digital Source Type",
+            "description": "C2PA digital source type (e.g. digitalCapture, trainedAlgorithmicMedia)"
+          },
+          "custom_assertions": {
+            "type": "string",
+            "title": "Custom Assertions",
+            "description": "JSON-encoded list of additional C2PA assertions",
+            "default": "[]"
+          },
+          "rights_data": {
+            "type": "string",
+            "title": "Rights Data",
+            "description": "JSON-encoded rights metadata",
+            "default": "{}"
+          },
+          "enable_video_watermark": {
+            "type": "boolean",
+            "title": "Enable Video Watermark",
+            "description": "Apply spread-spectrum video watermark (Enterprise only)",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "mime_type"
+        ],
+        "title": "Body_video_sign_api_v1_enterprise_video_sign_post"
+      },
+      "Body_video_verify_api_v1_enterprise_video_verify_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File",
+            "description": "Video file to verify"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "Video MIME type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "mime_type"
+        ],
+        "title": "Body_video_verify_api_v1_enterprise_video_verify_post"
       },
       "BulkInviteItem": {
         "properties": {
@@ -13692,6 +15163,18 @@
             "title": "Chain Pem",
             "description": "PEM-encoded intermediate certificates (if not included in certificate_pem)"
           },
+          "private_key_pem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Private Key Pem",
+            "description": "PEM-encoded private key matching the certificate. Required for the API to sign with this certificate."
+          },
           "key_name": {
             "anyOf": [
               {
@@ -13741,6 +15224,20 @@
               }
             ],
             "title": "Error"
+          },
+          "warnings": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warnings"
           }
         },
         "type": "object",
@@ -15445,43 +16942,39 @@
           "error": {
             "type": "string",
             "title": "Error",
-            "description": "Error type"
+            "description": "Error message"
           },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "Human-readable error message"
-          },
-          "details": {
+          "detail": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Details",
-            "description": "Additional error details"
+            "title": "Detail",
+            "description": "Detailed error information"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code",
+            "description": "Error code for programmatic handling"
           }
         },
         "type": "object",
         "required": [
-          "error",
-          "message"
+          "error"
         ],
         "title": "ErrorResponse",
-        "description": "Standard error response schema.",
-        "example": {
-          "details": {
-            "field": "segmentation_level",
-            "value": "invalid"
-          },
-          "error": "ValidationError",
-          "message": "Invalid segmentation level provided",
-          "success": false
-        }
+        "description": "Error response."
       },
       "EvidenceGenerateRequest": {
         "properties": {
@@ -16903,6 +18396,39 @@
               }
             ],
             "title": "Overall Status"
+          },
+          "watermark_detected": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Detected"
+          },
+          "watermark_payload": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Payload"
+          },
+          "watermark_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Confidence"
           },
           "error": {
             "anyOf": [
@@ -18328,6 +19854,134 @@
         ],
         "title": "PolicyRule"
       },
+      "PrebidSignRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 50000,
+            "minLength": 50,
+            "title": "Text",
+            "description": "Article text extracted from the DOM by the RTD module."
+          },
+          "page_url": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Page Url",
+            "description": "Canonical URL of the page."
+          },
+          "document_title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Title",
+            "description": "Page title from document.title."
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "page_url"
+        ],
+        "title": "PrebidSignRequest",
+        "description": "Request body for Prebid auto-sign endpoint."
+      },
+      "PrebidSignResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "manifest_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Url"
+          },
+          "signer_tier": {
+            "type": "string",
+            "title": "Signer Tier",
+            "default": "encypher_free"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
+          },
+          "org_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Org Id"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "upgrade_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upgrade Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "PrebidSignResponse",
+        "description": "Response from Prebid auto-sign endpoint."
+      },
       "ProgressionStage": {
         "properties": {
           "stage": {
@@ -18468,6 +20122,154 @@
         ],
         "title": "ProgressionStatusResponse",
         "description": "Publisher progression status across the 6-stage value journey."
+      },
+      "PublicAudioVerifyRequest": {
+        "properties": {
+          "audio_data": {
+            "type": "string",
+            "title": "Audio Data",
+            "description": "Base64-encoded audio file bytes"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "Audio MIME type (audio/wav, audio/mpeg, audio/mp4)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "audio_data",
+          "mime_type"
+        ],
+        "title": "PublicAudioVerifyRequest",
+        "description": "Request to verify a C2PA manifest in an audio file."
+      },
+      "PublicAudioVerifyResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "c2pa_manifest_valid": {
+            "type": "boolean",
+            "title": "C2Pa Manifest Valid"
+          },
+          "hash_matches": {
+            "type": "boolean",
+            "title": "Hash Matches"
+          },
+          "c2pa_instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "C2Pa Instance Id"
+          },
+          "signer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "manifest_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "correlation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Id"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "watermark_detected": {
+            "type": "boolean",
+            "title": "Watermark Detected",
+            "default": false
+          },
+          "watermark_payload": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Payload"
+          },
+          "watermark_confidence": {
+            "type": "number",
+            "title": "Watermark Confidence",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "valid",
+          "c2pa_manifest_valid",
+          "hash_matches"
+        ],
+        "title": "PublicAudioVerifyResponse"
       },
       "PublicKeyInfo": {
         "properties": {
@@ -18654,6 +20456,133 @@
           },
           "success": true
         }
+      },
+      "PublicVideoVerifyResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "c2pa_manifest_valid": {
+            "type": "boolean",
+            "title": "C2Pa Manifest Valid"
+          },
+          "hash_matches": {
+            "type": "boolean",
+            "title": "Hash Matches"
+          },
+          "c2pa_instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "C2Pa Instance Id"
+          },
+          "signer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "manifest_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "correlation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Id"
+          },
+          "verified_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verified At"
+          },
+          "watermark_detected": {
+            "type": "boolean",
+            "title": "Watermark Detected",
+            "default": false
+          },
+          "watermark_payload": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Payload"
+          },
+          "watermark_confidence": {
+            "type": "number",
+            "title": "Watermark Confidence",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "valid",
+          "c2pa_manifest_valid",
+          "hash_matches"
+        ],
+        "title": "PublicVideoVerifyResponse"
       },
       "QuotaInfo": {
         "properties": {
@@ -19071,8 +21000,23 @@
             },
             "type": "array",
             "maxItems": 20,
-            "minItems": 1,
             "title": "Images"
+          },
+          "audios": {
+            "items": {
+              "$ref": "#/components/schemas/RichContentAudio"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Audios"
+          },
+          "videos": {
+            "items": {
+              "$ref": "#/components/schemas/RichContentVideo"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "title": "Videos"
           },
           "options": {
             "$ref": "#/components/schemas/RichSignOptions"
@@ -19091,10 +21035,54 @@
         },
         "type": "object",
         "required": [
-          "content",
-          "images"
+          "content"
         ],
         "title": "RichArticleSignRequest"
+      },
+      "RichContentAudio": {
+        "properties": {
+          "data": {
+            "type": "string",
+            "title": "Data",
+            "description": "Base64-encoded audio bytes"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename",
+            "description": "Original filename e.g. interview.mp3"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "MIME type of the audio"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Position",
+            "description": "Order of this audio within the article",
+            "default": 0
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "filename",
+          "mime_type"
+        ],
+        "title": "RichContentAudio"
       },
       "RichContentImage": {
         "properties": {
@@ -19153,6 +21141,51 @@
         ],
         "title": "RichContentImage"
       },
+      "RichContentVideo": {
+        "properties": {
+          "data": {
+            "type": "string",
+            "title": "Data",
+            "description": "Base64-encoded video bytes"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename",
+            "description": "Original filename e.g. clip.mp4"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "MIME type of the video"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Position",
+            "description": "Order of this video within the article",
+            "default": 0
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data",
+          "filename",
+          "mime_type"
+        ],
+        "title": "RichContentVideo"
+      },
       "RichSignOptions": {
         "properties": {
           "segmentation_level": {
@@ -19173,6 +21206,16 @@
           "enable_trustmark": {
             "type": "boolean",
             "title": "Enable Trustmark",
+            "default": false
+          },
+          "enable_audio_watermark": {
+            "type": "boolean",
+            "title": "Enable Audio Watermark",
+            "default": false
+          },
+          "enable_video_watermark": {
+            "type": "boolean",
+            "title": "Enable Video Watermark",
             "default": false
           },
           "image_quality": {
@@ -19251,6 +21294,22 @@
             "title": "Image Verifications",
             "default": []
           },
+          "audio_verifications": {
+            "items": {
+              "$ref": "#/components/schemas/AudioVerificationResult"
+            },
+            "type": "array",
+            "title": "Audio Verifications",
+            "default": []
+          },
+          "video_verifications": {
+            "items": {
+              "$ref": "#/components/schemas/VideoVerificationResult"
+            },
+            "type": "array",
+            "title": "Video Verifications",
+            "default": []
+          },
           "composite_manifest_valid": {
             "type": "boolean",
             "title": "Composite Manifest Valid"
@@ -19295,7 +21354,7 @@
           "signer_identity": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/app__schemas__rich_verify_schemas__SignerIdentity"
+                "$ref": "#/components/schemas/SignerIdentity"
               },
               {
                 "type": "null"
@@ -19467,6 +21526,30 @@
         "title": "SegmentLocationResponse",
         "description": "Location of a segment within the original document."
       },
+      "SegmentRightsMapping": {
+        "properties": {
+          "segment_indices": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Segment Indices",
+            "description": "Segment indices (0-based) that this rights profile applies to"
+          },
+          "rights": {
+            "$ref": "#/components/schemas/RightsMetadata",
+            "description": "Rights metadata for the specified segments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "segment_indices",
+          "rights"
+        ],
+        "title": "SegmentRightsMapping",
+        "description": "Maps a set of segment indices to a specific rights profile.\n\nUsed with segment_rights on SignOptions to assign different rights\nto different segments within a single document.  Segments not\ncovered by any mapping inherit the document-level ``rights`` field."
+      },
       "SignDocument": {
         "properties": {
           "text": {
@@ -19542,7 +21625,7 @@
           "document_type": {
             "type": "string",
             "title": "Document Type",
-            "description": "Document type: article, legal_brief, contract, ai_output",
+            "description": "Document type: article, social_media, legal_brief, contract, ai_output",
             "default": "article"
           },
           "claim_generator": {
@@ -19752,6 +21835,21 @@
             "description": "Print Leak Detection - embed imperceptible spacing patterns that survive printing and scanning, enabling source identification from physical or PDF copies (Enterprise)",
             "default": false
           },
+          "segment_rights": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SegmentRightsMapping"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment Rights",
+            "description": "Per-segment rights mappings (Enterprise). Each entry maps a set of segment indices to a RightsMetadata profile. Segments not covered inherit the document-level rights field. Produces a com.encypher.rights.v2 compound assertion in the C2PA manifest."
+          },
           "disable_c2pa": {
             "type": "boolean",
             "title": "Disable C2Pa",
@@ -19790,7 +21888,7 @@
         },
         "type": "object",
         "title": "SignOptions",
-        "description": "Options for signing - features are gated by tier.\n\nTier Feature Matrix:\n\n| Feature                  | Free | Enterprise |\n|--------------------------|:----:|:----------:|\n| document_type            | yes  | yes        |\n| claim_generator          | yes  | yes        |\n| segmentation_level       | all except word | all |\n| manifest_mode            | all  | all        |\n| embedding_strategy       | all  | all        |\n| index_for_attribution    | yes  | yes        |\n| custom_assertions        | yes  | yes        |\n| template_id              | yes  | yes        |\n| rights / use_rights_profile | yes | yes     |\n| add_dual_binding         | no   | yes        |\n| include_fingerprint      | no   | yes        |\n| enable_print_fingerprint | no   | yes        |\n| word segmentation        | no   | yes        |\n| batch (documents array)  | 10   | 100        |"
+        "description": "Options for signing - features are gated by tier.\n\nTier Feature Matrix:\n\n| Feature                  | Free | Enterprise |\n|--------------------------|:----:|:----------:|\n| document_type            | yes  | yes        |\n| claim_generator          | yes  | yes        |\n| segmentation_level       | all except word | all |\n| manifest_mode            | all  | all        |\n| embedding_strategy       | all  | all        |\n| index_for_attribution    | yes  | yes        |\n| custom_assertions        | yes  | yes        |\n| template_id              | yes  | yes        |\n| rights / use_rights_profile | yes | yes     |\n| add_dual_binding         | no   | yes        |\n| include_fingerprint      | no   | yes        |\n| enable_print_fingerprint | no   | yes        |\n| segment_rights           | no   | yes        |\n| word segmentation        | no   | yes        |\n| batch (documents array)  | 10   | 100        |"
       },
       "SignatureVerification": {
         "properties": {
@@ -19853,9 +21951,15 @@
       "SignerIdentity": {
         "properties": {
           "organization_id": {
-            "type": "string",
-            "title": "Organization Id",
-            "description": "Organization identifier"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
           },
           "organization_name": {
             "anyOf": [
@@ -19866,59 +21970,16 @@
                 "type": "null"
               }
             ],
-            "title": "Organization Name",
-            "description": "Organization display name"
-          },
-          "certificate_status": {
-            "type": "string",
-            "title": "Certificate Status",
-            "description": "Certificate lifecycle: none, pending, active, expired, revoked"
-          },
-          "ca_backed": {
-            "type": "boolean",
-            "title": "Ca Backed",
-            "description": "True if the org certificate chains to a trusted CA (not self-signed)",
-            "default": false
-          },
-          "issuer": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Issuer",
-            "description": "Certificate issuer (CA name) if CA-backed, or 'self-signed'"
-          },
-          "certificate_expiry": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Certificate Expiry",
-            "description": "Certificate expiry timestamp"
+            "title": "Organization Name"
           },
           "trust_level": {
             "type": "string",
             "title": "Trust Level",
-            "description": "Trust level: 'ca_verified' (chains to C2PA-trusted CA), 'self_signed' (Encypher-managed key), 'none' (no certificate)",
-            "default": "self_signed"
+            "default": "unknown"
           }
         },
         "type": "object",
-        "required": [
-          "organization_id",
-          "certificate_status"
-        ],
-        "title": "SignerIdentity",
-        "description": "Signer identity and trust chain information.\n\nTEAM_165: When an org starts with a self-signed key managed by Encypher,\nmicro markers are already cryptographically bound to that key. If the org\nlater obtains a CA-signed certificate (via /byok/certificates), the trust\nchain upgrades automatically \u2014 no re-signing needed."
+        "title": "SignerIdentity"
       },
       "SourceRecord": {
         "properties": {
@@ -20061,6 +22122,34 @@
         ],
         "title": "SourceRecord",
         "description": "A single source record in the lookup results."
+      },
+      "StreamFinalizeResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "segment_count": {
+            "type": "integer",
+            "title": "Segment Count"
+          },
+          "merkle_root": {
+            "type": "string",
+            "title": "Merkle Root"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "segment_count",
+          "merkle_root",
+          "status"
+        ],
+        "title": "StreamFinalizeResponse"
       },
       "StreamMerkleFinalizeRequest": {
         "properties": {
@@ -20473,6 +22562,69 @@
         "title": "StreamMerkleStatusResponse",
         "description": "Response with streaming Merkle session status."
       },
+      "StreamSegmentResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "segment_index": {
+            "type": "integer",
+            "title": "Segment Index"
+          },
+          "signed_segment_base64": {
+            "type": "string",
+            "title": "Signed Segment Base64"
+          },
+          "original_hash": {
+            "type": "string",
+            "title": "Original Hash"
+          },
+          "signed_hash": {
+            "type": "string",
+            "title": "Signed Hash"
+          },
+          "c2pa_instance_id": {
+            "type": "string",
+            "title": "C2Pa Instance Id"
+          },
+          "c2pa_manifest_hash": {
+            "type": "string",
+            "title": "C2Pa Manifest Hash"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "c2pa_signed": {
+            "type": "boolean",
+            "title": "C2Pa Signed"
+          },
+          "watermark_applied": {
+            "type": "boolean",
+            "title": "Watermark Applied"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "segment_index",
+          "signed_segment_base64",
+          "original_hash",
+          "signed_hash",
+          "c2pa_instance_id",
+          "c2pa_manifest_hash",
+          "size_bytes",
+          "mime_type",
+          "c2pa_signed",
+          "watermark_applied"
+        ],
+        "title": "StreamSegmentResponse"
+      },
       "StreamSignRequest": {
         "properties": {
           "text": {
@@ -20529,6 +22681,67 @@
         ],
         "title": "StreamSignRequest",
         "description": "Request payload for streaming signing run."
+      },
+      "StreamStartResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "status",
+          "message"
+        ],
+        "title": "StreamStartResponse"
+      },
+      "StreamStatusResponse": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "segment_count": {
+            "type": "integer",
+            "title": "Segment Count"
+          },
+          "created_at": {
+            "type": "number",
+            "title": "Created At"
+          },
+          "last_activity": {
+            "type": "number",
+            "title": "Last Activity"
+          },
+          "expires_at": {
+            "type": "number",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "status",
+          "segment_count",
+          "created_at",
+          "last_activity",
+          "expires_at"
+        ],
+        "title": "StreamStatusResponse"
       },
       "SuccessResponse": {
         "properties": {
@@ -21815,7 +24028,7 @@
           "signer_identity": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/SignerIdentity"
+                "$ref": "#/components/schemas/app__schemas__embeddings__SignerIdentity"
               },
               {
                 "type": "null"
@@ -21866,6 +24079,21 @@
         ],
         "title": "VerifyEmbeddingResponse",
         "description": "Response from verifying an embedding."
+      },
+      "VerifyTextRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "description": "Text with invisible embedding to verify"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "VerifyTextRequest",
+        "description": "Request body for text verification."
       },
       "VerifyVerdict": {
         "properties": {
@@ -21957,6 +24185,342 @@
         ],
         "title": "VerifyVerdict",
         "description": "Detailed verification verdict data."
+      },
+      "VideoSignResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "video_id": {
+            "type": "string",
+            "title": "Video Id"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "signed_video_base64": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Video Base64",
+            "description": "Base64-encoded signed video (null for files > 50MB; use download_url instead)"
+          },
+          "download_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Download Url",
+            "description": "URL to download signed video (for files > 50MB)"
+          },
+          "original_hash": {
+            "type": "string",
+            "title": "Original Hash"
+          },
+          "signed_hash": {
+            "type": "string",
+            "title": "Signed Hash"
+          },
+          "c2pa_instance_id": {
+            "type": "string",
+            "title": "C2Pa Instance Id"
+          },
+          "c2pa_manifest_hash": {
+            "type": "string",
+            "title": "C2Pa Manifest Hash"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "c2pa_signed": {
+            "type": "boolean",
+            "title": "C2Pa Signed"
+          },
+          "watermark_applied": {
+            "type": "boolean",
+            "title": "Watermark Applied",
+            "default": false
+          },
+          "watermark_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "video_id",
+          "document_id",
+          "original_hash",
+          "signed_hash",
+          "c2pa_instance_id",
+          "c2pa_manifest_hash",
+          "size_bytes",
+          "mime_type",
+          "c2pa_signed"
+        ],
+        "title": "VideoSignResponse"
+      },
+      "VideoVerificationResult": {
+        "properties": {
+          "video_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Id"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "c2pa_manifest_valid": {
+            "type": "boolean",
+            "title": "C2Pa Manifest Valid"
+          },
+          "hash_matches": {
+            "type": "boolean",
+            "title": "Hash Matches"
+          },
+          "watermark_valid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Valid"
+          },
+          "c2pa_instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "C2Pa Instance Id"
+          },
+          "signer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "cryptographically_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cryptographically Verified"
+          },
+          "historically_signed_by_us": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Historically Signed By Us"
+          },
+          "overall_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Overall Status"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "c2pa_manifest_valid",
+          "hash_matches"
+        ],
+        "title": "VideoVerificationResult"
+      },
+      "VideoVerifyResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "c2pa_manifest_valid": {
+            "type": "boolean",
+            "title": "C2Pa Manifest Valid"
+          },
+          "hash_matches": {
+            "type": "boolean",
+            "title": "Hash Matches"
+          },
+          "c2pa_instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "C2Pa Instance Id"
+          },
+          "signer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "manifest_data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "watermark_detected": {
+            "type": "boolean",
+            "title": "Watermark Detected",
+            "default": false
+          },
+          "watermark_payload": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Payload"
+          },
+          "watermark_confidence": {
+            "type": "number",
+            "title": "Watermark Confidence",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "valid",
+          "c2pa_manifest_valid",
+          "hash_matches"
+        ],
+        "title": "VideoVerifyResponse"
       },
       "WebhookCreateRequest": {
         "properties": {
@@ -22910,81 +25474,74 @@
         "title": "ZWResolveResponse",
         "description": "Response for ZW segment UUID resolution."
       },
-      "app__schemas__embeddings__BatchVerifyRequest": {
+      "app__schemas__batch__BatchVerifyRequest": {
         "properties": {
-          "references": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "c2pa",
+              "embeddings"
+            ],
+            "title": "Mode",
+            "description": "Processing mode: 'c2pa' or 'embeddings'"
+          },
+          "segmentation_level": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "document",
+                  "paragraph",
+                  "sentence"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmentation Level",
+            "description": "Segmentation level (embeddings mode only)",
+            "default": "sentence"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "description": "Caller-supplied key used to deduplicate retries"
+          },
+          "items": {
             "items": {
-              "$ref": "#/components/schemas/VerifyEmbeddingRequest"
+              "$ref": "#/components/schemas/BatchItemPayload"
             },
             "type": "array",
-            "title": "References",
-            "description": "List of embeddings to verify"
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Items",
+            "description": "Documents to process (max 100)"
+          },
+          "fail_fast": {
+            "type": "boolean",
+            "title": "Fail Fast",
+            "description": "Abort remaining items upon the first error when set to true",
+            "default": false
           }
         },
         "type": "object",
         "required": [
-          "references"
+          "mode",
+          "idempotency_key",
+          "items"
         ],
         "title": "BatchVerifyRequest",
-        "description": "Request to verify multiple embeddings."
+        "description": "Batch verification request (shares schema for now)."
       },
-      "app__schemas__embeddings__ErrorResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "Always false for errors",
-            "default": false
-          },
-          "error": {
-            "type": "string",
-            "title": "Error",
-            "description": "Error message"
-          },
-          "detail": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Detail",
-            "description": "Detailed error information"
-          },
-          "error_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error Code",
-            "description": "Error code for programmatic handling"
-          }
-        },
-        "type": "object",
-        "required": [
-          "error"
-        ],
-        "title": "ErrorResponse",
-        "description": "Error response."
-      },
-      "app__schemas__rich_verify_schemas__SignerIdentity": {
+      "app__schemas__embeddings__SignerIdentity": {
         "properties": {
           "organization_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Organization Id"
+            "type": "string",
+            "title": "Organization Id",
+            "description": "Organization identifier"
           },
           "organization_name": {
             "anyOf": [
@@ -22995,16 +25552,108 @@
                 "type": "null"
               }
             ],
-            "title": "Organization Name"
+            "title": "Organization Name",
+            "description": "Organization display name"
+          },
+          "certificate_status": {
+            "type": "string",
+            "title": "Certificate Status",
+            "description": "Certificate lifecycle: none, pending, active, expired, revoked"
+          },
+          "ca_backed": {
+            "type": "boolean",
+            "title": "Ca Backed",
+            "description": "True if the org certificate chains to a trusted CA (not self-signed)",
+            "default": false
+          },
+          "issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuer",
+            "description": "Certificate issuer (CA name) if CA-backed, or 'self-signed'"
+          },
+          "certificate_expiry": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certificate Expiry",
+            "description": "Certificate expiry timestamp"
           },
           "trust_level": {
             "type": "string",
             "title": "Trust Level",
-            "default": "unknown"
+            "description": "Trust level: 'ca_verified' (chains to C2PA-trusted CA), 'self_signed' (Encypher-managed key), 'none' (no certificate)",
+            "default": "self_signed"
           }
         },
         "type": "object",
-        "title": "SignerIdentity"
+        "required": [
+          "organization_id",
+          "certificate_status"
+        ],
+        "title": "SignerIdentity",
+        "description": "Signer identity and trust chain information.\n\nTEAM_165: When an org starts with a self-signed key managed by Encypher,\nmicro markers are already cryptographically bound to that key. If the org\nlater obtains a CA-signed certificate (via /byok/certificates), the trust\nchain upgrades automatically \u2014 no re-signing needed."
+      },
+      "app__schemas__merkle__ErrorResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always false for errors",
+            "default": false
+          },
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "description": "Error type"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable error message"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details",
+            "description": "Additional error details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "title": "ErrorResponse",
+        "description": "Standard error response schema.",
+        "example": {
+          "details": {
+            "field": "segmentation_level",
+            "value": "invalid"
+          },
+          "error": "ValidationError",
+          "message": "Invalid segmentation level provided",
+          "success": false
+        }
       },
       "VerificationService__C2PAInfo": {
         "properties": {

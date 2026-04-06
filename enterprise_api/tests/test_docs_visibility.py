@@ -8,7 +8,7 @@ from app.main import app, build_public_docs_html, build_public_openapi
 
 @pytest.mark.asyncio
 async def test_docs_landing_page_is_branded_with_swagger(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("app.main.settings.enable_public_api_docs", True)
+    monkeypatch.setattr("app.bootstrap.docs.settings.enable_public_api_docs", True)
     resp = build_public_docs_html()
     assert resp.status_code == 200
     assert "text/html" in resp.media_type
@@ -25,7 +25,7 @@ async def test_docs_landing_page_is_branded_with_swagger(monkeypatch: pytest.Mon
 
 @pytest.mark.asyncio
 async def test_public_openapi_excludes_internal_tags(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("app.main.settings.enable_public_api_docs", True)
+    monkeypatch.setattr("app.bootstrap.docs.settings.enable_public_api_docs", True)
     resp = build_public_openapi()
     assert resp.status_code == 200
     data = resp.body
@@ -50,7 +50,7 @@ async def test_internal_openapi_exists_and_full_spec_includes_licensing() -> Non
 
 @pytest.mark.asyncio
 async def test_openapi_does_not_advertise_deprecated_tools_endpoints(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("app.main.settings.enable_public_api_docs", True)
+    monkeypatch.setattr("app.bootstrap.docs.settings.enable_public_api_docs", True)
     public_resp = build_public_openapi()
     assert public_resp.status_code == 200
     public_text = public_resp.body.decode("utf-8")

@@ -49,7 +49,12 @@ async def test_webhook_dispatcher_rejects_untrusted_url() -> None:
 def test_build_headers_adds_signature_when_secret_present() -> None:
     dispatcher = WebhookDispatcher()
 
-    headers = dispatcher.build_headers("document.signed", "del_test", '{"ok":true}', "webhook-test-token")
+    headers = dispatcher.build_headers(
+        event_type="document.signed",
+        delivery_id="del_test",
+        payload_json='{"ok":true}',
+        secret="webhook-test-token",  # pragma: allowlist secret
+    )
 
     assert headers["X-Encypher-Event"] == "document.signed"
     assert headers["X-Encypher-Delivery"] == "del_test"

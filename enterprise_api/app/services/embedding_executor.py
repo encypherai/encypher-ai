@@ -198,6 +198,12 @@ async def encode_document_with_embeddings(
             if rights_payload:
                 raw_assertions.append({"label": "com.encypher.rights.v1", "data": rights_payload})
 
+        # Segment-level rights: build compound v2 assertion
+        if request.segment_rights:
+            from app.services.segment_rights_utils import build_segment_rights_assertion_from_raw
+
+            raw_assertions.append(build_segment_rights_assertion_from_raw(request.segment_rights, request.rights))
+
         if effective_template_id:
             features = organization.get("features", {})
             custom_assertions_enabled = False
@@ -448,6 +454,20 @@ async def encode_document_with_embeddings(
 
             leaf_hashes = [compute_leaf_hash(segment) for segment in segments]
 
+        # Validate segment_rights indices against actual segment count
+        if request.segment_rights:
+            n_segments = len(segments)
+            for mapping in request.segment_rights:
+                for idx in mapping.get("segment_indices", []):
+                    if idx >= n_segments:
+                        raise HTTPException(
+                            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail={
+                                "code": "INVALID_SEGMENT_INDEX",
+                                "message": f"segment_rights index {idx} exceeds segment count ({n_segments})",
+                            },
+                        )
+
         # Step 3: Generate minimal signed embeddings
         license_info = None
         if request.license:
@@ -484,6 +504,7 @@ async def encode_document_with_embeddings(
             store_c2pa_manifest=request.store_c2pa_manifest,
             organization_name=organization.get("publisher_identity_base") or organization.get("organization_name"),
             original_text=document_text,  # Preserve inter-segment whitespace (e.g. \n\n before headings)
+            segment_rights=request.segment_rights,
         )
 
         # Step 4: Convert embeddings to response format

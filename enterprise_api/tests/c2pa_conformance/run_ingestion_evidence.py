@@ -500,7 +500,7 @@ def _write_evidence_doc(records: list[IngestionRecord], timestamp: str, pass_cou
         assertions = r.manifest_summary.get("assertion_count", 0)
         cose_bytes = r.manifest_summary.get("cose_signature_bytes", 0)
         valid_str = "PASS" if r.valid else f"FAIL ({r.error or ''})"
-        lines.append(f"| {i} | {r.filename} | {r.mime_type} | {valid_str} | " f"{assertions} | {cose_bytes} | {gen} |")
+        lines.append(f"| {i} | {r.filename} | {r.mime_type} | {valid_str} | {assertions} | {cose_bytes} | {gen} |")
 
     lines.extend(
         [

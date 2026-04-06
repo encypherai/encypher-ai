@@ -1,7 +1,7 @@
 # Encypher Feature Matrix by Tier
 
-**Last Updated**: March 21, 2026
-**Version**: 2.1
+**Last Updated**: April 4, 2026
+**Version**: 2.3
 
 This document provides a comprehensive breakdown of all Encypher features organized by subscription tier.
 
@@ -43,6 +43,7 @@ Founding Coalition members have the implementation fee waived.
 | Batch operations (100+ documents/request) | ❌ | ✅ |
 | Document revocation (StatusList2021) | ❌ | ✅ |
 | Robust fingerprinting (survives paraphrase/translation) | ❌ | ✅ |
+| Segment-level rights (per-segment licensing metadata) | ❌ | ✅ |
 
 ---
 
@@ -116,6 +117,19 @@ Makes C2PA provenance survive CDN image transformations (resize, reformat, recom
 
 ---
 
+## Image Soft-Binding Watermarking
+
+TrustMark neural image watermark (Adobe Research, Apache 2.0). Embeds a 100-bit payload that survives JPEG recompression, scaling, and cropping. Applied after C2PA hard-binding and declared via `c2pa.soft_binding.v1` assertion.
+
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| TrustMark neural image watermark (`enable_image_watermark` on `/sign/media`) | - | Yes |
+| `c2pa.soft_binding.v1` assertion in C2PA manifest | - | Yes |
+| Watermark detection in `/verify/image` response | - | Yes |
+| `ImageWatermarkRecord` persistence for key lookups | - | Yes |
+
+---
+
 ## Audio C2PA Signing
 
 Embed C2PA manifests directly into audio files. Uses `c2pa-python` (wrapping `c2pa-rs`) for container-specific embedding (RIFF chunk for WAV, ID3 GEOB frame for MP3, BMFF uuid box for M4A/AAC).
@@ -127,6 +141,8 @@ Embed C2PA manifests directly into audio files. Uses `c2pa-python` (wrapping `c2
 | C2PA v2.3 audio actions (created, dubbed, mixed, mastered, remixed) | ❌ | ✅ |
 | Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |
 | Passthrough mode (provenance metadata without JUMBF embedding) | ❌ | ✅ |
+| Audio soft-binding watermark (survives MP3 re-encoding, loudness normalization) | ❌ | ✅ |
+| Concatenated ECC (RS(32,8) + rate-1/3 K=7 convolutional + soft Viterbi) for audio and video watermarks | ❌ | ✅ |
 
 ---
 
@@ -142,6 +158,7 @@ Embed C2PA manifests directly into video files. Uses `c2pa-python` (wrapping `c2
 | Large file download endpoint (files > 50 MB) | ❌ | ✅ |
 | Per-org signing credentials (SSL.com / BYOK) | ❌ | ✅ |
 | Passthrough mode (provenance metadata without JUMBF embedding) | ❌ | ✅ |
+| Video soft-binding watermark (VOD and live stream) | ❌ | ✅ |
 
 ---
 

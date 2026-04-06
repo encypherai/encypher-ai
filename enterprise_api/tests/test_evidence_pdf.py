@@ -95,7 +95,7 @@ def _make_evidence_package() -> dict:
 
 
 def mock_org_dep():
-    return {"organization_id": TEST_ORG_ID, "name": "Test Publisher"}
+    return {"organization_id": TEST_ORG_ID, "name": "Test Publisher", "tier": "enterprise"}
 
 
 @pytest.fixture

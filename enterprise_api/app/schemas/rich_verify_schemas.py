@@ -1,4 +1,4 @@
-"""Pydantic schemas for rich article and image verification."""
+"""Pydantic schemas for rich article and media verification."""
 
 from typing import List, Optional
 
@@ -30,6 +30,38 @@ class ImageVerificationResult(BaseModel):
     error: Optional[str] = None
 
 
+class AudioVerificationResult(BaseModel):
+    audio_id: Optional[str] = None
+    filename: Optional[str] = None
+    valid: bool
+    c2pa_manifest_valid: bool
+    hash_matches: bool
+    watermark_valid: Optional[bool] = None  # None = not checked
+    c2pa_instance_id: Optional[str] = None
+    signer: Optional[str] = None
+    signed_at: Optional[str] = None
+    cryptographically_verified: Optional[bool] = None
+    historically_signed_by_us: Optional[bool] = None
+    overall_status: Optional[str] = None
+    error: Optional[str] = None
+
+
+class VideoVerificationResult(BaseModel):
+    video_id: Optional[str] = None
+    filename: Optional[str] = None
+    valid: bool
+    c2pa_manifest_valid: bool
+    hash_matches: bool
+    watermark_valid: Optional[bool] = None  # None = not checked
+    c2pa_instance_id: Optional[str] = None
+    signer: Optional[str] = None
+    signed_at: Optional[str] = None
+    cryptographically_verified: Optional[bool] = None
+    historically_signed_by_us: Optional[bool] = None
+    overall_status: Optional[str] = None
+    error: Optional[str] = None
+
+
 class TextVerificationResult(BaseModel):
     valid: bool
     total_segments: Optional[int] = None
@@ -52,6 +84,8 @@ class RichVerifyResponse(BaseModel):
     content_type: str = "rich_article"
     text_verification: Optional[TextVerificationResult] = None
     image_verifications: List[ImageVerificationResult] = []
+    audio_verifications: List[AudioVerificationResult] = []
+    video_verifications: List[VideoVerificationResult] = []
     composite_manifest_valid: bool
     all_ingredients_verified: bool
     cryptographically_verified: Optional[bool] = None
@@ -75,5 +109,9 @@ class ImageVerifyResponse(BaseModel):
     db_matched: Optional[bool] = None
     historically_signed_by_us: Optional[bool] = None
     overall_status: Optional[str] = None
+    # TrustMark watermark detection results
+    watermark_detected: Optional[bool] = None
+    watermark_payload: Optional[str] = None
+    watermark_confidence: Optional[float] = None
     error: Optional[str] = None
     correlation_id: str

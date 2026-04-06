@@ -262,7 +262,7 @@ class TestRequestLimitDimensions:
             scope="sign",
             per_minute=2,
             identity_type="api_key",
-            identity_value="ency_test_key",
+            identity_value="fixture-token",
         )
 
         result, limited_dimension = limiter.check_request_limits(

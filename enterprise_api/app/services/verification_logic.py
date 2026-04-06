@@ -161,6 +161,12 @@ def _extract_rights_signals(manifest: Dict[str, Any]) -> Dict[str, Any]:
                 data = assertion.get("data")
                 if isinstance(data, dict):
                     rights_signals["rights"] = data
+            if label == "com.encypher.rights.v2":
+                data = assertion.get("data")
+                if isinstance(data, dict):
+                    rights_signals["segment_rights"] = data.get("segment_rights_map")
+                    if data.get("default_rights"):
+                        rights_signals.setdefault("rights", data["default_rights"])
     return rights_signals
 
 

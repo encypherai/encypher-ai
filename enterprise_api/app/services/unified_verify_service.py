@@ -559,11 +559,42 @@ def run_print_fingerprint(text: str) -> Dict[str, Any]:
 async def resolve_rights(
     document_id: Optional[str],
     content_db: AsyncSession,
+    segment_index: Optional[int] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Look up rights resolution URL for a document."""
+    """Look up rights resolution URL for a document, optionally for a specific segment.
+
+    When segment_index is provided, returns the per-segment rights from
+    embedding_metadata["rights"] if available. Falls back to the
+    document-level rights_snapshot.
+    """
     if not document_id:
         return None
 
+    if segment_index is not None:
+        # Try segment-specific rights first
+        stmt = (
+            select(
+                ContentReference.rights_resolution_url,
+                ContentReference.rights_snapshot,
+                ContentReference.embedding_metadata,
+            )
+            .where(ContentReference.document_id == document_id)
+            .where(ContentReference.leaf_index == segment_index)
+            .limit(1)
+        )
+        result = await content_db.execute(stmt)
+        row = result.first()
+        if row:
+            segment_rights = None
+            if row.embedding_metadata and isinstance(row.embedding_metadata, dict):
+                segment_rights = row.embedding_metadata.get("rights")
+            return {
+                "resolution_url": row.rights_resolution_url,
+                "snapshot": row.rights_snapshot,
+                "segment_rights": segment_rights,
+            }
+
+    # Document-level fallback
     stmt = (
         select(ContentReference.rights_resolution_url, ContentReference.rights_snapshot).where(ContentReference.document_id == document_id).limit(1)
     )

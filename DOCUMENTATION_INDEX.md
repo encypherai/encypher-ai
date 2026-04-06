@@ -123,7 +123,7 @@ Use this index to jump directly to the documentation you need.
 | [enterprise_api/docs/LICENSING_API.md](./enterprise_api/docs/LICENSING_API.md) | Licensing API reference (agreements, content, payouts) |
 | [docs/perf/batch-sign.md](./docs/perf/batch-sign.md) | Batch throughput benchmark results |
 
-**Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection, CDN provenance continuity, audio C2PA signing (WAV, MP3, M4A/AAC), video C2PA signing (MP4, MOV, M4V, AVI), live video stream signing (C2PA 2.3 Section 19)
+**Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection, CDN provenance continuity, audio C2PA signing (WAV, MP3, M4A/AAC), audio soft-binding watermarking, image soft-binding watermarking (TrustMark neural), segment-level rights, video C2PA signing (MP4, MOV, M4V, AVI), live video stream signing (C2PA 2.3 Section 19)
 **Status**: Production Ready
 **Tier**: Enterprise
 **Port**: 9000
@@ -144,6 +144,70 @@ Audio signing has no standalone guide -- the implementation is self-documenting 
 **Status**: Production Ready
 **Tier**: Enterprise
 **Tests**: 51 tests (35 in test_audio_signing.py + 16 in test_c2pa_shared.py)
+
+#### Audio Soft-Binding Watermarking
+
+Signal-domain spread-spectrum watermarking that embeds a 64-bit payload directly into the audio signal, surviving MP3 re-encoding and loudness normalization. Follows the TrustMark microservice pattern.
+
+| Document | Purpose |
+|----------|---------|
+| [services/audio-watermark-service/README.md](./services/audio-watermark-service/README.md) | Service setup, algorithm, configuration |
+| `enterprise_api/app/services/audio_watermark_client.py` | Enterprise API client (async httpx, mirrors TrustMark) |
+| `services/audio-watermark-service/app/services/spread_spectrum.py` | Core embed/detect algorithm |
+| `services/shared/spread_spectrum_ecc.py` | Shared ECC module (RS(32,8) + rate-1/3 K=7 convolutional + soft Viterbi) |
+| [PRDs/CURRENT/PRD_Audio_Soft_Binding.md](./PRDs/CURRENT/PRD_Audio_Soft_Binding.md) | Product requirements and task list |
+
+**Assertion**: `c2pa.soft_binding.v1` added to C2PA manifest when watermarking is enabled
+**ECC**: `rs32_8_conv_r3_k7` (RS(32,8) outer + rate-1/3 K=7 convolutional inner + soft Viterbi)
+**Status**: In Progress (WAV complete, MP3/M4A format support pending)
+**Tier**: Enterprise
+**Tests**: 17 tests in audio-watermark-service + 20 tests in enterprise_api
+
+#### Video Soft-Binding Watermarking
+
+Frame-domain spread-spectrum watermarking for video files and live stream segments. Follows the audio watermark microservice pattern.
+
+| Document | Purpose |
+|----------|---------|
+| [services/video-watermark-service/](./services/video-watermark-service/) | Service directory (Dockerfile, app, tests) |
+| `services/shared/spread_spectrum_ecc.py` | Shared ECC module used by both audio and video watermark services |
+
+**Method**: `encypher.spread_spectrum_video.v1`
+**ECC**: `rs32_8_conv_r3_k7` (shared with audio watermark service)
+**Supports**: VOD files and live stream segments
+**Status**: In Progress
+**Tier**: Enterprise
+**Port**: 8012
+
+#### Image Soft-Binding Watermarking (TrustMark)
+
+TrustMark neural image watermark (Adobe Research, Apache 2.0). Embeds a 100-bit payload that survives JPEG recompression, scaling, and cropping. Wired into the unified `/sign/media` endpoint via `enable_image_watermark` and into `/verify/image` for detection.
+
+| Document | Purpose |
+|----------|---------|
+| `services/image-service/` | TrustMark microservice (Dockerfile, app, tests) |
+| `enterprise_api/app/services/trustmark_client.py` | Enterprise API client (inherits `WatermarkClientBase`) |
+| `enterprise_api/app/models/image_watermark_record.py` | Watermark record persistence model |
+
+**Method**: `encypher.trustmark_neural.v1`
+**Assertion**: `c2pa.soft_binding.v1` added to C2PA manifest when watermarking is enabled
+**Status**: Production Ready
+**Tier**: Enterprise
+**Port**: 8010
+
+#### Segment-Level Rights
+
+Per-segment rights metadata for documents where different segments have different licensing terms. Uses `com.encypher.rights.v2` C2PA assertion.
+
+| Document | Purpose |
+|----------|---------|
+| `enterprise_api/app/services/segment_rights_utils.py` | Assertion builder and per-segment rights resolution |
+| `enterprise_api/app/schemas/sign_schemas.py` | `SegmentRightsMapping` schema and `segment_rights` on `SignOptions` |
+| [PRDs/CURRENT/PRD_Segment_Level_Rights.md](./PRDs/CURRENT/PRD_Segment_Level_Rights.md) | Product requirements and task list |
+
+**Status**: In Progress (core signing/verification complete, public rights API and integration tests pending)
+**Tier**: Enterprise
+**Tests**: 15 tests in test_segment_rights.py
 
 #### Video C2PA Signing
 
@@ -215,7 +279,7 @@ Per-segment C2PA manifest signing for live video streams with backwards-linked p
 | [services/ENV_VARS_MAPPING.md](./services/ENV_VARS_MAPPING.md) | Environment variables mapping |
 | [docker-compose.microservices.yml](./docker-compose.microservices.yml) | Full microservices stack |
 
-**Architecture**: 8 core services plus the Enterprise API
+**Architecture**: 10 core services plus the Enterprise API
 **Status**: Active
 
 #### Active Services
@@ -229,6 +293,8 @@ Per-segment C2PA manifest signing for live video streams with backwards-linked p
 | [services/analytics-service/](./services/analytics-service/) | Usage metrics and reporting |
 | [services/billing-service/](./services/billing-service/) | Billing, subscriptions, and Stripe integration |
 | [services/notification-service/](./services/notification-service/) | Email and notification delivery |
+| [services/audio-watermark-service/](./services/audio-watermark-service/) | Spread-spectrum audio watermarking |
+| [services/video-watermark-service/](./services/video-watermark-service/) | Spread-spectrum video watermarking (VOD and live stream) |
 
 **See also**: [README.md](./README.md#-microservices-architecture) and [services/README.md](./services/README.md) for the current service inventory and ports.
 

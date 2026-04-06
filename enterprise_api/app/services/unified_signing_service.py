@@ -201,6 +201,7 @@ def _needs_advanced_signing(options: SignOptions) -> bool:
         or options.use_rights_profile
         or options.add_dual_binding
         or options.include_fingerprint
+        or options.segment_rights is not None
         or options.segmentation_levels is not None
     )
 
@@ -340,6 +341,9 @@ async def _execute_advanced_signing(
         digital_source_type=options.digital_source_type,
         license=legacy_license,
         rights=legacy_rights,
+        segment_rights=[{"segment_indices": m.segment_indices, "rights": m.rights.model_dump(exclude_none=True)} for m in options.segment_rights]
+        if options.segment_rights
+        else None,
         embedding_options=legacy_embedding_options,
         expires_at=options.expires_at,
     )

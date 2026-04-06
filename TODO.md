@@ -14,6 +14,14 @@
 
 <!-- Add TODOs below this line -->
 
+### Spread-Spectrum ECC (Concatenated RS + Convolutional + Soft Viterbi)
+
+Applies to all three signal-domain watermarking surfaces. The concatenated coding scheme (outer RS(32,8) over GF(2^8), inner rate-1/3 K=7 convolutional code, soft-decision Viterbi decoder) is specified in `PRDs/CURRENT/PRD_Video_Soft_Binding.md` section "Error Correction Coding (Concatenated Code)".
+
+- [ ] `services/audio-watermark-service/app/services/spread_spectrum.py` - ECC backport: wrap 64-bit payload in concatenated RS+convolutional code before PN spreading, soft Viterbi decode on detection. Detailed tasks in PRD_Video_Soft_Binding.md section 10.0.
+- [ ] `services/video-watermark-service/` (not yet created) - ECC built-in from day one. Detailed tasks in PRD_Video_Soft_Binding.md section 9.0.
+- [ ] `services/image-watermark-service/` (not yet created) - Spread-spectrum image watermarking with concatenated ECC, replacing TrustMark dependency (Adobe neural model). Own the algorithm end-to-end. Same PN sequence + ECC architecture as audio/video, applied to spatial-domain pixel luminance. Needs its own PRD.
+
 ### TEAM_218 - Metrics Pipeline + Request Tracing
 > See: `.teams/TEAM_218_metrics_pipeline_request_tracing.md`
 > PRD: `PRDs/CURRENT/PRD_Metrics_Pipeline_Request_Tracing.md`

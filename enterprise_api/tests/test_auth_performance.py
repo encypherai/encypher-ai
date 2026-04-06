@@ -21,6 +21,7 @@ async def test_get_current_organization_uses_client():
     """
 
     with patch.object(dependencies, "key_service_client") as mock_service_client:
+        mock_service_client.validate_key_minimal = AsyncMock(return_value=None)
         mock_service_client.validate_key = AsyncMock(
             return_value={"api_key": "test_key", "organization_id": "org_1", "tier": "professional", "api_calls_this_month": 0, "monthly_quota": 1000}
         )

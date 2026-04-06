@@ -1184,3 +1184,140 @@ async def test_health_endpoint_still_works_2(async_client: AsyncClient) -> None:
     assert resp.status_code == 200
     data = resp.json()
     assert data.get("status") == "healthy" or "status" in data
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# Unit Tests — Segment-Level Rights Resolution (6.7)
+# ════════════════════════════════════════════════════════════════════════════════
+
+
+class TestSegmentLevelRightsResolution:
+    """Segment-level rights resolution via resolve_segment_rights utility.
+
+    Tests the full contract: mapped segments return their specific rights,
+    unmapped segments inherit document-level defaults, and the v2 assertion
+    round-trips correctly.
+    """
+
+    def test_mapped_segment_returns_correct_rights(self) -> None:
+        """A segment covered by a mapping returns that mapping's rights dict."""
+        from app.schemas.sign_schemas import RightsMetadata, SegmentRightsMapping
+        from app.services.segment_rights_utils import resolve_segment_rights
+
+        mappings = [
+            SegmentRightsMapping(
+                segment_indices=[0, 1, 2],
+                rights=RightsMetadata(copyright_holder="NPR", syndication_allowed=False),
+            ),
+            SegmentRightsMapping(
+                segment_indices=[3],
+                rights=RightsMetadata(copyright_holder="AP", syndication_allowed=True),
+            ),
+        ]
+        # Segment 1 belongs to the first mapping
+        result = resolve_segment_rights(1, mappings)
+        assert result is not None
+        assert result["copyright_holder"] == "NPR"
+        assert result["syndication_allowed"] is False
+
+    def test_segment_at_mapping_boundary_resolved_correctly(self) -> None:
+        """Boundary index (last in segment_indices list) resolves correctly."""
+        from app.schemas.sign_schemas import RightsMetadata, SegmentRightsMapping
+        from app.services.segment_rights_utils import resolve_segment_rights
+
+        mappings = [
+            SegmentRightsMapping(
+                segment_indices=[0, 1],
+                rights=RightsMetadata(copyright_holder="NPR"),
+            ),
+        ]
+        result = resolve_segment_rights(1, mappings)
+        assert result is not None
+        assert result["copyright_holder"] == "NPR"
+
+    def test_unmapped_segment_inherits_document_default(self) -> None:
+        """Segments not in any mapping inherit the document-level default rights."""
+        from app.schemas.sign_schemas import RightsMetadata, SegmentRightsMapping
+        from app.services.segment_rights_utils import resolve_segment_rights
+
+        mappings = [
+            SegmentRightsMapping(
+                segment_indices=[0],
+                rights=RightsMetadata(copyright_holder="AP"),
+            ),
+        ]
+        document_default = RightsMetadata(copyright_holder="NPR", usage_terms="All rights reserved")
+
+        # Segment 10 is not mapped
+        result = resolve_segment_rights(10, mappings, document_default)
+        assert result is not None
+        assert result["copyright_holder"] == "NPR"
+        assert result["usage_terms"] == "All rights reserved"
+
+    def test_unmapped_segment_no_default_is_none(self) -> None:
+        """When no mapping covers a segment and no default is provided, returns None."""
+        from app.schemas.sign_schemas import RightsMetadata, SegmentRightsMapping
+        from app.services.segment_rights_utils import resolve_segment_rights
+
+        mappings = [
+            SegmentRightsMapping(
+                segment_indices=[0],
+                rights=RightsMetadata(copyright_holder="NPR"),
+            ),
+        ]
+        result = resolve_segment_rights(5, mappings, None)
+        assert result is None
+
+    def test_empty_mappings_with_default_returns_default(self) -> None:
+        """Empty segment_rights list always falls through to default_rights."""
+        from app.schemas.sign_schemas import RightsMetadata
+        from app.services.segment_rights_utils import resolve_segment_rights
+
+        document_default = RightsMetadata(copyright_holder="NPR")
+        result = resolve_segment_rights(0, [], document_default)
+        assert result is not None
+        assert result["copyright_holder"] == "NPR"
+
+    def test_rights_serialization_excludes_none_fields(self) -> None:
+        """Serialized rights dict from resolve_segment_rights excludes None fields."""
+        from app.schemas.sign_schemas import RightsMetadata, SegmentRightsMapping
+        from app.services.segment_rights_utils import resolve_segment_rights
+
+        mappings = [
+            SegmentRightsMapping(
+                segment_indices=[0],
+                rights=RightsMetadata(copyright_holder="NPR"),
+            ),
+        ]
+        result = resolve_segment_rights(0, mappings)
+        assert result is not None
+        # Fields not set should not appear
+        assert "license_url" not in result
+        assert "usage_terms" not in result
+        assert "syndication_allowed" not in result
+
+    def test_v2_assertion_roundtrip(self) -> None:
+        """build_segment_rights_assertion followed by resolve_segment_rights is consistent."""
+        from app.schemas.sign_schemas import RightsMetadata, SegmentRightsMapping
+        from app.services.segment_rights_utils import (
+            build_segment_rights_assertion,
+            resolve_segment_rights,
+        )
+
+        npr_rights = RightsMetadata(copyright_holder="NPR", syndication_allowed=False)
+        ap_rights = RightsMetadata(copyright_holder="AP", syndication_allowed=True)
+        default_rights = RightsMetadata(copyright_holder="DefaultPublisher")
+
+        mappings = [
+            SegmentRightsMapping(segment_indices=[0, 1], rights=npr_rights),
+            SegmentRightsMapping(segment_indices=[2], rights=ap_rights),
+        ]
+
+        # Build the assertion (what gets embedded in C2PA)
+        assertion = build_segment_rights_assertion(mappings, default_rights)
+        assert assertion["label"] == "com.encypher.rights.v2"
+
+        # Resolve from the same mappings (what verification returns)
+        assert resolve_segment_rights(0, mappings, default_rights)["copyright_holder"] == "NPR"
+        assert resolve_segment_rights(2, mappings, default_rights)["copyright_holder"] == "AP"
+        assert resolve_segment_rights(5, mappings, default_rights)["copyright_holder"] == "DefaultPublisher"

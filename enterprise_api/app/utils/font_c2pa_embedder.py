@@ -199,7 +199,7 @@ def replace_manifest_in_font(
     """
     if len(manifest_bytes) > c2pa_length:
         raise ValueError(
-            f"Manifest ({len(manifest_bytes)} bytes) exceeds C2PA table " f"placeholder ({c2pa_length} bytes). Retry with larger placeholder."
+            f"Manifest ({len(manifest_bytes)} bytes) exceeds C2PA table placeholder ({c2pa_length} bytes). Retry with larger placeholder."
         )
 
     # Pad to fill the placeholder exactly

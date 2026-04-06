@@ -28,6 +28,7 @@ async def execute_audio_signing(
     custom_assertions: list[dict] | None = None,
     rights_data: dict | None = None,
     action: str = "c2pa.created",
+    enable_audio_watermark: bool = False,
 ) -> SignedAudioResult:
     """Sign audio with C2PA using org credentials.
 
@@ -68,15 +69,22 @@ async def execute_audio_signing(
             exc,
         )
 
+    from app.services.audio_watermark_client import SOFT_BINDING_ASSERTION
+
+    # Add soft-binding assertion when watermarking is enabled
+    assertions = list(custom_assertions or [])
+    if enable_audio_watermark:
+        assertions.append(SOFT_BINDING_ASSERTION)
+
     try:
-        return await sign_audio(
+        result = await sign_audio(
             audio_data=audio_bytes,
             mime_type=mime_type,
             title=title,
             org_id=org_id,
             document_id=document_id,
             audio_id=audio_id,
-            custom_assertions=custom_assertions or [],
+            custom_assertions=assertions,
             rights_data=rights_data or {},
             signer_private_key_pem=private_key_pem,
             signer_cert_chain_pem=cert_chain_pem,
@@ -91,3 +99,15 @@ async def execute_audio_signing(
             status_code=500,
             detail={"code": "AUDIO_SIGNING_FAILED", "message": "Audio signing failed"},
         ) from exc
+
+    # Apply spread-spectrum watermark after C2PA signing
+    if enable_audio_watermark:
+        from app.services.audio_watermark_client import apply_watermark_to_signed_audio
+
+        wm_result = await apply_watermark_to_signed_audio(result.signed_bytes, mime_type, audio_id, org_id)
+        if wm_result is not None:
+            result.signed_bytes, result.signed_hash, _wm_key = wm_result
+            result.size_bytes = len(result.signed_bytes)
+            logger.info("Audio watermark applied: audio_id=%s org=%s", audio_id, org_id)
+
+    return result

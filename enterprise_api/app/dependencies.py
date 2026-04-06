@@ -535,6 +535,41 @@ async def require_read_permission(
     return organization
 
 
+# ---------------------------------------------------------------------------
+# Shared Enterprise tier gate
+# ---------------------------------------------------------------------------
+
+ENTERPRISE_TIERS = frozenset({"enterprise", "strategic_partner", "demo"})
+
+
+def require_enterprise_tier(feature_name: str = "This feature"):
+    """FastAPI dependency factory that gates endpoints to Enterprise-equivalent tiers.
+
+    Usage::
+
+        @router.post("/enterprise/video/sign")
+        async def sign(organization: dict = Depends(require_enterprise_tier("Video C2PA signing"))):
+            ...
+    """
+
+    def _gate(organization: dict = Depends(get_current_organization)) -> dict:
+        tier = (organization.get("tier") or "free").lower().replace("-", "_")
+        if tier not in ENTERPRISE_TIERS:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": f"{feature_name} requires Enterprise tier",
+                    "required_tier": "enterprise",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        return organization
+
+    return _gate
+
+
 async def _require_permission_flag(organization: Dict, permission_flag: str, error_detail: str) -> Dict:
     if not organization.get(permission_flag):
         raise HTTPException(

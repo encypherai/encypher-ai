@@ -35,6 +35,9 @@ class PublicVideoVerifyResponse(BaseModel):
     error: str | None = None
     correlation_id: str | None = None
     verified_at: str | None = None
+    watermark_detected: bool = False
+    watermark_payload: str | None = None
+    watermark_confidence: float = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -71,20 +74,23 @@ async def verify_video(
             detail=f"Payload exceeds {settings.public_video_max_size_bytes} bytes limit",
         )
 
-    from app.services.video_verification_service import verify_video_c2pa
+    from app.services.video_verification_service import verify_video_with_watermark
 
-    result = verify_video_c2pa(video_bytes, mime_type)
+    combined = await verify_video_with_watermark(video_bytes, mime_type)
 
     return PublicVideoVerifyResponse(
-        success=result.valid,
-        valid=result.valid,
-        c2pa_manifest_valid=result.c2pa_manifest_valid,
-        hash_matches=result.hash_matches,
-        c2pa_instance_id=result.c2pa_instance_id,
-        signer=result.signer,
-        signed_at=result.signed_at,
-        manifest_data=result.manifest_data,
-        error=result.error,
+        success=combined.c2pa.valid,
+        valid=combined.c2pa.valid,
+        c2pa_manifest_valid=combined.c2pa.c2pa_manifest_valid,
+        hash_matches=combined.c2pa.hash_matches,
+        c2pa_instance_id=combined.c2pa.c2pa_instance_id,
+        signer=combined.c2pa.signer,
+        signed_at=combined.c2pa.signed_at,
+        manifest_data=combined.c2pa.manifest_data,
+        error=combined.c2pa.error,
         correlation_id=correlation_id,
         verified_at=verified_at,
+        watermark_detected=combined.watermark_detected,
+        watermark_payload=combined.watermark_payload,
+        watermark_confidence=combined.watermark_confidence,
     )

@@ -11,6 +11,7 @@ Session storage:
 - PEM private keys are encrypted at rest in Redis via AESGCM
 """
 
+import base64
 import hashlib
 import json
 import logging
@@ -20,6 +21,11 @@ import uuid
 from dataclasses import dataclass, field
 from io import BytesIO
 from typing import Any, Dict, List, Optional
+
+from app.config import settings
+from app.services.video_watermark_client import SOFT_BINDING_ASSERTION_VIDEO, video_watermark_client
+from app.utils.hashing import compute_sha256
+from app.utils.video_utils import validate_video
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +53,8 @@ class VideoStreamSession:
     created_at: float = field(default_factory=time.time)
     last_activity: float = field(default_factory=time.time)
     expires_at: float = 0.0
+    enable_video_watermark: bool = False
+    watermark_payload: Optional[str] = None  # Computed once at session start, shared across segments
 
     def __post_init__(self) -> None:
         if not self.stream_id:
@@ -60,7 +68,6 @@ class SignedSegmentResult:
     """Result of signing a single video segment."""
 
     segment_index: int
-    sequence_number: int
     stream_id: str
     signed_bytes: bytes
     original_hash: str
@@ -70,6 +77,7 @@ class SignedSegmentResult:
     size_bytes: int
     mime_type: str
     c2pa_signed: bool
+    watermark_applied: bool = False
 
 
 @dataclass
@@ -113,6 +121,8 @@ def _serialize_session(session: VideoStreamSession) -> str:
         "created_at": session.created_at,
         "last_activity": session.last_activity,
         "expires_at": session.expires_at,
+        "enable_video_watermark": session.enable_video_watermark,
+        "watermark_payload": session.watermark_payload,
     }
     # Encrypt private key before storing in Redis
     try:
@@ -150,6 +160,8 @@ def _deserialize_session(raw: str) -> VideoStreamSession:
         created_at=data["created_at"],
         last_activity=data["last_activity"],
         expires_at=data["expires_at"],
+        enable_video_watermark=data.get("enable_video_watermark", False),
+        watermark_payload=data.get("watermark_payload"),
     )
 
 
@@ -247,17 +259,30 @@ async def start_stream_session(
     org_id: str,
     private_key_pem: str,
     cert_chain_pem: str,
+    enable_video_watermark: bool = False,
 ) -> VideoStreamSession:
     """Create a new video stream signing session.
 
     Credentials are cached for the session lifetime to avoid per-segment DB reads.
+    If enable_video_watermark is True, the watermark payload is computed once here
+    and stored on the session so all segments share the same payload.
     """
     session_id = f"vstream_{secrets.token_hex(12)}"
+
+    watermark_payload: Optional[str] = None
+    if enable_video_watermark:
+        from app.services.video_watermark_client import compute_video_watermark_payload
+
+        watermark_payload = compute_video_watermark_payload(session_id, org_id)
+        logger.info("Video watermark payload computed for session %s", session_id)
+
     session = VideoStreamSession(
         session_id=session_id,
         org_id=org_id,
         private_key_pem=private_key_pem,
         cert_chain_pem=cert_chain_pem,
+        enable_video_watermark=enable_video_watermark,
+        watermark_payload=watermark_payload,
     )
 
     saved = await _redis_save_session(session)
@@ -265,7 +290,13 @@ async def start_stream_session(
         _cleanup_expired_sessions()
         _sessions[session_id] = session
 
-    logger.info("Stream session started: %s org=%s redis=%s", session_id, org_id, saved)
+    logger.info(
+        "Stream session started: %s org=%s redis=%s watermark=%s",
+        session_id,
+        org_id,
+        saved,
+        enable_video_watermark,
+    )
     return session
 
 
@@ -320,9 +351,6 @@ async def sign_segment(
     if session.status != "active":
         raise ValueError(f"Session {session.session_id} is {session.status}, cannot sign new segments")
 
-    from app.utils.hashing import compute_sha256
-    from app.utils.video_utils import validate_video
-
     canonical_mime, file_size = validate_video(segment_data, mime_type)
     original_hash = compute_sha256(segment_data)
 
@@ -343,9 +371,11 @@ async def sign_segment(
         livevideo_assertion["data"]["previousManifestId"] = session.prev_manifest_id
     all_assertions.append(livevideo_assertion)
 
-    passthrough = not (session.private_key_pem and session.cert_chain_pem)
+    # Declare soft-binding watermark in the manifest when watermarking is enabled
+    if session.enable_video_watermark:
+        all_assertions.append(SOFT_BINDING_ASSERTION_VIDEO)
 
-    from app.config import settings
+    passthrough = not (session.private_key_pem and session.cert_chain_pem)
 
     passthrough = passthrough or settings.signing_passthrough
 
@@ -362,7 +392,6 @@ async def sign_segment(
 
         return SignedSegmentResult(
             segment_index=segment_index,
-            sequence_number=segment_index,
             stream_id=session.stream_id,
             signed_bytes=segment_data,
             original_hash=original_hash,
@@ -406,6 +435,28 @@ async def sign_segment(
     signed_hash = compute_sha256(signed_bytes)
     manifest_hash = compute_sha256(manifest_bytes)
 
+    # Apply spread-spectrum watermark after C2PA signing when enabled
+    watermark_applied = False
+    if session.enable_video_watermark and session.watermark_payload is not None:
+        signed_b64 = base64.b64encode(signed_bytes).decode()
+        wm_result = await video_watermark_client.apply_watermark(signed_b64, canonical_mime, session.watermark_payload)
+        if wm_result is not None:
+            watermarked_b64, _confidence = wm_result
+            signed_bytes = base64.b64decode(watermarked_b64)
+            signed_hash = compute_sha256(signed_bytes)
+            watermark_applied = True
+            logger.info(
+                "Video watermark applied: session=%s index=%d",
+                session.session_id,
+                segment_index,
+            )
+        else:
+            logger.warning(
+                "Video watermark failed for session=%s index=%d, continuing without watermark",
+                session.session_id,
+                segment_index,
+            )
+
     session.segment_count += 1
     session.segment_manifest_hashes.append(manifest_hash)
     session.prev_manifest_hash = manifest_hash
@@ -432,6 +483,7 @@ async def sign_segment(
         size_bytes=len(signed_bytes),
         mime_type=canonical_mime,
         c2pa_signed=True,
+        watermark_applied=watermark_applied,
     )
 
 

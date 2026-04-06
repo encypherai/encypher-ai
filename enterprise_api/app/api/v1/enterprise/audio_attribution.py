@@ -15,36 +15,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, List, Optional
 
 from app.database import get_db
-from app.dependencies import get_current_organization, require_sign_permission
+from app.dependencies import require_enterprise_tier, require_sign_permission
 from app.models.organization import Organization
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Tier gate
-# ---------------------------------------------------------------------------
-
-_ALLOWED_TIERS = {"enterprise", "strategic_partner", "demo"}
-
-
-def require_enterprise_audio(
-    organization: dict = Depends(get_current_organization),
-) -> dict:
-    """Require Enterprise (or equivalent) tier for audio C2PA endpoints."""
-    tier = (organization.get("tier") or "free").lower().replace("-", "_")
-    if tier not in _ALLOWED_TIERS:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Audio C2PA signing requires Enterprise tier",
-                "required_tier": "enterprise",
-                "current_tier": tier,
-                "upgrade_url": "/billing/upgrade",
-            },
-        )
-    return organization
+require_enterprise_audio = require_enterprise_tier("Audio C2PA signing")
 
 
 # ---------------------------------------------------------------------------

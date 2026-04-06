@@ -29,6 +29,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas.rich_verify_schemas import (
+    AudioVerificationResult,
     ImageVerificationResult,
     ImageVerifyRequest,
     ImageVerifyResponse,
@@ -36,6 +37,7 @@ from app.schemas.rich_verify_schemas import (
     RichVerifyResponse,
     SignerIdentity,
     TextVerificationResult,
+    VideoVerificationResult,
 )
 
 
@@ -141,6 +143,68 @@ class TestImageVerificationResult:
         assert result.error == "No C2PA manifest found in image"
 
 
+class TestAudioVerificationResult:
+    """AudioVerificationResult schema defaults and construction."""
+
+    def test_required_fields(self) -> None:
+        result = AudioVerificationResult(valid=True, c2pa_manifest_valid=True, hash_matches=True)
+        assert result.valid is True
+        assert result.c2pa_manifest_valid is True
+        assert result.hash_matches is True
+
+    def test_optional_fields_default_to_none(self) -> None:
+        result = AudioVerificationResult(valid=False, c2pa_manifest_valid=False, hash_matches=False)
+        assert result.audio_id is None
+        assert result.filename is None
+        assert result.watermark_valid is None
+        assert result.c2pa_instance_id is None
+        assert result.error is None
+
+    def test_with_all_fields(self) -> None:
+        result = AudioVerificationResult(
+            audio_id="aud_test",
+            filename="clip.wav",
+            valid=True,
+            c2pa_manifest_valid=True,
+            hash_matches=True,
+            watermark_valid=True,
+            c2pa_instance_id="urn:uuid:1234",
+            signer="Encypher Test Publisher",
+            signed_at="2026-04-06T00:00:00Z",
+            overall_status="cryptographically_valid",
+        )
+        assert result.audio_id == "aud_test"
+        assert result.watermark_valid is True
+
+
+class TestVideoVerificationResult:
+    """VideoVerificationResult schema defaults and construction."""
+
+    def test_required_fields(self) -> None:
+        result = VideoVerificationResult(valid=True, c2pa_manifest_valid=True, hash_matches=True)
+        assert result.valid is True
+
+    def test_optional_fields_default_to_none(self) -> None:
+        result = VideoVerificationResult(valid=False, c2pa_manifest_valid=False, hash_matches=False)
+        assert result.video_id is None
+        assert result.watermark_valid is None
+        assert result.error is None
+
+    def test_with_all_fields(self) -> None:
+        result = VideoVerificationResult(
+            video_id="vid_test",
+            filename="intro.mp4",
+            valid=True,
+            c2pa_manifest_valid=True,
+            hash_matches=True,
+            watermark_valid=True,
+            c2pa_instance_id="urn:uuid:5678",
+            overall_status="cryptographically_valid",
+        )
+        assert result.video_id == "vid_test"
+        assert result.watermark_valid is True
+
+
 class TestTextVerificationResult:
     """TextVerificationResult schema defaults."""
 
@@ -204,6 +268,8 @@ class TestRichVerifyResponse:
         assert resp.document_id == "doc_abc123"
         assert resp.content_type == "rich_article"
         assert resp.image_verifications == []
+        assert resp.audio_verifications == []
+        assert resp.video_verifications == []
         assert resp.cryptographically_verified is True
         assert resp.historically_signed_by_us is True
         assert resp.overall_status == "cryptographically_valid"

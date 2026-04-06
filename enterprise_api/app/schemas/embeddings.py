@@ -52,13 +52,7 @@ class LicenseInfo(BaseModel):
     contact_email: Optional[str] = Field(None, description="Contact email for licensing")
 
 
-class RightsMetadata(BaseModel):
-    copyright_holder: Optional[str] = Field(None, description="Copyright holder / publisher name")
-    license_url: Optional[str] = Field(None, description="URL to license terms")
-    usage_terms: Optional[str] = Field(None, description="Human-readable usage terms")
-    syndication_allowed: Optional[bool] = Field(None, description="Whether downstream syndication is permitted")
-    embargo_until: Optional[datetime] = Field(None, description="Optional embargo end timestamp")
-    contact_email: Optional[str] = Field(None, description="Contact email for licensing")
+from app.schemas.sign_schemas import RightsMetadata  # noqa: E402 -- SSOT; avoid duplicate definition
 
 
 class EncodeWithEmbeddingsRequest(BaseModel):
@@ -126,6 +120,10 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     rights: Optional[RightsMetadata] = Field(
         None,
         description="Optional rights metadata to embed (Business+).",
+    )
+    segment_rights: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Per-segment rights mappings (Enterprise). Each entry has segment_indices (list of ints) and rights (RightsMetadata dict). Serialized from SignOptions.segment_rights.",
     )
     embedding_options: EmbeddingOptions = Field(default_factory=EmbeddingOptions, description="Embedding generation options")
     expires_at: Optional[datetime] = Field(None, description="Optional expiration datetime for embeddings")
