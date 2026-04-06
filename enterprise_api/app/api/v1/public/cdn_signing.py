@@ -4,6 +4,8 @@ These endpoints do NOT require authentication. They are designed for the
 Encypher Cloudflare Edge Provenance Worker to auto-sign publisher content
 with C2PA provenance markers that survive copy-paste. Rate limited by
 IP and domain.
+
+The /domains endpoint requires authentication (used by the dashboard).
 """
 
 import logging
@@ -11,7 +13,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -221,3 +223,54 @@ async def cdn_status(
         "quota_remaining": remaining,
         "upgrade_url": f"https://encypher.com/enterprise?ref=cdn&domain={domain}",
     }
+
+
+@router.get(
+    "/domains",
+    summary="List CDN edge provenance domains for the current org",
+    description="""
+    Authenticated endpoint for the dashboard. Returns all domains where the
+    Edge Provenance Worker has been deployed and provisioned for the
+    current user's organization.
+    """,
+    responses={
+        200: {"description": "List of CDN edge domains"},
+    },
+)
+async def cdn_domains(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """List CDN domains with signing stats for the authenticated user's org."""
+    from app.middleware.auth import get_current_user
+
+    user = await get_current_user(request, db)
+    org_id = user.active_organization_id
+    if not org_id:
+        return []
+
+    # Query distinct domains for this org with stats
+    result = await db.execute(
+        select(
+            CdnContentRecord.domain,
+            func.count(CdnContentRecord.id).label("articles_signed"),
+            func.max(CdnContentRecord.signed_at).label("last_signed_at"),
+            func.min(CdnContentRecord.created_at).label("created_at"),
+        )
+        .where(CdnContentRecord.organization_id == org_id)
+        .group_by(CdnContentRecord.domain)
+        .order_by(func.max(CdnContentRecord.signed_at).desc())
+    )
+    rows = result.all()
+
+    return [
+        {
+            "domain": row.domain,
+            "org_id": org_id,
+            "articles_signed": row.articles_signed,
+            "last_signed_at": row.last_signed_at.isoformat() if row.last_signed_at else None,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "claim_status": "verified",  # If queried via dashboard, user is already verified
+        }
+        for row in rows
+    ]

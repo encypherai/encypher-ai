@@ -4,6 +4,7 @@ import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { GhostIntegrationCard } from './GhostIntegrationCard';
 import { ChromeExtensionCard } from './ChromeExtensionCard';
 import { CloudflareIntegrationCard } from './CloudflareIntegrationCard';
+import { EdgeProvenanceWorkerCard } from './EdgeProvenanceWorkerCard';
 import { Card, CardHeader, CardTitle, CardDescription } from '@encypher/design-system';
 
 const WORDPRESS_PLUGIN_DOWNLOAD_URL =
@@ -176,6 +177,20 @@ export default function IntegrationsPage() {
                 )}
               </Card>
             ))}
+          </div>
+        </section>
+
+        {/* Edge Provenance */}
+        <section className="mb-10">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+            Edge Provenance
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4 max-w-2xl">
+            Deploy a CDN worker to embed invisible provenance markers into every article.
+            Markers survive copy-paste, scraping, and aggregation.
+          </p>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <EdgeProvenanceWorkerCard />
           </div>
         </section>
 

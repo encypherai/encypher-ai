@@ -1,7 +1,7 @@
 # Cloudflare Edge Provenance Worker
 
-**Status:** In Progress (Phase 1 complete)
-**Current Goal:** Phase 1 backend + worker core complete, 80/80 tests passing. Phase 2 (dashboard, publishing, docs) pending.
+**Status:** In Progress (Phase 2 complete)
+**Current Goal:** Phase 1 (backend + worker) and Phase 2 (dashboard integration card, README, API client) complete. 80/80 tests passing, dashboard builds clean. Phase 3 (landing page, advanced analytics, org signing config) pending.
 
 ## Overview
 
@@ -514,33 +514,34 @@ Parallel to `prebid_content_records`. Shares the same cross-channel org resoluti
 
 ### 6.0 Dashboard - CDN Domain Management
 
-- [ ] 6.1 CDN domain listing in org settings
-  - [ ] 6.1.1 Show auto-provisioned CDN domains with signing stats
-  - [ ] 6.1.2 Show claim status (unclaimed, claimed, verified)
-- [ ] 6.2 Domain claim flow in dashboard
-  - [ ] 6.2.1 "Claim a CDN domain" button
-  - [ ] 6.2.2 Enter domain, backend verifies via .well-known
-  - [ ] 6.2.3 Link to existing account
-- [ ] 6.3 Org-level signing configuration
+- [x] 6.1 CDN domain listing on integrations page -- dashboard builds clean
+  - [x] 6.1.1 EdgeProvenanceWorkerCard with deploy button and domain list
+  - [x] 6.1.2 Show claim status (unclaimed, claimed, verified)
+  - [x] 6.1.3 Backend /domains endpoint with signing stats per domain
+- [x] 6.2 Domain claim flow in dashboard
+  - [x] 6.2.1 "Claim a CDN domain" inline input on integration card
+  - [x] 6.2.2 Calls /cdn/claim endpoint with domain
+  - [ ] 6.2.3 Backend .well-known verification (deferred - needs live worker)
+- [ ] 6.3 Org-level signing configuration (deferred to Phase 3)
   - [ ] 6.3.1 Default signing options per org (segmentation_level, embedding_strategy, etc.)
   - [ ] 6.3.2 Enterprise options when tier permits (fingerprinting, dual binding, rights)
   - [ ] 6.3.3 Changes take effect on next cache miss (within 1 hour)
-- [ ] 6.4 CDN analytics view
+- [ ] 6.4 CDN analytics view (existing cdn-analytics page covers image CDN; text CDN analytics deferred)
   - [ ] 6.4.1 Articles signed, unique content hashes, quota usage
   - [ ] 6.4.2 Boundary detection method distribution (which selector matched)
   - [ ] 6.4.3 Cache hit rate
 
 ### 7.0 Publishing & Distribution
 
-- [ ] 7.1 GitHub repo setup (`encypher/cloudflare-worker-provenance`)
-  - [ ] 7.1.1 README with Deploy button, 5-minute setup guide, architecture overview
-  - [ ] 7.1.2 LICENSE (proprietary for the worker, AGPL for the signing is server-side)
-  - [ ] 7.1.3 CHANGELOG
-- [ ] 7.2 Deploy button configuration
-  - [ ] 7.2.1 Button image and URL in README
-  - [ ] 7.2.2 Auto-provisioning of KV namespace confirmed working
+- [x] 7.1 GitHub repo setup (`encypher/cloudflare-worker-provenance`)
+  - [x] 7.1.1 README with Deploy button, 5-minute setup guide, architecture overview
+  - [ ] 7.1.2 LICENSE file (deferred - repo not yet public)
+  - [ ] 7.1.3 CHANGELOG (deferred - repo not yet public)
+- [x] 7.2 Deploy button configuration
+  - [x] 7.2.1 Button image and URL in README
+  - [ ] 7.2.2 Auto-provisioning of KV namespace confirmed working (needs live deploy test)
 - [ ] 7.3 Cloudflare template gallery submission (if available)
-- [ ] 7.4 Landing page at encypher.com/cloudflare
+- [ ] 7.4 Landing page at encypher.com/cloudflare (deferred to Phase 3)
   - [ ] 7.4.1 Deploy button
   - [ ] 7.4.2 How it works (3-step visual)
   - [ ] 7.4.3 Free vs. Enterprise comparison

@@ -2760,6 +2760,43 @@ const apiClient = {
       accessToken,
     );
   },
+
+  // ============================================
+  // CDN Edge Provenance (Text Signing Worker)
+  // ============================================
+
+  async getCdnEdgeDomains(
+    accessToken: string,
+  ): Promise<CdnEdgeDomain[]> {
+    return fetchWithAuth<CdnEdgeDomain[]>(
+      `${API_BASE_URL}/public/cdn/domains`,
+      accessToken,
+    );
+  },
+
+  async getCdnEdgeDomainStatus(
+    accessToken: string,
+    domain: string,
+  ): Promise<CdnEdgeDomainStatus> {
+    return fetchWithAuth<CdnEdgeDomainStatus>(
+      `${API_BASE_URL}/public/cdn/status/${encodeURIComponent(domain)}`,
+      accessToken,
+    );
+  },
+
+  async claimCdnEdgeDomain(
+    accessToken: string,
+    domain: string,
+  ): Promise<CdnEdgeClaimResponse> {
+    return fetchWithAuth<CdnEdgeClaimResponse>(
+      `${API_BASE_URL}/public/cdn/claim`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ domain }),
+      },
+    );
+  },
 };
 
 // ── Print Leak Detection types ────────────────────────────────────────────────
@@ -2812,6 +2849,36 @@ interface CdnAnalyticsTimelineDay {
 interface CdnAnalyticsTimeline {
   days: number;
   data: CdnAnalyticsTimelineDay[];
+}
+
+// ── CDN Edge Provenance (Text Signing Worker) types ──────────────────────────
+
+interface CdnEdgeDomain {
+  domain: string;
+  org_id: string;
+  worker_version: string;
+  articles_signed: number;
+  last_signed_at: string | null;
+  claim_status: 'unclaimed' | 'claimed' | 'verified';
+  created_at: string;
+}
+
+interface CdnEdgeDomainStatus {
+  domain: string;
+  org_id: string;
+  active: boolean;
+  articles_signed: number;
+  unique_content_hashes: number;
+  tier: string;
+  worker_version: string | null;
+  last_signed_at: string | null;
+}
+
+interface CdnEdgeClaimResponse {
+  success: boolean;
+  domain: string;
+  org_id: string;
+  message: string;
 }
 
 // ── Image / Rich Signing types ────────────────────────────────────────────────
@@ -3583,4 +3650,8 @@ export type {
   CdnAnalyticsSummary,
   CdnAnalyticsTimelineDay,
   CdnAnalyticsTimeline,
+  // CDN Edge Provenance (Text Signing Worker)
+  CdnEdgeDomain,
+  CdnEdgeDomainStatus,
+  CdnEdgeClaimResponse,
 };
