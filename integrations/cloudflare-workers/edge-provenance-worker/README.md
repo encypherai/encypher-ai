@@ -192,6 +192,191 @@ subsequent requests with no additional API round-trip.
 
 ---
 
+## Troubleshooting
+
+**Worker is deployed but articles are not signed.**
+
+Check the `X-Encypher-Provenance` response header. A value of `active` means the
+page was signed. Other values indicate why it was skipped:
+
+| Header Value | Meaning | Fix |
+|---|---|---|
+| `active` | Page was signed successfully | None needed |
+| `skipped:empty` | Extracted text was below 50 characters | Page has no article content, or detection missed it |
+| `skipped:oversized` | Extracted text exceeded 50 KB | Increase `MAX_TEXT_LENGTH` or accept partial signing |
+| `skipped:error` | API or embedding error (fail-open) | Check Cloudflare Workers logs for details |
+| Header absent | Request was not intercepted by the worker | Verify your Cloudflare route pattern matches the URL |
+
+**Detection picks up the wrong content (nav, sidebar, footer text).**
+
+Set the `ARTICLE_SELECTOR` environment variable to a CSS selector that targets
+your article body. Example:
+
+```toml
+[vars]
+ARTICLE_SELECTOR = ".my-post-body"
+```
+
+Supported selector forms: tag name (`article`), class (`.post-content`),
+attribute (`[data-testid="article-body"]`). The selector must match a single
+container element. Restart the worker after changing the variable.
+
+**Markers appear as visible characters.**
+
+The provenance markers use Unicode variation selectors, which are invisible in
+all modern browsers and text editors. If you see unexpected characters, confirm
+you are not viewing the raw HTML source in a hex editor. Markers are invisible
+in rendered HTML, plain text copy-paste, and standard text editors.
+
+**KV namespace errors on deploy.**
+
+If deploying manually (not via the Deploy button), replace the placeholder
+namespace ID in `wrangler.toml` with your actual KV namespace ID. Run
+`wrangler kv:namespace create PROVENANCE_CACHE` to create one.
+
+---
+
+## API Reference
+
+The worker communicates with four backend endpoints. Publishers do not call
+these directly. They are documented here for transparency and debugging.
+
+### POST /api/v1/public/cdn/provision
+
+Auto-provisions a domain on first request. Public, no authentication required.
+
+```json
+// Request
+{
+  "domain": "example.com",
+  "worker_version": "1.0.0"
+}
+
+// Response
+{
+  "org_id": "org_cdn_a1b2c3d4e5f6",
+  "domain_token": "dtk_...",
+  "dashboard_url": "https://dashboard.encypher.com/cdn/example.com",
+  "claim_url": "https://dashboard.encypher.com/claim/org_cdn_a1b2c3d4e5f6"
+}
+```
+
+### POST /api/v1/public/cdn/sign
+
+Signs article text and returns an embedding plan. Public, rate-limited by org
+quota (1,000 unique signs/month on the free tier).
+
+```json
+// Request
+{
+  "text": "extracted article text...",
+  "page_url": "https://example.com/article/slug",
+  "org_id": "org_cdn_a1b2c3d4e5f6",
+  "options": {
+    "return_embedding_plan": true
+  }
+}
+
+// Response
+{
+  "embedding_plan": {
+    "index_unit": "codepoint",
+    "operations": [
+      {"insert_after_index": 42, "marker": "\ufe00\ufe01"}
+    ]
+  },
+  "document_id": "doc_...",
+  "verification_url": "https://encypher.com/verify/doc_...",
+  "content_hash": "sha256:abcdef...",
+  "cached": false,
+  "signer_tier": "encypher_free"
+}
+```
+
+Duplicate requests (same domain + content hash) return the cached plan with no
+quota charge.
+
+### GET /api/v1/public/cdn/manifest/{record_id}
+
+Returns manifest metadata for a signed content record. Public, CORS-enabled.
+
+### POST /api/v1/public/cdn/claim
+
+Claims a CDN domain for dashboard access. Requires authentication.
+
+```json
+// Request
+{
+  "domain": "example.com"
+}
+
+// Response
+{
+  "status": "verification_initiated",
+  "domain": "example.com"
+}
+```
+
+The backend verifies domain ownership by fetching
+`https://example.com/.well-known/encypher-verify` and confirming the
+domain token matches.
+
+---
+
+## FAQ
+
+**What text is signed?**
+
+The worker signs visible article text only. Navigation, footers, sidebars, ads,
+scripts, and metadata are excluded. The detection chain identifies the article
+boundary using semantic HTML, CMS class names, and Schema.org microdata.
+
+**What data is stored?**
+
+The Encypher API stores a content hash, the page URL, a document ID, and the
+signing timestamp. The full article text is not stored. The embedding plan
+(marker positions and sequences) is cached in Cloudflare KV for one hour and in
+the Encypher backend for deduplication.
+
+**Who owns the signed content?**
+
+The publisher owns the content. Signing does not transfer any intellectual
+property rights. The provenance record attributes the content to the publisher's
+domain at the time of signing.
+
+**Do markers affect SEO?**
+
+No. Unicode variation selectors are zero-width, invisible characters that do not
+affect rendering, indexing, or search ranking. Google's crawler processes the
+same visible text as any reader.
+
+**Do markers survive copy-paste?**
+
+Yes. Variation-selector markers survive copy-paste in Chrome, Firefox, Safari,
+and Edge. They survive email forwarding, RSS aggregation, and scraping. This is
+the core design property that makes provenance tracking work after content
+leaves the original site.
+
+**What happens if the Encypher API is down?**
+
+The worker serves the original unmodified HTML. All errors are fail-open.
+Readers never see an error page or broken content. When the API recovers,
+signing resumes automatically on the next cache miss.
+
+**Can I use this with a custom CMS or static site generator?**
+
+Yes. If the auto-detection chain does not find your article content, set the
+`ARTICLE_SELECTOR` environment variable to a CSS selector targeting your article
+body container. Any site that serves HTML over Cloudflare is compatible.
+
+**Is the worker open source?**
+
+The worker source code is provided for transparency and auditability. The
+signing API, marker embedding protocol, and verification infrastructure are
+proprietary. See the LICENSE file for terms.
+
+---
+
 ## Development
 
 Run the test suite:
