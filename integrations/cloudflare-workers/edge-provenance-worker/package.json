@@ -19,6 +19,7 @@
   ],
   "license": "UNLICENSED",
   "devDependencies": {
+    "miniflare": "^4.20260405.0",
     "wrangler": "^3.0.0"
   }
 }

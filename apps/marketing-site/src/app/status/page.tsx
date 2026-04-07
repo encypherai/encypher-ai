@@ -5,7 +5,8 @@ export const metadata: Metadata = {
   description: 'Current operational status of Encypher services including API, signing, verification, and dashboard.',
 };
 
-// Revalidate every 60 seconds
+// Status checks require live service endpoints, cannot be pre-rendered during build.
+export const dynamic = 'force-dynamic';
 export const revalidate = 60;
 
 type ServiceStatus = {
