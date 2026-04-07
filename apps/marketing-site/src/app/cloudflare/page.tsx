@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Button } from '@encypher/design-system';
 import { Badge } from '@encypher/design-system';
@@ -13,10 +13,15 @@ import {
   FileCode2,
   Cpu,
   GitBranch,
+  Clipboard,
+  ClipboardCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
+
+const DEPLOY_BASE_URL =
+  'https://deploy.workers.cloudflare.com/?url=https://github.com/encypherai/edge-provenance-worker';
 
 const HOW_IT_WORKS = [
   {
@@ -94,6 +99,27 @@ const TECHNICAL_CARDS = [
 
 export default function CloudflarePage() {
   const [showContactModal, setShowContactModal] = useState(false);
+  const [domain, setDomain] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const routePattern = domain.trim()
+    ? `*${domain.trim().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/+$/, '')}/*`
+    : '';
+
+  const handleDeploy = useCallback(async () => {
+    if (!routePattern) {
+      window.open(DEPLOY_BASE_URL, '_blank');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(routePattern);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      // Clipboard not available, proceed anyway
+    }
+    window.open(DEPLOY_BASE_URL, '_blank');
+  }, [routePattern]);
 
   return (
     <div className="bg-background text-foreground">
@@ -122,12 +148,48 @@ export default function CloudflarePage() {
             Track where your content goes when it is copied, scraped, or fed into AI models.
             No CMS changes. Free for all publishers.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button asChild size="lg" className="font-semibold">
-              <Link href="https://deploy.workers.cloudflare.com/?url=https://github.com/encypherai/edge-provenance-worker">
+
+          {/* Domain input deploy flow */}
+          <div className="max-w-lg mx-auto mb-8">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={domain}
+                onChange={(e) => { setDomain(e.target.value); setCopied(false); }}
+                placeholder="yourdomain.com"
+                className="flex-1 text-base px-4 py-3 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <Button
+                size="lg"
+                className="font-semibold whitespace-nowrap"
+                onClick={handleDeploy}
+              >
                 Deploy to Cloudflare <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+              </Button>
+            </div>
+            {routePattern && (
+              <p className="text-sm text-muted-foreground mt-3 flex items-center justify-center gap-2">
+                {copied ? (
+                  <ClipboardCheck className="h-4 w-4 text-primary" />
+                ) : (
+                  <Clipboard className="h-4 w-4" />
+                )}
+                <span>
+                  {copied
+                    ? `Route pattern copied: ${routePattern}`
+                    : `We will copy the route pattern for you: ${routePattern}`}
+                </span>
+              </p>
+            )}
+            {!domain.trim() && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Enter your domain and we will prepare the route pattern for Cloudflare.
+                Or deploy directly and configure later.
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild variant="outline" size="lg">
               <Link href="https://github.com/encypherai/edge-provenance-worker">
                 View on GitHub <GitBranch className="ml-2 h-4 w-4" />
