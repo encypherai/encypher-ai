@@ -841,7 +841,17 @@ class UnicodeMetadata:
             claim_generator=claim_gen,
             alg="sha256",
         )
-        cose_sign1_bytes = sign_c2pa_cose(private_key, claim_cbor, cert_chain_pem=cert_chain_pem)
+        certificates = None
+        if cert_chain_pem:
+            from cryptography import x509 as x509_mod
+
+            certificates = []
+            for pem_block in cert_chain_pem.split("-----END CERTIFICATE-----"):
+                pem_block = pem_block.strip()
+                if pem_block and "-----BEGIN CERTIFICATE-----" in pem_block:
+                    cert_pem = pem_block + "\n-----END CERTIFICATE-----\n"
+                    certificates.append(x509_mod.load_pem_x509_certificate(cert_pem.encode()))
+        cose_sign1_bytes = sign_c2pa_cose(private_key, claim_cbor, certificates=certificates)
 
         manifest_box = build_manifest(manifest_label, assertion_boxes, claim_cbor, cose_sign1_bytes)
         return build_manifest_store([manifest_box])

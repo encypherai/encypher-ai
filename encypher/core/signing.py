@@ -342,13 +342,22 @@ def extract_payload_from_cose_sign1(cose_bytes: bytes) -> Optional[bytes]:
         return None
 
 
-def verify_c2pa_cose(public_key: ed25519.Ed25519PublicKey, cose_bytes: bytes) -> bytes:
+def verify_c2pa_cose(
+    public_key: ed25519.Ed25519PublicKey,
+    cose_bytes: bytes,
+    payload_override: Optional[bytes] = None,
+) -> bytes:
     """
     Verifies a COSE_Sign1 signature and returns the payload if valid.
 
     Args:
         public_key: The Ed25519 public key for verification.
         cose_bytes: The CBOR-encoded COSE_Sign1 message.
+        payload_override: If provided, use this as the payload for signature
+            verification instead of the embedded payload. Used when the COSE
+            structure has a detached payload (payload=None in the COSE envelope)
+            but the actual payload is known from context (e.g. reconstructed
+            from the JUMBF manifest store).
 
     Returns:
         The original payload bytes if the signature is valid.
@@ -359,17 +368,18 @@ def verify_c2pa_cose(public_key: ed25519.Ed25519PublicKey, cose_bytes: bytes) ->
     """
     logger.debug(f"Attempting to verify COSE_Sign1 message ({len(cose_bytes)} bytes).")
     protected_bstr, _unprotected, payload, signature = _parse_sign1(cose_bytes)
-    if payload is None:
+    if payload is None and payload_override is None:
         raise ValueError("Message is not a COSE_Sign1 structure.")
+    effective_payload = payload_override if payload_override is not None else payload
     # Optional: validate alg is EdDSA
     protected_map = cbor2.loads(protected_bstr)
     if protected_map.get(ALG_HEADER) != ALG_EDDSA:
         raise ValueError("Unsupported or missing alg in protected header")
-    to_verify = _sig_structure(protected_bstr, payload)
+    to_verify = _sig_structure(protected_bstr, effective_payload)
     try:
         public_key.verify(signature, to_verify)
         logger.info("COSE_Sign1 signature verification successful.")
-        return bytes(payload)
+        return bytes(effective_payload)
     except InvalidSignature:
         raise InvalidSignature("COSE signature verification failed.") from None
 
