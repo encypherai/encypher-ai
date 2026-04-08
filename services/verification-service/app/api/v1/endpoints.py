@@ -40,6 +40,7 @@ from cryptography import x509
 from encypher.core.payloads import deserialize_jumbf_payload
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.signing import extract_certificates_from_cose
+from encypher.interop.c2pa.jumbf import parse_manifest_store
 
 try:
     from encypher.interop.c2pa import find_wrapper_info_bytes
@@ -87,6 +88,48 @@ MAX_MANIFEST_BYTES = 50 * 1024  # 50 KB cap on serialized manifest
 _ORG_CONTEXT_CACHE: dict[str, tuple[float, dict]] = {}
 _ORG_CONTEXT_TTL = 300  # 5 minutes
 _ORG_CONTEXT_CACHE_MAX = 1000  # evict all if exceeded
+
+
+def _extract_cose_and_signer_from_manifest(
+    manifest_bytes: bytes,
+) -> tuple[bytes | None, str | None]:
+    """Extract COSE_Sign1 bytes and signer_id from manifest bytes.
+
+    Tries conformant JUMBF first, then falls back to legacy JSON-in-jumb.
+    Returns (cose_bytes, signer_id) or (None, None).
+    """
+    # Conformant JUMBF
+    try:
+        parsed = parse_manifest_store(manifest_bytes)
+        active = parsed["manifests"][-1]
+        cose_bytes = active.get("signature_cose")
+        if cose_bytes:
+            import cbor2
+
+            signer_id = None
+            signer_cbor = active.get("assertions", {}).get("com.encypher.signer")
+            if signer_cbor:
+                try:
+                    signer_id = cbor2.loads(signer_cbor).get("signer_id")
+                except Exception:
+                    pass
+            return cose_bytes, signer_id
+    except (ValueError, KeyError, IndexError):
+        pass
+
+    # Legacy JSON-in-jumb
+    try:
+        manifest_store = deserialize_jumbf_payload(manifest_bytes)
+        if isinstance(manifest_store, dict):
+            cose_b64 = manifest_store.get("cose_sign1")
+            signer_id = manifest_store.get("signer_id")
+            if isinstance(cose_b64, str) and cose_b64:
+                return base64.b64decode(cose_b64), signer_id
+    except Exception:
+        pass
+
+    return None, None
+
 
 # ---------------------------------------------------------------------------
 # Template helpers (Task 1.0 - move inline HTML to template files)
@@ -484,20 +527,8 @@ def _extract_embedded_c2pa_public_key(_text: str):
         return None
 
     manifest_bytes, _wrapper_start, _wrapper_length = info
-    try:
-        manifest_store = deserialize_jumbf_payload(manifest_bytes)
-    except Exception:
-        return None
-    if not isinstance(manifest_store, dict):
-        return None
-
-    cose_sign1_b64 = manifest_store.get("cose_sign1")
-    if not isinstance(cose_sign1_b64, str) or not cose_sign1_b64:
-        return None
-
-    try:
-        cose_bytes = base64.b64decode(cose_sign1_b64)
-    except Exception:
+    cose_bytes, _ = _extract_cose_and_signer_from_manifest(manifest_bytes)
+    if not cose_bytes:
         return None
 
     try:
@@ -545,20 +576,8 @@ async def _is_embedded_c2pa_key_trusted(text: str) -> bool:
         return False
 
     manifest_bytes, _wrapper_start, _wrapper_length = info
-    try:
-        manifest_store = deserialize_jumbf_payload(manifest_bytes)
-    except Exception:
-        return False
-    if not isinstance(manifest_store, dict):
-        return False
-
-    cose_sign1_b64 = manifest_store.get("cose_sign1")
-    if not isinstance(cose_sign1_b64, str) or not cose_sign1_b64:
-        return False
-
-    try:
-        cose_bytes = base64.b64decode(cose_sign1_b64)
-    except Exception:
+    cose_bytes, _ = _extract_cose_and_signer_from_manifest(manifest_bytes)
+    if not cose_bytes:
         return False
 
     try:
@@ -646,11 +665,9 @@ async def _resolve_org_context(
     if not extracted_signer_id and has_c2pa_wrapper and wrapper_info:
         try:
             manifest_bytes = wrapper_info[0]
-            manifest_store = deserialize_jumbf_payload(manifest_bytes)
-            if isinstance(manifest_store, dict):
-                jumbf_signer_id = manifest_store.get("signer_id")
-                if isinstance(jumbf_signer_id, str):
-                    extracted_signer_id = jumbf_signer_id
+            _, jumbf_signer_id = _extract_cose_and_signer_from_manifest(manifest_bytes)
+            if isinstance(jumbf_signer_id, str):
+                extracted_signer_id = jumbf_signer_id
         except Exception:
             pass
 
@@ -1200,20 +1217,31 @@ def _try_c2pa_fallback(
 
     manifest_bytes, wrapper_start_byte, wrapper_length_byte = info
     try:
-        manifest_store = deserialize_jumbf_payload(manifest_bytes)
-        if isinstance(manifest_store, dict):
-            fallback_signer_id = manifest_store.get("signer_id")
-            cose_sign1 = manifest_store.get("cose_sign1")
-        else:
-            fallback_signer_id = None
-            cose_sign1 = None
+        # Try conformant JUMBF first
+        try:
+            parsed_store = parse_manifest_store(manifest_bytes)
+            outer_payload = UnicodeMetadata._outer_payload_from_jumbf(parsed_store, manifest_bytes)
+        except (ValueError, KeyError):
+            outer_payload = None
 
-        if isinstance(fallback_signer_id, str) and isinstance(cose_sign1, str):
-            outer_payload = {
-                "format": "c2pa",
-                "signer_id": fallback_signer_id,
-                "cose_sign1": cose_sign1,
-            }
+        if outer_payload is None:
+            # Legacy JSON-in-jumb fallback
+            manifest_store = deserialize_jumbf_payload(manifest_bytes)
+            if isinstance(manifest_store, dict):
+                fallback_signer_id = manifest_store.get("signer_id")
+                cose_sign1 = manifest_store.get("cose_sign1")
+            else:
+                fallback_signer_id = None
+                cose_sign1 = None
+
+            if isinstance(fallback_signer_id, str) and isinstance(cose_sign1, str):
+                outer_payload = {
+                    "format": "c2pa",
+                    "signer_id": fallback_signer_id,
+                    "cose_sign1": cose_sign1,
+                }
+
+        if outer_payload:
             is_valid, signer_id, manifest = UnicodeMetadata._verify_c2pa(
                 original_text=text,
                 outer_payload=outer_payload,
