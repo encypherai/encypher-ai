@@ -2690,6 +2690,10 @@ async function scanPage(root = document.body) {
   const newImages = _scanImages(root);
   if (newImages > 0) {
     _debugLog('INFO', 'detector', `Image scan: ${newImages} new images inventoried (${_processedImages.size} total)`);
+    // Mutation-discovered content is genuinely new — clear the per-URL cooldown
+    // so _autoScanImages actually checks these images. The cooldown prevents
+    // redundant full-page rescans, not mutation-triggered discoveries.
+    if (root !== document.body) _autoScanPageCooldown.delete(window.location.href);
     _autoScanImages();
   }
 
@@ -2697,6 +2701,7 @@ async function scanPage(root = document.body) {
   const newAudioVideo = _scanAudioVideo(root);
   if (newAudioVideo > 0) {
     _debugLog('INFO', 'detector', `Audio/video scan: ${newAudioVideo} new elements inventoried (${_processedAudioVideo.size} total)`);
+    if (root !== document.body) _autoScanPageCooldown.delete(window.location.href + ':media');
     _autoScanMedia();
   }
 
@@ -2704,6 +2709,7 @@ async function scanPage(root = document.body) {
   const newDocs = _scanDocuments(root);
   if (newDocs > 0) {
     _debugLog('INFO', 'detector', `Document scan: ${newDocs} new embeds inventoried (${_processedDocuments.size} total)`);
+    if (root !== document.body) _autoScanPageCooldown.delete(window.location.href + ':documents');
     _autoScanDocuments();
   }
 
@@ -2753,6 +2759,7 @@ function _getOnlineEditorRoots() {
  */
 function observeDOM() {
   let pendingNodes = [];
+  let pendingCharDataNodes = new Set(); // elements whose text changed in-place
   let debounceTimer = null;
   let maxWaitTimer = null;
   let pendingInputRoots = [];
@@ -2778,6 +2785,7 @@ function observeDOM() {
         const parent = mutation.target?.parentElement;
         if (parent) {
           pendingNodes.push(parent);
+          pendingCharDataNodes.add(parent);
         }
       }
     }
@@ -2790,7 +2798,25 @@ function observeDOM() {
         debounceTimer = null;
         maxWaitTimer = null;
         const nodesToScan = pendingNodes;
+        const charDataSet = pendingCharDataNodes;
         pendingNodes = [];
+        pendingCharDataNodes = new Set();
+
+        // Evict stale entries for elements whose text content changed in-place.
+        // Without this, _processedElements blocks re-detection when a page
+        // replaces embedded text (React re-render, SPA nav, infinite scroll).
+        for (const node of charDataSet) {
+          if (!node.isConnected) continue;
+          try {
+            const block = getContainingBlock(node);
+            if (block && _processedElements.has(block)) {
+              _processedElements.delete(block);
+              // Remove stale badge — rescan will inject a fresh one if needed
+              block.querySelectorAll?.('.encypher-badge')?.forEach(b => b.remove());
+            }
+          } catch (_) {}
+        }
+
         for (const node of nodesToScan) {
           if (node.isConnected) {
             scanPage(node);

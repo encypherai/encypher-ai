@@ -592,9 +592,15 @@ function showNotification(type, message) {
 
 function setPrimaryEditor(editorId) {
   primaryEditorId = editorId;
+  // Hide all buttons first, then show only the primary — guarantees
+  // at most one sign button is visible on screen at any time.
   for (const [, info] of activeEditors) {
-    info.updateVisibility?.();
+    if (info.button) {
+      info.button.classList.remove('encypher-sign-btn--visible', 'encypher-sign-btn--expanded');
+    }
   }
+  const primary = activeEditors.get(editorId);
+  if (primary) primary.updateVisibility?.({ forceVisible: true });
 }
 
 async function getStoredApiKey() {
@@ -1294,7 +1300,12 @@ function updateEditorButtonState(info, options = {}) {
   const ui = document.querySelector('.encypher-sign-ui');
   const keepVisible = ui?.dataset.editorId === info.editorId;
   const active = primaryEditorId === info.editorId;
-  const visible = info.isOnlineEditor || keepVisible || options.forceVisible || active || Boolean(info.insideModal && trimmedLength > 0);
+  // Only one button should be visible at a time. The isOnlineEditor and
+  // insideModal flags may show the button when no primary is set, but must
+  // not override another editor's primary status.
+  const noPrimary = !primaryEditorId || !activeEditors.has(primaryEditorId);
+  const visible = keepVisible || options.forceVisible || active
+    || (noPrimary && (info.isOnlineEditor || Boolean(info.insideModal && trimmedLength > 0)));
   updateButtonPresentation(info.button, {
     ready,
     signed: info.button.classList.contains('encypher-sign-btn--signed'),
@@ -1380,11 +1391,14 @@ function attachSignButton(editor) {
   if (!editor.id) editor.id = editorId;
 
   if (activeEditors.has(editorId)) return;
+  // Reserve the slot immediately to prevent a concurrent call from also
+  // passing the has() check before we populate the full entry below.
+  activeEditors.set(editorId, { editorId, element: editor, _placeholder: true });
 
   // Create button
   const button = createSignButton(editorId);
   const _mountRoot = _getButtonMountRoot();
-  if (!_mountRoot) return; // cross-origin editable-body iframe; cannot mount safely
+  if (!_mountRoot) { activeEditors.delete(editorId); return; } // cross-origin editable-body iframe; cannot mount safely
   _mountRoot.appendChild(button);
   const repositionHandler = createRepositionScheduler(button, editor);
   const surface = getEditorSurfaceKind(editor, editorType);
