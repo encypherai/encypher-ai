@@ -183,7 +183,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="https://x.com/Encypher" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <a href="https://x.com/encypherai" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Twitter
                 </a>
               </li>

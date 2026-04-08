@@ -401,7 +401,7 @@ export const organizationSchema = {
   ],
   "sameAs": [
     `https://github.com/${siteConfig.social.github}`,
-    `https://twitter.com/${siteConfig.social.twitter}`,
+    `https://x.com/encypherai`,
     `https://linkedin.com/${siteConfig.social.linkedin}`
   ],
   "contactPoint": {
