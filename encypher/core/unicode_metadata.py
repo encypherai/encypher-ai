@@ -1577,7 +1577,7 @@ class UnicodeMetadata:
                         try:
                             signed_segment = signed_segment_bytes.decode("utf-8")
                             # Use measured wrapper exclusion for JUMBF, assertion's for legacy
-                            segment_excl = (segment_exclusion_start, current_wrapper_byte_len) if is_jumbf_format else expected_exclusion
+                            segment_excl: tuple[int, int] = (segment_exclusion_start, current_wrapper_byte_len) if is_jumbf_format else (expected_exclusion or (0, 0))
                             retry_result = compute_normalized_hash(signed_segment, [segment_excl])
                             if retry_result.hexdigest == expected_hard_hash:
                                 logger.info(
@@ -1669,9 +1669,9 @@ class UnicodeMetadata:
             "signature": "c2pa_jumbf_manifest_store",
         }
         # Attach parsed JUMBF data for downstream verification
-        outer["_jumbf_parsed"] = parsed_store  # type: ignore[typeddict-unknown-key]
-        outer["_jumbf_assertions"] = c2pa_assertions  # type: ignore[typeddict-unknown-key]
-        outer["_jumbf_manifest"] = active  # type: ignore[typeddict-unknown-key]
+        outer["_jumbf_parsed"] = parsed_store
+        outer["_jumbf_assertions"] = c2pa_assertions
+        outer["_jumbf_manifest"] = active
         return outer
 
     @classmethod
