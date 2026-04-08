@@ -312,7 +312,7 @@ class TestPrintSimulation300DPI:
         payload = build_payload(_sample_log_id(), _sample_signing_key())
         result = _run_simulation(text, payload, dpi=300, noise_stddev_em=0.01, seed=42)
 
-        print(f"300 DPI, 0.01em noise: {result.symbol_errors} symbol errors, " f"{result.byte_errors} byte errors, BER={result.bit_error_rate:.4f}")
+        print(f"300 DPI, 0.01em noise: {result.symbol_errors} symbol errors, {result.byte_errors} byte errors, BER={result.bit_error_rate:.4f}")
         assert result.payload_recovered is True
         assert result.log_id_match is True
 
@@ -322,11 +322,11 @@ class TestPrintSimulation300DPI:
         payload = build_payload(_sample_log_id(), _sample_signing_key())
         result = _run_simulation(text, payload, dpi=300, noise_stddev_em=0.02, seed=42)
 
-        print(f"300 DPI, 0.02em noise: {result.symbol_errors} symbol errors, " f"{result.byte_errors} byte errors, BER={result.bit_error_rate:.4f}")
+        print(f"300 DPI, 0.02em noise: {result.symbol_errors} symbol errors, {result.byte_errors} byte errors, BER={result.bit_error_rate:.4f}")
         # At moderate noise, recovery may or may not succeed depending on
         # how many errors land in distinct RS bytes. Log the result.
         if not result.payload_recovered:
-            print(f"  RS recovery FAILED at this noise level " f"({result.byte_errors} byte errors > 4 correctable)")
+            print(f"  RS recovery FAILED at this noise level ({result.byte_errors} byte errors > 4 correctable)")
 
 
 # --------------------------------------------------------------------------
@@ -353,7 +353,7 @@ class TestPrintSimulation600DPI:
         payload = build_payload(_sample_log_id(), _sample_signing_key())
         result = _run_simulation(text, payload, dpi=600, noise_stddev_em=0.01, seed=42)
 
-        print(f"600 DPI, 0.01em noise: {result.symbol_errors} symbol errors, " f"{result.byte_errors} byte errors, BER={result.bit_error_rate:.4f}")
+        print(f"600 DPI, 0.01em noise: {result.symbol_errors} symbol errors, {result.byte_errors} byte errors, BER={result.bit_error_rate:.4f}")
         assert result.payload_recovered is True
         assert result.log_id_match is True
 
@@ -368,7 +368,7 @@ class TestPrintSimulation600DPI:
         payload = build_payload(_sample_log_id(), _sample_signing_key())
         result = _run_simulation(text, payload, dpi=600, noise_stddev_em=0.012, seed=42)
 
-        print(f"600 DPI, 0.012em noise: {result.symbol_errors} symbol errors, " f"{result.byte_errors} byte errors, BER={result.bit_error_rate:.4f}")
+        print(f"600 DPI, 0.012em noise: {result.symbol_errors} symbol errors, {result.byte_errors} byte errors, BER={result.bit_error_rate:.4f}")
         assert result.payload_recovered is True
 
     def test_600dpi_high_noise(self) -> None:
@@ -377,7 +377,7 @@ class TestPrintSimulation600DPI:
         payload = build_payload(_sample_log_id(), _sample_signing_key())
         result = _run_simulation(text, payload, dpi=600, noise_stddev_em=0.03, seed=42)
 
-        print(f"600 DPI, 0.03em noise: {result.symbol_errors} symbol errors, " f"{result.byte_errors} byte errors, BER={result.bit_error_rate:.4f}")
+        print(f"600 DPI, 0.03em noise: {result.symbol_errors} symbol errors, {result.byte_errors} byte errors, BER={result.bit_error_rate:.4f}")
         # Log whether RS can handle this level
         if result.payload_recovered:
             print("  RS recovery SUCCEEDED at high noise")
@@ -581,7 +581,7 @@ class TestImageRendering:
                 errors += 1
 
         decoded = _decode_from_symbols(symbols)
-        print(f"150 DPI: {errors} symbol errors out of {len(symbols)}, " f"recovered={decoded is not None}")
+        print(f"150 DPI: {errors} symbol errors out of {len(symbols)}, recovered={decoded is not None}")
         # At 150 DPI, font rendering is coarser. Even without noise,
         # some rounding artifacts may cause misclassification.
         # RS should still handle a few errors.
@@ -619,12 +619,12 @@ class TestSummaryReport:
         print("\n" + "=" * 75)
         print("PRINT MICRO ECC - DIGITAL SIMULATION REPORT")
         print("=" * 75)
-        print(f"{'DPI':>5} {'Noise(em)':>10} {'Sym Err':>8} {'Byte Err':>9} " f"{'BER':>8} {'Recovered':>10}")
+        print(f"{'DPI':>5} {'Noise(em)':>10} {'Sym Err':>8} {'Byte Err':>9} {'BER':>8} {'Recovered':>10}")
         print("-" * 75)
 
         for dpi, noise in configs:
             result = _run_simulation(text, payload, dpi=dpi, noise_stddev_em=noise)
             status = "YES" if result.payload_recovered else "NO"
-            print(f"{dpi:>5} {noise:>10.3f} {result.symbol_errors:>8} " f"{result.byte_errors:>9} {result.bit_error_rate:>8.4f} " f"{status:>10}")
+            print(f"{dpi:>5} {noise:>10.3f} {result.symbol_errors:>8} {result.byte_errors:>9} {result.bit_error_rate:>8.4f} {status:>10}")
 
         print("=" * 75)
