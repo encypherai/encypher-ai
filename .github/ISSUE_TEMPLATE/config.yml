@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: EncypherAI Documentation
+    url: https://docs.encypherai.com
+    about: Check our documentation for guides and troubleshooting
+  - name: EncypherAI Community Discussions
+    url: https://github.com/encypherai/encypher-ai/discussions
+    about: Ask questions and discuss with other community members
+  - name: Security Issues
+    url: https://www.encypherai.com/security
+    about: Please report security vulnerabilities here
