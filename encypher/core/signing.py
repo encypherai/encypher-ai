@@ -73,7 +73,7 @@ def _sign_with_key(key: SigningKey, data: bytes) -> bytes:
     if isinstance(key, ec.EllipticCurvePrivateKey):
         curve = key.curve
         if isinstance(curve, ec.SECP256R1):
-            hash_alg = hashes.SHA256()
+            hash_alg: hashes.HashAlgorithm = hashes.SHA256()
         elif isinstance(curve, ec.SECP384R1):
             hash_alg = hashes.SHA384()
         elif isinstance(curve, ec.SECP521R1):
