@@ -343,7 +343,7 @@ def extract_payload_from_cose_sign1(cose_bytes: bytes) -> Optional[bytes]:
 
 
 def verify_c2pa_cose(
-    public_key: ed25519.Ed25519PublicKey,
+    public_key: Optional[ed25519.Ed25519PublicKey],
     cose_bytes: bytes,
     payload_override: Optional[bytes] = None,
 ) -> bytes:
@@ -351,7 +351,9 @@ def verify_c2pa_cose(
     Verifies a COSE_Sign1 signature and returns the payload if valid.
 
     Args:
-        public_key: The Ed25519 public key for verification.
+        public_key: The Ed25519 public key for verification. If None, the
+            public key is extracted from the x5chain certificates embedded
+            in the COSE unprotected header.
         cose_bytes: The CBOR-encoded COSE_Sign1 message.
         payload_override: If provided, use this as the payload for signature
             verification instead of the embedded payload. Used when the COSE
@@ -367,19 +369,36 @@ def verify_c2pa_cose(
         ValueError: If the message is not a valid COSE_Sign1 structure.
     """
     logger.debug(f"Attempting to verify COSE_Sign1 message ({len(cose_bytes)} bytes).")
-    protected_bstr, _unprotected, payload, signature = _parse_sign1(cose_bytes)
+    protected_bstr, unprotected, payload, signature = _parse_sign1(cose_bytes)
     if payload is None and payload_override is None:
         raise ValueError("Message is not a COSE_Sign1 structure.")
-    effective_payload = payload_override if payload_override is not None else payload
+    effective_payload: bytes = payload_override if payload_override is not None else (payload or b"")
+    if not effective_payload:
+        raise ValueError("No payload available for verification")
     # Optional: validate alg is EdDSA
     protected_map = cbor2.loads(protected_bstr)
     if protected_map.get(ALG_HEADER) != ALG_EDDSA:
         raise ValueError("Unsupported or missing alg in protected header")
     to_verify = _sig_structure(protected_bstr, effective_payload)
+
+    # Resolve public key: use provided key or extract from x5chain
+    verify_key: ed25519.Ed25519PublicKey
+    if public_key is not None:
+        verify_key = public_key
+    else:
+        x5chain = unprotected.get(X5CHAIN_HEADER)
+        if not x5chain:
+            raise ValueError("No public key provided and no x5chain in COSE message")
+        cert = x509.load_der_x509_certificate(x5chain[0])
+        extracted = cert.public_key()
+        if not isinstance(extracted, ed25519.Ed25519PublicKey):
+            raise ValueError("x5chain certificate does not contain an Ed25519 public key")
+        verify_key = extracted
+
     try:
-        public_key.verify(signature, to_verify)
+        verify_key.verify(signature, to_verify)
         logger.info("COSE_Sign1 signature verification successful.")
-        return bytes(effective_payload)
+        return effective_payload
     except InvalidSignature:
         raise InvalidSignature("COSE signature verification failed.") from None
 

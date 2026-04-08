@@ -88,7 +88,7 @@ def worst_case_wrapper_byte_length(manifest_byte_count: int) -> int:
 
     Delegates to :func:`c2pa_text.worst_case_wrapper_byte_length`.
     """
-    return c2pa_text.worst_case_wrapper_byte_length(manifest_byte_count)
+    return int(c2pa_text.worst_case_wrapper_byte_length(manifest_byte_count))
 
 
 def attach_wrapper_to_text(text: str, manifest_bytes: bytes, alg: str = "sha256", *, at_end: bool = True) -> str:
