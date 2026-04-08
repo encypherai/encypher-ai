@@ -1,7 +1,7 @@
 # Encypher Industry Trend Tracker
 
-Last updated: 2026-03-31
-Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
+Last updated: 2026-04-07
+Research weeks analyzed: 6 (earliest: 2026-03-03, latest: 2026-04-07)
 
 ---
 
@@ -9,27 +9,29 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 | Trend | Category | First Seen | Last Seen | Appearances | Trajectory | Signal Strength |
 |-------|----------|------------|-----------|-------------|------------|-----------------|
-| Machine-readable opt-out standard hardening | Regulatory and Legal | 2026-03-03 | 2026-03-31 | 5/5 weeks | Rising | Strong |
-| EU AI Act Article 50/53 enforcement deadline | Regulatory and Legal | 2026-03-03 | 2026-03-31 | 5/5 weeks | Rising | Strong |
-| Multi-layered marking requirement (Code of Practice) | Regulatory and Legal | 2026-03-31 | 2026-03-31 | 1/5 weeks | New | Strong |
-| Robots.txt legal and technical failure | Regulatory and Legal | 2026-03-03 | 2026-03-17 | 2/5 weeks | Fading | Strong |
-| AI copyright litigation continuing but narrowing | Regulatory and Legal | 2026-03-10 | 2026-03-24 | 3/5 weeks | Stable | Strong |
-| Human authorship requirement settled | Regulatory and Legal | 2026-03-24 | 2026-03-24 | 1/5 weeks | New | Moderate |
-| AI licensing marketplace infrastructure emerging | Market and Commercial | 2026-03-03 | 2026-03-24 | 4/5 weeks | Rising | Strong |
-| Collective licensing models for small publishers | Market and Commercial | 2026-03-10 | 2026-03-24 | 2/5 weeks | Stable | Moderate |
-| Settlement math systematically underpays rights holders | Market and Commercial | 2026-03-10 | 2026-03-10 | 1/5 weeks | Fading | Strong |
-| AI company training-data discovery orders | Market and Commercial | 2026-03-24 | 2026-03-24 | 1/5 weeks | New | Moderate |
-| C2PA 2.3 text provenance standard (Section A.7) | Technology and Standards | 2026-03-03 | 2026-03-31 | 5/5 weeks | Rising | Strong |
-| Text watermarking as compliance requirement | Technology and Standards | 2026-03-31 | 2026-03-31 | 1/5 weeks | New | Strong |
-| Sentence-level provenance granularity gap | Technology and Standards | 2026-03-10 | 2026-03-10 | 1/5 weeks | Fading | Moderate |
-| IETF AI Preferences Working Group standards race | Technology and Standards | 2026-03-17 | 2026-03-17 | 1/5 weeks | Fading | Moderate |
-| AI scraper non-compliance with robots.txt rising | Technology and Standards | 2026-03-03 | 2026-03-03 | 1/5 weeks | Fading | Moderate |
-| Microsoft Publisher Content Marketplace | Competitors and Adjacent Players | 2026-03-24 | 2026-03-24 | 1/5 weeks | New | Strong |
-| OpenAI active in licensing and litigation defense | Competitors and Adjacent Players | 2026-03-10 | 2026-03-24 | 3/5 weeks | Stable | Strong |
-| Anthropic major copyright settlement | Competitors and Adjacent Players | 2026-03-10 | 2026-03-10 | 1/5 weeks | Fading | Strong |
-| Publisher content signing and provenance adoption | Publisher and Creator Ecosystem | 2026-03-03 | 2026-03-31 | 5/5 weeks | Rising | Strong |
-| RAG-driven content monetization for publishers | Publisher and Creator Ecosystem | 2026-03-24 | 2026-03-24 | 1/5 weeks | New | Moderate |
-| Syndicated content lacks rights signals | Publisher and Creator Ecosystem | 2026-03-03 | 2026-03-17 | 2/5 weeks | Fading | Strong |
+| Machine-readable opt-out standard hardening | Regulatory and Legal | 2026-03-03 | 2026-03-31 | 5/6 weeks | Rising | Strong |
+| EU AI Act Article 50/53 enforcement deadline | Regulatory and Legal | 2026-03-03 | 2026-03-31 | 5/6 weeks | Rising | Strong |
+| Multi-layered marking requirement (Code of Practice) | Regulatory and Legal | 2026-03-31 | 2026-03-31 | 1/6 weeks | New | Strong |
+| AI copyright litigation continuing but narrowing | Regulatory and Legal | 2026-03-10 | 2026-04-07 | 4/6 weeks | Stable | Strong |
+| Human authorship requirement and documentation gap | Regulatory and Legal | 2026-03-24 | 2026-04-07 | 2/6 weeks | Rising | Strong |
+| AI authorship evidentiary burden undefined | Regulatory and Legal | 2026-04-07 | 2026-04-07 | 1/6 weeks | New | Strong |
+| Robots.txt legal and technical failure | Regulatory and Legal | 2026-03-03 | 2026-03-17 | 2/6 weeks | Fading | Strong |
+| AI licensing marketplace infrastructure emerging | Market and Commercial | 2026-03-03 | 2026-03-24 | 4/6 weeks | Rising | Strong |
+| Collective licensing models for small publishers | Market and Commercial | 2026-03-10 | 2026-03-24 | 2/6 weeks | Stable | Moderate |
+| Settlement math systematically underpays rights holders | Market and Commercial | 2026-03-10 | 2026-03-10 | 1/6 weeks | Fading | Strong |
+| AI company training-data discovery orders | Market and Commercial | 2026-03-24 | 2026-03-24 | 1/6 weeks | Fading | Moderate |
+| C2PA 2.3 text provenance standard (Section A.7) | Technology and Standards | 2026-03-03 | 2026-04-07 | 6/6 weeks | Rising | Strong |
+| Text watermarking as compliance requirement | Technology and Standards | 2026-03-31 | 2026-03-31 | 1/6 weeks | New | Strong |
+| Content provenance as authorship evidence layer | Technology and Standards | 2026-04-07 | 2026-04-07 | 1/6 weeks | New | Strong |
+| Sentence-level provenance granularity gap | Technology and Standards | 2026-03-10 | 2026-03-10 | 1/6 weeks | Fading | Moderate |
+| IETF AI Preferences Working Group standards race | Technology and Standards | 2026-03-17 | 2026-03-17 | 1/6 weeks | Fading | Moderate |
+| AI scraper non-compliance with robots.txt rising | Technology and Standards | 2026-03-03 | 2026-03-03 | 1/6 weeks | Fading | Moderate |
+| Microsoft Publisher Content Marketplace | Competitors and Adjacent Players | 2026-03-24 | 2026-03-24 | 1/6 weeks | Fading | Strong |
+| OpenAI active in licensing and litigation defense | Competitors and Adjacent Players | 2026-03-10 | 2026-04-07 | 4/6 weeks | Stable | Strong |
+| Anthropic major copyright settlement | Competitors and Adjacent Players | 2026-03-10 | 2026-03-10 | 1/6 weeks | Fading | Strong |
+| Publisher content signing and provenance adoption | Publisher and Creator Ecosystem | 2026-03-03 | 2026-04-07 | 6/6 weeks | Rising | Strong |
+| RAG-driven content monetization for publishers | Publisher and Creator Ecosystem | 2026-03-24 | 2026-03-24 | 1/6 weeks | Fading | Moderate |
+| Syndicated content lacks rights signals | Publisher and Creator Ecosystem | 2026-03-03 | 2026-03-17 | 2/6 weeks | Fading | Strong |
 
 ---
 
@@ -37,7 +39,7 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### Machine-Readable Opt-Out Standard Hardening
 - **Trajectory:** Rising
-- **First seen:** 2026-03-03 | **Last seen:** 2026-03-31 | **Appearances:** 5/5 weeks
+- **First seen:** 2026-03-03 | **Last seen:** 2026-03-31 | **Appearances:** 5/6 weeks
 - **Key developments:**
   - (2026-03-03) European Commission launched a stakeholder consultation (Dec 2025 - Jan 2026) on machine-readable protocols for reserving rights against TDM under the AI Act and GPAI Code of Practice. The Commission explicitly sought protocols going beyond robots.txt.
   - (2026-03-03) EU Commission consultation window closed January 23, 2026. The agreed protocol list will be reviewed at least every two years and used to assess GPAI provider compliance.
@@ -50,7 +52,7 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### EU AI Act Article 50 and 53 Enforcement Deadline
 - **Trajectory:** Rising
-- **First seen:** 2026-03-03 | **Last seen:** 2026-03-31 | **Appearances:** 5/5 weeks
+- **First seen:** 2026-03-03 | **Last seen:** 2026-03-31 | **Appearances:** 5/6 weeks
 - **Key developments:**
   - (2026-03-03) EU AI Act Article 53(1)(c) establishes that GPAI model providers must comply with machine-readable TDM reservations using "state-of-the-art technologies."
   - (2026-03-10) EU Commission published the second draft Code of Practice under Article 50 in March 2026, specifying a "two-layered marking approach involving secured metadata and watermarking" with optional fingerprinting. Feedback period closed March 30, 2026.
@@ -65,7 +67,7 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### Multi-Layered Marking Requirement (Code of Practice)
 - **Trajectory:** New
-- **First seen:** 2026-03-31 | **Last seen:** 2026-03-31 | **Appearances:** 1/5 weeks
+- **First seen:** 2026-03-31 | **Last seen:** 2026-03-31 | **Appearances:** 1/6 weeks
 - **Key developments:**
   - (2026-03-31) The European Commission's Second Draft Code of Practice explicitly states: "no single marking technique is sufficient to meet the requirements of Article 50 on its own." Organizations must implement at least two layers of machine-readable active marking.
   - (2026-03-31) The two mandatory layers are: (1) digitally signed metadata, with providers recording and embedding provenance information on whether content is AI-generated or AI-manipulated, and (2) imperceptible watermarking techniques interwoven within the content, designed so that a fragment of the content suffices to detect the watermark.
@@ -74,34 +76,51 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
   - (2026-03-31) The Second Draft refined the First Draft's approach rather than abandoning it, and the feedback period has now closed. The multi-layered requirement has survived two drafts.
 - **Encypher relevance:** This is a direct product-market fit signal. Encypher provides both C2PA digitally signed metadata (the first mandatory layer) and invisible marking techniques (the second mandatory layer) in a single platform. Most organizations preparing for Article 50 are building single-layer solutions. The Code explicitly says these will fail compliance. Encypher's positioning should lead with this gap: "You need both layers. We provide both."
 
-### Robots.txt Legal and Technical Failure
-- **Trajectory:** Fading
-- **First seen:** 2026-03-03 | **Last seen:** 2026-03-17 | **Appearances:** 2/5 weeks
-- **Key developments:**
-  - (2026-03-03) US federal court in Ziff Davis, Inc. v. OpenAI, Inc. (S.D.N.Y., December 18, 2025) ruled that robots.txt is not a "technological measure that effectively controls access" under DMCA Section 1201. OpenAI's motion to dismiss the DMCA circumvention claim was granted.
-  - (2026-03-03) Academic research (Reitinger, SSRN) shows that unless a website is in the top 1% by traffic and resources, robots.txt is effectively unused to control AI crawlers.
-  - (2026-03-03) Tollbit data shows AI bot non-compliance with robots.txt rose from 3.3% in Q4 2024 to 13.26% in Q2 2025 - a four-fold increase in six months.
-  - (2026-03-17) Hamburg court applied a separate but reinforcing standard: even where robots.txt is technically present, it does not meet the machine-readable AND actionable threshold required under EU copyright law.
-- **Encypher relevance:** Robots.txt failure is the negative case that makes Encypher's product the affirmative answer. Both US courts and EU regulators have formally rejected robots.txt as a rights-reservation mechanism. This is now established background context rather than a developing story - it has not appeared in research for two consecutive weeks. The argument is settled; Encypher can cite it but does not need to keep tracking new developments.
-
 ### AI Copyright Litigation Continuing but Narrowing
 - **Trajectory:** Stable
-- **First seen:** 2026-03-10 | **Last seen:** 2026-03-24 | **Appearances:** 3/5 weeks
+- **First seen:** 2026-03-10 | **Last seen:** 2026-04-07 | **Appearances:** 4/6 weeks
 - **Key developments:**
   - (2026-03-10) Anthropic settled the Bartz class action for approximately $1.5 billion (announced September 2025), paying approximately $3,000 per book. Claim deadline is March 30, 2026; final approval hearing April 23, 2026.
   - (2026-03-10) The settlement covers approximately 500,000 books from shadow libraries. Awards are fixed per ISBN/ASIN regardless of differential usage frequency.
   - (2026-03-24) Britannica and Merriam-Webster filed suit against OpenAI on March 13, 2026 in the Southern District of New York, alleging unauthorized use of nearly 100,000 copyrighted articles. The suit also targets RAG-based retrieval and includes Lanham Act trademark claims.
   - (2026-03-24) A court ordered disclosure of 78 million training data logs (March 9, 2026), creating litigation leverage for publishers.
   - (2026-03-24) Lawsuits are establishing liability precedent but are not creating per-usage attribution infrastructure - the commercial licensing shift to marketplaces is happening in parallel.
-- **Encypher relevance:** Litigation validates the market problem but does not solve it. Settlements are calculated per work, not per usage - which is the attribution granularity gap Encypher addresses. The ongoing litigation also means AI companies are more willing to negotiate licensing terms, which benefits the marketplace infrastructure Encypher enables.
+  - (2026-04-07) The Supreme Court's denial of certiorari in Thaler v. Perlmutter (March 2, 2026) settled the narrow question that pure AI output is not copyrightable, but the broader litigation landscape around AI-assisted works continues with Allen v. Perlmutter pending in Colorado.
+  - (2026-04-07) The Copyright Lately analysis identifies a litigation paradox: the same AI-generated work may be too machine-authored to own copyright protection and still close enough to someone else's protected expression to infringe. This creates dual exposure for organizations.
+- **Encypher relevance:** Litigation validates the market problem but does not solve it. Settlements are calculated per work, not per usage - which is the attribution granularity gap Encypher addresses. The Thaler denial and pending Allen case further establish that documenting human contribution is becoming a legal necessity, not just best practice. Encypher's provenance infrastructure directly addresses this evidentiary need.
 
-### Human Authorship Requirement Settled
-- **Trajectory:** New
-- **First seen:** 2026-03-24 | **Last seen:** 2026-03-24 | **Appearances:** 1/5 weeks
+### Human Authorship Requirement and Documentation Gap
+- **Trajectory:** Rising
+- **First seen:** 2026-03-24 | **Last seen:** 2026-04-07 | **Appearances:** 2/6 weeks
+- **Alias:** Previously tracked as "Human authorship requirement settled" - renamed to reflect the evolving focus from the settled legal principle to the unresolved documentation problem.
 - **Key developments:**
   - (2026-03-24) US Supreme Court denied certiorari in Thaler v. Perlmutter on March 2, 2026, affirming that AI cannot be an author under the Copyright Act. Human authorship is required for copyright protection.
   - (2026-03-24) The decision settles the authorship question but does not address whether training on human-authored works constitutes infringement.
-- **Encypher relevance:** Human authorship being legally required strengthens the value of provenance infrastructure that establishes and preserves human authorship claims. Encypher's content signing is directly relevant to proving human origin - which now has confirmed legal standing.
+  - (2026-04-07) Holland & Knight and Morgan Lewis analyses confirm the ruling left the harder question entirely open: how much human involvement qualifies AI-assisted works for copyright protection. Circuit Judge Patricia A. Millett wrote that "The Creativity Machine cannot be the recognized author of a copyrighted work because the Copyright Act of 1976 requires all eligible work to be authored in the first instance by a human being."
+  - (2026-04-07) Allen v. Perlmutter (pending, Colorado) may provide the first judicial test of the authorship threshold. Jason Allen used 624 prompts, Midjourney's variation and upscaling tools, and Photoshop post-processing, yet the Copyright Office Review Board denied registration, concluding his iterative prompting process did not amount to human authorship.
+  - (2026-04-07) The US Copyright Office's Part 2 Copyrightability Report (January 2025) concluded that copyrightability of AI-assisted works must be assessed case-by-case with no bright-line test. The mere provision of prompts does not constitute authorship. Four categories of potential human contribution were identified but no numerical threshold was set.
+  - (2026-04-07) Copyright Lately identifies the authorship paradox: AI-generated work may be too machine-authored to be copyrightable and simultaneously close enough to existing protected expression to constitute infringement - creating dual legal exposure for organizations.
+- **Encypher relevance:** The shift from "authorship requirement is settled" to "documentation of authorship is the unsolved problem" is a direct product signal for Encypher. The case-by-case standard does not scale to organizations producing thousands of AI-assisted works daily. C2PA Content Credentials record the creation chain - which AI tools were used, what human edits were made, the sequence of creative decisions - providing the evidentiary record courts and the Copyright Office are implicitly requiring. Encypher should position provenance metadata as the infrastructure that makes human authorship demonstrable at scale, distinct from the legal question of what threshold courts will eventually set.
+
+### AI Authorship Evidentiary Burden Undefined
+- **Trajectory:** New
+- **First seen:** 2026-04-07 | **Last seen:** 2026-04-07 | **Appearances:** 1/6 weeks
+- **Key developments:**
+  - (2026-04-07) The Copyright Office identified four categories of potential human contribution to AI-assisted works: (1) using AI to facilitate human creative process, (2) prompts to generate outputs, (3) expressive inputs, and (4) human modifications or arrangements of AI-generated content. No threshold, weighting, or bright-line test was provided for any category.
+  - (2026-04-07) Allen v. Perlmutter demonstrates that even substantial human effort (624 prompts, multiple tool iterations, manual post-processing) does not guarantee the authorship threshold is met. The Copyright Office looked for evidence of human creative decisions but has not defined what form that evidence should take.
+  - (2026-04-07) The Copyright Office acknowledged the standard "could change as technology evolves," indicating the threshold itself is a moving target.
+  - (2026-04-07) Copyright registration is required to bring federal infringement lawsuits and claim statutory damages, making the undefined evidentiary burden a practical commercial problem, not just a theoretical legal one.
+- **Encypher relevance:** This is a new and distinct product signal. The evidentiary burden is undefined, but its existence is certain. Organizations that can document their human contribution chain will be in a materially stronger position than those that cannot, regardless of where courts eventually draw the line. Encypher's C2PA provenance metadata captures the creation process itself - tools used, human modifications, sequence of decisions - which is exactly the kind of evidence the Copyright Office is looking for, even though it has not specified what is sufficient. The sales argument: "You cannot know in advance what evidence courts will require, but you can ensure you have the most complete record possible."
+
+### Robots.txt Legal and Technical Failure
+- **Trajectory:** Fading
+- **First seen:** 2026-03-03 | **Last seen:** 2026-03-17 | **Appearances:** 2/6 weeks
+- **Key developments:**
+  - (2026-03-03) US federal court in Ziff Davis, Inc. v. OpenAI, Inc. (S.D.N.Y., December 18, 2025) ruled that robots.txt is not a "technological measure that effectively controls access" under DMCA Section 1201. OpenAI's motion to dismiss the DMCA circumvention claim was granted.
+  - (2026-03-03) Academic research (Reitinger, SSRN) shows that unless a website is in the top 1% by traffic and resources, robots.txt is effectively unused to control AI crawlers.
+  - (2026-03-03) Tollbit data shows AI bot non-compliance with robots.txt rose from 3.3% in Q4 2024 to 13.26% in Q2 2025 - a four-fold increase in six months.
+  - (2026-03-17) Hamburg court applied a separate but reinforcing standard: even where robots.txt is technically present, it does not meet the machine-readable AND actionable threshold required under EU copyright law.
+- **Encypher relevance:** Robots.txt failure is the negative case that makes Encypher's product the affirmative answer. Both US courts and EU regulators have formally rejected robots.txt as a rights-reservation mechanism. This is now established background context rather than a developing story. The argument is settled; Encypher can cite it but does not need to keep tracking new developments.
 
 ---
 
@@ -109,7 +128,7 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### AI Licensing Marketplace Infrastructure Emerging
 - **Trajectory:** Rising
-- **First seen:** 2026-03-03 | **Last seen:** 2026-03-24 | **Appearances:** 4/5 weeks
+- **First seen:** 2026-03-03 | **Last seen:** 2026-03-24 | **Appearances:** 4/6 weeks
 - **Key developments:**
   - (2026-03-03) AI companies are signing commercial licensing agreements with publishers: Amazon-NYT, Amazon-Hearst/Conde Nast deals cited as evidence of direct commercial licensing activity as of late 2025.
   - (2026-03-10) Licensing deals referenced as per-work and per-outlet, negotiated in bulk - not per-usage - creating a structural compensation gap.
@@ -120,7 +139,7 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### Collective Licensing Models for Small Publishers
 - **Trajectory:** Stable
-- **First seen:** 2026-03-10 | **Last seen:** 2026-03-24 | **Appearances:** 2/5 weeks
+- **First seen:** 2026-03-10 | **Last seen:** 2026-03-24 | **Appearances:** 2/6 weeks
 - **Key developments:**
   - (2026-03-10) Class action settlement structure (Bartz v. Anthropic) represents a collective approach that aggregates rights holder claims, though it uses flat per-work compensation rather than usage-based attribution.
   - (2026-03-24) NMA/Bria deal explicitly targets the 2,200 publishers in the News/Media Alliance - specifically described as valuable for smaller publishers and local news outlets that lack resources to strike direct AI deals.
@@ -128,7 +147,7 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### Settlement Math Systematically Underpays Rights Holders
 - **Trajectory:** Fading
-- **First seen:** 2026-03-10 | **Last seen:** 2026-03-10 | **Appearances:** 1/5 weeks
+- **First seen:** 2026-03-10 | **Last seen:** 2026-03-10 | **Appearances:** 1/6 weeks
 - **Key developments:**
   - (2026-03-10) Anthropic's $1.5 billion settlement pays approximately $3,000 per book regardless of how frequently that book was used during Claude training. An Authors Guild analysis notes the amount may be shared between author and publisher depending on contract structure.
   - (2026-03-10) The settlement covers 500,000 books from shadow libraries (Library Genesis, Pirate Library Mirror). Awards are fixed per ISBN/ASIN.
@@ -136,8 +155,8 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 - **Encypher relevance:** The structural undercompensation argument is a strong product narrative for Encypher. The analogy to early streaming flat-rate music licensing is compelling. Encypher's sentence-level C2PA provenance is the technical infrastructure that would allow future settlements or licensing deals to be calculated on usage rather than work-count. This is a long-term positioning argument, not a near-term sale.
 
 ### AI Company Training-Data Discovery Orders
-- **Trajectory:** New
-- **First seen:** 2026-03-24 | **Last seen:** 2026-03-24 | **Appearances:** 1/5 weeks
+- **Trajectory:** Fading
+- **First seen:** 2026-03-24 | **Last seen:** 2026-03-24 | **Appearances:** 1/6 weeks
 - **Key developments:**
   - (2026-03-24) A court ordered disclosure of 78 million training data logs (March 9, 2026). This is cited as creating litigation leverage for publishers in negotiations with AI companies.
 - **Encypher relevance:** Discovery-driven transparency creates short-term leverage for publishers in licensing negotiations. However, the research argues this leverage without infrastructure cannot generate recurring revenue. Monitor for whether these logs surface enough attribution data to inform future settlement math, or whether they simply confirm the retroactive attribution gap Encypher addresses prospectively.
@@ -148,7 +167,7 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### C2PA 2.3 Text Provenance Standard (Section A.7)
 - **Trajectory:** Rising
-- **First seen:** 2026-03-03 | **Last seen:** 2026-03-31 | **Appearances:** 5/5 weeks
+- **First seen:** 2026-03-03 | **Last seen:** 2026-04-07 | **Appearances:** 6/6 weeks
 - **Key developments:**
   - (2026-03-03) C2PA 2.3 Specification published January 8, 2026. Section A.7, "Embedding Manifests into Unstructured Text," defines embedding of C2PA manifests into text using Unicode Variation Selectors as non-rendering characters. Encypher co-authored Section A.7.
   - (2026-03-03) Section A.7 credentials travel with content through syndication feeds, cached copies, and RAG indexes - solving the syndication rights-signal problem robots.txt cannot address.
@@ -157,11 +176,12 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
   - (2026-03-24) EU AI Act Code of Practice is expected to reference C2PA-compatible standards. C2PA is the only text provenance standard that currently exists and is published.
   - (2026-03-31) The Code of Practice's first mandatory layer - digitally signed metadata - aligns directly with C2PA's approach. C2PA provides the interoperable, standardized metadata that the Code requires. The Code's requirement that metadata be "digitally signed" maps to C2PA's cryptographic signing model.
   - (2026-03-31) The Code's acknowledgment that metadata alone is insufficient (can be stripped by screenshots, social media, file conversion) validates C2PA's own Section A.7 approach of embedding credentials within content rather than relying solely on sidecar files.
-- **Encypher relevance:** C2PA 2.3 Section A.7 is Encypher's technical foundation and competitive moat. Co-authoring the standard is a credibility differentiator. The Code of Practice's two-layer mandate is a direct validation of C2PA as the metadata layer. The risk remains that alternative protocols (IETF, platform-controlled) could compete for the compliance slot, but the Code's language aligns closely with C2PA's architecture.
+  - (2026-04-07) C2PA Content Credentials referenced as the technical infrastructure that solves the AI authorship documentation problem - recording which AI tools were used, what human edits were made, and creating a tamper-evident chain of human creative decisions. Any tampering breaks the cryptographic signature.
+- **Encypher relevance:** C2PA 2.3 Section A.7 is Encypher's technical foundation and competitive moat. Co-authoring the standard is a credibility differentiator. The standard now has a new use case beyond rights reservation and compliance: documenting human authorship chains for copyright protection of AI-assisted works. This expands the addressable market from publishers protecting content to any organization producing AI-assisted works that need copyright protection.
 
 ### Text Watermarking as Compliance Requirement
 - **Trajectory:** New
-- **First seen:** 2026-03-31 | **Last seen:** 2026-03-31 | **Appearances:** 1/5 weeks
+- **First seen:** 2026-03-31 | **Last seen:** 2026-03-31 | **Appearances:** 1/6 weeks
 - **Key developments:**
   - (2026-03-31) The Code of Practice's second mandatory layer is "imperceptible watermarking techniques interwoven within the content, designed so that a fragment of the content suffices to detect the watermark." This is a distinct requirement from the metadata layer.
   - (2026-03-31) The Code acknowledges that text presents genuine technical challenges for watermarking that do not apply to images or video. However, the multi-layer mandate is not exempted for text content.
@@ -169,9 +189,19 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
   - (2026-03-31) Large AI providers (OpenAI, Google, Meta) may implement multi-layer solutions quickly. The compliance gap is greatest among mid-market AI deployers and publishers.
 - **Encypher relevance:** This is a strong product signal. Encypher's invisible marking techniques (VS markers and ZWC markers) satisfy the watermarking layer requirement. Combined with C2PA metadata, Encypher provides both mandatory layers in a single platform. The text-specific difficulty acknowledged in the Code creates a competitive moat: organizations cannot easily build text watermarking in-house, increasing demand for specialized providers like Encypher.
 
+### Content Provenance as Authorship Evidence Layer
+- **Trajectory:** New
+- **First seen:** 2026-04-07 | **Last seen:** 2026-04-07 | **Appearances:** 1/6 weeks
+- **Key developments:**
+  - (2026-04-07) C2PA Content Credentials can record the complete creation chain for AI-assisted works: which AI tools were used, what human edits were made, the date of creation, and the sequence of creative decisions. This maps directly to the four categories of human contribution the Copyright Office identified.
+  - (2026-04-07) The documentation function is distinct from the legal determination. Provenance metadata does not solve the question of how much human involvement is sufficient, but it solves the evidentiary question of proving what human involvement existed.
+  - (2026-04-07) Organizations producing thousands of AI-assisted works daily cannot submit each one for individualized Copyright Office review. Machine-readable provenance metadata is the only infrastructure that scales to this production volume.
+  - (2026-04-07) Allen v. Perlmutter demonstrates the consequences of insufficient documentation: even 624 prompts and manual post-processing were not enough when the creative process itself was not documented in a verifiable, structured format.
+- **Encypher relevance:** This trend opens a new product category for Encypher beyond rights reservation and regulatory compliance: authorship documentation for AI-assisted content. The addressable market expands from publishers protecting existing human content to any enterprise, agency, or creator producing AI-assisted works that need copyright protection. This is a distinct sales narrative from EU AI Act compliance and should be developed as a separate product positioning track, particularly for the US market where the EU compliance argument has less urgency.
+
 ### Sentence-Level Provenance Granularity Gap
 - **Trajectory:** Fading
-- **First seen:** 2026-03-10 | **Last seen:** 2026-03-10 | **Appearances:** 1/5 weeks
+- **First seen:** 2026-03-10 | **Last seen:** 2026-03-10 | **Appearances:** 1/6 weeks
 - **Key developments:**
   - (2026-03-10) Current AI copyright settlements calculate compensation per work (book, article) rather than per sentence or semantic unit. C2PA Section A.7 technically supports sub-document granularity, but no current licensing framework requires or uses it.
   - (2026-03-10) Oxford JIPLP research confirms: datasets from non-web sources "pose significant challenges in terms of attribution and often lack inherent metadata linking them to original rightsholders."
@@ -180,14 +210,14 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### IETF AI Preferences Working Group Standards Race
 - **Trajectory:** Fading
-- **First seen:** 2026-03-17 | **Last seen:** 2026-03-17 | **Appearances:** 1/5 weeks
+- **First seen:** 2026-03-17 | **Last seen:** 2026-03-17 | **Appearances:** 1/6 weeks
 - **Key developments:**
   - (2026-03-17) The IETF AI Preferences Working Group is developing a vocabulary of terms for machine-readable AI preferences. Kluwer Copyright Blog analysis notes the outcome - whether open or platform-controlled de facto standards prevail - will be decisive.
 - **Encypher relevance:** An IETF standard that converges on a format incompatible with C2PA would be a risk to Encypher's positioning. Conversely, if the IETF vocabulary aligns with or defers to C2PA, it validates Encypher's standard. Encypher should monitor this working group and consider participation to influence outcome. The EU Commission's protocol list (being finalized now) is likely to reference whichever standard achieves sufficient adoption first.
 
 ### AI Scraper Non-Compliance with Robots.txt Rising
 - **Trajectory:** Fading
-- **First seen:** 2026-03-03 | **Last seen:** 2026-03-03 | **Appearances:** 1/5 weeks
+- **First seen:** 2026-03-03 | **Last seen:** 2026-03-03 | **Appearances:** 1/6 weeks
 - **Key developments:**
   - (2026-03-03) Tollbit proprietary data (reported by The Register) shows AI bot non-compliance with robots.txt directives rose from 3.3% of requests in Q4 2024 to 13.26% in Q2 2025 - a four-fold increase in six months.
 - **Encypher relevance:** Non-compliance data directly supports Encypher's thesis that server-level controls are insufficient and in-content signals are necessary. This is a sales and marketing data point. Note the single-source limitation - Tollbit has a commercial interest in showing robots.txt failure.
@@ -197,8 +227,8 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 ## Category: Competitors and Adjacent Players
 
 ### Microsoft Publisher Content Marketplace
-- **Trajectory:** New
-- **First seen:** 2026-03-24 | **Last seen:** 2026-03-24 | **Appearances:** 1/5 weeks
+- **Trajectory:** Fading
+- **First seen:** 2026-03-24 | **Last seen:** 2026-03-24 | **Appearances:** 1/6 weeks
 - **Key developments:**
   - (2026-03-24) Microsoft launched the Publisher Content Marketplace (PCM) on February 3, 2026. Launch partners include The Associated Press, Conde Nast, Hearst Magazines, and Vox Media. The platform connects publishers setting usage terms with AI companies licensing content for grounding.
   - (2026-03-24) PCM includes usage-based reporting. Publishers must structure metadata and archives for content to be discoverable and attributable within the marketplace.
@@ -207,18 +237,19 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### OpenAI Active in Licensing and Litigation Defense
 - **Trajectory:** Stable
-- **First seen:** 2026-03-10 | **Last seen:** 2026-03-24 | **Appearances:** 3/5 weeks
+- **First seen:** 2026-03-10 | **Last seen:** 2026-04-07 | **Appearances:** 4/6 weeks
 - **Key developments:**
   - (2026-03-03) OpenAI referenced in context of robots.txt compliance commitments (alongside Google and Anthropic) - voluntary commitments that do not bind the long tail of smaller models or open-source scrapers.
   - (2026-03-10) OpenAI referenced in the context of the Anthropic settlement as the industry benchmark; NYT v. OpenAI's memorization tests are the methodology comparison point for output-level attribution.
   - (2026-03-24) OpenAI named in Britannica and Merriam-Webster lawsuit (March 13, 2026). OpenAI's defense: models "trained on publicly available data and grounded in fair use."
   - (2026-03-24) Court ordered disclosure of 78 million OpenAI training data logs (March 9, 2026).
   - (2026-03-31) OpenAI referenced alongside Google and Meta as large AI providers that may have resources to implement multi-layer marking solutions quickly, contrasting with mid-market compliance gap.
+  - (2026-04-07) OpenAI's training practices are part of the backdrop for the AI authorship discussion - the same models that ingest copyrighted content produce outputs whose copyright status depends on the human contribution documentation.
 - **Encypher relevance:** OpenAI's continued use of fair use defense and its scale in the licensing marketplace makes it both a potential enterprise customer for Encypher's verification infrastructure and an adversarial actor from the publisher perspective. Encypher should not take a public adversarial stance toward OpenAI but should position its infrastructure as what makes publisher-AI company relationships auditable and fair.
 
 ### Anthropic Major Copyright Settlement
 - **Trajectory:** Fading
-- **First seen:** 2026-03-10 | **Last seen:** 2026-03-10 | **Appearances:** 1/5 weeks
+- **First seen:** 2026-03-10 | **Last seen:** 2026-03-10 | **Appearances:** 1/6 weeks
 - **Key developments:**
   - (2026-03-10) Anthropic settled Bartz v. Anthropic for approximately $1.5 billion - described as the largest copyright settlement in US history. Payment is approximately $3,000 per book covering around 500,000 books from shadow libraries. Claim deadline March 30, 2026; final approval hearing April 23, 2026.
 - **Encypher relevance:** The settlement is precedent that training on copyrighted text carries real financial liability. It also establishes the per-work flat fee as the current market clearing price - which Encypher can argue dramatically undervalues publishers, setting up the case for per-usage provenance infrastructure.
@@ -229,7 +260,7 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### Publisher Content Signing and Provenance Adoption
 - **Trajectory:** Rising
-- **First seen:** 2026-03-03 | **Last seen:** 2026-03-31 | **Appearances:** 5/5 weeks
+- **First seen:** 2026-03-03 | **Last seen:** 2026-04-07 | **Appearances:** 6/6 weeks
 - **Key developments:**
   - (2026-03-03) The case for in-content credentials is framed as a proactive publisher action: sign content now to build the audit record that licensing deals and future regulation will require.
   - (2026-03-10) C2PA provenance infrastructure described as a prerequisite for publishers to have standing to claim compensation under EU AI Act and emerging TDM opt-out frameworks.
@@ -238,11 +269,12 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
   - (2026-03-24) NMA/Bria deal requires content to be identifiable and attributable for usage tracking - same technical prerequisite.
   - (2026-03-31) The Code of Practice's multi-layer mandate creates a new urgency for publishers: AI-generated content entering the publisher ecosystem must carry both metadata and watermarking. Publishers need infrastructure to both sign their own content and verify incoming content authenticity.
   - (2026-03-31) The compliance gap is greatest among mid-market publishers and smaller AI deployers who lack in-house capability to implement multi-layer marking solutions.
-- **Encypher relevance:** The publisher ecosystem is at the point where early adopters gain structural advantages (marketplace participation, regulatory standing, compliance readiness) while laggards face compounding disadvantages (permanently unprotected historical content, invisibility in revenue platforms, non-compliance risk). The Code of Practice's multi-layer requirement adds a new dimension: publishers are now also deployers under Article 50(4), meaning they need to label AI-generated content they publish on matters of public interest.
+  - (2026-04-07) The authorship documentation requirement adds another dimension to publisher provenance adoption: publishers using AI-assisted content creation need C2PA credentials not just to protect against unauthorized use, but to establish copyright over their own AI-assisted output.
+- **Encypher relevance:** This trend has appeared in all six research weeks and continues to broaden. Publisher provenance adoption now serves three distinct purposes: (1) rights reservation against AI training, (2) marketplace participation for licensing revenue, and (3) authorship documentation for copyright protection of AI-assisted works. Encypher's product addresses all three. The Code of Practice's multi-layer requirement adds a fourth: publishers as deployers under Article 50(4) must label AI-generated content they publish on matters of public interest.
 
 ### RAG-Driven Content Monetization for Publishers
-- **Trajectory:** New
-- **First seen:** 2026-03-24 | **Last seen:** 2026-03-24 | **Appearances:** 1/5 weeks
+- **Trajectory:** Fading
+- **First seen:** 2026-03-24 | **Last seen:** 2026-03-24 | **Appearances:** 1/6 weeks
 - **Key developments:**
   - (2026-03-24) NMA/Bria deal specifically monetizes RAG-driven enterprise demand - AI retrieval-augmented generation systems drawing on publisher content for grounding and citation.
   - (2026-03-24) Microsoft PCM explicitly targets "grounding scenarios" as the use case for publisher licensing.
@@ -251,7 +283,7 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ### Syndicated Content Lacks Rights Signals
 - **Trajectory:** Fading
-- **First seen:** 2026-03-03 | **Last seen:** 2026-03-17 | **Appearances:** 2/5 weeks
+- **First seen:** 2026-03-03 | **Last seen:** 2026-03-17 | **Appearances:** 2/6 weeks
 - **Key developments:**
   - (2026-03-03) Server-side controls including robots.txt, Cloudflare filtering, and CDN-level blocklists cannot protect content that has already been syndicated, cached, or re-published by third parties. Once an article is on an aggregator, API feed, or partner site, the origin server's robots.txt is irrelevant.
   - (2026-03-17) RSS feeds, APIs, syndication partnerships, email newsletters, and any non-web distribution channel are outside the scope of robots.txt protection - and outside the scope of any header-based or file-based opt-out signal.
@@ -261,28 +293,32 @@ Research weeks analyzed: 5 (earliest: 2026-03-03, latest: 2026-03-31)
 
 ## Strategic Implications
 
-1. **The multi-layer requirement is Encypher's strongest product-market fit signal to date.** The Code of Practice explicitly states that no single marking technique is sufficient. Most organizations are building single-layer solutions. Encypher provides both mandatory layers (C2PA metadata + invisible marking) in a single platform. This should become the lead message in all sales and marketing materials. The compliance gap is real, the deadline is four months away, and the Code has survived two drafts with the multi-layer requirement intact.
+1. **The authorship documentation gap opens a new US-market product narrative.** The EU AI Act compliance argument drives urgency in European markets, but the Thaler denial and undefined authorship evidentiary burden create a parallel, US-specific demand signal. Organizations producing AI-assisted content need provenance metadata to establish copyright protection over their own outputs - not just to protect against unauthorized use by others. Encypher should develop a distinct product positioning track for the US market centered on authorship documentation, separate from the EU compliance narrative.
 
-2. **The August 2026 compliance window is compressing, not expanding.** The final Code is expected in June, leaving only two months for implementation before enforcement on August 2. Organizations that have not begun multi-layer implementation face a near-impossible timeline if they wait for the final text. Encypher should position early adoption as risk mitigation: "Implement now against the Second Draft, which has survived two iterations, rather than wait for the final version and have two months to comply."
+2. **The multi-layer requirement remains Encypher's strongest product-market fit signal.** The Code of Practice explicitly states that no single marking technique is sufficient. Most organizations are building single-layer solutions. Encypher provides both mandatory layers (C2PA metadata + invisible marking) in a single platform. The compliance gap is real, the deadline is under four months away, and the Code has survived two drafts with the multi-layer requirement intact.
 
-3. **Marketplace participation is replacing rights protection as the primary publisher motivation.** Four out of five weeks frame provenance infrastructure as essential for participation in licensing marketplaces (Microsoft PCM, NMA/Bria). Encypher's pitch should lead with revenue enablement: "Your content is invisible to attribution engines without provenance signals" is a stronger commercial argument than "protect your rights."
+3. **C2PA now serves three distinct market needs, and Encypher should message accordingly.** The standard has appeared in all six research weeks but for increasingly distinct reasons: (a) rights reservation against AI training, (b) EU AI Act compliance infrastructure, and (c) authorship documentation for AI-assisted works. Each maps to a different buyer persona and sales conversation. Encypher should develop differentiated messaging for each rather than a single "content provenance" pitch.
 
-4. **Text watermarking creates a competitive moat.** The Code of Practice acknowledges text watermarking is harder than image or video watermarking but does not exempt text from the requirement. This technical difficulty is Encypher's advantage: organizations cannot easily build text watermarking in-house, creating demand for specialized providers. Encypher should emphasize its text-specific invisible marking expertise in differentiation against providers focused primarily on image/video.
+4. **The August 2026 compliance window continues compressing.** The final Code is expected in June, leaving only two months for implementation before enforcement on August 2. Organizations that have not begun multi-layer implementation face a near-impossible timeline if they wait for the final text.
 
-5. **Three trends are fading and represent settled arguments.** Robots.txt failure, AI scraper non-compliance, and syndication rights signal gaps have not appeared in recent research. These are no longer developing stories - they are established facts. Encypher's marketing should reference them as background context rather than leading with them. The conversation has moved from "why server-side controls fail" to "what multi-layer compliance looks like."
+5. **Marketplace participation is replacing rights protection as the primary publisher motivation.** Four of the first five weeks frame provenance infrastructure as essential for participation in licensing marketplaces (Microsoft PCM, NMA/Bria). The authorship documentation argument adds a new dimension: publishers using AI in their own content production need the same infrastructure to protect their outputs.
 
 ---
 
 ## Coverage Gaps
 
-1. **Audio and video provenance.** All five research weeks focus exclusively on text content. The EU AI Act Article 50 explicitly covers audio, image, and video. Encypher's product supports multi-media signing. The competitive landscape for non-text provenance (image watermarking vendors, video authentication tools) is absent from our research.
+1. **Allen v. Perlmutter outcome and implications.** This pending Colorado case may set the first judicial threshold for AI-assisted authorship. Our research identifies it but does not track the case docket. The ruling could fundamentally reshape the authorship documentation market. Future research should monitor this case closely.
 
-2. **Non-EU, non-US regulatory developments.** Research covers the EU AI Act and US federal courts. The UK AI copyright consultation (ongoing as of early 2026), Australia's AI governance proposals, and emerging markets regulatory activity are not represented.
+2. **Audio and video provenance.** All six research weeks focus exclusively on text content. The EU AI Act Article 50 explicitly covers audio, image, and video. Encypher's product supports multi-media signing. The competitive landscape for non-text provenance (image watermarking vendors, video authentication tools) is absent from our research.
 
-3. **Competitive landscape for provenance tools.** No research covers direct competitors to Encypher (watermarking vendors, other C2PA implementations, digital rights management tools). The only adjacent commercial player covered is Microsoft PCM. With the multi-layer requirement now explicit, the competitive landscape for combined metadata-plus-watermarking solutions is a critical gap.
+3. **Non-EU, non-US regulatory developments.** Research covers the EU AI Act and US federal courts. The UK AI copyright consultation (ongoing as of early 2026), Australia's AI governance proposals, and emerging markets regulatory activity are not represented.
 
-4. **AI company implementation of C2PA credential detection.** Research documents AI companies' legal positions and licensing activity but contains no data on whether AI crawlers and training pipelines are actually implementing C2PA credential detection. Adoption of C2PA readers by AI companies is the demand-side condition that makes publisher signing valuable.
+4. **Competitive landscape for provenance tools.** No research covers direct competitors to Encypher (watermarking vendors, other C2PA implementations, digital rights management tools). The only adjacent commercial player covered is Microsoft PCM. With the multi-layer requirement now explicit, the competitive landscape for combined metadata-plus-watermarking solutions is a critical gap.
 
-5. **Publisher adoption rates and implementation barriers.** The research makes the case for why publishers should implement C2PA provenance but contains no data on actual adoption rates, technical barriers (CMS integration, workflow changes), or cost sensitivity.
+5. **AI company implementation of C2PA credential detection.** Research documents AI companies' legal positions and licensing activity but contains no data on whether AI crawlers and training pipelines are actually implementing C2PA credential detection. Adoption of C2PA readers by AI companies is the demand-side condition that makes publisher signing valuable.
 
-6. **Text watermarking state of the art.** The Code of Practice mandates imperceptible text watermarking, and the research acknowledges this is technically harder than image/video watermarking. No research covers the current state of text watermarking technology, academic research, or commercial offerings beyond Encypher. Given that this is now a compliance requirement, the competitive and technical landscape for text watermarking specifically is an urgent gap.
+6. **Publisher adoption rates and implementation barriers.** The research makes the case for why publishers should implement C2PA provenance but contains no data on actual adoption rates, technical barriers (CMS integration, workflow changes), or cost sensitivity.
+
+7. **Enterprise AI-assisted content production scale.** The authorship documentation argument depends on organizations producing AI-assisted works at high volume. Our research references this but provides no data on actual production volumes, workflows, or the percentage of enterprise content that is now AI-assisted. This data would strengthen the scalability argument.
+
+8. **Text watermarking state of the art.** The Code of Practice mandates imperceptible text watermarking, and the research acknowledges this is technically harder than image/video watermarking. No research covers the current state of text watermarking technology, academic research, or commercial offerings beyond Encypher. Given that this is now a compliance requirement, the competitive and technical landscape for text watermarking specifically is an urgent gap.

@@ -1,7 +1,7 @@
 # Encypher Relationship Tracker
 ## Active BD, Standards, and Investor Pipeline
 
-**Last Updated:** April 2, 2026
+**Last Updated:** April 7, 2026
 **Status:** Active Tracker (Living Document)
 **Owner:** Chief Commercial Officer (CCO)
 **Distribution:** Executive, BD, Strategy
@@ -52,6 +52,7 @@ Use it to track status, ownership, next actions, and strategic significance acro
 | Valnet | Tier 2 Publisher | Shaun Decker (Senior Legal Counsel) | Meeting complete; detailed technical/commercial Q&A active | Healthy | Matt / Erik | Respond to technical and commercial diligence items |
 | Apartment Therapy | Publisher | Laina (Strategic Partnerships) | Intro + materials shared | Monitor | Matt | Qualification follow-up on implementation path |
 | Springer Nature (Strategic Target) | Tier 1/2 Academic | TBD | Strategic academic path identified | Monitor | Erik | Build intro path through existing standards network |
+| USA Today Co. (Gannett) | Tier 1 Publisher | Jessica Davis (VP AI Product), Andrew Steinberg (Jessica's business partner), Michael McCarter (Standards Editor / Head of Multimedia) | Intro call complete (2026-04-07); Jessica emailed legal + dev team during call; MNDA initiated by USA Today; next meeting with partnerships/licensing, legal, tech teams; custom headless CMS is primary blocker (all-or-nothing across 200+ newsrooms, no partial integration); Jessica connected to NMA (Johannes, IP standards), WAN-IFRA (board), RSL, Carnegie Mellon; CMU capstone tried watermarking Dec 2025 and failed, validating technical moat; pricing: 80/20 self-service rev share is the right model for Gannett scale (they have own licensing team, coalition model unlikely fit) | Healthy | Erik / Matt | 1) Send follow-up email (C2PA docs, conformance, Trust in Media intro, Prebid webinar, C2PA membership); 2) Execute MNDA; 3) Schedule second meeting (partnerships + legal + tech); 4) Research Gannett CMS architecture; 5) Connect with Lucky (Jessica referral); 6) Add to Prebid webinar invite list |
 
 ---
 
@@ -59,13 +60,15 @@ Use it to track status, ownership, next actions, and strategic significance acro
 
 | Organization | Type | Key Contacts | Current Status | Health | Owner | Next Action |
 |---|---|---|---|---|---|---|
-| NMA (News Media Alliance) | Standards/Coalition | Regan Smith, Cassie Sciortino | Presentation completed; active engagement continues | Healthy | Erik | Continue framework briefings and coalition alignment |
+| NMA (News Media Alliance) | Standards/Coalition | Regan Smith, Cassie Sciortino, Johannes (IP standards work stream) | Presentation completed; active engagement continues; Johannes actively seeking Encypher connection per Jessica Davis (USA Today); Jessica works hand in hand with NMA | Healthy | Erik | Continue framework briefings and coalition alignment; follow up with Johannes on IP standards work stream |
 | AAM / Scott Cunningham | Standards | Scott Cunningham, Rich Murphy | Deep strategic mapping complete; follow-up active | Healthy | Erik / Matt | Formalize standards-stack narrative + partner pathways |
 | Library of Congress / G+LAM | Standards Credibility | Kate Murray | Initial contact made; no presentation delivered yet | Paused | Erik | Schedule introductory briefing before claiming active relationship |
 | Ellen McCarthy / Trust in Media | Government Credibility | Ellen McCarthy (former Asst. Secretary of State) | Relationship warm; dropped from SC application outreach (doesn't map to selection criteria) | Paused | Erik | Maintain relationship for future regulatory/policy contexts |
 | NPR | Tier 1 Public Media | Erica (BD/Licensing) | Intro meeting complete (2026-03-30); aligned on CMS integration, audio provenance, rights-aware marking; four-team follow-up scheduled (~April 13) with CMS, distribution, content ops, and RAD teams | Healthy | Erik | Confirm SC application reference permission; prepare technical overview for four-team meeting |
 | SPUR Coalition (UK) | Standards Vector | Charlie Hatford (BBC connection point) | SPUR wants to work with Encypher; BBC is SC member and potential internal champion | Healthy | Erik | Request organizational support letter for C2PA SC application; formalize partnership (MOU or named collaboration) |
 | Linklaters | Legal/Strategic | Ieuan Jolly | Active legal ecosystem relationship | Monitor | Erik | Continue high-trust legal framework discussion |
+| WAN-IFRA (World Assoc. of News Publishers) | Standards/Ecosystem | Ezra Eman (AI Advisory Board chair), Stig Kirk Orskou (CEO, new; replacing Vincent) | Intro path opened via Jessica Davis (USA Today); Jessica on WAN-IFRA board, will advocate at next board meeting (~late April); Europe-based publisher org, strong AI standards focus; Jessica notes European publishers likely to adopt provenance tech before US | Monitor | Erik | Reach out to Ezra Eman (Jessica sending contact info); follow up after Jessica's board advocacy (~late April) |
+| SSL.com | PKI / Certificate Partner | Dom Guinard (Dir. Product, Content Authenticity), Jeremiah Doyle, Cory Mangus, Daniel Rendon | Sub-CA path ruled out (root must be Encypher's per C2PA CA reqs); full managed PKI offered at 6 figures+; reseller partnership proposed; Platform Claim Signing cert in progress for conformance listing | Healthy | Erik | 1) Secure Platform Claim Signing cert via Cory/Jere; 2) Evaluate reseller partnership terms; 3) Defer managed PKI decision until CAWG regulatory trajectory clarifies |
 
 ---
 
@@ -87,6 +90,7 @@ Use it to track status, ownership, next actions, and strategic significance acro
 | Symitri / Morgan Digital Ventures (David Kohl) | Strategic Peer | Relationship-level alignment; not a standard prospect | Erik | Continue strategic exchange and market intelligence sharing |
 | ProRata / TollBit | Market Adjacent | Deal-flow and narrative risk; not direct technical equivalent | Matt / Erik | Track public announcements and publisher positioning responses |
 | IP3 Digital / WordProof | Market Adjacent | Differentiation messaging needed in FAQ and sales responses | Marketing / Sales | Keep concise differentiation language in customer-facing materials |
+| OriginVault (Luke Nispel) | Direct Competitor | Content provenance / creator rights startup; Nispel active in CAWG (endorsement assertions) and Project Origin ecosystem; actively lobbying on WordPress/ai PR #294 to remove Connected signing tier and delay text provenance, which would eliminate Encypher's integration path into WordPress | Erik | Monitor WordPress PR activity; respond on technical merits without escalating competitive framing publicly |
 
 ---
 
@@ -133,6 +137,7 @@ Use it to track status, ownership, next actions, and strategic significance acro
 | ~~6~~ | ~~Ellen McCarthy / Trust in Media~~ | ~~Dropped: doesn't map to SC selection criteria~~ | ~~N/A~~ |
 | 7 | River Valley Technology | C2PA member peer validation | Achievable; needs ask |
 | 8 | NPR | Tier 1 public media active evaluation | Intro meeting complete; SC reference ask sent; awaiting confirmation |
+| 9 (new) | USA Today Co. (Gannett) | Largest US newspaper publisher (200+ newsrooms, 2M digital subs); Jessica Davis deeply connected across NMA, WAN-IFRA, RSL | MNDA initiated; second meeting pending |
 | 9 | Prebid | Ad-tech supply chain (touches Amazon, Microsoft, BBC ecosystems) | Phase 1 complete: backend signing service live, RTD module built and tested, upstream PR pending |
 | 10 | Freestar / Kurt Donnell | Platform commercial traction (700+ publishers) | Legal review in progress |
 | 11 | Jeremy Uzan / UMG | Creative economy breadth (music rights) | Needs ask |
@@ -160,11 +165,17 @@ Use it to track status, ownership, next actions, and strategic significance acro
 4. Close Freestar legal path and set launch timeline; request Kurt Donnell support letter for SC application.
 5. Complete Valnet technical/commercial diligence response cycle.
 6. Keep Waldo and broader Series A relationship warm with periodic strategic updates.
+7. **USA Today Co. (Gannett):** Send follow-up email (C2PA docs, conformance, Trust in Media intro, Prebid webinar link, C2PA membership). Execute MNDA. Schedule second meeting (partnerships + legal + tech). Research Gannett CMS architecture.
+8. **WAN-IFRA:** Reach out to Ezra Eman (AI Advisory Board chair) and Stig Kirk Orskou (CEO). Jessica Davis will advocate at board meeting (~late April).
+9. **NMA / Johannes:** Follow up with Johannes on IP standards work stream (he's been looking for Encypher per Jessica).
 
 ---
 
 ## Change Log
 
+- **2026-04-07:** Added USA Today Co. (Gannett) to Publishers (Tier 1). Jessica Davis (VP AI Product) intro call completed; MNDA initiated by USA Today during call; next meeting with partnerships/licensing, legal, tech teams. Custom headless CMS (all-or-nothing, 200+ newsrooms) is primary integration challenge. Added WAN-IFRA to Standards/Ecosystem stakeholders (intro path via Jessica Davis; Ezra Eman AI Advisory Board chair, Stig Kirk Orskou new CEO). Updated NMA entry with Johannes (IP standards) contact. Added USA Today Co. to SC External Support Portfolio (priority 9). Jessica is a high-value multiplier contact across NMA, WAN-IFRA, RSL, and Carnegie Mellon.
+- **2026-04-07:** Added OriginVault (Luke Nispel) to Strategic Peers. Direct competitor in content provenance/creator rights; CAWG endorsement assertion involvement; actively opposing Connected tier and text provenance timeline on WordPress/ai PR #294. Competitive motivation identified: removing Encypher's integration path into WordPress ecosystem.
+- **2026-04-06:** Added SSL.com to Standards/Ecosystem stakeholders. Sub-CA path ruled out by SSL.com legal review (C2PA CA reqs require own root). Three options: managed PKI (6 figures+), reseller partnership, or CAWG collaboration. Platform Claim Signing cert in progress for conformance listing. Key contacts: Dom Guinard (Dir. Product), Cory Mangus, Jeremiah Doyle, Daniel Rendon.
 - **2026-04-02:** Added Local Media Association (LMA) to Platform and Channel Partners. Frank Mungeam (CIO) intro call completed 2026-04-01; journalism support org touching 3,000+ news leaders; distribution/credibility channel for small/regional publishers; AI Discovery Day events (next: Phoenix); co-published trust research with Trusting News. Pilot proposal and mutual intros (Ellen McCarthy, Lynn Walsh) in follow-up.
 - **2026-03-30:** Updated NPR after intro meeting with Erica. Contact identified, status upgraded to active evaluation, four-team follow-up scheduled (~April 13). SC application reference ask sent via follow-up email.
 - **2026-03-29:** Major update for C2PA Steering Committee application. Added Section 7 (SC application tracker with internal supporters, external support portfolio, and pre-submission actions). Corrected Library of Congress status from "Healthy" to "Paused" (no presentation delivered). Added NPR (active, meeting in 2 weeks) and Ellen McCarthy / Trust in Media (potential SC application supporter). Updated SPUR status to "Healthy" (SPUR wants to work with Encypher). Renumbered Immediate Action Queue to Section 8; reprioritized around SC application.
