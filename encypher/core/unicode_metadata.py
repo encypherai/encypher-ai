@@ -1577,7 +1577,9 @@ class UnicodeMetadata:
                         try:
                             signed_segment = signed_segment_bytes.decode("utf-8")
                             # Use measured wrapper exclusion for JUMBF, assertion's for legacy
-                            segment_excl: tuple[int, int] = (segment_exclusion_start, current_wrapper_byte_len) if is_jumbf_format else (expected_exclusion or (0, 0))
+                            segment_excl: tuple[int, int] = (
+                                (segment_exclusion_start, current_wrapper_byte_len) if is_jumbf_format else (expected_exclusion or (0, 0))
+                            )
                             retry_result = compute_normalized_hash(signed_segment, [segment_excl])
                             if retry_result.hexdigest == expected_hard_hash:
                                 logger.info(
