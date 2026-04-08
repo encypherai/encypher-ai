@@ -97,7 +97,10 @@ class TestC2PAIntegration(unittest.TestCase):
             "c2pa.actions.v1" in assertion_labels or "c2pa.actions.v2" in assertion_labels,
             f"Expected c2pa.actions.v1 or v2 in {assertion_labels}",
         )
-        self.assertIn("c2pa.hash.data.v1", assertion_labels)
+        self.assertTrue(
+            "c2pa.hash.data" in assertion_labels or "c2pa.hash.data.v1" in assertion_labels,
+            f"Expected c2pa.hash.data or c2pa.hash.data.v1 in {assertion_labels}",
+        )
         self.assertIn("c2pa.soft_binding.v1", assertion_labels)
 
     def test_c2pa_verification(self):
