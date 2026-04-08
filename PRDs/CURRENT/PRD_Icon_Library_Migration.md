@@ -144,7 +144,7 @@ Build an internal brand asset browser at `/brand` on the dashboard, locked behin
 These are tracked separately under the domain migration project but noted here for completeness.
 
 - [ ] 9.1 Update ~12 `base.html` files across services from `https://encypher.com/encypher_full_logo_white.png` to `https://encypher.com/brand/wordmark-white-nobg.png` (or appropriate hosted URL)
-- [ ] 9.2 Depends on: DNS migration Phase 2 (domain migration PRD) and task 7.x (public brand assets)
+- [ ] 9.2 Depends on: task 7.x (public brand assets) -- DNS migration complete as of 2026-04-06
 
 ### 10.0 Cleanup
 
@@ -204,7 +204,7 @@ For each app migration (tasks 1.0-6.0):
 - Puppeteer before/after screenshots show no visual regressions
 - `https://encypher.com/brand/` serves canonical assets with proper caching
 - Dashboard `/brand` page accessible to Encypher team, shows all variants with download/embed functionality
-- Email templates point to hosted brand asset URLs (blocked on domain migration Phase 2)
+- Email templates point to hosted brand asset URLs (depends on task 7.x public brand assets)
 
 ## Completion Notes
 
