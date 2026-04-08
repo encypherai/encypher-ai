@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "encypher-ai"
-version = "3.1.0"
+version = "3.1.1"
 description = "Embed invisible metadata in AI-generated text using zero-width characters."
 readme = "README.md"
 authors = [{name = "Encypher Team"}]
@@ -42,6 +42,9 @@ dev = [
 [project.urls]
 "Homepage" = "https://github.com/encypherai/encypher-ai"
 "Bug Tracker" = "https://github.com/encypherai/encypher-ai/issues"
+
+[tool.uv.sources]
+c2pa-text = { path = "../c2pa-text/python", editable = true }
 
 [tool.mypy]
 python_version = "3.9"
@@ -96,3 +99,12 @@ line-ending = "auto"
 
 [tool.setuptools]
 packages = ["encypher"]
+
+[dependency-groups]
+dev = [
+    "build>=1.4.2",
+    "mypy>=1.19.1",
+    "pytest>=8.4.2",
+    "twine>=6.2.0",
+    "types-requests>=2.32.4.20260107",
+]
