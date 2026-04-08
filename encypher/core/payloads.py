@@ -112,6 +112,10 @@ class OuterPayload(TypedDict, total=False):
     signature: str  # Base64 encoded signature string
     cose_sign1: str
     cbor_payload: str  # Base64-encoded CBOR payload for detached COSE_Sign1 verification
+    # JUMBF manifest store fields (set when parsing conformant JUMBF)
+    _jumbf_parsed: dict[str, Any]
+    _jumbf_manifest: dict[str, Any]
+    _jumbf_assertions: list[dict[str, Any]]
 
 
 # --- End TypedDict Definitions ---
