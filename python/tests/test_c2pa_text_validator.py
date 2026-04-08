@@ -3,6 +3,7 @@ Tests for the C2PA manifest validator.
 """
 
 import struct
+import unicodedata
 
 from c2pa_text import (
     MAGIC,
@@ -11,6 +12,7 @@ from c2pa_text import (
     ValidationResult,
     embed_manifest,
     extract_manifest,
+    find_wrapper_info,
     validate_jumbf_structure,
     validate_manifest,
     validate_wrapper_bytes,
@@ -210,3 +212,27 @@ class TestIntegration:
 
         # Developer would see this and fix before embedding
         assert "truncated" in str(result).lower()
+
+
+class TestWrapperOffsets:
+    def test_wrapper_offsets_are_nfc_utf8_byte_offsets(self):
+        jumbf = struct.pack(">I", 8) + b"jumb"
+
+        decomposed = "e\u0301"
+        embedded = embed_manifest(decomposed, jumbf)
+
+        info = find_wrapper_info(embedded)
+        assert info is not None
+        extracted, offset, length = info[0], info[1], info[2]
+        assert extracted == jumbf
+
+        normalized_nfc = unicodedata.normalize("NFC", decomposed)
+        expected_offset = len(normalized_nfc.encode("utf-8"))
+        expected_length = len(embedded.encode("utf-8")) - expected_offset
+
+        assert offset == expected_offset
+        assert length == expected_length
+
+        extracted2, clean = extract_manifest(embedded)
+        assert extracted2 == jumbf
+        assert clean == normalized_nfc
