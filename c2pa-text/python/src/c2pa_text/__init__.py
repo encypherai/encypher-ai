@@ -83,6 +83,73 @@ def encode_wrapper(manifest_bytes: bytes) -> str:
     return ZWNBSP + "".join(vs)
 
 
+def worst_case_wrapper_byte_length(manifest_byte_count: int) -> int:
+    """Compute the deterministic target UTF-8 byte length of a padded wrapper
+    for a manifest of *manifest_byte_count* bytes.
+
+    The base worst case is ``3 + (13 + M) * 4`` (ZWNBSP at 3 bytes, every
+    header + manifest byte at 4 bytes).  A margin of 6 is added to guarantee
+    the gap between worst case and actual is always expressible as ``3a + 4b``
+    (required for VS-based padding).  The non-representable values 1, 2, 5 are
+    thereby excluded for all possible byte distributions.
+
+    Formula: ``3 + (13 + M) * 4 + 6``
+    """
+    return 3 + (13 + manifest_byte_count) * 4 + 6
+
+
+def _compute_padding(gap: int) -> list[int]:
+    """Return padding byte values whose VS encoding totals exactly *gap* UTF-8 bytes.
+
+    Bytes 0x00-0x0F encode to 3-byte VS chars (U+FE00-U+FE0F).
+    Bytes 0x10-0xFF encode to 4-byte VS chars (U+E0100-U+E01EF).
+    Solves 3a + 4b = gap for non-negative integers a, b.
+    """
+    if gap == 0:
+        return []
+    # Try to express gap as 3a + 4b, preferring fewer characters (maximize b)
+    for b in range(gap // 4, -1, -1):
+        remainder = gap - 4 * b
+        if remainder >= 0 and remainder % 3 == 0:
+            a = remainder // 3
+            return [0x00] * a + [0xFF] * b
+    # Unreachable for gap >= 3 and gap != 5, but defensive
+    raise ValueError(f"Cannot pad {gap} UTF-8 bytes with 3-byte and 4-byte VS characters")
+
+
+def encode_wrapper_padded(manifest_bytes: bytes, target_byte_length: int) -> str:
+    """Encode a C2PA Text Manifest Wrapper and pad to an exact UTF-8 byte length.
+
+    The padding consists of additional VS-encoded bytes appended after the
+    JUMBF container within the wrapper.  Decoders use ``manifestLength`` to
+    extract the manifest and ignore trailing padding.
+
+    Args:
+        manifest_bytes: The binary manifest data.
+        target_byte_length: Desired UTF-8 byte length of the wrapper string.
+            Must be >= the actual (unpadded) wrapper byte length.
+
+    Returns:
+        A wrapper string whose ``len(s.encode('utf-8'))`` equals
+        *target_byte_length*.
+
+    Raises:
+        ValueError: If *target_byte_length* is too small or the gap cannot be
+            filled (only possible for gap values 1, 2, or 5, which do not occur
+            for realistic manifests).
+    """
+    base = encode_wrapper(manifest_bytes)
+    actual = len(base.encode("utf-8"))
+    gap = target_byte_length - actual
+    if gap < 0:
+        raise ValueError(f"target_byte_length ({target_byte_length}) is smaller than " f"actual wrapper byte length ({actual})")
+    if gap == 0:
+        return base
+    padding_bytes = _compute_padding(gap)
+    padding_vs = "".join(_byte_to_vs(b) for b in padding_bytes)
+    return base + padding_vs
+
+
 def decode_wrapper_sequence(seq: str) -> bytes:
     """Decode a sequence of variation selector characters into bytes."""
     out = bytearray()
@@ -197,6 +264,8 @@ __all__ = [
     "extract_manifest",
     "find_wrapper_info",
     "encode_wrapper",
+    "encode_wrapper_padded",
+    "worst_case_wrapper_byte_length",
     "decode_wrapper_sequence",
     # Validation
     "validate_manifest",

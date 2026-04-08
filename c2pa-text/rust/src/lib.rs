@@ -80,7 +80,7 @@ fn vs_to_byte(c: char) -> Option<u8> {
 /// Encode raw bytes into a C2PA Text Manifest Wrapper string.
 pub fn encode_wrapper(manifest_bytes: &[u8]) -> String {
     let len = manifest_bytes.len() as u32;
-    
+
     // Estimate capacity: 1 (ZWNBSP) + HEADER_SIZE + len
     let mut out = String::with_capacity(1 + HEADER_SIZE + manifest_bytes.len());
     out.push(ZWNBSP);
@@ -90,7 +90,7 @@ pub fn encode_wrapper(manifest_bytes: &[u8]) -> String {
         out.push(byte_to_vs(b));
     }
     out.push(byte_to_vs(VERSION));
-    
+
     // Length (Big Endian)
     out.push(byte_to_vs(((len >> 24) & 0xFF) as u8));
     out.push(byte_to_vs(((len >> 16) & 0xFF) as u8));
@@ -103,6 +103,63 @@ pub fn encode_wrapper(manifest_bytes: &[u8]) -> String {
     }
 
     out
+}
+
+/// Compute the deterministic target UTF-8 byte length of a padded wrapper
+/// for a manifest of `manifest_byte_count` bytes.
+///
+/// Formula: `3 + (13 + M) * 4 + 6`
+///
+/// The margin of 6 guarantees the gap between target and actual is always
+/// expressible as `3a + 4b` (required for VS-based padding).
+pub fn worst_case_wrapper_byte_length(manifest_byte_count: usize) -> usize {
+    3 + (HEADER_SIZE + manifest_byte_count) * 4 + 6
+}
+
+/// Compute padding bytes whose VS encoding totals exactly `gap` UTF-8 bytes.
+/// Returns a Vec of byte values (0x00 for 3-byte VS, 0xFF for 4-byte VS).
+fn compute_padding(gap: usize) -> Result<Vec<u8>, Error> {
+    if gap == 0 {
+        return Ok(Vec::new());
+    }
+    // Solve 3a + 4b = gap, preferring fewer characters (maximize b)
+    let mut b = gap / 4;
+    loop {
+        let remainder = gap - 4 * b;
+        if remainder % 3 == 0 {
+            let a = remainder / 3;
+            let mut result = vec![0x00u8; a];
+            result.extend(vec![0xFFu8; b]);
+            return Ok(result);
+        }
+        if b == 0 {
+            break;
+        }
+        b -= 1;
+    }
+    Err(Error::Truncated) // Should not happen with +6 margin
+}
+
+/// Encode a C2PA Text Manifest Wrapper and pad to an exact UTF-8 byte length.
+///
+/// Decoders use `manifestLength` to extract the manifest and ignore trailing
+/// padding bytes.
+pub fn encode_wrapper_padded(manifest_bytes: &[u8], target_byte_length: usize) -> Result<String, Error> {
+    let base = encode_wrapper(manifest_bytes);
+    let actual = base.len(); // String::len() returns UTF-8 byte count
+    if target_byte_length < actual {
+        return Err(Error::Truncated);
+    }
+    let gap = target_byte_length - actual;
+    if gap == 0 {
+        return Ok(base);
+    }
+    let padding = compute_padding(gap)?;
+    let mut result = base;
+    for &b in &padding {
+        result.push(byte_to_vs(b));
+    }
+    Ok(result)
 }
 
 /// Embed a C2PA manifest into text.
@@ -133,7 +190,7 @@ pub fn extract_manifest(text: &str) -> Result<ExtractionResult, Error> {
     // Iterate chars to find potential wrapper
     let chars: Vec<(usize, char)> = text.char_indices().collect();
     let mut i = 0;
-    
+
     while i < chars.len() {
         let (idx, c) = chars[i];
         if c == ZWNBSP {
@@ -141,7 +198,7 @@ pub fn extract_manifest(text: &str) -> Result<ExtractionResult, Error> {
             let start_idx = idx;
             let mut current_bytes = Vec::new();
             let mut j = i + 1;
-            
+
             while j < chars.len() {
                 let (_, vc) = chars[j];
                 if let Some(b) = vs_to_byte(vc) {
@@ -178,9 +235,9 @@ pub fn extract_manifest(text: &str) -> Result<ExtractionResult, Error> {
                             } else {
                                 wrapper_end = Some(text.len());
                             }
-                            
+
                             decoded_bytes = current_bytes[HEADER_SIZE..HEADER_SIZE + len].to_vec();
-                            
+
                             // We found one, but spec says we must ensure no others exist.
                             // Continue searching from j
                             i = j;

@@ -13,7 +13,7 @@ const (
 	Version    = 1
 	HeaderSize = 13 // 8 (Magic) + 1 (Version) + 4 (Length)
 	ZWNBSP     = '\ufeff'
-	
+
 	VSStart    = 0xFE00
 	VSEnd      = 0xFE0F
 	VSSupStart = 0xE0100
@@ -61,14 +61,14 @@ func EncodeWrapper(manifestBytes []byte) string {
 		r, _ := byteToVS(b)
 		buf.WriteRune(r)
 	}
-	
+
 	rVersion, _ := byteToVS(byte(Version))
 	buf.WriteRune(rVersion)
 
 	length := uint32(len(manifestBytes))
 	lengthBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(lengthBytes, length)
-	
+
 	for _, b := range lengthBytes {
 		r, _ := byteToVS(b)
 		buf.WriteRune(r)
@@ -81,6 +81,62 @@ func EncodeWrapper(manifestBytes []byte) string {
 	}
 
 	return buf.String()
+}
+
+// WorstCaseWrapperByteLength computes the deterministic target UTF-8 byte
+// length of a padded wrapper for a manifest of manifestByteCount bytes.
+// Formula: 3 + (13 + M) * 4 + 6
+func WorstCaseWrapperByteLength(manifestByteCount int) int {
+	return 3 + (HeaderSize+manifestByteCount)*4 + 6
+}
+
+// computePadding returns padding byte values whose VS encoding totals
+// exactly gap UTF-8 bytes. Bytes 0x00 encode to 3-byte VS, 0xFF to 4-byte VS.
+func computePadding(gap int) ([]byte, error) {
+	if gap == 0 {
+		return nil, nil
+	}
+	for b := gap / 4; b >= 0; b-- {
+		remainder := gap - 4*b
+		if remainder >= 0 && remainder%3 == 0 {
+			a := remainder / 3
+			result := make([]byte, 0, a+b)
+			for i := 0; i < a; i++ {
+				result = append(result, 0x00)
+			}
+			for i := 0; i < b; i++ {
+				result = append(result, 0xFF)
+			}
+			return result, nil
+		}
+	}
+	return nil, errors.New("cannot compute padding for given gap")
+}
+
+// EncodeWrapperPadded encodes a C2PA Text Manifest Wrapper and pads to an
+// exact UTF-8 byte length. Decoders use manifestLength to extract the
+// manifest and ignore trailing padding bytes.
+func EncodeWrapperPadded(manifestBytes []byte, targetByteLength int) (string, error) {
+	base := EncodeWrapper(manifestBytes)
+	actual := len(base) // Go strings are UTF-8 byte sequences
+	if targetByteLength < actual {
+		return "", ErrTruncated
+	}
+	gap := targetByteLength - actual
+	if gap == 0 {
+		return base, nil
+	}
+	padding, err := computePadding(gap)
+	if err != nil {
+		return "", err
+	}
+	var buf bytes.Buffer
+	buf.WriteString(base)
+	for _, b := range padding {
+		r, _ := byteToVS(b)
+		buf.WriteRune(r)
+	}
+	return buf.String(), nil
 }
 
 // EmbedManifest embeds a C2PA manifest into text.
@@ -97,7 +153,7 @@ func EmbedManifest(text string, manifestBytes []byte) string {
 func ExtractManifest(text string) ([]byte, string, int, int, error) {
 	// We need to scan by rune
 	runes := []rune(text)
-	
+
 	var wrapperStart, wrapperEnd int = -1, -1
 	var decodedBytes []byte
 
@@ -107,7 +163,7 @@ func ExtractManifest(text string) ([]byte, string, int, int, error) {
 			startIdx := i
 			var currentBytes []byte
 			j := i + 1
-			
+
 			for j < len(runes) {
 				b, ok := vsToByte(runes[j])
 				if !ok {
@@ -127,21 +183,21 @@ func ExtractManifest(text string) ([]byte, string, int, int, error) {
 						break
 					}
 				}
-				
+
 				if validMagic {
 					if currentBytes[8] == byte(Version) {
 						length := binary.BigEndian.Uint32(currentBytes[9:13])
-						
+
 						if len(currentBytes) >= HeaderSize+int(length) {
 							if wrapperStart != -1 {
 								return nil, norm.NFC.String(text), -1, -1, ErrMultipleWrappers
 							}
-							
+
 							wrapperStart = startIdx
 							wrapperEnd = j // j is exclusive end in rune slice
-							
+
 							decodedBytes = currentBytes[HeaderSize : HeaderSize+int(length)]
-							
+
 							// Continue searching
 							i = j - 1 // -1 because loop increments
 							continue
@@ -156,7 +212,7 @@ func ExtractManifest(text string) ([]byte, string, int, int, error) {
 		// Convert rune indices to byte indices
 		preRunes := runes[:wrapperStart]
 		wrapperRunes := runes[wrapperStart:wrapperEnd]
-		
+
 		startByte := len(string(preRunes))
 		lengthByte := len(string(wrapperRunes))
 
@@ -164,11 +220,11 @@ func ExtractManifest(text string) ([]byte, string, int, int, error) {
 		pre := string(runes[:wrapperStart])
 		post := string(runes[wrapperEnd:])
 		clean := norm.NFC.String(pre + post)
-		
+
 		// Need to copy bytes to avoid reference issues
 		outBytes := make([]byte, len(decodedBytes))
 		copy(outBytes, decodedBytes)
-		
+
 		return outBytes, clean, startByte, lengthByte, nil
 	}
 
