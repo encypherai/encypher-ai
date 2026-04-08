@@ -238,7 +238,8 @@ def _extract_and_validate_c2pa_certificate(text: str) -> C2PACertificateResult:
 
         from cryptography.hazmat.primitives import serialization
         from encypher.core.signing import extract_certificates_from_cose
-        from encypher.interop.c2pa.jumbf import deserialize_jumbf_payload
+        from encypher.core.payloads import deserialize_jumbf_payload
+        from encypher.interop.c2pa.jumbf import parse_manifest_store
         from encypher.interop.c2pa.text_wrapper import find_and_decode
 
         # Extract manifest from text
@@ -246,16 +247,23 @@ def _extract_and_validate_c2pa_certificate(text: str) -> C2PACertificateResult:
         if manifest_bytes is None:
             return result
 
-        # Deserialize JUMBF to get COSE signature
-        manifest_store = deserialize_jumbf_payload(manifest_bytes)
-        if not isinstance(manifest_store, dict):
-            return result
+        # Try conformant JUMBF first, fall back to legacy JSON-in-jumb
+        cose_bytes: bytes | None = None
+        try:
+            parsed = parse_manifest_store(manifest_bytes)
+            active = parsed["manifests"][-1]
+            cose_bytes = active.get("signature_cose")
+        except (ValueError, KeyError, IndexError):
+            pass
 
-        cose_sign1_b64 = manifest_store.get("cose_sign1")
-        if not cose_sign1_b64:
-            return result
-
-        cose_bytes = base64.b64decode(cose_sign1_b64)
+        if cose_bytes is None:
+            manifest_store = deserialize_jumbf_payload(manifest_bytes)
+            if not isinstance(manifest_store, dict):
+                return result
+            cose_sign1_b64 = manifest_store.get("cose_sign1")
+            if not cose_sign1_b64:
+                return result
+            cose_bytes = base64.b64decode(cose_sign1_b64)
 
         # Extract certificates from COSE x5chain
         try:
