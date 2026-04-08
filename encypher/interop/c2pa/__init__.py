@@ -21,6 +21,19 @@ from ..c2pa_core import (
     get_c2pa_manifest_schema as get_c2pa_manifest_schema,
 )
 
+# C2PA claim v2 builder
+from .c2pa_claim import build_claim_cbor  # noqa: F401
+
+# JUMBF builder/parser (ISO 19566-5)
+from .jumbf import (  # noqa: F401
+    build_assertion_box,
+    build_manifest,
+    build_manifest_store,
+    generate_manifest_label,
+    parse_manifest_store,
+    parse_superbox,
+)
+
 # Normalisation + hashing helpers
 from .text_hashing import (  # noqa: F401
     NormalizedHashResult,

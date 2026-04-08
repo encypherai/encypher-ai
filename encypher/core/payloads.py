@@ -1,5 +1,6 @@
 import json
 import struct
+import warnings
 from typing import Any, Literal, Optional, TypedDict, Union, cast
 
 import cbor2
@@ -110,6 +111,7 @@ class OuterPayload(TypedDict, total=False):
     payload: Union[BasicPayload, ManifestPayload, str]
     signature: str  # Base64 encoded signature string
     cose_sign1: str
+    cbor_payload: str  # Base64-encoded CBOR payload for detached COSE_Sign1 verification
 
 
 # --- End TypedDict Definitions ---
@@ -177,12 +179,16 @@ def deserialize_c2pa_payload_from_cbor(cbor_bytes: bytes) -> C2PAPayload:
 def serialize_jumbf_payload(payload: dict[str, Any]) -> bytes:
     """Serializes a payload dictionary into a minimal JUMBF box.
 
-    The function creates a single JUMBF box with a 4 byte length field and a
-    4 byte box type (``b"jumb"``). The payload is encoded as canonical JSON and
-    stored as the box contents. This is **not** a full implementation of
-    ISO/IEC 19566‑5 but provides a deterministic binary representation suitable
-    for signing and unit tests.
+    .. deprecated::
+        Use ``encypher.interop.c2pa.jumbf.build_manifest_store`` for
+        conformant C2PA JUMBF output.  This function wraps JSON in a
+        bare ``jumb`` box, which is not ISO 19566-5 conformant.
     """
+    warnings.warn(
+        "serialize_jumbf_payload is deprecated. Use encypher.interop.c2pa.jumbf.build_manifest_store instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     logger.debug("Attempting to serialize payload to JUMBF bytes.")
     try:
         json_bytes = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -196,7 +202,18 @@ def serialize_jumbf_payload(payload: dict[str, Any]) -> bytes:
 
 
 def deserialize_jumbf_payload(jumbf_bytes: bytes) -> dict[str, Any]:
-    """Deserializes bytes produced by :func:`serialize_jumbf_payload`."""
+    """Deserializes bytes produced by :func:`serialize_jumbf_payload`.
+
+    .. deprecated::
+        Use ``encypher.interop.c2pa.jumbf.parse_manifest_store`` for
+        conformant C2PA JUMBF parsing.  This function only handles the
+        legacy JSON-in-jumb format.
+    """
+    warnings.warn(
+        "deserialize_jumbf_payload is deprecated. Use encypher.interop.c2pa.jumbf.parse_manifest_store instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     logger.debug(f"Attempting to deserialize {len(jumbf_bytes)} bytes from JUMBF.")
     try:
         if len(jumbf_bytes) < 8:

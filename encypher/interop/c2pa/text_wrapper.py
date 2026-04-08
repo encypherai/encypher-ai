@@ -58,7 +58,7 @@ def _find_valid_wrappers(normalized_text: str) -> list[tuple[bytes, int, int, in
             continue
 
         total = _HEADER_SIZE + length
-        if len(raw) != total:
+        if len(raw) < total:
             i = j
             continue
 
@@ -73,6 +73,22 @@ def _find_valid_wrappers(normalized_text: str) -> list[tuple[bytes, int, int, in
 
 def encode_wrapper(manifest_bytes: bytes) -> str:
     return cast(str, c2pa_text.encode_wrapper(manifest_bytes))
+
+
+def encode_wrapper_padded(manifest_bytes: bytes, target_byte_length: int) -> str:
+    """Encode a C2PA Text Manifest Wrapper padded to an exact UTF-8 byte length.
+
+    Delegates to :func:`c2pa_text.encode_wrapper_padded`.
+    """
+    return cast(str, c2pa_text.encode_wrapper_padded(manifest_bytes, target_byte_length))
+
+
+def worst_case_wrapper_byte_length(manifest_byte_count: int) -> int:
+    """Return the deterministic target UTF-8 byte length for a padded wrapper.
+
+    Delegates to :func:`c2pa_text.worst_case_wrapper_byte_length`.
+    """
+    return c2pa_text.worst_case_wrapper_byte_length(manifest_byte_count)
 
 
 def attach_wrapper_to_text(text: str, manifest_bytes: bytes, alg: str = "sha256", *, at_end: bool = True) -> str:

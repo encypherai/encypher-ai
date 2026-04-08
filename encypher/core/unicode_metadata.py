@@ -11,8 +11,8 @@ import copy
 import hashlib
 import json
 import re
+import struct
 import unicodedata
-import uuid
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Literal, Optional, Union, cast
 
@@ -23,14 +23,26 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey,
 
 from encypher import __version__
 from encypher.config.settings import Settings
+from encypher.interop.c2pa.c2pa_claim import build_claim_cbor
+from encypher.interop.c2pa.jumbf import (
+    build_assertion_box,
+    build_manifest,
+    build_manifest_store,
+    generate_manifest_label,
+    parse_manifest_store,
+)
 from encypher.interop.c2pa.text_hashing import compute_normalized_hash, normalize_text
-from encypher.interop.c2pa.text_wrapper import encode_wrapper, find_and_decode, find_wrapper_info_bytes
+from encypher.interop.c2pa.text_wrapper import (
+    encode_wrapper_padded,
+    find_and_decode,
+    find_wrapper_info_bytes,
+    worst_case_wrapper_byte_length,
+)
 
 from .constants import MetadataTarget
 from .logging_config import logger
 from .payloads import (
     BasicPayload,
-    C2PAAssertion,
     C2PAPayload,
     ManifestPayload,
     OuterPayload,
@@ -40,7 +52,15 @@ from .payloads import (
     serialize_jumbf_payload,
     serialize_payload,
 )
-from .signing import SigningKey, extract_payload_from_cose_sign1, sign_c2pa_cose, sign_payload, verify_c2pa_cose, verify_signature
+from .signing import (
+    SigningKey,
+    extract_certificates_from_cose,
+    extract_payload_from_cose_sign1,
+    sign_c2pa_cose,
+    sign_payload,
+    verify_c2pa_cose,
+    verify_signature,
+)
 
 
 class UnicodeMetadata:
@@ -382,6 +402,7 @@ class UnicodeMetadata:
         omit_keys: Optional[list[str]] = None,
         distribute_across_targets: bool = False,
         add_hard_binding: bool = True,
+        cert_chain_pem: Optional[str] = None,
     ) -> str:
         if metadata_format == "c2pa":
             # Convert timestamp once for C2PA-specific embedding (optional)
@@ -404,6 +425,7 @@ class UnicodeMetadata:
                 distribute_across_targets=distribute_across_targets,
                 add_hard_binding=add_hard_binding,
                 custom_assertions=custom_assertions,
+                cert_chain_pem=cert_chain_pem,
             )
         # --- Start: Input Validation ---
         if not isinstance(text, str):
@@ -750,6 +772,80 @@ class UnicodeMetadata:
         h.update(normalized.encode("utf-8"))
         return h.hexdigest()
 
+    @staticmethod
+    def _predict_wrapper_byte_length(manifest_bytes: bytes) -> int:
+        """Predict the UTF-8 byte length of the VS-encoded wrapper.
+
+        The c2pa-text encoder maps each byte to a variation selector:
+        bytes 0-15 -> U+FE00..U+FE0F (3-byte UTF-8), bytes 16-255 ->
+        U+E0100..U+E01EF (4-byte UTF-8).  The wrapper is:
+        FEFF(3 bytes) + VS-encoded(MAGIC 8B + VERSION 1B + LENGTH 4B + PAYLOAD).
+        """
+        total = 3  # U+FEFF prefix
+        header = b"C2PATXT\x00\x01" + struct.pack(">I", len(manifest_bytes))
+        for b in header:
+            total += 3 if b <= 15 else 4
+        for b in manifest_bytes:
+            total += 3 if b <= 15 else 4
+        return total
+
+    @classmethod
+    def _build_jumbf_manifest_store(
+        cls,
+        assertion_tuples: list[tuple[str, dict[str, Any]]],
+        manifest_label: str,
+        claim_gen: str,
+        private_key: SigningKey,
+        cert_chain_pem: Optional[str],
+    ) -> bytes:
+        """Build a complete JUMBF manifest store from assertion tuples.
+
+        Computes soft binding, builds JUMBF boxes, signs claim, returns
+        the manifest store bytes.
+        """
+        # Recompute soft binding from non-soft-binding assertions
+        soft_binding_input = b""
+        for _lbl, _data in assertion_tuples:
+            if _lbl != "c2pa.soft_binding.v1":
+                soft_binding_input += cbor2.dumps(_data)
+        sb_hash = hashlib.sha256(soft_binding_input).digest()
+
+        # Replace or append soft binding tuple
+        sb_idx = next(
+            (i for i, (lbl, _) in enumerate(assertion_tuples) if lbl == "c2pa.soft_binding.v1"),
+            None,
+        )
+        sb_tuple = (
+            "c2pa.soft_binding.v1",
+            {"alg": "encypher.unicode_variation_selector.v1", "hash": sb_hash},
+        )
+        if sb_idx is not None:
+            assertion_tuples[sb_idx] = sb_tuple
+        else:
+            assertion_tuples.append(sb_tuple)
+
+        # Build JUMBF assertion boxes
+        assertion_boxes: list[bytes] = []
+        assertion_refs: list[tuple[str, bytes]] = []
+        for a_label, a_data in assertion_tuples:
+            a_cbor = cbor2.dumps(a_data)
+            a_box = build_assertion_box(a_label, a_cbor)
+            assertion_boxes.append(a_box)
+            assertion_refs.append((a_label, a_box[8:]))
+
+        # Claim v2 and COSE signature
+        claim_cbor = build_claim_cbor(
+            manifest_label,
+            assertion_refs,
+            dc_format="text/plain",
+            claim_generator=claim_gen,
+            alg="sha256",
+        )
+        cose_sign1_bytes = sign_c2pa_cose(private_key, claim_cbor, cert_chain_pem=cert_chain_pem)
+
+        manifest_box = build_manifest(manifest_label, assertion_boxes, claim_cbor, cose_sign1_bytes)
+        return build_manifest_store([manifest_box])
+
     @classmethod
     def _embed_c2pa(
         cls,
@@ -765,6 +861,7 @@ class UnicodeMetadata:
         distribute_across_targets: bool,
         add_hard_binding: bool,
         custom_assertions: Optional[list[dict[str, Any]]] = None,
+        cert_chain_pem: Optional[str] = None,
     ) -> str:
         """
         Constructs and embeds a C2PA-compliant manifest.
@@ -774,9 +871,14 @@ class UnicodeMetadata:
         hash. The resulting manifest is serialized to CBOR, signed, and then
         embedded into the text using Unicode variation selectors.
 
+        When cert_chain_pem is provided, produces a spec-compliant COSE_Sign1_Tagged
+        structure with x5chain and detached payload (matching the binary media
+        signing pipeline). Without cert_chain_pem, falls back to the legacy
+        Ed25519-only inline-payload mode.
+
         Args:
             text: The original, clean text content to be watermarked.
-            private_key: The Ed25519 private key for signing the manifest.
+            private_key: Private key for signing (Ed25519, EC, RSA, or Signer).
             signer_id: An identifier for the key pair.
             claim_generator: A string identifying the software agent creating the claim.
             actions: A list of action dictionaries to include in the manifest.
@@ -786,23 +888,26 @@ class UnicodeMetadata:
             distribute_across_targets: If True, distribute bits across multiple targets.
             add_hard_binding: If True, include the hard binding assertion in the manifest.
             custom_assertions: Optional list of custom C2PA assertions to include.
+            cert_chain_pem: Optional PEM-encoded certificate chain (EE cert first).
 
         Returns:
             The text with the embedded C2PA manifest.
         """
-        if not isinstance(private_key, ed25519.Ed25519PrivateKey):
-            raise TypeError("For C2PA embedding, 'private_key' must be an Ed25519PrivateKey instance.")
+        # When no cert chain is provided, require Ed25519 for legacy path
+        if not cert_chain_pem and not isinstance(private_key, ed25519.Ed25519PrivateKey):
+            raise TypeError(
+                "For C2PA embedding without a certificate chain, 'private_key' must be an "
+                "Ed25519PrivateKey instance. Provide cert_chain_pem to use EC/RSA keys."
+            )
 
         text = normalize_text(text)
 
         base_hash_result = compute_normalized_hash(text)
-        content_hash = base_hash_result.hexdigest
-
-        current_exclusions: list[dict[str, int]] = []
+        content_hash_hex = base_hash_result.hexdigest
+        content_hash = bytes.fromhex(content_hash_hex)
 
         base_actions: list[dict[str, Any]] = copy.deepcopy(actions) if actions else []
         claim_gen = claim_generator or f"encypher-ai/{__version__}"
-        instance_id = str(uuid.uuid4())
 
         # Only add c2pa.created if no creation or edit action exists
         has_creation_or_edit_action = any(a.get("label") in ["c2pa.created", "c2pa.edited"] for a in base_actions)
@@ -827,130 +932,110 @@ class UnicodeMetadata:
         wm_action["softwareAgent"] = claim_gen
         wm_action["description"] = "Text embedded with Unicode variation selectors."
 
-        wrapper_text = ""
-        cose_sign1_bytes: Optional[bytes] = None
-
         settings = Settings()
         c2pa_context_url = settings.get("c2pa_context_url", "https://c2pa.org/schemas/v2.3/c2pa.jsonld")
 
-        MAX_ITERATIONS = 6
         actions_label = "c2pa.actions.v2"
+        manifest_label = generate_manifest_label()
 
-        for _ in range(MAX_ITERATIONS):
-            c2pa_manifest: C2PAPayload = {
-                "@context": c2pa_context_url,
-                "instance_id": instance_id,
-                "claim_label": "c2pa.claim.v2",
-                "claim_generator": claim_gen,
-                "assertions": [],
-            }
+        # -- Collect base assertion data as (label, data_dict) tuples --
+        assertion_tuples: list[tuple[str, dict[str, Any]]] = []
 
-            # Add ingredients for provenance chain (if provided)
-            if ingredients:
-                c2pa_manifest["ingredients"] = ingredients
+        # Actions assertion (include watermarked action)
+        actions_data_dict: dict[str, Any] = {"actions": copy.deepcopy(base_actions) + [copy.deepcopy(wm_action)]}
+        assertion_tuples.append((actions_label, actions_data_dict))
 
-            actions_data: dict[str, Any] = {"actions": copy.deepcopy(base_actions)}
-            c2pa_manifest["assertions"].append({"label": actions_label, "data": actions_data, "kind": "Actions"})
+        # Metadata assertion
+        if custom_metadata:
+            assertion_tuples.append(("c2pa.metadata", copy.deepcopy(custom_metadata)))
 
-            if custom_metadata:
-                c2pa_manifest["assertions"].append(
-                    {
-                        "label": "c2pa.metadata",
-                        "data": copy.deepcopy(custom_metadata),
-                        "kind": "Metadata",
-                    }
+        # Custom assertions
+        if custom_assertions:
+            for custom_assertion in custom_assertions:
+                ca_label = custom_assertion.get("label")
+                ca_data = custom_assertion.get("data", {})
+                if ca_label:
+                    assertion_tuples.append((ca_label, ca_data))
+
+        # Signer identity assertion (replaces JSON envelope signer_id)
+        assertion_tuples.append(("com.encypher.signer", {"signer_id": signer_id}))
+
+        # Context URL assertion (carries @context for verification)
+        assertion_tuples.append(("com.encypher.context", {"@context": c2pa_context_url}))
+
+        # Hard binding exclusion start is fixed: the wrapper is appended at the
+        # end of the normalized text, so its byte offset equals the text length.
+        exclusion_start = len(text.encode("utf-8"))
+
+        if add_hard_binding:
+            # Deterministic padding: use worst-case wrapper byte length as the
+            # exclusion length.  This eliminates the hash-avalanche circularity
+            # because the worst case depends only on manifest byte count, not
+            # byte distribution.  The wrapper is padded to match.
+            #
+            # We iterate up to 3 times because the exclusion_length is stored
+            # as a CBOR integer inside the manifest; changing its value can
+            # change the manifest byte count by a few bytes (CBOR integer width),
+            # which changes the worst-case target.
+            exclusion_length = 0  # placeholder
+            for _iter in range(3):
+                assertion_tuples_with_hb = list(assertion_tuples)
+                assertion_tuples_with_hb.append(
+                    (
+                        "c2pa.hash.data",
+                        {
+                            "hash": content_hash,
+                            "alg": "sha256",
+                            "exclusions": [{"start": exclusion_start, "length": exclusion_length}],
+                        },
+                    )
+                )
+                manifest_store_bytes = cls._build_jumbf_manifest_store(
+                    assertion_tuples_with_hb,
+                    manifest_label,
+                    claim_gen,
+                    private_key,
+                    cert_chain_pem,
+                )
+                new_exclusion_length = worst_case_wrapper_byte_length(len(manifest_store_bytes))
+                if new_exclusion_length == exclusion_length:
+                    break
+                exclusion_length = new_exclusion_length
+            else:
+                # Final build with converged exclusion_length
+                assertion_tuples_with_hb = list(assertion_tuples)
+                assertion_tuples_with_hb.append(
+                    (
+                        "c2pa.hash.data",
+                        {
+                            "hash": content_hash,
+                            "alg": "sha256",
+                            "exclusions": [{"start": exclusion_start, "length": exclusion_length}],
+                        },
+                    )
+                )
+                manifest_store_bytes = cls._build_jumbf_manifest_store(
+                    assertion_tuples_with_hb,
+                    manifest_label,
+                    claim_gen,
+                    private_key,
+                    cert_chain_pem,
                 )
 
-            # Add custom assertions if provided
-            if custom_assertions:
-                for custom_assertion in custom_assertions:
-                    label = custom_assertion.get("label")
-                    data = custom_assertion.get("data", {})
-                    if label:
-                        # Determine kind based on label
-                        kind = "CustomAssertion"
-                        if "location" in label:
-                            kind = "Location"
-                        elif "training-mining" in label:
-                            kind = "TrainingMining"
-                        elif "claim_review" in label:
-                            kind = "ClaimReview"
-                        elif "thumbnail" in label:
-                            kind = "Thumbnail"
-
-                        c2pa_manifest["assertions"].append({"label": label, "data": data, "kind": kind})
-
-            if add_hard_binding:
-                hard_binding_data = {
-                    "hash": content_hash,
-                    "alg": "sha256",
-                    "exclusions": copy.deepcopy(current_exclusions),
-                }
-                c2pa_manifest["assertions"].append({"label": "c2pa.hash.data.v1", "data": hard_binding_data, "kind": "ContentHash"})
-
-            manifest_for_hashing = copy.deepcopy(c2pa_manifest)
-            placeholder_soft_binding: C2PAAssertion = {
-                "label": "c2pa.soft_binding.v1",
-                "data": {"alg": "encypher.unicode_variation_selector.v1", "hash": ""},
-                "kind": "SoftBinding",
-            }
-            manifest_for_hashing["assertions"].append(placeholder_soft_binding)
-
-            actions_data_copy = next((a["data"] for a in manifest_for_hashing["assertions"] if a.get("label") == actions_label), None)
-            if actions_data_copy and isinstance(actions_data_copy.get("actions"), list):
-                actions_data_copy["actions"].append(copy.deepcopy(wm_action))
-
-            cbor_for_hashing = serialize_c2pa_payload_to_cbor(manifest_for_hashing)
-            actual_soft_binding_hash = hashlib.sha256(cbor_for_hashing).hexdigest()
-
-            final_soft_binding_assertion: C2PAAssertion = {
-                "label": "c2pa.soft_binding.v1",
-                "data": {"alg": "encypher.unicode_variation_selector.v1", "hash": actual_soft_binding_hash},
-                "kind": "SoftBinding",
-            }
-            c2pa_manifest["assertions"].append(final_soft_binding_assertion)
-            actions_data["actions"].append(copy.deepcopy(wm_action))
-
-            final_cbor_payload_bytes = serialize_c2pa_payload_to_cbor(c2pa_manifest)
-            cose_sign1_bytes = sign_c2pa_cose(private_key, final_cbor_payload_bytes)
-
-            jumbf_payload = {
-                "format": "c2pa",
-                "signer_id": signer_id,
-                "cose_sign1": base64.b64encode(cose_sign1_bytes).decode("utf-8"),
-            }
-            jumbf_bytes = serialize_jumbf_payload(jumbf_payload)
-            wrapper_text = encode_wrapper(jumbf_bytes)
-
-            final_text = text + wrapper_text
-
-            exclusion_tuples: list[tuple[int, int]] = []
-            new_exclusions: list[dict[str, int]] = []
-
-            if add_hard_binding:
-                wrapper_length_bytes = len(wrapper_text.encode("utf-8"))
-                normalized_final_text = normalize_text(final_text)
-                wrapper_index = normalized_final_text.rfind(wrapper_text)
-                if wrapper_index < 0:
-                    raise RuntimeError("Failed to locate C2PA wrapper inside normalized text")
-                exclusion_start = len(normalized_final_text[:wrapper_index].encode("utf-8"))
-                exclusion_tuples = [(exclusion_start, wrapper_length_bytes)]
-                new_exclusions = [{"start": exclusion_start, "length": wrapper_length_bytes}]
-
-            hash_result = compute_normalized_hash(final_text, exclusion_tuples)
-            actual_hash = hash_result.hexdigest
-
-            if add_hard_binding:
-                if actual_hash != content_hash:
-                    content_hash = actual_hash
-                    current_exclusions = new_exclusions
-                    continue
-                if new_exclusions != current_exclusions:
-                    current_exclusions = new_exclusions
-                    continue
-            break
+            # -- Encode wrapper with deterministic padding --
+            wrapper_text = encode_wrapper_padded(manifest_store_bytes, exclusion_length)
         else:
-            raise RuntimeError("Failed to stabilise C2PA wrapper exclusion offsets")
+            manifest_store_bytes = cls._build_jumbf_manifest_store(
+                assertion_tuples,
+                manifest_label,
+                claim_gen,
+                private_key,
+                cert_chain_pem,
+            )
+            wrapper_text = encode_wrapper_padded(
+                manifest_store_bytes,
+                worst_case_wrapper_byte_length(len(manifest_store_bytes)),
+            )
 
         if not wrapper_text:
             raise RuntimeError("Failed to produce C2PA wrapper text")
@@ -1158,6 +1243,10 @@ class UnicodeMetadata:
         and integrity of an embedded C2PA manifest, including signature verification,
         soft binding, and hard binding checks.
 
+        Supports both:
+        - Spec-compliant COSE_Sign1_Tagged with x5chain (extracts public key from cert)
+        - Legacy untagged COSE_Sign1 with bare Ed25519 (uses public_key_resolver)
+
         Args:
             original_text: The full text asset (including the wrapper) provided for verification.
             outer_payload: The deserialized outer payload containing the manifest.
@@ -1182,38 +1271,135 @@ class UnicodeMetadata:
             return False, signer_id, None
 
         # --- 1. Signature Verification using COSE ---
-        public_key = public_key_resolver(signer_id)
-        if not public_key:
-            logger.warning(f"C2PA verification: Public key not found for signer_id: {signer_id}")
-            if return_payload_on_failure:
-                try:
-                    payload = extract_payload_from_cose_sign1(cose_sign1_bytes)
-                    if payload is None:
-                        return False, signer_id, None
-                    unverified_manifest = deserialize_c2pa_payload_from_cbor(payload)
-                    return False, signer_id, unverified_manifest
-                except Exception:
-                    return False, signer_id, None
-            return False, signer_id, None
+        # Determine if this is a spec-compliant (tagged, detached, x5chain) or legacy structure.
+        # For spec-compliant: public key comes from x5chain in the COSE structure.
+        # For legacy: public key comes from the resolver.
 
+        # Extract inline payload (may be None for detached mode)
+        inline_payload = extract_payload_from_cose_sign1(cose_sign1_bytes)
+
+        # For detached payload mode, the CBOR payload is stored separately in the wrapper
+        external_payload: Optional[bytes] = None
+        cbor_payload_b64 = outer_payload.get("cbor_payload")
+        if cbor_payload_b64 and isinstance(cbor_payload_b64, str):
+            try:
+                external_payload = base64.b64decode(cbor_payload_b64)
+            except (binascii.Error, ValueError):
+                pass
+
+        # Check if COSE has embedded certificates (spec-compliant path)
+        has_x5chain = False
         try:
-            cbor_payload_bytes = verify_c2pa_cose(public_key, cose_sign1_bytes)
-            c2pa_manifest = deserialize_c2pa_payload_from_cbor(cbor_payload_bytes)
-        except (InvalidSignature, ValueError) as e:
-            logger.warning(f"C2PA COSE verification failed for signer_id: {signer_id}. Reason: {e}")
-            if return_payload_on_failure:
-                try:
-                    payload = extract_payload_from_cose_sign1(cose_sign1_bytes)
-                    if payload is None:
+            certs = extract_certificates_from_cose(cose_sign1_bytes)
+            has_x5chain = len(certs) > 0
+        except (ValueError, Exception):
+            pass
+
+        # The payload for verification: inline (legacy) or external (spec-compliant detached)
+        effective_payload = inline_payload or external_payload
+
+        if has_x5chain:
+            # Spec-compliant path: verify using x5chain certificate
+            try:
+                cbor_payload_bytes = verify_c2pa_cose(None, cose_sign1_bytes, payload_override=effective_payload)
+                c2pa_manifest = deserialize_c2pa_payload_from_cbor(cbor_payload_bytes)
+            except (InvalidSignature, ValueError) as e:
+                logger.warning(f"C2PA COSE verification failed (x5chain path) for signer_id: {signer_id}. Reason: {e}")
+                if return_payload_on_failure and effective_payload:
+                    try:
+                        return False, signer_id, deserialize_c2pa_payload_from_cbor(effective_payload)
+                    except Exception:
+                        pass
+                return False, signer_id, None
+            except Exception as e:
+                logger.error(f"Unexpected error during COSE verification: {e}", exc_info=True)
+                return False, signer_id, None
+        else:
+            # Legacy path: use public_key_resolver
+            public_key = public_key_resolver(signer_id)
+            if not public_key:
+                logger.warning(f"C2PA verification: Public key not found for signer_id: {signer_id}")
+                if return_payload_on_failure and effective_payload:
+                    try:
+                        return False, signer_id, deserialize_c2pa_payload_from_cbor(effective_payload)
+                    except Exception:
+                        pass
+                return False, signer_id, None
+
+            try:
+                cbor_payload_bytes = verify_c2pa_cose(public_key, cose_sign1_bytes, payload_override=effective_payload)
+                c2pa_manifest = deserialize_c2pa_payload_from_cbor(cbor_payload_bytes)
+            except (InvalidSignature, ValueError) as e:
+                logger.warning(f"C2PA COSE verification failed for signer_id: {signer_id}. Reason: {e}")
+                if return_payload_on_failure and effective_payload:
+                    try:
+                        return False, signer_id, deserialize_c2pa_payload_from_cbor(effective_payload)
+                    except Exception:
+                        pass
+                return False, signer_id, None
+            except Exception as e:
+                logger.error(f"An unexpected error occurred during COSE verification: {e}", exc_info=True)
+                return False, signer_id, None
+
+        # --- JUMBF format branch ---
+        # For new-format JUMBF manifest stores, reconstruct the c2pa_manifest
+        # dict from individual assertion CBOR boxes and use the new soft
+        # binding algorithm.
+        is_jumbf_format = "_jumbf_parsed" in outer_payload
+
+        if is_jumbf_format:
+            # Verify assertion hashes match the claim's created_assertions
+            jumbf_manifest = outer_payload.get("_jumbf_manifest", {})
+            try:
+                claim_dict = cbor2.loads(effective_payload) if effective_payload else {}
+            except Exception:
+                claim_dict = {}
+
+            created_assertions = claim_dict.get("created_assertions", [])
+            assertion_jumbf = jumbf_manifest.get("assertion_jumbf", {})
+            for ca in created_assertions:
+                ca_url = ca.get("url", "")
+                ca_hash = ca.get("hash", b"")
+                ca_alg = ca.get("alg", "sha256")
+                # Extract label from URL: self#jumbf=c2pa.assertions/{label}
+                label = ca_url.split("/", 1)[-1] if "/" in ca_url else ca_url
+                if label in assertion_jumbf:
+                    actual_hash = hashlib.new(ca_alg, assertion_jumbf[label]).digest()
+                    if actual_hash != ca_hash:
+                        logger.warning("C2PA JUMBF verification: assertion hash mismatch for '%s'.", label)
                         return False, signer_id, None
-                    unverified_manifest = deserialize_c2pa_payload_from_cbor(payload)
-                    return False, signer_id, unverified_manifest
-                except Exception:
-                    return False, signer_id, None
-            return False, signer_id, None
-        except Exception as e:
-            logger.error(f"An unexpected error occurred during COSE verification: {e}", exc_info=True)
-            return False, signer_id, None
+
+            # Reconstruct c2pa_manifest dict from JUMBF assertions
+            jumbf_assertions = outer_payload.get("_jumbf_assertions", [])
+            gen_info = claim_dict.get("claim_generator_info", {})
+            gen_name = gen_info.get("name", "unknown")
+            gen_version = gen_info.get("version", "")
+
+            # Extract @context from com.encypher.context assertion
+            jumbf_context = "https://c2pa.org/schemas/v2.3/c2pa.jsonld"
+            for a in jumbf_assertions:
+                if isinstance(a, dict) and a.get("label") == "com.encypher.context":
+                    jumbf_context = a.get("data", {}).get("@context", jumbf_context)
+                    break
+
+            # Convert bytes to hex strings for the returned manifest (JSON compat).
+            # Keep raw jumbf_assertions for verification hash computation below.
+            def _bytes_to_hex(obj: Any) -> Any:
+                if isinstance(obj, bytes):
+                    return obj.hex()
+                if isinstance(obj, dict):
+                    return {k: _bytes_to_hex(v) for k, v in obj.items()}
+                if isinstance(obj, list):
+                    return [_bytes_to_hex(v) for v in obj]
+                return obj
+
+            c2pa_manifest = {
+                "@context": jumbf_context,
+                "instance_id": claim_dict.get("instanceID", ""),
+                "claim_generator": f"{gen_name}/{gen_version}" if gen_version else gen_name,
+                "assertions": _bytes_to_hex(jumbf_assertions),
+                "ingredients": [],
+            }
 
         # --- 2. Manifest Content Validation ---
         settings = Settings()
@@ -1236,7 +1422,8 @@ class UnicodeMetadata:
         required_actions = {"c2pa.actions.v1", "c2pa.actions.v2"}
         required_assertions = {"c2pa.soft_binding.v1"}
         if require_hard_binding:
-            required_assertions.add("c2pa.hash.data.v1")
+            # Accept both v1 label and new label
+            required_assertions.add("c2pa.hash.data.v1" if not is_jumbf_format else "c2pa.hash.data")
         if not (required_actions & assertion_labels) or not required_assertions.issubset(assertion_labels):
             missing = required_assertions - assertion_labels
             if not (required_actions & assertion_labels):
@@ -1253,19 +1440,34 @@ class UnicodeMetadata:
         # a) Extract the expected hash from the received manifest.
         expected_soft_hash = soft_binding_assertion["data"].get("hash")
 
-        # b) Create a deep copy of the manifest to modify for hash calculation.
-        manifest_for_hashing = copy.deepcopy(c2pa_manifest)
+        # Normalize expected hash: raw bytes -> hex, hex string -> hex
+        if isinstance(expected_soft_hash, bytes):
+            expected_soft_hash = expected_soft_hash.hex()
 
-        # c) Find the soft binding assertion in the copy and replace its hash with a placeholder.
-        assertion_to_modify = next(
-            (a for a in manifest_for_hashing.get("assertions", []) if isinstance(a, dict) and a.get("label") == "c2pa.soft_binding.v1"), None
-        )
-        if assertion_to_modify:
-            assertion_to_modify["data"]["hash"] = ""
+        if is_jumbf_format:
+            # New soft binding: hash concatenation of non-soft-binding assertion CBOR.
+            # Use the raw (non-hex-converted) assertions for CBOR re-encoding.
+            raw_assertions = outer_payload.get("_jumbf_assertions", [])
+            soft_binding_input = b""
+            for a in raw_assertions:
+                if not isinstance(a, dict) or a.get("label") == "c2pa.soft_binding.v1":
+                    continue
+                soft_binding_input += cbor2.dumps(a.get("data", {}))
+            actual_soft_hash = hashlib.sha256(soft_binding_input).hexdigest()
+        else:
+            # b) Create a deep copy of the manifest to modify for hash calculation.
+            manifest_for_hashing = copy.deepcopy(c2pa_manifest)
 
-        # d) Serialize the modified manifest and calculate the hash.
-        cbor_for_hashing = serialize_c2pa_payload_to_cbor(manifest_for_hashing)
-        actual_soft_hash = hashlib.sha256(cbor_for_hashing).hexdigest()
+            # c) Find the soft binding assertion in the copy and replace its hash with a placeholder.
+            assertion_to_modify = next(
+                (a for a in manifest_for_hashing.get("assertions", []) if isinstance(a, dict) and a.get("label") == "c2pa.soft_binding.v1"), None
+            )
+            if assertion_to_modify:
+                assertion_to_modify["data"]["hash"] = ""
+
+            # d) Serialize the modified manifest and calculate the hash.
+            cbor_for_hashing = serialize_c2pa_payload_to_cbor(manifest_for_hashing)
+            actual_soft_hash = hashlib.sha256(cbor_for_hashing).hexdigest()
 
         # e) Compare the calculated hash with the expected hash.
         if expected_soft_hash != actual_soft_hash:
@@ -1274,11 +1476,15 @@ class UnicodeMetadata:
 
         # --- 4. Hard Binding Verification ---
         if require_hard_binding:
-            hard_binding_assertion = next((a for a in assertions if isinstance(a, dict) and a.get("label") == "c2pa.hash.data.v1"), None)
+            _hard_binding_labels = ("c2pa.hash.data", "c2pa.hash.data.v1")
+            hard_binding_assertion = next((a for a in assertions if isinstance(a, dict) and a.get("label") in _hard_binding_labels), None)
             if hard_binding_assertion is None:
                 logger.warning("C2PA verification: Hard binding assertion not found.")
                 return False, signer_id if signer_id is not None else None, c2pa_manifest
             expected_hard_hash = hard_binding_assertion["data"].get("hash")
+            # Normalize: raw bytes -> hex, hex string -> as-is
+            if isinstance(expected_hard_hash, bytes):
+                expected_hard_hash = expected_hard_hash.hex()
 
             exclusions_data = hard_binding_assertion["data"].get("exclusions")
             expected_exclusion: Optional[tuple[int, int]] = None
@@ -1297,11 +1503,13 @@ class UnicodeMetadata:
                     except (TypeError, ValueError):
                         expected_exclusion = None
 
-            # Use the exclusion range from the manifest (expected_exclusion) as the authoritative source.
-            # The manifest's exclusion was calculated at signing time relative to the signed text.
-            # For sentence-level embeddings, wrapper_exclusion (calculated from current text position)
-            # may differ from expected_exclusion, but the manifest's value is what matters for verification.
-            if expected_exclusion is not None:
+            # For new JUMBF format: the exclusion length in the assertion is an
+            # estimate (VS encoding byte length varies with COSE byte distribution).
+            # The verifier uses the *measured* wrapper byte range for hash
+            # computation and the assertion's start offset for segment extraction.
+            if is_jumbf_format and wrapper_exclusion is not None:
+                exclusion_ranges = [wrapper_exclusion]
+            elif expected_exclusion is not None:
                 exclusion_ranges = [expected_exclusion]
                 if wrapper_exclusion is not None and expected_exclusion != wrapper_exclusion:
                     logger.debug(
@@ -1310,7 +1518,6 @@ class UnicodeMetadata:
                         wrapper_exclusion,
                     )
             elif wrapper_exclusion is not None:
-                # Fallback to wrapper exclusion if manifest doesn't specify one
                 exclusion_ranges = [wrapper_exclusion]
             else:
                 exclusion_ranges = []
@@ -1322,17 +1529,16 @@ class UnicodeMetadata:
                 # --- Fallback: extract the originally-signed segment from a larger paste ---
                 # When users copy-paste from a rendered web page, the pasted text often
                 # includes surrounding page chrome (nav bars, footers, etc.) that was
-                # never part of the signed content.  The manifest's exclusion range
+                # never part of the signed content.  The manifest's exclusion start
                 # records the wrapper's byte offset within the *original* signed text.
                 # We use find_wrapper_info_bytes to get the wrapper's *actual* byte
                 # offset in the current (possibly larger) text, then slice out the
                 # originally-signed segment and retry the hash.
                 segment_verified = False
-                if expected_exclusion is not None:
-                    # Try segment extraction on two text variants:
-                    # 1. The original text (handles extra text before/after with same whitespace)
-                    # 2. Whitespace-collapsed text (handles browser paste where <p> tags
-                    #    become \n\n but the signed text used single spaces between paragraphs)
+                # Use the assertion's start offset for segment extraction.
+                # For JUMBF format, use the measured wrapper length for hash.
+                segment_exclusion_start = expected_exclusion[0] if expected_exclusion else None
+                if segment_exclusion_start is not None:
                     _WS_COLLAPSE = re.compile(r"\s+")
                     text_variants = [
                         ("original", original_text),
@@ -1350,7 +1556,7 @@ class UnicodeMetadata:
                             continue
 
                         _, current_wrapper_byte_start, current_wrapper_byte_len = wrapper_info
-                        signed_start_byte = current_wrapper_byte_start - expected_exclusion[0]
+                        signed_start_byte = current_wrapper_byte_start - segment_exclusion_start
                         signed_end_byte = current_wrapper_byte_start + current_wrapper_byte_len
                         normalized_bytes = normalize_text(variant_text).encode("utf-8")
 
@@ -1360,7 +1566,9 @@ class UnicodeMetadata:
                         signed_segment_bytes = normalized_bytes[signed_start_byte:signed_end_byte]
                         try:
                             signed_segment = signed_segment_bytes.decode("utf-8")
-                            retry_result = compute_normalized_hash(signed_segment, [expected_exclusion])
+                            # Use measured wrapper exclusion for JUMBF, assertion's for legacy
+                            segment_excl = (segment_exclusion_start, current_wrapper_byte_len) if is_jumbf_format else expected_exclusion
+                            retry_result = compute_normalized_hash(signed_segment, [segment_excl])
                             if retry_result.hexdigest == expected_hard_hash:
                                 logger.info(
                                     "C2PA verification: Hard binding passed after extracting signed segment "
@@ -1398,6 +1606,65 @@ class UnicodeMetadata:
         return valid_selectors
 
     @classmethod
+    def _outer_payload_from_jumbf(
+        cls,
+        parsed_store: dict,
+        raw_manifest_bytes: bytes,
+    ) -> Optional[OuterPayload]:
+        """Build an OuterPayload from a parsed conformant JUMBF manifest store.
+
+        This bridges the new JUMBF format to the existing verification
+        interface so that ``_verify_c2pa`` can handle both old and new formats.
+        """
+        manifests = parsed_store.get("manifests", [])
+        if not manifests:
+            logger.warning("JUMBF manifest store contains no manifests.")
+            return None
+
+        # Active manifest is the last one per C2PA spec
+        active = manifests[-1]
+        cose_bytes = active.get("signature_cose")
+        claim_cbor_bytes = active.get("claim_cbor")
+        assertions = active.get("assertions", {})
+
+        if not cose_bytes or not claim_cbor_bytes:
+            logger.warning("JUMBF manifest missing claim or signature.")
+            return None
+
+        # Extract signer_id from com.encypher.signer assertion
+        signer_id = "unknown"
+        signer_assertion = assertions.get("com.encypher.signer")
+        if signer_assertion:
+            try:
+                signer_data = cbor2.loads(signer_assertion)
+                signer_id = signer_data.get("signer_id", "unknown")
+            except Exception:
+                pass
+
+        # Reconstruct C2PAPayload from individual assertion CBOR boxes
+        c2pa_assertions: list[dict[str, Any]] = []
+        for a_label, a_cbor_bytes in assertions.items():
+            try:
+                a_data = cbor2.loads(a_cbor_bytes)
+            except Exception:
+                a_data = {}
+            c2pa_assertions.append({"label": a_label, "data": a_data})
+
+        outer: OuterPayload = {
+            "format": "c2pa",
+            "signer_id": signer_id,
+            "cose_sign1": base64.b64encode(cose_bytes).decode("utf-8"),
+            "cbor_payload": base64.b64encode(claim_cbor_bytes).decode("utf-8"),
+            "payload": base64.b64encode(raw_manifest_bytes).decode("utf-8"),
+            "signature": "c2pa_jumbf_manifest_store",
+        }
+        # Attach parsed JUMBF data for downstream verification
+        outer["_jumbf_parsed"] = parsed_store  # type: ignore[typeddict-unknown-key]
+        outer["_jumbf_assertions"] = c2pa_assertions  # type: ignore[typeddict-unknown-key]
+        outer["_jumbf_manifest"] = active  # type: ignore[typeddict-unknown-key]
+        return outer
+
+    @classmethod
     def _extract_outer_payload(cls, text: str) -> Optional[OuterPayload]:
         """Extracts the raw OuterPayload dict from embedded bytes.
 
@@ -1423,6 +1690,15 @@ class UnicodeMetadata:
 
         if manifest_bytes is not None:
             logger.debug("Detected C2PA text wrapper – attempting JUMBF decode.")
+
+            # --- New format: conformant JUMBF manifest store ---
+            try:
+                parsed_store = parse_manifest_store(manifest_bytes)
+                return cls._outer_payload_from_jumbf(parsed_store, manifest_bytes)
+            except (ValueError, KeyError):
+                pass  # Not conformant JUMBF – fall through to legacy JSON path
+
+            # --- Legacy format: JSON envelope in fake jumb box ---
             try:
                 manifest_store = deserialize_jumbf_payload(manifest_bytes)
             except Exception as exc:
@@ -1446,6 +1722,9 @@ class UnicodeMetadata:
                 "signature": "c2pa_manifest_store",
             }
             outer_payload["cose_sign1"] = cose_sign1
+            cbor_payload = manifest_store.get("cbor_payload")
+            if cbor_payload:
+                outer_payload["cbor_payload"] = cbor_payload
             return outer_payload
 
         # 1. Extract Bytes for legacy/other formats:
@@ -1557,6 +1836,50 @@ class UnicodeMetadata:
         payload_format = outer_payload.get("format")
 
         if payload_format == "c2pa":
+            # New JUMBF format: reconstruct C2PAPayload from parsed assertions
+            jumbf_assertions = outer_payload.get("_jumbf_assertions")
+            if jumbf_assertions is not None:
+                cbor_payload_b64 = outer_payload.get("cbor_payload")
+                claim: dict[str, Any] = {}
+                if isinstance(cbor_payload_b64, str):
+                    try:
+                        claim = cbor2.loads(base64.b64decode(cbor_payload_b64))
+                    except Exception:
+                        pass
+                gen_info = claim.get("claim_generator_info", {})
+                gen_name = gen_info.get("name", "unknown")
+                gen_version = gen_info.get("version", "")
+                claim_generator_str = f"{gen_name}/{gen_version}" if gen_version else gen_name
+                # Extract @context from com.encypher.context assertion
+                ctx_url = "https://c2pa.org/schemas/v2.3/c2pa.jsonld"
+                for a in jumbf_assertions:
+                    if isinstance(a, dict) and a.get("label") == "com.encypher.context":
+                        ctx_url = a.get("data", {}).get("@context", ctx_url)
+                        break
+
+                # Convert bytes to hex strings for JSON-serializable output
+                def _bytes_to_hex(obj: Any) -> Any:
+                    if isinstance(obj, bytes):
+                        return obj.hex()
+                    if isinstance(obj, dict):
+                        return {k: _bytes_to_hex(v) for k, v in obj.items()}
+                    if isinstance(obj, list):
+                        return [_bytes_to_hex(v) for v in obj]
+                    return obj
+
+                return cast(
+                    C2PAPayload,
+                    {
+                        "@context": ctx_url,
+                        "instance_id": claim.get("instanceID", ""),
+                        "claim_label": "c2pa.claim.v2",
+                        "claim_generator": claim_generator_str,
+                        "assertions": _bytes_to_hex(jumbf_assertions),
+                        "ingredients": [],
+                    },
+                )
+
+            # Legacy JSON envelope format: extract from COSE payload
             cose_sign1_b64 = outer_payload.get("cose_sign1")
             try:
                 if isinstance(cose_sign1_b64, str):
