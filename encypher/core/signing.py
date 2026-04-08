@@ -16,7 +16,7 @@ import requests
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ed25519, padding, rsa
+from cryptography.hazmat.primitives.asymmetric import ec, ed25519, padding, rsa
 from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 from cryptography.x509 import Certificate, NameOID
 
@@ -24,7 +24,18 @@ from .logging_config import logger
 
 ALG_HEADER = 1
 ALG_EDDSA = -8
+ALG_ES256 = -7
+ALG_ES384 = -35
+ALG_ES512 = -36
+ALG_PS256 = -37
 X5CHAIN_HEADER = 33
+
+# Map COSE algorithm IDs to EC curve / hash pairs for verification
+_EC_ALG_MAP: dict[int, tuple[type[ec.EllipticCurve], type[hashes.HashAlgorithm]]] = {
+    ALG_ES256: (ec.SECP256R1, hashes.SHA256),
+    ALG_ES384: (ec.SECP384R1, hashes.SHA384),
+    ALG_ES512: (ec.SECP521R1, hashes.SHA512),
+}
 
 
 class Signer(Protocol):
@@ -33,7 +44,77 @@ class Signer(Protocol):
     def sign(self, data: bytes) -> bytes: ...
 
 
-SigningKey = Union[ed25519.Ed25519PrivateKey, Signer]
+SigningKey = Union[ed25519.Ed25519PrivateKey, ec.EllipticCurvePrivateKey, rsa.RSAPrivateKey, Signer]
+
+
+def _cose_alg_for_key(key: SigningKey) -> int:
+    """Return the COSE algorithm identifier for a private key."""
+    if isinstance(key, ed25519.Ed25519PrivateKey):
+        return ALG_EDDSA
+    if isinstance(key, ec.EllipticCurvePrivateKey):
+        curve = key.curve
+        if isinstance(curve, ec.SECP256R1):
+            return ALG_ES256
+        if isinstance(curve, ec.SECP384R1):
+            return ALG_ES384
+        if isinstance(curve, ec.SECP521R1):
+            return ALG_ES512
+        raise ValueError(f"Unsupported EC curve: {curve.name}")
+    if isinstance(key, rsa.RSAPrivateKey):
+        return ALG_PS256
+    # Signer protocol - assume EdDSA (caller should override if needed)
+    return ALG_EDDSA
+
+
+def _sign_with_key(key: SigningKey, data: bytes) -> bytes:
+    """Sign data using the correct algorithm for the key type."""
+    if isinstance(key, ed25519.Ed25519PrivateKey):
+        return key.sign(data)
+    if isinstance(key, ec.EllipticCurvePrivateKey):
+        curve = key.curve
+        if isinstance(curve, ec.SECP256R1):
+            hash_alg = hashes.SHA256()
+        elif isinstance(curve, ec.SECP384R1):
+            hash_alg = hashes.SHA384()
+        elif isinstance(curve, ec.SECP521R1):
+            hash_alg = hashes.SHA512()
+        else:
+            raise ValueError(f"Unsupported EC curve: {curve.name}")
+        return key.sign(data, ec.ECDSA(hash_alg))
+    if isinstance(key, rsa.RSAPrivateKey):
+        return key.sign(
+            data,
+            padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+            hashes.SHA256(),
+        )
+    # Signer protocol (e.g. AWS KMS) - handles algorithm internally
+    return key.sign(data)
+
+
+def _verify_with_public_key(pub: PublicKeyTypes, signature: bytes, data: bytes, alg: int) -> None:
+    """Verify a signature using the correct algorithm for the key/alg pair.
+
+    Raises InvalidSignature on failure.
+    """
+    if isinstance(pub, ed25519.Ed25519PublicKey):
+        pub.verify(signature, data)
+        return
+    if isinstance(pub, ec.EllipticCurvePublicKey):
+        ec_entry = _EC_ALG_MAP.get(alg)
+        if ec_entry is None:
+            raise ValueError(f"COSE alg {alg} is not an EC algorithm")
+        _, hash_cls = ec_entry
+        pub.verify(signature, data, ec.ECDSA(hash_cls()))
+        return
+    if isinstance(pub, rsa.RSAPublicKey):
+        pub.verify(
+            signature,
+            data,
+            padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+            hashes.SHA256(),
+        )
+        return
+    raise ValueError(f"Unsupported public key type: {type(pub)}")
 
 
 def _encode_protected(headers: dict) -> bytes:
@@ -149,7 +230,7 @@ def sign_c2pa_cose(
     an RFC 3161 Time-Stamp Authority and a certificate chain.
 
     Args:
-        private_key: The Ed25519 private key or Signer for signing.
+        private_key: The signing key (Ed25519, EC, RSA, or Signer protocol).
         payload_bytes: The CBOR-encoded C2PA manifest to be signed.
         timestamp_authority_url: Optional URL of an RFC 3161 Time-Stamp Authority.
         certificates: Optional list of X.509 certificates to include in the signature.
@@ -162,7 +243,8 @@ def sign_c2pa_cose(
     """
     logger.debug(f"Attempting to sign payload ({len(payload_bytes)} bytes) with COSE_Sign1 structure.")
     try:
-        protected_header = {ALG_HEADER: ALG_EDDSA}
+        alg = _cose_alg_for_key(private_key)
+        protected_header = {ALG_HEADER: alg}
         unprotected_header = {}
 
         # Add certificates if provided
@@ -174,11 +256,7 @@ def sign_c2pa_cose(
         protected_bstr = _encode_protected(protected_header)
         to_sign = _sig_structure(protected_bstr, payload_bytes)
 
-        # Use the generalized signing logic
-        if hasattr(private_key, "sign") and callable(private_key.sign):
-            signature = private_key.sign(to_sign)
-        else:
-            signature = private_key.sign(to_sign)
+        signature = _sign_with_key(private_key, to_sign)
 
         encoded_cose = _build_sign1(protected_bstr, unprotected_header, payload_bytes, cast(bytes, signature))
 
@@ -342,8 +420,11 @@ def extract_payload_from_cose_sign1(cose_bytes: bytes) -> Optional[bytes]:
         return None
 
 
+_SUPPORTED_COSE_ALGS = {ALG_EDDSA, ALG_ES256, ALG_ES384, ALG_ES512, ALG_PS256}
+
+
 def verify_c2pa_cose(
-    public_key: Optional[ed25519.Ed25519PublicKey],
+    public_key: Optional[PublicKeyTypes],
     cose_bytes: bytes,
     payload_override: Optional[bytes] = None,
 ) -> bytes:
@@ -351,9 +432,9 @@ def verify_c2pa_cose(
     Verifies a COSE_Sign1 signature and returns the payload if valid.
 
     Args:
-        public_key: The Ed25519 public key for verification. If None, the
-            public key is extracted from the x5chain certificates embedded
-            in the COSE unprotected header.
+        public_key: The public key for verification (Ed25519, EC, or RSA).
+            If None, the public key is extracted from the x5chain certificates
+            embedded in the COSE unprotected header.
         cose_bytes: The CBOR-encoded COSE_Sign1 message.
         payload_override: If provided, use this as the payload for signature
             verification instead of the embedded payload. Used when the COSE
@@ -375,14 +456,14 @@ def verify_c2pa_cose(
     effective_payload: bytes = payload_override if payload_override is not None else (payload or b"")
     if not effective_payload:
         raise ValueError("No payload available for verification")
-    # Optional: validate alg is EdDSA
     protected_map = cbor2.loads(protected_bstr)
-    if protected_map.get(ALG_HEADER) != ALG_EDDSA:
-        raise ValueError("Unsupported or missing alg in protected header")
+    alg = protected_map.get(ALG_HEADER)
+    if alg not in _SUPPORTED_COSE_ALGS:
+        raise ValueError(f"Unsupported or missing alg in protected header: {alg}")
     to_verify = _sig_structure(protected_bstr, effective_payload)
 
     # Resolve public key: use provided key or extract from x5chain
-    verify_key: ed25519.Ed25519PublicKey
+    verify_key: PublicKeyTypes
     if public_key is not None:
         verify_key = public_key
     else:
@@ -390,13 +471,10 @@ def verify_c2pa_cose(
         if not x5chain:
             raise ValueError("No public key provided and no x5chain in COSE message")
         cert = x509.load_der_x509_certificate(x5chain[0])
-        extracted = cert.public_key()
-        if not isinstance(extracted, ed25519.Ed25519PublicKey):
-            raise ValueError("x5chain certificate does not contain an Ed25519 public key")
-        verify_key = extracted
+        verify_key = cert.public_key()
 
     try:
-        verify_key.verify(signature, to_verify)
+        _verify_with_public_key(verify_key, signature, to_verify, alg)
         logger.info("COSE_Sign1 signature verification successful.")
         return effective_payload
     except InvalidSignature:
