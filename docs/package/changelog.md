@@ -2,6 +2,25 @@
 
 This document provides a chronological list of notable changes for each version of Encypher.
 
+## 3.1.0 (2026-04-08)
+
+### Added
+- **ISO 19566-5 conformant JUMBF manifest store:** New `encypher.interop.c2pa.jumbf` module implements a proper C2PA v2 binary serializer/parser with correct type UUIDs, CBOR assertion boxes, extended-size box support, and COSE_Sign1 signatures. Replaces the legacy JSON-in-fake-JUMB-box format.
+- **C2PA Claim v2 builder:** New `encypher.interop.c2pa.c2pa_claim` module builds spec-conformant `c2pa.claim.v2` CBOR structures with hashed assertion references, `claim_generator_info`, and proper signature fields.
+- **Deterministic wrapper padding:** Signing pipeline uses `encode_wrapper_padded()` from c2pa-text 1.1.0 to produce fixed-length wrappers, eliminating the iterative convergence loop for hard binding hash stabilization.
+- **Dedicated CBOR assertions:** `signer_id` stored in `com.encypher.signer` assertion; `@context` URL stored in `com.encypher.context` assertion (previously embedded in JSON envelope fields).
+- New unit tests for JUMBF structure, claim hashes, and COSE box construction.
+- New integration tests for JUMBF conformance, hard/soft binding, tamper detection, and round-trip sign/verify.
+
+### Changed
+- Signing pipeline in `unicode_metadata.py` now builds proper JUMBF assertion boxes with hashed references instead of a flat JSON manifest.
+- Hard binding assertion label changed from `c2pa.hash.data.v1` to `c2pa.hash.data` per C2PA v2 convention.
+- Content hash stored as raw bytes (not hex string) inside assertions.
+- Verification supports both new JUMBF and legacy JSON formats with automatic detection and graceful fallback.
+
+### Deprecated
+- `serialize_jumbf_payload()` and `deserialize_jumbf_payload()` in `encypher.core.payloads` now emit `DeprecationWarning`. Use `jumbf.build_manifest_store()` and `jumbf.parse_manifest_store()` instead.
+
 ## 3.0.6 (2026-02-12)
 
 ### Fixed
