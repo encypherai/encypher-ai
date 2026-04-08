@@ -1,7 +1,8 @@
 """Tests for multi-key-type C2PA COSE signing and verification.
 
-Covers EC (P-256, P-384, P-521) and RSA-PSS key types in sign_c2pa_cose
-and verify_c2pa_cose, in addition to the existing Ed25519 path.
+Covers EC (P-256, P-384, P-521) and RSA-PSS key types in sign_c2pa_cose,
+verify_c2pa_cose, and verify_signature (basic payload path), in addition
+to the existing Ed25519 path.
 """
 
 import cbor2
@@ -13,7 +14,9 @@ from encypher.core.signing import (
     ALG_EDDSA,
     SigningKey,
     sign_c2pa_cose,
+    sign_payload,
     verify_c2pa_cose,
+    verify_signature,
 )
 
 # COSE algorithm identifiers (RFC 9053 / C2PA)
@@ -175,3 +178,33 @@ class TestSignC2paCoseTampering:
         tampered = cbor2.dumps({"test": "TAMPERED", "version": 999})
         with pytest.raises(InvalidSignature):
             verify_c2pa_cose(pub, cose, payload_override=tampered)
+
+
+class TestVerifySignatureMultiKey:
+    """verify_signature must accept EC and RSA keys (not just Ed25519)."""
+
+    def test_ec_p256_sign_verify(self, ec_p256_keypair):
+        priv, pub = ec_p256_keypair
+        sig = sign_payload(priv, SAMPLE_PAYLOAD)
+        assert verify_signature(pub, SAMPLE_PAYLOAD, sig) is True
+
+    def test_ec_p384_sign_verify(self, ec_p384_keypair):
+        priv, pub = ec_p384_keypair
+        sig = sign_payload(priv, SAMPLE_PAYLOAD)
+        assert verify_signature(pub, SAMPLE_PAYLOAD, sig) is True
+
+    def test_rsa_sign_verify(self, rsa_keypair):
+        priv, pub = rsa_keypair
+        sig = sign_payload(priv, SAMPLE_PAYLOAD)
+        assert verify_signature(pub, SAMPLE_PAYLOAD, sig) is True
+
+    def test_ed25519_sign_verify(self, ed25519_keypair):
+        priv, pub = ed25519_keypair
+        sig = sign_payload(priv, SAMPLE_PAYLOAD)
+        assert verify_signature(pub, SAMPLE_PAYLOAD, sig) is True
+
+    def test_ec_wrong_key_fails(self, ec_p256_keypair):
+        priv, _ = ec_p256_keypair
+        other_priv = ec.generate_private_key(ec.SECP256R1())
+        sig = sign_payload(priv, SAMPLE_PAYLOAD)
+        assert verify_signature(other_priv.public_key(), SAMPLE_PAYLOAD, sig) is False
