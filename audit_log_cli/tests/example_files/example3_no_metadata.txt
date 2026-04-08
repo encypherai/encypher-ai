@@ -1,4 +1,0 @@
-This is an example file without any Encypher metadata.
-
-This file should be detected as having no metadata when scanned
-by the audit-log-cli tool.

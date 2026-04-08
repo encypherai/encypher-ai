@@ -1,9 +1,0 @@
-{
-  "name": "@encypher/google-docs-addon",
-  "private": true,
-  "version": "0.1.0",
-  "description": "Google Docs Add-on for Encypher provenance sign/verify workflows",
-  "scripts": {
-    "test": "node --test tests/*.test.js"
-  }
-}

@@ -1,7 +1,0 @@
-Document Without Metadata - 1
-
-This is an example document without any Encypher metadata.
-                
-This file should be detected as having no metadata when scanned by the verification tools.
-
-File ID: no-metadata-1

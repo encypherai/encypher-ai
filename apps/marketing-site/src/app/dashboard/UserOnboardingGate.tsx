@@ -1,8 +1,0 @@
-'use client';
-
-import type { ReactNode } from 'react';
-
-export default function UserOnboardingGate({ children }: { children: ReactNode }) {
-  // TEAM_061: File was corrupted (null bytes) and blocked ESLint; replace with no-op gate to keep marketing site build healthy.
-  return <>{children}</>;
-}

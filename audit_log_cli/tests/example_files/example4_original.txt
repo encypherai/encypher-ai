@@ -1,5 +1,0 @@
-This 󠅫󠄒󠅖󠅟󠅢󠅝󠅑󠅤󠄒󠄪󠄒󠅒󠅑󠅣󠅙󠅓󠄒󠄜󠄒󠅠󠅑󠅩󠅜󠅟󠅑󠅔󠄒󠄪󠅫󠄒󠅓󠅥󠅣󠅤󠅟󠅝󠅏󠅝󠅕󠅤󠅑󠅔󠅑󠅤󠅑󠄒󠄪󠅫󠄒󠅔󠅟󠅓󠅥󠅝󠅕󠅞󠅤󠅏󠅙󠅔󠄒󠄪󠄒󠅔󠅟󠅓󠄝󠅟󠅢󠅙󠅗󠅙󠅞󠅑󠅜󠄝󠄡󠄢󠄣󠄒󠄜󠄒󠅕󠅨󠅑󠅝󠅠󠅜󠅕󠄒󠄪󠄒󠅤󠅑󠅝󠅠󠅕󠅢󠅕󠅔󠄒󠄜󠄒󠅠󠅥󠅢󠅠󠅟󠅣󠅕󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠅙󠅞󠅗󠄒󠄜󠄒󠅦󠅕󠅢󠅣󠅙󠅟󠅞󠄒󠄪󠄒󠄡󠄞󠄠󠄞󠄠󠄒󠅭󠄜󠄒󠅖󠅟󠅢󠅝󠅑󠅤󠄒󠄪󠄒󠅒󠅑󠅣󠅙󠅓󠄒󠄜󠄒󠅝󠅟󠅔󠅕󠅜󠅏󠅙󠅔󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠄝󠅝󠅟󠅔󠅕󠅜󠄝󠄤󠄒󠄜󠄒󠅣󠅙󠅗󠅞󠅕󠅢󠅏󠅙󠅔󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠄝󠅣󠅙󠅗󠅞󠅕󠅢󠄒󠄜󠄒󠅤󠅙󠅝󠅕󠅣󠅤󠅑󠅝󠅠󠄒󠄪󠄒󠄢󠄠󠄢󠄥󠄝󠄠󠄦󠄝󠄠󠄣󠅄󠄢󠄠󠄪󠄡󠄠󠄪󠄤󠄠󠅊󠄒󠅭󠄜󠄒󠅣󠅙󠅗󠅞󠅑󠅤󠅥󠅢󠅕󠄒󠄪󠄒󠄸󠅒󠅣󠄸󠅠󠄼󠅃󠄼󠄱󠅊󠄩󠅈󠅁󠄳󠄥󠄼󠅅󠅓󠄱󠅆󠅡󠅉󠅜󠅖󠅉󠅛󠄣󠅓󠄨󠄝󠄠󠅕󠅢󠅃󠅗󠅙󠅀󠅊󠄴󠅑󠄶󠅜󠅠󠅦󠄠󠄵󠅚󠄢󠅕󠄶󠅗󠄺󠅠󠅥󠅙󠅚󠄴󠅅󠄺󠅈󠄵󠄼󠄻󠅉󠅖󠅊󠅉󠄦󠄦󠅂󠅇󠅓󠅜󠅅󠅪󠅣󠄡󠄸󠄩󠄨󠅜󠅗󠅆󠅒󠄲󠅧󠄒󠄜󠄒󠅣󠅙󠅗󠅞󠅕󠅢󠅏󠅙󠅔󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠄝󠅣󠅙󠅗󠅞󠅕󠅢󠄒󠅭is an example file with tampered Encypher metadata.
-The metadata was originally valid, but the content has been modified
-after the metadata was embedded.
-
-This file should fail verification when scanned by the audit-log-cli tool.

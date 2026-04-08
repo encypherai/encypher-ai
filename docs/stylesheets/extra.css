@@ -1,0 +1,136 @@
+:root {
+  --delft-blue: #1b2f50;
+  --blue-ncs: #2a87c4;
+  --columbia-blue: #b7d5ed;
+  --white: #ffffff;
+  --rosy-brown: #ba8790;
+}
+
+/* Dark mode specific overrides */
+[data-md-color-scheme="slate"] {
+  --md-typeset-a-color: var(--columbia-blue);
+  --md-primary-fg-color--light: var(--columbia-blue);
+  --md-accent-fg-color: var(--columbia-blue);
+}
+
+/* Light mode specific overrides */
+[data-md-color-scheme="default"] {
+  --md-typeset-a-color: var(--blue-ncs);
+  --md-primary-fg-color--light: var(--blue-ncs);
+  --md-accent-fg-color: var(--blue-ncs);
+}
+
+/* Custom styling for admonitions */
+.md-typeset .admonition,
+.md-typeset details {
+  border-color: var(--blue-ncs);
+}
+
+.md-typeset .admonition.note,
+.md-typeset details.note {
+  border-color: var(--blue-ncs);
+}
+
+.md-typeset .admonition.note > .admonition-title,
+.md-typeset details.note > summary {
+  background-color: rgba(42, 135, 196, 0.1);
+}
+
+.md-typeset .admonition.note > .admonition-title::before,
+.md-typeset details.note > summary::before {
+  background-color: var(--blue-ncs);
+}
+
+/* Custom styling for links */
+[data-md-color-scheme="default"] .md-typeset a {
+  color: var(--blue-ncs);
+}
+
+[data-md-color-scheme="default"] .md-typeset a:hover {
+  color: var(--delft-blue);
+}
+
+[data-md-color-scheme="slate"] .md-typeset a {
+  color: var(--columbia-blue);
+}
+
+[data-md-color-scheme="slate"] .md-typeset a:hover {
+  color: var(--white);
+}
+
+/* Custom styling for code blocks */
+[data-md-color-scheme="default"] .md-typeset code {
+  background-color: rgba(183, 213, 237, 0.2);
+  color: var(--delft-blue);
+}
+
+[data-md-color-scheme="slate"] .md-typeset code {
+  background-color: rgba(183, 213, 237, 0.1);
+  color: var(--columbia-blue);
+}
+
+/* Custom styling for blockquotes */
+.md-typeset blockquote {
+  border-left-color: var(--blue-ncs);
+}
+
+/* Custom styling for tables */
+[data-md-color-scheme="default"] .md-typeset table:not([class]) th {
+  background-color: var(--delft-blue);
+  color: var(--white);
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background-color: var(--blue-ncs);
+  color: var(--white);
+}
+
+.md-typeset table:not([class]) tr:nth-child(2n) {
+  background-color: rgba(183, 213, 237, 0.1);
+}
+
+/* Custom styling for buttons */
+.md-typeset .md-button {
+  background-color: var(--blue-ncs);
+  color: var(--white);
+  border-color: var(--blue-ncs);
+}
+
+.md-typeset .md-button:hover {
+  background-color: var(--delft-blue);
+  border-color: var(--delft-blue);
+}
+
+/* Custom styling for headers */
+[data-md-color-scheme="default"] .md-typeset h1 {
+  color: var(--delft-blue);
+}
+
+[data-md-color-scheme="default"] .md-typeset h2 {
+  color: var(--blue-ncs);
+}
+
+[data-md-color-scheme="slate"] .md-typeset h1 {
+  color: var(--columbia-blue);
+}
+
+[data-md-color-scheme="slate"] .md-typeset h2 {
+  color: var(--columbia-blue);
+}
+
+/* Custom styling for navigation */
+[data-md-color-scheme="default"] .md-nav__item .md-nav__link--active {
+  color: var(--blue-ncs);
+}
+
+[data-md-color-scheme="default"] .md-nav__item .md-nav__link:hover {
+  color: var(--blue-ncs);
+}
+
+[data-md-color-scheme="slate"] .md-nav__item .md-nav__link--active {
+  color: var(--columbia-blue);
+}
+
+[data-md-color-scheme="slate"] .md-nav__item .md-nav__link:hover {
+  color: var(--columbia-blue);
+}

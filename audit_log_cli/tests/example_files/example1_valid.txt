@@ -1,5 +1,0 @@
-This 󠅫󠄒󠅖󠅟󠅢󠅝󠅑󠅤󠄒󠄪󠄒󠅒󠅑󠅣󠅙󠅓󠄒󠄜󠄒󠅠󠅑󠅩󠅜󠅟󠅑󠅔󠄒󠄪󠅫󠄒󠅓󠅥󠅣󠅤󠅟󠅝󠅏󠅝󠅕󠅤󠅑󠅔󠅑󠅤󠅑󠄒󠄪󠅫󠄒󠅕󠅨󠅑󠅝󠅠󠅜󠅕󠄒󠄪󠄒󠅦󠅑󠅜󠅙󠅔󠄒󠄜󠄒󠅠󠅥󠅢󠅠󠅟󠅣󠅕󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠅙󠅞󠅗󠄒󠅭󠄜󠄒󠅖󠅟󠅢󠅝󠅑󠅤󠄒󠄪󠄒󠅒󠅑󠅣󠅙󠅓󠄒󠄜󠄒󠅝󠅟󠅔󠅕󠅜󠅏󠅙󠅔󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠄝󠅝󠅟󠅔󠅕󠅜󠄝󠄡󠄒󠄜󠄒󠅣󠅙󠅗󠅞󠅕󠅢󠅏󠅙󠅔󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠄝󠅣󠅙󠅗󠅞󠅕󠅢󠄒󠄜󠄒󠅤󠅙󠅝󠅕󠅣󠅤󠅑󠅝󠅠󠄒󠄪󠄒󠄢󠄠󠄢󠄥󠄝󠄠󠄦󠄝󠄠󠄣󠅄󠄡󠄣󠄪󠄡󠄠󠄪󠄤󠄠󠅊󠄒󠅭󠄜󠄒󠅣󠅙󠅗󠅞󠅑󠅤󠅥󠅢󠅕󠄒󠄪󠄒󠄨󠅠󠄲󠄼󠅗󠅑󠅜󠅏󠅡󠅁󠅗󠄨󠄼󠅢󠅙󠅑󠅊󠅥󠄿󠅖󠅨󠅅󠅂󠄠󠅟󠅠󠅥󠅝󠄾󠄴󠄡󠄹󠄺󠅑󠅦󠄱󠅟󠅚󠅈󠅜󠅨󠅟󠅔󠅒󠅊󠄠󠅏󠅅󠄱󠅥󠄱󠅀󠄲󠄠󠅩󠄤󠄷󠅝󠅒󠅤󠄧󠅓󠄸󠄝󠅘󠄶󠄸󠅘󠅢󠅑󠅪󠅨󠅡󠅡󠅙󠅟󠄦󠅞󠅜󠅏󠅡󠅖󠄷󠅅󠄴󠅁󠄒󠄜󠄒󠅣󠅙󠅗󠅞󠅕󠅢󠅏󠅙󠅔󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠄝󠅣󠅙󠅗󠅞󠅕󠅢󠄒󠅭is an example file with valid Encypher metadata.
-The metadata is embedded in this text file and can be verified
-using the test-signer public key.
-
-This file should pass verification when scanned by the audit-log-cli tool.

@@ -1,1 +1,0 @@
-"""Coalition Service Application"""

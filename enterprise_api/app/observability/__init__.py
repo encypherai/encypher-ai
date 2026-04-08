@@ -1,1 +1,0 @@
-"""Observability helpers (metrics, tracing)."""

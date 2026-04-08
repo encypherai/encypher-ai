@@ -1,8 +1,0 @@
-__pycache__/
-*.py[cod]
-.venv/
-uv.lock
-.env
-*.log
-.pytest_cache/
-.DS_Store

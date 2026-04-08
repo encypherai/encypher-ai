@@ -1,5 +1,0 @@
-This 󠅫󠄒󠅖󠅟󠅢󠅝󠅑󠅤󠄒󠄪󠄒󠅒󠅑󠅣󠅙󠅓󠄒󠄜󠄒󠅠󠅑󠅩󠅜󠅟󠅑󠅔󠄒󠄪󠅫󠄒󠅓󠅥󠅣󠅤󠅟󠅝󠅏󠅝󠅕󠅤󠅑󠅔󠅑󠅤󠅑󠄒󠄪󠅫󠄒󠅕󠅨󠅑󠅝󠅠󠅜󠅕󠄒󠄪󠄒󠅥󠅞󠅛󠅞󠅟󠅧󠅞󠄝󠅣󠅙󠅗󠅞󠅕󠅢󠄒󠄜󠄒󠅠󠅥󠅢󠅠󠅟󠅣󠅕󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠅙󠅞󠅗󠄒󠅭󠄜󠄒󠅖󠅟󠅢󠅝󠅑󠅤󠄒󠄪󠄒󠅒󠅑󠅣󠅙󠅓󠄒󠄜󠄒󠅝󠅟󠅔󠅕󠅜󠅏󠅙󠅔󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠄝󠅝󠅟󠅔󠅕󠅜󠄝󠄢󠄒󠄜󠄒󠅣󠅙󠅗󠅞󠅕󠅢󠅏󠅙󠅔󠄒󠄪󠄒󠅥󠅞󠅛󠅞󠅟󠅧󠅞󠄝󠅣󠅙󠅗󠅞󠅕󠅢󠄒󠄜󠄒󠅤󠅙󠅝󠅕󠅣󠅤󠅑󠅝󠅠󠄒󠄪󠄒󠄢󠄠󠄢󠄥󠄝󠄠󠄦󠄝󠄠󠄣󠅄󠄡󠄣󠄪󠄡󠄠󠄪󠄤󠄠󠅊󠄒󠅭󠄜󠄒󠅣󠅙󠅗󠅞󠅑󠅤󠅥󠅢󠅕󠄒󠄪󠄒󠄼󠅑󠅂󠅆󠅇󠄦󠅉󠄺󠄡󠄩󠄶󠄼󠅆󠄷󠄥󠅓󠅟󠄽󠄷󠅏󠅚󠅄󠄧󠄦󠄲󠅇󠄹󠅒󠅂󠄩󠅡󠅓󠄸󠅤󠄺󠄠󠅧󠄤󠅀󠅨󠅆󠄺󠅖󠄺󠅆󠅩󠅦󠅨󠅕󠄽󠄲󠅠󠅈󠅈󠄲󠅡󠅅󠅙󠅖󠅛󠅉󠅑󠅩󠄠󠅜󠅈󠅏󠅞󠅗󠄾󠅘󠅡󠄻󠅚󠅝󠅟󠅝󠅟󠅔󠅩󠄨󠅁󠅏󠅅󠄱󠄱󠄒󠄜󠄒󠅣󠅙󠅗󠅞󠅕󠅢󠅏󠅙󠅔󠄒󠄪󠄒󠅥󠅞󠅛󠅞󠅟󠅧󠅞󠄝󠅣󠅙󠅗󠅞󠅕󠅢󠄒󠅭is an example file with valid Encypher metadata,
-but from an unknown signer that is not in the trusted signers list.
-
-This file should have valid metadata but fail verification when scanned
-by the audit-log-cli tool with trusted signers specified.

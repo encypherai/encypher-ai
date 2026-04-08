@@ -1,9 +1,0 @@
-# NPM artifacts (puppeteer installed for Adobe verify screenshots)
-node_modules/
-package-lock.json
-
-# Generated fixtures (can be regenerated)
-fixtures/
-
-# Signed files (can be regenerated)
-signed/

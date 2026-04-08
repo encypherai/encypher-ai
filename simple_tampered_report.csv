@@ -1,8 +1,0 @@
-File,Verified,Has Metadata,Signer ID,Timestamp,Model ID,Format
-audit_log_cli\tests\simple_tampered_examples\original.docx,False,False,,,,
-audit_log_cli\tests\simple_tampered_examples\original.pdf,False,False,,,,
-audit_log_cli\tests\simple_tampered_examples\original.txt,True,True,test-signer,,test-model,basic
-audit_log_cli\tests\simple_tampered_examples\tampered - Copy.docx,False,False,,,,
-audit_log_cli\tests\simple_tampered_examples\tampered.docx,False,False,,,,
-audit_log_cli\tests\simple_tampered_examples\tampered.pdf,False,False,,,,
-audit_log_cli\tests\simple_tampered_examples\tampered.txt,True,True,test-signer,,test-model,basic
