@@ -147,10 +147,12 @@ def _parse_sign1(cose_bytes: bytes) -> tuple[bytes, dict, Optional[bytes], bytes
 
 def sign_payload(private_key: SigningKey, payload_bytes: bytes) -> bytes:
     """
-    Signs the payload bytes using the private key (Ed25519 or Signer).
+    Signs the payload bytes using the private key.
+
+    Supports Ed25519, EC (P-256/P-384/P-521), RSA, and Signer protocol.
 
     Args:
-        private_key: The Ed25519 private key object or Signer implementation.
+        private_key: The private key object or Signer implementation.
         payload_bytes: The canonical bytes of the payload to sign.
 
     Returns:
@@ -161,21 +163,8 @@ def sign_payload(private_key: SigningKey, payload_bytes: bytes) -> bytes:
     """
     logger.debug(f"Attempting to sign payload ({len(payload_bytes)} bytes).")
 
-    if hasattr(private_key, "sign") and callable(private_key.sign):
-        try:
-            signature = private_key.sign(payload_bytes)
-            logger.info(f"Successfully signed payload (signature length: {len(signature)} bytes).")
-            return cast(bytes, signature)
-        except Exception as e:
-            logger.error(f"Signing operation failed: {e}", exc_info=True)
-            raise RuntimeError(f"Signing failed: {e}") from e
-
-    if not isinstance(private_key, ed25519.Ed25519PrivateKey):
-        logger.error(f"Signing aborted: Incorrect private key type provided ({type(private_key)}). Expected Ed25519PrivateKey or Signer.")
-        raise TypeError("Signing requires an Ed25519PrivateKey instance or Signer implementation.")
-
     try:
-        signature = private_key.sign(payload_bytes)
+        signature = _sign_with_key(private_key, payload_bytes)
         logger.info(f"Successfully signed payload (signature length: {len(signature)} bytes).")
         return cast(bytes, signature)
     except Exception as e:
@@ -185,10 +174,12 @@ def sign_payload(private_key: SigningKey, payload_bytes: bytes) -> bytes:
 
 def verify_signature(public_key: PublicKeyTypes, payload_bytes: bytes, signature: bytes) -> bool:
     """
-    Verifies the signature against the payload using the public key (Ed25519).
+    Verifies the signature against the payload using the public key.
+
+    Supports Ed25519, EC (P-256/P-384/P-521), and RSA public keys.
 
     Args:
-        public_key: The Ed25519 public key object.
+        public_key: The public key object (Ed25519, EC, or RSA).
         payload_bytes: The canonical bytes of the payload that was signed.
         signature: The signature bytes to verify.
 
@@ -196,15 +187,36 @@ def verify_signature(public_key: PublicKeyTypes, payload_bytes: bytes, signature
         True if the signature is valid, False otherwise.
 
     Raises:
-        TypeError: If the provided key is not an Ed25519 public key.
+        TypeError: If the provided key is not a supported public key type.
     """
-    if not isinstance(public_key, ed25519.Ed25519PublicKey):
-        logger.error(f"Verification aborted: Incorrect public key type provided ({type(public_key)}). Expected Ed25519PublicKey.")
-        raise TypeError("Verification requires an Ed25519PublicKey instance.")
+    supported_types = (ed25519.Ed25519PublicKey, ec.EllipticCurvePublicKey, rsa.RSAPublicKey)
+    if not isinstance(public_key, supported_types):
+        logger.error(f"Verification aborted: Unsupported public key type ({type(public_key)}).")
+        raise TypeError(f"Verification requires Ed25519, EC, or RSA public key, got {type(public_key).__name__}.")
 
-    logger.debug(f"Attempting to verify signature (len={len(signature)}) against payload (len={len(payload_bytes)}) using Ed25519 public key.")
+    key_name = type(public_key).__name__
+    logger.debug(f"Attempting to verify signature (len={len(signature)}) against payload (len={len(payload_bytes)}) using {key_name}.")
     try:
-        public_key.verify(signature, payload_bytes)
+        if isinstance(public_key, ed25519.Ed25519PublicKey):
+            public_key.verify(signature, payload_bytes)
+        elif isinstance(public_key, ec.EllipticCurvePublicKey):
+            curve = public_key.curve
+            if isinstance(curve, ec.SECP256R1):
+                hash_alg: hashes.HashAlgorithm = hashes.SHA256()
+            elif isinstance(curve, ec.SECP384R1):
+                hash_alg = hashes.SHA384()
+            elif isinstance(curve, ec.SECP521R1):
+                hash_alg = hashes.SHA512()
+            else:
+                raise ValueError(f"Unsupported EC curve: {curve.name}")
+            public_key.verify(signature, payload_bytes, ec.ECDSA(hash_alg))
+        elif isinstance(public_key, rsa.RSAPublicKey):
+            public_key.verify(
+                signature,
+                payload_bytes,
+                padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
+                hashes.SHA256(),
+            )
         logger.info("Signature verification successful.")
         return True
     except InvalidSignature:
