@@ -43,6 +43,9 @@ dev = [
 "Homepage" = "https://github.com/encypherai/encypher-ai"
 "Bug Tracker" = "https://github.com/encypherai/encypher-ai/issues"
 
+[tool.uv.sources]
+c2pa-text = { path = "../c2pa-text/python", editable = true }
+
 [tool.mypy]
 python_version = "3.9"
 warn_return_any = true
