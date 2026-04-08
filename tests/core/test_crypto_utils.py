@@ -392,4 +392,54 @@ def test_verify_failure_corrupt_signature(test_keys, basic_payload_data: BasicPa
     assert is_valid is False
 
 
-# --- Key Loading/Saving Tests --- (If applicable, add tests for load/save functions)
+# --- Key Loading/Saving Tests ---
+
+
+def test_load_public_key_ec_p256():
+    """load_public_key_from_data accepts EC P-256 PEM keys."""
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    pem = private_key.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    loaded = load_public_key(pem)
+    assert isinstance(loaded, ec.EllipticCurvePublicKey)
+
+
+def test_load_public_key_ec_p384():
+    """load_public_key_from_data accepts EC P-384 PEM keys."""
+    from cryptography.hazmat.primitives.asymmetric import ec
+
+    private_key = ec.generate_private_key(ec.SECP384R1())
+    pem = private_key.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    loaded = load_public_key(pem)
+    assert isinstance(loaded, ec.EllipticCurvePublicKey)
+
+
+def test_load_public_key_rsa():
+    """load_public_key_from_data accepts RSA PEM keys."""
+    from cryptography.hazmat.primitives.asymmetric import rsa
+
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pem = private_key.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    loaded = load_public_key(pem)
+    assert isinstance(loaded, rsa.RSAPublicKey)
+
+
+def test_load_public_key_ed25519_still_works():
+    """load_public_key_from_data still loads Ed25519 keys (regression check)."""
+    private_key = ed25519.Ed25519PrivateKey.generate()
+    pem = private_key.public_key().public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    loaded = load_public_key(pem)
+    assert isinstance(loaded, ed25519.Ed25519PublicKey)

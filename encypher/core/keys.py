@@ -1,7 +1,8 @@
 from typing import Optional, Union
 
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.hazmat.primitives.asymmetric import ec, ed25519, rsa
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 
 from .exceptions import EncypherError, PrivateKeyLoadingError, PublicKeyLoadingError
 from .logging_config import logger
@@ -202,23 +203,25 @@ def load_private_key_from_data(key_data: Union[bytes, str], password: Optional[b
         raise ValueError("Invalid private key byte length or format (expected PEM or 32 raw bytes)")
 
 
-def load_public_key_from_data(key_data: Union[bytes, str]) -> ed25519.Ed25519PublicKey:
+def load_public_key_from_data(key_data: Union[bytes, str]) -> PublicKeyTypes:
     """
-    Loads an Ed25519 public key from PEM-encoded bytes or string,
-    or from raw bytes (32 bytes).
+    Loads a public key from PEM-encoded bytes or string, or from raw bytes.
+
+    Supports Ed25519, EC (P-256/P-384/P-521), and RSA public keys in SPKI
+    PEM format. Also accepts raw 32-byte Ed25519 public keys.
 
     Args:
         key_data: PEM string/bytes or raw public key bytes.
 
     Returns:
-        Ed25519 public key object.
+        Public key object (Ed25519, EC, or RSA).
 
     Raises:
         ValueError: If the key format is invalid or unsupported.
         TypeError: If key_data has an invalid type.
     """
     if isinstance(key_data, str):
-        key_data_bytes = key_data.encode("utf-8")  # Assume PEM if string
+        key_data_bytes = key_data.encode("utf-8")
         logger.debug("Received public key as string, encoded to UTF-8 for PEM processing.")
     elif isinstance(key_data, bytes):
         key_data_bytes = key_data
@@ -227,20 +230,28 @@ def load_public_key_from_data(key_data: Union[bytes, str]) -> ed25519.Ed25519Pub
         logger.error(f"Invalid type for key_data: {type(key_data)}.")
         raise TypeError("key_data must be bytes or a PEM string")
 
-    if b"-----BEGIN PUBLIC KEY-----" in key_data_bytes:  # Check for PEM format (SPKI)
+    supported_types = (
+        ed25519.Ed25519PublicKey,
+        ec.EllipticCurvePublicKey,
+        rsa.RSAPublicKey,
+    )
+
+    if b"-----BEGIN PUBLIC KEY-----" in key_data_bytes:
         logger.debug("Detected SPKI PEM format for public key.")
         try:
             loaded_key = serialization.load_pem_public_key(key_data_bytes)
-            if isinstance(loaded_key, ed25519.Ed25519PublicKey):
-                logger.info("Successfully loaded Ed25519 public key from PEM.")
+            if isinstance(loaded_key, supported_types):
+                logger.info(f"Successfully loaded {type(loaded_key).__name__} public key from PEM.")
                 return loaded_key
             else:
-                logger.warning(f"PEM data yielded unexpected key type: {type(loaded_key)}.")
-                raise ValueError("PEM data is not an Ed25519 public key")
+                logger.warning(f"PEM data yielded unsupported key type: {type(loaded_key)}.")
+                raise ValueError(f"Unsupported public key type: {type(loaded_key).__name__}")
+        except ValueError:
+            raise
         except Exception as e:
             logger.error(f"Failed to load PEM public key: {e}", exc_info=True)
             raise ValueError(f"Failed to load PEM public key: {e}") from e
-    elif len(key_data_bytes) == 32:  # Ed25519 public key is 32 bytes
+    elif len(key_data_bytes) == 32:
         logger.debug("Detected potential raw Ed25519 public key (32 bytes).")
         try:
             key = ed25519.Ed25519PublicKey.from_public_bytes(key_data_bytes)
