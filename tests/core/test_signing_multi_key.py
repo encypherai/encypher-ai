@@ -317,3 +317,23 @@ class TestVerifyCoseWithX5chain:
         patched = cbor2.dumps(arr)
         result = verify_c2pa_cose(None, patched)
         assert result == SAMPLE_PAYLOAD
+
+    def test_verify_cbor_tag18_wrapped(self, ec_p256_keypair):
+        """COSE_Sign1 wrapped in CBOR tag 18 per RFC 9052 section 4.1."""
+        priv, pub = ec_p256_keypair
+        cert = _self_signed_cert(priv, pub)
+        cose = sign_c2pa_cose(priv, SAMPLE_PAYLOAD, certificates=[cert])
+        # Wrap in CBOR tag 18 (as WordPress C2PA plugin does)
+        tagged = cbor2.dumps(cbor2.CBORTag(18, cbor2.loads(cose)))
+        result = verify_c2pa_cose(None, tagged)
+        assert result == SAMPLE_PAYLOAD
+
+    def test_extract_certs_cbor_tag18(self, ec_p256_keypair):
+        """extract_certificates_from_cose handles CBOR tag 18 wrapping."""
+        priv, pub = ec_p256_keypair
+        cert = _self_signed_cert(priv, pub)
+        cose = sign_c2pa_cose(priv, SAMPLE_PAYLOAD, certificates=[cert])
+        tagged = cbor2.dumps(cbor2.CBORTag(18, cbor2.loads(cose)))
+        certs = extract_certificates_from_cose(tagged)
+        assert len(certs) == 1
+        assert certs[0].public_key().public_numbers() == pub.public_numbers()
