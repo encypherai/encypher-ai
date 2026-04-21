@@ -131,6 +131,9 @@ def _build_sign1(protected_bstr: bytes, unprotected: dict, payload: bytes, signa
 
 def _parse_sign1(cose_bytes: bytes) -> tuple[bytes, dict, Optional[bytes], bytes]:
     arr = cbor2.loads(cose_bytes)
+    # COSE_Sign1 may be wrapped in CBOR tag 18 per RFC 9052 §4.1.
+    if isinstance(arr, cbor2.CBORTag) and arr.tag == 18:
+        arr = arr.value
     if not isinstance(arr, list) or len(arr) != 4:
         raise ValueError("Invalid COSE_Sign1 structure")
     protected_bstr, unprotected, payload, signature = arr
