@@ -8,11 +8,13 @@ to the existing Ed25519 path.
 import cbor2
 import pytest
 from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519, rsa
 
 from encypher.core.signing import (
     ALG_EDDSA,
     SigningKey,
+    extract_certificates_from_cose,
     sign_c2pa_cose,
     sign_payload,
     verify_c2pa_cose,
@@ -208,3 +210,110 @@ class TestVerifySignatureMultiKey:
         other_priv = ec.generate_private_key(ec.SECP256R1())
         sig = sign_payload(priv, SAMPLE_PAYLOAD)
         assert verify_signature(other_priv.public_key(), SAMPLE_PAYLOAD, sig) is False
+
+
+# --- Helper: self-signed X.509 certificate ---
+
+
+def _self_signed_cert(private_key, public_key):
+    """Create a self-signed X.509 certificate for testing."""
+    from cryptography import x509 as x509_mod
+    from cryptography.x509.oid import NameOID
+    import datetime
+
+    subject = issuer = x509_mod.Name([
+        x509_mod.NameAttribute(NameOID.COMMON_NAME, "test-c2pa-signer"),
+    ])
+    cert = (
+        x509_mod.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer)
+        .public_key(public_key)
+        .serial_number(x509_mod.random_serial_number())
+        .not_valid_before(datetime.datetime.now(datetime.timezone.utc))
+        .not_valid_after(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365))
+        .sign(private_key, hashes.SHA256())
+    )
+    return cert
+
+
+def _make_detached_cose(cose_bytes: bytes) -> bytes:
+    """Replace the inline payload in a COSE_Sign1 with None (detached)."""
+    arr = cbor2.loads(cose_bytes)
+    arr[2] = None  # payload = null
+    return cbor2.dumps(arr)
+
+
+class TestExtractCertificatesFromCose:
+    """extract_certificates_from_cose must handle detached and inline payloads."""
+
+    def test_inline_payload_with_x5chain(self, ec_p256_keypair):
+        priv, pub = ec_p256_keypair
+        cert = _self_signed_cert(priv, pub)
+        cose = sign_c2pa_cose(priv, SAMPLE_PAYLOAD, certificates=[cert])
+        certs = extract_certificates_from_cose(cose)
+        assert len(certs) == 1
+        assert certs[0].public_key().public_numbers() == pub.public_numbers()
+
+    def test_detached_payload_with_x5chain(self, ec_p256_keypair):
+        """Detached payload (None) must not prevent x5chain extraction."""
+        priv, pub = ec_p256_keypair
+        cert = _self_signed_cert(priv, pub)
+        cose = sign_c2pa_cose(priv, SAMPLE_PAYLOAD, certificates=[cert])
+        detached = _make_detached_cose(cose)
+        certs = extract_certificates_from_cose(detached)
+        assert len(certs) == 1
+        assert certs[0].public_key().public_numbers() == pub.public_numbers()
+
+    def test_single_bstr_x5chain(self, ec_p256_keypair):
+        """x5chain as a single CBOR bstr (not array) per RFC 9360."""
+        from cryptography.hazmat.primitives import serialization as ser
+        priv, pub = ec_p256_keypair
+        cert = _self_signed_cert(priv, pub)
+        cert_der = cert.public_bytes(ser.Encoding.DER)
+        # Build COSE manually with x5chain as single bstr (not list)
+        cose = sign_c2pa_cose(priv, SAMPLE_PAYLOAD, certificates=[cert])
+        arr = cbor2.loads(cose)
+        arr[1] = {33: cert_der}  # single bstr, not [cert_der]
+        patched = cbor2.dumps(arr)
+        certs = extract_certificates_from_cose(patched)
+        assert len(certs) == 1
+
+    def test_no_x5chain_raises(self, ec_p256_keypair):
+        priv, _ = ec_p256_keypair
+        cose = sign_c2pa_cose(priv, SAMPLE_PAYLOAD)  # no certificates
+        with pytest.raises(ValueError, match="No X.509 certificates"):
+            extract_certificates_from_cose(cose)
+
+
+class TestVerifyCoseWithX5chain:
+    """verify_c2pa_cose extracts key from x5chain when public_key=None."""
+
+    def test_verify_inline_x5chain(self, ec_p256_keypair):
+        priv, pub = ec_p256_keypair
+        cert = _self_signed_cert(priv, pub)
+        cose = sign_c2pa_cose(priv, SAMPLE_PAYLOAD, certificates=[cert])
+        result = verify_c2pa_cose(None, cose)
+        assert result == SAMPLE_PAYLOAD
+
+    def test_verify_detached_x5chain(self, ec_p256_keypair):
+        """Detached payload + x5chain: verify with payload_override."""
+        priv, pub = ec_p256_keypair
+        cert = _self_signed_cert(priv, pub)
+        cose = sign_c2pa_cose(priv, SAMPLE_PAYLOAD, certificates=[cert])
+        detached = _make_detached_cose(cose)
+        result = verify_c2pa_cose(None, detached, payload_override=SAMPLE_PAYLOAD)
+        assert result == SAMPLE_PAYLOAD
+
+    def test_verify_single_bstr_x5chain(self, ec_p256_keypair):
+        """verify_c2pa_cose handles x5chain as single bstr per RFC 9360."""
+        from cryptography.hazmat.primitives import serialization as ser
+        priv, pub = ec_p256_keypair
+        cert = _self_signed_cert(priv, pub)
+        cert_der = cert.public_bytes(ser.Encoding.DER)
+        cose = sign_c2pa_cose(priv, SAMPLE_PAYLOAD, certificates=[cert])
+        arr = cbor2.loads(cose)
+        arr[1] = {33: cert_der}  # single bstr, not [cert_der]
+        patched = cbor2.dumps(arr)
+        result = verify_c2pa_cose(None, patched)
+        assert result == SAMPLE_PAYLOAD
