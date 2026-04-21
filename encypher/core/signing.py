@@ -482,7 +482,10 @@ def verify_c2pa_cose(
         x5chain = unprotected.get(X5CHAIN_HEADER)
         if not x5chain:
             raise ValueError("No public key provided and no x5chain in COSE message")
-        cert = x509.load_der_x509_certificate(x5chain[0])
+        # Per RFC 9360, x5chain is a single CBOR bstr for one certificate
+        # or a CBOR array of bstr for a chain. Extract the leaf (first) cert.
+        leaf_der = x5chain if isinstance(x5chain, bytes) else x5chain[0]
+        cert = x509.load_der_x509_certificate(leaf_der)
         verify_key = cert.public_key()
 
     try:
@@ -670,17 +673,22 @@ def extract_certificates_from_cose(cose_bytes: bytes) -> list[Certificate]:
         ValueError: If the message is not a valid COSE_Sign1 structure or contains no certificates.
     """
     protected_bstr, unprotected, payload, _signature = _parse_sign1(cose_bytes)
-    if payload is None:
-        raise ValueError("Message is not a COSE_Sign1 structure.")
 
-    # Extract certificates from the unprotected header (x5chain)
+    # Extract certificates from the unprotected header (x5chain).
+    # The payload may be None for detached-payload COSE_Sign1 structures
+    # (required by C2PA spec); certificates live in the unprotected header
+    # regardless of whether the payload is inline or detached.
     certificates = []
     x5chain = unprotected.get(X5CHAIN_HEADER)
 
     if not x5chain:
         raise ValueError("No X.509 certificates found in COSE message.")
 
-    # Parse each certificate in the chain
+    # Per RFC 9360, x5chain is a single CBOR bstr for one certificate
+    # or a CBOR array of bstr for a chain. Normalise to a list.
+    if isinstance(x5chain, bytes):
+        x5chain = [x5chain]
+
     for cert_bytes in x5chain:
         try:
             cert = x509.load_der_x509_certificate(cert_bytes)
