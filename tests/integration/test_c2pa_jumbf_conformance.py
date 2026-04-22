@@ -285,6 +285,35 @@ class TestHardBinding:
             f"Declared exclusion length ({declared_length}) != " f"measured wrapper byte length ({measured_length})"
         )
 
+    def test_hard_binding_verifies_after_html_wrapping(self):
+        """Hard binding must verify when signed plain text is wrapped in HTML tags.
+
+        WordPress signs ``wp_strip_all_tags(content)`` (plain text) but
+        embeds the wrapper into the original HTML content.  The verifier
+        should strip HTML tags and recompute the hash as a fallback.
+        """
+        priv, pub = _keygen()
+        html_content = "<p>Hello world.</p>\n<p>This is a C2PA verification test.</p>"
+        import re
+
+        plain_text = re.sub(r"<[^>]+>", "", html_content)
+
+        # Sign the plain text (WordPress hashes this).
+        signed = _sign(plain_text, priv, signer_id="wp-html")
+
+        # Extract the wrapper from the signed result and append it to
+        # the HTML content instead, simulating WordPress's embed flow.
+        wrapper = signed[len(plain_text) :]
+        html_with_wrapper = html_content + wrapper
+
+        is_valid, signer, _payload = UnicodeMetadata.verify_metadata(
+            html_with_wrapper,
+            _resolver("wp-html", pub),
+            require_hard_binding=True,
+        )
+        assert is_valid is True
+        assert signer == "wp-html"
+
     def test_exclusion_length_deterministic_across_content(self):
         """Two different texts producing same-size manifests must have same exclusion length."""
         priv, _pub = _keygen()
