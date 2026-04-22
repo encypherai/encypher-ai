@@ -155,7 +155,7 @@ This document provides a chronological list of notable changes for each version 
 - **C2PA v2.2 Compliance:** Re-architected the core package to be the reference implementation for text-based C2PA v2.2 soft binding. This includes:
   - **Manifest Structure:** Manifests now conform to the C2PA v2.2 specification, including the official `@context`, a unique `instance_id`, and ISO 8601 formatted timestamps.
   - **Hard Binding:** Added the mandatory `c2pa.hash.data.v1` assertion, which contains a SHA-256 hash of the clean text content for integrity verification.
-  - **Soft Binding:** Implemented the `c2pa.soft_binding.v1` assertion, formalizing our Unicode Variation Selector method as `encypher.unicode_variation_selector.v1` and linking it to a `c2pa.watermarked` action.
+  - **Soft Binding:** Implemented the `c2pa.soft-binding` assertion, formalizing our Unicode Variation Selector method as `encypher.unicode_variation_selector.v1` and linking it to a `c2pa.watermarked` action.
   - **Advanced Signing:** Integrated COSE (CBOR Object Signing and Encryption) for claims, with support for X.509 certificate validation and RFC 3161 Time-Stamp Authority (TSA) integration.
 - **Conditional Hard Binding Control:**
   - Introduced `add_hard_binding: bool` to `UnicodeMetadata.embed_metadata` to optionally disable hard binding, which is now the default for streaming.

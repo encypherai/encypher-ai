@@ -46,7 +46,7 @@ Encypher relies on the MIT-licensed `encypherai/c2pa-text` package for C2PA Text
 Key features:
 - **C2PA 2.3 compliant manifests** with proper structure (`@context`, `instance_id`, `claim_generator`)
 - **Hard binding** via `c2pa.hash.data.v1` assertions with NFC normalization
-- **Soft binding** via `c2pa.soft_binding.v1` for manifest recovery
+- **Soft binding** via `c2pa.soft-binding` for manifest recovery
 - **C2PATextManifestWrapper** encoding using Unicode variation selectors (U+FE00-U+FE0F, U+E0100-U+E01EF)
 - **COSE_Sign1 signatures** for cryptographic integrity
 - **Format-agnostic embedding** that works across JSON, XML, databases, and message brokers

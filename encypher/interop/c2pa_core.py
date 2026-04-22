@@ -223,13 +223,13 @@ def encypher_manifest_to_c2pa_like_dict(
         hash_assertion = {"label": "c2pa.hash.data.v1", "data": {"hash": content_hash, "alg": "sha256", "exclusions": []}}
         c2pa_assertions.append(hash_assertion)
 
-    # 3. Add c2pa.soft_binding.v1 assertion (soft binding)
+    # 3. Add c2pa.soft-binding assertion (soft binding)
     soft_binding_assertion_id = None
     if embedded_data is not None:
         # Generate deterministic hash of the embedded data
         embedded_data_hash = hashlib.sha256(embedded_data.encode("utf-8")).hexdigest()
         soft_binding_assertion = {
-            "label": "c2pa.soft_binding.v1",
+            "label": "c2pa.soft-binding",
             "data": {"alg": "encypher.unicode_variation_selector.v1", "hash": embedded_data_hash},
         }
         c2pa_assertions.append(soft_binding_assertion)
@@ -434,7 +434,7 @@ def get_c2pa_manifest_schema() -> dict[str, Any]:
                         "label": {
                             "type": "string",
                             "description": "Type of assertion",
-                            "examples": ["c2pa.created", "c2pa.actions.v1", "c2pa.hash.data.v1", "c2pa.soft_binding.v1", "ai.model.info"],
+                            "examples": ["c2pa.created", "c2pa.actions.v1", "c2pa.hash.data.v1", "c2pa.soft-binding", "ai.model.info"],
                         },
                         "data": {
                             "type": "object",
