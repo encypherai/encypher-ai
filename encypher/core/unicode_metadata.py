@@ -1447,16 +1447,47 @@ class UnicodeMetadata:
             logger.warning("C2PA verification: Soft binding assertion not found.")
             return False, signer_id if signer_id is not None else None, c2pa_manifest
 
+        soft_data = soft_binding_assertion.get("data", {})
+
         # a) Extract the expected hash from the received manifest.
-        expected_soft_hash = soft_binding_assertion["data"].get("hash")
+        # C2PA A.7 format uses blocks[{scope, value}]; legacy uses a top-level "hash" key.
+        expected_soft_hash = soft_data.get("hash")
+        soft_binding_alg = soft_data.get("alg")
+
+        if expected_soft_hash is None:
+            # C2PA 2.4 Section A.7: soft-binding-map has "blocks" array.
+            blocks = soft_data.get("blocks", [])
+            if blocks and isinstance(blocks[0], dict):
+                expected_soft_hash = blocks[0].get("value")
 
         # Normalize expected hash: raw bytes -> hex, hex string -> hex
         if isinstance(expected_soft_hash, bytes):
             expected_soft_hash = expected_soft_hash.hex()
 
-        if is_jumbf_format:
-            # New soft binding: hash concatenation of non-soft-binding assertion CBOR.
-            # Use the raw (non-hex-converted) assertions for CBOR re-encoding.
+        if is_jumbf_format and soft_binding_alg == "c2pa.text.vs16":
+            # C2PA A.7 text soft binding: the value is SHA-256 of the
+            # NFC-normalized text asset (the content the user sees, without
+            # the invisible wrapper). Producers may hash plain text (HTML
+            # stripped), so try both the raw clean text and an HTML-stripped
+            # variant.
+            clean_text = original_text
+            if wrapper_exclusion:
+                text_bytes = original_text.encode("utf-8")
+                ws, wl = wrapper_exclusion
+                clean_bytes = text_bytes[:ws] + text_bytes[ws + wl :]
+                clean_text = clean_bytes.decode("utf-8", errors="replace")
+
+            nfc_clean = unicodedata.normalize("NFC", clean_text)
+            actual_soft_hash = hashlib.sha256(nfc_clean.encode("utf-8")).hexdigest()
+
+            if expected_soft_hash != actual_soft_hash:
+                # Try stripping HTML tags (WordPress signs plain text).
+                stripped = re.sub(r"<[^>]+>", "", nfc_clean)
+                stripped_hash = hashlib.sha256(stripped.encode("utf-8")).hexdigest()
+                if expected_soft_hash == stripped_hash:
+                    actual_soft_hash = stripped_hash
+        elif is_jumbf_format:
+            # Encypher JUMBF soft binding: hash concatenation of non-soft-binding assertion CBOR.
             raw_assertions = outer_payload.get("_jumbf_assertions", [])
             soft_binding_input = b""
             for a in raw_assertions:
