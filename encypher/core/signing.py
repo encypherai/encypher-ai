@@ -18,6 +18,7 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519, padding, rsa
 from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature, encode_dss_signature
 from cryptography.x509 import Certificate, NameOID
 
 from .logging_config import logger
@@ -30,12 +31,32 @@ ALG_ES512 = -36
 ALG_PS256 = -37
 X5CHAIN_HEADER = 33
 
-# Map COSE algorithm IDs to EC curve / hash pairs for verification
-_EC_ALG_MAP: dict[int, tuple[type[ec.EllipticCurve], type[hashes.HashAlgorithm]]] = {
-    ALG_ES256: (ec.SECP256R1, hashes.SHA256),
-    ALG_ES384: (ec.SECP384R1, hashes.SHA384),
-    ALG_ES512: (ec.SECP521R1, hashes.SHA512),
+# Map COSE algorithm IDs to (EC curve, hash, R||S component size in bytes)
+_EC_ALG_MAP: dict[int, tuple[type[ec.EllipticCurve], type[hashes.HashAlgorithm], int]] = {
+    ALG_ES256: (ec.SECP256R1, hashes.SHA256, 32),
+    ALG_ES384: (ec.SECP384R1, hashes.SHA384, 48),
+    ALG_ES512: (ec.SECP521R1, hashes.SHA512, 66),
 }
+
+# Reverse map: EC curve name to R||S component size
+_EC_COMPONENT_SIZE: dict[str, int] = {
+    "secp256r1": 32,
+    "secp384r1": 48,
+    "secp521r1": 66,
+}
+
+
+def _raw_to_der_ecdsa(raw_sig: bytes, component_size: int) -> bytes:
+    """Convert a COSE raw R||S ECDSA signature to DER format."""
+    r = int.from_bytes(raw_sig[:component_size], "big")
+    s = int.from_bytes(raw_sig[component_size:], "big")
+    return encode_dss_signature(r, s)
+
+
+def _der_to_raw_ecdsa(der_sig: bytes, component_size: int) -> bytes:
+    """Convert a DER-encoded ECDSA signature to COSE raw R||S format."""
+    r, s = decode_dss_signature(der_sig)
+    return r.to_bytes(component_size, "big") + s.to_bytes(component_size, "big")
 
 
 class Signer(Protocol):
@@ -94,6 +115,9 @@ def _sign_with_key(key: SigningKey, data: bytes) -> bytes:
 def _verify_with_public_key(pub: PublicKeyTypes, signature: bytes, data: bytes, alg: int) -> None:
     """Verify a signature using the correct algorithm for the key/alg pair.
 
+    Handles both COSE raw R||S format (RFC 9053) and DER-encoded ECDSA
+    signatures for backwards compatibility.
+
     Raises InvalidSignature on failure.
     """
     if isinstance(pub, ed25519.Ed25519PublicKey):
@@ -103,8 +127,15 @@ def _verify_with_public_key(pub: PublicKeyTypes, signature: bytes, data: bytes, 
         ec_entry = _EC_ALG_MAP.get(alg)
         if ec_entry is None:
             raise ValueError(f"COSE alg {alg} is not an EC algorithm")
-        _, hash_cls = ec_entry
-        pub.verify(signature, data, ec.ECDSA(hash_cls()))
+        _, hash_cls, component_size = ec_entry
+        # COSE uses raw R||S (RFC 9053). Convert to DER for cryptography lib.
+        expected_raw_len = component_size * 2
+        if len(signature) == expected_raw_len:
+            der_sig = _raw_to_der_ecdsa(signature, component_size)
+        else:
+            # Already DER-encoded (legacy Encypher-signed content)
+            der_sig = signature
+        pub.verify(der_sig, data, ec.ECDSA(hash_cls()))
         return
     if isinstance(pub, rsa.RSAPublicKey):
         pub.verify(
@@ -271,9 +302,16 @@ def sign_c2pa_cose(
         protected_bstr = _encode_protected(protected_header)
         to_sign = _sig_structure(protected_bstr, payload_bytes)
 
-        signature = _sign_with_key(private_key, to_sign)
+        signature = cast(bytes, _sign_with_key(private_key, to_sign))
 
-        encoded_cose = _build_sign1(protected_bstr, unprotected_header, payload_bytes, cast(bytes, signature))
+        # COSE requires raw R||S format for ECDSA (RFC 9053 Section 2.1).
+        # Python's cryptography library returns DER; convert if EC key.
+        if isinstance(private_key, ec.EllipticCurvePrivateKey):
+            component_size = _EC_COMPONENT_SIZE.get(private_key.curve.name)
+            if component_size:
+                signature = _der_to_raw_ecdsa(signature, component_size)
+
+        encoded_cose = _build_sign1(protected_bstr, unprotected_header, payload_bytes, signature)
 
         # If timestamp authority URL is provided, request a timestamp
         if timestamp_authority_url:
