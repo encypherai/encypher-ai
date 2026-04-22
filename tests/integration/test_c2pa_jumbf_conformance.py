@@ -101,7 +101,7 @@ class TestJUMBFStructure:
         labels = set(parsed["manifests"][0]["assertions"].keys())
         assert any(l.startswith("c2pa.actions") for l in labels)
         assert any(l.startswith("c2pa.hash.data") for l in labels)
-        assert "c2pa.soft_binding.v1" in labels
+        assert "c2pa.soft-binding" in labels
         assert "com.encypher.signer" in labels
         assert "com.encypher.context" in labels
 
@@ -325,7 +325,7 @@ class TestSoftBinding:
         sb_input = b""
         sb_hash_stored = None
         for label, cbor_bytes in assertions.items():
-            if label == "c2pa.soft_binding.v1":
+            if label == "c2pa.soft-binding":
                 sb_hash_stored = cbor2.loads(cbor_bytes).get("hash")
             else:
                 data = cbor2.loads(cbor_bytes)
@@ -341,7 +341,7 @@ class TestSoftBinding:
         signed = _sign("SB alg test.", priv)
         parsed, _ = _extract_manifest_store(signed)
 
-        sb_cbor = parsed["manifests"][0]["assertions"]["c2pa.soft_binding.v1"]
+        sb_cbor = parsed["manifests"][0]["assertions"]["c2pa.soft-binding"]
         sb = cbor2.loads(sb_cbor)
         assert sb["alg"] == "encypher.unicode_variation_selector.v1"
 

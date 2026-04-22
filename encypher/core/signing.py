@@ -18,6 +18,7 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, ed25519, padding, rsa
 from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature, encode_dss_signature
 from cryptography.x509 import Certificate, NameOID
 
 from .logging_config import logger
@@ -30,12 +31,32 @@ ALG_ES512 = -36
 ALG_PS256 = -37
 X5CHAIN_HEADER = 33
 
-# Map COSE algorithm IDs to EC curve / hash pairs for verification
-_EC_ALG_MAP: dict[int, tuple[type[ec.EllipticCurve], type[hashes.HashAlgorithm]]] = {
-    ALG_ES256: (ec.SECP256R1, hashes.SHA256),
-    ALG_ES384: (ec.SECP384R1, hashes.SHA384),
-    ALG_ES512: (ec.SECP521R1, hashes.SHA512),
+# Map COSE algorithm IDs to (EC curve, hash, R||S component size in bytes)
+_EC_ALG_MAP: dict[int, tuple[type[ec.EllipticCurve], type[hashes.HashAlgorithm], int]] = {
+    ALG_ES256: (ec.SECP256R1, hashes.SHA256, 32),
+    ALG_ES384: (ec.SECP384R1, hashes.SHA384, 48),
+    ALG_ES512: (ec.SECP521R1, hashes.SHA512, 66),
 }
+
+# Reverse map: EC curve name to R||S component size
+_EC_COMPONENT_SIZE: dict[str, int] = {
+    "secp256r1": 32,
+    "secp384r1": 48,
+    "secp521r1": 66,
+}
+
+
+def _raw_to_der_ecdsa(raw_sig: bytes, component_size: int) -> bytes:
+    """Convert a COSE raw R||S ECDSA signature to DER format."""
+    r = int.from_bytes(raw_sig[:component_size], "big")
+    s = int.from_bytes(raw_sig[component_size:], "big")
+    return encode_dss_signature(r, s)
+
+
+def _der_to_raw_ecdsa(der_sig: bytes, component_size: int) -> bytes:
+    """Convert a DER-encoded ECDSA signature to COSE raw R||S format."""
+    r, s = decode_dss_signature(der_sig)
+    return r.to_bytes(component_size, "big") + s.to_bytes(component_size, "big")
 
 
 class Signer(Protocol):
@@ -94,6 +115,9 @@ def _sign_with_key(key: SigningKey, data: bytes) -> bytes:
 def _verify_with_public_key(pub: PublicKeyTypes, signature: bytes, data: bytes, alg: int) -> None:
     """Verify a signature using the correct algorithm for the key/alg pair.
 
+    Handles both COSE raw R||S format (RFC 9053) and DER-encoded ECDSA
+    signatures for backwards compatibility.
+
     Raises InvalidSignature on failure.
     """
     if isinstance(pub, ed25519.Ed25519PublicKey):
@@ -103,8 +127,15 @@ def _verify_with_public_key(pub: PublicKeyTypes, signature: bytes, data: bytes, 
         ec_entry = _EC_ALG_MAP.get(alg)
         if ec_entry is None:
             raise ValueError(f"COSE alg {alg} is not an EC algorithm")
-        _, hash_cls = ec_entry
-        pub.verify(signature, data, ec.ECDSA(hash_cls()))
+        _, hash_cls, component_size = ec_entry
+        # COSE uses raw R||S (RFC 9053). Convert to DER for cryptography lib.
+        expected_raw_len = component_size * 2
+        if len(signature) == expected_raw_len:
+            der_sig = _raw_to_der_ecdsa(signature, component_size)
+        else:
+            # Already DER-encoded (legacy Encypher-signed content)
+            der_sig = signature
+        pub.verify(der_sig, data, ec.ECDSA(hash_cls()))
         return
     if isinstance(pub, rsa.RSAPublicKey):
         pub.verify(
@@ -131,6 +162,9 @@ def _build_sign1(protected_bstr: bytes, unprotected: dict, payload: bytes, signa
 
 def _parse_sign1(cose_bytes: bytes) -> tuple[bytes, dict, Optional[bytes], bytes]:
     arr = cbor2.loads(cose_bytes)
+    # COSE_Sign1 may be wrapped in CBOR tag 18 per RFC 9052 §4.1.
+    if isinstance(arr, cbor2.CBORTag) and arr.tag == 18:
+        arr = arr.value
     if not isinstance(arr, list) or len(arr) != 4:
         raise ValueError("Invalid COSE_Sign1 structure")
     protected_bstr, unprotected, payload, signature = arr
@@ -268,9 +302,16 @@ def sign_c2pa_cose(
         protected_bstr = _encode_protected(protected_header)
         to_sign = _sig_structure(protected_bstr, payload_bytes)
 
-        signature = _sign_with_key(private_key, to_sign)
+        signature = cast(bytes, _sign_with_key(private_key, to_sign))
 
-        encoded_cose = _build_sign1(protected_bstr, unprotected_header, payload_bytes, cast(bytes, signature))
+        # COSE requires raw R||S format for ECDSA (RFC 9053 Section 2.1).
+        # Python's cryptography library returns DER; convert if EC key.
+        if isinstance(private_key, ec.EllipticCurvePrivateKey):
+            component_size = _EC_COMPONENT_SIZE.get(private_key.curve.name)
+            if component_size:
+                signature = _der_to_raw_ecdsa(signature, component_size)
+
+        encoded_cose = _build_sign1(protected_bstr, unprotected_header, payload_bytes, signature)
 
         # If timestamp authority URL is provided, request a timestamp
         if timestamp_authority_url:
@@ -482,7 +523,10 @@ def verify_c2pa_cose(
         x5chain = unprotected.get(X5CHAIN_HEADER)
         if not x5chain:
             raise ValueError("No public key provided and no x5chain in COSE message")
-        cert = x509.load_der_x509_certificate(x5chain[0])
+        # Per RFC 9360, x5chain is a single CBOR bstr for one certificate
+        # or a CBOR array of bstr for a chain. Extract the leaf (first) cert.
+        leaf_der = x5chain if isinstance(x5chain, bytes) else x5chain[0]
+        cert = x509.load_der_x509_certificate(leaf_der)
         verify_key = cert.public_key()
 
     try:
@@ -670,17 +714,22 @@ def extract_certificates_from_cose(cose_bytes: bytes) -> list[Certificate]:
         ValueError: If the message is not a valid COSE_Sign1 structure or contains no certificates.
     """
     protected_bstr, unprotected, payload, _signature = _parse_sign1(cose_bytes)
-    if payload is None:
-        raise ValueError("Message is not a COSE_Sign1 structure.")
 
-    # Extract certificates from the unprotected header (x5chain)
+    # Extract certificates from the unprotected header (x5chain).
+    # The payload may be None for detached-payload COSE_Sign1 structures
+    # (required by C2PA spec); certificates live in the unprotected header
+    # regardless of whether the payload is inline or detached.
     certificates = []
     x5chain = unprotected.get(X5CHAIN_HEADER)
 
     if not x5chain:
         raise ValueError("No X.509 certificates found in COSE message.")
 
-    # Parse each certificate in the chain
+    # Per RFC 9360, x5chain is a single CBOR bstr for one certificate
+    # or a CBOR array of bstr for a chain. Normalise to a list.
+    if isinstance(x5chain, bytes):
+        x5chain = [x5chain]
+
     for cert_bytes in x5chain:
         try:
             cert = x509.load_der_x509_certificate(cert_bytes)
