@@ -1566,6 +1566,20 @@ class UnicodeMetadata:
             hard_hash_result = compute_normalized_hash(original_text, exclusion_ranges)
             actual_hard_hash = hard_hash_result.hexdigest
 
+            # Fallback: producers may hash plain text (HTML tags stripped).
+            if expected_hard_hash != actual_hard_hash:
+                stripped_text = re.sub(r"<[^>]+>", "", original_text)
+                if stripped_text != original_text:
+                    try:
+                        stripped_wrapper = find_wrapper_info_bytes(stripped_text)
+                    except Exception:
+                        stripped_wrapper = None
+                    stripped_exclusions = [(stripped_wrapper[1], stripped_wrapper[2])] if stripped_wrapper else []
+                    stripped_result = compute_normalized_hash(stripped_text, stripped_exclusions)
+                    if stripped_result.hexdigest == expected_hard_hash:
+                        logger.info("C2PA verification: Hard binding passed after stripping HTML tags.")
+                        actual_hard_hash = stripped_result.hexdigest
+
             if expected_hard_hash != actual_hard_hash:
                 # --- Fallback: extract the originally-signed segment from a larger paste ---
                 # When users copy-paste from a rendered web page, the pasted text often
