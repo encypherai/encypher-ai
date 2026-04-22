@@ -326,7 +326,7 @@ A **hard binding** creates a direct, unbreakable link between the C2PA manifest 
 A **soft binding** protects the integrity of the manifest itself, ensuring that the claims within it have not been tampered with.
 
 - **How it works**: We calculate a hash of the manifest's assertions *before* the final COSE signature is applied.
-- **Assertion**: This hash is stored in a `c2pa.soft_binding.v1` assertion.
+- **Assertion**: This hash is stored in a `c2pa.soft-binding` assertion.
 - **Purpose**: This prevents an attacker from modifying, adding, or removing assertions in the manifest without invalidating the soft binding. For example, it prevents someone from changing the author's name or the creation date.
 
 The `verify_metadata` method automatically validates both the hard and soft bindings, providing robust, two-layered tamper detection.

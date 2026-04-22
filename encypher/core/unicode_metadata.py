@@ -806,17 +806,17 @@ class UnicodeMetadata:
         # Recompute soft binding from non-soft-binding assertions
         soft_binding_input = b""
         for _lbl, _data in assertion_tuples:
-            if _lbl != "c2pa.soft_binding.v1":
+            if _lbl != "c2pa.soft-binding":
                 soft_binding_input += cbor2.dumps(_data)
         sb_hash = hashlib.sha256(soft_binding_input).digest()
 
         # Replace or append soft binding tuple
         sb_idx = next(
-            (i for i, (lbl, _) in enumerate(assertion_tuples) if lbl == "c2pa.soft_binding.v1"),
+            (i for i, (lbl, _) in enumerate(assertion_tuples) if lbl == "c2pa.soft-binding"),
             None,
         )
         sb_tuple = (
-            "c2pa.soft_binding.v1",
+            "c2pa.soft-binding",
             {"alg": "encypher.unicode_variation_selector.v1", "hash": sb_hash},
         )
         if sb_idx is not None:
@@ -1430,7 +1430,7 @@ class UnicodeMetadata:
         assertions = c2pa_manifest.get("assertions", [])
         assertion_labels = {a.get("label") for a in assertions if isinstance(a, dict)}
         required_actions = {"c2pa.actions.v1", "c2pa.actions.v2"}
-        required_assertions = {"c2pa.soft_binding.v1"}
+        required_assertions = {"c2pa.soft-binding"}
         if require_hard_binding:
             # Accept both v1 label and new label
             required_assertions.add("c2pa.hash.data.v1" if not is_jumbf_format else "c2pa.hash.data")
@@ -1442,7 +1442,7 @@ class UnicodeMetadata:
             return False, signer_id, c2pa_manifest
 
         # --- 3. Soft Binding Verification (Deterministic Hashing) ---
-        soft_binding_assertion = next((a for a in assertions if isinstance(a, dict) and a.get("label") == "c2pa.soft_binding.v1"), None)
+        soft_binding_assertion = next((a for a in assertions if isinstance(a, dict) and a.get("label") == "c2pa.soft-binding"), None)
         if soft_binding_assertion is None:
             logger.warning("C2PA verification: Soft binding assertion not found.")
             return False, signer_id if signer_id is not None else None, c2pa_manifest
@@ -1460,7 +1460,7 @@ class UnicodeMetadata:
             raw_assertions = outer_payload.get("_jumbf_assertions", [])
             soft_binding_input = b""
             for a in raw_assertions:
-                if not isinstance(a, dict) or a.get("label") == "c2pa.soft_binding.v1":
+                if not isinstance(a, dict) or a.get("label") == "c2pa.soft-binding":
                     continue
                 soft_binding_input += cbor2.dumps(a.get("data", {}))
             actual_soft_hash = hashlib.sha256(soft_binding_input).hexdigest()
@@ -1470,7 +1470,7 @@ class UnicodeMetadata:
 
             # c) Find the soft binding assertion in the copy and replace its hash with a placeholder.
             assertion_to_modify = next(
-                (a for a in manifest_for_hashing.get("assertions", []) if isinstance(a, dict) and a.get("label") == "c2pa.soft_binding.v1"), None
+                (a for a in manifest_for_hashing.get("assertions", []) if isinstance(a, dict) and a.get("label") == "c2pa.soft-binding"), None
             )
             if assertion_to_modify:
                 assertion_to_modify["data"]["hash"] = ""

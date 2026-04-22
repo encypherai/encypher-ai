@@ -53,7 +53,7 @@ embedded_text = UnicodeMetadata.embed_metadata(
 What happens under the hood:
 
 1. ``UnicodeMetadata`` constructs a C2PA manifest with ``c2pa.actions.v1``,
-   ``c2pa.soft_binding.v1``, and ``c2pa.hash.data.v1`` assertions.
+   ``c2pa.soft-binding``, and ``c2pa.hash.data.v1`` assertions.
 2. The manifest is serialised to CBOR, wrapped in a COSE ``Sign1`` signature, and
    packaged as a compact JUMBF container.
 3. ``encode_wrapper`` converts the header + manifest bytes into variation selectors
