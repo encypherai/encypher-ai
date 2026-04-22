@@ -101,7 +101,7 @@ class TestC2PAIntegration(unittest.TestCase):
             "c2pa.hash.data" in assertion_labels or "c2pa.hash.data.v1" in assertion_labels,
             f"Expected c2pa.hash.data or c2pa.hash.data.v1 in {assertion_labels}",
         )
-        self.assertIn("c2pa.soft_binding.v1", assertion_labels)
+        self.assertIn("c2pa.soft-binding", assertion_labels)
 
     def test_c2pa_verification(self):
         """Test verification of C2PA compliant metadata."""
@@ -184,7 +184,7 @@ class TestC2PAIntegration(unittest.TestCase):
         )
 
         # Check soft binding assertion is present
-        soft_binding_assertion = next((a for a in c2pa_dict["assertions"] if a["label"] == "c2pa.soft_binding.v1"), None)
+        soft_binding_assertion = next((a for a in c2pa_dict["assertions"] if a["label"] == "c2pa.soft-binding"), None)
         self.assertIsNotNone(soft_binding_assertion)
         self.assertEqual(soft_binding_assertion["data"]["alg"], "encypher.unicode_variation_selector.v1")
 
