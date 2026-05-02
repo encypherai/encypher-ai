@@ -403,6 +403,8 @@ class UnicodeMetadata:
         distribute_across_targets: bool = False,
         add_hard_binding: bool = True,
         cert_chain_pem: Optional[str] = None,
+        spec_version: Optional[str] = None,
+        product_version: Optional[str] = None,
     ) -> str:
         if metadata_format == "c2pa":
             # Convert timestamp once for C2PA-specific embedding (optional)
@@ -426,6 +428,8 @@ class UnicodeMetadata:
                 add_hard_binding=add_hard_binding,
                 custom_assertions=custom_assertions,
                 cert_chain_pem=cert_chain_pem,
+                spec_version=spec_version,
+                product_version=product_version,
             )
         # --- Start: Input Validation ---
         if not isinstance(text, str):
@@ -797,11 +801,18 @@ class UnicodeMetadata:
         claim_gen: str,
         private_key: SigningKey,
         cert_chain_pem: Optional[str],
+        *,
+        spec_version: Optional[str] = None,
+        product_version: Optional[str] = None,
     ) -> bytes:
         """Build a complete JUMBF manifest store from assertion tuples.
 
         Computes soft binding, builds JUMBF boxes, signs claim, returns
         the manifest store bytes.
+
+        Args:
+            spec_version: C2PA spec version passed through to the claim.
+            product_version: Product version passed through to the claim.
         """
         # Recompute soft binding from non-soft-binding assertions
         soft_binding_input = b""
@@ -840,6 +851,8 @@ class UnicodeMetadata:
             dc_format="text/plain",
             claim_generator=claim_gen,
             alg="sha256",
+            spec_version=spec_version,
+            product_version=product_version,
         )
         certificates = None
         if cert_chain_pem:
@@ -872,6 +885,8 @@ class UnicodeMetadata:
         add_hard_binding: bool,
         custom_assertions: Optional[list[dict[str, Any]]] = None,
         cert_chain_pem: Optional[str] = None,
+        spec_version: Optional[str] = None,
+        product_version: Optional[str] = None,
     ) -> str:
         """
         Constructs and embeds a C2PA-compliant manifest.
@@ -880,6 +895,10 @@ class UnicodeMetadata:
         mandatory assertions, content hashing (hard binding), and a soft binding
         hash. The resulting manifest is serialized to CBOR, signed, and then
         embedded into the text using Unicode variation selectors.
+
+        Policy values (spec version, product version, default actions) are passed
+        by the caller. The enterprise API is the SSOT for these; the SDK only
+        provides last-resort fallbacks.
 
         When cert_chain_pem is provided, produces a spec-compliant COSE_Sign1_Tagged
         structure with x5chain and detached payload (matching the binary media
@@ -899,6 +918,8 @@ class UnicodeMetadata:
             add_hard_binding: If True, include the hard binding assertion in the manifest.
             custom_assertions: Optional list of custom C2PA assertions to include.
             cert_chain_pem: Optional PEM-encoded certificate chain (EE cert first).
+            spec_version: C2PA spec version for claim_generator_info.
+            product_version: Product version for claim_generator_info.
 
         Returns:
             The text with the embedded C2PA manifest.
@@ -919,13 +940,19 @@ class UnicodeMetadata:
         base_actions: list[dict[str, Any]] = copy.deepcopy(actions) if actions else []
         claim_gen = claim_generator or f"encypher-ai/{__version__}"
 
+        # Normalize incoming actions: accept both "label" (legacy) and "action"
+        # (C2PA spec-correct) keys; emit only "action" per C2PA spec.
+        for a in base_actions:
+            if "label" in a and "action" not in a:
+                a["action"] = a.pop("label")
+
         # Only add c2pa.created if no creation or edit action exists
-        has_creation_or_edit_action = any(a.get("label") in ["c2pa.created", "c2pa.edited"] for a in base_actions)
+        has_creation_or_edit_action = any(a.get("action") in ["c2pa.created", "c2pa.edited"] for a in base_actions)
 
         if not has_creation_or_edit_action:
-            # Build created action with consistent field ordering: label, when, softwareAgent, then other fields
+            # Build created action with C2PA spec field ordering
             created_action: dict[str, Any] = {
-                "label": "c2pa.created",
+                "action": "c2pa.created",
             }
             if iso_timestamp is not None:
                 created_action["when"] = iso_timestamp
@@ -933,9 +960,12 @@ class UnicodeMetadata:
             created_action["digitalSourceType"] = "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia"
             base_actions.insert(0, created_action)
 
-        # Build watermarked action with consistent field ordering
+        # Build watermarked action with C2PA spec 2.4 field naming.
+        # c2pa.watermarked is deprecated per spec 2.4; use c2pa.watermarked.bound
+        # because the variation-selector embedding is cryptographically bound
+        # to the manifest (same JUMBF store).
         wm_action: dict[str, Any] = {
-            "label": "c2pa.watermarked",
+            "action": "c2pa.watermarked.bound",
         }
         if iso_timestamp is not None:
             wm_action["when"] = iso_timestamp
@@ -1006,6 +1036,8 @@ class UnicodeMetadata:
                     claim_gen,
                     private_key,
                     cert_chain_pem,
+                    spec_version=spec_version,
+                    product_version=product_version,
                 )
                 new_exclusion_length = worst_case_wrapper_byte_length(len(manifest_store_bytes))
                 if new_exclusion_length == exclusion_length:
@@ -1030,6 +1062,8 @@ class UnicodeMetadata:
                     claim_gen,
                     private_key,
                     cert_chain_pem,
+                    spec_version=spec_version,
+                    product_version=product_version,
                 )
 
             # -- Encode wrapper with deterministic padding --
@@ -1041,6 +1075,8 @@ class UnicodeMetadata:
                 claim_gen,
                 private_key,
                 cert_chain_pem,
+                spec_version=spec_version,
+                product_version=product_version,
             )
             wrapper_text = encode_wrapper_padded(
                 manifest_store_bytes,

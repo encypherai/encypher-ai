@@ -6,6 +6,10 @@ generator info, and content binding.
 
 The claim v2 format uses ``created_assertions`` with JUMBF URI references
 and per-assertion hashes, unlike v1 which inlined assertion data.
+
+This module is a thin implementation layer. All policy values (spec version,
+product version, product name) are passed by the caller. The enterprise API
+is the SSOT for these constants.
 """
 
 from __future__ import annotations
@@ -14,9 +18,6 @@ import hashlib
 import uuid
 
 import cbor2
-
-_PRODUCT_NAME = "Encypher"
-_PRODUCT_VERSION = "2.0"
 
 # Hash algorithm identifiers per C2PA spec
 HASH_ALG_SHA256 = "sha256"
@@ -39,6 +40,8 @@ def build_claim_cbor(
     title: str | None = None,
     claim_generator: str | None = None,
     alg: str = HASH_ALG_SHA256,
+    spec_version: str | None = None,
+    product_version: str | None = None,
 ) -> bytes:
     """Build the CBOR-encoded C2PA claim v2.
 
@@ -50,8 +53,13 @@ def build_claim_cbor(
             hash them.
         dc_format: MIME type of the asset (required per C2PA spec).
         title: Optional asset title.
-        claim_generator: Optional claim generator string override.
+        claim_generator: Claim generator name. Required by callers; falls
+            back to ``"encypher"`` only as a last resort.
         alg: Hash algorithm for assertion hashing.
+        spec_version: C2PA spec version (e.g. ``"2.4"``). Included in
+            ``claim_generator_info`` when provided; omitted otherwise.
+        product_version: Product version string for ``claim_generator_info``.
+            Omitted when ``None``.
 
     Returns:
         CBOR-encoded claim bytes.
@@ -78,13 +86,16 @@ def build_claim_cbor(
     #   metadata
     # Fields like claim_generator, dc:format, assertions are v1-only and
     # cause "unsupported claim version" or "unknown V2 claim field" errors.
-    generator_name = claim_generator or _PRODUCT_NAME
+    generator_name = claim_generator or "encypher"
+    gen_info: dict = {"name": generator_name}
+    if product_version is not None:
+        gen_info["version"] = product_version
+    if spec_version is not None:
+        gen_info["specVersion"] = spec_version
+
     claim: dict = {
         "instanceID": instance_id,
-        "claim_generator_info": {
-            "name": generator_name,
-            "version": _PRODUCT_VERSION,
-        },
+        "claim_generator_info": gen_info,
         "signature": f"self#jumbf={manifest_label}/c2pa.signature",
         "created_assertions": assertion_refs,
         "alg": alg,
