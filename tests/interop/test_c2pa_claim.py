@@ -49,10 +49,37 @@ class TestBuildClaimCbor:
         assert claim["instanceID"].startswith("urn:uuid:")
         assert "claim_generator_info" in claim
         assert "name" in claim["claim_generator_info"]
-        assert "version" in claim["claim_generator_info"]
         assert "signature" in claim
         assert "created_assertions" in claim
         assert "alg" in claim
+
+    def test_version_included_when_provided(self):
+        refs = self._make_assertion_refs()
+        claim_bytes = build_claim_cbor(
+            "urn:c2pa:test-1234", refs, dc_format="text/plain", product_version="2.0"
+        )
+        claim = cbor2.loads(claim_bytes)
+        assert claim["claim_generator_info"]["version"] == "2.0"
+
+    def test_version_absent_when_not_provided(self):
+        refs = self._make_assertion_refs()
+        claim_bytes = build_claim_cbor("urn:c2pa:test-1234", refs, dc_format="text/plain")
+        claim = cbor2.loads(claim_bytes)
+        assert "version" not in claim["claim_generator_info"]
+
+    def test_spec_version_included_when_provided(self):
+        refs = self._make_assertion_refs()
+        claim_bytes = build_claim_cbor(
+            "urn:c2pa:test-1234", refs, dc_format="text/plain", spec_version="2.4"
+        )
+        claim = cbor2.loads(claim_bytes)
+        assert claim["claim_generator_info"]["specVersion"] == "2.4"
+
+    def test_spec_version_absent_when_not_provided(self):
+        refs = self._make_assertion_refs()
+        claim_bytes = build_claim_cbor("urn:c2pa:test-1234", refs, dc_format="text/plain")
+        claim = cbor2.loads(claim_bytes)
+        assert "specVersion" not in claim["claim_generator_info"]
 
     def test_signature_reference_format(self):
         refs = self._make_assertion_refs()
