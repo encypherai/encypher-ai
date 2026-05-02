@@ -44,7 +44,7 @@ This project is maintained by Encypher. The maintainers of this codebase are co-
 Encypher relies on the MIT-licensed `encypherai/c2pa-text` package for C2PA Text Manifest wrapper encoding/decoding (the wrapper transport layer), while `encypher-ai` provides end-to-end signing, embedding, extraction, and verification.
 
 Key features:
-- **C2PA 2.3 compliant manifests** with proper structure (`@context`, `instance_id`, `claim_generator`)
+- **C2PA 2.4 compliant manifests** with proper structure (`@context`, `instance_id`, `claim_generator`)
 - **Hard binding** via `c2pa.hash.data.v1` assertions with NFC normalization
 - **Soft binding** via `c2pa.soft-binding` for manifest recovery
 - **C2PATextManifestWrapper** encoding using Unicode variation selectors (U+FE00-U+FE0F, U+E0100-U+E01EF)
@@ -126,7 +126,7 @@ uv run python -c "import encypher; print(encypher.__version__)"
 
 > **Note:** Digital signatures require managing a private/public key pair. You can use the helper script `encypher/examples/generate_keys.py` to create your first key pair and get setup instructions, or generate keys programmatically as shown below.
 
-> **Note:** Timestamp is optional across all formats (basic, manifest, cbor_manifest, c2pa). If omitted, verification still works. For C2PA, action assertions (e.g., `c2pa.created`, `c2pa.watermarked`) omit the `when` field when no timestamp is supplied.
+> **Note:** Timestamp is optional across all formats (basic, manifest, cbor_manifest, c2pa). If omitted, verification still works. For C2PA, action assertions (e.g., `c2pa.created`, `c2pa.watermarked.bound`) omit the `when` field when no timestamp is supplied.
 
 ### Basic Encoding and Verification
 
@@ -369,7 +369,7 @@ Encypher supports embedding structured manifests inspired by the C2PA standard, 
 
 The library handles the creation of the manifest, including calculating the content hash of the original, un-encoded text, and bundles it into a CBOR-encoded, signed payload.
 
-> **Note:** The `timestamp` parameter is optional. If you omit it, C2PA actions created by Encypher (e.g., the `c2pa.watermarked` action) will not include a `when` field; behavior is unchanged when a valid timestamp is provided.
+> **Note:** The `timestamp` parameter is optional. If you omit it, C2PA actions created by Encypher (e.g., the `c2pa.watermarked.bound` action) will not include a `when` field; behavior is unchanged when a valid timestamp is provided.
 
 ### Example: Embedding and Verifying a Manifest
 
