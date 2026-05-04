@@ -1,0 +1,112 @@
+name: Sensitive Content Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Block internal content from public repo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check tree for sensitive files
+        run: |
+          echo "Scanning repository tree for internal content..."
+          SENSITIVE_PATTERNS=(
+            "PRDs/"
+            ".teams/"
+            ".questions/"
+            "docs/company_internal_strategy/"
+            "docs/company_internal/"
+            "docs/drafts/"
+            "docs/legal/"
+            "docs/pricing/"
+            "docs/sales/"
+            "enterprise_api/"
+            "services/"
+            "apps/"
+            "integrations/"
+            "sdk/"
+            "scripts/"
+            "shared_commercial_libs/"
+            "infrastructure/"
+            "CLAUDE.md"
+            "agents.md"
+            ".secrets.baseline"
+            ".mcp.json"
+          )
+
+          FOUND=0
+          for pattern in "${SENSITIVE_PATTERNS[@]}"; do
+            matches=$(git ls-tree -r --name-only HEAD | grep "^${pattern}" || true)
+            if [ -n "$matches" ]; then
+              echo "::error::BLOCKED: Internal content detected on HEAD: ${pattern}"
+              echo "$matches" | head -5
+              FOUND=1
+            fi
+          done
+
+          if [ "$FOUND" -eq 1 ]; then
+            echo ""
+            echo "::error::This repository is public. Internal content must not be committed."
+            exit 1
+          fi
+
+          echo "Tree scan passed."
+
+      - name: Check commit messages for private repo references
+        run: |
+          echo "Scanning commit messages for private repo references..."
+
+          BLOCKED_PATTERNS=(
+            "encypherai-commercial"
+            "encypherai/encypherai-commercial"
+            "specs-core#[0-9]"
+          )
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            RANGE="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          else
+            RANGE="HEAD~1..HEAD"
+          fi
+
+          FOUND=0
+          for pattern in "${BLOCKED_PATTERNS[@]}"; do
+            matches=$(git log --oneline "$RANGE" --grep="$pattern" 2>/dev/null || true)
+            if [ -n "$matches" ]; then
+              echo "::error::BLOCKED: Commit message references private content: ${pattern}"
+              echo "$matches" | head -5
+              FOUND=1
+            fi
+          done
+
+          if [ "$FOUND" -eq 1 ]; then
+            echo ""
+            echo "::error::Commit messages must not reference private repositories or upstream PR numbers."
+            exit 1
+          fi
+
+          echo "Message scan passed."
+
+      - name: Check history for leaked files (full push only)
+        if: github.event_name == 'push'
+        run: |
+          echo "Scanning full history for leaked files..."
+
+          LEAKED=$(git log --all --diff-filter=A --name-only --format="" | \
+            grep -cE "^(PRDs/|\.teams/|\.questions/|docs/company_internal|docs/legal/|docs/pricing/|docs/sales/|enterprise_api/|services/|apps/|integrations/|\.secrets)" || true)
+
+          if [ "$LEAKED" -gt 0 ]; then
+            echo "::warning::History contains ${LEAKED} sensitive file additions. Run git filter-repo to clean."
+          else
+            echo "History scan passed."
+          fi
