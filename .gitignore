@@ -73,10 +73,19 @@ htmlcov/
 nosetests.xml
 coverage/
 
-# Documentation
+# Documentation build artifacts
 docs/_build/
 site/
+
+# Internal/sensitive content (must never reach public repos)
 *prd*
+.claude/
+CLAUDE.md
+agents.md
+agents_linux.md
+TODO.md
+.secrets.baseline
+.mcp.json
 
 # Frontend
 */.next/*
