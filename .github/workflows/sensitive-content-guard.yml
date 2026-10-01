@@ -1,0 +1,57 @@
+name: Sensitive Content Guard
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# The patterns that identify internal material are kept in the repository
+# secret LEAK_GUARD_PATTERNS (one extended regex per line), so this public file
+# does not list them. Tracked paths, file contents and new commit messages are
+# checked. Fork pull requests cannot read secrets; maintainers
+# review those by hand.
+jobs:
+  scan:
+    name: Block internal content from public repo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan tree paths and commit messages
+        env:
+          PATTERNS: ${{ secrets.LEAK_GUARD_PATTERNS }}
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [ -z "$PATTERNS" ]; then
+            echo "::notice::LEAK_GUARD_PATTERNS is not available (fork PR or unset); skipping."
+            exit 0
+          fi
+          if [ -n "$BASE" ] && [ "$BASE" != "0000000000000000000000000000000000000000" ]; then
+            RANGE="$BASE..$HEAD"
+          else
+            RANGE="HEAD~1..HEAD"
+          fi
+          FOUND=0
+          while IFS= read -r pattern; do
+            [ -z "$pattern" ] && continue
+            if git ls-tree -r --name-only HEAD | grep -qE "$pattern"; then
+              echo "::error::A tracked path matches a blocked pattern."
+              FOUND=1
+            fi
+            if git grep -qE "$pattern" HEAD -- . ':!.github/workflows/sensitive-content-guard.yml'; then
+              echo "::error::A tracked file's content matches a blocked pattern."
+              FOUND=1
+            fi
+            if git log --format=%B "$RANGE" | grep -qE "$pattern"; then
+              echo "::error::A commit message matches a blocked pattern."
+              FOUND=1
+            fi
+          done <<< "$PATTERNS"
+          exit "$FOUND"
